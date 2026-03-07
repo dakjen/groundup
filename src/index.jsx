@@ -985,13 +985,33 @@ function ContactPage({ setActivePage }) {
 
 // ─── ADMIN ───────────────────────────────────────────────────────────────────
 
-const ADMIN_EMAIL = "gina@nreuv.com";
-const ADMIN_PASSWORD = "groundup2024";
-
 function AdminLoginPage({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        onLogin();
+      } else {
+        setError(data.error || "Invalid email or password.");
+      }
+    } catch {
+      setError("Login failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: "#000", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
@@ -1006,10 +1026,10 @@ function AdminLoginPage({ onLogin }) {
         </div>
         <div style={{ marginBottom: 24 }}>
           <label style={{ fontSize: 11, color: "#8a7070", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", display: "block", marginBottom: 8 }}>Password</label>
-          <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="••••••••" onKeyDown={e => e.key === "Enter" && (email === ADMIN_EMAIL && password === ADMIN_PASSWORD ? onLogin() : setError("Invalid email or password."))} style={{ width: "100%", background: "#1a0808", border: "1px solid #2a0000", borderRadius: 8, padding: "12px 14px", color: "#f0d8d8", fontSize: 14, fontFamily: "'DM Sans', sans-serif", outline: "none" }} />
+          <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="••••••••" onKeyDown={e => e.key === "Enter" && handleLogin()} style={{ width: "100%", background: "#1a0808", border: "1px solid #2a0000", borderRadius: 8, padding: "12px 14px", color: "#f0d8d8", fontSize: 14, fontFamily: "'DM Sans', sans-serif", outline: "none" }} />
         </div>
         {error && <div style={{ color: "#b80101", fontSize: 13, marginBottom: 16, fontFamily: "'DM Sans', sans-serif" }}>{error}</div>}
-        <button onClick={() => email === ADMIN_EMAIL && password === ADMIN_PASSWORD ? onLogin() : setError("Invalid email or password.")} style={{ width: "100%", background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "13px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Sign In</button>
+        <button onClick={handleLogin} disabled={loading} style={{ width: "100%", background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "13px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Sign In</button>
       </div>
     </div>
   );
