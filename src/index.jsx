@@ -563,6 +563,41 @@ function HomePage({ setActivePage }) {
         </div>
       </div>
 
+      {/* Gina's Story */}
+      <div style={{ padding: "100px clamp(20px,5vw,80px)", maxWidth: 1000, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 56 }}>
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>The founder</div>
+          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "#f5e8e8", marginBottom: 16, lineHeight: 1.15 }}>From the Bronx to $600M in Development</h2>
+          <p style={{ color: "#8a7070", fontSize: 14, maxWidth: 600, margin: "0 auto", lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif" }}>Dr. Gina Merritt's journey is the blueprint behind every GroundUp course.</p>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
+          <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: 32 }}>
+            <div style={{ fontSize: 28, marginBottom: 16 }}>🏢</div>
+            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#f0d8d8", marginBottom: 12 }}>Grew Up in Affordable Housing</h3>
+            <p style={{ color: "#8a7070", fontSize: 14, lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif" }}>
+              Raised in the Bronx in the same kind of communities she now builds for, Gina saw firsthand how housing shapes opportunity — and who gets left out of the deal-making.
+            </p>
+          </div>
+          <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: 32 }}>
+            <div style={{ fontSize: 28, marginBottom: 16 }}>🎓</div>
+            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#f0d8d8", marginBottom: 12 }}>Howard, Darden, USC</h3>
+            <p style={{ color: "#8a7070", fontSize: 14, lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif" }}>
+              Business degree from Howard University, MBA from UVA's Darden School, and a Doctorate in Social Innovation from USC. She built the academic foundation — then proved it in the field.
+            </p>
+          </div>
+          <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: 32 }}>
+            <div style={{ fontSize: 28, marginBottom: 16 }}>🔑</div>
+            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#f0d8d8", marginBottom: 12 }}>28 Years, Then Ownership</h3>
+            <p style={{ color: "#8a7070", fontSize: 14, lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif" }}>
+              After two decades advising on $4.5B+ in transactions, she started owning her own deals in 2020. Since then, she's grown her pipeline from near zero to over $600 million across DC, Baltimore, Cleveland, and PG County.
+            </p>
+          </div>
+        </div>
+        <div style={{ textAlign: "center", marginTop: 48 }}>
+          <button onClick={() => setActivePage("about")} style={{ background: "transparent", color: "#b80101", border: "1px solid #2a0000", borderRadius: 10, padding: "14px 36px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer", letterSpacing: "0.5px" }}>READ HER FULL STORY →</button>
+        </div>
+      </div>
+
       {/* Lunch & Learn */}
       <div style={{ background: "#050202", borderTop: "1px solid #1a0000", padding: "80px clamp(20px,5vw,80px)" }}>
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
