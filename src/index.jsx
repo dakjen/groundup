@@ -1028,6 +1028,52 @@ function ContactPage({ setActivePage }) {
 
 // ─── ADMIN ───────────────────────────────────────────────────────────────────
 
+function SiteGatePage({ onUnlock }) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/site-auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem("siteUnlocked", "true");
+        onUnlock();
+      } else {
+        setError(data.error || "Wrong password.");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#000", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div style={{ width: "100%", maxWidth: 420, background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: 48 }}>
+        <div style={{ marginBottom: 36, textAlign: "center" }}>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 6 }}>GroundUp</div>
+          <div style={{ fontSize: 12, color: "#6a5050", fontFamily: "'DM Sans', sans-serif" }}>Enter password to continue</div>
+        </div>
+        <div style={{ marginBottom: 24 }}>
+          <label style={{ fontSize: 11, color: "#8a7070", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", display: "block", marginBottom: 8 }}>Password</label>
+          <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="••••••••" onKeyDown={e => e.key === "Enter" && handleSubmit()} style={{ width: "100%", background: "#1a0808", border: "1px solid #2a0000", borderRadius: 8, padding: "12px 14px", color: "#f0d8d8", fontSize: 14, fontFamily: "'DM Sans', sans-serif", outline: "none" }} />
+        </div>
+        {error && <div style={{ color: "#b80101", fontSize: 13, marginBottom: 16, fontFamily: "'DM Sans', sans-serif" }}>{error}</div>}
+        <button onClick={handleSubmit} disabled={loading} style={{ width: "100%", background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "13px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>{loading ? "Verifying..." : "Enter"}</button>
+      </div>
+    </div>
+  );
+}
+
 function AdminLoginPage({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -1771,6 +1817,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 // ─── APP ─────────────────────────────────────────────────────────────────────
 
 export default function App() {
+  const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
   const [activePage, setActivePage] = useState("home");
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
@@ -1804,6 +1851,7 @@ export default function App() {
 
   const openSignup = (tier = "Free") => { setSignupTier(tier); setShowSignup(true); };
 
+  if (!siteUnlocked) return <SiteGatePage onUnlock={() => setSiteUnlocked(true)} />;
   if (showAdminLogin && !isAdmin) return <AdminLoginPage onLogin={() => { setIsAdmin(true); setShowAdminLogin(false); }} />;
   if (isAdmin) return <AdminPanel onLogout={() => setIsAdmin(false)} />;
 
