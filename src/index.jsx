@@ -501,11 +501,18 @@ function HomePage({ setActivePage }) {
             </div>
           </div>
           <div style={{ flexShrink: 0, width: "clamp(280px,40%,460px)", position: "relative" }}>
-            <div style={{ width: "100%", height: 420, borderRadius: 20, background: "#0d0404", border: "1px solid #2a0000", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <div style={{ textAlign: "center", padding: 24 }}>
-                <div style={{ fontSize: 48, marginBottom: 12 }}>🏗️</div>
-                <div style={{ fontSize: 13, color: "#b80101", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, letterSpacing: "1px", marginBottom: 6 }}>9410 HOUGH AVENUE</div>
-                <div style={{ fontSize: 12, color: "#6a5050", fontFamily: "'DM Sans', sans-serif" }}>Cleveland, OH · 116 units · $47M</div>
+            <div style={{ width: "100%", borderRadius: 20, overflow: "hidden", background: "#0d0404", border: "1px solid #2a0000" }}>
+              <img src={IMG_SPEECH} alt="Dr. Gina Merritt" style={{ width: "100%", height: 300, objectFit: "cover", display: "block" }} />
+              <div style={{ padding: "24px 28px 28px" }}>
+                <div style={{ fontSize: 11, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Dr. Gina Merritt</div>
+                <p style={{ fontSize: 13, color: "#c4a8a8", lineHeight: 1.75, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>
+                  Raised in the Bronx. Bootstrapped from public housing to $600M+ in development deals across DC, Baltimore & Cleveland.
+                </p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {["Howard Grad", "Darden MBA", "USC Doctorate", "$4.5B Underwritten", "7,500+ Units"].map(t => (
+                    <span key={t} style={{ fontSize: 10, color: "#8a7070", border: "1px solid #2a0000", borderRadius: 20, padding: "4px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{t}</span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
