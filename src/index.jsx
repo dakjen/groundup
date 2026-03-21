@@ -502,7 +502,7 @@ function HomePage({ setActivePage }) {
           </div>
           <div style={{ flexShrink: 0, width: "clamp(280px,40%,460px)", position: "relative" }}>
             <div style={{ width: "100%", borderRadius: 20, overflow: "hidden", background: "#0d0404", border: "1px solid #2a0000" }}>
-              <img src="/SIS-AWARD-GM.jpg" alt="Dr. Gina Merritt" style={{ width: "100%", height: 300, objectFit: "cover", objectPosition: "center top", display: "block" }} />
+              <img src="/LIIF-Stills1.png" alt="Dr. Gina Merritt" style={{ width: "100%", height: 300, objectFit: "cover", objectPosition: "center top", display: "block" }} />
               <div style={{ padding: "24px 28px 28px" }}>
                 <div style={{ fontSize: 11, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Dr. Gina Merritt</div>
                 <p style={{ fontSize: 13, color: "#c4a8a8", lineHeight: 1.75, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>
