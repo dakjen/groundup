@@ -741,7 +741,7 @@ function AboutPage({ setActivePage }) {
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 40, borderRadius: 16, overflow: "hidden" }}>
           <img src="/LIIF-Stills5.png" alt="Dr. Gina Merritt" style={{ width: "100%", height: 240, objectFit: "cover", display: "block", borderRadius: 12 }} />
-          <img src={IMG_STAGE} alt="Dr. Merritt accepting award on stage" style={{ width: "100%", height: 240, objectFit: "cover", display: "block", borderRadius: 12 }} />
+          <img src="/SISAwards-Award.jpg" alt="Dr. Merritt accepting award on stage" style={{ width: "100%", height: 240, objectFit: "cover", display: "block", borderRadius: 12 }} />
         </div>
         <div style={{ marginBottom: 64 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>The Instructor</div>
@@ -1873,7 +1873,8 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const [activePage, setActivePage] = useState("home");
+  const [activePage, setActivePageRaw] = useState(() => sessionStorage.getItem("activePage") || "home");
+  const setActivePage = (page) => { sessionStorage.setItem("activePage", page); setActivePageRaw(page); };
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [logoClicks, setLogoClicks] = useState(0);
