@@ -502,7 +502,7 @@ function HomePage({ setActivePage }) {
           </div>
           <div style={{ flexShrink: 0, width: "clamp(280px,40%,460px)", position: "relative" }}>
             <div style={{ width: "100%", borderRadius: 20, overflow: "hidden", background: "#0d0404", border: "1px solid #2a0000" }}>
-              <img src={IMG_SPEECH} alt="Dr. Gina Merritt" style={{ width: "100%", height: 300, objectFit: "cover", display: "block" }} />
+              <img src="/SIS-AWARD-GM.jpg" alt="Dr. Gina Merritt" style={{ width: "100%", height: 300, objectFit: "cover", objectPosition: "center top", display: "block" }} />
               <div style={{ padding: "24px 28px 28px" }}>
                 <div style={{ fontSize: 11, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Dr. Gina Merritt</div>
                 <p style={{ fontSize: 13, color: "#c4a8a8", lineHeight: 1.75, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>
@@ -582,32 +582,80 @@ function HomePage({ setActivePage }) {
       <div style={{ padding: "100px clamp(20px,5vw,80px)", maxWidth: 1000, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 56 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>The founder</div>
-          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "#f5e8e8", marginBottom: 16, lineHeight: 1.15 }}>From the Bronx to $600M in Development</h2>
+          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "#f5e8e8", marginBottom: 16, lineHeight: 1.15 }}>
+            "I, too, am an institution."
+          </h2>
           <p style={{ color: "#8a7070", fontSize: 14, maxWidth: 600, margin: "0 auto", lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif" }}>Dr. Gina Merritt's journey is the blueprint behind every GroundUp course.</p>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
-          <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: 32 }}>
-            <div style={{ fontSize: 28, marginBottom: 16 }}>🏢</div>
-            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#f0d8d8", marginBottom: 12 }}>Grew Up in Affordable Housing</h3>
-            <p style={{ color: "#8a7070", fontSize: 14, lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif" }}>
-              Raised in the Bronx in the same kind of communities she now builds for, Gina saw firsthand how housing shapes opportunity — and who gets left out of the deal-making.
+
+        {/* Chapter 1: Twenty Years Building for Others */}
+        <div style={{ display: "flex", gap: 40, alignItems: "center", marginBottom: 64, flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 280 }}>
+            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Chapter 1</div>
+            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#f0d8d8", marginBottom: 16, lineHeight: 1.2 }}>Twenty Years Building for Others</h3>
+            <p style={{ color: "#8a7070", fontSize: 14, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif" }}>
+              For twenty years, Dr. Gina Merritt built other people's buildings. She managed billions of dollars in real estate transactions, created financial models that became company-wide standards, negotiated institutional equity deals, and structured affordable housing projects across Washington DC, Baltimore, Cleveland, and beyond. She did the work. She just never got to own it.
+            </p>
+            <p style={{ color: "#8a7070", fontSize: 14, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", marginTop: 16 }}>
+              Despite managing over $2 billion worth of development projects and overseeing more than 2,600 units of housing, she owned exactly one project before 2020. Not because she lacked the skill. Because the capital markets weren't built for someone who looks like her.
             </p>
           </div>
-          <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: 32 }}>
-            <div style={{ fontSize: 28, marginBottom: 16 }}>🎓</div>
-            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#f0d8d8", marginBottom: 12 }}>Howard, Darden, USC</h3>
-            <p style={{ color: "#8a7070", fontSize: 14, lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif" }}>
-              Business degree from Howard University, MBA from UVA's Darden School, and a Doctorate in Social Innovation from USC. She built the academic foundation — then proved it in the field.
-            </p>
-          </div>
-          <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: 32 }}>
-            <div style={{ fontSize: 28, marginBottom: 16 }}>🔑</div>
-            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#f0d8d8", marginBottom: 12 }}>28 Years, Then Ownership</h3>
-            <p style={{ color: "#8a7070", fontSize: 14, lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif" }}>
-              After two decades advising on $4.5B+ in transactions, she started owning her own deals in 2020. Since then, she's grown her pipeline from near zero to over $600 million across DC, Baltimore, Cleveland, and PG County.
-            </p>
+          <div style={{ width: "clamp(260px,35%,360px)", flexShrink: 0, borderRadius: 16, overflow: "hidden", border: "1px solid #2a0000" }}>
+            <img src="/LIIF-Stills1.png" alt="Dr. Merritt on site" style={{ width: "100%", height: 320, objectFit: "cover", display: "block" }} />
           </div>
         </div>
+
+        {/* Chapter 2: The Banker Call */}
+        <div style={{ display: "flex", gap: 40, alignItems: "center", marginBottom: 64, flexWrap: "wrap", flexDirection: "row-reverse" }}>
+          <div style={{ flex: 1, minWidth: 280 }}>
+            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Chapter 2</div>
+            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#f0d8d8", marginBottom: 16, lineHeight: 1.2 }}>The Call That Changed Everything</h3>
+            <p style={{ color: "#8a7070", fontSize: 14, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif" }}>
+              During a two-hour Zoom call with a bank she won't name, they made her catalog every function she'd performed on every project — design management, financing, construction oversight, acquisition — line by line. At the end, the banker told her they typically lend to institutional firms like JBG and Madison Marquette.
+            </p>
+            <p style={{ color: "#8a7070", fontSize: 14, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", marginTop: 16 }}>
+              Dr. Merritt's response became the title of her forthcoming book: <span style={{ color: "#f0d8d8", fontStyle: "italic" }}>"I have more experience than the principals at JBG. I, too, am an institution."</span> The difference wasn't experience. It was that she is a Black woman in an industry that routinely hands capital to people with far thinner resumes.
+            </p>
+          </div>
+          <div style={{ width: "clamp(260px,35%,360px)", flexShrink: 0, borderRadius: 16, overflow: "hidden", border: "1px solid #2a0000" }}>
+            <img src="/sis-gm-speech.jpg" alt="Dr. Merritt speaking at Social Innovation Summit" style={{ width: "100%", height: 320, objectFit: "cover", objectPosition: "center top", display: "block" }} />
+          </div>
+        </div>
+
+        {/* Chapter 3: After 2020 */}
+        <div style={{ display: "flex", gap: 40, alignItems: "center", marginBottom: 64, flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 280 }}>
+            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Chapter 3</div>
+            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#f0d8d8", marginBottom: 16, lineHeight: 1.2 }}>From Zero Balance Sheet to $500M Pipeline</h3>
+            <p style={{ color: "#8a7070", fontSize: 14, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif" }}>
+              Everything changed after 2020. When the world was forced to reckon with racial inequity, Dr. Merritt's phone didn't stop ringing. Investors and lenders were suddenly looking for exactly what she'd always been — a Black woman developer with decades of deep, verifiable execution experience.
+            </p>
+            <p style={{ color: "#8a7070", fontSize: 14, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", marginTop: 16 }}>
+              Goldman Sachs underwrote her experience directly, helping fund her projects when her balance sheet was still at zero. NREUV went from a consulting-driven firm to an owner-operator managing a $500 million development pipeline spanning DC, Cleveland, and Prince George's County.
+            </p>
+          </div>
+          <div style={{ width: "clamp(260px,35%,360px)", flexShrink: 0, borderRadius: 16, overflow: "hidden", border: "1px solid #2a0000" }}>
+            <img src="/LIIF-Stills5.png" alt="Dr. Merritt working" style={{ width: "100%", height: 320, objectFit: "cover", display: "block" }} />
+          </div>
+        </div>
+
+        {/* Chapter 4: Beyond Housing */}
+        <div style={{ display: "flex", gap: 40, alignItems: "center", marginBottom: 48, flexWrap: "wrap", flexDirection: "row-reverse" }}>
+          <div style={{ flex: 1, minWidth: 280 }}>
+            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Chapter 4</div>
+            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#f0d8d8", marginBottom: 16, lineHeight: 1.2 }}>Housing Was Just the First Step</h3>
+            <p style={{ color: "#8a7070", fontSize: 14, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif" }}>
+              Working in low-income communities, she realized that affordable housing alone wasn't the solution. Residents couldn't escape the cycle without access to jobs, education, healthcare, and social capital. That insight led her to found Project Community Capital (PCC), an economic empowerment platform connecting underserved individuals with employment and entrepreneurial pathways.
+            </p>
+            <p style={{ color: "#8a7070", fontSize: 14, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", marginTop: 16 }}>
+              Her belief is simple and unyielding: people in low-income communities aren't lazy or unreliable — they lack access to opportunity. Her company's motto captures the philosophy she's lived by through every closed door: <span style={{ color: "#f0d8d8", fontStyle: "italic" }}>working with communities, building for the future.</span>
+            </p>
+          </div>
+          <div style={{ width: "clamp(260px,35%,360px)", flexShrink: 0, borderRadius: 16, overflow: "hidden", border: "1px solid #2a0000" }}>
+            <img src="/SISAwards-acceptance.jpg" alt="Dr. Merritt accepting Social Innovation Summit award" style={{ width: "100%", height: 320, objectFit: "cover", objectPosition: "center 20%", display: "block" }} />
+          </div>
+        </div>
+
         <div style={{ textAlign: "center", marginTop: 48 }}>
           <button onClick={() => setActivePage("about")} style={{ background: "transparent", color: "#b80101", border: "1px solid #2a0000", borderRadius: 10, padding: "14px 36px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer", letterSpacing: "0.5px" }}>READ HER FULL STORY →</button>
         </div>
