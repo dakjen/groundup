@@ -314,7 +314,7 @@ function MiniCoursePage({ course, onBack }) {
           <div style={{ background: "#0a0808", border: "1px solid #1e0000", borderRadius: 14, padding: "24px 28px", marginBottom: 32 }}>
             <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Key Takeaways</div>
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              {lesson.keyTakeaways.map((t, i) => (
+              {(lesson.takeaways || []).map((t, i) => (
                 <li key={i} style={{ display: "flex", gap: 12, marginBottom: 12, color: "#c8a8a8", fontSize: 14, lineHeight: 1.7, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>
                   <span style={{ color: "#b80101", flexShrink: 0, marginTop: 2 }}>→</span>
                   <span>{t}</span>
