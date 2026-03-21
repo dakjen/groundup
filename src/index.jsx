@@ -740,7 +740,7 @@ function AboutPage({ setActivePage }) {
     <div style={{ background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 40, borderRadius: 16, overflow: "hidden" }}>
-          <img src="/SIS-AWARD-GM.jpg" alt="Dr. Merritt receiving Social Innovation Summit award" style={{ width: "100%", height: 240, objectFit: "cover", objectPosition: "center top", display: "block", borderRadius: 12 }} />
+          <img src="/LIIF-Stills5.png" alt="Dr. Gina Merritt" style={{ width: "100%", height: 240, objectFit: "cover", display: "block", borderRadius: 12 }} />
           <img src={IMG_STAGE} alt="Dr. Merritt accepting award on stage" style={{ width: "100%", height: 240, objectFit: "cover", display: "block", borderRadius: 12 }} />
         </div>
         <div style={{ marginBottom: 64 }}>
