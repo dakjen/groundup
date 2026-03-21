@@ -785,10 +785,10 @@ function AboutPage({ setActivePage }) {
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>Portfolio</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             {[
-              { src: IMG_NANNIE, label: "Nannie Helen at 4800", sub: "Prince George's County, MD" },
-              { src: IMG_INTERIOR, label: "9410 Hough — Interior", sub: "Cleveland, OH" },
-              { src: IMG_LOBBY, label: "Nannie Helen — Lobby", sub: "Resident common space" },
-              { src: IMG_SITEWORK, label: "Nannie Helen — Site Work", sub: "Under construction" },
+              { src: "/DSC00837.jpg", label: "Mary's House — Groundbreaking", sub: "Cleveland, OH" },
+              { src: "/DSC00699.jpg", label: "Community Engagement", sub: "On-site with residents" },
+              { src: "/DSC00371.jpg", label: "Industry Networking", sub: "Building relationships" },
+              { src: "/DSC00378.jpg", label: "NREUV Gala", sub: "Community celebration" },
             ].map((p, i) => (
               <div key={i} style={{ borderRadius: 12, overflow: "hidden", position: "relative", border: "1px solid #2a0000" }}>
                 <img src={p.src} alt={p.label} style={{ width: "100%", height: 180, objectFit: "cover", display: "block" }} />
