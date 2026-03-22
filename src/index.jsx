@@ -299,13 +299,28 @@ const miniCourses = [
 
 function MiniCoursePage({ course, onBack }) {
   const [activeLesson, setActiveLesson] = useState(null);
+  const [lessonPdfs, setLessonPdfs] = useState({});
+  const [lessonVideos, setLessonVideos] = useState({});
+  const [playingVideo, setPlayingVideo] = useState(false);
+
+  useEffect(() => {
+    window.storage.get("admin:lessonPdfs").then(r => {
+      if (r) setLessonPdfs(JSON.parse(r.value));
+    }).catch(() => {});
+    window.storage.get("admin:lessonVideos").then(r => {
+      if (r) setLessonVideos(JSON.parse(r.value));
+    }).catch(() => {});
+  }, []);
 
   if (activeLesson !== null) {
     const lesson = course.lessons[activeLesson];
+    const pdfKey = `${course.id}:${lesson.id}`;
+    const lessonPdf = lessonPdfs[pdfKey];
+    const lessonVideo = lessonVideos[pdfKey];
     return (
       <div style={{ background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,60px) 80px" }}>
         <div style={{ maxWidth: 760, margin: "0 auto" }}>
-          <button onClick={() => setActiveLesson(null)} style={{ background: "transparent", color: "#6a6b69", border: "1px solid #1a0000", borderRadius: 8, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", marginBottom: 40 }}>← Back to lessons</button>
+          <button onClick={() => { setActiveLesson(null); setPlayingVideo(false); }} style={{ background: "transparent", color: "#6a6b69", border: "1px solid #1a0000", borderRadius: 8, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", marginBottom: 40 }}>← Back to lessons</button>
           <div style={{ fontSize: 10, color: course.stageColor, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>{course.stage} · Lesson {activeLesson + 1} of {course.lessons.length}</div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(28px,4vw,44px)", color: "#f5e8e8", marginBottom: 32, lineHeight: 1.2 }}>{lesson.title}</h1>
           <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 16, padding: "28px 32px", marginBottom: 32 }}>
@@ -335,6 +350,54 @@ function MiniCoursePage({ course, onBack }) {
             <div style={{ background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 14, padding: "20px 24px" }}>
               <div style={{ fontSize: 9, color: "#a08030", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Action Item</div>
               <p style={{ color: "#b8a060", fontSize: 14, lineHeight: 1.75, fontFamily: "'DM Sans', sans-serif" }}>{lesson.actionItem}</p>
+            </div>
+          )}
+          {lessonPdf && (
+            <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: "20px 24px", marginTop: 24, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+                <div style={{ width: 40, height: 40, background: "#1a0808", border: "1px solid #2a0000", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>📄</div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 3 }}>Lesson Resource</div>
+                  <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 600, fontFamily: "'DM Sans', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lessonPdf.filename}</div>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                <a href={lessonPdf.url} target="_blank" rel="noreferrer" style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "9px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center" }}>View PDF</a>
+                <a href={lessonPdf.url} download={lessonPdf.filename} style={{ background: "transparent", color: "#8a7070", border: "1px solid #2a0000", borderRadius: 8, padding: "8px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 12, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center" }}>Download</a>
+              </div>
+            </div>
+          )}
+          {lessonVideo && (
+            <div style={{ marginTop: 24 }}>
+              <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>Lesson Video</div>
+              {playingVideo ? (
+                <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, borderRadius: 14, overflow: "hidden", background: "#0d0404", border: "1px solid #1a0000" }}>
+                  <iframe
+                    src={`https://www.youtube.com/embed/${lessonVideo.videoId}?autoplay=1`}
+                    title={lessonVideo.title || "Lesson Video"}
+                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              ) : (
+                <div
+                  onClick={() => setPlayingVideo(true)}
+                  style={{ position: "relative", borderRadius: 14, overflow: "hidden", cursor: "pointer", background: "#0d0404", border: "1px solid #1a0000" }}
+                >
+                  <img
+                    src={`https://img.youtube.com/vi/${lessonVideo.videoId}/hqdefault.jpg`}
+                    alt={lessonVideo.title || "Lesson Video"}
+                    style={{ width: "100%", display: "block", aspectRatio: "16/9", objectFit: "cover" }}
+                  />
+                  <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.4)" }}>
+                    <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(184,1,1,0.9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <div style={{ width: 0, height: 0, borderTop: "12px solid transparent", borderBottom: "12px solid transparent", borderLeft: "20px solid #fff", marginLeft: 4 }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+              {lessonVideo.title && <div style={{ color: "#c8a8a8", fontSize: 14, fontWeight: 600, fontFamily: "'DM Sans', sans-serif", marginTop: 10 }}>{lessonVideo.title}</div>}
             </div>
           )}
         </div>
@@ -677,7 +740,7 @@ function HomePage({ setActivePage }) {
       <div style={{ padding: "100px clamp(20px,5vw,80px)", textAlign: "center", background: "#000" }}>
         <div style={{ maxWidth: 560, margin: "0 auto" }}>
           <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(32px,5vw,52px)", color: "#f5e8e8", marginBottom: 20, lineHeight: 1.15 }}>
-            You already have what it takes.<br />Now learn what you need.
+            You already have what it takes.<br />Now learn what you need to execute.
           </h2>
           <p style={{ color: "#8a7070", fontSize: 15, lineHeight: 1.8, marginBottom: 40, fontFamily: "'DM Sans', sans-serif" }}>One course. One deal. One building at a time.</p>
           <button onClick={() => setActivePage("courses")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "16px 44px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", letterSpacing: "1px" }}>START FOR FREE</button>
@@ -816,66 +879,66 @@ const plans = [
     name: "Free",
     price: "$0",
     period: "",
-    description: "Dip your toes in. No credit card, no commitment.",
+    description: "Sample the curriculum. No credit card, no commitment.",
     accent: "#6a6b69",
     popular: false,
     cta: "Join Free",
     features: [
-      "Course 1 full access (Predevelopment)",
-      "First lesson of each other course",
-      "Public Lunch & Learn recordings",
-      "Monthly community newsletter",
+      "Intro lesson from each of the 4 courses",
+      "1 curated case study",
+      "Glossary & resource sheet",
     ],
-    locked: ["Live Lunch & Learn access", "Weekly sessions", "1-on-1 mentorship"],
+    locked: ["Full course access", "Worksheets & reading guides", "Lunch & Learn recordings", "Work sessions & advisory calls"],
   },
   {
     name: "Basic",
-    price: "$17.99",
+    price: "$59.99",
     period: "/mo",
-    description: "Get in the room. Monthly Lunch & Learns included.",
+    description: "Full access to every course, lesson, and written resource in the GroundUp library.",
     accent: "#b80101",
     popular: false,
     cta: "Start Basic",
     features: [
-      "All 4 mini-courses — full access",
-      "Course worksheets & templates",
-      "Monthly Lunch & Learn (live RSVP)",
-      "All Lunch & Learn recordings",
+      "Access to all 4 courses",
+      "All written lessons",
+      "Case studies",
+      "Worksheets & reading guides",
+      "Resource lists",
     ],
-    locked: ["Weekly Lunch & Learns", "1-on-1 mentorship"],
+    locked: ["Development timeline templates", "Lunch & Learn recordings", "1 free work session (1 hr)", "Advisory calls with Dr. Merritt"],
   },
   {
     name: "Premium",
-    price: "$40.99",
+    price: "$165.99",
     period: "/mo",
-    description: "Weekly access to Dr. Merritt — live, every week.",
+    description: "Everything in Basic — plus deal tools, Lunch & Learns, and a free advisory hour.",
     accent: "#b80101",
     popular: true,
     cta: "Go Premium",
     features: [
-      "Everything in Basic",
-      "Weekly Lunch & Learns (live RSVP)",
-      "Deal review worksheet templates",
-      "Capital stack modeling templates",
-      "Email Q&A (48hr response)",
+      "Everything in Learning",
+      "Development timeline templates",
+      "Lunch & Learn recordings",
+      "Case studies",
+      "1 free work session (1 hr)",
+      "Priority booking (session price not included)",
     ],
-    locked: ["1-on-1 mentorship sessions"],
+    locked: ["3 advisory calls/yr with Dr. Merritt", "Priority Q&A submissions", "Small group advisory sessions", "Exclusive networking event invite"],
   },
   {
     name: "Elite",
-    price: "$89.99",
+    price: "$599.99",
     period: "/mo",
-    description: "Weekly sessions + 1-on-1 mentorship with Dr. Merritt.",
+    description: "Direct access to Dr. Gina Merritt. For serious developers ready to move at the highest level.",
     accent: "#570404",
     popular: false,
     cta: "Join Elite",
     features: [
       "Everything in Premium",
-      "1-on-1 mentorship sessions (exclusive)",
-      "Priority booking & response",
-      "Direct deal feedback via loom/email",
-      "Direct line to Dr. Merritt's team",
-      "1 personal invite to an outside networking event",
+      "3 one-on-one advisory calls/yr with Dr. Merritt",
+      "Priority Q&A submissions",
+      "1–2 small group advisory sessions/yr",
+      "1 invite to exclusive networking event",
     ],
     locked: [],
   },
@@ -1190,20 +1253,35 @@ function AdminPanel({ onLogout }) {
   const [courseMsg, setCourseMsg] = useState("");
   const [lunchForm, setLunchForm] = useState({ title: "", date: "", time: "", description: "", zoomLink: "" });
   const [lunchMsg, setLunchMsg] = useState("");
+  const [lessonPdfs, setLessonPdfs] = useState({});
+  const [pdfCourse, setPdfCourse] = useState("");
+  const [pdfLesson, setPdfLesson] = useState("");
+  const [pdfUploading, setPdfUploading] = useState(false);
+  const [pdfMsg, setPdfMsg] = useState("");
+  const [lessonVideos, setLessonVideos] = useState({});
+  const [videoCourse, setVideoCourse] = useState("");
+  const [videoLesson, setVideoLesson] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [videoTitle, setVideoTitle] = useState("");
+  const [videoMsg, setVideoMsg] = useState("");
 
   useEffect(() => {
     (async () => {
       try {
-        const [cRes, iRes, rRes, lRes] = await Promise.all([
+        const [cRes, iRes, rRes, lRes, pRes, vRes] = await Promise.all([
           window.storage.get("admin:courses").catch(() => null),
           window.storage.get("admin:inbox").catch(() => null),
           window.storage.get("admin:rsvps").catch(() => null),
           window.storage.get("admin:lunchEvent").catch(() => null),
+          window.storage.get("admin:lessonPdfs").catch(() => null),
+          window.storage.get("admin:lessonVideos").catch(() => null),
         ]);
         if (cRes) setCourses(JSON.parse(cRes.value));
         if (iRes) setInbox(JSON.parse(iRes.value));
         if (rRes) setRsvps(JSON.parse(rRes.value));
         if (lRes) setLunchEvent(JSON.parse(lRes.value));
+        if (pRes) setLessonPdfs(JSON.parse(pRes.value));
+        if (vRes) setLessonVideos(JSON.parse(vRes.value));
       } catch(e) {}
       setLoading(false);
     })();
@@ -1219,6 +1297,8 @@ function AdminPanel({ onLogout }) {
   const saveLunch = async (evt) => { setLunchEvent(evt); await window.storage.set("admin:lunchEvent", JSON.stringify(evt)); };
   const saveInboxData = async (data) => { setInbox(data); await window.storage.set("admin:inbox", JSON.stringify(data)); };
   const saveCourseData = async (data) => { setCourses(data); await window.storage.set("admin:courses", JSON.stringify(data)); };
+  const saveLessonPdfs = async (data) => { setLessonPdfs(data); await window.storage.set("admin:lessonPdfs", JSON.stringify(data)); };
+  const saveLessonVideos = async (data) => { setLessonVideos(data); await window.storage.set("admin:lessonVideos", JSON.stringify(data)); };
 
   if (loading) return <div style={{ minHeight: "100vh", background: "#000", display: "flex", alignItems: "center", justifyContent: "center", color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
 
@@ -1362,6 +1442,167 @@ function AdminPanel({ onLogout }) {
                   <button onClick={async () => { if (window.confirm("Remove?")) await saveCourseData(courses.filter(x => x.id !== c.id)); }} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", flexShrink: 0 }}>Remove</button>
                 </div>
               ))}
+
+              {/* ─── Lesson PDF Attachments ─── */}
+              <div style={{ marginTop: 48 }}>
+                <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Lesson PDF Attachments</div>
+                <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: 28, marginBottom: 24 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+                    <div>
+                      <label style={lbl}>Course</label>
+                      <select value={pdfCourse} onChange={e => { setPdfCourse(e.target.value); setPdfLesson(""); }} style={{ ...inp, cursor: "pointer" }}>
+                        <option value="">Select a course...</option>
+                        {miniCourses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={lbl}>Lesson</label>
+                      <select value={pdfLesson} onChange={e => setPdfLesson(e.target.value)} style={{ ...inp, cursor: "pointer" }} disabled={!pdfCourse}>
+                        <option value="">Select a lesson...</option>
+                        {pdfCourse && (miniCourses.find(c => c.id === pdfCourse)?.lessons || []).map(l => <option key={l.id} value={l.id}>Lesson {l.id}: {l.title}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <input type="file" accept=".pdf" id="pdf-upload-input" style={{ display: "none" }} onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file || !pdfCourse || !pdfLesson) return;
+                      setPdfUploading(true); setPdfMsg("");
+                      try {
+                        const key = `${pdfCourse}:${pdfLesson}`;
+                        // Delete old blob if replacing
+                        if (lessonPdfs[key]?.url) {
+                          await fetch("/api/lesson-pdfs", { method: "DELETE", body: JSON.stringify({ url: lessonPdfs[key].url }) }).catch(() => {});
+                        }
+                        const form = new FormData();
+                        form.append("file", file);
+                        const res = await fetch("/api/lesson-pdfs", { method: "POST", body: form });
+                        if (!res.ok) throw new Error("Upload failed");
+                        const data = await res.json();
+                        const updated = { ...lessonPdfs, [key]: { url: data.url, filename: data.filename, uploadedAt: new Date().toISOString() } };
+                        await saveLessonPdfs(updated);
+                        setPdfMsg("PDF uploaded successfully.");
+                      } catch (err) { setPdfMsg("Upload failed. Please try again."); }
+                      setPdfUploading(false);
+                      e.target.value = "";
+                      setTimeout(() => setPdfMsg(""), 4000);
+                    }} />
+                    <button onClick={() => { if (!pdfCourse || !pdfLesson) { setPdfMsg("Select a course and lesson first."); setTimeout(() => setPdfMsg(""), 3000); return; } document.getElementById("pdf-upload-input").click(); }} disabled={pdfUploading} style={{ ...btnRed, opacity: pdfUploading ? 0.6 : 1 }}>
+                      {pdfUploading ? "Uploading..." : "Upload PDF"}
+                    </button>
+                    {pdfMsg && <span style={{ color: pdfMsg.includes("success") ? "#22c55e" : "#b80101", fontSize: 12 }}>{pdfMsg}</span>}
+                  </div>
+                </div>
+
+                {Object.keys(lessonPdfs).length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 12 }}>Assigned PDFs ({Object.keys(lessonPdfs).length})</div>
+                    {Object.entries(lessonPdfs).map(([key, pdf]) => {
+                      const [cId, lId] = key.split(":");
+                      const course = miniCourses.find(c => c.id === cId);
+                      const lesson = course?.lessons.find(l => String(l.id) === lId);
+                      return (
+                        <div key={key} style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 12, padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, marginBottom: 10 }}>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: 3 }}>{course?.title || cId}</div>
+                            <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 600, marginBottom: 2 }}>Lesson {lId}: {lesson?.title || "Unknown"}</div>
+                            <div style={{ color: "#6a5050", fontSize: 11 }}>📄 {pdf.filename} · {new Date(pdf.uploadedAt).toLocaleDateString()}</div>
+                          </div>
+                          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                            <button onClick={() => { setPdfCourse(cId); setPdfLesson(lId); document.getElementById("pdf-upload-input").click(); }} style={btnGhost}>Replace</button>
+                            <button onClick={async () => {
+                              if (!window.confirm("Remove this PDF?")) return;
+                              await fetch("/api/lesson-pdfs", { method: "DELETE", body: JSON.stringify({ url: pdf.url }) }).catch(() => {});
+                              const updated = { ...lessonPdfs };
+                              delete updated[key];
+                              await saveLessonPdfs(updated);
+                            }} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130" }}>Remove</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* ─── Lesson Video Attachments ─── */}
+              <div style={{ marginTop: 48 }}>
+                <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Lesson Video Attachments</div>
+                <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: 28, marginBottom: 24 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+                    <div>
+                      <label style={lbl}>Course</label>
+                      <select value={videoCourse} onChange={e => { setVideoCourse(e.target.value); setVideoLesson(""); }} style={{ ...inp, cursor: "pointer" }}>
+                        <option value="">Select a course...</option>
+                        {miniCourses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={lbl}>Lesson</label>
+                      <select value={videoLesson} onChange={e => setVideoLesson(e.target.value)} style={{ ...inp, cursor: "pointer" }} disabled={!videoCourse}>
+                        <option value="">Select a lesson...</option>
+                        {videoCourse && (miniCourses.find(c => c.id === videoCourse)?.lessons || []).map(l => <option key={l.id} value={l.id}>Lesson {l.id}: {l.title}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: 12 }}>
+                    <label style={lbl}>YouTube URL</label>
+                    <input value={videoUrl} onChange={e => setVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." style={inp} />
+                  </div>
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={lbl}>Title (optional)</label>
+                    <input value={videoTitle} onChange={e => setVideoTitle(e.target.value)} placeholder="Video title..." style={inp} />
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <button onClick={async () => {
+                      if (!videoCourse || !videoLesson) { setVideoMsg("Select a course and lesson first."); setTimeout(() => setVideoMsg(""), 3000); return; }
+                      if (!videoUrl.trim()) { setVideoMsg("Enter a YouTube URL."); setTimeout(() => setVideoMsg(""), 3000); return; }
+                      const match = videoUrl.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+                      if (!match) { setVideoMsg("Invalid YouTube URL."); setTimeout(() => setVideoMsg(""), 3000); return; }
+                      const videoId = match[1];
+                      const key = `${videoCourse}:${videoLesson}`;
+                      const updated = { ...lessonVideos, [key]: { url: videoUrl.trim(), title: videoTitle.trim(), videoId, addedAt: new Date().toISOString() } };
+                      await saveLessonVideos(updated);
+                      setVideoUrl(""); setVideoTitle("");
+                      setVideoMsg("Video added successfully.");
+                      setTimeout(() => setVideoMsg(""), 4000);
+                    }} style={btnRed}>Add Video</button>
+                    {videoMsg && <span style={{ color: videoMsg.includes("success") ? "#22c55e" : "#b80101", fontSize: 12 }}>{videoMsg}</span>}
+                  </div>
+                </div>
+
+                {Object.keys(lessonVideos).length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 12 }}>Assigned Videos ({Object.keys(lessonVideos).length})</div>
+                    {Object.entries(lessonVideos).map(([key, video]) => {
+                      const [cId, lId] = key.split(":");
+                      const course = miniCourses.find(c => c.id === cId);
+                      const lesson = course?.lessons.find(l => String(l.id) === lId);
+                      return (
+                        <div key={key} style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 12, padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, marginBottom: 10 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+                            <img src={`https://img.youtube.com/vi/${video.videoId}/default.jpg`} alt="" style={{ width: 60, height: 45, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: 3 }}>{course?.title || cId}</div>
+                              <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 600, marginBottom: 2 }}>Lesson {lId}: {lesson?.title || "Unknown"}</div>
+                              <div style={{ color: "#6a5050", fontSize: 11 }}>🎬 {video.title || "YouTube Video"} · {new Date(video.addedAt).toLocaleDateString()}</div>
+                            </div>
+                          </div>
+                          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                            <button onClick={() => { setVideoCourse(cId); setVideoLesson(lId); }} style={btnGhost}>Replace</button>
+                            <button onClick={async () => {
+                              if (!window.confirm("Remove this video?")) return;
+                              const updated = { ...lessonVideos };
+                              delete updated[key];
+                              await saveLessonVideos(updated);
+                            }} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130" }}>Remove</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -1383,7 +1624,7 @@ function AdminPanel({ onLogout }) {
 
 // ─── REVENUE TAB ──────────────────────────────────────────────────────────────
 
-const TIER_PRICES = { Free: 0, Basic: 17.99, Premium: 40.99, Elite: 89.99 };
+const TIER_PRICES = { Free: 0, Basic: 59.99, Premium: 165.99, Elite: 599.99 };
 
 function RevenueTab() {
   const [users, setUsers] = useState([]);
@@ -1814,7 +2055,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
     } catch(e) { setError("Something went wrong. Please try again."); }
   };
 
-  const planPrices = { Free: "$0", Basic: "$17.99/mo", Premium: "$40.99/mo", Elite: "$89.99/mo" };
+  const planPrices = { Free: "$0", Basic: "$59.99/mo", Premium: "$165.99/mo", Elite: "$599.99/mo" };
   const planColors = { Free: "#6a6b69", Basic: "#b80101", Premium: "#b80101", Elite: "#570404" };
 
   return (
