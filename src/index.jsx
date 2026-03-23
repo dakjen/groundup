@@ -2116,7 +2116,7 @@ export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
   const [activePage, setActivePageRaw] = useState(() => sessionStorage.getItem("activePage") || "home");
   const setActivePage = (page) => { sessionStorage.setItem("activePage", page); setActivePageRaw(page); };
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem("isAdmin") === "true");
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [logoClicks, setLogoClicks] = useState(0);
   const [trialBanner, setTrialBanner] = useState(null);
@@ -2149,8 +2149,8 @@ export default function App() {
   const openSignup = (tier = "Free") => { setSignupTier(tier); setShowSignup(true); };
 
   if (!siteUnlocked) return <SiteGatePage onUnlock={() => setSiteUnlocked(true)} />;
-  if (showAdminLogin && !isAdmin) return <AdminLoginPage onLogin={() => { setIsAdmin(true); setShowAdminLogin(false); }} />;
-  if (isAdmin) return <AdminPanel onLogout={() => setIsAdmin(false)} />;
+  if (showAdminLogin && !isAdmin) return <AdminLoginPage onLogin={() => { sessionStorage.setItem("isAdmin", "true"); setIsAdmin(true); setShowAdminLogin(false); }} />;
+  if (isAdmin) return <AdminPanel onLogout={() => { sessionStorage.removeItem("isAdmin"); setIsAdmin(false); }} />;
 
   return (
     <>
