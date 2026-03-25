@@ -353,17 +353,22 @@ function MiniCoursePage({ course, onBack }) {
             </div>
           )}
           {lessonPdf && (
-            <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: "20px 24px", marginTop: 24, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
-                <div style={{ width: 40, height: 40, background: "#1a0808", border: "1px solid #2a0000", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>📄</div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 3 }}>Lesson Resource</div>
-                  <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 600, fontFamily: "'DM Sans', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lessonPdf.filename}</div>
+            <div style={{ marginTop: 24 }}>
+              <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+                  <div style={{ width: 40, height: 40, background: "#1a0808", border: "1px solid #2a0000", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>📄</div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 3 }}>Lesson Resource — View Only</div>
+                    <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 600, fontFamily: "'DM Sans', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lessonPdf.filename}</div>
+                  </div>
                 </div>
               </div>
-              <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                <a href={lessonPdf.url} target="_blank" rel="noreferrer" style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "9px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center" }}>View PDF</a>
-                <a href={lessonPdf.url} download={lessonPdf.filename} style={{ background: "transparent", color: "#8a7070", border: "1px solid #2a0000", borderRadius: 8, padding: "8px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 12, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center" }}>Download</a>
+              <div style={{ marginTop: 12, borderRadius: 14, overflow: "hidden", border: "1px solid #1a0000", background: "#0d0404" }}>
+                <iframe
+                  src={lessonPdf.url + "#toolbar=0&navpanes=0&scrollbar=1"}
+                  title={lessonPdf.filename}
+                  style={{ width: "100%", height: 600, border: "none" }}
+                />
               </div>
             </div>
           )}
@@ -436,7 +441,7 @@ function MiniCoursePage({ course, onBack }) {
 
 // ─── EVENT CARD ─────────────────────────────────────────────────────────────
 
-function EventCard() {
+function EventCard({ currentUser, eventInvited, onSignUp, setActivePage }) {
   const [rsvpd, setRsvpd] = useState(false);
   const [liveEvent, setLiveEvent] = useState(null);
 
@@ -445,6 +450,62 @@ function EventCard() {
       if (r) setLiveEvent(JSON.parse(r.value));
     }).catch(() => {});
   }, []);
+
+  // Check if this user already RSVP'd
+  useEffect(() => {
+    if (!currentUser) return;
+    window.storage.get("admin:rsvps").then(r => {
+      if (!r) return;
+      const rsvps = JSON.parse(r.value);
+      if (rsvps.find(rv => rv.email === currentUser.email)) setRsvpd(true);
+    }).catch(() => {});
+  }, [currentUser]);
+
+  const handleRsvp = async () => {
+    if (!currentUser) return;
+    const existing = await window.storage.get("admin:rsvps").catch(() => null);
+    const rsvps = existing ? JSON.parse(existing.value) : [];
+    if (rsvps.find(rv => rv.email === currentUser.email)) { setRsvpd(true); return; }
+    const newRsvp = { id: Date.now().toString(), name: currentUser.name, email: currentUser.email, tier: currentUser.tier, rsvpAt: new Date().toISOString() };
+    await window.storage.set("admin:rsvps", JSON.stringify([newRsvp, ...rsvps]));
+    setRsvpd(true);
+  };
+
+  const isPaid = currentUser && currentUser.tier !== "Free";
+  const canRsvp = isPaid || eventInvited;
+
+  const renderRsvpArea = () => {
+    if (!currentUser) {
+      return (
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <button onClick={() => onSignUp && onSignUp("Free")} style={{ background: "#b80101", color: "#fff", border: "1px solid #b80101", borderRadius: 10, padding: "12px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", transition: "all 0.2s" }}>
+            Sign Up to RSVP
+          </button>
+          <span style={{ fontSize: 12, color: "#7a5050", fontFamily: "'DM Sans', sans-serif" }}>Create an account to reserve your spot</span>
+        </div>
+      );
+    }
+    if (!canRsvp) {
+      return (
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <button onClick={() => setActivePage && setActivePage("pricing")} style={{ background: "transparent", color: "#b80101", border: "1px solid #b80101", borderRadius: 10, padding: "12px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", transition: "all 0.2s" }}>
+            Upgrade to RSVP
+          </button>
+          <span style={{ fontSize: 12, color: "#7a5050", fontFamily: "'DM Sans', sans-serif" }}>Available for Basic, Premium & Elite members</span>
+        </div>
+      );
+    }
+    return (
+      <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+        <button onClick={() => !rsvpd && handleRsvp()} style={{ background: rsvpd ? "#1a0a0a" : "#b80101", color: rsvpd ? "#b80101" : "#fff", border: "1px solid #b80101", borderRadius: 10, padding: "12px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: rsvpd ? "default" : "pointer", transition: "all 0.2s" }}>
+          {rsvpd ? "✓ You're registered" : "RSVP Now"}
+        </button>
+        <span style={{ fontSize: 12, color: "#7a5050", fontFamily: "'DM Sans', sans-serif" }}>
+          {rsvpd ? "A calendar invite will be sent to your email." : "Limited spots · Basic, Premium & Elite members"}
+        </span>
+      </div>
+    );
+  };
 
   return (
     <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "32px 36px" }}>
@@ -464,14 +525,7 @@ function EventCard() {
       <p style={{ color: "#8a7070", fontSize: 14, lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif", marginBottom: 24 }}>
         {liveEvent ? liveEvent.description : "Join Dr. Merritt for a live interactive session on financing affordable housing in today's high-interest-rate environment."}
       </p>
-      <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-        <button onClick={() => setRsvpd(!rsvpd)} style={{ background: rsvpd ? "#1a0a0a" : "#b80101", color: rsvpd ? "#b80101" : "#fff", border: "1px solid #b80101", borderRadius: 10, padding: "12px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", transition: "all 0.2s" }}>
-          {rsvpd ? "✓ You're registered" : "RSVP Now"}
-        </button>
-        <span style={{ fontSize: 12, color: "#7a5050", fontFamily: "'DM Sans', sans-serif" }}>
-          {rsvpd ? "A calendar invite will be sent to your email." : "Limited spots · Basic, Premium & Elite members"}
-        </span>
-      </div>
+      {renderRsvpArea()}
       {liveEvent && liveEvent.status === "confirmed" && liveEvent.zoomLink && rsvpd && (
         <div style={{ marginTop: 24, background: "#0a0a0a", border: "1px solid #2a0000", borderRadius: 12, overflow: "hidden" }}>
           <div style={{ padding: "14px 20px", borderBottom: "1px solid #1a0000", display: "flex", alignItems: "center", gap: 10 }}>
@@ -490,7 +544,8 @@ function EventCard() {
 
 function Nav({ activePage, setActivePage, onLogoClick, onSignUp }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const pages = ["home", "courses", "about", "pricing", "contact"];
+  const pages = ["home", "courses", "about", "pricing", "lunchlearn", "contact"];
+  const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", contact: "Contact" };
   return (
     <>
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: "rgba(0,0,0,0.97)", backdropFilter: "blur(16px)", borderBottom: "1px solid #1a0000", padding: "0 clamp(16px,4vw,48px)", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
@@ -504,7 +559,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp }) {
         {/* Desktop nav */}
         <div style={{ display: "flex", gap: 2, alignItems: "center", "@media(max-width:640px)": { display: "none" } }} className="desktop-nav">
           {pages.map(page => (
-            <button key={page} onClick={() => setActivePage(page)} style={{ background: activePage === page ? "#57040418" : "transparent", color: activePage === page ? "#b80101" : "#6a6b69", border: activePage === page ? "1px solid #57040440" : "1px solid transparent", borderRadius: 7, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", textTransform: "capitalize", transition: "all 0.2s" }}>{page}</button>
+            <button key={page} onClick={() => setActivePage(page)} style={{ background: activePage === page ? "#57040418" : "transparent", color: activePage === page ? "#b80101" : "#6a6b69", border: activePage === page ? "1px solid #57040440" : "1px solid transparent", borderRadius: 7, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }}>{pageLabels[page] || page}</button>
           ))}
           <button onClick={onSignUp} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 7, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", marginLeft: 8 }}>Sign Up</button>
         </div>
@@ -519,7 +574,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp }) {
       {menuOpen && (
         <div style={{ position: "fixed", top: 64, left: 0, right: 0, zIndex: 99, background: "#050202", borderBottom: "1px solid #1a0000", padding: "16px 20px 24px", display: "flex", flexDirection: "column", gap: 4 }}>
           {pages.map(page => (
-            <button key={page} onClick={() => { setActivePage(page); setMenuOpen(false); }} style={{ background: activePage === page ? "#57040418" : "transparent", color: activePage === page ? "#b80101" : "#c8a0a0", border: activePage === page ? "1px solid #57040440" : "1px solid transparent", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textTransform: "capitalize", textAlign: "left" }}>{page}</button>
+            <button key={page} onClick={() => { setActivePage(page); setMenuOpen(false); }} style={{ background: activePage === page ? "#57040418" : "transparent", color: activePage === page ? "#b80101" : "#c8a0a0", border: activePage === page ? "1px solid #57040440" : "1px solid transparent", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>{pageLabels[page] || page}</button>
           ))}
           <button onClick={() => { setMenuOpen(false); onSignUp(); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 15, cursor: "pointer", marginTop: 8 }}>Sign Up →</button>
         </div>
@@ -540,7 +595,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp }) {
 
 // ─── HOME PAGE ──────────────────────────────────────────────────────────────
 
-function HomePage({ setActivePage }) {
+function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
   return (
     <div style={{ background: "#000", paddingTop: 64 }}>
       {/* Hero */}
@@ -732,7 +787,7 @@ function HomePage({ setActivePage }) {
             <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 38, color: "#f5e8e8" }}>Lunch & Learns</h2>
             <p style={{ color: "#8a7070", fontSize: 14, maxWidth: 440, margin: "12px auto 0", lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif" }}>Live, interactive sessions with Dr. Merritt — four times a year. Included with all paid plans.</p>
           </div>
-          <EventCard />
+          <EventCard currentUser={currentUser} eventInvited={eventInvited} onSignUp={onSignUp} setActivePage={setActivePage} />
         </div>
       </div>
 
@@ -1144,6 +1199,82 @@ function ContactPage({ setActivePage }) {
   );
 }
 
+// ─── LUNCH & LEARN PAGE ──────────────────────────────────────────────────────
+
+function LunchLearnPage() {
+  const [recordings, setRecordings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [playingId, setPlayingId] = useState(null);
+
+  useEffect(() => {
+    window.storage.get("admin:lunchRecordings").then(r => {
+      if (r) setRecordings(JSON.parse(r.value));
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <div style={{ minHeight: "100vh", paddingTop: 64, background: "#000" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "48px clamp(20px,5vw,48px)" }}>
+        <div style={{ textAlign: "center", marginBottom: 48 }}>
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>Past Sessions</div>
+          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(28px, 5vw, 44px)", color: "#f5e8e8", margin: 0, lineHeight: 1.2 }}>Lunch & Learn Recordings</h1>
+          <p style={{ color: "#6a6b69", fontSize: 14, fontFamily: "'DM Sans', sans-serif", marginTop: 12, maxWidth: 560, marginLeft: "auto", marginRight: "auto", lineHeight: 1.7 }}>
+            Catch up on past sessions covering affordable housing finance, tax credits, community development, and more.
+          </p>
+        </div>
+
+        {loading ? (
+          <div style={{ textAlign: "center", color: "#b80101", fontFamily: "'DM Sans', sans-serif", padding: 40 }}>Loading...</div>
+        ) : recordings.length === 0 ? (
+          <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: 48, textAlign: "center" }}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>📹</div>
+            <div style={{ color: "#6a6b69", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>No recordings available yet. Check back after the next session!</div>
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
+            {recordings.map(rec => (
+              <div key={rec.id} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, overflow: "hidden", transition: "all 0.2s" }}>
+                {playingId === rec.id ? (
+                  <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, background: "#000" }}>
+                    <iframe
+                      src={`https://www.youtube.com/embed/${rec.videoId}?autoplay=1`}
+                      title={rec.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => setPlayingId(rec.id)}
+                    style={{ position: "relative", cursor: "pointer" }}
+                  >
+                    <img
+                      src={`https://img.youtube.com/vi/${rec.videoId}/hqdefault.jpg`}
+                      alt={rec.title}
+                      style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }}
+                    />
+                    <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s" }}>
+                      <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(184,1,1,0.9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <span style={{ color: "#fff", fontSize: 22, marginLeft: 3 }}>▶</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div style={{ padding: "18px 20px" }}>
+                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 18, color: "#f0d8d8", marginBottom: 4 }}>{rec.title}</div>
+                  <div style={{ color: "#8a7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>{rec.date}</div>
+                  {rec.description && <div style={{ color: "#6a6b69", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>{rec.description}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── ADMIN ───────────────────────────────────────────────────────────────────
 
 function SiteGatePage({ onUnlock }) {
@@ -1264,17 +1395,30 @@ function AdminPanel({ onLogout }) {
   const [videoUrl, setVideoUrl] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
   const [videoMsg, setVideoMsg] = useState("");
+  const [lunchRecordings, setLunchRecordings] = useState([]);
+  const [recTitle, setRecTitle] = useState("");
+  const [recDate, setRecDate] = useState("");
+  const [recDescription, setRecDescription] = useState("");
+  const [recUrl, setRecUrl] = useState("");
+  const [recMsg, setRecMsg] = useState("");
+  const [eventInvites, setEventInvites] = useState([]);
+  const [eventInvName, setEventInvName] = useState("");
+  const [eventInvEmail, setEventInvEmail] = useState("");
+  const [eventInvMsg, setEventInvMsg] = useState("");
+  const [eventInvCopied, setEventInvCopied] = useState(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const [cRes, iRes, rRes, lRes, pRes, vRes] = await Promise.all([
+        const [cRes, iRes, rRes, lRes, pRes, vRes, lrRes, eiRes] = await Promise.all([
           window.storage.get("admin:courses").catch(() => null),
           window.storage.get("admin:inbox").catch(() => null),
           window.storage.get("admin:rsvps").catch(() => null),
           window.storage.get("admin:lunchEvent").catch(() => null),
           window.storage.get("admin:lessonPdfs").catch(() => null),
           window.storage.get("admin:lessonVideos").catch(() => null),
+          window.storage.get("admin:lunchRecordings").catch(() => null),
+          window.storage.get("admin:eventInvites").catch(() => null),
         ]);
         if (cRes) setCourses(JSON.parse(cRes.value));
         if (iRes) setInbox(JSON.parse(iRes.value));
@@ -1282,15 +1426,17 @@ function AdminPanel({ onLogout }) {
         if (lRes) setLunchEvent(JSON.parse(lRes.value));
         if (pRes) setLessonPdfs(JSON.parse(pRes.value));
         if (vRes) setLessonVideos(JSON.parse(vRes.value));
+        if (lrRes) setLunchRecordings(JSON.parse(lrRes.value));
+        if (eiRes) setEventInvites(JSON.parse(eiRes.value));
       } catch(e) {}
       setLoading(false);
     })();
   }, []);
 
-  const inp = { width: "100%", background: "#1a0808", border: "1px solid #2a0000", borderRadius: 8, padding: "10px 14px", color: "#f0d8d8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", outline: "none", marginBottom: 12 };
-  const lbl = { fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", display: "block", marginBottom: 6 };
+  const inp = { width: "100%", background: "#1e1010", border: "1px solid #3a1515", borderRadius: 8, padding: "10px 14px", color: "#f0d8d8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", outline: "none", marginBottom: 12 };
+  const lbl = { fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", display: "block", marginBottom: 6 };
   const btnRed = { background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer" };
-  const btnGhost = { background: "transparent", color: "#8a7070", border: "1px solid #2a0000", borderRadius: 8, padding: "9px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 12, cursor: "pointer" };
+  const btnGhost = { background: "transparent", color: "#a08888", border: "1px solid #3a1515", borderRadius: 8, padding: "9px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 12, cursor: "pointer" };
 
   const unread = inbox.filter(m => m.status === "unread").length;
 
@@ -1299,12 +1445,14 @@ function AdminPanel({ onLogout }) {
   const saveCourseData = async (data) => { setCourses(data); await window.storage.set("admin:courses", JSON.stringify(data)); };
   const saveLessonPdfs = async (data) => { setLessonPdfs(data); await window.storage.set("admin:lessonPdfs", JSON.stringify(data)); };
   const saveLessonVideos = async (data) => { setLessonVideos(data); await window.storage.set("admin:lessonVideos", JSON.stringify(data)); };
+  const saveLunchRecordings = async (data) => { setLunchRecordings(data); await window.storage.set("admin:lunchRecordings", JSON.stringify(data)); };
+  const saveEventInvites = async (data) => { setEventInvites(data); await window.storage.set("admin:eventInvites", JSON.stringify(data)); };
 
-  if (loading) return <div style={{ minHeight: "100vh", background: "#000", display: "flex", alignItems: "center", justifyContent: "center", color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
+  if (loading) return <div style={{ minHeight: "100vh", background: "#0a0606", display: "flex", alignItems: "center", justifyContent: "center", color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#000", fontFamily: "'DM Sans', sans-serif" }}>
-      <div style={{ background: "#0a0404", borderBottom: "1px solid #2a0000", padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 60 }}>
+    <div style={{ minHeight: "100vh", background: "#0a0606", fontFamily: "'DM Sans', sans-serif" }}>
+      <div style={{ background: "#120a0a", borderBottom: "1px solid #3a1515", padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 60 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 20, color: "#f5e8e8" }}>GroundUp Admin</div>
           <span style={{ background: "#b8010120", color: "#b80101", border: "1px solid #b8010140", borderRadius: 4, padding: "2px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "1px" }}>ADMIN</span>
@@ -1312,9 +1460,9 @@ function AdminPanel({ onLogout }) {
         <button onClick={onLogout} style={btnGhost}>Sign Out</button>
       </div>
       <div style={{ display: "flex", minHeight: "calc(100vh - 60px)" }}>
-        <div style={{ width: 220, background: "#080202", borderRight: "1px solid #1a0000", padding: "24px 12px", flexShrink: 0 }}>
+        <div style={{ width: 220, background: "#100808", borderRight: "1px solid #2a1010", padding: "24px 12px", flexShrink: 0 }}>
           {[{ id: "lunch", label: "Lunch & Learn", emoji: "📅" }, { id: "inbox", label: "Inbox", emoji: "📬" }, { id: "courses", label: "Courses", emoji: "📚" }, { id: "referrals", label: "Referrals", emoji: "🔗" }, { id: "users", label: "Users", emoji: "👥" }, { id: "revenue", label: "Revenue", emoji: "💰" }].map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{ width: "100%", textAlign: "left", background: tab === t.id ? "#1a0808" : "transparent", color: tab === t.id ? "#f0d8d8" : "#6a5050", border: tab === t.id ? "1px solid #2a0000" : "1px solid transparent", borderRadius: 8, padding: "10px 14px", marginBottom: 4, cursor: "pointer", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
+            <button key={t.id} onClick={() => setTab(t.id)} style={{ width: "100%", textAlign: "left", background: tab === t.id ? "#1e1010" : "transparent", color: tab === t.id ? "#f0d8d8" : "#7a6060", border: tab === t.id ? "1px solid #3a1515" : "1px solid transparent", borderRadius: 8, padding: "10px 14px", marginBottom: 4, cursor: "pointer", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
               <span>{t.emoji}</span><span>{t.label}</span>
               {t.id === "inbox" && unread > 0 && <span style={{ marginLeft: "auto", background: "#b80101", color: "#fff", borderRadius: 99, fontSize: 10, fontWeight: 800, padding: "1px 7px" }}>{unread}</span>}
             </button>
@@ -1326,15 +1474,15 @@ function AdminPanel({ onLogout }) {
           {tab === "lunch" && (
             <div style={{ maxWidth: 700 }}>
               <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Lunch & Learn</h2>
-              <p style={{ color: "#6a5050", fontSize: 13, marginBottom: 32 }}>Set up the next event and manage RSVPs.</p>
+              <p style={{ color: "#7a6060", fontSize: 13, marginBottom: 32 }}>Set up the next event and manage RSVPs.</p>
 
               {lunchEvent && lunchEvent.status !== "cancelled" && (
-                <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 14, padding: 28, marginBottom: 32 }}>
+                <div style={{ background: "#150c0c", border: "1px solid #3a1515", borderRadius: 14, padding: 28, marginBottom: 32 }}>
                   <div style={{ fontSize: 10, color: lunchEvent.status === "confirmed" ? "#22c55e" : "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 8 }}>{lunchEvent.status === "confirmed" ? "✓ Confirmed" : "● Active"}</div>
                   <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#f0d8d8", fontWeight: 700, marginBottom: 4 }}>{lunchEvent.title}</div>
-                  <div style={{ color: "#8a7070", fontSize: 13, marginBottom: 8 }}>{lunchEvent.date}{lunchEvent.time ? " · " + lunchEvent.time : ""}</div>
-                  {lunchEvent.description && <div style={{ color: "#7a6060", fontSize: 13, lineHeight: 1.6, marginBottom: 8 }}>{lunchEvent.description}</div>}
-                  {lunchEvent.zoomLink && <div style={{ marginBottom: 8 }}><span style={{ fontSize: 11, color: "#8a7070", fontWeight: 700 }}>Zoom: </span><a href={lunchEvent.zoomLink} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontSize: 13 }}>{lunchEvent.zoomLink}</a></div>}
+                  <div style={{ color: "#a08888", fontSize: 13, marginBottom: 8 }}>{lunchEvent.date}{lunchEvent.time ? " · " + lunchEvent.time : ""}</div>
+                  {lunchEvent.description && <div style={{ color: "#8a6060", fontSize: 13, lineHeight: 1.6, marginBottom: 8 }}>{lunchEvent.description}</div>}
+                  {lunchEvent.zoomLink && <div style={{ marginBottom: 8 }}><span style={{ fontSize: 11, color: "#a08888", fontWeight: 700 }}>Zoom: </span><a href={lunchEvent.zoomLink} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontSize: 13 }}>{lunchEvent.zoomLink}</a></div>}
                   <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
                     {lunchEvent.status !== "confirmed" && <button onClick={() => saveLunch({ ...lunchEvent, status: "confirmed" })} style={btnRed}>✓ Confirm Event</button>}
                     <button onClick={() => saveLunch({ ...lunchEvent, status: "cancelled" })} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010140" }}>Cancel Event</button>
@@ -1343,19 +1491,19 @@ function AdminPanel({ onLogout }) {
                 </div>
               )}
 
-              <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: 28, marginBottom: 32 }}>
-                <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 16 }}>RSVPs ({rsvps.length})</div>
-                {rsvps.length === 0 ? <div style={{ color: "#4a3030", fontSize: 13 }}>No RSVPs yet.</div> : rsvps.map((r, i) => (
-                  <div key={i} style={{ background: "#130606", border: "1px solid #1e0a0a", borderRadius: 8, padding: "10px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between" }}>
+              <div style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 32 }}>
+                <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 16 }}>RSVPs ({rsvps.length})</div>
+                {rsvps.length === 0 ? <div style={{ color: "#5a4040", fontSize: 13 }}>No RSVPs yet.</div> : rsvps.map((r, i) => (
+                  <div key={i} style={{ background: "#1a0e0e", border: "1px solid #2e1515", borderRadius: 8, padding: "10px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between" }}>
                     <span style={{ color: "#f0d8d8", fontSize: 13 }}>{r.name || "Anonymous"}</span>
-                    {r.email && <span style={{ color: "#7a5050", fontSize: 12 }}>{r.email}</span>}
+                    {r.email && <span style={{ color: "#8a6060", fontSize: 12 }}>{r.email}</span>}
                   </div>
                 ))}
               </div>
 
               {(!lunchEvent || lunchEvent.status === "cancelled") && (
-                <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: 28 }}>
-                  <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Create New Event</div>
+                <div style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 14, padding: 28 }}>
+                  <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Create New Event</div>
                   <label style={lbl}>Title</label>
                   <input value={lunchForm.title} onChange={e => setLunchForm({ ...lunchForm, title: e.target.value })} placeholder="e.g. Lunch & Learn: Financing Without Tax Credits" style={inp} />
                   <label style={lbl}>Date</label>
@@ -1375,29 +1523,125 @@ function AdminPanel({ onLogout }) {
                   }} style={btnRed}>Publish Event</button>
                 </div>
               )}
+
+              {/* ─── Past Recordings ─── */}
+              <div style={{ marginTop: 48 }}>
+                <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Past Recordings</div>
+                <div style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 24 }}>
+                  <label style={lbl}>Title</label>
+                  <input value={recTitle} onChange={e => setRecTitle(e.target.value)} placeholder="e.g. Lunch & Learn: HUD Programs" style={inp} />
+                  <label style={lbl}>Date</label>
+                  <input value={recDate} onChange={e => setRecDate(e.target.value)} type="date" style={inp} />
+                  <label style={lbl}>Description (optional)</label>
+                  <textarea value={recDescription} onChange={e => setRecDescription(e.target.value)} rows={2} style={{ ...inp, resize: "vertical", height: 60 }} />
+                  <label style={lbl}>YouTube URL</label>
+                  <input value={recUrl} onChange={e => setRecUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." style={inp} />
+                  {recMsg && <div style={{ color: recMsg.includes("Added") ? "#22c55e" : "#b80101", fontSize: 12, marginBottom: 12 }}>{recMsg}</div>}
+                  <button onClick={async () => {
+                    if (!recTitle || !recDate) { setRecMsg("Title and date required."); setTimeout(() => setRecMsg(""), 3000); return; }
+                    if (!recUrl.trim()) { setRecMsg("YouTube URL required."); setTimeout(() => setRecMsg(""), 3000); return; }
+                    const match = recUrl.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+                    if (!match) { setRecMsg("Invalid YouTube URL."); setTimeout(() => setRecMsg(""), 3000); return; }
+                    const videoId = match[1];
+                    const rec = { id: Date.now().toString(), title: recTitle, date: recDate, description: recDescription, videoId, url: recUrl.trim(), addedAt: new Date().toISOString() };
+                    await saveLunchRecordings([rec, ...lunchRecordings]);
+                    setRecTitle(""); setRecDate(""); setRecDescription(""); setRecUrl("");
+                    setRecMsg("Added!");
+                    setTimeout(() => setRecMsg(""), 3000);
+                  }} style={btnRed}>Add Recording</button>
+                </div>
+
+                {lunchRecordings.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 12 }}>Recordings ({lunchRecordings.length})</div>
+                    {lunchRecordings.map(rec => (
+                      <div key={rec.id} style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
+                        <img src={`https://img.youtube.com/vi/${rec.videoId}/default.jpg`} alt="" style={{ width: 80, height: 60, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 700 }}>{rec.title}</div>
+                          <div style={{ color: "#a08888", fontSize: 12 }}>{rec.date}</div>
+                          {rec.description && <div style={{ color: "#7a6060", fontSize: 12, marginTop: 2 }}>{rec.description}</div>}
+                        </div>
+                        <button onClick={async () => {
+                          if (!window.confirm("Remove this recording?")) return;
+                          await saveLunchRecordings(lunchRecordings.filter(r => r.id !== rec.id));
+                        }} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", flexShrink: 0 }}>Remove</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* ─── Event Invites ─── */}
+              <div style={{ marginTop: 48 }}>
+                <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Event Invites</div>
+                <p style={{ color: "#7a6060", fontSize: 13, marginBottom: 20 }}>Generate invite links to let non-paid users RSVP for events.</p>
+                <div style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 24 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <div>
+                      <label style={lbl}>Recipient Name</label>
+                      <input value={eventInvName} onChange={e => setEventInvName(e.target.value)} placeholder="Jane Doe" style={inp} />
+                    </div>
+                    <div>
+                      <label style={lbl}>Recipient Email</label>
+                      <input value={eventInvEmail} onChange={e => setEventInvEmail(e.target.value)} type="email" placeholder="jane@email.com" style={inp} />
+                    </div>
+                  </div>
+                  {eventInvMsg && <div style={{ color: eventInvMsg.includes("created") ? "#22c55e" : "#b80101", fontSize: 12, marginBottom: 12 }}>{eventInvMsg}</div>}
+                  <button onClick={async () => {
+                    if (!eventInvName || !eventInvEmail) { setEventInvMsg("Name and email required."); return; }
+                    const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+                    const newInvite = { id: Date.now().toString(), name: eventInvName, email: eventInvEmail, code, eventTitle: lunchEvent ? lunchEvent.title : "", created: new Date().toISOString(), used: false };
+                    await saveEventInvites([newInvite, ...eventInvites]);
+                    setEventInvName(""); setEventInvEmail("");
+                    setEventInvMsg("Invite created!");
+                    setTimeout(() => setEventInvMsg(""), 3000);
+                  }} style={btnRed}>Generate Invite Link</button>
+                </div>
+
+                {eventInvites.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 12 }}>Sent Invites ({eventInvites.length})</div>
+                    {eventInvites.map(inv => {
+                      const link = `${window.location.origin}${window.location.pathname}?eventInvite=${inv.code}`;
+                      return (
+                        <div key={inv.id} style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 700 }}>{inv.name}</div>
+                            <div style={{ color: "#a08888", fontSize: 12 }}>{inv.email}</div>
+                            {inv.eventTitle && <div style={{ color: "#7a6060", fontSize: 11, marginTop: 2 }}>{inv.eventTitle}</div>}
+                          </div>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: inv.used ? "#22c55e" : "#a08030", letterSpacing: "1px", textTransform: "uppercase", flexShrink: 0 }}>{inv.used ? "Used" : "Pending"}</span>
+                          <button onClick={() => { navigator.clipboard.writeText(link); setEventInvCopied(inv.id); setTimeout(() => setEventInvCopied(null), 2000); }} style={{ ...btnGhost, flexShrink: 0 }}>{eventInvCopied === inv.id ? "✓ Copied" : "Copy Link"}</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
           {tab === "inbox" && (
             <div style={{ maxWidth: 700 }}>
               <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Inbox</h2>
-              <p style={{ color: "#6a5050", fontSize: 13, marginBottom: 32 }}>1-on-1 session requests from students.</p>
+              <p style={{ color: "#7a6060", fontSize: 13, marginBottom: 32 }}>1-on-1 session requests from students.</p>
               {inbox.length === 0 ? (
-                <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: 40, textAlign: "center", color: "#4a3030", fontSize: 14 }}>No messages yet.</div>
+                <div style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#5a4040", fontSize: 14 }}>No messages yet.</div>
               ) : inbox.map(msg => (
-                <div key={msg.id} style={{ background: "#0d0404", border: "1px solid " + (msg.status === "unread" ? "#2a0000" : "#150000"), borderRadius: 14, padding: 24, marginBottom: 14, opacity: msg.status === "responded" ? 0.6 : 1 }}>
+                <div key={msg.id} style={{ background: "#150c0c", border: "1px solid " + (msg.status === "unread" ? "#3a1515" : "#2a1010"), borderRadius: 14, padding: 24, marginBottom: 14, opacity: msg.status === "responded" ? 0.6 : 1 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                         {msg.status === "unread" && <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />}
                         <span style={{ color: "#f0d8d8", fontSize: 15, fontWeight: 700 }}>{msg.name}</span>
-                        {msg.sessionType && <span style={{ background: "#1a0808", color: "#b80101", border: "1px solid #2a0000", borderRadius: 4, padding: "2px 8px", fontSize: 10, fontWeight: 700 }}>{msg.sessionType}</span>}
+                        {msg.sessionType && <span style={{ background: "#1e1010", color: "#b80101", border: "1px solid #3a1515", borderRadius: 4, padding: "2px 8px", fontSize: 10, fontWeight: 700 }}>{msg.sessionType}</span>}
                       </div>
-                      <div style={{ color: "#7a5050", fontSize: 12 }}>{msg.email}</div>
+                      <div style={{ color: "#8a6060", fontSize: 12 }}>{msg.email}</div>
                     </div>
-                    <span style={{ background: msg.status === "responded" ? "#0f3020" : msg.status === "read" ? "#1a1a0a" : "#1a0808", color: msg.status === "responded" ? "#22c55e" : msg.status === "read" ? "#a0a020" : "#b80101", borderRadius: 4, padding: "2px 10px", fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>{msg.status}</span>
+                    <span style={{ background: msg.status === "responded" ? "#0f3020" : msg.status === "read" ? "#1a1a0a" : "#1e1010", color: msg.status === "responded" ? "#22c55e" : msg.status === "read" ? "#a0a020" : "#b80101", borderRadius: 4, padding: "2px 10px", fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>{msg.status}</span>
                   </div>
-                  <div style={{ color: "#9a8080", fontSize: 14, lineHeight: 1.75, background: "#0a0404", borderRadius: 8, padding: "12px 16px", marginBottom: 14 }}>{msg.message}</div>
+                  <div style={{ color: "#9a8080", fontSize: 14, lineHeight: 1.75, background: "#120a0a", borderRadius: 8, padding: "12px 16px", marginBottom: 14 }}>{msg.message}</div>
                   <div style={{ display: "flex", gap: 8 }}>
                     {msg.status === "unread" && <button onClick={() => saveInboxData(inbox.map(m => m.id === msg.id ? { ...m, status: "read" } : m))} style={btnGhost}>Mark Read</button>}
                     {msg.status !== "responded" && <button onClick={() => saveInboxData(inbox.map(m => m.id === msg.id ? { ...m, status: "responded" } : m))} style={btnRed}>Mark Responded</button>}
@@ -1411,9 +1655,9 @@ function AdminPanel({ onLogout }) {
           {tab === "courses" && (
             <div style={{ maxWidth: 800 }}>
               <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Courses</h2>
-              <p style={{ color: "#6a5050", fontSize: 13, marginBottom: 32 }}>Add or remove courses from the platform.</p>
-              <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: 28, marginBottom: 32 }}>
-                <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Add New Course</div>
+              <p style={{ color: "#7a6060", fontSize: 13, marginBottom: 32 }}>Add or remove courses from the platform.</p>
+              <div style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 32 }}>
+                <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Add New Course</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                   <div><label style={lbl}>Title</label><input value={newCourse.title} onChange={e => setNewCourse({ ...newCourse, title: e.target.value })} placeholder="Course title" style={inp} /></div>
                   <div><label style={lbl}>Stage</label><input value={newCourse.stage} onChange={e => setNewCourse({ ...newCourse, stage: e.target.value })} placeholder="e.g. Stage 5 of 4" style={inp} /></div>
@@ -1430,11 +1674,11 @@ function AdminPanel({ onLogout }) {
                   setTimeout(() => setCourseMsg(""), 3000);
                 }} style={btnRed}>Add Course</button>
               </div>
-              <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 16 }}>Added Courses ({courses.length})</div>
+              <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 16 }}>Added Courses ({courses.length})</div>
               {courses.length === 0 ? (
-                <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: 32, textAlign: "center", color: "#4a3030", fontSize: 13 }}>No courses added yet.</div>
+                <div style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 14, padding: 32, textAlign: "center", color: "#5a4040", fontSize: 13 }}>No courses added yet.</div>
               ) : courses.map(c => (
-                <div key={c.id} style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 12, padding: "18px 22px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 12 }}>
+                <div key={c.id} style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 12, padding: "18px 22px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 12 }}>
                   <div>
                     <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: 4 }}>{c.stage} · {c.duration}</div>
                     <div style={{ color: "#f0d8d8", fontSize: 15, fontWeight: 700 }}>{c.title}</div>
@@ -1445,8 +1689,8 @@ function AdminPanel({ onLogout }) {
 
               {/* ─── Lesson PDF Attachments ─── */}
               <div style={{ marginTop: 48 }}>
-                <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Lesson PDF Attachments</div>
-                <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: 28, marginBottom: 24 }}>
+                <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Lesson PDF Attachments</div>
+                <div style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 24 }}>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
                     <div>
                       <label style={lbl}>Course</label>
@@ -1496,17 +1740,17 @@ function AdminPanel({ onLogout }) {
 
                 {Object.keys(lessonPdfs).length > 0 && (
                   <div>
-                    <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 12 }}>Assigned PDFs ({Object.keys(lessonPdfs).length})</div>
+                    <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 12 }}>Assigned PDFs ({Object.keys(lessonPdfs).length})</div>
                     {Object.entries(lessonPdfs).map(([key, pdf]) => {
                       const [cId, lId] = key.split(":");
                       const course = miniCourses.find(c => c.id === cId);
                       const lesson = course?.lessons.find(l => String(l.id) === lId);
                       return (
-                        <div key={key} style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 12, padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, marginBottom: 10 }}>
+                        <div key={key} style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, marginBottom: 10 }}>
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: 3 }}>{course?.title || cId}</div>
                             <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 600, marginBottom: 2 }}>Lesson {lId}: {lesson?.title || "Unknown"}</div>
-                            <div style={{ color: "#6a5050", fontSize: 11 }}>📄 {pdf.filename} · {new Date(pdf.uploadedAt).toLocaleDateString()}</div>
+                            <div style={{ color: "#7a6060", fontSize: 11 }}>📄 {pdf.filename} · {new Date(pdf.uploadedAt).toLocaleDateString()}</div>
                           </div>
                           <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                             <button onClick={() => { setPdfCourse(cId); setPdfLesson(lId); document.getElementById("pdf-upload-input").click(); }} style={btnGhost}>Replace</button>
@@ -1527,8 +1771,8 @@ function AdminPanel({ onLogout }) {
 
               {/* ─── Lesson Video Attachments ─── */}
               <div style={{ marginTop: 48 }}>
-                <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Lesson Video Attachments</div>
-                <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: 28, marginBottom: 24 }}>
+                <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Lesson Video Attachments</div>
+                <div style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 24 }}>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
                     <div>
                       <label style={lbl}>Course</label>
@@ -1573,19 +1817,19 @@ function AdminPanel({ onLogout }) {
 
                 {Object.keys(lessonVideos).length > 0 && (
                   <div>
-                    <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 12 }}>Assigned Videos ({Object.keys(lessonVideos).length})</div>
+                    <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 12 }}>Assigned Videos ({Object.keys(lessonVideos).length})</div>
                     {Object.entries(lessonVideos).map(([key, video]) => {
                       const [cId, lId] = key.split(":");
                       const course = miniCourses.find(c => c.id === cId);
                       const lesson = course?.lessons.find(l => String(l.id) === lId);
                       return (
-                        <div key={key} style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 12, padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, marginBottom: 10 }}>
+                        <div key={key} style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, marginBottom: 10 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
                             <img src={`https://img.youtube.com/vi/${video.videoId}/default.jpg`} alt="" style={{ width: 60, height: 45, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
                             <div style={{ minWidth: 0 }}>
                               <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: 3 }}>{course?.title || cId}</div>
                               <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 600, marginBottom: 2 }}>Lesson {lId}: {lesson?.title || "Unknown"}</div>
-                              <div style={{ color: "#6a5050", fontSize: 11 }}>🎬 {video.title || "YouTube Video"} · {new Date(video.addedAt).toLocaleDateString()}</div>
+                              <div style={{ color: "#7a6060", fontSize: 11 }}>🎬 {video.title || "YouTube Video"} · {new Date(video.addedAt).toLocaleDateString()}</div>
                             </div>
                           </div>
                           <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
@@ -1673,8 +1917,8 @@ function RevenueTab() {
   const trialPending = referrals.filter(r => !r.used && r.status === "pending").length;
 
   const statCard = (label, value, sub, color = "#b80101") => (
-    <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: "22px 24px" }}>
-      <div style={{ fontSize: 10, color: "#6a5050", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>{label}</div>
+    <div style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 14, padding: "22px 24px" }}>
+      <div style={{ fontSize: 10, color: "#7a6060", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>{label}</div>
       <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 36, color, lineHeight: 1, marginBottom: 6 }}>{value}</div>
       {sub && <div style={{ fontSize: 12, color: "#5a4040", fontFamily: "'DM Sans', sans-serif" }}>{sub}</div>}
     </div>
@@ -1683,7 +1927,7 @@ function RevenueTab() {
   return (
     <div style={{ maxWidth: 780 }}>
       <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Revenue</h2>
-      <p style={{ color: "#6a5050", fontSize: 13, marginBottom: 32 }}>Based on current users and their plan tiers.</p>
+      <p style={{ color: "#7a6060", fontSize: 13, marginBottom: 32 }}>Based on current users and their plan tiers.</p>
 
       {/* Top stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 32 }}>
@@ -1694,8 +1938,8 @@ function RevenueTab() {
       </div>
 
       {/* Revenue by tier */}
-      <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: 24, marginBottom: 20 }}>
-        <div style={{ fontSize: 10, color: "#6a5050", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>Revenue by Tier</div>
+      <div style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 20 }}>
+        <div style={{ fontSize: 10, color: "#7a6060", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>Revenue by Tier</div>
         {["Basic", "Premium", "Elite"].map(t => {
           const rev = tierRevenue[t];
           const pct = mrr > 0 ? (rev / mrr) * 100 : 0;
@@ -1716,8 +1960,8 @@ function RevenueTab() {
       </div>
 
       {/* Signup trend */}
-      <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: 24, marginBottom: 20 }}>
-        <div style={{ fontSize: 10, color: "#6a5050", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>New Signups — Last 6 Months</div>
+      <div style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 20 }}>
+        <div style={{ fontSize: 10, color: "#7a6060", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>New Signups — Last 6 Months</div>
         <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 100 }}>
           {signupsByMonth.map((m, i) => (
             <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
@@ -1731,15 +1975,15 @@ function RevenueTab() {
       </div>
 
       {/* Referral conversion */}
-      <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: 24 }}>
-        <div style={{ fontSize: 10, color: "#6a5050", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Referral Trials</div>
+      <div style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 14, padding: 24 }}>
+        <div style={{ fontSize: 10, color: "#7a6060", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Referral Trials</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
           {[
             { label: "Sent", value: referrals.length, color: "#6a6b69" },
             { label: "Activated", value: trialConversions, color: "#a08030" },
             { label: "Conversion Rate", value: referrals.length > 0 ? `${Math.round((trialConversions / referrals.length) * 100)}%` : "—", color: "#b80101" },
           ].map((s, i) => (
-            <div key={i} style={{ background: "#0a0404", border: "1px solid #150000", borderRadius: 10, padding: "16px 14px", textAlign: "center" }}>
+            <div key={i} style={{ background: "#120a0a", border: "1px solid #2a1010", borderRadius: 10, padding: "16px 14px", textAlign: "center" }}>
               <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 30, color: s.color, lineHeight: 1, marginBottom: 4 }}>{s.value}</div>
               <div style={{ fontSize: 10, color: "#5a4040", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{s.label}</div>
             </div>
@@ -1806,21 +2050,21 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
   return (
     <div style={{ maxWidth: 800 }}>
       <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Users</h2>
-      <p style={{ color: "#6a5050", fontSize: 13, marginBottom: 32 }}>Manage members and their plan tiers.</p>
+      <p style={{ color: "#7a6060", fontSize: 13, marginBottom: 32 }}>Manage members and their plan tiers.</p>
 
       {/* Tier summary */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 32 }}>
         {TIERS.map(t => (
-          <div key={t} onClick={() => setFilterTier(filterTier === t ? "All" : t)} style={{ background: filterTier === t ? "#1a0808" : "#0a0404", border: "1px solid " + (filterTier === t ? TIER_COLORS[t] + "60" : "#150000"), borderRadius: 12, padding: "16px 14px", textAlign: "center", cursor: "pointer", transition: "all 0.2s" }}>
+          <div key={t} onClick={() => setFilterTier(filterTier === t ? "All" : t)} style={{ background: filterTier === t ? "#1e1010" : "#120a0a", border: "1px solid " + (filterTier === t ? TIER_COLORS[t] + "60" : "#2a1010"), borderRadius: 12, padding: "16px 14px", textAlign: "center", cursor: "pointer", transition: "all 0.2s" }}>
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: TIER_COLORS[t], lineHeight: 1 }}>{tierCounts[t]}</div>
-            <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>{t}</div>
+            <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>{t}</div>
           </div>
         ))}
       </div>
 
       {/* Add user */}
-      <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: 24, marginBottom: 28 }}>
-        <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Add User</div>
+      <div style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 28 }}>
+        <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Add User</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 12, alignItems: "end" }}>
           <div>
             <label style={lbl}>Name</label>
@@ -1853,7 +2097,7 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
 
       {/* Users list */}
       {filtered.length === 0 ? (
-        <div style={{ background: "#0a0404", border: "1px solid #150000", borderRadius: 14, padding: 40, textAlign: "center", color: "#4a3030", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>
+        <div style={{ background: "#120a0a", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#5a4040", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>
           {users.length === 0 ? "No users yet. Add your first user above." : "No users match your search."}
         </div>
       ) : (
@@ -1862,10 +2106,10 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
             {filtered.length} user{filtered.length !== 1 ? "s" : ""}
           </div>
           {filtered.map(user => (
-            <div key={user.id} style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 12, padding: "16px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+            <div key={user.id} style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 12, padding: "16px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
               <div style={{ flex: 1, minWidth: 180 }}>
                 <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{user.name}</div>
-                <div style={{ color: "#7a5050", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>{user.email}</div>
+                <div style={{ color: "#8a6060", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>{user.email}</div>
               </div>
               <div style={{ fontSize: 10, color: "#5a4040", fontFamily: "'DM Sans', sans-serif" }}>
                 Joined {new Date(user.joinedAt).toLocaleDateString()}
@@ -1875,7 +2119,7 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
                 onChange={e => changeTier(user.id, e.target.value)}
                 style={{ background: TIER_COLORS[user.tier] + "18", color: TIER_COLORS[user.tier], border: "1px solid " + TIER_COLORS[user.tier] + "50", borderRadius: 6, padding: "6px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer", outline: "none" }}
               >
-                {TIERS.map(t => <option key={t} value={t} style={{ background: "#0d0404", color: "#f0d8d8" }}>{t}</option>)}
+                {TIERS.map(t => <option key={t} value={t} style={{ background: "#150c0c", color: "#f0d8d8" }}>{t}</option>)}
               </select>
               <button onClick={() => removeUser(user.id)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "6px 12px", flexShrink: 0 }}>Remove</button>
             </div>
@@ -1960,11 +2204,11 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
   return (
     <div style={{ maxWidth: 700 }}>
       <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Referral Invites</h2>
-      <p style={{ color: "#6a5050", fontSize: 13, marginBottom: 32 }}>Create unique invite links that give recipients 7 days of Basic access free.</p>
+      <p style={{ color: "#7a6060", fontSize: 13, marginBottom: 32 }}>Create unique invite links that give recipients 7 days of Basic access free.</p>
 
       {/* Create invite */}
-      <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 14, padding: 28, marginBottom: 32 }}>
-        <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>Create New Invite</div>
+      <div style={{ background: "#150c0c", border: "1px solid #3a1515", borderRadius: 14, padding: 28, marginBottom: 32 }}>
+        <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>Create New Invite</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div>
             <label style={lbl}>Recipient Name</label>
@@ -1975,9 +2219,9 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
             <input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} type="email" placeholder="their@email.com" style={inp} />
           </div>
         </div>
-        <div style={{ background: "#0a0404", border: "1px solid #1a0000", borderRadius: 10, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ background: "#120a0a", border: "1px solid #2a1010", borderRadius: 10, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 16 }}>🎁</span>
-          <span style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>Recipient gets <strong style={{ color: "#b80101" }}>7 days of Basic free</strong> — then prompted to upgrade or drop to Free.</span>
+          <span style={{ color: "#a08888", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>Recipient gets <strong style={{ color: "#b80101" }}>7 days of Basic free</strong> — then prompted to upgrade or drop to Free.</span>
         </div>
         {msg && <div style={{ color: msg.includes("created") ? "#22c55e" : "#b80101", fontSize: 12, marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>{msg}</div>}
         <button onClick={createInvite} style={btnRed}>Generate Invite Link</button>
@@ -1985,21 +2229,21 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
 
       {/* Active invites */}
       <div style={{ marginBottom: 32 }}>
-        <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>
+        <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>
           Active Invites ({active.length})
         </div>
         {active.length === 0 ? (
-          <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 12, padding: 24, textAlign: "center", color: "#4a3030", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No active invites yet.</div>
+          <div style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 12, padding: 24, textAlign: "center", color: "#5a4040", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No active invites yet.</div>
         ) : active.map(invite => (
-          <div key={invite.id} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 12, padding: "18px 22px", marginBottom: 10 }}>
+          <div key={invite.id} style={{ background: "#150c0c", border: "1px solid #3a1515", borderRadius: 12, padding: "18px 22px", marginBottom: 10 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
               <div>
                 <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{invite.name}</div>
-                <div style={{ color: "#7a5050", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>{invite.email}</div>
+                <div style={{ color: "#8a6060", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>{invite.email}</div>
               </div>
               <span style={{ background: "#1a1a0a", color: statusColor(invite), border: "1px solid " + statusColor(invite) + "40", borderRadius: 4, padding: "2px 10px", fontSize: 10, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{statusLabel(invite)}</span>
             </div>
-            <div style={{ background: "#0a0404", border: "1px solid #1a0000", borderRadius: 8, padding: "10px 14px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <div style={{ background: "#120a0a", border: "1px solid #2a1010", borderRadius: 8, padding: "10px 14px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
               <code style={{ color: "#b80101", fontSize: 12, fontFamily: "monospace", wordBreak: "break-all" }}>{getLink(invite.code)}</code>
               <button onClick={() => copyLink(invite.code)} style={{ ...btnGhost, flexShrink: 0, fontSize: 11, padding: "6px 14px" }}>
                 {copied === invite.code ? "✓ Copied" : "Copy"}
@@ -2017,20 +2261,82 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
       {/* Used / history */}
       {(used.length > 0 || revoked.length > 0) && (
         <div>
-          <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>
+          <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>
             History ({used.length + revoked.length})
           </div>
           {[...used, ...revoked].map(invite => (
-            <div key={invite.id} style={{ background: "#080202", border: "1px solid #150000", borderRadius: 12, padding: "14px 18px", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center", opacity: 0.7 }}>
+            <div key={invite.id} style={{ background: "#100808", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 18px", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center", opacity: 0.7 }}>
               <div>
-                <div style={{ color: "#7a5050", fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{invite.name}</div>
-                <div style={{ color: "#4a3030", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>{invite.email} · {invite.code}</div>
+                <div style={{ color: "#8a6060", fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{invite.name}</div>
+                <div style={{ color: "#5a4040", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>{invite.email} · {invite.code}</div>
               </div>
               <span style={{ background: "transparent", color: statusColor(invite), fontSize: 10, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{statusLabel(invite)}</span>
             </div>
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── CONTENT AGREEMENT MODAL ──────────────────────────────────────────────────
+
+function ContentAgreementModal({ onAgree, onClose }) {
+  const [checked, setChecked] = useState(false);
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "40px clamp(24px,5vw,48px)", width: "100%", maxWidth: 540, position: "relative", maxHeight: "90vh", overflowY: "auto" }}>
+        <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "transparent", border: "none", color: "#6a5050", fontSize: 20, cursor: "pointer", lineHeight: 1 }}>✕</button>
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <div style={{ fontSize: 28, marginBottom: 8 }}>🔒</div>
+          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#f5e8e8", marginBottom: 8 }}>Content Agreement</h2>
+          <div style={{ fontSize: 12, color: "#8a7070", fontFamily: "'DM Sans', sans-serif" }}>Please review and accept before accessing content</div>
+        </div>
+        <div style={{ background: "#0a0404", border: "1px solid #1a0000", borderRadius: 12, padding: "20px 24px", marginBottom: 24, maxHeight: 300, overflowY: "auto" }}>
+          <div style={{ color: "#c8a0a0", fontSize: 13, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif" }}>
+            <p style={{ marginBottom: 4, fontWeight: 700, color: "#f0d8d8", fontSize: 14 }}>Intellectual Property (IP) &amp; Content Use Policy</p>
+            <p style={{ marginBottom: 14, color: "#8a7070", fontSize: 12 }}>Ground Up by Dr. Gina Merritt</p>
+
+            <p style={{ marginBottom: 10, fontWeight: 700, color: "#f0d8d8" }}>Ownership of Content</p>
+            <p style={{ marginBottom: 16 }}>All content provided through <em>Ground Up by Dr. Gina Merritt</em>, including but not limited to course materials, videos, text, graphics, frameworks, templates, branding, and any related resources, is the exclusive property of Dr. Gina Merritt and/or its licensors and is protected by applicable intellectual property laws.</p>
+
+            <p style={{ marginBottom: 10, fontWeight: 700, color: "#f0d8d8" }}>Permitted Use</p>
+            <p style={{ marginBottom: 16 }}>Your purchase or access to this course grants you a <strong style={{ color: "#f0d8d8" }}>limited, non-exclusive, non-transferable, revocable license</strong> to access and use the content <strong style={{ color: "#f0d8d8" }}>for your personal, non-commercial use only</strong>.</p>
+
+            <p style={{ marginBottom: 10, fontWeight: 700, color: "#f0d8d8" }}>Prohibited Use</p>
+            <p style={{ marginBottom: 8 }}>You may <strong style={{ color: "#f0d8d8" }}>not</strong>, under any circumstances:</p>
+            <ul style={{ paddingLeft: 20, marginBottom: 16 }}>
+              <li style={{ marginBottom: 6 }}>Copy, reproduce, republish, upload, post, or distribute any course content</li>
+              <li style={{ marginBottom: 6 }}>Share, sell, sublicense, or transfer access to the course or its materials to any third party</li>
+              <li style={{ marginBottom: 6 }}>Modify, adapt, or create derivative works based on the content</li>
+              <li style={{ marginBottom: 6 }}>Use any materials for commercial purposes or public display</li>
+              <li style={{ marginBottom: 6 }}>Record, screenshot, or otherwise capture course content for redistribution</li>
+              <li style={{ marginBottom: 6 }}>Use the content in a way that competes with or replicates <em>Ground Up by Dr. Gina Merritt</em></li>
+            </ul>
+
+            <p style={{ marginBottom: 10, fontWeight: 700, color: "#f0d8d8" }}>Unauthorized Use &amp; Enforcement</p>
+            <p style={{ marginBottom: 8 }}>Any unauthorized use of our content constitutes a violation of this policy and may result in:</p>
+            <ul style={{ paddingLeft: 20, marginBottom: 16 }}>
+              <li style={{ marginBottom: 6 }}>Immediate termination of your access without refund</li>
+              <li style={{ marginBottom: 6 }}>Legal action, including claims for damages and enforcement of intellectual property rights</li>
+            </ul>
+
+            <p style={{ marginBottom: 10, fontWeight: 700, color: "#f0d8d8" }}>Acknowledgment</p>
+            <p style={{ marginBottom: 0 }}>By accessing or purchasing from <em>Ground Up by Dr. Gina Merritt</em>, you acknowledge that you have read, understood, and agree to comply with this Intellectual Property Policy.</p>
+          </div>
+        </div>
+        <label style={{ display: "flex", alignItems: "flex-start", gap: 12, cursor: "pointer", marginBottom: 24 }} onClick={() => setChecked(!checked)}>
+          <div style={{ width: 20, height: 20, borderRadius: 4, border: "1px solid " + (checked ? "#b80101" : "#2a0000"), background: checked ? "#b80101" : "#1a0808", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, transition: "all 0.15s" }}>
+            {checked && <span style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>✓</span>}
+          </div>
+          <span style={{ color: "#c8a0a0", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.5 }}>I have read and agree to the Intellectual Property &amp; Content Use Policy. I understand that all materials are the exclusive property of Dr. Gina Merritt and I will not copy, redistribute, or repurpose any content.</span>
+        </label>
+        <button
+          onClick={() => { if (checked) onAgree(); }}
+          disabled={!checked}
+          style={{ width: "100%", background: checked ? "#b80101" : "#3a1515", color: checked ? "#fff" : "#6a5050", border: "none", borderRadius: 10, padding: "14px 0", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: checked ? "pointer" : "not-allowed", transition: "all 0.2s", letterSpacing: "0.5px" }}
+        >I AGREE</button>
+      </div>
     </div>
   );
 }
@@ -2051,6 +2357,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
       if (users.find(u => u.email === form.email)) { setError("An account with that email already exists."); return; }
       const newUser = { id: Date.now().toString(), name: form.name, email: form.email, tier: form.tier, joinedAt: new Date().toISOString() };
       await window.storage.set("admin:users", JSON.stringify([newUser, ...users]));
+      sessionStorage.setItem("currentUser", JSON.stringify({ name: newUser.name, email: newUser.email, tier: newUser.tier }));
       setStep("success");
     } catch(e) { setError("Something went wrong. Please try again."); }
   };
@@ -2122,6 +2429,12 @@ export default function App() {
   const [trialBanner, setTrialBanner] = useState(null);
   const [showSignup, setShowSignup] = useState(false);
   const [signupTier, setSignupTier] = useState("Free");
+  const [contentAgreed, setContentAgreed] = useState(() => sessionStorage.getItem("contentAgreed") === "true");
+  const [showAgreement, setShowAgreement] = useState(false);
+  const [pendingPage, setPendingPage] = useState(null);
+  const [currentUser, setCurrentUser] = useState(() => { try { const u = sessionStorage.getItem("currentUser"); return u ? JSON.parse(u) : null; } catch { return null; } });
+  const [eventInvited, setEventInvited] = useState(() => sessionStorage.getItem("eventInvited") === "true");
+  const [eventInviteBanner, setEventInviteBanner] = useState(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -2138,6 +2451,21 @@ export default function App() {
         }
       }).catch(() => {});
     }
+    const eventInviteCode = params.get("eventInvite");
+    if (eventInviteCode) {
+      window.storage.get("admin:eventInvites").then(r => {
+        if (!r) return;
+        const invites = JSON.parse(r.value);
+        const invite = invites.find(i => i.code === eventInviteCode && !i.used);
+        if (invite) {
+          sessionStorage.setItem("eventInvited", "true");
+          setEventInvited(true);
+          setEventInviteBanner(invite);
+          const updated = invites.map(i => i.id === invite.id ? { ...i, used: true, usedAt: new Date().toISOString() } : i);
+          window.storage.set("admin:eventInvites", JSON.stringify(updated));
+        }
+      }).catch(() => {});
+    }
   }, []);
 
   const handleLogoClick = () => {
@@ -2147,6 +2475,22 @@ export default function App() {
   };
 
   const openSignup = (tier = "Free") => { setSignupTier(tier); setShowSignup(true); };
+
+  const protectedPages = ["courses", "lunchlearn"];
+  const navigateTo = (page) => {
+    if (protectedPages.includes(page) && !contentAgreed) {
+      setPendingPage(page);
+      setShowAgreement(true);
+      return;
+    }
+    setActivePage(page);
+  };
+  const handleAgree = () => {
+    sessionStorage.setItem("contentAgreed", "true");
+    setContentAgreed(true);
+    setShowAgreement(false);
+    if (pendingPage) { setActivePage(pendingPage); setPendingPage(null); }
+  };
 
   if (!siteUnlocked) return <SiteGatePage onUnlock={() => setSiteUnlocked(true)} />;
   if (showAdminLogin && !isAdmin) return <AdminLoginPage onLogin={() => { sessionStorage.setItem("isAdmin", "true"); setIsAdmin(true); setShowAdminLogin(false); }} />;
@@ -2161,8 +2505,12 @@ export default function App() {
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: #000; }
         ::-webkit-scrollbar-thumb { background: #2a1a1a; border-radius: 3px; }
+        .content-protected { -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
+        .content-protected img { -webkit-user-drag: none; user-drag: none; pointer-events: none; }
+        .content-protected iframe { pointer-events: auto; }
+        .content-protected video { pointer-events: auto; }
       `}</style>
-      {showSignup && <SignupModal onClose={() => setShowSignup(false)} defaultTier={signupTier} />}
+      {showSignup && <SignupModal onClose={() => { setShowSignup(false); try { const u = sessionStorage.getItem("currentUser"); if (u) setCurrentUser(JSON.parse(u)); } catch {} }} defaultTier={signupTier} />}
       {trialBanner && (
         <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "#0d0a04", border: "1px solid #b8010140", borderRadius: 14, padding: "18px 28px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 8px 40px rgba(184,1,1,0.2)", maxWidth: 520, width: "calc(100% - 48px)" }}>
           <span style={{ fontSize: 28, flexShrink: 0 }}>🎁</span>
@@ -2170,15 +2518,27 @@ export default function App() {
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, color: "#f0d8d8", marginBottom: 3 }}>You've been invited — 7 days of Basic, free.</div>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#8a7070" }}>Invited by Dr. Merritt's team. Full access starts now. After 7 days, choose a plan to continue.</div>
           </div>
-          <button onClick={() => { setTrialBanner(null); setActivePage("courses"); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12, cursor: "pointer", flexShrink: 0 }}>Start →</button>
+          <button onClick={() => { setTrialBanner(null); navigateTo("courses"); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12, cursor: "pointer", flexShrink: 0 }}>Start →</button>
         </div>
       )}
-      <Nav activePage={activePage} setActivePage={setActivePage} onLogoClick={handleLogoClick} onSignUp={() => openSignup("Free")} />
-      {activePage === "home" && <HomePage setActivePage={setActivePage} onSignUp={openSignup} />}
-      {activePage === "courses" && <CoursesPage />}
-      {activePage === "about" && <AboutPage setActivePage={setActivePage} />}
+      {eventInviteBanner && (
+        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "#0d0a04", border: "1px solid #b8010140", borderRadius: 14, padding: "18px 28px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 8px 40px rgba(184,1,1,0.2)", maxWidth: 520, width: "calc(100% - 48px)" }}>
+          <span style={{ fontSize: 28, flexShrink: 0 }}>🎟️</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, color: "#f0d8d8", marginBottom: 3 }}>You've been invited to RSVP!</div>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#8a7070" }}>Special invite from Dr. Merritt's team{eventInviteBanner.eventTitle ? ` for ${eventInviteBanner.eventTitle}` : ""}. You can now RSVP for the upcoming event.</div>
+          </div>
+          <button onClick={() => setEventInviteBanner(null)} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12, cursor: "pointer", flexShrink: 0 }}>Got it</button>
+        </div>
+      )}
+      {showAgreement && <ContentAgreementModal onAgree={handleAgree} onClose={() => { setShowAgreement(false); setPendingPage(null); }} />}
+      <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => openSignup("Free")} />
+      {activePage === "home" && <HomePage setActivePage={navigateTo} onSignUp={openSignup} currentUser={currentUser} eventInvited={eventInvited} />}
+      {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage /></div>}
+      {activePage === "about" && <AboutPage setActivePage={navigateTo} />}
       {activePage === "pricing" && <PricingPage onSignUp={openSignup} />}
-      {activePage === "contact" && <ContactPage setActivePage={setActivePage} />}
+      {activePage === "lunchlearn" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><LunchLearnPage /></div>}
+      {activePage === "contact" && <ContactPage setActivePage={navigateTo} />}
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#3a2a2a" }}>© {new Date().getFullYear()} GroundUp · Northern Real Estate Urban Ventures</div>
         <button onClick={() => setShowAdminLogin(true)} style={{ background: "transparent", border: "none", color: "#2a1a1a", fontFamily: "'DM Sans', sans-serif", fontSize: 11, cursor: "pointer", letterSpacing: "1px" }}>Admin</button>
