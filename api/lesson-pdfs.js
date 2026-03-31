@@ -5,6 +5,11 @@ export const config = {
 };
 
 export default async function handler(req, res) {
+  const auth = req.headers['authorization'];
+  if (!auth || auth !== `Bearer ${process.env.ADMIN_PASSWORD}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   if (req.method === 'POST') {
     try {
       const chunks = [];

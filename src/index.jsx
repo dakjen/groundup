@@ -1343,7 +1343,7 @@ function AdminLoginPage({ onLogin }) {
       });
       const data = await res.json();
       if (data.success) {
-        onLogin();
+        onLogin(data.token);
       } else {
         setError(data.error || "Invalid email or password.");
       }
@@ -1719,11 +1719,11 @@ function AdminPanel({ onLogout }) {
                         const key = `${pdfCourse}:${pdfLesson}`;
                         // Delete old blob if replacing
                         if (lessonPdfs[key]?.url) {
-                          await fetch("/api/lesson-pdfs", { method: "DELETE", body: JSON.stringify({ url: lessonPdfs[key].url }) }).catch(() => {});
+                          await fetch("/api/lesson-pdfs", { method: "DELETE", headers: { "Authorization": "Bearer " + sessionStorage.getItem("adminToken") }, body: JSON.stringify({ url: lessonPdfs[key].url }) }).catch(() => {});
                         }
                         const form = new FormData();
                         form.append("file", file);
-                        const res = await fetch("/api/lesson-pdfs", { method: "POST", body: form });
+                        const res = await fetch("/api/lesson-pdfs", { method: "POST", headers: { "Authorization": "Bearer " + sessionStorage.getItem("adminToken") }, body: form });
                         if (!res.ok) throw new Error("Upload failed");
                         const data = await res.json();
                         const updated = { ...lessonPdfs, [key]: { url: data.url, filename: data.filename, uploadedAt: new Date().toISOString() } };
@@ -1759,7 +1759,7 @@ function AdminPanel({ onLogout }) {
                             <button onClick={() => { setPdfCourse(cId); setPdfLesson(lId); document.getElementById("pdf-upload-input").click(); }} style={btnGhost}>Replace</button>
                             <button onClick={async () => {
                               if (!window.confirm("Remove this PDF?")) return;
-                              await fetch("/api/lesson-pdfs", { method: "DELETE", body: JSON.stringify({ url: pdf.url }) }).catch(() => {});
+                              await fetch("/api/lesson-pdfs", { method: "DELETE", headers: { "Authorization": "Bearer " + sessionStorage.getItem("adminToken") }, body: JSON.stringify({ url: pdf.url }) }).catch(() => {});
                               const updated = { ...lessonPdfs };
                               delete updated[key];
                               await saveLessonPdfs(updated);
@@ -2496,8 +2496,8 @@ export default function App() {
   };
 
   if (!siteUnlocked) return <SiteGatePage onUnlock={() => setSiteUnlocked(true)} />;
-  if (showAdminLogin && !isAdmin) return <AdminLoginPage onLogin={() => { sessionStorage.setItem("isAdmin", "true"); setIsAdmin(true); setShowAdminLogin(false); }} />;
-  if (isAdmin) return <AdminPanel onLogout={() => { sessionStorage.removeItem("isAdmin"); setIsAdmin(false); }} />;
+  if (showAdminLogin && !isAdmin) return <AdminLoginPage onLogin={(token) => { sessionStorage.setItem("isAdmin", "true"); sessionStorage.setItem("adminToken", token || ""); setIsAdmin(true); setShowAdminLogin(false); }} />;
+  if (isAdmin) return <AdminPanel onLogout={() => { sessionStorage.removeItem("isAdmin"); sessionStorage.removeItem("adminToken"); setIsAdmin(false); }} />;
 
   return (
     <>

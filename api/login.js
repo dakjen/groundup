@@ -9,7 +9,7 @@ export default function handler(req, res) {
     email === process.env.ADMIN_EMAIL &&
     password === process.env.ADMIN_PASSWORD
   ) {
-    return res.status(200).json({ success: true });
+    return res.status(200).json({ success: true, token: process.env.ADMIN_PASSWORD });
   }
 
   return res.status(401).json({ error: "Invalid credentials" });
