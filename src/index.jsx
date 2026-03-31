@@ -31,7 +31,7 @@ const miniCourses = [
       {
         id: 1,
         title: "How to Read a Market Before You Fall in Love With a Site",
-        summary: "Before you evaluate any individual property, you need to understand three layers: the region, the city, and the neighborhood. Dr. Merritt looks at all three before she ever puts a site under contract — and she uses that analysis to determine whether a deal is a smart bet or a money pit dressed up as an opportunity.  The region tells you about population movement, job growth, and whether people fundamentally want to live there. The city tells you about investment trends, political priorities, and where subsidy is flowing. The neighborhood tells you what's actually happening on the ground — who's building, what rents are doing, and whether a catalyst already exists or needs to be created.  She used this framework on Parkway House in DC's Ward 7: a deeply distressed property, difficult to manage, residents treated poorly for years. On paper, not a great deal. But she looked at the neighborhood — St. Elizabeth's redevelopment on one side, another market-rate project going up on the other, Barry Farm across the street, a Metro stop a mile away, multiple other developers with site control nearby. The city of DC wouldn't leave one derelict property in the middle of hundreds of millions of investment. That's a political argument as much as a market one — and she knew how to make it.  The same framework worked in Cleveland's Hough neighborhood. No investment for decades. But two blocks away? A contiguous neighborhood with $5,000 rents and Case Western Reserve University right behind it. Dr. Merritt's read: if she could build a catalyst project, investment would follow. She was right — 9410 Hough closed, and others started developing in the neighborhood shortly after. She'd done the same thing with Nannie Helen years earlier: no development in that neighborhood either, until she built there. Then everyone came.",
+        summary: "Before you evaluate any individual property, you need to understand three layers: the region, the city, and the neighborhood. Dr. Merritt looks at all three before she ever puts a site under contract — and she uses that analysis to determine whether a deal is a smart bet or a money pit dressed up as an opportunity.  The region tells you about population movement, job growth, and whether people fundamentally want to live there. The city tells you about investment trends, political priorities, and where subsidy is flowing. The neighborhood tells you what's actually happening on the ground — who's building, what rents are doing, and whether a catalyst already exists or needs to be created.  She used this framework on Parkway House in DC's Ward 7: a deeply distressed property, difficult to manage, residents treated poorly for years. On paper, not a great deal. But she looked at the neighborhood — St. Elizabeth's redevelopment on one side, another market-rate project going up on the other, Barry Farm across the street, a Metro stop a mile away, multiple other developers with site control nearby. The city of DC wouldn't leave one derelict property in the middle of hundreds of millions of investment. That's a political argument as much as a market one — and she knew how to make it.  The same framework worked in Cleveland's Hough neighborhood. No investment for decades. But two blocks away? A contiguous neighborhood with $5,000 rents and Case Western Reserve University right behind it. Dr. Merritt's read: if she could build a catalyst project, investment would follow. She was right — 9410 Hough closed, and others started developing in the neighborhood shortly after. She'd done the same thing with Nannie Helen years earlier: no development in that neighborhood either, until she built there. Then everyone came.  But market analysis is only half the picture. Before you fall in love with a site, you also need to understand the public financing landscape. That means knowing whether the city is actively funding affordable housing — and how much capital they actually have available. It means digging into your state's housing programs: what programs exist, how projects are scored under the Qualified Allocation Plan (QAP), and whether your site fits the current scoring criteria. A site can look great on the ground and still fail to get funded because it scores poorly — too far from transit, in a market the state doesn't prioritize, or missing a threshold requirement you didn't see coming.  If your site doesn't score well today, that's not automatically a dealbreaker — but it means you need a strategy. You may need to adjust your program to fit the scoring, build a political case for why the state should fund this site anyway, or cultivate a relationship with the housing finance agency over time. The developers who win competitive allocations aren't just the ones with the best sites — they're the ones who understand the scoring rubric and know how to play the game.",
         quote: "Either you can be in a neighborhood where you're buying the most derelict property in a neighborhood full of opportunity — or you can be the market leader and say, nothing's going on here, but if I come, others will come. Both can work. But you have to know which one you're doing.",
         quoteContext: "Dr. Merritt distinguishes between two types of site opportunities: following existing investment, or being the catalyst that creates it. Both are valid strategies — but they require different risk tolerance, different political capital, and different financing timelines. Knowing which one you're pursuing changes how you underwrite the deal.",
         takeaways: [
@@ -41,6 +41,9 @@ const miniCourses = [
           "Adjacent neighborhood dynamics matter as much as the site itself. Case Western Reserve University two blocks away, $5,000 rents in the contiguous neighborhood, Barry Farm across the street — these facts change the risk calculus entirely.",
           "Your market analysis should tell you: Why would this neighborhood improve? What is creating stability or investment nearby? What would have to be true for this deal to fail — and how likely is that?",
           "Don't just look at the neighborhood. Look at who else is playing in that market: which CDFIs are active, which foundations are funding, which city agencies have money, which developers have site control nearby. That ecosystem shapes what's possible.",
+          "Understand the public financing landscape before you commit to a site. Is the city actively funding affordable housing? How much capital do they have available, and what are their current priorities? City subsidy can make or break a deal — know what's on the table before you start.",
+          "Score your site against the state's Qualified Allocation Plan (QAP) early. QAP scoring determines whether you get a tax credit allocation — and sites that don't score well can't get funded without a strategic intervention. Know the criteria: transit access, market need, income targeting, community priorities.",
+          "If your site doesn't fit today's QAP scoring, develop a strategy before you walk away. That might mean adjusting your program, building relationships with your state housing finance agency, or making a political case for why your project should be prioritized. Lobbying the state is a real part of the job.",
         ],
       },
       {
@@ -611,7 +614,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
             <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(48px,8vw,88px)", lineHeight: 1.0, marginBottom: 12, letterSpacing: "-1px", background: "linear-gradient(135deg, #b80101 0%, #570404 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Build Legacy.</h1>
             <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontStyle: "italic", fontSize: "clamp(36px,6vw,68px)", lineHeight: 1.0, color: "#6a6b69", marginBottom: 44, letterSpacing: "-1px" }}>Build Home.</h1>
             <p style={{ fontSize: "clamp(14px,1.8vw,17px)", color: "#9a9a98", lineHeight: 1.9, maxWidth: 520, marginBottom: 48, fontFamily: "'DM Sans', sans-serif" }}>
-              Real development education for underrepresented developers — built from Dr. Gina Merritt's 28+ years of hands-on deal experience.
+              Real development education for underrepresented developers — built from Dr. Gina Merritt's 30+ years of hands-on deal experience.
             </p>
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
               <button onClick={() => setActivePage("courses")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "15px 36px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", letterSpacing: "0.5px" }}>EXPLORE COURSES</button>
@@ -643,7 +646,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
           { val: "4", label: "Courses" },
           { val: "$4.5B", label: "Transactions Underwritten" },
           { val: "7,500+", label: "Units Built" },
-          { val: "28+", label: "Years of Experience" },
+          { val: "30+", label: "Years of Experience" },
         ].map((s, i) => (
           <div key={i} style={{ padding: "28px 20px", textAlign: "center", borderRight: i < 3 ? "1px solid #1a0000" : "none" }}>
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 36, color: "#b80101", lineHeight: 1 }}>{s.val}</div>
@@ -865,7 +868,7 @@ function AboutPage({ setActivePage }) {
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>The Instructor</div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(38px,5vw,58px)", color: "#f5e8e8", marginBottom: 24, lineHeight: 1.1 }}>Dr. Gina Merritt</h1>
           <p style={{ color: "#9a8080", fontSize: 16, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", maxWidth: 700 }}>
-            Principal of Northern Real Estate Urban Ventures (NREUV) and founder of Project Community Capital®. 28+ years of hands-on development, finance, construction, and asset management experience. She grew up in affordable housing in the Bronx — a fact that shapes every deal she touches.
+            Principal of Northern Real Estate Urban Ventures (NREUV) and founder of Project Community Capital®. 30+ years of hands-on development, finance, construction, and asset management experience. She grew up in affordable housing in the Bronx — a fact that shapes every deal she touches.
           </p>
         </div>
 
@@ -882,7 +885,7 @@ function AboutPage({ setActivePage }) {
               { val: "7,500+", label: "Units Developed" },
               { val: "$4.5B", label: "Transactions" },
               { val: "$600M+", label: "Active Pipeline" },
-              { val: "28+", label: "Years Experience" },
+              { val: "30+", label: "Years Experience" },
             ].map((s, i) => (
               <div key={i} style={{ textAlign: "center", background: "#110606", border: "1px solid #1a0000", borderRadius: 12, padding: "18px 14px" }}>
                 <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 30, color: "#b80101" }}>{s.val}</div>
@@ -904,9 +907,9 @@ function AboutPage({ setActivePage }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             {[
               { src: "/DSC00837.jpg", label: "Mary's House — Groundbreaking", sub: "Cleveland, OH" },
-              { src: "/DSC00699.jpg", label: "Community Engagement", sub: "On-site with residents" },
-              { src: "/DSC00371.jpg", label: "Industry Networking", sub: "Building relationships" },
-              { src: "/DSC00378.jpg", label: "NREUV Gala", sub: "Community celebration" },
+              { src: "/SIS-AWARD-GM.jpg", label: "SIS Award — Economic Empowerment", sub: "Social Innovation Summit 2022" },
+              { src: "/LIIF-Stills5.png", label: "Industry Work", sub: "Deal analysis" },
+              { src: "/SISAwards-acceptance.jpg", label: "Speaking Engagement", sub: "Social Innovation Summit 2022" },
             ].map((p, i) => (
               <div key={i} style={{ borderRadius: 12, overflow: "hidden", position: "relative", border: "1px solid #2a0000" }}>
                 <img src={p.src} alt={p.label} style={{ width: "100%", height: 180, objectFit: "cover", display: "block" }} />
