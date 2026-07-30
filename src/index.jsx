@@ -2017,6 +2017,29 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
         </div>
       </div>
 
+      {/* Course overviews — the written content at a glance */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 10, color: "#8a8a8a", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", margin: "8px 0 14px" }}>The Curriculum</div>
+        {miniCourses.map(c => (
+          <div key={c.id} style={{ background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 14, padding: "24px 28px", marginBottom: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8, flexWrap: "wrap" }}>
+              <span style={{ background: "#b8010112", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "2px 9px", fontSize: 10, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "1px" }}>{c.stage}</span>
+              <span style={{ color: "#9a9a9a", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{c.lessons.length} lessons · {c.duration}</span>
+            </div>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#161616", marginBottom: 8 }}>{c.title}</div>
+            <p style={{ color: "#666666", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 14 }}>{c.description}</p>
+            <div style={{ borderTop: "1px solid #eeebe4", paddingTop: 12 }}>
+              {c.lessons.map((l, i) => (
+                <div key={i} style={{ display: "flex", gap: 10, padding: "5px 0", alignItems: "baseline" }}>
+                  <span style={{ color: "#b80101", fontSize: 12, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>{i + 1}.</span>
+                  <span style={{ color: "#333333", fontSize: 13, fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>{l.title}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
       {Object.keys(attachments).length > 0 && (
         <div style={section}>
           <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>Everything attached</div>
