@@ -98,7 +98,23 @@ CREATE TABLE IF NOT EXISTS waitlist (
 );
 
 ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS phone TEXT;
-ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS reason TEXT;
+ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS reason TEXT;   -- their main pain point
+ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS learn TEXT;    -- what they want to learn
+ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS budget TEXT;   -- monthly budget range
+ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS source TEXT;   -- where they heard about us (optional)
+
+-- Resources & Templates page: fully editable from the admin panel
+CREATE TABLE IF NOT EXISTS resources (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT,
+  url TEXT,
+  code TEXT,                          -- optional referral/coupon code shown with the link
+  category TEXT DEFAULT 'resource',   -- 'resource' | 'template' | 'partner'
+  min_tier TEXT DEFAULT 'Premium',    -- Premium | Elite
+  position INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW()
+);
 
 -- Simple key/value settings (e.g. the live Lunch & Learn session link)
 CREATE TABLE IF NOT EXISTS settings (

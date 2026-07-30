@@ -179,7 +179,7 @@ export function waitlistConfirmEmail(name, planLabel) {
     subject: "You're on the GroundUp waitlist",
     html: `
       <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">You're on the list, ${name.split(' ')[0]}.</h2>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">We've saved your spot for the <strong style="color:#e0c4c4;">${planLabel}</strong> plan. When GroundUp opens, you'll be the first to know — and you'll get a personal link to claim your plan before anyone else.</p>
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">Your spot is saved. We read every answer you gave — what you want to learn, what's in your way — and we're building for exactly that. When GroundUp opens, you'll be the first to know, with a personal link before anyone else.</p>
       <p style="color:#a89080;font-size:14px;line-height:1.8;">Decades of affordable-housing deal experience, distilled into a curriculum and community for developers like you. It's almost time.</p>`,
   };
 }
@@ -196,15 +196,19 @@ export function countdownEmail(stage, launchText) {
   };
 }
 
-export function launchEmail(name, planLabel, link) {
+export function launchEmail(name, rec, link, painPoint) {
   return {
-    subject: "We're live — claim your GroundUp plan",
+    subject: "We're live \u2014 here's the plan we recommend for you",
     html: `
       <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">We're Live</div>
       <h2 style="color:#f5e8e8;font-size:28px;margin:0 0 16px;">GroundUp is open, ${name.split(' ')[0]}.</h2>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">You're getting this first because you're on the waitlist. Your <strong style="color:#e0c4c4;">${planLabel}</strong> spot is ready — this link takes you straight to it:</p>
-      <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:14px 30px;font-weight:bold;font-size:15px;text-decoration:none;margin:10px 0;">Claim Your ${planLabel} Plan</a>
-      <p style="color:#7a6060;font-size:12px;line-height:1.7;">This link is yours — it pre-selects the plan you chose when you joined the list.</p>`,
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">You're getting this first because you're an insider. We read what you told us${painPoint ? " \u2014 including what's been standing in your way" : ""} \u2014 and based on your goals and your budget, here's our recommendation:</p>
+      <div style="background:#12060a;border:1px solid #b8010130;border-radius:12px;padding:20px 24px;margin:16px 0;">
+        <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">Recommended for you</div>
+        <div style="color:#f5e8e8;font-size:22px;font-weight:bold;">${rec.label} <span style="color:#8a7070;font-size:14px;font-weight:normal;">\u00b7 ${rec.price}</span></div>
+      </div>
+      <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:14px 30px;font-weight:bold;font-size:15px;text-decoration:none;margin:6px 0;">Start with ${rec.label} \u2192</a>
+      <p style="color:#7a6060;font-size:12px;line-height:1.7;">Not the right fit? Every plan is on the pricing page \u2014 and you can change anytime.</p>`,
   };
 }
 

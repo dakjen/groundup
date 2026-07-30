@@ -148,8 +148,8 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
 const BENEFITS = {
   Free: ["One lesson of your choice — the first you open", "1 curated case study", "Glossary & resource sheet"],
   Basic: ["All 4 courses + every new course we add", "Case studies, worksheets & reading guides", "Community access — read every channel"],
-  Premium: ["Everything in Member", "Engage in the community — post, reply & network", "JV & Partnerships channel", "Development timeline templates", "Lunch & Learn recordings", "1 free work session (1 hr) + priority booking"],
-  Elite: ["Everything in Premium", "Priority responses in the community", "Direct messages to Dr. Merritt & her team", "Elite Lounge — private channel", "3 one-on-one advisory calls/yr with Dr. Merritt", "Priority Q&A submissions"],
+  Premium: ["Everything in Member", "Engage in the community — post, reply & network", "JV & Partnerships channel", "Development timeline templates", "Lunch & Learn recordings", "1 free work session (1 hr) + priority booking", "The GroundUp Newsletter — monthly edition"],
+  Elite: ["Everything in Premium", "Priority responses in the community", "Direct messages to Dr. Merritt & her team", "Elite Lounge — private channel", "3 one-on-one advisory calls/yr with Dr. Merritt", "The full GroundUp Newsletter — twice a month"],
   Partner: ["Custom organizational access", "Contact info@nreuv.com for your cohort setup"],
 };
 
@@ -598,49 +598,75 @@ export function ResetPasswordModal({ token, onDone }) {
 
 // ─── WAITLIST (public join modal) ───────────────────────────────────────────
 
-const WL_PLANS = [
-  { id: "pass_single", label: "One Course", price: "$100 one-time", desc: "30 days of one course, your pick" },
-  { id: "pass_all", label: "The Full Boat", price: "$250 one-time", desc: "30 days of all four courses" },
-  { id: "Basic", label: "Member", price: "$59.99/mo", desc: "Every course + community, ongoing" },
-  { id: "Premium", label: "Premium", price: "$165.99/mo", desc: "Engage the community + deal tools" },
-  { id: "Elite", label: "Elite", price: "$599.99/mo", desc: "Direct access to Dr. Merritt" },
+const WL_LEARN = [
+  "Financing & capital stacks",
+  "LIHTC & tax credits",
+  "Finding & evaluating deals",
+  "JV partnerships & structuring",
+  "Construction & design management",
+  "Getting my first deal done",
+  "Scaling my existing pipeline",
+  "Other",
 ];
+const WL_PAIN = [
+  "I can't find the capital",
+  "I don't know where to start",
+  "I have a deal but I'm stuck",
+  "I need partners or a team",
+  "I don't understand the numbers",
+  "Navigating government & compliance",
+  "No network in the industry",
+  "Other",
+];
+const WL_SOURCE = ["Dr. Merritt / NREUV", "A Lunch & Learn", "LinkedIn", "Instagram", "Word of mouth", "An event or conference", "Other"];
+const WL_BUDGETS = ["Under $50", "$50–$150", "$150–$500", "$500+"];
 
 export function WaitlistModal({ onClose }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [reason, setReason] = useState("");
-  const [plan, setPlan] = useState("Basic");
+  const [learn, setLearn] = useState("");
+  const [learnOther, setLearnOther] = useState("");
+  const [pain, setPain] = useState("");
+  const [painOther, setPainOther] = useState("");
+  const [budget, setBudget] = useState("");
+  const [source, setSource] = useState("");
   const [msg, setMsg] = useState(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
 
   const submit = async (e) => {
     e.preventDefault();
+    const learnVal = learn === "Other" ? learnOther.trim() : learn;
+    const painVal = pain === "Other" ? painOther.trim() : pain;
+    if (!learnVal) { setMsg("Tell us what you hope to learn."); return; }
+    if (!painVal) { setMsg("Tell us your main pain point."); return; }
+    if (!budget) { setMsg("Pick the monthly budget that fits you."); return; }
     setBusy(true); setMsg(null);
     try {
-      await api("/api/waitlist", { method: "POST", body: JSON.stringify({ action: "join", name, email, phone, reason, plan }) });
+      await api("/api/waitlist", { method: "POST", body: JSON.stringify({ action: "join", name, email, phone, learn: learnVal, pain: painVal, budget, source: source || undefined }) });
       setDone(true);
     } catch (err) {
       setMsg(err.message);
     } finally { setBusy(false); }
   };
 
+  const sel = { ...inp, appearance: "auto", cursor: "pointer" };
+
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "36px 36px 32px", width: "100%", maxWidth: 460, maxHeight: "90vh", overflowY: "auto" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "36px 36px 32px", width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto" }}>
         {done ? (
           <div style={{ textAlign: "center", padding: "20px 0" }}>
             <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 12 }}>You're an insider.</h2>
-            <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font, lineHeight: 1.8, marginBottom: 24 }}>Check your inbox — your spot is saved, and you'll get first notice with a personal link the moment we launch.</p>
+            <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font, lineHeight: 1.8, marginBottom: 24 }}>Check your inbox — your spot is saved. We read every answer, and when we launch you'll get our personal recommendation for the plan that fits you best.</p>
             <button onClick={onClose} style={btnRed}>Done</button>
           </div>
         ) : (
           <>
             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>Elite Insider Waitlist</div>
             <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>Become an insider</h2>
-            <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginBottom: 22 }}>The inside track: first notice, first access, and a personal link to the plan you pick — before the doors open to anyone else.</p>
+            <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginBottom: 22 }}>Tell us where you are and what's in your way — at launch, you'll get first access and our personal recommendation for the plan that fits.</p>
             <form onSubmit={submit}>
               <div style={{ marginBottom: 14 }}>
                 <label style={lbl}>Full name</label>
@@ -654,27 +680,124 @@ export function WaitlistModal({ onClose }) {
                 <label style={lbl}>Phone</label>
                 <input style={inp} type="tel" value={phone} onChange={e => setPhone(e.target.value)} required placeholder="(555) 555-5555" />
               </div>
-              <div style={{ marginBottom: 18 }}>
-                <label style={lbl}>Why do you want to join?</label>
-                <textarea style={{ ...inp, resize: "vertical" }} rows={3} value={reason} onChange={e => setReason(e.target.value)} required maxLength={2000} placeholder="Where are you in your development journey, and what are you trying to get done?" />
+              <div style={{ marginBottom: 14 }}>
+                <label style={lbl}>What do you hope to learn?</label>
+                <select style={sel} value={learn} onChange={e => setLearn(e.target.value)} required>
+                  <option value="" disabled>Choose one…</option>
+                  {WL_LEARN.map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+                {learn === "Other" && <input style={{ ...inp, marginTop: 8 }} value={learnOther} onChange={e => setLearnOther(e.target.value)} placeholder="Tell us in your own words" required />}
               </div>
-              <label style={lbl}>What are you interested in?</label>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
-                {WL_PLANS.map(p => (
-                  <button type="button" key={p.id} onClick={() => setPlan(p.id)} style={{ background: plan === p.id ? "#b8010118" : "transparent", border: plan === p.id ? "1px solid #b80101" : "1px solid #2a0000", borderRadius: 10, padding: "12px 16px", cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-                    <span>
-                      <span style={{ display: "block", color: plan === p.id ? "#f0d8d8" : "#c8a8a8", fontWeight: 800, fontSize: 14, fontFamily: font }}>{p.label}</span>
-                      <span style={{ display: "block", color: "#7a5050", fontSize: 12, fontFamily: font, marginTop: 2 }}>{p.desc}</span>
-                    </span>
-                    <span style={{ color: plan === p.id ? "#e0c4c4" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font, whiteSpace: "nowrap" }}>{p.price}</span>
-                  </button>
-                ))}
+              <div style={{ marginBottom: 14 }}>
+                <label style={lbl}>What's your main pain point?</label>
+                <select style={sel} value={pain} onChange={e => setPain(e.target.value)} required>
+                  <option value="" disabled>Choose one…</option>
+                  {WL_PAIN.map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+                {pain === "Other" && <input style={{ ...inp, marginTop: 8 }} value={painOther} onChange={e => setPainOther(e.target.value)} placeholder="Tell us in your own words" required />}
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <label style={lbl}>Monthly budget for a course + community that helps you get this done</label>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  {WL_BUDGETS.map(b => (
+                    <button type="button" key={b} onClick={() => setBudget(b)} style={{ background: budget === b ? "#b8010118" : "transparent", border: budget === b ? "1px solid #b80101" : "1px solid #2a0000", borderRadius: 8, padding: "11px 12px", cursor: "pointer", color: budget === b ? "#f0d8d8" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font }}>{b}</button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ marginBottom: 18 }}>
+                <label style={lbl}>Where did you hear about us? <span style={{ color: "#5a4040", textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
+                <select style={sel} value={source} onChange={e => setSource(e.target.value)}>
+                  <option value="">Prefer not to say</option>
+                  {WL_SOURCE.map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
               </div>
               {msg && <div style={{ color: "#ff6b6b", fontSize: 13, fontFamily: font, marginBottom: 12 }}>{msg}</div>}
               <button type="submit" disabled={busy} style={{ ...btnRed, width: "100%", opacity: busy ? 0.6 : 1 }}>{busy ? "Saving your spot…" : "Join the Insider Waitlist →"}</button>
             </form>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+
+// ─── RESOURCES & TEMPLATES (Premium+; partner network is Elite) ─────────────
+
+export function ResourcesPage({ member, onUpgrade }) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  const rank = member ? (TIER_RANK[member.tier] ?? 0) : 0;
+
+  useEffect(() => {
+    if (rank < 2 && member?.role !== "admin") return;
+    api("/api/resources").then(setData).catch(e => setError(e.message));
+  }, [member?.id]);
+
+  if (!member || (rank < 2 && member.role !== "admin")) {
+    return (
+      <div style={{ background: "#000", minHeight: "100vh", padding: "140px 20px", textAlign: "center" }}>
+        <div style={{ marginBottom: 16 }}><Lock size={36} color="#b80101" style={{ display: "inline-block" }} /></div>
+        <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "#f5e8e8", marginBottom: 14 }}>Resources & Templates</h1>
+        <p style={{ color: "#8a7070", fontFamily: font, fontSize: 15, maxWidth: 480, margin: "0 auto 28px", lineHeight: 1.8 }}>
+          Development timeline templates, worksheets, and curated tools are a Premium benefit — and Elite members unlock the NREUV partner network with member-only referral codes.
+        </p>
+        <button style={btnRed} onClick={onUpgrade}>View Plans →</button>
+      </div>
+    );
+  }
+
+  const groups = [
+    { key: "template", title: "Templates", desc: "Development timelines, worksheets, and working documents." },
+    { key: "resource", title: "Resources", desc: "Curated tools and reading Dr. Merritt's team actually uses." },
+    { key: "partner", title: "NREUV Partner Network", desc: "The firms in our corner — with member referral codes.", elite: true },
+  ];
+
+  return (
+    <div style={{ background: "#000", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Member Library</div>
+        <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "#f5e8e8", marginBottom: 40 }}>Resources & Templates</h1>
+        {error && <div style={{ color: "#ff6b6b", fontFamily: font, fontSize: 13, marginBottom: 20 }}>{error}</div>}
+        {!data ? <div style={{ color: "#8a7070", fontFamily: font }}>Loading…</div> : groups.map(g => {
+          const items = data.resources.filter(r => r.category === g.key);
+          const locked = g.elite && rank < 3 && member.role !== "admin";
+          return (
+            <div key={g.key} style={{ marginBottom: 44 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 6 }}>
+                <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 26, color: "#f0d8d8" }}>{g.title}</h2>
+                {g.elite && <TierBadge tier="Elite" small />}
+              </div>
+              <p style={{ color: "#7a5050", fontSize: 13, fontFamily: font, marginBottom: 18 }}>{g.desc}</p>
+              {locked ? (
+                <div style={{ background: "#0a0808", border: "1px solid #1e0000", borderRadius: 14, padding: "26px 30px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+                  <Lock size={18} color="#8a7070" />
+                  <span style={{ color: "#8a7070", fontSize: 14, fontFamily: font, flex: 1 }}>The partner network — marketing, tech, design and more, with member-only referral discounts — is an Elite benefit.</span>
+                  <button style={btnRed} onClick={onUpgrade}>Go Elite →</button>
+                </div>
+              ) : items.length === 0 ? (
+                <div style={{ color: "#5a4040", fontSize: 13, fontFamily: font, background: "#0a0808", border: "1px solid #1e0000", borderRadius: 12, padding: "20px 24px" }}>Nothing here yet — check back soon.</div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
+                  {items.map(r => (
+                    <div key={r.id} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 14, padding: "22px 24px", display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 15, fontFamily: font }}>{r.title}</div>
+                      {r.description && <div style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, flex: 1 }}>{r.description}</div>}
+                      {r.code && (
+                        <div style={{ background: "#0d0a04", border: "1px dashed #e0c4c440", borderRadius: 8, padding: "8px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+                          <span style={{ fontSize: 9, color: "#e0c4c4", fontWeight: 800, letterSpacing: "1.5px", fontFamily: font }}>CODE</span>
+                          <code style={{ color: "#f0d8d8", fontSize: 13, letterSpacing: "1px" }}>{r.code}</code>
+                          <button onClick={() => navigator.clipboard && navigator.clipboard.writeText(r.code)} style={{ marginLeft: "auto", background: "none", border: "none", color: "#8a7070", cursor: "pointer", fontSize: 11, fontFamily: font, fontWeight: 700 }}>Copy</button>
+                        </div>
+                      )}
+                      {r.url && <a href={r.url} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontSize: 13, fontFamily: font, fontWeight: 800, textDecoration: "none" }}>Open →</a>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

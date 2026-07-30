@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { FileText, Send, Hourglass, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2 } from "lucide-react";
-import { AuthModal, ResetPasswordModal, WaitlistModal, MemberPage, CommunityPage, TierBadge, TIER_RANK, TIER_LABELS, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
+import { FileText, Send, Hourglass, FolderOpen, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2 } from "lucide-react";
+import { AuthModal, ResetPasswordModal, WaitlistModal, ResourcesPage, MemberPage, CommunityPage, TierBadge, TIER_RANK, TIER_LABELS, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -583,9 +583,9 @@ function EventCard({ currentUser, eventInvited, onSignUp, setActivePage }) {
 function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const pages = member
-    ? ["home", "courses", "community", "membership", "pricing", "lunchlearn", "contact"]
+    ? ["home", "courses", "community", "resources", "membership", "pricing", "lunchlearn", "contact"]
     : ["home", "courses", "about", "pricing", "lunchlearn", "contact"];
-  const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", contact: "Contact", community: "Community", membership: "Membership" };
+  const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", contact: "Contact", community: "Community", membership: "Membership", resources: "Resources" };
   return (
     <>
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: "rgba(0,0,0,0.97)", backdropFilter: "blur(16px)", borderBottom: "1px solid #1a0000", padding: "0 clamp(16px,4vw,48px)", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
@@ -1061,6 +1061,7 @@ const plans = [
       "Development timeline templates",
       "Lunch & Learn recordings",
       "1 free work session (1 hr) + priority booking",
+      "The GroundUp Newsletter — monthly edition",
     ],
     locked: ["Advisory calls with Dr. Merritt", "Priority responses & direct messages"],
   },
@@ -1082,6 +1083,7 @@ const plans = [
       "Priority Q&A submissions",
       "1–2 small group advisory sessions/yr",
       "1 invite to exclusive networking event",
+      "The full GroundUp Newsletter — twice a month",
     ],
     locked: [],
   },
@@ -1967,7 +1969,7 @@ function AdminPanel({ onLogout }) {
       </div>
       <div style={{ display: "flex", minHeight: "calc(100vh - 60px)" }}>
         <div style={{ width: 220, background: "#100808", borderRight: "1px solid #2a1010", padding: "24px 12px", flexShrink: 0 }}>
-          {[{ id: "lunch", label: "Lunch & Learn", Icon: Calendar }, { id: "inbox", label: "Inbox", Icon: Inbox }, { id: "courses", label: "Courses", Icon: GraduationCap }, { id: "referrals", label: "Referrals", Icon: Link2 }, { id: "users", label: "Users", Icon: UsersIcon }, { id: "email", label: "Email", Icon: Send }, { id: "waitlist", label: "Waitlist", Icon: Hourglass }, { id: "revenue", label: "Revenue", Icon: DollarSign }].map(t => (
+          {[{ id: "lunch", label: "Lunch & Learn", Icon: Calendar }, { id: "inbox", label: "Inbox", Icon: Inbox }, { id: "courses", label: "Courses", Icon: GraduationCap }, { id: "referrals", label: "Referrals", Icon: Link2 }, { id: "users", label: "Users", Icon: UsersIcon }, { id: "email", label: "Email", Icon: Send }, { id: "waitlist", label: "Waitlist", Icon: Hourglass }, { id: "resources", label: "Resources", Icon: FolderOpen }, { id: "revenue", label: "Revenue", Icon: DollarSign }].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} style={{ width: "100%", textAlign: "left", background: tab === t.id ? "#1e1010" : "transparent", color: tab === t.id ? "#f0d8d8" : "#7a6060", border: tab === t.id ? "1px solid #3a1515" : "1px solid transparent", borderRadius: 8, padding: "10px 14px", marginBottom: 4, cursor: "pointer", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
               <t.Icon size={15} /><span>{t.label}</span>
               {t.id === "inbox" && unread > 0 && <span style={{ marginLeft: "auto", background: "#b80101", color: "#fff", borderRadius: 99, fontSize: 10, fontWeight: 800, padding: "1px 7px" }}>{unread}</span>}
@@ -2358,6 +2360,7 @@ function AdminPanel({ onLogout }) {
           )}
 
           {tab === "email" && <EmailTab btnRed={btnRed} btnGhost={btnGhost} inp={inp} lbl={lbl} />}\n          {tab === "waitlist" && <WaitlistTab btnRed={btnRed} btnGhost={btnGhost} inp={inp} lbl={lbl} />}
+          {tab === "resources" && <ResourcesTab btnRed={btnRed} btnGhost={btnGhost} inp={inp} lbl={lbl} />}
           {tab === "revenue" && <RevenueTab />}
 
           {tab === "users" && (
@@ -2941,6 +2944,84 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
   );
 }
 
+function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
+  const [rows, setRows] = useState(null);
+  const [form, setForm] = useState({ title: "", description: "", url: "", code: "", category: "resource", min_tier: "Premium" });
+  const [msg, setMsg] = useState(null);
+
+  const call = async (method, body) => {
+    const res = await fetch("/api/resources", {
+      method,
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + sessionStorage.getItem("adminToken") },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(d.error || "Request failed");
+    return d;
+  };
+  const load = () => call("GET").then(d => setRows(d.resources)).catch(e => setMsg({ ok: false, text: e.message }));
+  useEffect(() => { load(); }, []);
+  const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 4000); };
+
+  const add = async () => {
+    if (!form.title) { flash(false, "Title required."); return; }
+    try { await call("POST", form); setForm({ title: "", description: "", url: "", code: "", category: form.category, min_tier: form.min_tier }); flash(true, "Added."); await load(); } catch (e) { flash(false, e.message); }
+  };
+  const patch = async (id, p) => { try { await call("PATCH", { id, ...p }); await load(); } catch (e) { flash(false, e.message); } };
+  const remove = async (id) => { if (!window.confirm("Delete this resource?")) return; try { await call("DELETE", { id }); await load(); } catch (e) { flash(false, e.message); } };
+
+  const CAT_LABEL = { resource: "Resource", template: "Template", partner: "Partner (NREUV network)" };
+  if (!rows) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
+
+  return (
+    <div style={{ maxWidth: 760 }}>
+      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Resources & Templates</h2>
+      <p style={{ color: "#7a6060", fontSize: 13, marginBottom: 28 }}>Everything on the member Resources page is edited here — links, templates, and the Elite partner network with referral codes.</p>
+      {msg && <div style={{ background: msg.ok ? "#06170d" : "#170606", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
+
+      <div style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 28 }}>
+        <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Add Resource</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div><label style={lbl}>Title</label><input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="DakJen Creative — Marketing" style={inp} /></div>
+          <div><label style={lbl}>Link</label><input value={form.url} onChange={e => setForm({ ...form, url: e.target.value })} placeholder="https://…" style={inp} /></div>
+          <div><label style={lbl}>Referral / coupon code (optional)</label><input value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} placeholder="GROUNDUP20" style={inp} /></div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div><label style={lbl}>Section</label>
+              <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value, min_tier: e.target.value === "partner" ? "Elite" : form.min_tier })} style={{ ...inp, marginBottom: 0 }}>
+                <option value="resource">Resource</option><option value="template">Template</option><option value="partner">Partner</option>
+              </select>
+            </div>
+            <div><label style={lbl}>Unlocks at</label>
+              <select value={form.min_tier} onChange={e => setForm({ ...form, min_tier: e.target.value })} style={{ ...inp, marginBottom: 0 }}>
+                <option value="Premium">Premium</option><option value="Elite">Elite</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <label style={{ ...lbl, marginTop: 12 }}>Description</label>
+        <input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="What it is and why members should care" style={inp} />
+        <button onClick={add} style={{ ...btnRed, marginTop: 14 }}>Add</button>
+      </div>
+
+      {rows.length === 0 ? (
+        <div style={{ background: "#120a0a", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#5a4040", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No resources yet — add your first one above.</div>
+      ) : rows.map(r => (
+        <div key={r.id} style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 180 }}>
+            <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{r.title}</div>
+            <div style={{ color: "#8a6060", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{r.url || "no link"}{r.code ? ` · code ${r.code}` : ""}</div>
+          </div>
+          <span style={{ color: "#8a7070", fontSize: 10, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{CAT_LABEL[r.category]}</span>
+          <select value={r.min_tier} onChange={e => patch(r.id, { min_tier: e.target.value })} style={{ background: "#120a0a", color: "#e0c4c4", border: "1px solid #2a1010", borderRadius: 6, padding: "5px 8px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 11, cursor: "pointer", outline: "none" }}>
+            <option value="Premium">Premium</option><option value="Elite">Elite</option>
+          </select>
+          <button onClick={() => remove(r.id)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Delete</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function EmailTab({ btnRed, btnGhost, inp, lbl }) {
   const AUDIENCES = [
     { id: "all", label: "Everyone" },
@@ -3385,6 +3466,7 @@ export default function App() {
       <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => openSignup("Free")} member={member} />
       {activePage === "home" && <HomePage setActivePage={navigateTo} onSignUp={openSignup} currentUser={currentUser} eventInvited={eventInvited} />}
       {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} /></div>}
+      {activePage === "resources" && <ResourcesPage member={member} onUpgrade={() => navigateTo("pricing")} />}
       {activePage === "membership" && <MemberPage member={member} setActivePage={navigateTo} onSignIn={() => openSignup("Free")} onSignOut={() => { clearMember(); setMember(null); sessionStorage.removeItem("currentUser"); setCurrentUser(null); navigateTo("home"); }} />}
       {activePage === "community" && <CommunityPage member={member} isAdmin={member?.role === "admin"} onSignIn={() => member ? navigateTo("pricing") : openSignup("Basic")} />}
       {activePage === "about" && <AboutPage setActivePage={navigateTo} />}
