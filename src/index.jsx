@@ -601,8 +601,9 @@ function GULogo({ size = 40 }) {
       {win(14, 23)} {win(21.5, 23)} {win(29, 23)}
       {win(14, 32)} {win(21.5, 32)}
       {win(14, 41)}
-      {/* red door up the stoop */}
-      <path d="M28.5 51 V37.5 a3.2 3.2 0 0 1 6.4 0 V51" fill="#b80101" stroke={w} strokeWidth="1.6" />
+      {/* arched door up the stoop */}
+      <path d="M28.5 51 V37.5 a3.2 3.2 0 0 1 6.4 0 V51" fill="none" stroke={w} strokeWidth="1.8" />
+      <path d="M31.7 44 v3" stroke={w} strokeWidth="1.4" strokeLinecap="round" />
       {/* the stoop — steps rising from the ground */}
       <path d="M21 51 h3.5 v-2.6 h3.5 v-2.6 h2.5" stroke={w} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       {/* ground */}
