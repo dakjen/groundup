@@ -202,7 +202,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
   }
   const rank = TIER_RANK[member.tier] ?? 0;
   return (
-    <div style={{ background: "#000", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
+    <div style={{ background: "#17120c", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16, marginBottom: 40 }}>
           <div>
@@ -424,9 +424,9 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
   const canPost = canEngage && active && (!active.admin_only_post || isAdmin);
 
   return (
-    <div style={{ background: "#000", minHeight: "100vh", paddingTop: 64, display: "flex", height: "100vh", boxSizing: "border-box" }}>
+    <div style={{ background: "#17120c", paddingTop: 64, display: "flex", height: "100vh", boxSizing: "border-box", overflow: "hidden", position: "fixed", inset: 0 }}>
       {/* Channel sidebar */}
-      <div className="community-sidebar" style={{ width: 240, flexShrink: 0, borderRight: "1px solid #1a0000", background: "#070303", padding: "24px 12px", overflowY: "auto", display: sidebarOpen ? "block" : undefined }}>
+      <div className="community-sidebar" style={{ width: 240, flexShrink: 0, borderRight: "1px solid #2c2214", background: "#1d1610", padding: "24px 12px", overflowY: "auto", display: sidebarOpen ? "block" : undefined }}>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "0 12px", marginBottom: 14 }}>Channels</div>
         {channels.map(c => (
           <button key={c.id} onClick={() => { setActive(c); setDmOpen(false); setSidebarOpen(false); }}
@@ -751,7 +751,7 @@ export function ResourcesPage({ member, onUpgrade }) {
   ];
 
   return (
-    <div style={{ background: "#000", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
+    <div style={{ background: "#17120c", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Member Library</div>
         <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "#f5e8e8", marginBottom: 40 }}>Resources & Templates</h1>

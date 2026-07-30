@@ -54,6 +54,7 @@ export default async function handler(req, res) {
     if (req.method === 'GET' && req.query.admin === '1') {
       if (!admin) return res.status(401).json({ error: 'Unauthorized' });
       const [linkRow] = await sql`SELECT value FROM settings WHERE key = 'lnl_link'`;
+      const [recRow] = await sql`SELECT value FROM settings WHERE key = 'lnl_recordings'`;
       const coupons = await sql`SELECT * FROM coupons WHERE kind = 'lnl_comp' ORDER BY created_at DESC LIMIT 100`;
       const requests = await sql`
         SELECT r.id, r.body, r.created_at, u.name, u.email
@@ -64,7 +65,7 @@ export default async function handler(req, res) {
         FROM entitlements e JOIN users u ON u.id = e.user_id
         WHERE e.course_id = 'lunchlearn' AND (e.expires_at IS NULL OR e.expires_at > NOW())
         ORDER BY e.created_at DESC LIMIT 200`;
-      return res.json({ link: linkRow?.value || '', coupons, requests, attendees });
+      return res.json({ link: linkRow?.value || '', recordings: recRow?.value ? JSON.parse(recRow.value) : [], coupons, requests, attendees });
     }
 
     // ── Member: my Lunch & Learn status ──
@@ -78,10 +79,16 @@ export default async function handler(req, res) {
         link = linkRow?.value || null;
       }
       const [reqRow] = session.uid ? await sql`SELECT id FROM lnl_requests WHERE user_id = ${session.uid} LIMIT 1` : [];
+      let recordings = [];
+      if (access || admin) {
+        const [recRow] = await sql`SELECT value FROM settings WHERE key = 'lnl_recordings'`;
+        recordings = recRow?.value ? JSON.parse(recRow.value) : [];
+      }
       return res.json({
         active: !!access || !!admin,
         expires_at: access?.expires_at || null,
         link,
+        recordings,
         discount_until: user?.lnl_discount_until || null,
         has_request: !!reqRow,
       });
@@ -109,6 +116,29 @@ export default async function handler(req, res) {
         ON CONFLICT (code) DO NOTHING RETURNING *`;
       if (!coupon) return res.status(409).json({ error: 'That code already exists' });
       return res.status(201).json({ coupon });
+    }
+
+    if (action === 'add_recording') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const { title, url, date, description } = req.body;
+      if (!title || !url) return res.status(400).json({ error: 'Title and video URL required' });
+      const yt = String(url).match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{6,})/);
+      if (!yt) return res.status(400).json({ error: 'Use a YouTube link (unlisted videos work great)' });
+      const [recRow] = await sql`SELECT value FROM settings WHERE key = 'lnl_recordings'`;
+      const recs = recRow?.value ? JSON.parse(recRow.value) : [];
+      recs.unshift({ id: String(Date.now()), title: String(title).slice(0, 200), videoId: yt[1], date: date || '', description: (description || '').slice(0, 500) });
+      const val = JSON.stringify(recs.slice(0, 200));
+      await sql`INSERT INTO settings (key, value) VALUES ('lnl_recordings', ${val}) ON CONFLICT (key) DO UPDATE SET value = ${val}`;
+      return res.status(201).json({ success: true, recordings: recs });
+    }
+
+    if (action === 'remove_recording') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const [recRow] = await sql`SELECT value FROM settings WHERE key = 'lnl_recordings'`;
+      const recs = (recRow?.value ? JSON.parse(recRow.value) : []).filter(r => r.id !== req.body.id);
+      const val = JSON.stringify(recs);
+      await sql`INSERT INTO settings (key, value) VALUES ('lnl_recordings', ${val}) ON CONFLICT (key) DO UPDATE SET value = ${val}`;
+      return res.json({ success: true, recordings: recs });
     }
 
     if (action === 'grant') {
