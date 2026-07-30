@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { AuthModal, MemberPage, CommunityPage, TierBadge, TIER_RANK, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -300,7 +301,31 @@ const miniCourses = [
 
 // ─── MINI COURSE PAGE ───────────────────────────────────────────────────────
 
-function MiniCoursePage({ course, onBack }) {
+function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
+  // Paid members (Basic+) get every lesson. Free members get ONE lesson total across
+  // all courses: the first they open is claimed server-side and everything else locks.
+  const memberRank = member ? (TIER_RANK[member.tier] ?? 0) : 0;
+  const freeKey = member?.free_lesson_key || null;
+  const lessonUnlocked = (i) => memberRank >= 1 || (freeKey ? freeKey === `${course.id}:${i}` : i === 0);
+  const openLesson = async (i) => {
+    if (memberRank >= 1) return setActiveLesson(i);
+    const key = `${course.id}:${i}`;
+    if (freeKey === key) return setActiveLesson(i);
+    if (!freeKey && i === 0) {
+      try {
+        const res = await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${getMemberToken()}` }, body: JSON.stringify({ action: "claim_free_lesson", key }) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "claim failed");
+        saveMember(data.user);
+        onMemberUpdate && onMemberUpdate(data.user);
+        setActiveLesson(i);
+      } catch {
+        onUpgrade && onUpgrade();
+      }
+      return;
+    }
+    onUpgrade && onUpgrade();
+  };
   const [activeLesson, setActiveLesson] = useState(null);
   const [lessonPdfs, setLessonPdfs] = useState({});
   const [lessonVideos, setLessonVideos] = useState({});
@@ -422,8 +447,8 @@ function MiniCoursePage({ course, onBack }) {
         <p style={{ color: "#8a7070", fontSize: 15, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif", marginBottom: 48 }}>{course.description}</p>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {course.lessons.map((lesson, i) => (
-            <div key={i} onClick={() => setActiveLesson(i)}
-              style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: "22px 28px", cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}
+            <div key={i} onClick={() => openLesson(i)}
+              style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: "22px 28px", cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, opacity: lessonUnlocked(i) ? 1 : 0.5 }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = "#b8010145"; e.currentTarget.style.background = "#130606"; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = "#1a0000"; e.currentTarget.style.background = "#0d0404"; }}>
               <div style={{ display: "flex", alignItems: "center", gap: 16, flex: 1 }}>
@@ -433,10 +458,16 @@ function MiniCoursePage({ course, onBack }) {
                   <div style={{ color: "#7a5050", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{lesson.summary ? lesson.summary.substring(0, 80) + "..." : ""}</div>
                 </div>
               </div>
-              <span style={{ color: "#b80101", fontSize: 18, flexShrink: 0 }}>→</span>
+              <span style={{ color: "#b80101", fontSize: 18, flexShrink: 0 }}>{lessonUnlocked(i) ? "→" : "🔒"}</span>
             </div>
           ))}
         </div>
+        {memberRank < 1 && (
+          <div style={{ marginTop: 28, background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 14, padding: "20px 26px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
+            <div style={{ color: "#b8a060", fontSize: 14, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{freeKey ? "You've used your one free lesson. Upgrade to Basic to unlock every course." : "Your Free plan includes one lesson, total — the first one you open. Choose wisely, or go Basic for everything."}</div>
+            <button onClick={onUpgrade} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>View Plans →</button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -545,10 +576,12 @@ function EventCard({ currentUser, eventInvited, onSignUp, setActivePage }) {
 
 // ─── NAV ────────────────────────────────────────────────────────────────────
 
-function Nav({ activePage, setActivePage, onLogoClick, onSignUp }) {
+function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const pages = ["home", "courses", "about", "pricing", "lunchlearn", "contact"];
-  const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", contact: "Contact" };
+  const pages = member
+    ? ["home", "courses", "community", "membership", "lunchlearn", "contact"]
+    : ["home", "courses", "about", "pricing", "lunchlearn", "contact"];
+  const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", contact: "Contact", community: "Community", membership: "Membership" };
   return (
     <>
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: "rgba(0,0,0,0.97)", backdropFilter: "blur(16px)", borderBottom: "1px solid #1a0000", padding: "0 clamp(16px,4vw,48px)", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
@@ -564,7 +597,11 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp }) {
           {pages.map(page => (
             <button key={page} onClick={() => setActivePage(page)} style={{ background: activePage === page ? "#57040418" : "transparent", color: activePage === page ? "#b80101" : "#6a6b69", border: activePage === page ? "1px solid #57040440" : "1px solid transparent", borderRadius: 7, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }}>{pageLabels[page] || page}</button>
           ))}
-          <button onClick={onSignUp} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 7, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", marginLeft: 8 }}>Sign Up</button>
+          {member ? (
+            <button onClick={() => setActivePage("membership")} style={{ background: "transparent", color: "#f0d8d8", border: "1px solid #57040440", borderRadius: 7, padding: "8px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer", marginLeft: 8 }}>{member.name.split(" ")[0]} · {member.tier}</button>
+          ) : (
+            <button onClick={onSignUp} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 7, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", marginLeft: 8 }}>Sign In / Join</button>
+          )}
         </div>
         {/* Mobile hamburger */}
         <button onClick={() => setMenuOpen(!menuOpen)} className="mobile-menu-btn" style={{ background: "transparent", border: "1px solid #2a0000", borderRadius: 7, padding: "8px 10px", cursor: "pointer", display: "none", flexDirection: "column", gap: 4 }}>
@@ -579,7 +616,11 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp }) {
           {pages.map(page => (
             <button key={page} onClick={() => { setActivePage(page); setMenuOpen(false); }} style={{ background: activePage === page ? "#57040418" : "transparent", color: activePage === page ? "#b80101" : "#c8a0a0", border: activePage === page ? "1px solid #57040440" : "1px solid transparent", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>{pageLabels[page] || page}</button>
           ))}
-          <button onClick={() => { setMenuOpen(false); onSignUp(); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 15, cursor: "pointer", marginTop: 8 }}>Sign Up →</button>
+          {member ? (
+            <button onClick={() => { setMenuOpen(false); setActivePage("membership"); }} style={{ background: "transparent", color: "#f0d8d8", border: "1px solid #57040440", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 15, cursor: "pointer", marginTop: 8, textAlign: "left" }}>{member.name.split(" ")[0]} · {member.tier}</button>
+          ) : (
+            <button onClick={() => { setMenuOpen(false); onSignUp(); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 15, cursor: "pointer", marginTop: 8 }}>Sign In / Join →</button>
+          )}
         </div>
       )}
       <style>{`
@@ -811,11 +852,23 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
 
 // ─── COURSES PAGE ────────────────────────────────────────────────────────────
 
-function CoursesPage() {
+function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate }) {
   const [activeMiniCourse, setActiveMiniCourse] = useState(null);
 
+  // Course content requires an account — sign in (free) to preview, paid to unlock everything.
+  if (!member) {
+    return (
+      <div style={{ background: "#000", minHeight: "100vh", padding: "160px 20px", textAlign: "center" }}>
+        <div style={{ fontSize: 40, marginBottom: 16 }}>🔒</div>
+        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 44, color: "#f5e8e8", marginBottom: 14 }}>Members Only</h1>
+        <p style={{ color: "#8a7070", fontFamily: "'DM Sans', sans-serif", fontSize: 15, maxWidth: 460, margin: "0 auto 28px", lineHeight: 1.8 }}>The GroundUp curriculum is for members. Create a free account to try one lesson on us, or go Basic for the full four-course curriculum.</p>
+        <button onClick={onSignIn} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "13px 26px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Sign In / Join Free →</button>
+      </div>
+    );
+  }
+
   if (activeMiniCourse) {
-    return <MiniCoursePage course={activeMiniCourse} onBack={() => setActiveMiniCourse(null)} />;
+    return <MiniCoursePage course={activeMiniCourse} onBack={() => setActiveMiniCourse(null)} member={member} onUpgrade={onUpgrade} onMemberUpdate={onMemberUpdate} />;
   }
 
   return (
@@ -974,7 +1027,7 @@ const plans = [
     popular: true,
     cta: "Go Premium",
     features: [
-      "Everything in Learning",
+      "Everything in Basic",
       "Development timeline templates",
       "Lunch & Learn recordings",
       "Case studies",
@@ -2432,12 +2485,22 @@ export default function App() {
   const [trialBanner, setTrialBanner] = useState(null);
   const [showSignup, setShowSignup] = useState(false);
   const [signupTier, setSignupTier] = useState("Free");
+  const [member, setMember] = useState(() => getMember());
   const [contentAgreed, setContentAgreed] = useState(() => sessionStorage.getItem("contentAgreed") === "true");
   const [showAgreement, setShowAgreement] = useState(false);
   const [pendingPage, setPendingPage] = useState(null);
   const [currentUser, setCurrentUser] = useState(() => { try { const u = sessionStorage.getItem("currentUser"); return u ? JSON.parse(u) : null; } catch { return null; } });
   const [eventInvited, setEventInvited] = useState(() => sessionStorage.getItem("eventInvited") === "true");
   const [eventInviteBanner, setEventInviteBanner] = useState(null);
+
+  // Re-validate the saved member session against the server on load
+  useEffect(() => {
+    if (!getMemberToken() || !getMember()) return;
+    fetch("/api/auth", { headers: { Authorization: `Bearer ${getMemberToken()}` } })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => { saveMember(data.user); setMember(data.user); })
+      .catch(() => { clearMember(); setMember(null); });
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -2513,7 +2576,7 @@ export default function App() {
         .content-protected iframe { pointer-events: auto; }
         .content-protected video { pointer-events: auto; }
       `}</style>
-      {showSignup && <SignupModal onClose={() => { setShowSignup(false); try { const u = sessionStorage.getItem("currentUser"); if (u) setCurrentUser(JSON.parse(u)); } catch {} }} defaultTier={signupTier} />}
+      {showSignup && <AuthModal onClose={() => setShowSignup(false)} defaultTier={signupTier} onAuthed={(user) => { setMember(user); setShowSignup(false); sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); }} />}
       {trialBanner && (
         <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "#0d0a04", border: "1px solid #b8010140", borderRadius: 14, padding: "18px 28px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 8px 40px rgba(184,1,1,0.2)", maxWidth: 520, width: "calc(100% - 48px)" }}>
           <span style={{ fontSize: 28, flexShrink: 0 }}>🎁</span>
@@ -2535,9 +2598,11 @@ export default function App() {
         </div>
       )}
       {showAgreement && <ContentAgreementModal onAgree={handleAgree} onClose={() => { setShowAgreement(false); setPendingPage(null); }} />}
-      <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => openSignup("Free")} />
+      <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => openSignup("Free")} member={member} />
       {activePage === "home" && <HomePage setActivePage={navigateTo} onSignUp={openSignup} currentUser={currentUser} eventInvited={eventInvited} />}
-      {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage /></div>}
+      {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} /></div>}
+      {activePage === "membership" && <MemberPage member={member} setActivePage={navigateTo} onSignIn={() => openSignup("Free")} onSignOut={() => { clearMember(); setMember(null); sessionStorage.removeItem("currentUser"); setCurrentUser(null); navigateTo("home"); }} />}
+      {activePage === "community" && <CommunityPage member={member} isAdmin={member?.role === "admin"} onSignIn={() => member ? navigateTo("pricing") : openSignup("Basic")} />}
       {activePage === "about" && <AboutPage setActivePage={navigateTo} />}
       {activePage === "pricing" && <PricingPage onSignUp={openSignup} />}
       {activePage === "lunchlearn" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><LunchLearnPage /></div>}

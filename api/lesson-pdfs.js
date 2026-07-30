@@ -1,12 +1,12 @@
 import { put, del } from '@vercel/blob';
+import { getAdmin } from './_utils.js';
 
 export const config = {
   api: { bodyParser: false },
 };
 
 export default async function handler(req, res) {
-  const auth = req.headers['authorization'];
-  if (!auth || auth !== `Bearer ${process.env.ADMIN_PASSWORD}`) {
+  if (!getAdmin(req)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -45,6 +45,11 @@ export default async function handler(req, res) {
       for await (const chunk of req) chunks.push(chunk);
       const { url } = JSON.parse(Buffer.concat(chunks).toString());
       if (!url) return res.status(400).json({ error: 'URL required' });
+      let parsed;
+      try { parsed = new URL(url); } catch { return res.status(400).json({ error: 'Invalid URL' }); }
+      if (!parsed.hostname.endsWith('.blob.vercel-storage.com') || !parsed.pathname.startsWith('/lesson-pdfs/')) {
+        return res.status(400).json({ error: 'URL not allowed' });
+      }
 
       await del(url);
       return res.status(200).json({ success: true });
