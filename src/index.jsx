@@ -1934,12 +1934,10 @@ function TeamPage({ children }) {
 // Attach PDFs and videos to existing lessons (courses themselves ship in code)
 function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
   const [attachments, setAttachments] = useState(null);
-  const [courseId, setCourseId] = useState(miniCourses[0].id);
-  const [lessonIdx, setLessonIdx] = useState(0);
+  const [openLesson, setOpenLesson] = useState(null); // "courseId:idx"
   const [videoUrl, setVideoUrl] = useState("");
   const [msg, setMsg] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [openLesson, setOpenLesson] = useState(null); // "courseId:idx"
 
   const authHeaders = () => ({ Authorization: "Bearer " + sessionStorage.getItem("adminToken") });
   const load = () => fetch("/api/resources?attachments=1", { headers: authHeaders() }).then(r => r.json()).then(d => setAttachments(d.attachments || {})).catch(() => setAttachments({}));
@@ -1952,10 +1950,7 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
     setAttachments(next);
   };
 
-  const course = miniCourses.find(c => c.id === courseId);
-  const key = `${courseId}:${course.lessons[lessonIdx]?.id ?? lessonIdx}`;
-
-  const uploadPdf = async (file) => {
+  const uploadPdf = async (key, file) => {
     if (!file) return;
     setUploading(true);
     try {
@@ -1965,17 +1960,17 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Upload failed");
       await save({ ...attachments, [key]: { ...(attachments[key] || {}), pdf: { url: d.url, filename: d.filename, uploadedAt: new Date().toISOString() } } });
-      flash(true, "PDF attached to the lesson.");
+      flash(true, "PDF attached — the preview below is what members see.");
     } catch (e) { flash(false, e.message); } finally { setUploading(false); }
   };
 
-  const attachVideo = async () => {
+  const attachVideo = async (key, title) => {
     const yt = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{6,})/);
     if (!yt) { flash(false, "Use a YouTube link (unlisted works great)."); return; }
     try {
-      await save({ ...attachments, [key]: { ...(attachments[key] || {}), video: { videoId: yt[1], title: course.lessons[lessonIdx].title } } });
+      await save({ ...attachments, [key]: { ...(attachments[key] || {}), video: { videoId: yt[1], title } } });
       setVideoUrl("");
-      flash(true, "Video attached to the lesson.");
+      flash(true, "Video attached — the preview below is what members see.");
     } catch (e) { flash(false, e.message); }
   };
 
@@ -1987,159 +1982,107 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
     try { await save(next); } catch (e) { flash(false, e.message); }
   };
 
-  const section = { background: "#ffffff", border: "1px solid #c9bd9e", borderRadius: 14, padding: 28, marginBottom: 20 };
   if (attachments === null) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading…</div>;
 
   return (
     <div>
       <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#161616", marginBottom: 8 }}>Courses</h2>
-      <p style={{ color: "#666666", fontSize: 13, marginBottom: 24, fontFamily: "'DM Sans', sans-serif" }}>Courses ship in code — here you attach the PDFs and videos that appear inside each lesson.</p>
-      {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#1a7a3a" : "#b80101", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
+      <p style={{ color: "#666666", fontSize: 13, marginBottom: 24, fontFamily: "'DM Sans', sans-serif" }}>Click any lesson to read its content and attach a PDF or video right there. What you attach appears instantly in the member preview — exactly as members will see it.</p>
+      {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#1a7a3a" : "#b80101", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16, position: "sticky", top: 70, zIndex: 5 }}>{msg.text}</div>}
 
-      <div style={section}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", columnGap: 20, rowGap: 18 }}>
-          <div><label style={lbl}>Course</label>
-            <select value={courseId} onChange={e => { setCourseId(e.target.value); setLessonIdx(0); }} style={{ ...inp, maxWidth: "none", marginBottom: 0, cursor: "pointer" }}>
-              {miniCourses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
-            </select>
+      {miniCourses.map(c => (
+        <div key={c.id} style={{ background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 14, padding: "24px 28px", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8, flexWrap: "wrap" }}>
+            <span style={{ background: "#b8010112", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "2px 9px", fontSize: 10, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "1px" }}>{c.stage}</span>
+            <span style={{ color: "#9a9a9a", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{c.lessons.length} lessons · {c.duration}</span>
           </div>
-          <div><label style={lbl}>Lesson</label>
-            <select value={lessonIdx} onChange={e => setLessonIdx(Number(e.target.value))} style={{ ...inp, maxWidth: "none", marginBottom: 0, cursor: "pointer" }}>
-              {course.lessons.map((l, i) => <option key={i} value={i}>{i + 1}. {l.title}</option>)}
-            </select>
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 20, marginTop: 18, flexWrap: "wrap" }}>
-          <div style={{ flex: 1, minWidth: 240 }}>
-            <label style={lbl}>Lesson PDF</label>
-            {attachments[key]?.pdf ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <FileText size={14} color="#b80101" />
-                <span style={{ color: "#161616", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis" }}>{attachments[key].pdf.filename}</span>
-                <button onClick={() => removeAttachment(key, "pdf")} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px", color: "#b80101", borderColor: "#b8010140" }}>Remove</button>
-              </div>
-            ) : (
-              <label style={{ ...btnGhost, display: "inline-block", cursor: "pointer" }}>
-                {uploading ? "Uploading…" : "Upload PDF"}
-                <input type="file" accept="application/pdf" style={{ display: "none" }} onChange={e => uploadPdf(e.target.files[0])} />
-              </label>
-            )}
-          </div>
-          <div style={{ flex: 1, minWidth: 240 }}>
-            <label style={lbl}>Lesson video (YouTube)</label>
-            {attachments[key]?.video ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <Video size={14} color="#b80101" />
-                <span style={{ color: "#161616", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>Attached</span>
-                <button onClick={() => removeAttachment(key, "video")} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px", color: "#b80101", borderColor: "#b8010140" }}>Remove</button>
-              </div>
-            ) : (
-              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <input value={videoUrl} onChange={e => setVideoUrl(e.target.value)} placeholder="https://youtu.be/…" style={{ ...inp, marginBottom: 0, flex: 1 }} />
-                <button onClick={attachVideo} style={btnRed}>Attach</button>
-              </div>
-            )}
-          </div>
-        </div>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#161616", marginBottom: 8 }}>{c.title}</div>
+          <p style={{ color: "#666666", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 14 }}>{c.description}</p>
+          <div style={{ borderTop: "1px solid #eeebe4", paddingTop: 8 }}>
+            {c.lessons.map((l, i) => {
+              const uiKey = `${c.id}:${i}`;
+              const dataKey = `${c.id}:${l.id ?? i}`;
+              const open = openLesson === uiKey;
+              const att = attachments[dataKey] || {};
+              return (
+                <div key={i} style={{ borderBottom: "1px solid #f2efe8" }}>
+                  <button onClick={() => { setOpenLesson(open ? null : uiKey); setVideoUrl(""); }} style={{ display: "flex", gap: 10, padding: "11px 4px", alignItems: "center", width: "100%", background: "transparent", border: "none", cursor: "pointer", textAlign: "left" }}>
+                    <span style={{ color: "#b80101", fontSize: 12, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>{i + 1}.</span>
+                    <span style={{ color: "#222222", fontSize: 13.5, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", flex: 1 }}>{l.title}</span>
+                    {att.pdf && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#1a7a3a", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}><FileText size={12} /> PDF</span>}
+                    {att.video && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#1a7a3a", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}><Video size={12} /> VIDEO</span>}
+                    <span style={{ color: "#9a9a9a", fontSize: 14, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>▾</span>
+                  </button>
+                  {open && (
+                    <div style={{ padding: "4px 4px 20px 26px" }}>
+                      <p style={{ color: "#444444", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8, marginBottom: 12 }}>{l.summary}</p>
+                      {l.takeaways && l.takeaways.length > 0 && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>Key takeaways</div>
+                          {l.takeaways.map((t, ti) => (
+                            <div key={ti} style={{ display: "flex", gap: 8, marginBottom: 5 }}>
+                              <span style={{ color: "#b80101", flexShrink: 0 }}>→</span>
+                              <span style={{ color: "#555555", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>{t}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {l.quote && <p style={{ borderLeft: "3px solid #b80101", paddingLeft: 12, fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 15, color: "#333333", lineHeight: 1.6, marginBottom: 14 }}>&ldquo;{l.quote}&rdquo;</p>}
 
-        {/* Live preview — how this lesson renders for members */}
-        {(attachments[key]?.pdf || attachments[key]?.video) && (
-          <div style={{ marginTop: 22, borderTop: "1px solid #eeebe4", paddingTop: 18 }}>
-            <div style={{ fontSize: 10, color: "#8a8a8a", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>Member preview — {course.lessons[lessonIdx].title}</div>
-            <div style={{ background: "#000", borderRadius: 14, padding: "22px 24px", maxWidth: 640 }}>
-              {attachments[key]?.video && (
-                <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, borderRadius: 10, overflow: "hidden", marginBottom: attachments[key]?.pdf ? 14 : 0 }}>
-                  <iframe src={`https://www.youtube.com/embed/${attachments[key].video.videoId}`} title="Lesson video preview" allowFullScreen style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }} />
-                </div>
-              )}
-              {attachments[key]?.pdf && (
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                    <FileText size={16} color="#b80101" />
-                    <span style={{ color: "#f0d8d8", fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{attachments[key].pdf.filename}</span>
-                    <span style={{ color: "#8a7070", fontSize: 10, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>View only</span>
-                  </div>
-                  <iframe src={attachments[key].pdf.url + "#toolbar=0"} title="Lesson PDF preview" style={{ width: "100%", height: 280, border: "1px solid #1a0000", borderRadius: 8, background: "#fff" }} />
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+                      {/* Attach panel — right where you're looking */}
+                      <div style={{ background: "#f7f5f0", border: "1px solid #e5e0d5", borderRadius: 12, padding: "18px 20px", marginTop: 6 }}>
+                        <div style={{ fontSize: 10, color: "#8a8a8a", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Attach to this lesson</div>
+                        <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
+                          {att.pdf ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <FileText size={14} color="#1a7a3a" />
+                              <span style={{ color: "#222222", fontSize: 13, fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>{att.pdf.filename}</span>
+                              <button onClick={() => removeAttachment(dataKey, "pdf")} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px", color: "#b80101", borderColor: "#b8010140" }}>Remove</button>
+                            </div>
+                          ) : (
+                            <label style={{ ...btnRed, cursor: "pointer", display: "inline-block" }}>
+                              {uploading ? "Uploading…" : "Upload lesson PDF"}
+                              <input type="file" accept="application/pdf" style={{ display: "none" }} onChange={e => uploadPdf(dataKey, e.target.files[0])} />
+                            </label>
+                          )}
+                          {att.video ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <Video size={14} color="#1a7a3a" />
+                              <span style={{ color: "#222222", fontSize: 13, fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>Video attached</span>
+                              <button onClick={() => removeAttachment(dataKey, "video")} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px", color: "#b80101", borderColor: "#b8010140" }}>Remove</button>
+                            </div>
+                          ) : (
+                            <div style={{ display: "flex", gap: 8, alignItems: "center", flex: 1, minWidth: 280 }}>
+                              <input value={videoUrl} onChange={e => setVideoUrl(e.target.value)} placeholder="Paste a YouTube link (unlisted works)" style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1 }} />
+                              <button onClick={() => attachVideo(dataKey, l.title)} style={btnRed}>Attach video</button>
+                            </div>
+                          )}
+                        </div>
 
-      {/* Course overviews — the written content at a glance */}
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 10, color: "#8a8a8a", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", margin: "8px 0 14px" }}>The Curriculum</div>
-        {miniCourses.map(c => (
-          <div key={c.id} style={{ background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 14, padding: "24px 28px", marginBottom: 14 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8, flexWrap: "wrap" }}>
-              <span style={{ background: "#b8010112", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "2px 9px", fontSize: 10, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "1px" }}>{c.stage}</span>
-              <span style={{ color: "#9a9a9a", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{c.lessons.length} lessons · {c.duration}</span>
-            </div>
-            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#161616", marginBottom: 8 }}>{c.title}</div>
-            <p style={{ color: "#666666", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 14 }}>{c.description}</p>
-            <div style={{ borderTop: "1px solid #eeebe4", paddingTop: 8 }}>
-              {c.lessons.map((l, i) => {
-                const k = `${c.id}:${i}`;
-                const open = openLesson === k;
-                const att = attachments[`${c.id}:${l.id ?? i}`] || {};
-                return (
-                  <div key={i} style={{ borderBottom: "1px solid #f2efe8" }}>
-                    <button onClick={() => setOpenLesson(open ? null : k)} style={{ display: "flex", gap: 10, padding: "10px 4px", alignItems: "center", width: "100%", background: "transparent", border: "none", cursor: "pointer", textAlign: "left" }}>
-                      <span style={{ color: "#b80101", fontSize: 12, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>{i + 1}.</span>
-                      <span style={{ color: "#222222", fontSize: 13.5, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", flex: 1 }}>{l.title}</span>
-                      {att.pdf && <FileText size={13} color="#8a8a8a" />}
-                      {att.video && <Video size={13} color="#8a8a8a" />}
-                      <span style={{ color: "#9a9a9a", fontSize: 14, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>▾</span>
-                    </button>
-                    {open && (
-                      <div style={{ padding: "4px 4px 18px 26px" }}>
-                        <p style={{ color: "#444444", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8, marginBottom: 12 }}>{l.summary}</p>
-                        {l.takeaways && l.takeaways.length > 0 && (
-                          <div style={{ marginBottom: 12 }}>
-                            <div style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>Key takeaways</div>
-                            {l.takeaways.map((t, ti) => (
-                              <div key={ti} style={{ display: "flex", gap: 8, marginBottom: 5 }}>
-                                <span style={{ color: "#b80101", flexShrink: 0 }}>→</span>
-                                <span style={{ color: "#555555", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>{t}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        {l.quote && <p style={{ borderLeft: "3px solid #b80101", paddingLeft: 12, fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 15, color: "#333333", lineHeight: 1.6, marginBottom: 10 }}>&ldquo;{l.quote}&rdquo;</p>}
-                        {l.actionItem && (
-                          <div style={{ background: "#faf6ec", border: "1px solid #e8dfc8", borderRadius: 8, padding: "10px 14px" }}>
-                            <span style={{ fontSize: 9, color: "#8a6a20", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginRight: 8 }}>Action item</span>
-                            <span style={{ color: "#555555", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>{l.actionItem}</span>
+                        {(att.pdf || att.video) && (
+                          <div style={{ marginTop: 16 }}>
+                            <div style={{ fontSize: 10, color: "#8a8a8a", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Member preview</div>
+                            <div style={{ background: "#000", borderRadius: 12, padding: "18px 20px", maxWidth: 620 }}>
+                              {att.video && (
+                                <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, borderRadius: 10, overflow: "hidden", marginBottom: att.pdf ? 14 : 0 }}>
+                                  <iframe src={`https://www.youtube.com/embed/${att.video.videoId}`} title="Lesson video preview" allowFullScreen style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }} />
+                                </div>
+                              )}
+                              {att.pdf && (
+                                <iframe src={att.pdf.url + "#toolbar=0"} title="Lesson PDF preview" style={{ width: "100%", height: 260, border: "1px solid #1a0000", borderRadius: 8, background: "#fff" }} />
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        ))}
-      </div>
-
-      {Object.keys(attachments).length > 0 && (
-        <div style={section}>
-          <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>Everything attached</div>
-          {Object.entries(attachments).map(([k, v]) => {
-            const [cid, lid] = k.split(":");
-            const c = miniCourses.find(x => x.id === cid);
-            const lesson = c?.lessons.find((l, i) => String(l.id ?? i) === lid);
-            return (
-              <div key={k} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #d5c9aa", flexWrap: "wrap" }}>
-                <span style={{ color: "#161616", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, flex: 1, minWidth: 200 }}>{c?.title} — {lesson?.title || `Lesson ${lid}`}</span>
-                {v.pdf && <span style={{ color: "#666666", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>PDF</span>}
-                {v.video && <span style={{ color: "#666666", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>Video</span>}
-              </div>
-            );
-          })}
         </div>
-      )}
+      ))}
     </div>
   );
 }
