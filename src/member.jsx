@@ -173,19 +173,19 @@ function SessionCreditsCard({ member }) {
   };
 
   return (
-    <div style={{ background: "#faf8f5", border: "1px solid #1e0000", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
+    <div style={{ background: "#fafafa", border: "1px solid #1e0000", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
         <div>
           <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>Your 1-on-1 Sessions</div>
-          <div style={{ color: "#2a231d", fontWeight: 800, fontSize: 16, fontFamily: font }}>{sessions.remaining} of {sessions.total} remaining</div>
-          <div style={{ color: "#6b6259", fontSize: 13, fontFamily: font, marginTop: 4 }}>{member.tier === "Elite" ? "Advisory calls with Dr. Merritt, included in Elite." : "Your free work session, included in Premium."}</div>
+          <div style={{ color: "#222222", fontWeight: 800, fontSize: 16, fontFamily: font }}>{sessions.remaining} of {sessions.total} remaining</div>
+          <div style={{ color: "#666666", fontSize: 13, fontFamily: font, marginTop: 4 }}>{member.tier === "Elite" ? "Advisory calls with Dr. Merritt, included in Elite." : "Your free work session, included in Premium."}</div>
         </div>
         {sessions.remaining > 0 && !open && <button style={btnRed} onClick={() => setOpen(true)}>Request a Session</button>}
       </div>
       {open && (
         <form onSubmit={request} style={{ marginTop: 16 }}>
           <label style={lbl}>What do you want to cover? (optional)</label>
-          <textarea style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#1c1613", resize: "vertical" }} rows={2} value={note} onChange={e => setNote(e.target.value)} maxLength={2000} placeholder="Your deal, your question, where you're stuck…" />
+          <textarea style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#161616", resize: "vertical" }} rows={2} value={note} onChange={e => setNote(e.target.value)} maxLength={2000} placeholder="Your deal, your question, where you're stuck…" />
           <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
             <button type="submit" disabled={busy} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>{busy ? "Sending…" : "Send Request"}</button>
             <button type="button" onClick={() => setOpen(false)} style={btnGhost}>Cancel</button>
@@ -216,7 +216,7 @@ function ChangePasswordCard() {
   };
 
   return (
-    <div style={{ background: "#faf8f5", border: "1px solid #1e0000", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
+    <div style={{ background: "#fafafa", border: "1px solid #1e0000", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
       <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 16 }}>Change password</div>
       <form onSubmit={submit} style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end" }}>
         <div style={{ flex: 1, minWidth: 180 }}>
@@ -238,20 +238,20 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
   // Team accounts have no tier or plan — just a clean account view
   if (member && member.role === "admin") {
     return (
-      <div style={{ background: "#f6f4f0", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
+      <div style={{ background: "#f5f5f5", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
         <div style={{ maxWidth: 700, margin: "0 auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16, marginBottom: 36 }}>
             <div>
               <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>GroundUp Team</div>
-              <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,44px)", color: "#1c1613", lineHeight: 1.1, marginBottom: 10 }}>{member.name}</h1>
+              <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,44px)", color: "#161616", lineHeight: 1.1, marginBottom: 10 }}>{member.name}</h1>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ background: "#b80101", color: "#fff", borderRadius: 4, padding: "2px 9px", fontSize: 10, fontWeight: 800, fontFamily: font, letterSpacing: "1px" }}>{member.badge === "drmerritt" ? "DR. MERRITT" : "TEAM"}</span>
-                <span style={{ color: "#8d847a", fontSize: 13, fontFamily: font }}>{member.email}</span>
+                <span style={{ color: "#8a8a8a", fontSize: 13, fontFamily: font }}>{member.email}</span>
               </div>
             </div>
             <button style={btnGhost} onClick={onSignOut}>Sign out</button>
           </div>
-          <p style={{ color: "#6b6259", fontSize: 14, fontFamily: font, lineHeight: 1.8, marginBottom: 28 }}>Your tools live in the nav: the Community (you post as the team), Resources and Lunch & Learns are your editors, and everything else is under GroundUp Admin.</p>
+          <p style={{ color: "#666666", fontSize: 14, fontFamily: font, lineHeight: 1.8, marginBottom: 28 }}>Your tools live in the nav: the Community (you post as the team), Resources and Lunch & Learns are your editors, and everything else is under GroundUp Admin.</p>
           <ChangePasswordCard />
         </div>
       </div>
@@ -259,24 +259,24 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
   }
   if (!member) {
     return (
-      <div style={{ background: "#f6f4f0", minHeight: "100vh", padding: "140px 20px", textAlign: "center" }}>
-        <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "#1c1613", marginBottom: 14 }}>Membership</h1>
-        <p style={{ color: "#6b6259", fontFamily: font, fontSize: 15, marginBottom: 28 }}>Sign in or create an account to see your membership.</p>
+      <div style={{ background: "#f5f5f5", minHeight: "100vh", padding: "140px 20px", textAlign: "center" }}>
+        <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "#161616", marginBottom: 14 }}>Membership</h1>
+        <p style={{ color: "#666666", fontFamily: font, fontSize: 15, marginBottom: 28 }}>Sign in or create an account to see your membership.</p>
         <button style={btnRed} onClick={onSignIn}>Sign In / Join →</button>
       </div>
     );
   }
   const rank = TIER_RANK[member.tier] ?? 0;
   return (
-    <div style={{ background: "#f6f4f0", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
+    <div style={{ background: "#f5f5f5", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16, marginBottom: 40 }}>
           <div>
             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Your Membership</div>
-            <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "#1c1613", lineHeight: 1.1, marginBottom: 10 }}>Welcome, {member.name.split(" ")[0]}.</h1>
+            <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "#161616", lineHeight: 1.1, marginBottom: 10 }}>Welcome, {member.name.split(" ")[0]}.</h1>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <TierBadge tier={member.tier} />
-              <span style={{ color: "#8d847a", fontSize: 13, fontFamily: font }}>{member.email}</span>
+              <span style={{ color: "#8a8a8a", fontSize: 13, fontFamily: font }}>{member.email}</span>
             </div>
           </div>
           <button style={btnGhost} onClick={onSignOut}>Sign out</button>
@@ -285,31 +285,31 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, marginBottom: 40 }}>
           <div onClick={() => setActivePage("courses")} style={{ background: "#ffffff", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: "pointer" }}>
             <div style={{ marginBottom: 12 }}><BookOpen size={24} color="#b80101" /></div>
-            <div style={{ color: "#2a231d", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Your Courses</div>
-            <p style={{ color: "#6b6259", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 1 ? "Full access to all 4 courses and every lesson." : member.free_lesson_key ? "You've used your free lesson. Upgrade for the full curriculum." : "One free lesson included. Upgrade for the full curriculum."}</p>
+            <div style={{ color: "#222222", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Your Courses</div>
+            <p style={{ color: "#666666", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 1 ? "Full access to all 4 courses and every lesson." : member.free_lesson_key ? "You've used your free lesson. Upgrade for the full curriculum." : "One free lesson included. Upgrade for the full curriculum."}</p>
           </div>
           <div onClick={() => rank >= 1 && setActivePage("community")} style={{ background: "#ffffff", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: rank >= 1 ? "pointer" : "default", opacity: rank >= 1 ? 1 : 0.55 }}>
             <div style={{ marginBottom: 12 }}><MessagesSquare size={24} color="#b80101" /></div>
-            <div style={{ color: "#2a231d", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Community {rank < 1 && <Lock size={13} style={{ display: "inline", verticalAlign: "middle" }} />}</div>
-            <p style={{ color: "#6b6259", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 2 ? "Post, reply, and network with fellow developers." : rank >= 1 ? "Read every channel. Upgrade to Premium to post and reply." : "Members-only. Upgrade to a membership to join the conversation."}</p>
+            <div style={{ color: "#222222", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Community {rank < 1 && <Lock size={13} style={{ display: "inline", verticalAlign: "middle" }} />}</div>
+            <p style={{ color: "#666666", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 2 ? "Post, reply, and network with fellow developers." : rank >= 1 ? "Read every channel. Upgrade to Premium to post and reply." : "Members-only. Upgrade to a membership to join the conversation."}</p>
           </div>
           <div onClick={() => setActivePage("lunchlearn")} style={{ background: "#ffffff", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: "pointer", opacity: rank >= 2 ? 1 : 0.55 }}>
             <div style={{ marginBottom: 12 }}><Video size={24} color="#b80101" /></div>
-            <div style={{ color: "#2a231d", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Lunch & Learns {rank < 2 && <Lock size={13} style={{ display: "inline", verticalAlign: "middle" }} />}</div>
-            <p style={{ color: "#6b6259", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 2 ? "Recordings and live session access included in your plan." : "Recordings are a Premium benefit. Live sessions open to all."}</p>
+            <div style={{ color: "#222222", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Lunch & Learns {rank < 2 && <Lock size={13} style={{ display: "inline", verticalAlign: "middle" }} />}</div>
+            <p style={{ color: "#666666", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 2 ? "Recordings and live session access included in your plan." : "Recordings are a Premium benefit. Live sessions open to all."}</p>
           </div>
           <div onClick={() => setActivePage("contact")} style={{ background: "#ffffff", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: "pointer", opacity: rank >= 3 ? 1 : 0.55 }}>
             <div style={{ marginBottom: 12 }}><Handshake size={24} color="#b80101" /></div>
-            <div style={{ color: "#2a231d", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Advisory Access {rank < 3 && <Lock size={13} style={{ display: "inline", verticalAlign: "middle" }} />}</div>
-            <p style={{ color: "#6b6259", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 3 ? "Your Elite advisory calls and priority Q&A with Dr. Merritt." : "One-on-one time with Dr. Merritt is an Elite benefit. Book single sessions anytime."}</p>
+            <div style={{ color: "#222222", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Advisory Access {rank < 3 && <Lock size={13} style={{ display: "inline", verticalAlign: "middle" }} />}</div>
+            <p style={{ color: "#666666", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 3 ? "Your Elite advisory calls and priority Q&A with Dr. Merritt." : "One-on-one time with Dr. Merritt is an Elite benefit. Book single sessions anytime."}</p>
           </div>
         </div>
 
-        <div style={{ background: "#faf8f5", border: "1px solid #1e0000", borderRadius: 16, padding: "28px 32px", marginBottom: 28 }}>
+        <div style={{ background: "#fafafa", border: "1px solid #1e0000", borderRadius: 16, padding: "28px 32px", marginBottom: 28 }}>
           <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 16 }}>What your {member.tier} plan includes</div>
           <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
             {(BENEFITS[member.tier] || []).map((b, i) => (
-              <li key={i} style={{ display: "flex", gap: 12, marginBottom: 10, color: "#4a423a", fontSize: 14, lineHeight: 1.7, fontFamily: font, fontWeight: 600 }}>
+              <li key={i} style={{ display: "flex", gap: 12, marginBottom: 10, color: "#3a3a3a", fontSize: 14, lineHeight: 1.7, fontFamily: font, fontWeight: 600 }}>
                 <span style={{ color: "#b80101" }}>→</span><span>{b}</span>
               </li>
             ))}
@@ -320,18 +320,18 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
         <ChangePasswordCard />
 
         {rank < 1 && member.lnl_discount_until && new Date(member.lnl_discount_until) > new Date() && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, background: "#faf8f5", border: "1px solid #e0c4c440", borderRadius: 14, padding: "20px 26px", marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, background: "#fafafa", border: "1px solid #e0c4c440", borderRadius: 14, padding: "20px 26px", marginBottom: 16 }}>
             <div>
-              <div style={{ color: "#8a5a5a", fontWeight: 800, fontSize: 15, fontFamily: font, marginBottom: 4 }}>Your Lunch & Learn perk: 25% off your first month</div>
-              <div style={{ color: "#6b6259", fontSize: 13, fontFamily: font }}>Become a member by {new Date(member.lnl_discount_until).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })} and mention it when you sign up.</div>
+              <div style={{ color: "#b80101", fontWeight: 800, fontSize: 15, fontFamily: font, marginBottom: 4 }}>Your Lunch & Learn perk: 25% off your first month</div>
+              <div style={{ color: "#666666", fontSize: 13, fontFamily: font }}>Become a member by {new Date(member.lnl_discount_until).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })} and mention it when you sign up.</div>
             </div>
             <button style={btnRed} onClick={() => setActivePage("pricing")}>See Memberships →</button>
           </div>
         )}
 
         {rank < 3 && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, background: "#faf8f5", border: "1px solid #2a2000", borderRadius: 14, padding: "20px 26px" }}>
-            <div style={{ color: "#6b6259", fontSize: 14, fontFamily: font, fontWeight: 600 }}>Want more access? Compare plans and upgrade anytime.</div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, background: "#fafafa", border: "1px solid #2a2000", borderRadius: 14, padding: "20px 26px" }}>
+            <div style={{ color: "#666666", fontSize: 14, fontFamily: font, fontWeight: 600 }}>Want more access? Compare plans and upgrade anytime.</div>
             <button style={btnRed} onClick={() => setActivePage("pricing")}>View Plans →</button>
           </div>
         )}
@@ -361,16 +361,16 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote }) {
   return (
     <div style={{ padding: "12px 16px", borderRadius: 10, background: m.is_admin ? "#fdf1f1" : "transparent", border: m.is_admin ? "1px solid #b8010130" : "1px solid transparent", marginBottom: 4 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-        <span style={{ color: m.is_admin ? (m.author_badge === "drmerritt" ? "#8a5a5a" : "#b80101") : "#2a231d", fontWeight: 800, fontSize: 13, fontFamily: font }}>{m.author_name || "Member"}</span>
+        <span style={{ color: m.is_admin ? (m.author_badge === "drmerritt" ? "#b80101" : "#b80101") : "#222222", fontWeight: 800, fontSize: 13, fontFamily: font }}>{m.author_name || "Member"}</span>
         {m.is_admin ? (
           m.author_badge === "drmerritt"
             ? <span style={{ background: "linear-gradient(135deg, #c9a0a0, #7a4a4a)", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, fontFamily: font, letterSpacing: "1px" }}>DR. MERRITT</span>
             : <span style={{ background: "#b80101", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, fontFamily: font, letterSpacing: "1px" }}>TEAM</span>
         ) : m.author_tier && <TierBadge tier={m.author_tier} small />}
-        <span style={{ color: "#9a918a", fontSize: 11, fontFamily: font }}>{timeAgo(m.created_at)}</span>
-        {canDelete && <button onClick={() => onDelete(m)} style={{ background: "none", border: "none", color: "#9a918a", cursor: "pointer", fontSize: 11, fontFamily: font, marginLeft: "auto" }}>delete</button>}
+        <span style={{ color: "#9a9a9a", fontSize: 11, fontFamily: font }}>{timeAgo(m.created_at)}</span>
+        {canDelete && <button onClick={() => onDelete(m)} style={{ background: "none", border: "none", color: "#9a9a9a", cursor: "pointer", fontSize: 11, fontFamily: font, marginLeft: "auto" }}>delete</button>}
       </div>
-      <div style={{ color: "#3a332c", fontSize: 14, fontFamily: font, lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{linkify(m.body)}</div>
+      <div style={{ color: "#333333", fontSize: 14, fontFamily: font, lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{linkify(m.body)}</div>
       {m.poll && m.poll_results && (
         <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6, maxWidth: 420 }}>
           {(m.poll.options || []).map((opt, i) => {
@@ -379,23 +379,23 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote }) {
             const pct = total ? Math.round((count / total) * 100) : 0;
             const mine = m.poll_results.my_vote === i;
             return (
-              <button key={i} onClick={() => onVote && onVote(m, i)} style={{ position: "relative", overflow: "hidden", textAlign: "left", background: "#f2efe9", border: mine ? "1px solid #b80101" : "1px solid #2c2214", borderRadius: 9, padding: "9px 12px", cursor: "pointer" }}>
+              <button key={i} onClick={() => onVote && onVote(m, i)} style={{ position: "relative", overflow: "hidden", textAlign: "left", background: "#f0f0f0", border: mine ? "1px solid #b80101" : "1px solid #2c2214", borderRadius: 9, padding: "9px 12px", cursor: "pointer" }}>
                 <span style={{ position: "absolute", inset: 0, width: `${pct}%`, background: mine ? "#b8010128" : "#e0c4c414" }} />
                 <span style={{ position: "relative", display: "flex", justifyContent: "space-between", gap: 10 }}>
-                  <span style={{ color: mine ? "#2a231d" : "#4a423a", fontSize: 13, fontFamily: font, fontWeight: 700 }}>{mine ? "● " : ""}{opt}</span>
-                  <span style={{ color: "#6b6259", fontSize: 12, fontFamily: font, fontWeight: 700 }}>{count} · {pct}%</span>
+                  <span style={{ color: mine ? "#222222" : "#3a3a3a", fontSize: 13, fontFamily: font, fontWeight: 700 }}>{mine ? "● " : ""}{opt}</span>
+                  <span style={{ color: "#666666", fontSize: 12, fontFamily: font, fontWeight: 700 }}>{count} · {pct}%</span>
                 </span>
                 {m.poll_results.voters && count > 0 && (
-                  <span style={{ position: "relative", display: "block", color: "#6b6259", fontSize: 11, fontFamily: font, marginTop: 3 }}>{m.poll_results.voters[i].join(", ")}</span>
+                  <span style={{ position: "relative", display: "block", color: "#666666", fontSize: 11, fontFamily: font, marginTop: 3 }}>{m.poll_results.voters[i].join(", ")}</span>
                 )}
               </button>
             );
           })}
-          <span style={{ color: "#9a918a", fontSize: 11, fontFamily: font }}>{m.poll_results.total} vote{m.poll_results.total === 1 ? "" : "s"} — tap to vote or change your vote</span>
+          <span style={{ color: "#9a9a9a", fontSize: 11, fontFamily: font }}>{m.poll_results.total} vote{m.poll_results.total === 1 ? "" : "s"} — tap to vote or change your vote</span>
         </div>
       )}
       {!inThread && (
-        <button onClick={() => onOpenThread(m)} style={{ background: "none", border: "none", color: Number(m.reply_count) > 0 ? "#b80101" : "#9a918a", cursor: "pointer", fontSize: 12, fontFamily: font, fontWeight: 700, padding: 0, marginTop: 6 }}>
+        <button onClick={() => onOpenThread(m)} style={{ background: "none", border: "none", color: Number(m.reply_count) > 0 ? "#b80101" : "#9a9a9a", cursor: "pointer", fontSize: 12, fontFamily: font, fontWeight: 700, padding: 0, marginTop: 6 }}>
           {Number(m.reply_count) > 0 ? `${m.reply_count} repl${Number(m.reply_count) === 1 ? "y" : "ies"}` : "Reply in thread"}
         </button>
       )}
@@ -538,10 +538,10 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
 
   if (!hasAccess) {
     return (
-      <div style={{ background: "#f6f4f0", minHeight: "100vh", padding: "140px 20px", textAlign: "center" }}>
+      <div style={{ background: "#f5f5f5", minHeight: "100vh", padding: "140px 20px", textAlign: "center" }}>
         <div style={{ marginBottom: 16 }}><MessagesSquare size={36} color="#b80101" style={{ display: "inline-block" }} /></div>
-        <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "#1c1613", marginBottom: 14 }}>The GroundUp Community</h1>
-        <p style={{ color: "#6b6259", fontFamily: font, fontSize: 15, maxWidth: 480, margin: "0 auto 28px", lineHeight: 1.8 }}>
+        <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "#161616", marginBottom: 14 }}>The GroundUp Community</h1>
+        <p style={{ color: "#666666", fontFamily: font, fontSize: 15, maxWidth: 480, margin: "0 auto 28px", lineHeight: 1.8 }}>
           {member ? "The community is a paid-member benefit. Upgrade to Basic or above to join channels for deals, financing, JV partnerships, and direct announcements from Dr. Merritt's team." : "Sign in with a paid membership to chat with fellow developers and hear directly from Dr. Merritt's team."}
         </p>
         <button style={btnRed} onClick={onSignIn}>{member ? "View Plans →" : "Sign In / Join →"}</button>
@@ -552,14 +552,14 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
   const canPost = canEngage && active && (!active.admin_only_post || isAdmin);
 
   return (
-    <div style={{ background: "#f6f4f0", paddingTop: 64, display: "flex", height: "100vh", boxSizing: "border-box", overflow: "hidden", position: "fixed", inset: 0 }}>
+    <div style={{ background: "#f5f5f5", paddingTop: 64, display: "flex", height: "100vh", boxSizing: "border-box", overflow: "hidden", position: "fixed", inset: 0 }}>
       {/* Channel sidebar */}
-      <div className="community-sidebar" style={{ width: 240, flexShrink: 0, borderRight: "1px solid #2c2214", background: "#efece6", padding: "24px 12px", overflowY: "auto", display: sidebarOpen ? "block" : undefined }}>
+      <div className="community-sidebar" style={{ width: 240, flexShrink: 0, borderRight: "1px solid #2c2214", background: "#ececec", padding: "24px 12px", overflowY: "auto", display: sidebarOpen ? "block" : undefined }}>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "0 12px", marginBottom: 14 }}>Channels</div>
         {channels.map(c => (
           <button key={c.id} onClick={() => { setActive(c); setDmOpen(false); setSidebarOpen(false); }}
             style={{ display: "block", width: "100%", textAlign: "left", background: !dmOpen && active?.id === c.id ? "#b8010118" : "transparent", border: "none", borderRadius: 8, padding: "9px 12px", cursor: "pointer", marginBottom: 2 }}>
-            <span style={{ color: !dmOpen && active?.id === c.id ? "#2a231d" : "#6b6259", fontWeight: 700, fontSize: 13.5, fontFamily: font }}>
+            <span style={{ color: !dmOpen && active?.id === c.id ? "#222222" : "#666666", fontWeight: 700, fontSize: 13.5, fontFamily: font }}>
               {c.admin_only_post ? <Megaphone size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 2 }} /> : "#"} {c.name}
             </span>
             {c.min_tier !== "Basic" && <span style={{ marginLeft: 6, fontSize: 9, color: TIER_COLORS[c.min_tier], fontFamily: font, fontWeight: 800 }}>{(TIER_LABELS[c.min_tier] || c.min_tier).toUpperCase()}</span>}
@@ -571,14 +571,14 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
             {!isAdmin && (
               <button onClick={() => { setDmOpen(true); setSidebarOpen(false); }}
                 style={{ display: "block", width: "100%", textAlign: "left", background: dmOpen ? "#b8010118" : "transparent", border: "none", borderRadius: 8, padding: "9px 12px", cursor: "pointer" }}>
-                <span style={{ color: dmOpen ? "#2a231d" : "#6b6259", fontWeight: 700, fontSize: 13.5, fontFamily: font }}><Mail size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> Dr. Merritt & Team</span>
+                <span style={{ color: dmOpen ? "#222222" : "#666666", fontWeight: 700, fontSize: 13.5, fontFamily: font }}><Mail size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> Dr. Merritt & Team</span>
               </button>
             )}
-            {isAdmin && dmThreads.length === 0 && <div style={{ color: "#9a918a", fontSize: 12, fontFamily: font, padding: "0 12px" }}>No member DMs yet.</div>}
+            {isAdmin && dmThreads.length === 0 && <div style={{ color: "#9a9a9a", fontSize: 12, fontFamily: font, padding: "0 12px" }}>No member DMs yet.</div>}
             {isAdmin && dmThreads.map(t => (
               <button key={t.id} onClick={() => { setDmTarget(t); setDmOpen(true); setSidebarOpen(false); }}
                 style={{ display: "block", width: "100%", textAlign: "left", background: dmOpen && dmTarget?.id === t.id ? "#b8010118" : "transparent", border: "none", borderRadius: 8, padding: "9px 12px", cursor: "pointer", marginBottom: 2 }}>
-                <span style={{ color: dmOpen && dmTarget?.id === t.id ? "#2a231d" : "#6b6259", fontWeight: 700, fontSize: 13.5, fontFamily: font }}><Mail size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> {t.name}</span>
+                <span style={{ color: dmOpen && dmTarget?.id === t.id ? "#222222" : "#666666", fontWeight: 700, fontSize: 13.5, fontFamily: font }}><Mail size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> {t.name}</span>
                 <span style={{ marginLeft: 6, fontSize: 9, color: TIER_COLORS[t.tier], fontFamily: font, fontWeight: 800 }}>{(TIER_LABELS[t.tier] || t.tier).toUpperCase()}</span>
               </button>
             ))}
@@ -587,18 +587,18 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
         {isAdmin && (
           <div style={{ margin: "18px 12px 0" }}>
             {!newChanOpen ? (
-              <button onClick={() => setNewChanOpen(true)} style={{ width: "100%", background: "transparent", border: "1px dashed #3a2c1a", borderRadius: 8, padding: "9px 12px", color: "#6b6259", fontSize: 12.5, fontFamily: font, fontWeight: 700, cursor: "pointer", textAlign: "left" }}>+ New channel</button>
+              <button onClick={() => setNewChanOpen(true)} style={{ width: "100%", background: "transparent", border: "1px dashed #3a2c1a", borderRadius: 8, padding: "9px 12px", color: "#666666", fontSize: 12.5, fontFamily: font, fontWeight: 700, cursor: "pointer", textAlign: "left" }}>+ New channel</button>
             ) : (
-              <div style={{ background: "#f2efe9", border: "1px solid #2c2214", borderRadius: 10, padding: 12 }}>
-                <input style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#1c1613", marginBottom: 8, fontSize: 13, padding: "9px 11px" }} value={newChan.name} onChange={e => setNewChan({ ...newChan, name: e.target.value })} placeholder="Channel name" maxLength={40} />
-                <select style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#1c1613", marginBottom: 8, fontSize: 13, padding: "9px 11px", cursor: "pointer" }} value={newChan.min_tier} onChange={e => setNewChan({ ...newChan, min_tier: e.target.value })}>
+              <div style={{ background: "#f0f0f0", border: "1px solid #2c2214", borderRadius: 10, padding: 12 }}>
+                <input style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#161616", marginBottom: 8, fontSize: 13, padding: "9px 11px" }} value={newChan.name} onChange={e => setNewChan({ ...newChan, name: e.target.value })} placeholder="Channel name" maxLength={40} />
+                <select style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#161616", marginBottom: 8, fontSize: 13, padding: "9px 11px", cursor: "pointer" }} value={newChan.min_tier} onChange={e => setNewChan({ ...newChan, min_tier: e.target.value })}>
                   <option value="Basic">All members</option>
                   <option value="Premium">Premium+</option>
                   <option value="Elite">Elite only</option>
                 </select>
                 <label style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10, cursor: "pointer" }}>
                   <input type="checkbox" checked={newChan.admin_only_post} onChange={e => setNewChan({ ...newChan, admin_only_post: e.target.checked })} />
-                  <span style={{ color: "#6b6259", fontSize: 12, fontFamily: font, fontWeight: 600 }}>Only team can post</span>
+                  <span style={{ color: "#666666", fontSize: 12, fontFamily: font, fontWeight: 600 }}>Only team can post</span>
                 </label>
                 <div style={{ display: "flex", gap: 6 }}>
                   <button onClick={createChannel} style={{ ...btnRed, flex: 1, padding: "9px 10px", fontSize: 12 }}>Create</button>
@@ -613,44 +613,44 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
 
       {/* Main feed */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        {loading ? <div style={{ padding: 40, color: "#6b6259", fontFamily: font }}>Loading community…</div> : dmOpen ? (
+        {loading ? <div style={{ padding: 40, color: "#666666", fontFamily: font }}>Loading community…</div> : dmOpen ? (
           <>
             <div style={{ padding: "16px 24px", borderBottom: "1px solid #1a0000", display: "flex", alignItems: "center", gap: 12 }}>
-              <button className="community-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", background: "transparent", border: "1px solid #2a0000", borderRadius: 6, color: "#6b6259", padding: "6px 10px", cursor: "pointer", fontFamily: font }}><Menu size={15} /></button>
+              <button className="community-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", background: "transparent", border: "1px solid #2a0000", borderRadius: 6, color: "#666666", padding: "6px 10px", cursor: "pointer", fontFamily: font }}><Menu size={15} /></button>
               <div>
-                <div style={{ color: "#2a231d", fontWeight: 800, fontSize: 16, fontFamily: font }}><Mail size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }} /> {isAdmin ? (dmTarget?.name || "Direct Messages") : "Dr. Merritt & Team"}</div>
-                <div style={{ color: "#8d847a", fontSize: 12, fontFamily: font }}>{isAdmin ? "Private thread with this member." : "Private line to Dr. Merritt and the GroundUp team — an Elite benefit."}</div>
+                <div style={{ color: "#222222", fontWeight: 800, fontSize: 16, fontFamily: font }}><Mail size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }} /> {isAdmin ? (dmTarget?.name || "Direct Messages") : "Dr. Merritt & Team"}</div>
+                <div style={{ color: "#8a8a8a", fontSize: 12, fontFamily: font }}>{isAdmin ? "Private thread with this member." : "Private line to Dr. Merritt and the GroundUp team — an Elite benefit."}</div>
               </div>
             </div>
             <div style={{ flex: 1, overflowY: "auto", padding: "20px 20px 12px" }}>
-              {dmMsgs.length === 0 && <div style={{ color: "#9a918a", fontFamily: font, fontSize: 14, textAlign: "center", marginTop: 60 }}>{isAdmin ? "No messages in this thread yet." : "Start the conversation — Dr. Merritt's team will respond here."}</div>}
+              {dmMsgs.length === 0 && <div style={{ color: "#9a9a9a", fontFamily: font, fontSize: 14, textAlign: "center", marginTop: 60 }}>{isAdmin ? "No messages in this thread yet." : "Start the conversation — Dr. Merritt's team will respond here."}</div>}
               {dmMsgs.map(m => (
                 <div key={m.id} style={{ display: "flex", justifyContent: m.from_admin === !isAdmin ? "flex-start" : "flex-end", marginBottom: 10 }}>
                   <div style={{ maxWidth: "78%", background: m.from_admin ? "#fdf1f1" : "#ffffff", border: m.from_admin ? "1px solid #b8010130" : "1px solid #1a0000", borderRadius: 12, padding: "10px 14px" }}>
                     {m.from_admin && <div style={{ marginBottom: 4 }}><span style={{ background: "#b80101", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, fontFamily: font, letterSpacing: "1px" }}>TEAM</span></div>}
-                    <div style={{ color: "#3a332c", fontSize: 14, fontFamily: font, lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.body}</div>
-                    <div style={{ color: "#9a918a", fontSize: 10, fontFamily: font, marginTop: 4 }}>{timeAgo(m.created_at)}</div>
+                    <div style={{ color: "#333333", fontSize: 14, fontFamily: font, lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.body}</div>
+                    <div style={{ color: "#9a9a9a", fontSize: 10, fontFamily: font, marginTop: 4 }}>{timeAgo(m.created_at)}</div>
                   </div>
                 </div>
               ))}
             </div>
             {error && <div style={{ color: "#ff6b6b", fontSize: 12, fontFamily: font, padding: "0 24px 6px" }}>{error}</div>}
             <form onSubmit={sendDm} style={{ display: "flex", gap: 10, padding: "12px 20px 20px", borderTop: "1px solid #1a0000" }}>
-              <input style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#1c1613", flex: 1 }} value={dmDraft} onChange={e => setDmDraft(e.target.value)} placeholder={isAdmin ? `Reply to ${dmTarget?.name || "member"}…` : "Message Dr. Merritt & team…"} maxLength={4000} />
+              <input style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#161616", flex: 1 }} value={dmDraft} onChange={e => setDmDraft(e.target.value)} placeholder={isAdmin ? `Reply to ${dmTarget?.name || "member"}…` : "Message Dr. Merritt & team…"} maxLength={4000} />
               <button type="submit" style={btnRed}>Send</button>
             </form>
           </>
         ) : active && (
           <>
             <div style={{ padding: "16px 24px", borderBottom: "1px solid #1a0000", display: "flex", alignItems: "center", gap: 12 }}>
-              <button className="community-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", background: "transparent", border: "1px solid #2a0000", borderRadius: 6, color: "#6b6259", padding: "6px 10px", cursor: "pointer", fontFamily: font }}><Menu size={15} /></button>
+              <button className="community-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", background: "transparent", border: "1px solid #2a0000", borderRadius: 6, color: "#666666", padding: "6px 10px", cursor: "pointer", fontFamily: font }}><Menu size={15} /></button>
               <div>
-                <div style={{ color: "#2a231d", fontWeight: 800, fontSize: 16, fontFamily: font }}>{active.admin_only_post ? <Megaphone size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> : "#"} {active.name}</div>
-                <div style={{ color: "#8d847a", fontSize: 12, fontFamily: font }}>{active.description}</div>
+                <div style={{ color: "#222222", fontWeight: 800, fontSize: 16, fontFamily: font }}>{active.admin_only_post ? <Megaphone size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> : "#"} {active.name}</div>
+                <div style={{ color: "#8a8a8a", fontSize: 12, fontFamily: font }}>{active.description}</div>
               </div>
             </div>
             <div ref={feedRef} style={{ flex: 1, overflowY: "auto", padding: "20px 20px 12px" }}>
-              {messages.length === 0 && <div style={{ color: "#9a918a", fontFamily: font, fontSize: 14, textAlign: "center", marginTop: 60 }}>No messages yet. {canPost ? "Start the conversation." : ""}</div>}
+              {messages.length === 0 && <div style={{ color: "#9a9a9a", fontFamily: font, fontSize: 14, textAlign: "center", marginTop: 60 }}>No messages yet. {canPost ? "Start the conversation." : ""}</div>}
               {messages.map(m => <Message key={m.id} m={m} onOpenThread={setThread} onDelete={deleteMsg} canDelete={isAdmin || (member && m.user_id === member.id)} onVote={votePoll} />)}
             </div>
             {error && <div style={{ color: "#ff6b6b", fontSize: 12, fontFamily: font, padding: "0 24px 6px" }}>{error}</div>}
@@ -658,10 +658,10 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
               {canPost ? (
                 <>
                 {isAdmin && pollOpen && (
-                  <div style={{ background: "#f2efe9", border: "1px solid #2c2214", borderRadius: 12, padding: 14, marginBottom: 10, maxWidth: 480 }}>
-                    <input style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#1c1613", marginBottom: 8 }} value={pollForm.question} onChange={e => setPollForm({ ...pollForm, question: e.target.value })} placeholder="Poll question — e.g. Dr. Merritt has 4 event tickets. Interested?" maxLength={500} />
+                  <div style={{ background: "#f0f0f0", border: "1px solid #2c2214", borderRadius: 12, padding: 14, marginBottom: 10, maxWidth: 480 }}>
+                    <input style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#161616", marginBottom: 8 }} value={pollForm.question} onChange={e => setPollForm({ ...pollForm, question: e.target.value })} placeholder="Poll question — e.g. Dr. Merritt has 4 event tickets. Interested?" maxLength={500} />
                     {pollForm.options.map((o, i) => (
-                      <input key={i} style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#1c1613", marginBottom: 8 }} value={o} onChange={e => setPollForm({ ...pollForm, options: pollForm.options.map((x, j) => j === i ? e.target.value : x) })} placeholder={`Option ${i + 1}`} maxLength={100} />
+                      <input key={i} style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#161616", marginBottom: 8 }} value={o} onChange={e => setPollForm({ ...pollForm, options: pollForm.options.map((x, j) => j === i ? e.target.value : x) })} placeholder={`Option ${i + 1}`} maxLength={100} />
                     ))}
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                       {pollForm.options.length < 6 && <button type="button" onClick={() => setPollForm({ ...pollForm, options: [...pollForm.options, ""] })} style={{ ...btnGhost, padding: "8px 14px", fontSize: 12 }}>+ Option</button>}
@@ -671,15 +671,15 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
                   </div>
                 )}
                 <form onSubmit={e => { e.preventDefault(); send(null, draft, () => setDraft("")); }} style={{ display: "flex", gap: 10 }}>
-                  <input style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#1c1613", flex: 1 }} value={draft} onChange={e => setDraft(e.target.value)} placeholder={`Message ${active.name}`} maxLength={4000} />
+                  <input style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#161616", flex: 1 }} value={draft} onChange={e => setDraft(e.target.value)} placeholder={`Message ${active.name}`} maxLength={4000} />
                   {isAdmin && <button type="button" onClick={() => setPollOpen(!pollOpen)} style={btnGhost}>Poll</button>}
                   <button type="submit" style={btnRed}>Send</button>
                 </form>
                 </>
               ) : !canEngage ? (
-                <div style={{ color: "#6b6259", fontSize: 13, fontFamily: font, textAlign: "center", padding: "8px 0" }}><Eye size={13} style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }} /> Reading is included with your Member plan. Upgrade to Premium to post, reply, and network.</div>
+                <div style={{ color: "#666666", fontSize: 13, fontFamily: font, textAlign: "center", padding: "8px 0" }}><Eye size={13} style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }} /> Reading is included with your Member plan. Upgrade to Premium to post, reply, and network.</div>
               ) : (
-                <div style={{ color: "#8d847a", fontSize: 13, fontFamily: font, textAlign: "center", padding: "8px 0" }}>Only the GroundUp team posts in this channel. Reply in threads to join the discussion.</div>
+                <div style={{ color: "#8a8a8a", fontSize: 13, fontFamily: font, textAlign: "center", padding: "8px 0" }}>Only the GroundUp team posts in this channel. Reply in threads to join the discussion.</div>
               )}
             </div>
           </>
@@ -690,8 +690,8 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
       {thread && (
         <div style={{ width: "min(380px, 100vw)", flexShrink: 0, borderLeft: "1px solid #1a0000", background: "#070303", display: "flex", flexDirection: "column" }}>
           <div style={{ padding: "16px 20px", borderBottom: "1px solid #1a0000", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ color: "#2a231d", fontWeight: 800, fontSize: 14, fontFamily: font }}>Thread</div>
-            <button onClick={() => setThread(null)} style={{ background: "none", border: "none", color: "#6b6259", cursor: "pointer", fontSize: 18 }}>✕</button>
+            <div style={{ color: "#222222", fontWeight: 800, fontSize: 14, fontFamily: font }}>Thread</div>
+            <button onClick={() => setThread(null)} style={{ background: "none", border: "none", color: "#666666", cursor: "pointer", fontSize: 18 }}>✕</button>
           </div>
           <div style={{ flex: 1, overflowY: "auto", padding: "16px 14px" }}>
             <Message m={thread} inThread onDelete={deleteMsg} canDelete={false} />
@@ -700,11 +700,11 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
           </div>
           {canEngage ? (
             <form onSubmit={e => { e.preventDefault(); send(thread.id, threadDraft, () => setThreadDraft("")); }} style={{ display: "flex", gap: 8, padding: "12px 14px 16px", borderTop: "1px solid #1a0000" }}>
-              <input style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#1c1613", flex: 1 }} value={threadDraft} onChange={e => setThreadDraft(e.target.value)} placeholder="Reply…" maxLength={4000} />
+              <input style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#161616", flex: 1 }} value={threadDraft} onChange={e => setThreadDraft(e.target.value)} placeholder="Reply…" maxLength={4000} />
               <button type="submit" style={{ ...btnRed, padding: "12px 16px" }}>↑</button>
             </form>
           ) : (
-            <div style={{ color: "#6b6259", fontSize: 12, fontFamily: font, textAlign: "center", padding: "12px 14px", borderTop: "1px solid #1a0000" }}>Upgrade to Premium to reply.</div>
+            <div style={{ color: "#666666", fontSize: 12, fontFamily: font, textAlign: "center", padding: "12px 14px", borderTop: "1px solid #1a0000" }}>Upgrade to Premium to reply.</div>
           )}
         </div>
       )}
@@ -901,10 +901,10 @@ export function ResourcesPage({ member, onUpgrade }) {
 
   if (!member || (rank < 2 && member.role !== "admin")) {
     return (
-      <div style={{ background: "#f6f4f0", minHeight: "100vh", padding: "140px 20px", textAlign: "center" }}>
+      <div style={{ background: "#f5f5f5", minHeight: "100vh", padding: "140px 20px", textAlign: "center" }}>
         <div style={{ marginBottom: 16 }}><Lock size={36} color="#b80101" style={{ display: "inline-block" }} /></div>
-        <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "#1c1613", marginBottom: 14 }}>Resources & Templates</h1>
-        <p style={{ color: "#6b6259", fontFamily: font, fontSize: 15, maxWidth: 480, margin: "0 auto 28px", lineHeight: 1.8 }}>
+        <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "#161616", marginBottom: 14 }}>Resources & Templates</h1>
+        <p style={{ color: "#666666", fontFamily: font, fontSize: 15, maxWidth: 480, margin: "0 auto 28px", lineHeight: 1.8 }}>
           Development timeline templates, worksheets, and curated tools are a Premium benefit — and Elite members unlock the NREUV partner network with member-only referral codes.
         </p>
         <button style={btnRed} onClick={onUpgrade}>View Plans →</button>
@@ -919,46 +919,46 @@ export function ResourcesPage({ member, onUpgrade }) {
   ];
 
   return (
-    <div style={{ background: "#f6f4f0", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
+    <div style={{ background: "#f5f5f5", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Member Library</div>
-        <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "#1c1613", marginBottom: 40 }}>Resources & Templates</h1>
+        <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "#161616", marginBottom: 40 }}>Resources & Templates</h1>
         {error && <div style={{ color: "#ff6b6b", fontFamily: font, fontSize: 13, marginBottom: 20 }}>{error}</div>}
-        {!data ? <div style={{ color: "#6b6259", fontFamily: font }}>Loading…</div> : groups.map(g => {
+        {!data ? <div style={{ color: "#666666", fontFamily: font }}>Loading…</div> : groups.map(g => {
           const items = data.resources.filter(r => r.category === g.key);
           const locked = g.elite && rank < 3 && member.role !== "admin";
           return (
             <div key={g.key} style={{ marginBottom: 44 }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 6 }}>
-                <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 26, color: "#2a231d" }}>{g.title}</h2>
+                <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 26, color: "#222222" }}>{g.title}</h2>
                 {g.elite && <TierBadge tier="Elite" small />}
               </div>
-              <p style={{ color: "#8d847a", fontSize: 13, fontFamily: font, marginBottom: 18 }}>{g.desc}</p>
+              <p style={{ color: "#8a8a8a", fontSize: 13, fontFamily: font, marginBottom: 18 }}>{g.desc}</p>
               {locked ? (
-                <div style={{ background: "#faf8f5", border: "1px solid #1e0000", borderRadius: 14, padding: "26px 30px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                  <Lock size={18} color="#6b6259" />
-                  <span style={{ color: "#6b6259", fontSize: 14, fontFamily: font, flex: 1 }}>The partner network — marketing, tech, design and more, with member-only referral discounts — is an Elite benefit.</span>
+                <div style={{ background: "#fafafa", border: "1px solid #1e0000", borderRadius: 14, padding: "26px 30px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+                  <Lock size={18} color="#666666" />
+                  <span style={{ color: "#666666", fontSize: 14, fontFamily: font, flex: 1 }}>The partner network — marketing, tech, design and more, with member-only referral discounts — is an Elite benefit.</span>
                   <button style={btnRed} onClick={onUpgrade}>Go Elite →</button>
                 </div>
               ) : items.length === 0 ? (
-                <div style={{ color: "#9a918a", fontSize: 13, fontFamily: font, background: "#faf8f5", border: "1px solid #1e0000", borderRadius: 12, padding: "20px 24px" }}>Nothing here yet — check back soon.</div>
+                <div style={{ color: "#9a9a9a", fontSize: 13, fontFamily: font, background: "#fafafa", border: "1px solid #1e0000", borderRadius: 12, padding: "20px 24px" }}>Nothing here yet — check back soon.</div>
               ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
                   {items.map(r => (
                     <div key={r.id} style={{ background: "#ffffff", border: "1px solid #2a0000", borderRadius: 14, padding: "22px 24px", display: "flex", flexDirection: "column", gap: 8 }}>
-                      <div style={{ color: "#2a231d", fontWeight: 800, fontSize: 15, fontFamily: font }}>{r.title}</div>
-                      {r.description && <div style={{ color: "#6b6259", fontSize: 13, fontFamily: font, lineHeight: 1.7, flex: 1 }}>{r.description}</div>}
+                      <div style={{ color: "#222222", fontWeight: 800, fontSize: 15, fontFamily: font }}>{r.title}</div>
+                      {r.description && <div style={{ color: "#666666", fontSize: 13, fontFamily: font, lineHeight: 1.7, flex: 1 }}>{r.description}</div>}
                       {r.code && (
-                        <div style={{ background: "#faf8f5", border: "1px dashed #e0c4c440", borderRadius: 8, padding: "8px 12px", display: "flex", alignItems: "center", gap: 10 }}>
-                          <span style={{ fontSize: 9, color: "#8a5a5a", fontWeight: 800, letterSpacing: "1.5px", fontFamily: font }}>CODE</span>
-                          <code style={{ color: "#2a231d", fontSize: 13, letterSpacing: "1px" }}>{r.code}</code>
-                          <button onClick={() => navigator.clipboard && navigator.clipboard.writeText(r.code)} style={{ marginLeft: "auto", background: "none", border: "none", color: "#6b6259", cursor: "pointer", fontSize: 11, fontFamily: font, fontWeight: 700 }}>Copy</button>
+                        <div style={{ background: "#fafafa", border: "1px dashed #e0c4c440", borderRadius: 8, padding: "8px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+                          <span style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", fontFamily: font }}>CODE</span>
+                          <code style={{ color: "#222222", fontSize: 13, letterSpacing: "1px" }}>{r.code}</code>
+                          <button onClick={() => navigator.clipboard && navigator.clipboard.writeText(r.code)} style={{ marginLeft: "auto", background: "none", border: "none", color: "#666666", cursor: "pointer", fontSize: 11, fontFamily: font, fontWeight: 700 }}>Copy</button>
                         </div>
                       )}
                       {r.url && (() => {
                         const yt = r.url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{6,})/);
                         if (yt) return (
-                          <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, borderRadius: 10, overflow: "hidden", background: "#f6f4f0" }}>
+                          <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, borderRadius: 10, overflow: "hidden", background: "#f5f5f5" }}>
                             <iframe src={`https://www.youtube.com/embed/${yt[1]}`} title={r.title} allowFullScreen allow="accelerometer; encrypted-media; picture-in-picture" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }} />
                           </div>
                         );

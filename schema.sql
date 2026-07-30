@@ -52,6 +52,12 @@ CREATE TABLE IF NOT EXISTS channels (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Private team room: visible to admins only
+ALTER TABLE channels ADD COLUMN IF NOT EXISTS team_only BOOLEAN DEFAULT FALSE;
+INSERT INTO channels (slug, name, description, min_tier, admin_only_post, position, team_only)
+VALUES ('team-room', 'Team Room', 'Private — just us. Members never see this channel.', 'Basic', FALSE, 9, TRUE)
+ON CONFLICT (slug) DO NOTHING;
+
 CREATE TABLE IF NOT EXISTS messages (
   id SERIAL PRIMARY KEY,
   channel_id INTEGER NOT NULL REFERENCES channels(id) ON DELETE CASCADE,

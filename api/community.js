@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     // GET ?resource=channels — channels visible to this user
     if (req.method === 'GET' && req.query.resource === 'channels') {
       const channels = await sql`SELECT * FROM channels ORDER BY position, id`;
-      const visible = channels.filter(c => user.rank >= (TIER_RANK[c.min_tier] ?? 1));
+      const visible = channels.filter(c => (!c.team_only || user.role === 'admin') && user.rank >= (TIER_RANK[c.min_tier] ?? 1));
       return res.json({ channels: visible, tier: user.tier });
     }
 
@@ -38,7 +38,7 @@ export default async function handler(req, res) {
       const channelId = Number(req.query.channel);
       if (!channelId) return res.status(400).json({ error: 'channel required' });
       const [channel] = await sql`SELECT * FROM channels WHERE id = ${channelId}`;
-      if (!channel || user.rank < (TIER_RANK[channel.min_tier] ?? 1)) {
+      if (!channel || user.rank < (TIER_RANK[channel.min_tier] ?? 1) || (channel.team_only && user.role !== 'admin')) {
         return res.status(403).json({ error: 'No access to this channel' });
       }
       const threadId = req.query.thread ? Number(req.query.thread) : null;
@@ -160,7 +160,7 @@ export default async function handler(req, res) {
     // Team: create a channel (max 10)
     if (req.method === 'POST' && req.body && req.body.action === 'create_channel') {
       if (!isAdminReq) return res.status(403).json({ error: 'Team only' });
-      const { name, description, min_tier, admin_only_post } = req.body;
+      const { name, description, min_tier, admin_only_post, team_only } = req.body;
       if (!name || !String(name).trim()) return res.status(400).json({ error: 'Channel name required' });
       const [{ count }] = await sql`SELECT COUNT(*)::int AS count FROM channels`;
       if (count >= 10) return res.status(400).json({ error: 'Channel limit reached (10) — delete one first' });
@@ -168,8 +168,8 @@ export default async function handler(req, res) {
       const slug = clean.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'channel';
       const safeTier = ['Basic', 'Premium', 'Elite'].includes(min_tier) ? min_tier : 'Basic';
       const [ch] = await sql`
-        INSERT INTO channels (slug, name, description, min_tier, admin_only_post, position, created_at)
-        VALUES (${slug}, ${clean}, ${(description || '').slice(0, 200)}, ${safeTier}, ${!!admin_only_post}, ${count}, NOW())
+        INSERT INTO channels (slug, name, description, min_tier, admin_only_post, position, team_only, created_at)
+        VALUES (${slug}, ${clean}, ${(description || '').slice(0, 200)}, ${safeTier}, ${!!admin_only_post}, ${count}, ${!!team_only}, NOW())
         ON CONFLICT (slug) DO NOTHING RETURNING *`;
       if (!ch) return res.status(409).json({ error: 'A channel with that name already exists' });
       return res.status(201).json({ channel: ch });
@@ -193,7 +193,7 @@ export default async function handler(req, res) {
       if (!channel_id || !text) return res.status(400).json({ error: 'channel_id and body required' });
       if (text.length > 4000) return res.status(400).json({ error: 'Message too long' });
       const [channel] = await sql`SELECT * FROM channels WHERE id = ${channel_id}`;
-      if (!channel || user.rank < (TIER_RANK[channel.min_tier] ?? 1)) {
+      if (!channel || user.rank < (TIER_RANK[channel.min_tier] ?? 1) || (channel.team_only && user.role !== 'admin')) {
         return res.status(403).json({ error: 'No access to this channel' });
       }
       if (channel.admin_only_post && user.role !== 'admin') {

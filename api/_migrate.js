@@ -63,6 +63,10 @@ const STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS dms (
     id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     from_admin BOOLEAN DEFAULT FALSE, body TEXT NOT NULL, created_at TIMESTAMP DEFAULT NOW())`,
+  `ALTER TABLE channels ADD COLUMN IF NOT EXISTS team_only BOOLEAN DEFAULT FALSE`,
+  `INSERT INTO channels (slug, name, description, min_tier, admin_only_post, position, team_only)
+    VALUES ('team-room', 'Team Room', 'Private — just us. Members never see this channel.', 'Basic', FALSE, 9, TRUE)
+    ON CONFLICT (slug) DO NOTHING`,
   `INSERT INTO channels (slug, name, description, min_tier, admin_only_post, position) VALUES
     ('announcements', 'Announcements', 'Official updates from Dr. Merritt and the GroundUp team.', 'Basic', TRUE, 0),
     ('general', 'General', 'Introduce yourself and talk shop with fellow members.', 'Basic', FALSE, 1),
