@@ -26,6 +26,48 @@ export default async function handler(req, res) {
     const user = await resolveUser(req, sql);
     if (!user) return res.status(401).json({ error: 'Sign in required' });
 
+    // GET ?resource=notifications — unread counts + latest unseen announcement
+    if (req.method === 'GET' && req.query.resource === 'notifications') {
+      if (!user.id) return res.json({ unread: 0, dm_unread: 0, announcement: null });
+      const [me] = await sql`SELECT last_seen_community, last_seen_dm, seen_announcement_id FROM users WHERE id = ${user.id}`;
+      const channels = await sql`SELECT * FROM channels`;
+      const visibleIds = channels.filter(ch => (!ch.team_only || user.role === 'admin') && user.rank >= (TIER_RANK[ch.min_tier] ?? 1)).map(ch => ch.id);
+      let unread = 0;
+      if (visibleIds.length) {
+        const [row] = await sql`
+          SELECT COUNT(*)::int AS n FROM messages
+          WHERE channel_id = ANY(${visibleIds}) AND deleted = FALSE
+            AND created_at > ${me?.last_seen_community || new Date(0).toISOString()}
+            AND (user_id IS NULL OR user_id != ${user.id})`;
+        unread = row.n;
+      }
+      const [dmRow] = await sql`
+        SELECT COUNT(*)::int AS n FROM dms
+        WHERE user_id = ${user.id} AND from_admin = TRUE
+          AND created_at > ${me?.last_seen_dm || new Date(0).toISOString()}`;
+      const [annCh] = await sql`SELECT id FROM channels WHERE slug = 'announcements'`;
+      let announcement = null;
+      if (annCh && user.rank >= 1) {
+        const [ann] = await sql`
+          SELECT id, body, created_at FROM messages
+          WHERE channel_id = ${annCh.id} AND deleted = FALSE AND parent_id IS NULL
+            AND id > ${me?.seen_announcement_id || 0}
+          ORDER BY id DESC LIMIT 1`;
+        announcement = ann || null;
+      }
+      return res.json({ unread, dm_unread: dmRow.n, announcement });
+    }
+
+    // POST { action: 'mark_seen', what: 'community' | 'dm' | 'announcement', id? }
+    if (req.method === 'POST' && req.body && req.body.action === 'mark_seen') {
+      if (!user.id) return res.json({ success: true });
+      const what = req.body.what;
+      if (what === 'community') await sql`UPDATE users SET last_seen_community = NOW() WHERE id = ${user.id}`;
+      else if (what === 'dm') await sql`UPDATE users SET last_seen_dm = NOW() WHERE id = ${user.id}`;
+      else if (what === 'announcement') await sql`UPDATE users SET seen_announcement_id = GREATEST(COALESCE(seen_announcement_id, 0), ${Number(req.body.id) || 0}) WHERE id = ${user.id}`;
+      return res.json({ success: true });
+    }
+
     // GET ?resource=channels — channels visible to this user
     if (req.method === 'GET' && req.query.resource === 'channels') {
       const channels = await sql`SELECT * FROM channels ORDER BY position, id`;

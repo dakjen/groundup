@@ -621,7 +621,7 @@ function GULogo({ size = 40, light = false }) {
 
 // ─── NAV ────────────────────────────────────────────────────────────────────
 
-function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member }) {
+function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread = 0 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const isTeam = member?.role === "admin";
   const pages = isTeam
@@ -1828,10 +1828,10 @@ function SiteGatePage({ onUnlock }) {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/site-auth", {
+      const res = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ action: "site_gate", password }),
       });
       const data = await res.json();
       if (data.success) {
@@ -3779,6 +3779,24 @@ export default function App() {
   const [authMode, setAuthMode] = useState("signup");
   const [member, setMember] = useState(() => getMember());
   const [resetToken, setResetToken] = useState(() => new URLSearchParams(window.location.search).get("reset"));
+  const [notif, setNotif] = useState(null);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
+  const loadNotif = () => {
+    if (!getMember()) return;
+    fetch("/api/community?resource=notifications", { headers: { Authorization: "Bearer " + getMemberToken() } })
+      .then(r => r.ok ? r.json() : null).then(d => d && setNotif(d)).catch(() => {});
+  };
+  useEffect(() => {
+    if (!member) return;
+    loadNotif();
+    const t = setInterval(loadNotif, 30000);
+    return () => clearInterval(t);
+  }, [member?.id]);
+  const markSeen = (what, id) => {
+    fetch("/api/community", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "mark_seen", what, id }) })
+      .then(() => loadNotif()).catch(() => {});
+  };
   const [showWaitlist, setShowWaitlist] = useState(false);
   const [launchAt, setLaunchAt] = useState(null);
   const [insiderAt, setInsiderAt] = useState(null);
@@ -3943,7 +3961,17 @@ export default function App() {
         </div>
       )}
       {showAgreement && <ContentAgreementModal onAgree={handleAgree} onClose={() => { setShowAgreement(false); setPendingPage(null); }} />}
-      <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => openSignup("Free")} member={member} />
+      {member && notif?.announcement && !bannerDismissed && (
+        <div style={{ position: "fixed", top: 64, left: 0, right: 0, zIndex: 95, background: "#b80101", color: "#fff", padding: "10px clamp(16px,4vw,48px)", display: "flex", alignItems: "center", gap: 14 }}>
+          <Megaphone size={16} />
+          <div style={{ flex: 1, fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <strong>Announcement:</strong> {notif.announcement.body.slice(0, 120)}{notif.announcement.body.length > 120 ? "…" : ""}
+          </div>
+          <button onClick={() => { markSeen("announcement", notif.announcement.id); setBannerDismissed(false); navigateTo("community"); }} style={{ background: "#fff", color: "#b80101", border: "none", borderRadius: 6, padding: "6px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12, cursor: "pointer", flexShrink: 0 }}>View</button>
+          <button onClick={() => { markSeen("announcement", notif.announcement.id); setBannerDismissed(true); }} style={{ background: "transparent", color: "#fff", border: "none", fontSize: 16, cursor: "pointer", flexShrink: 0 }}>✕</button>
+        </div>
+      )}
+      <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => openSignup("Free")} member={member} unread={(notif?.unread || 0) + (notif?.dm_unread || 0)} />
       {activePage === "home" && <HomePage setActivePage={navigateTo} onSignUp={openSignup} currentUser={currentUser} eventInvited={eventInvited} />}
       {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} /></div>}
       {activePage === "resources" && (member?.role === "admin" ? <TeamPage><ResourcesTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage> : <ResourcesPage member={member} onUpgrade={() => navigateTo("pricing")} />)}

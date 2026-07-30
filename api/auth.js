@@ -26,6 +26,12 @@ export default async function handler(req, res) {
 
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+    // Site password gate (folded in from /api/site-auth)
+    if (action === 'site_gate') {
+      if (req.body.password === process.env.SITE_PASSWORD) return res.json({ success: true });
+      return res.status(401).json({ error: 'Wrong password' });
+    }
+
     if (action === 'signup') {
       // Pre-launch: no signups until the launch moment passes (waitlist only)
       const [launchRow] = await sql`SELECT value FROM settings WHERE key = 'launch_at'`;

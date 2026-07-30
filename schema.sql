@@ -91,6 +91,9 @@ CREATE TABLE IF NOT EXISTS poll_votes (
 
 -- Lunch & Learn: 25%-off-first-month window after attending (2 months)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS lnl_discount_until TIMESTAMP;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen_community TIMESTAMP DEFAULT NOW();
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen_dm TIMESTAMP DEFAULT NOW();
+ALTER TABLE users ADD COLUMN IF NOT EXISTS seen_announcement_id INTEGER DEFAULT 0;
 
 -- Comp coupon codes for Lunch & Learn access (Dr. Merritt can hand these out)
 CREATE TABLE IF NOT EXISTS coupons (

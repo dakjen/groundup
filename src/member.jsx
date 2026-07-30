@@ -445,6 +445,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
     if (!hasAccess) { setLoading(false); return; }
     loadChannels().catch(e => setError(e.message)).finally(() => setLoading(false));
     if (isAdmin) api("/api/community?resource=dm-threads").then(d => setDmThreads(d.threads)).catch(() => {});
+    api("/api/community", { method: "POST", body: JSON.stringify({ action: "mark_seen", what: "community" }) }).catch(() => {});
   }, [hasAccess, isAdmin, loadChannels]);
 
   const loadDm = useCallback(async (targetId) => {
@@ -455,6 +456,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
 
   useEffect(() => {
     if (!dmOpen) return;
+    api("/api/community", { method: "POST", body: JSON.stringify({ action: "mark_seen", what: "dm" }) }).catch(() => {});
     const target = isAdmin ? dmTarget?.id : null;
     if (isAdmin && !target) return;
     loadDm(target).catch(e => setError(e.message));
