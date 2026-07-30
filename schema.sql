@@ -137,7 +137,8 @@ INSERT INTO channels (slug, name, description, min_tier, admin_only_post, positi
   ('general', 'General', 'Introduce yourself and talk shop with fellow members.', 'Basic', FALSE, 1),
   ('deals-financing', 'Deals & Financing', 'Capital stacks, LIHTC, gap funding, underwriting questions.', 'Basic', FALSE, 2),
   ('jv-partnerships', 'JV & Partnerships', 'Find partners, structure splits, share opportunities.', 'Premium', FALSE, 3),
-  ('elite-lounge', 'Elite Lounge', 'Private channel for Elite members and advisory clients.', 'Elite', FALSE, 4)
+  ('opportunity-board', 'Opportunity Board', 'RFPs, funding windows, and deals worth chasing — posted by the team monthly. Reply in threads to discuss.', 'Premium', TRUE, 4),
+  ('elite-lounge', 'Elite Lounge', 'Private channel for Elite members and advisory clients.', 'Elite', FALSE, 5)
 ON CONFLICT (slug) DO NOTHING;
 
 -- Indexes for faster queries

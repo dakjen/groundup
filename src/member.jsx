@@ -148,8 +148,8 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
 const BENEFITS = {
   Free: ["One lesson of your choice — the first you open", "1 curated case study", "Glossary & resource sheet"],
   Basic: ["All 4 courses + every new course we add", "Case studies, worksheets & reading guides", "Community access — read every channel"],
-  Premium: ["Everything in Member", "Engage in the community — post, reply & network", "JV & Partnerships channel", "Development timeline templates", "Lunch & Learn recordings", "1 free work session (1 hr) + priority booking", "The GroundUp Newsletter — monthly edition"],
-  Elite: ["Everything in Premium", "Priority responses in the community", "Direct messages to Dr. Merritt & her team", "Elite Lounge — private channel", "3 one-on-one advisory calls/yr with Dr. Merritt", "The full GroundUp Newsletter — twice a month"],
+  Premium: ["Everything in Member", "Engage in the community — post, reply & network", "JV & Partnerships channel", "Development timeline templates", "Lunch & Learn recordings", "1 free work session (1 hr) + priority booking", "The Opportunity Board — RFPs, funding windows & deals"],
+  Elite: ["Everything in Premium", "Priority responses in the community", "Direct messages to Dr. Merritt & her team", "Elite Lounge — private channel", "3 one-on-one advisory calls/yr with Dr. Merritt", "Priority Q&A submissions"],
   Partner: ["Custom organizational access", "Contact info@nreuv.com for your cohort setup"],
 };
 

@@ -1061,7 +1061,7 @@ const plans = [
       "Development timeline templates",
       "Lunch & Learn recordings",
       "1 free work session (1 hr) + priority booking",
-      "The GroundUp Newsletter — monthly edition",
+      "The Opportunity Board — RFPs, funding windows & deals, posted by the team",
     ],
     locked: ["Advisory calls with Dr. Merritt", "Priority responses & direct messages"],
   },
@@ -1083,7 +1083,7 @@ const plans = [
       "Priority Q&A submissions",
       "1–2 small group advisory sessions/yr",
       "1 invite to exclusive networking event",
-      "The full GroundUp Newsletter — twice a month",
+      
     ],
     locked: [],
   },
