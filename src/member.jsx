@@ -186,7 +186,7 @@ function SessionCreditsCard({ member }) {
         <form onSubmit={request} style={{ marginTop: 16 }}>
           <label style={lbl}>What do you want to cover? (optional)</label>
           <textarea style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#161616", resize: "vertical" }} rows={2} value={note} onChange={e => setNote(e.target.value)} maxLength={2000} placeholder="Your deal, your question, where you're stuck…" />
-          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+          <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 10 }}>
             <button type="submit" disabled={busy} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>{busy ? "Sending…" : "Send Request"}</button>
             <button type="button" onClick={() => setOpen(false)} style={btnGhost}>Cancel</button>
           </div>
@@ -585,7 +585,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
                   <input type="checkbox" checked={newChan.admin_only_post} onChange={e => setNewChan({ ...newChan, admin_only_post: e.target.checked })} />
                   <span style={{ color: "#666666", fontSize: 12, fontFamily: font, fontWeight: 600 }}>Only team can post</span>
                 </label>
-                <div style={{ display: "flex", gap: 6 }}>
+                <div style={{ display: "flex", gap: 10 }}>
                   <button onClick={createChannel} style={{ ...btnRed, flex: 1, padding: "9px 10px", fontSize: 12 }}>Create</button>
                   <button onClick={() => setNewChanOpen(false)} style={{ ...btnGhost, padding: "9px 10px", fontSize: 12 }}>Cancel</button>
                 </div>
@@ -669,7 +669,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
                     {pollForm.options.map((o, i) => (
                       <input key={i} style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#161616", marginBottom: 8 }} value={o} onChange={e => setPollForm({ ...pollForm, options: pollForm.options.map((x, j) => j === i ? e.target.value : x) })} placeholder={`Option ${i + 1}`} maxLength={100} />
                     ))}
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
                       {pollForm.options.length < 6 && <button type="button" onClick={() => setPollForm({ ...pollForm, options: [...pollForm.options, ""] })} style={{ ...btnGhost, padding: "8px 14px", fontSize: 12 }}>+ Option</button>}
                       <button type="button" onClick={createPoll} style={{ ...btnRed, padding: "8px 16px", fontSize: 12 }}>Post Poll</button>
                       <button type="button" onClick={() => setPollOpen(false)} style={{ ...btnGhost, padding: "8px 14px", fontSize: 12 }}>Cancel</button>
@@ -705,7 +705,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
             {threadMsgs.map(m => <Message key={m.id} m={m} inThread onDelete={deleteMsg} canDelete={isAdmin || (member && m.user_id === member.id)} />)}
           </div>
           {canEngage ? (
-            <form onSubmit={e => { e.preventDefault(); send(thread.id, threadDraft, () => setThreadDraft("")); }} style={{ display: "flex", gap: 8, padding: "12px 14px 16px", borderTop: "1px solid #1a0000" }}>
+            <form onSubmit={e => { e.preventDefault(); send(thread.id, threadDraft, () => setThreadDraft("")); }} style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 14px 16px", borderTop: "1px solid #1a0000" }}>
               <input style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#161616", flex: 1 }} value={threadDraft} onChange={e => setThreadDraft(e.target.value)} placeholder="Reply…" maxLength={4000} />
               <button type="submit" style={{ ...btnRed, padding: "12px 16px" }}>↑</button>
             </form>

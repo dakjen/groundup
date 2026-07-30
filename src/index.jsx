@@ -1947,7 +1947,7 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
     try { await save(next); } catch (e) { flash(false, e.message); }
   };
 
-  const section = { background: "#ffffff", border: "1px solid #c9bd9e", borderRadius: 14, padding: 24, marginBottom: 20 };
+  const section = { background: "#ffffff", border: "1px solid #c9bd9e", borderRadius: 14, padding: 28, marginBottom: 20 };
   if (attachments === null) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading…</div>;
 
   return (
@@ -1957,7 +1957,7 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
       {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#1a7a3a" : "#b80101", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
 
       <div style={section}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
           <div><label style={lbl}>Course</label>
             <select value={courseId} onChange={e => { setCourseId(e.target.value); setLessonIdx(0); }} style={{ ...inp, marginBottom: 0, cursor: "pointer" }}>
               {miniCourses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
@@ -1994,7 +1994,7 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
                 <button onClick={() => removeAttachment(key, "video")} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px", color: "#b80101", borderColor: "#b8010140" }}>Remove</button>
               </div>
             ) : (
-              <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                 <input value={videoUrl} onChange={e => setVideoUrl(e.target.value)} placeholder="https://youtu.be/…" style={{ ...inp, marginBottom: 0, flex: 1 }} />
                 <button onClick={attachVideo} style={btnRed}>Attach</button>
               </div>
@@ -2074,7 +2074,7 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
     } catch (e) { flash(false, e.message); }
   };
 
-  const section = { background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 20 };
+  const section = { background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 20 };
   const heading = { fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14, display: "flex", alignItems: "center", gap: 8 };
 
   if (!data) return <div style={{ color: "#666666", fontSize: 13, marginBottom: 24 }}>Loading Lunch & Learn manager…</div>;
@@ -2087,7 +2087,7 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
       <div style={section}>
         <div style={heading}><Link2 size={13} color="#b80101" /> Live Session Link</div>
         <p style={{ color: "#666666", fontSize: 12, marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>Everyone with Lunch & Learn access sees this link on their page. Update it before each session.</p>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <input value={link} onChange={e => setLink(e.target.value)} placeholder="https://zoom.us/j/..." style={{ ...inp, marginBottom: 0, flex: 1, minWidth: 240 }} />
           <button onClick={saveLink} style={btnRed}>Save Link</button>
         </div>
@@ -2097,7 +2097,7 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
       <div style={section}>
         <div style={heading}><Ticket size={13} color="#b80101" /> Comp Codes</div>
         <p style={{ color: "#666666", fontSize: 12, marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>Generate codes Dr. Merritt can hand out. Each grants 6 months of Lunch & Learn access, free.</p>
-        <div style={{ display: "flex", gap: 10, alignItems: "flex-end", flexWrap: "wrap", marginBottom: 16 }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap", marginBottom: 16 }}>
           <div>
             <label style={lbl}>Uses per code</label>
             <select value={couponUses} onChange={e => setCouponUses(Number(e.target.value))} style={{ ...inp, marginBottom: 0, width: 120 }}>
@@ -2123,7 +2123,7 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
       <div style={section}>
         <div style={heading}><Video size={13} color="#b80101" /> Session Recordings</div>
         <p style={{ color: "#666666", fontSize: 12, marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>Upload the video to YouTube as Unlisted, then paste the link here. It appears instantly on the Lunch & Learn page for everyone with access (and Premium+).</p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 12 }}>
           <div><label style={lbl}>Title</label><input value={recForm.title} onChange={e => setRecForm({ ...recForm, title: e.target.value })} placeholder="Capital Stacks 101" style={inp} /></div>
           <div><label style={lbl}>YouTube link</label><input value={recForm.url} onChange={e => setRecForm({ ...recForm, url: e.target.value })} placeholder="https://youtu.be/…" style={inp} /></div>
           <div><label style={lbl}>Date</label><input value={recForm.date} onChange={e => setRecForm({ ...recForm, date: e.target.value })} placeholder="August 2026" style={inp} /></div>
@@ -2395,7 +2395,7 @@ function AdminPanel({ onLogout, onExit }) {
                 <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Event Invites</div>
                 <p style={{ color: "#666666", fontSize: 13, marginBottom: 20 }}>Generate invite links to let non-paid users RSVP for events.</p>
                 <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 24 }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                     <div>
                       <label style={lbl}>Recipient Name</label>
                       <input value={eventInvName} onChange={e => setEventInvName(e.target.value)} placeholder="Jane Doe" style={inp} />
@@ -2447,7 +2447,7 @@ function AdminPanel({ onLogout, onExit }) {
               {inbox.length === 0 ? (
                 <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#9a9a9a", fontSize: 14 }}>No messages yet.</div>
               ) : inbox.map(msg => (
-                <div key={msg.id} style={{ background: "#ffffff", border: "1px solid " + (msg.status === "unread" ? "#dcdcdc" : "#e6e6e6"), borderRadius: 14, padding: 24, marginBottom: 14, opacity: msg.status === "responded" ? 0.6 : 1 }}>
+                <div key={msg.id} style={{ background: "#ffffff", border: "1px solid " + (msg.status === "unread" ? "#dcdcdc" : "#e6e6e6"), borderRadius: 14, padding: 28, marginBottom: 14, opacity: msg.status === "responded" ? 0.6 : 1 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -2460,7 +2460,7 @@ function AdminPanel({ onLogout, onExit }) {
                     <span style={{ background: msg.status === "responded" ? "#0f3020" : msg.status === "read" ? "#1a1a0a" : "#f0f0f0", color: msg.status === "responded" ? "#22c55e" : msg.status === "read" ? "#a0a020" : "#b80101", borderRadius: 4, padding: "2px 10px", fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>{msg.status}</span>
                   </div>
                   <div style={{ color: "#9a8080", fontSize: 14, lineHeight: 1.75, background: "#ececec", borderRadius: 8, padding: "12px 16px", marginBottom: 14 }}>{msg.message}</div>
-                  <div style={{ display: "flex", gap: 8 }}>
+                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                     {msg.status === "unread" && <button onClick={() => saveInboxData(inbox.map(m => m.id === msg.id ? { ...m, status: "read" } : m))} style={btnGhost}>Mark Read</button>}
                     {msg.status !== "responded" && <button onClick={() => saveInboxData(inbox.map(m => m.id === msg.id ? { ...m, status: "responded" } : m))} style={btnRed}>Mark Responded</button>}
                     <a href={"mailto:" + msg.email} style={{ ...btnGhost, textDecoration: "none", display: "inline-flex", alignItems: "center" }}>Reply via Email ↗</a>
@@ -2476,7 +2476,7 @@ function AdminPanel({ onLogout, onExit }) {
               <p style={{ color: "#666666", fontSize: 13, marginBottom: 32 }}>Add or remove courses from the platform.</p>
               <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 32 }}>
                 <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Add New Course</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                   <div><label style={lbl}>Title</label><input value={newCourse.title} onChange={e => setNewCourse({ ...newCourse, title: e.target.value })} placeholder="Course title" style={inp} /></div>
                   <div><label style={lbl}>Stage</label><input value={newCourse.stage} onChange={e => setNewCourse({ ...newCourse, stage: e.target.value })} placeholder="e.g. Stage 5 of 4" style={inp} /></div>
                   <div><label style={lbl}>Duration</label><input value={newCourse.duration} onChange={e => setNewCourse({ ...newCourse, duration: e.target.value })} placeholder="e.g. ~45 min" style={inp} /></div>
@@ -2509,7 +2509,7 @@ function AdminPanel({ onLogout, onExit }) {
               <div style={{ marginTop: 48 }}>
                 <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Lesson PDF Attachments</div>
                 <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 24 }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
                     <div>
                       <label style={lbl}>Course</label>
                       <select value={pdfCourse} onChange={e => { setPdfCourse(e.target.value); setPdfLesson(""); }} style={{ ...inp, cursor: "pointer" }}>
@@ -2570,7 +2570,7 @@ function AdminPanel({ onLogout, onExit }) {
                             <div style={{ color: "#222222", fontSize: 14, fontWeight: 600, marginBottom: 2 }}>Lesson {lId}: {lesson?.title || "Unknown"}</div>
                             <div style={{ color: "#666666", fontSize: 11, display: "flex", alignItems: "center", gap: 6 }}><FileText size={12} /> {pdf.filename} · {new Date(pdf.uploadedAt).toLocaleDateString()}</div>
                           </div>
-                          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                          <div style={{ display: "flex", gap: 12, alignItems: "center", flexShrink: 0 }}>
                             <button onClick={() => { setPdfCourse(cId); setPdfLesson(lId); document.getElementById("pdf-upload-input").click(); }} style={btnGhost}>Replace</button>
                             <button onClick={async () => {
                               if (!window.confirm("Remove this PDF?")) return;
@@ -2591,7 +2591,7 @@ function AdminPanel({ onLogout, onExit }) {
               <div style={{ marginTop: 48 }}>
                 <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Lesson Video Attachments</div>
                 <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 24 }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
                     <div>
                       <label style={lbl}>Course</label>
                       <select value={videoCourse} onChange={e => { setVideoCourse(e.target.value); setVideoLesson(""); }} style={{ ...inp, cursor: "pointer" }}>
@@ -2650,7 +2650,7 @@ function AdminPanel({ onLogout, onExit }) {
                               <div style={{ color: "#666666", fontSize: 11, display: "flex", alignItems: "center", gap: 6 }}><Video size={12} /> {video.title || "YouTube Video"} · {new Date(video.addedAt).toLocaleDateString()}</div>
                             </div>
                           </div>
-                          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                          <div style={{ display: "flex", gap: 12, alignItems: "center", flexShrink: 0 }}>
                             <button onClick={() => { setVideoCourse(cId); setVideoLesson(lId); }} style={btnGhost}>Replace</button>
                             <button onClick={async () => {
                               if (!window.confirm("Remove this video?")) return;
@@ -2758,7 +2758,7 @@ function RevenueTab() {
       </div>
 
       {/* Revenue by tier */}
-      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 20 }}>
+      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 20 }}>
         <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>Revenue by Tier</div>
         {["Basic", "Premium", "Elite"].map(t => {
           const rev = tierRevenue[t];
@@ -2780,7 +2780,7 @@ function RevenueTab() {
       </div>
 
       {/* Signup trend */}
-      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 20 }}>
+      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 20 }}>
         <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>New Signups — Last 6 Months</div>
         <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 100 }}>
           {signupsByMonth.map((m, i) => (
@@ -2795,7 +2795,7 @@ function RevenueTab() {
       </div>
 
       {/* Referral conversion */}
-      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 24 }}>
+      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28 }}>
         <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Referral Trials</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
           {[
@@ -2918,9 +2918,9 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
       </div>
 
       {/* Add user / team member */}
-      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 28 }}>
+      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 28 }}>
         <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Add User or Team Member</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, alignItems: "end" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, alignItems: "end" }}>
           <div>
             <label style={lbl}>Name</label>
             <input value={addForm.name} onChange={e => setAddForm({ ...addForm, name: e.target.value })} placeholder="Full name" style={inp} />
@@ -3072,9 +3072,9 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
 
       {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
 
-      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 28 }}>
+      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 28 }}>
         <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Send an Invite</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 12, alignItems: "end" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 16, alignItems: "end" }}>
           <div>
             <label style={lbl}>Name</label>
             <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Full name" style={inp} />
@@ -3158,7 +3158,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
     try { await call("POST", { action: "remove", id: entry.id }); await load(); } catch (e) { flash(false, e.message); }
   };
 
-  const section = { background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 20 };
+  const section = { background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 20 };
   const heading = { fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 };
   const statCard = (label, value, sub) => (
     <div style={{ background: "#ececec", border: "1px solid #2a1010", borderRadius: 12, padding: "20px 18px", textAlign: "center" }}>
@@ -3220,7 +3220,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
       <div style={section}>
         <div style={heading}>Countdown Emails</div>
         <p style={{ color: "#666666", fontSize: 12, marginBottom: 14, fontFamily: "'DM Sans', sans-serif" }}>Each button sends one countdown email to the whole waitlist. Launch sends everyone their personal claim link for the plan they chose.</p>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           {["2 days", "1 day", "12 hours", "5 hours"].map(stage => (
             <button key={stage} disabled={busy} onClick={() => sendStage(stage)} style={{ ...btnGhost, opacity: busy ? 0.6 : 1 }}>{stage}</button>
           ))}
@@ -3288,13 +3288,13 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
       <p style={{ color: "#666666", fontSize: 13, marginBottom: 28 }}>Everything on the member Resources page is edited here — links, templates, and the Elite partner network with referral codes.</p>
       {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
 
-      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 28 }}>
+      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 28 }}>
         <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Add Resource</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
           <div><label style={lbl}>Title</label><input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="DakJen Creative — Marketing" style={inp} /></div>
           <div><label style={lbl}>Link</label><input value={form.url} onChange={e => setForm({ ...form, url: e.target.value })} placeholder="https://…" style={inp} /></div>
           <div><label style={lbl}>Referral / coupon code (optional)</label><input value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} placeholder="GROUNDUP20" style={inp} /></div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <div><label style={lbl}>Section</label>
               <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value, min_tier: e.target.value === "partner" ? "Elite" : form.min_tier })} style={{ ...inp, marginBottom: 0 }}>
                 <option value="resource">Resource</option><option value="template">Template</option><option value="partner">Partner</option>
@@ -3374,7 +3374,7 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
     } catch (e) { flash(false, e.message); } finally { setBusy(false); }
   };
 
-  const section = { background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 20 };
+  const section = { background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 20 };
   const heading = { fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 };
   const sub = { color: "#666666", fontSize: 12, marginBottom: 14, fontFamily: "'DM Sans', sans-serif" };
 
@@ -3435,7 +3435,7 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
       <div style={section}>
         <div style={heading}>Personal Meeting Email</div>
         <p style={sub}>For 1-on-1 sessions — drop the meeting link and send it straight to the client.</p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 12 }}>
           <div><label style={lbl}>Client name</label><input value={meeting.to_name} onChange={e => setMeeting({ ...meeting, to_name: e.target.value })} style={inp} /></div>
           <div><label style={lbl}>Client email</label><input value={meeting.to_email} onChange={e => setMeeting({ ...meeting, to_email: e.target.value })} type="email" style={inp} /></div>
           <div><label style={lbl}>Session</label><input value={meeting.title} onChange={e => setMeeting({ ...meeting, title: e.target.value })} placeholder="Deal Review with Dr. Merritt" style={inp} /></div>
