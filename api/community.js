@@ -109,6 +109,31 @@ export default async function handler(req, res) {
       return res.status(201).json({ message: msg });
     }
 
+    // Team: create a channel (max 10)
+    if (req.method === 'POST' && req.body && req.body.action === 'create_channel') {
+      if (!isAdminReq) return res.status(403).json({ error: 'Team only' });
+      const { name, description, min_tier, admin_only_post } = req.body;
+      if (!name || !String(name).trim()) return res.status(400).json({ error: 'Channel name required' });
+      const [{ count }] = await sql`SELECT COUNT(*)::int AS count FROM channels`;
+      if (count >= 10) return res.status(400).json({ error: 'Channel limit reached (10) — delete one first' });
+      const clean = String(name).trim().slice(0, 40);
+      const slug = clean.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'channel';
+      const safeTier = ['Basic', 'Premium', 'Elite'].includes(min_tier) ? min_tier : 'Basic';
+      const [ch] = await sql`
+        INSERT INTO channels (slug, name, description, min_tier, admin_only_post, position, created_at)
+        VALUES (${slug}, ${clean}, ${(description || '').slice(0, 200)}, ${safeTier}, ${!!admin_only_post}, ${count}, NOW())
+        ON CONFLICT (slug) DO NOTHING RETURNING *`;
+      if (!ch) return res.status(409).json({ error: 'A channel with that name already exists' });
+      return res.status(201).json({ channel: ch });
+    }
+
+    // Team: delete a channel (messages go with it)
+    if (req.method === 'POST' && req.body && req.body.action === 'delete_channel') {
+      if (!isAdminReq) return res.status(403).json({ error: 'Team only' });
+      await sql`DELETE FROM channels WHERE id = ${Number(req.body.id)}`;
+      return res.json({ success: true });
+    }
+
     // POST { channel_id, body, parent_id? } — post a message or thread reply
     // Posting requires Premium+; Basic is read-only. Admins always post.
     if (req.method === 'POST') {
