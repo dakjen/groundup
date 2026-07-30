@@ -1193,7 +1193,7 @@ function PlanCard({ plan, onSelect }) {
   );
 }
 
-function PricingPage({ onSignUp, onWaitlist }) {
+function PricingPage({ onSignUp }) {
   return (
     <div style={{ background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
@@ -1203,12 +1203,10 @@ function PricingPage({ onSignUp, onWaitlist }) {
             Invest in yourself.<br />The returns are generational.
           </h1>
           <p style={{ color: "#7a6151", fontSize: 15, maxWidth: 420, margin: "0 auto", lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif" }}>Start free. Upgrade when you're ready. Cancel anytime.</p>
-          {onWaitlist && (
-            <div style={{ marginTop: 26, display: "inline-flex", alignItems: "center", gap: 14, background: "#0d0404", border: "1px solid #b8010130", borderRadius: 12, padding: "14px 22px", flexWrap: "wrap", justifyContent: "center" }}>
-              <span style={{ color: "#c8a8a8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>Launching soon — save your spot and your plan.</span>
-              <button onClick={onWaitlist} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Join the Waitlist</button>
-            </div>
-          )}
+          <div style={{ marginTop: 26, display: "inline-flex", alignItems: "center", gap: 10, background: "#0d0404", border: "1px solid #b8010130", borderRadius: 12, padding: "14px 22px" }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
+            <span style={{ color: "#c8a8a8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>The waitlist opens in September.</span>
+          </div>
         </div>
 
         {/* One-time passes */}
@@ -3556,7 +3554,7 @@ export default function App() {
       {activePage === "membership" && <MemberPage member={member} setActivePage={navigateTo} onSignIn={() => openSignup("Free")} onSignOut={() => { clearMember(); setMember(null); sessionStorage.removeItem("currentUser"); setCurrentUser(null); navigateTo("home"); }} />}
       {activePage === "community" && <CommunityPage member={member} isAdmin={member?.role === "admin"} onSignIn={() => member ? navigateTo("pricing") : openSignup("Basic")} />}
       {activePage === "about" && <AboutPage setActivePage={navigateTo} />}
-      {activePage === "pricing" && <PricingPage onSignUp={openSignup} onWaitlist={() => { window.location.href = "/waitlist"; }} />}
+      {activePage === "pricing" && <PricingPage onSignUp={openSignup} />}
       {activePage === "lunchlearn" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><LunchLearnPage member={member} onSignIn={() => openSignup("Free")} setActivePage={navigateTo} /></div>}
       {activePage === "contact" && <ContactPage setActivePage={navigateTo} />}
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>
