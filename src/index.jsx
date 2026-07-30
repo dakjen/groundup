@@ -1957,14 +1957,14 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
       {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#1a7a3a" : "#b80101", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
 
       <div style={section}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", columnGap: 20, rowGap: 18 }}>
           <div><label style={lbl}>Course</label>
-            <select value={courseId} onChange={e => { setCourseId(e.target.value); setLessonIdx(0); }} style={{ ...inp, marginBottom: 0, cursor: "pointer" }}>
+            <select value={courseId} onChange={e => { setCourseId(e.target.value); setLessonIdx(0); }} style={{ ...inp, maxWidth: "none", marginBottom: 0, cursor: "pointer" }}>
               {miniCourses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
             </select>
           </div>
           <div><label style={lbl}>Lesson</label>
-            <select value={lessonIdx} onChange={e => setLessonIdx(Number(e.target.value))} style={{ ...inp, marginBottom: 0, cursor: "pointer" }}>
+            <select value={lessonIdx} onChange={e => setLessonIdx(Number(e.target.value))} style={{ ...inp, maxWidth: "none", marginBottom: 0, cursor: "pointer" }}>
               {course.lessons.map((l, i) => <option key={i} value={i}>{i + 1}. {l.title}</option>)}
             </select>
           </div>
@@ -2088,7 +2088,7 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
         <div style={heading}><Link2 size={13} color="#b80101" /> Live Session Link</div>
         <p style={{ color: "#666666", fontSize: 12, marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>Everyone with Lunch & Learn access sees this link on their page. Update it before each session.</p>
         <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-          <input value={link} onChange={e => setLink(e.target.value)} placeholder="https://zoom.us/j/..." style={{ ...inp, marginBottom: 0, flex: 1, minWidth: 240 }} />
+          <input value={link} onChange={e => setLink(e.target.value)} placeholder="https://zoom.us/j/..." style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1, minWidth: 240 }} />
           <button onClick={saveLink} style={btnRed}>Save Link</button>
         </div>
       </div>
@@ -2123,11 +2123,11 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
       <div style={section}>
         <div style={heading}><Video size={13} color="#b80101" /> Session Recordings</div>
         <p style={{ color: "#666666", fontSize: 12, marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>Upload the video to YouTube as Unlisted, then paste the link here. It appears instantly on the Lunch & Learn page for everyone with access (and Premium+).</p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 12 }}>
-          <div><label style={lbl}>Title</label><input value={recForm.title} onChange={e => setRecForm({ ...recForm, title: e.target.value })} placeholder="Capital Stacks 101" style={inp} /></div>
-          <div><label style={lbl}>YouTube link</label><input value={recForm.url} onChange={e => setRecForm({ ...recForm, url: e.target.value })} placeholder="https://youtu.be/…" style={inp} /></div>
-          <div><label style={lbl}>Date</label><input value={recForm.date} onChange={e => setRecForm({ ...recForm, date: e.target.value })} placeholder="August 2026" style={inp} /></div>
-          <div><label style={lbl}>Description (optional)</label><input value={recForm.description} onChange={e => setRecForm({ ...recForm, description: e.target.value })} style={inp} /></div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", columnGap: 20, rowGap: 18, marginBottom: 18 }}>
+          <div><label style={lbl}>Title</label><input value={recForm.title} onChange={e => setRecForm({ ...recForm, title: e.target.value })} placeholder="Capital Stacks 101" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div><label style={lbl}>YouTube link</label><input value={recForm.url} onChange={e => setRecForm({ ...recForm, url: e.target.value })} placeholder="https://youtu.be/…" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div><label style={lbl}>Date</label><input value={recForm.date} onChange={e => setRecForm({ ...recForm, date: e.target.value })} placeholder="August 2026" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div><label style={lbl}>Description (optional)</label><input value={recForm.description} onChange={e => setRecForm({ ...recForm, description: e.target.value })} style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
         </div>
         <button onClick={addRecording} style={btnRed}>Add Recording</button>
         {data.recordings && data.recordings.length > 0 && (
@@ -2920,24 +2920,24 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
       {/* Add user / team member */}
       <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 28 }}>
         <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Add User or Team Member</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, alignItems: "end" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", columnGap: 20, rowGap: 18 }}>
           <div>
             <label style={lbl}>Name</label>
-            <input value={addForm.name} onChange={e => setAddForm({ ...addForm, name: e.target.value })} placeholder="Full name" style={inp} />
+            <input value={addForm.name} onChange={e => setAddForm({ ...addForm, name: e.target.value })} placeholder="Full name" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} />
           </div>
           <div>
             <label style={lbl}>Email</label>
-            <input value={addForm.email} onChange={e => setAddForm({ ...addForm, email: e.target.value })} type="email" placeholder="user@email.com" style={inp} />
+            <input value={addForm.email} onChange={e => setAddForm({ ...addForm, email: e.target.value })} type="email" placeholder="user@email.com" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} />
           </div>
           <div>
             <label style={lbl}>Tier</label>
-            <select value={addForm.tier} onChange={e => setAddForm({ ...addForm, tier: e.target.value })} style={{ ...inp, marginBottom: 0 }}>
+            <select value={addForm.tier} onChange={e => setAddForm({ ...addForm, tier: e.target.value })} style={{ ...inp, maxWidth: "none", marginBottom: 0 }}>
               {TIERS.map(t => <option key={t} value={t}>{TIER_DISPLAY[t]}</option>)}
             </select>
           </div>
           <div>
             <label style={lbl}>Password (blank = auto-generate)</label>
-            <input value={addForm.password} onChange={e => setAddForm({ ...addForm, password: e.target.value })} placeholder="Optional" style={inp} />
+            <input value={addForm.password} onChange={e => setAddForm({ ...addForm, password: e.target.value })} placeholder="Optional" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} />
           </div>
         </div>
         <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14, cursor: "pointer" }}>
@@ -2945,7 +2945,7 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
           <span style={{ color: "#333333", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>Team member — can post announcements, gets the TEAM badge, sees member DMs</span>
         </label>
         {addMsg && <div style={{ color: addMsg.includes("added") ? "#22c55e" : "#b80101", fontSize: 12, marginTop: 8, fontFamily: "'DM Sans', sans-serif" }}>{addMsg}</div>}
-        <button onClick={addUser} style={{ ...btnRed, marginTop: 14 }}>Add {addForm.team ? "Team Member" : "User"}</button>
+        <button onClick={addUser} style={{ ...btnRed, marginTop: 22, padding: "12px 28px" }}>Add {addForm.team ? "Team Member" : "User"}</button>
       </div>
 
       {/* Search + filter */}
@@ -3074,16 +3074,16 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
 
       <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 28 }}>
         <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Send an Invite</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 16, alignItems: "end" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", columnGap: 20, rowGap: 18, alignItems: "end" }}>
           <div>
             <label style={lbl}>Name</label>
-            <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Full name" style={inp} />
+            <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Full name" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} />
           </div>
           <div>
             <label style={lbl}>Email</label>
-            <input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} type="email" placeholder="their@email.com" style={inp} />
+            <input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} type="email" placeholder="their@email.com" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} />
           </div>
-          <button onClick={sendInvite} style={btnRed}>Send Invite</button>
+          <button onClick={sendInvite} style={{ ...btnRed, padding: "12px 24px" }}>Send Invite</button>
         </div>
       </div>
 
@@ -3412,9 +3412,9 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
           <div style={{ color: "#666666", fontSize: 12, fontFamily: "'DM Sans', sans-serif", paddingBottom: 12 }}>{count === null ? "" : `${count} recipient${count !== 1 ? "s" : ""}`}</div>
         </div>
         <label style={lbl}>Subject</label>
-        <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Subject line" style={{ ...inp, marginBottom: 12 }} />
+        <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Subject line" style={{ ...inp, maxWidth: "none", marginBottom: 18 }} />
         <label style={lbl}>Message</label>
-        <textarea value={message} onChange={e => setMessage(e.target.value)} rows={6} placeholder={"Write your message. Blank lines start new paragraphs.\nEach email opens with \u201cHi <first name>,\u201d automatically."} style={{ ...inp, resize: "vertical", marginBottom: 12 }} />
+        <textarea value={message} onChange={e => setMessage(e.target.value)} rows={6} placeholder={"Write your message. Blank lines start new paragraphs.\nEach email opens with \u201cHi <first name>,\u201d automatically."} style={{ ...inp, maxWidth: "none", resize: "vertical", marginBottom: 18 }} />
         <button disabled={busy} onClick={() => send({ kind: "broadcast", audience, subject, message }, `Send this email to ${count ?? "?"} recipient(s)?`)} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>Send Broadcast</button>
       </div>
 
@@ -3422,13 +3422,13 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
       <div style={section}>
         <div style={heading}>Event Announcement</div>
         <p style={sub}>A formatted announcement for an upcoming session — goes to the audience selected above.</p>
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
-          <div><label style={lbl}>Title</label><input value={event.title} onChange={e => setEvent({ ...event, title: e.target.value })} placeholder="Lunch & Learn: Capital Stacks 101" style={inp} /></div>
-          <div><label style={lbl}>Date</label><input value={event.date} onChange={e => setEvent({ ...event, date: e.target.value })} placeholder="August 14" style={inp} /></div>
-          <div><label style={lbl}>Time</label><input value={event.time} onChange={e => setEvent({ ...event, time: e.target.value })} placeholder="12:00 PM ET" style={inp} /></div>
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", columnGap: 20, rowGap: 18, marginBottom: 12 }}>
+          <div><label style={lbl}>Title</label><input value={event.title} onChange={e => setEvent({ ...event, title: e.target.value })} placeholder="Lunch & Learn: Capital Stacks 101" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div><label style={lbl}>Date</label><input value={event.date} onChange={e => setEvent({ ...event, date: e.target.value })} placeholder="August 14" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div><label style={lbl}>Time</label><input value={event.time} onChange={e => setEvent({ ...event, time: e.target.value })} placeholder="12:00 PM ET" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
         </div>
         <label style={lbl}>Description (optional)</label>
-        <textarea value={event.description} onChange={e => setEvent({ ...event, description: e.target.value })} rows={2} style={{ ...inp, resize: "vertical", marginBottom: 12 }} />
+        <textarea value={event.description} onChange={e => setEvent({ ...event, description: e.target.value })} rows={2} style={{ ...inp, maxWidth: "none", resize: "vertical", marginBottom: 18 }} />
         <button disabled={busy} onClick={() => send({ kind: "event", audience, ...event }, `Announce "${event.title}" to ${count ?? "?"} recipient(s)?`)} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>Send Announcement</button>
       </div>
 
@@ -3436,10 +3436,10 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
       <div style={section}>
         <div style={heading}>Lunch & Learn Reminder</div>
         <p style={sub}>Sends the join link (from the Lunch & Learn tab) to everyone with active access. Use it the day of the session.</p>
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
-          <div><label style={lbl}>Title (optional)</label><input value={event.title} onChange={e => setEvent({ ...event, title: e.target.value })} style={inp} /></div>
-          <div><label style={lbl}>Date</label><input value={event.date} onChange={e => setEvent({ ...event, date: e.target.value })} placeholder="Today" style={inp} /></div>
-          <div><label style={lbl}>Time</label><input value={event.time} onChange={e => setEvent({ ...event, time: e.target.value })} placeholder="12:00 PM ET" style={inp} /></div>
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", columnGap: 20, rowGap: 18, marginBottom: 12 }}>
+          <div><label style={lbl}>Title (optional)</label><input value={event.title} onChange={e => setEvent({ ...event, title: e.target.value })} style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div><label style={lbl}>Date</label><input value={event.date} onChange={e => setEvent({ ...event, date: e.target.value })} placeholder="Today" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div><label style={lbl}>Time</label><input value={event.time} onChange={e => setEvent({ ...event, time: e.target.value })} placeholder="12:00 PM ET" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
         </div>
         <button disabled={busy} onClick={() => send({ kind: "lnl_reminder", title: event.title, date: event.date, time: event.time }, "Send the join link to all active Lunch & Learn attendees?")} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>Send Reminder with Join Link</button>
       </div>
@@ -3448,13 +3448,13 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
       <div style={section}>
         <div style={heading}>Personal Meeting Email</div>
         <p style={sub}>For 1-on-1 sessions — drop the meeting link and send it straight to the client.</p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 12 }}>
-          <div><label style={lbl}>Client name</label><input value={meeting.to_name} onChange={e => setMeeting({ ...meeting, to_name: e.target.value })} style={inp} /></div>
-          <div><label style={lbl}>Client email</label><input value={meeting.to_email} onChange={e => setMeeting({ ...meeting, to_email: e.target.value })} type="email" style={inp} /></div>
-          <div><label style={lbl}>Session</label><input value={meeting.title} onChange={e => setMeeting({ ...meeting, title: e.target.value })} placeholder="Deal Review with Dr. Merritt" style={inp} /></div>
-          <div><label style={lbl}>Meeting link</label><input value={meeting.link} onChange={e => setMeeting({ ...meeting, link: e.target.value })} placeholder="https://zoom.us/j/..." style={inp} /></div>
-          <div><label style={lbl}>Date</label><input value={meeting.date} onChange={e => setMeeting({ ...meeting, date: e.target.value })} placeholder="August 14" style={inp} /></div>
-          <div><label style={lbl}>Time</label><input value={meeting.time} onChange={e => setMeeting({ ...meeting, time: e.target.value })} placeholder="2:00 PM ET" style={inp} /></div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", columnGap: 20, rowGap: 18, marginBottom: 18 }}>
+          <div><label style={lbl}>Client name</label><input value={meeting.to_name} onChange={e => setMeeting({ ...meeting, to_name: e.target.value })} style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div><label style={lbl}>Client email</label><input value={meeting.to_email} onChange={e => setMeeting({ ...meeting, to_email: e.target.value })} type="email" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div><label style={lbl}>Session</label><input value={meeting.title} onChange={e => setMeeting({ ...meeting, title: e.target.value })} placeholder="Deal Review with Dr. Merritt" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div><label style={lbl}>Meeting link</label><input value={meeting.link} onChange={e => setMeeting({ ...meeting, link: e.target.value })} placeholder="https://zoom.us/j/..." style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div><label style={lbl}>Date</label><input value={meeting.date} onChange={e => setMeeting({ ...meeting, date: e.target.value })} placeholder="August 14" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div><label style={lbl}>Time</label><input value={meeting.time} onChange={e => setMeeting({ ...meeting, time: e.target.value })} placeholder="2:00 PM ET" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
         </div>
         <button disabled={busy} onClick={() => send({ kind: "meeting", ...meeting }, `Send the meeting email to ${meeting.to_email || "?"}?`)} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>Send Meeting Email</button>
       </div>
