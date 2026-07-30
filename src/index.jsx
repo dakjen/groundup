@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { FileText, Send, Hourglass, FolderOpen, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2 } from "lucide-react";
-import { AuthModal, ResetPasswordModal, WaitlistModal, ResourcesPage, MemberPage, CommunityPage, TierBadge, TIER_RANK, TIER_LABELS, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
+import { AuthModal, ResetPasswordModal, WaitlistForm, ResourcesPage, MemberPage, CommunityPage, TierBadge, TIER_RANK, TIER_LABELS, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -1532,7 +1532,7 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
 
 // ─── LAUNCH PAGE (pre-launch mode) ──────────────────────────────────────────
 
-function LaunchPage({ launchAt, onWaitlist, onAdmin }) {
+function LaunchPage({ launchAt, onAdmin }) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
   const ms = launchAt ? new Date(launchAt).getTime() - now : 0;
@@ -1544,6 +1544,16 @@ function LaunchPage({ launchAt, onWaitlist, onAdmin }) {
   } : null;
   const font = "'DM Sans', sans-serif";
   const serif = "'Cormorant Garamond', serif";
+  const toForm = () => { const el = document.getElementById("insider-form"); el && el.scrollIntoView({ behavior: "smooth", block: "start" }); };
+
+  const TOPICS = [
+    { num: "01", title: "Finding & Controlling the Deal", teaser: "How Dr. Merritt reads a market, values land, and locks down a site — before spending real money." },
+    { num: "02", title: "Teams, Partners & Joint Ventures", teaser: "What you actually bring to the table, and the structures that protect you when the deal gets real." },
+    { num: "03", title: "Financing & the Capital Stack", teaser: "How multimillion-dollar deals actually get funded — the layers, the levers, and the money most people never find." },
+    { num: "04", locked: true },
+    { num: "05", locked: true },
+    { num: "06", locked: true },
+  ];
 
   return (
     <div style={{ background: "#000", minHeight: "100vh" }}>
@@ -1565,7 +1575,6 @@ function LaunchPage({ launchAt, onWaitlist, onAdmin }) {
 
       {/* Hero + countdown */}
       <div style={{ minHeight: "88vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "80px 20px 60px", position: "relative", overflow: "hidden" }}>
-        {/* Dr. Merritt photo backdrop, darkened so the text carries */}
         <div style={{ position: "absolute", inset: 0, backgroundImage: "url(/LIIF-Stills2.png)", backgroundSize: "cover", backgroundPosition: "center 25%", opacity: 0.28, pointerEvents: "none" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.75) 55%, #000 100%)", pointerEvents: "none" }} />
         <div className="gu-drift" style={{ position: "absolute", top: "0%", left: "20%", width: 700, height: 700, borderRadius: "50%", background: "radial-gradient(circle, #57040428 0%, transparent 65%)", pointerEvents: "none" }} />
@@ -1575,8 +1584,8 @@ function LaunchPage({ launchAt, onWaitlist, onAdmin }) {
         </div>
         <img src={IMG_LOGO} alt="GroundUp" className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, width: 72, height: 72, objectFit: "contain", borderRadius: 14, marginBottom: 24 }} />
         <h1 className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, fontFamily: serif, fontWeight: 700, fontSize: "clamp(44px,8vw,84px)", color: "#f5e8e8", lineHeight: 1.05, letterSpacing: "-1px", marginBottom: 10 }}>Get inside first.</h1>
-        <p className="gu-up gu-d2" style={{ position: "relative", zIndex: 1, color: "#9a9a98", fontSize: "clamp(14px,1.8vw,17px)", lineHeight: 1.9, maxWidth: 560, fontFamily: font, marginBottom: 40 }}>
-          Our mission is simple: <span style={{ color: "#e0c4c4", fontWeight: 700 }}>help you get your deals done and build a legacy.</span> Real development education, a community that has your back, and direct support from Dr. Gina Merritt — 30+ years and $600M+ of hands-on deal experience.
+        <p className="gu-up gu-d2" style={{ position: "relative", zIndex: 1, color: "#c8b0b0", fontSize: "clamp(14px,1.8vw,17px)", lineHeight: 1.9, maxWidth: 580, fontFamily: font, marginBottom: 40 }}>
+          Our mission is simple: <span style={{ color: "#e0c4c4", fontWeight: 700 }}>help you get your deals done and build a legacy.</span> Something new is coming for underrepresented developers — built on 30+ years and $600M+ of real deals.
         </p>
         {cd && (
           <div className="gu-up gu-d3" style={{ position: "relative", zIndex: 1, display: "flex", gap: "clamp(16px,4vw,36px)", marginBottom: 44 }}>
@@ -1588,57 +1597,78 @@ function LaunchPage({ launchAt, onWaitlist, onAdmin }) {
             ))}
           </div>
         )}
-        <button className="gu-up gu-d4" onClick={onWaitlist} style={{ position: "relative", zIndex: 1, background: "#b80101", color: "#fff", border: "none", borderRadius: 12, padding: "17px 44px", fontFamily: font, fontWeight: 800, fontSize: 15, cursor: "pointer", letterSpacing: "0.5px" }}>Join the Insider Waitlist →</button>
-        <div className="gu-up gu-d5" style={{ position: "relative", zIndex: 1, color: "#5a4040", fontSize: 12, fontFamily: font, marginTop: 16 }}>Insiders get first notice, first access, and a personal link to their plan at launch.</div>
+        <button className="gu-up gu-d4" onClick={toForm} style={{ position: "relative", zIndex: 1, background: "#b80101", color: "#fff", border: "none", borderRadius: 12, padding: "17px 44px", fontFamily: font, fontWeight: 800, fontSize: 15, cursor: "pointer", letterSpacing: "0.5px" }}>Join the Insider Waitlist →</button>
+        <div className="gu-up gu-d5" style={{ position: "relative", zIndex: 1, color: "#8a7070", fontSize: 12, fontFamily: font, marginTop: 16 }}>Insiders get first notice, first access, and a personal recommendation at launch.</div>
       </div>
 
-      {/* What's included */}
-      <div style={{ padding: "70px clamp(20px,5vw,80px)", maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>What's Inside</div>
-          <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4vw,44px)", color: "#f5e8e8" }}>Community. Support.<br />A constant influx of courses.</h2>
-          <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font, marginTop: 14, maxWidth: 560, marginLeft: "auto", marginRight: "auto", lineHeight: 1.8 }}>Four courses open the curriculum — and new ones keep coming. Membership means people in your corner, answers when you're stuck, and a library that grows with you.</p>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18, marginBottom: 22 }}>
-          {miniCourses.map((course, i) => (
-            <div key={course.id} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                <span style={{ background: course.stageColor + "18", color: course.stageColor, border: "1px solid " + course.stageColor + "35", borderRadius: 4, padding: "3px 10px", fontSize: 10, fontFamily: font, fontWeight: 800, letterSpacing: "1px" }}>{course.stage}</span>
-                <span style={{ color: "#7a5050", fontSize: 12, fontFamily: font }}>{course.lessons.length} lessons</span>
-              </div>
-              <h3 style={{ fontFamily: serif, fontWeight: 700, fontSize: 21, color: "#f0d8d8", marginBottom: 10, lineHeight: 1.25 }}>{course.title}</h3>
-              <p style={{ fontSize: 13, color: "#8a7070", lineHeight: 1.75, fontFamily: font }}>{course.description}</p>
+      {/* Dr. Merritt — the value */}
+      <div style={{ padding: "70px clamp(20px,5vw,80px)", maxWidth: 1050, margin: "0 auto" }}>
+        <div style={{ display: "flex", gap: 44, alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ flexShrink: 0, width: "clamp(260px,36%,400px)", borderRadius: 20, overflow: "hidden", border: "1px solid #2a0000" }}>
+            <img src="/GM Headshot.jpg" alt="Dr. Gina Merritt" style={{ width: "100%", display: "block" }} />
+          </div>
+          <div style={{ flex: 1, minWidth: 300 }}>
+            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 14 }}>The Real Value</div>
+            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4vw,44px)", color: "#f5e8e8", lineHeight: 1.15, marginBottom: 18 }}>You're not buying courses.<br />You're getting Dr. Gina Merritt.</h2>
+            <p style={{ color: "#a89080", fontSize: 15, lineHeight: 1.9, fontFamily: font, marginBottom: 22 }}>
+              Raised in the Bronx. Bootstrapped from public housing to $600M+ in development deals across DC, Baltimore, and Cleveland. The people who know this business almost never teach it — she's about to.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {[
+                "Live Lunch & Learns — real deals, real numbers, live with her",
+                "Office hours & work sessions — bring your deal, leave with a plan",
+                "She's in the community — answers from her and her team",
+                "One-on-one advisory for the developers ready to move",
+              ].map((t, i) => (
+                <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <span style={{ color: "#b80101", fontWeight: 800, flexShrink: 0 }}>→</span>
+                  <span style={{ color: "#c8a8a8", fontSize: 14, lineHeight: 1.7, fontFamily: font, fontWeight: 600 }}>{t}</span>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 18 }}>
-          {[
-            { Icon: MessagesSquare, title: "Support that has your back", desc: "A helping hand from people who've done it — a members-only community for deals, financing, and JV partnerships, with answers straight from Dr. Merritt's team." },
-            { Icon: Calendar, title: "Live Lunch & Learns + templates", desc: "Live sessions with Dr. Merritt on financing, JV strategy, and construction — plus recordings, worksheets, and development timeline templates." },
-            { Icon: Handshake, title: "Work directly with Dr. Merritt", desc: "1-on-1 deal reviews, strategy sessions, and Elite advisory calls with someone who has closed $600M+ in deals." },
-          ].map((f, i) => (
-            <div key={i} style={{ background: "#0a0808", border: "1px solid #1e0000", borderRadius: 16, padding: "26px 28px" }}>
-              <f.Icon size={22} color="#b80101" style={{ marginBottom: 14 }} />
-              <h3 style={{ fontFamily: font, fontWeight: 800, fontSize: 15, color: "#f0d8d8", marginBottom: 8 }}>{f.title}</h3>
-              <p style={{ fontSize: 13, color: "#8a7070", lineHeight: 1.75, fontFamily: font }}>{f.desc}</p>
+      </div>
+
+      {/* Curriculum teaser — no spoilers */}
+      <div style={{ padding: "40px clamp(20px,5vw,80px) 70px", maxWidth: 1100, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>The Curriculum</div>
+          <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4vw,44px)", color: "#f5e8e8" }}>Community. Support.<br />A constant influx of courses.</h2>
+          <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font, marginTop: 14, maxWidth: 560, marginLeft: "auto", marginRight: "auto", lineHeight: 1.8 }}>
+            The full development lifecycle, taught from deals that actually closed — and the curriculum keeps growing after launch. Here's a taste. The rest stays under wraps until the doors open.
+          </p>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18 }}>
+          {TOPICS.map((t) => t.locked ? (
+            <div key={t.num} style={{ background: "#070303", border: "1px dashed #2a1010", borderRadius: 16, padding: "26px 28px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 150, gap: 10 }}>
+              <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "#241010", lineHeight: 1 }}>{t.num}</div>
+              <Lock size={16} color="#3a2020" />
+              <div style={{ color: "#4a3030", fontSize: 11, fontFamily: font, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>Revealed at launch</div>
+            </div>
+          ) : (
+            <div key={t.num} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px" }}>
+              <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "#b8010150", lineHeight: 1, marginBottom: 12 }}>{t.num}</div>
+              <h3 style={{ fontFamily: serif, fontWeight: 700, fontSize: 21, color: "#f0d8d8", marginBottom: 10, lineHeight: 1.25 }}>{t.title}</h3>
+              <p style={{ fontSize: 13, color: "#8a7070", lineHeight: 1.75, fontFamily: font }}>{t.teaser}</p>
             </div>
           ))}
         </div>
       </div>
 
       {/* Pricing preview */}
-      <div style={{ padding: "40px clamp(20px,5vw,80px) 80px", maxWidth: 1100, margin: "0 auto" }}>
+      <div style={{ padding: "20px clamp(20px,5vw,80px) 60px", maxWidth: 1100, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 40 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Pricing at Launch</div>
-          <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(28px,4vw,40px)", color: "#f5e8e8" }}>Insiders pick their path now — pay at launch.</h2>
+          <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(28px,4vw,40px)", color: "#f5e8e8" }}>Every path in. One mission.</h2>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
           {[
-            { name: "One Course", price: "$100", period: "one-time", desc: "30 days of one course of your choice." },
+            { name: "One Course", price: "$100", period: "one-time", desc: "30 days inside one course of your choice." },
             { name: "All-Access Pass", price: "$250", period: "one-time", desc: "30 days of the entire curriculum." },
             { name: "Member", price: "$59.99", period: "/mo", desc: "Constant access + support — every course, every new course, and the community." },
-            { name: "Premium", price: "$165.99", period: "/mo", desc: "Engage the community, deal tools, a free work session.", popular: true },
-            { name: "Elite", price: "$599.99", period: "/mo", desc: "Direct line to Dr. Merritt — advisory calls and DMs." },
+            { name: "Premium", price: "$165.99", period: "/mo", desc: "Engage the community, deal tools, the Opportunity Board, a free work session.", popular: true },
+            { name: "Elite", price: "$599.99", period: "/mo", desc: "Direct line to Dr. Merritt — advisory calls, DMs, and the partner network." },
           ].map((p, i) => (
             <div key={i} style={{ background: p.popular ? "#0d0404" : "#080404", border: "1px solid " + (p.popular ? "#b8010140" : "#150000"), borderRadius: 16, padding: "26px 24px", textAlign: "center", position: "relative" }}>
               {p.popular && <div style={{ position: "absolute", top: 12, right: 12, background: "#b8010115", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "2px 8px", fontSize: 8, fontFamily: font, fontWeight: 800, letterSpacing: "1.5px" }}>POPULAR</div>}
@@ -1648,9 +1678,15 @@ function LaunchPage({ launchAt, onWaitlist, onAdmin }) {
             </div>
           ))}
         </div>
-        <div style={{ textAlign: "center", marginTop: 40 }}>
-          <button onClick={onWaitlist} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 12, padding: "16px 40px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Claim My Insider Spot →</button>
+      </div>
+
+      {/* Inline waitlist form */}
+      <div id="insider-form" style={{ padding: "50px clamp(20px,5vw,80px) 90px", maxWidth: 1100, margin: "0 auto", scrollMarginTop: 20 }}>
+        <div style={{ textAlign: "center", marginBottom: 32 }}>
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Your Move</div>
+          <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(28px,4vw,40px)", color: "#f5e8e8" }}>Claim your insider spot.</h2>
         </div>
+        <WaitlistForm />
       </div>
 
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>
@@ -3387,20 +3423,10 @@ export default function App() {
   // Hidden, public waitlist page — shareable at /waitlist, linked from nowhere
   const isWaitlistPage = window.location.pathname.replace(/\/+$/, "") === "/waitlist" || new URLSearchParams(window.location.search).has("waitlist");
   if (isWaitlistPage && !isAdmin && !showAdminLogin) {
-    return (
-      <>
-        {showWaitlist && <WaitlistModal onClose={() => setShowWaitlist(false)} />}
-        <LaunchPage launchAt={launchAt} onWaitlist={() => setShowWaitlist(true)} onAdmin={() => setShowAdminLogin(true)} />
-      </>
-    );
+    return <LaunchPage launchAt={launchAt} onAdmin={() => setShowAdminLogin(true)} />;
   }
   if (prelaunch && !isAdmin && !showAdminLogin) {
-    return (
-      <>
-        {showWaitlist && <WaitlistModal onClose={() => setShowWaitlist(false)} />}
-        <LaunchPage launchAt={launchAt} onWaitlist={() => setShowWaitlist(true)} onAdmin={() => setShowAdminLogin(true)} />
-      </>
-    );
+    return <LaunchPage launchAt={launchAt} onAdmin={() => setShowAdminLogin(true)} />;
   }
   if (!siteUnlocked && !isAdmin && !showAdminLogin) return <SiteGatePage onUnlock={() => setSiteUnlocked(true)} />;
   if (showAdminLogin && !isAdmin) return <AdminLoginPage onLogin={(token) => { sessionStorage.setItem("isAdmin", "true"); sessionStorage.setItem("adminToken", token || ""); setIsAdmin(true); setShowAdminLogin(false); }} />;
@@ -3439,7 +3465,6 @@ export default function App() {
           button { transition: none; }
         }
       `}</style>
-      {showWaitlist && <WaitlistModal onClose={() => setShowWaitlist(false)} />}
       {resetToken && <ResetPasswordModal token={resetToken} onDone={() => { setResetToken(null); window.history.replaceState({}, "", window.location.pathname); setAuthMode("login"); setShowSignup(true); }} />}
       {showSignup && <AuthModal startMode={authMode} onClose={() => { setShowSignup(false); setAuthMode("signup"); }} defaultTier={signupTier} onAuthed={(user) => { setMember(user); setShowSignup(false); sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); }} />}
       {trialBanner && (
@@ -3470,7 +3495,7 @@ export default function App() {
       {activePage === "membership" && <MemberPage member={member} setActivePage={navigateTo} onSignIn={() => openSignup("Free")} onSignOut={() => { clearMember(); setMember(null); sessionStorage.removeItem("currentUser"); setCurrentUser(null); navigateTo("home"); }} />}
       {activePage === "community" && <CommunityPage member={member} isAdmin={member?.role === "admin"} onSignIn={() => member ? navigateTo("pricing") : openSignup("Basic")} />}
       {activePage === "about" && <AboutPage setActivePage={navigateTo} />}
-      {activePage === "pricing" && <PricingPage onSignUp={openSignup} onWaitlist={() => setShowWaitlist(true)} />}
+      {activePage === "pricing" && <PricingPage onSignUp={openSignup} onWaitlist={() => { window.location.href = "/waitlist"; }} />}
       {activePage === "lunchlearn" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><LunchLearnPage member={member} onSignIn={() => openSignup("Free")} setActivePage={navigateTo} /></div>}
       {activePage === "contact" && <ContactPage setActivePage={navigateTo} />}
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>

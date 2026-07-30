@@ -621,7 +621,7 @@ const WL_PAIN = [
 const WL_SOURCE = ["Dr. Merritt / NREUV", "A Lunch & Learn", "LinkedIn", "Instagram", "Word of mouth", "An event or conference", "Other"];
 const WL_BUDGETS = ["Under $50", "$50–$150", "$150–$500", "$500+"];
 
-export function WaitlistModal({ onClose }) {
+export function WaitlistForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -654,13 +654,11 @@ export function WaitlistModal({ onClose }) {
   const sel = { ...inp, appearance: "auto", cursor: "pointer" };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "36px 36px 32px", width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto" }}>
+    <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "36px 36px 32px", width: "100%", maxWidth: 520, margin: "0 auto" }}>
         {done ? (
           <div style={{ textAlign: "center", padding: "20px 0" }}>
             <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 12 }}>You're an insider.</h2>
-            <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font, lineHeight: 1.8, marginBottom: 24 }}>Check your inbox — your spot is saved. We read every answer, and when we launch you'll get our personal recommendation for the plan that fits you best.</p>
-            <button onClick={onClose} style={btnRed}>Done</button>
+            <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font, lineHeight: 1.8 }}>Check your inbox — your spot is saved. We read every answer, and when we launch you'll get our personal recommendation for the plan that fits you best.</p>
           </div>
         ) : (
           <>
@@ -716,7 +714,6 @@ export function WaitlistModal({ onClose }) {
             </form>
           </>
         )}
-      </div>
     </div>
   );
 }
