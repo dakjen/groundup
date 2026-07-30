@@ -63,6 +63,34 @@ CREATE TABLE IF NOT EXISTS messages (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Lunch & Learn: 25%-off-first-month window after attending (2 months)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS lnl_discount_until TIMESTAMP;
+
+-- Comp coupon codes for Lunch & Learn access (Dr. Merritt can hand these out)
+CREATE TABLE IF NOT EXISTS coupons (
+  id SERIAL PRIMARY KEY,
+  code TEXT UNIQUE NOT NULL,
+  kind TEXT DEFAULT 'lnl_comp',
+  max_uses INTEGER DEFAULT 1,
+  used_count INTEGER DEFAULT 0,
+  expires_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- "What do you want to learn about?" submissions from Lunch & Learn signups
+CREATE TABLE IF NOT EXISTS lnl_requests (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  body TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Simple key/value settings (e.g. the live Lunch & Learn session link)
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT
+);
+
 -- Direct messages: one private thread per member with Dr. Merritt & the team (Elite benefit)
 CREATE TABLE IF NOT EXISTS dms (
   id SERIAL PRIMARY KEY,

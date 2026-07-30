@@ -1,0 +1,143 @@
+import { neon } from '@neondatabase/serverless';
+import { getSession, getAdmin } from './_utils.js';
+
+// Lunch & Learn onboarding: $69.99 buys 6 months of access (entitlement
+// course_id 'lunchlearn'); comp coupons grant the same. Access also starts a
+// 2-month window for 25% off the first month of a membership.
+
+const SIX_MONTHS = "interval '6 months'";
+
+async function getAccess(sql, userId) {
+  const [ent] = await sql`
+    SELECT expires_at FROM entitlements
+    WHERE user_id = ${userId} AND course_id = 'lunchlearn' AND (expires_at IS NULL OR expires_at > NOW())
+    ORDER BY expires_at DESC NULLS FIRST LIMIT 1`;
+  return ent || null;
+}
+
+async function grantAccess(sql, userId, source) {
+  const [ent] = await sql`
+    INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at)
+    VALUES (${userId}, 'lunchlearn', ${source}, NOW() + interval '6 months', NOW())
+    RETURNING expires_at`;
+  // Open (or refresh) the 25%-off-first-month window: 2 months from now
+  await sql`UPDATE users SET lnl_discount_until = NOW() + interval '2 months' WHERE id = ${userId} AND (lnl_discount_until IS NULL OR lnl_discount_until < NOW() + interval '2 months')`;
+  return ent;
+}
+
+function genCode() {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  let s = 'LNL-';
+  const buf = new Uint32Array(8);
+  crypto.getRandomValues(buf);
+  for (const n of buf) s += chars[n % chars.length];
+  return s;
+}
+
+export default async function handler(req, res) {
+  const sql = neon(process.env.DATABASE_URL);
+  const session = getSession(req);
+  const admin = getAdmin(req);
+
+  try {
+    // ── Admin: dashboard data ──
+    if (req.method === 'GET' && req.query.admin === '1') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const [linkRow] = await sql`SELECT value FROM settings WHERE key = 'lnl_link'`;
+      const coupons = await sql`SELECT * FROM coupons WHERE kind = 'lnl_comp' ORDER BY created_at DESC LIMIT 100`;
+      const requests = await sql`
+        SELECT r.id, r.body, r.created_at, u.name, u.email
+        FROM lnl_requests r LEFT JOIN users u ON u.id = r.user_id
+        ORDER BY r.created_at DESC LIMIT 200`;
+      const attendees = await sql`
+        SELECT u.id, u.name, u.email, e.expires_at, e.source
+        FROM entitlements e JOIN users u ON u.id = e.user_id
+        WHERE e.course_id = 'lunchlearn' AND (e.expires_at IS NULL OR e.expires_at > NOW())
+        ORDER BY e.created_at DESC LIMIT 200`;
+      return res.json({ link: linkRow?.value || '', coupons, requests, attendees });
+    }
+
+    // ── Member: my Lunch & Learn status ──
+    if (req.method === 'GET') {
+      if (!session || !session.uid) return res.status(401).json({ error: 'Sign in required' });
+      const access = admin ? { expires_at: null } : await getAccess(sql, session.uid);
+      const [user] = await sql`SELECT lnl_discount_until FROM users WHERE id = ${session.uid}`;
+      let link = null;
+      if (access || admin) {
+        const [linkRow] = await sql`SELECT value FROM settings WHERE key = 'lnl_link'`;
+        link = linkRow?.value || null;
+      }
+      const [reqRow] = session.uid ? await sql`SELECT id FROM lnl_requests WHERE user_id = ${session.uid} LIMIT 1` : [];
+      return res.json({
+        active: !!access || !!admin,
+        expires_at: access?.expires_at || null,
+        link,
+        discount_until: user?.lnl_discount_until || null,
+        has_request: !!reqRow,
+      });
+    }
+
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const action = req.body?.action;
+
+    // ── Admin actions ──
+    if (action === 'set_link') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const url = (req.body.url || '').trim();
+      if (url) { try { new URL(url); } catch { return res.status(400).json({ error: 'Invalid URL' }); } }
+      await sql`INSERT INTO settings (key, value) VALUES ('lnl_link', ${url}) ON CONFLICT (key) DO UPDATE SET value = ${url}`;
+      return res.json({ success: true });
+    }
+
+    if (action === 'create_coupon') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const code = (req.body.code || genCode()).trim().toUpperCase();
+      const maxUses = Math.max(1, Math.min(1000, Number(req.body.max_uses) || 1));
+      const [coupon] = await sql`
+        INSERT INTO coupons (code, kind, max_uses, expires_at, created_at)
+        VALUES (${code}, 'lnl_comp', ${maxUses}, NOW() + interval '1 year', NOW())
+        ON CONFLICT (code) DO NOTHING RETURNING *`;
+      if (!coupon) return res.status(409).json({ error: 'That code already exists' });
+      return res.status(201).json({ coupon });
+    }
+
+    if (action === 'grant') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const userId = Number(req.body.user_id);
+      if (!userId) return res.status(400).json({ error: 'user_id required' });
+      const ent = await grantAccess(sql, userId, 'manual');
+      return res.json({ success: true, expires_at: ent.expires_at });
+    }
+
+    // ── Member actions ──
+    if (!session || !session.uid) return res.status(401).json({ error: 'Sign in required' });
+
+    if (action === 'redeem') {
+      const code = (req.body.code || '').trim().toUpperCase();
+      if (!code) return res.status(400).json({ error: 'Enter a code' });
+      const existing = await getAccess(sql, session.uid);
+      if (existing) return res.status(409).json({ error: 'You already have Lunch & Learn access' });
+      // Atomic redemption — only succeeds while uses remain and it hasn't expired
+      const [coupon] = await sql`
+        UPDATE coupons SET used_count = used_count + 1
+        WHERE code = ${code} AND kind = 'lnl_comp' AND used_count < max_uses AND (expires_at IS NULL OR expires_at > NOW())
+        RETURNING *`;
+      if (!coupon) return res.status(400).json({ error: 'That code is invalid, expired, or already used' });
+      const ent = await grantAccess(sql, session.uid, 'coupon');
+      return res.json({ success: true, expires_at: ent.expires_at });
+    }
+
+    if (action === 'request') {
+      const body = (req.body.body || '').trim();
+      if (!body) return res.status(400).json({ error: 'Tell us what you want to learn about' });
+      if (body.length > 2000) return res.status(400).json({ error: 'Please keep it under 2000 characters' });
+      await sql`INSERT INTO lnl_requests (user_id, body, created_at) VALUES (${session.uid}, ${body}, NOW())`;
+      return res.status(201).json({ success: true });
+    }
+
+    return res.status(400).json({ error: 'Unknown action' });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}

@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const session = getSession(req);
       if (!session || !session.uid) return res.status(401).json({ error: 'Not signed in' });
-      const [user] = await sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, created_at FROM users WHERE id = ${session.uid}`;
+      const [user] = await sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, created_at FROM users WHERE id = ${session.uid}`;
       if (!user) return res.status(401).json({ error: 'Account not found' });
       // Active one-time passes: course_id 'all' or 'mc1'..'mc4', unexpired
       user.entitlements = await sql`SELECT course_id, expires_at FROM entitlements WHERE user_id = ${user.id} AND (expires_at IS NULL OR expires_at > NOW())`;
@@ -50,6 +50,21 @@ export default async function handler(req, res) {
       const { password_hash, ...safe } = user;
       safe.entitlements = await sql`SELECT course_id, expires_at FROM entitlements WHERE user_id = ${user.id} AND (expires_at IS NULL OR expires_at > NOW())`;
       return res.json({ user: safe, token });
+    }
+
+    // Logged-in password change (members and team alike)
+    if (action === 'change_password') {
+      const session = getSession(req);
+      if (!session || !session.uid) return res.status(401).json({ error: 'Not signed in' });
+      const { current_password, new_password } = req.body;
+      if (!current_password || !new_password) return res.status(400).json({ error: 'Current and new password required' });
+      if (new_password.length < 8) return res.status(400).json({ error: 'New password must be at least 8 characters' });
+      const [user] = await sql`SELECT id, password_hash FROM users WHERE id = ${session.uid}`;
+      if (!user || !verifyPassword(current_password, user.password_hash)) {
+        return res.status(401).json({ error: 'Current password is incorrect' });
+      }
+      await sql`UPDATE users SET password_hash = ${hashPassword(new_password)} WHERE id = ${user.id}`;
+      return res.json({ success: true });
     }
 
     // Free plan: claim the single free lesson. Only succeeds if none is claimed yet

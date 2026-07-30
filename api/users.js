@@ -1,6 +1,7 @@
 import { neon } from '@neondatabase/serverless';
-import { requireAdmin } from './_utils.js';
+import { requireAdmin, hashPassword } from './_utils.js';
 
+const FIELDS = ['id', 'name', 'email', 'tier', 'role', 'badge', 'membership_status', 'created_at'];
 
 export default async function handler(req, res) {
   if (!requireAdmin(req, res)) return;
@@ -8,34 +9,52 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const users = await sql`SELECT * FROM users ORDER BY created_at DESC`;
+      const users = await sql`
+        SELECT id, name, email, tier, role, badge, membership_status, created_at
+        FROM users ORDER BY created_at DESC`;
       return res.json(users);
     }
 
+    // Add a user (member or team). Optional password lets them sign in immediately;
+    // optional role 'admin' + badge creates a team member in one step.
     if (req.method === 'POST') {
-      const { name, email, tier } = req.body;
-      const [user] = await sql`
-        INSERT INTO users (name, email, tier, created_at)
-        VALUES (${name}, ${email}, ${tier}, NOW())
-        ON CONFLICT (email) DO NOTHING
-        RETURNING *
-      `;
-      return res.json(user || { error: 'Email already exists' });
-    }
-
-    if (req.method === 'PATCH') {
-      const { id, tier, role, badge } = req.body;
+      const { name, email, tier, password, role, badge } = req.body;
+      if (!name || !email) return res.status(400).json({ error: 'Name and email required' });
+      if (password && password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
       if (role !== undefined && !['member', 'admin'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
       if (badge !== undefined && badge !== null && !['team', 'drmerritt'].includes(badge)) return res.status(400).json({ error: 'Invalid badge' });
-      // Only fields present in the request change; badge may be set to null to clear it
+      const cleanEmail = String(email).trim().toLowerCase();
+      const safeTier = ['Free', 'Basic', 'Premium', 'Elite', 'Partner'].includes(tier) ? tier : 'Free';
+      const [user] = await sql`
+        INSERT INTO users (name, email, tier, password_hash, role, badge, created_at)
+        VALUES (${String(name).trim()}, ${cleanEmail}, ${safeTier}, ${password ? hashPassword(password) : null}, ${role || 'member'}, ${badge || null}, NOW())
+        ON CONFLICT (email) DO NOTHING
+        RETURNING id, name, email, tier, role, badge, membership_status, created_at
+      `;
+      if (!user) return res.status(409).json({ error: 'Email already exists' });
+      return res.status(201).json(user);
+    }
+
+    // Update tier / role / badge, or reset a password ({ id, new_password })
+    if (req.method === 'PATCH') {
+      const { id, tier, role, badge, new_password } = req.body;
+      if (!id) return res.status(400).json({ error: 'id required' });
+      if (role !== undefined && !['member', 'admin'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
+      if (badge !== undefined && badge !== null && !['team', 'drmerritt'].includes(badge)) return res.status(400).json({ error: 'Invalid badge' });
+      if (new_password !== undefined && (typeof new_password !== 'string' || new_password.length < 8)) {
+        return res.status(400).json({ error: 'Password must be at least 8 characters' });
+      }
       const hasBadge = 'badge' in req.body;
       const [user] = await sql`
         UPDATE users SET
           tier = COALESCE(${tier ?? null}, tier),
           role = COALESCE(${role ?? null}, role),
-          badge = CASE WHEN ${hasBadge} THEN ${badge ?? null} ELSE badge END
-        WHERE id = ${id} RETURNING id, name, email, tier, role, badge, created_at
+          badge = CASE WHEN ${hasBadge} THEN ${badge ?? null} ELSE badge END,
+          password_hash = COALESCE(${new_password ? hashPassword(new_password) : null}, password_hash)
+        WHERE id = ${id}
+        RETURNING id, name, email, tier, role, badge, membership_status, created_at
       `;
+      if (!user) return res.status(404).json({ error: 'User not found' });
       return res.json(user);
     }
 

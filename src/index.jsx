@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { FileText, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2 } from "lucide-react";
 import { AuthModal, MemberPage, CommunityPage, TierBadge, TIER_RANK, TIER_LABELS, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
@@ -387,7 +388,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
             <div style={{ marginTop: 24 }}>
               <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
-                  <div style={{ width: 40, height: 40, background: "#1a0808", border: "1px solid #2a0000", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>📄</div>
+                  <div style={{ width: 40, height: 40, background: "#1a0808", border: "1px solid #2a0000", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}><FileText size={18} color="#b80101" /></div>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 3 }}>Lesson Resource — View Only</div>
                     <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 600, fontFamily: "'DM Sans', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lessonPdf.filename}</div>
@@ -461,7 +462,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
                   <div style={{ color: "#7a5050", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{lesson.summary ? lesson.summary.substring(0, 80) + "..." : ""}</div>
                 </div>
               </div>
-              <span style={{ color: "#b80101", fontSize: 18, flexShrink: 0 }}>{lessonUnlocked(i) ? "→" : "🔒"}</span>
+              <span style={{ color: "#b80101", fontSize: 18, flexShrink: 0 }}>{lessonUnlocked(i) ? "→" : <Lock size={16} color="#8a7070" />}</span>
             </div>
           ))}
         </div>
@@ -862,7 +863,7 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate }) {
   if (!member) {
     return (
       <div style={{ background: "#000", minHeight: "100vh", padding: "160px 20px", textAlign: "center" }}>
-        <div style={{ fontSize: 40, marginBottom: 16 }}>🔒</div>
+        <div style={{ marginBottom: 16 }}><Lock size={36} color="#b80101" style={{ display: "inline-block" }} /></div>
         <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 44, color: "#f5e8e8", marginBottom: 14 }}>Members Only</h1>
         <p style={{ color: "#8a7070", fontFamily: "'DM Sans', sans-serif", fontSize: 15, maxWidth: 460, margin: "0 auto 28px", lineHeight: 1.8 }}>The GroundUp curriculum is for members. Create a free account to try one lesson on us, or go Basic for the full four-course curriculum.</p>
         <button onClick={onSignIn} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "13px 26px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Sign In / Join Free →</button>
@@ -1181,12 +1182,12 @@ function PricingPage({ onSignUp }) {
 
         <div style={{ marginTop: 56, background: "#110606", border: "1px solid #150000", borderRadius: 14, padding: "28px 36px", display: "flex", gap: 40, flexWrap: "wrap", justifyContent: "center", alignItems: "center" }}>
           {[
-            { emoji: "💳", text: "No credit card to start free" },
-            { emoji: "🔁", text: "Cancel anytime, no questions" },
-            { emoji: "🤝", text: "Scholarship access — just reach out" },
+            { Icon: CreditCard, text: "No credit card to start free" },
+            { Icon: RefreshCw, text: "Cancel anytime, no questions" },
+            { Icon: Handshake, text: "Scholarship access — just reach out" },
           ].map((r, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 18 }}>{r.emoji}</span>
+              <r.Icon size={18} color="#b80101" />
               <span style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>{r.text}</span>
             </div>
           ))}
@@ -1201,10 +1202,10 @@ function PricingPage({ onSignUp }) {
 
 function ContactPage({ setActivePage }) {
   const SESSION_TYPES = [
-    { id: "deal", title: "Deal Review", desc: "Dr. Merritt reviews a specific site or deal — feasibility, market read, deal structure, and whether it's worth pursuing.", price: "$415", duration: "45 min", emoji: "🏗️", stripe: "https://buy.stripe.com/placeholder_deal" },
-    { id: "strategy", title: "Strategy Session", desc: "Big picture direction: where to focus, how to grow your pipeline, what JV structures make sense for your stage.", price: "$395", duration: "45 min", emoji: "🧭", stripe: "https://buy.stripe.com/placeholder_strategy" },
-    { id: "capital", title: "Capital Stack Review", desc: "Deep dive into your financing structure — tax credit sizing, subsidy sequencing, gap analysis, and how to close the deal.", price: "$550", duration: "45 min", emoji: "📊", stripe: "https://buy.stripe.com/placeholder_capital" },
-    { id: "community", title: "Community Development", desc: "Community engagement strategy, political capital, government relationships, and neighborhood support for your project.", price: "$375", duration: "45 min", emoji: "🤝", stripe: "https://buy.stripe.com/placeholder_community" },
+    { id: "deal", title: "Deal Review", desc: "Dr. Merritt reviews a specific site or deal — feasibility, market read, deal structure, and whether it's worth pursuing.", price: "$415", duration: "45 min", Icon: Building2, stripe: "https://buy.stripe.com/placeholder_deal" },
+    { id: "strategy", title: "Strategy Session", desc: "Big picture direction: where to focus, how to grow your pipeline, what JV structures make sense for your stage.", price: "$395", duration: "45 min", Icon: Compass, stripe: "https://buy.stripe.com/placeholder_strategy" },
+    { id: "capital", title: "Capital Stack Review", desc: "Deep dive into your financing structure — tax credit sizing, subsidy sequencing, gap analysis, and how to close the deal.", price: "$550", duration: "45 min", Icon: BarChart3, stripe: "https://buy.stripe.com/placeholder_capital" },
+    { id: "community", title: "Community Development", desc: "Community engagement strategy, political capital, government relationships, and neighborhood support for your project.", price: "$375", duration: "45 min", Icon: Handshake, stripe: "https://buy.stripe.com/placeholder_community" },
   ];
 
   const [selected, setSelected] = useState(null);
@@ -1263,7 +1264,7 @@ function ContactPage({ setActivePage }) {
                 style={{ background: selected && selected.id === s.id ? "#1a0808" : "#0d0404", border: "1px solid " + (selected && selected.id === s.id ? "#b80101" : "#2a0000"), borderRadius: 14, padding: "22px 24px", cursor: "pointer", transition: "all 0.2s", position: "relative" }}>
                 {selected && selected.id === s.id && <div style={{ position: "absolute", top: 14, right: 14, width: 20, height: 20, borderRadius: "50%", background: "#b80101", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "#fff", fontWeight: 900 }}>✓</div>}
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
-                  <div style={{ width: 42, height: 42, borderRadius: 10, background: "#1a0808", border: "1px solid #2a0000", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>{s.emoji}</div>
+                  <div style={{ width: 42, height: 42, borderRadius: 10, background: "#1a0808", border: "1px solid #2a0000", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><s.Icon size={20} color="#b80101" /></div>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
                       <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 20, color: "#f0d8d8" }}>{s.title}</div>
@@ -1326,39 +1327,158 @@ function ContactPage({ setActivePage }) {
 
 // ─── LUNCH & LEARN PAGE ──────────────────────────────────────────────────────
 
-function LunchLearnPage() {
+function LunchLearnPage({ member, onSignIn, setActivePage }) {
   const [recordings, setRecordings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [playingId, setPlayingId] = useState(null);
+  const [status, setStatus] = useState(null); // { active, expires_at, link, discount_until, has_request }
+  const [code, setCode] = useState("");
+  const [codeMsg, setCodeMsg] = useState(null);
+  const [topic, setTopic] = useState("");
+  const [topicMsg, setTopicMsg] = useState(null);
+
+  const memberRank = member ? (TIER_RANK[member.tier] ?? 0) : 0;
+
+  const loadStatus = () => {
+    if (!member) return Promise.resolve();
+    return fetch("/api/lunchlearn", { headers: { Authorization: "Bearer " + getMemberToken() } })
+      .then(r => r.ok ? r.json() : null).then(d => d && setStatus(d)).catch(() => {});
+  };
 
   useEffect(() => {
-    window.storage.get("admin:lunchRecordings").then(r => {
-      if (r) setRecordings(JSON.parse(r.value));
-    }).catch(() => {}).finally(() => setLoading(false));
-  }, []);
+    Promise.all([
+      window.storage.get("admin:lunchRecordings").then(r => { if (r) setRecordings(JSON.parse(r.value)); }).catch(() => {}),
+      loadStatus(),
+    ]).finally(() => setLoading(false));
+  }, [member?.id]);
+
+  const redeem = async (e) => {
+    e.preventDefault();
+    setCodeMsg(null);
+    try {
+      const res = await fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "redeem", code }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not redeem");
+      setCode("");
+      setCodeMsg({ ok: true, text: "You're in — welcome to Lunch & Learn." });
+      await loadStatus();
+    } catch (err) { setCodeMsg({ ok: false, text: err.message }); }
+  };
+
+  const submitTopic = async (e) => {
+    e.preventDefault();
+    setTopicMsg(null);
+    try {
+      const res = await fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "request", body: topic }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not submit");
+      setTopic("");
+      setTopicMsg({ ok: true, text: "Thank you — Dr. Merritt's team reads every submission." });
+      setStatus(st => st ? { ...st, has_request: true } : st);
+    } catch (err) { setTopicMsg({ ok: false, text: err.message }); }
+  };
+
+  const fmt = (d) => new Date(d).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
+  const active = status?.active;
+  const canSeeRecordings = active || memberRank >= 2;
+  const card = { background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16 };
+  const font = "'DM Sans', sans-serif";
 
   return (
     <div style={{ minHeight: "100vh", paddingTop: 64, background: "#000" }}>
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "48px clamp(20px,5vw,48px)" }}>
-        <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>Past Sessions</div>
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(28px, 5vw, 44px)", color: "#f5e8e8", margin: 0, lineHeight: 1.2 }}>Lunch & Learn Recordings</h1>
-          <p style={{ color: "#6a6b69", fontSize: 14, fontFamily: "'DM Sans', sans-serif", marginTop: 12, maxWidth: 560, marginLeft: "auto", marginRight: "auto", lineHeight: 1.7 }}>
-            Catch up on past sessions covering affordable housing finance, tax credits, community development, and more.
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Start Here</div>
+          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(28px, 5vw, 44px)", color: "#f5e8e8", margin: 0, lineHeight: 1.2 }}>Lunch & Learn</h1>
+          <p style={{ color: "#6a6b69", fontSize: 14, fontFamily: font, marginTop: 12, maxWidth: 560, marginLeft: "auto", marginRight: "auto", lineHeight: 1.7 }}>
+            Live sessions with Dr. Merritt on affordable housing finance, tax credits, JV structuring, and community development — the front door to GroundUp.
           </p>
         </div>
 
+        {/* Access / offer */}
+        {!active && (
+          <div style={{ ...card, padding: "36px clamp(24px,4vw,44px)", marginBottom: 28, textAlign: "center" }}>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 10, marginBottom: 6 }}>
+              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 54, color: "#f5e8e8", lineHeight: 1 }}>$39.99</span>
+              <span style={{ color: "#8a7070", fontSize: 15, fontFamily: font }}>· 6 months of sessions</span>
+            </div>
+            <p style={{ color: "#c9a227", fontSize: 13, fontFamily: font, fontWeight: 700, marginBottom: 10 }}>A $99.99 value — offered at $39.99 because Dr. Merritt believes access shouldn't be the barrier.</p>
+            <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font, lineHeight: 1.8, maxWidth: 520, margin: "0 auto 24px" }}>
+              Every live session for six months, plus the recordings — and attending unlocks 25% off your first month if you become a member within two months.
+            </p>
+            {member ? (
+              <>
+                <button onClick={() => { window.location.href = "mailto:info@nreuv.com?subject=" + encodeURIComponent("GroundUp — Lunch & Learn access"); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "14px 32px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Get Access — $39.99</button>
+                <form onSubmit={redeem} style={{ marginTop: 22, display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+                  <input value={code} onChange={e => setCode(e.target.value)} placeholder="Have a code from Dr. Merritt?" style={{ background: "#0a0505", border: "1px solid #2a0000", borderRadius: 8, padding: "12px 14px", color: "#f5e8e8", fontFamily: font, fontSize: 13, outline: "none", width: 260, textTransform: "uppercase" }} />
+                  <button type="submit" style={{ background: "transparent", color: "#c9a227", border: "1px solid #c9a22750", borderRadius: 8, padding: "12px 20px", fontFamily: font, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Redeem</button>
+                </form>
+                {codeMsg && <div style={{ color: codeMsg.ok ? "#22c55e" : "#ff6b6b", fontSize: 13, fontFamily: font, marginTop: 12 }}>{codeMsg.text}</div>}
+              </>
+            ) : (
+              <button onClick={onSignIn} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "14px 32px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Sign In to Get Started</button>
+            )}
+          </div>
+        )}
+
+        {active && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, marginBottom: 28 }}>
+            <div style={{ ...card, padding: "28px 30px" }}>
+              <div style={{ fontSize: 9, color: "#22c55e", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>You're in</div>
+              <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 17, fontFamily: font, marginBottom: 8 }}>Live Session Access</div>
+              {status?.link ? (
+                <a href={status.link} target="_blank" rel="noreferrer" style={{ display: "inline-block", background: "#b80101", color: "#fff", borderRadius: 8, padding: "11px 22px", fontFamily: font, fontWeight: 800, fontSize: 13, textDecoration: "none", marginTop: 6 }}>Join the Next Session</a>
+              ) : (
+                <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>The join link for the next session will appear here — check back closer to the date.</p>
+              )}
+              {status?.expires_at && <div style={{ color: "#5a4040", fontSize: 12, fontFamily: font, marginTop: 14 }}>Access through {fmt(status.expires_at)}</div>}
+            </div>
+            <div style={{ ...card, padding: "28px 30px" }}>
+              <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Shape the next session</div>
+              {status?.has_request ? (
+                <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font, lineHeight: 1.8 }}>Thanks — your topic request is in. Dr. Merritt's team reads every submission when planning sessions.</p>
+              ) : (
+                <form onSubmit={submitTopic}>
+                  <label style={{ display: "block", color: "#c8a8a8", fontSize: 14, fontWeight: 700, fontFamily: font, marginBottom: 10 }}>What do you want to learn about?</label>
+                  <textarea value={topic} onChange={e => setTopic(e.target.value)} rows={3} maxLength={2000} placeholder="Tax credit basics? JV splits? Your first deal?" style={{ width: "100%", boxSizing: "border-box", background: "#0a0505", border: "1px solid #2a0000", borderRadius: 8, padding: "12px 14px", color: "#f5e8e8", fontFamily: font, fontSize: 13, outline: "none", resize: "vertical" }} />
+                  <button type="submit" style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer", marginTop: 10 }}>Submit</button>
+                </form>
+              )}
+              {topicMsg && <div style={{ color: topicMsg.ok ? "#22c55e" : "#ff6b6b", fontSize: 13, fontFamily: font, marginTop: 10 }}>{topicMsg.text}</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Membership discount window */}
+        {member && status?.discount_until && new Date(status.discount_until) > new Date() && memberRank < 1 && (
+          <div style={{ background: "#0d0a04", border: "1px solid #c9a22740", borderRadius: 14, padding: "20px 26px", marginBottom: 36, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
+            <div>
+              <div style={{ color: "#c9a227", fontWeight: 800, fontSize: 15, fontFamily: font, marginBottom: 4 }}>25% off your first month of membership</div>
+              <div style={{ color: "#8a7070", fontSize: 13, fontFamily: font }}>Your Lunch & Learn perk — join by {fmt(status.discount_until)} and mention it when you sign up.</div>
+            </div>
+            <button onClick={() => setActivePage && setActivePage("pricing")} style={{ background: "#c9a227", color: "#000", border: "none", borderRadius: 8, padding: "11px 22px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>See Memberships</button>
+          </div>
+        )}
+
+        {/* Recordings */}
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>Past Sessions</div>
+          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 30, color: "#f5e8e8", margin: 0 }}>Recordings</h2>
+        </div>
         {loading ? (
-          <div style={{ textAlign: "center", color: "#b80101", fontFamily: "'DM Sans', sans-serif", padding: 40 }}>Loading...</div>
+          <div style={{ textAlign: "center", color: "#b80101", fontFamily: font, padding: 40 }}>Loading...</div>
+        ) : !canSeeRecordings ? (
+          <div style={{ ...card, padding: 48, textAlign: "center" }}>
+            <div style={{ color: "#8a7070", fontSize: 14, fontFamily: font, lineHeight: 1.8, maxWidth: 440, margin: "0 auto" }}>Recordings are included with Lunch & Learn access and with Premium and Elite memberships.</div>
+          </div>
         ) : recordings.length === 0 ? (
-          <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: 48, textAlign: "center" }}>
-            <div style={{ fontSize: 36, marginBottom: 12 }}>📹</div>
-            <div style={{ color: "#6a6b69", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>No recordings available yet. Check back after the next session!</div>
+          <div style={{ ...card, padding: 48, textAlign: "center" }}>
+            <div style={{ color: "#6a6b69", fontSize: 14, fontFamily: font }}>No recordings available yet. Check back after the next session!</div>
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
             {recordings.map(rec => (
-              <div key={rec.id} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, overflow: "hidden", transition: "all 0.2s" }}>
+              <div key={rec.id} style={{ ...card, overflow: "hidden", transition: "all 0.2s" }}>
                 {playingId === rec.id ? (
                   <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, background: "#000" }}>
                     <iframe
@@ -1370,10 +1490,7 @@ function LunchLearnPage() {
                     />
                   </div>
                 ) : (
-                  <div
-                    onClick={() => setPlayingId(rec.id)}
-                    style={{ position: "relative", cursor: "pointer" }}
-                  >
+                  <div onClick={() => setPlayingId(rec.id)} style={{ position: "relative", cursor: "pointer" }}>
                     <img
                       src={`https://img.youtube.com/vi/${rec.videoId}/hqdefault.jpg`}
                       alt={rec.title}
@@ -1381,15 +1498,15 @@ function LunchLearnPage() {
                     />
                     <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s" }}>
                       <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(184,1,1,0.9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <span style={{ color: "#fff", fontSize: 22, marginLeft: 3 }}>▶</span>
+                        <Play size={22} color="#fff" style={{ marginLeft: 3 }} />
                       </div>
                     </div>
                   </div>
                 )}
                 <div style={{ padding: "18px 20px" }}>
                   <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 18, color: "#f0d8d8", marginBottom: 4 }}>{rec.title}</div>
-                  <div style={{ color: "#8a7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>{rec.date}</div>
-                  {rec.description && <div style={{ color: "#6a6b69", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>{rec.description}</div>}
+                  <div style={{ color: "#8a7070", fontSize: 12, fontFamily: font, marginBottom: 6 }}>{rec.date}</div>
+                  {rec.description && <div style={{ color: "#6a6b69", fontSize: 13, fontFamily: font, lineHeight: 1.6 }}>{rec.description}</div>}
                 </div>
               </div>
             ))}
@@ -1498,6 +1615,128 @@ function AdminLoginPage({ onLogin }) {
   );
 }
 
+function LnLManager({ btnRed, btnGhost, inp, lbl }) {
+  const [data, setData] = useState(null);
+  const [link, setLink] = useState("");
+  const [couponUses, setCouponUses] = useState(1);
+  const [msg, setMsg] = useState(null);
+  const [showRequests, setShowRequests] = useState(false);
+
+  const call = async (method, body) => {
+    const res = await fetch("/api/lunchlearn" + (method === "GET" ? "?admin=1" : ""), {
+      method,
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + sessionStorage.getItem("adminToken") },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(d.error || "Request failed");
+    return d;
+  };
+
+  const load = () => call("GET").then(d => { setData(d); setLink(d.link); }).catch(e => setMsg({ ok: false, text: e.message }));
+  useEffect(() => { load(); }, []);
+
+  const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 4000); };
+
+  const saveLink = async () => {
+    try { await call("POST", { action: "set_link", url: link }); flash(true, "Session link saved — visible to everyone with access."); } catch (e) { flash(false, e.message); }
+  };
+
+  const createCoupon = async () => {
+    try {
+      const d = await call("POST", { action: "create_coupon", max_uses: couponUses });
+      flash(true, `Code created: ${d.coupon.code}`);
+      await load();
+    } catch (e) { flash(false, e.message); }
+  };
+
+  const section = { background: "#150c0c", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 20 };
+  const heading = { fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14, display: "flex", alignItems: "center", gap: 8 };
+
+  if (!data) return <div style={{ color: "#7a6060", fontSize: 13, marginBottom: 24 }}>Loading Lunch & Learn manager…</div>;
+
+  return (
+    <div style={{ marginBottom: 36 }}>
+      {msg && <div style={{ background: msg.ok ? "#06170d" : "#170606", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
+
+      {/* Session link */}
+      <div style={section}>
+        <div style={heading}><Link2 size={13} color="#b80101" /> Live Session Link</div>
+        <p style={{ color: "#7a6060", fontSize: 12, marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>Everyone with Lunch & Learn access sees this link on their page. Update it before each session.</p>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <input value={link} onChange={e => setLink(e.target.value)} placeholder="https://zoom.us/j/..." style={{ ...inp, marginBottom: 0, flex: 1, minWidth: 240 }} />
+          <button onClick={saveLink} style={btnRed}>Save Link</button>
+        </div>
+      </div>
+
+      {/* Comp codes */}
+      <div style={section}>
+        <div style={heading}><Ticket size={13} color="#b80101" /> Comp Codes</div>
+        <p style={{ color: "#7a6060", fontSize: 12, marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>Generate codes Dr. Merritt can hand out. Each grants 6 months of Lunch & Learn access, free.</p>
+        <div style={{ display: "flex", gap: 10, alignItems: "flex-end", flexWrap: "wrap", marginBottom: 16 }}>
+          <div>
+            <label style={lbl}>Uses per code</label>
+            <select value={couponUses} onChange={e => setCouponUses(Number(e.target.value))} style={{ ...inp, marginBottom: 0, width: 120 }}>
+              {[1, 5, 10, 25, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
+          </div>
+          <button onClick={createCoupon} style={btnRed}>Generate Code</button>
+        </div>
+        {data.coupons.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 220, overflowY: "auto" }}>
+            {data.coupons.map(c => (
+              <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "#120a0a", border: "1px solid #241010", borderRadius: 8, padding: "10px 14px", flexWrap: "wrap" }}>
+                <code style={{ color: "#c9a227", fontSize: 14, letterSpacing: "1px", flex: 1, minWidth: 140 }}>{c.code}</code>
+                <span style={{ color: c.used_count >= c.max_uses ? "#b80101" : "#8a7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>{c.used_count}/{c.max_uses} used</span>
+                <button onClick={() => { navigator.clipboard && navigator.clipboard.writeText(c.code); flash(true, "Copied " + c.code); }} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Copy</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Topic requests */}
+      <div style={section}>
+        <div style={{ ...heading, cursor: "pointer" }} onClick={() => setShowRequests(!showRequests)}>
+          <Inbox size={13} color="#b80101" /> Topic Requests ({data.requests.length}) <span style={{ marginLeft: "auto", color: "#5a4040" }}>{showRequests ? "Hide" : "Show"}</span>
+        </div>
+        {showRequests && (data.requests.length === 0 ? (
+          <p style={{ color: "#5a4040", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No submissions yet — attendees are asked what they want to learn when they get access.</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 320, overflowY: "auto" }}>
+            {data.requests.map(r => (
+              <div key={r.id} style={{ background: "#120a0a", border: "1px solid #241010", borderRadius: 8, padding: "12px 16px" }}>
+                <div style={{ color: "#c8a8a8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 6 }}>{r.body}</div>
+                <div style={{ color: "#5a4040", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>{r.name || "Unknown"} · {r.email || ""} · {new Date(r.created_at).toLocaleDateString()}</div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      {/* Attendees */}
+      <div style={section}>
+        <div style={heading}><UsersIcon size={13} color="#b80101" /> Active Access ({data.attendees.length})</div>
+        {data.attendees.length === 0 ? (
+          <p style={{ color: "#5a4040", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No one has Lunch & Learn access yet. Grant it from the Users tab, sell it, or hand out a comp code.</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 220, overflowY: "auto" }}>
+            {data.attendees.map(a => (
+              <div key={a.id + (a.expires_at || "")} style={{ display: "flex", alignItems: "center", gap: 12, background: "#120a0a", border: "1px solid #241010", borderRadius: 8, padding: "10px 14px", flexWrap: "wrap" }}>
+                <div style={{ flex: 1, minWidth: 160 }}>
+                  <span style={{ color: "#f0d8d8", fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{a.name}</span>
+                  <span style={{ color: "#8a6060", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 8 }}>{a.email}</span>
+                </div>
+                <span style={{ color: "#8a7070", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>{a.source === "coupon" ? "Comped" : a.source === "manual" ? "Granted" : "Paid"} · through {a.expires_at ? new Date(a.expires_at).toLocaleDateString() : "—"}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function AdminPanel({ onLogout }) {
   const [tab, setTab] = useState("lunch");
   const [courses, setCourses] = useState([]);
@@ -1586,9 +1825,9 @@ function AdminPanel({ onLogout }) {
       </div>
       <div style={{ display: "flex", minHeight: "calc(100vh - 60px)" }}>
         <div style={{ width: 220, background: "#100808", borderRight: "1px solid #2a1010", padding: "24px 12px", flexShrink: 0 }}>
-          {[{ id: "lunch", label: "Lunch & Learn", emoji: "📅" }, { id: "inbox", label: "Inbox", emoji: "📬" }, { id: "courses", label: "Courses", emoji: "📚" }, { id: "referrals", label: "Referrals", emoji: "🔗" }, { id: "users", label: "Users", emoji: "👥" }, { id: "revenue", label: "Revenue", emoji: "💰" }].map(t => (
+          {[{ id: "lunch", label: "Lunch & Learn", Icon: Calendar }, { id: "inbox", label: "Inbox", Icon: Inbox }, { id: "courses", label: "Courses", Icon: GraduationCap }, { id: "referrals", label: "Referrals", Icon: Link2 }, { id: "users", label: "Users", Icon: UsersIcon }, { id: "revenue", label: "Revenue", Icon: DollarSign }].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} style={{ width: "100%", textAlign: "left", background: tab === t.id ? "#1e1010" : "transparent", color: tab === t.id ? "#f0d8d8" : "#7a6060", border: tab === t.id ? "1px solid #3a1515" : "1px solid transparent", borderRadius: 8, padding: "10px 14px", marginBottom: 4, cursor: "pointer", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
-              <span>{t.emoji}</span><span>{t.label}</span>
+              <t.Icon size={15} /><span>{t.label}</span>
               {t.id === "inbox" && unread > 0 && <span style={{ marginLeft: "auto", background: "#b80101", color: "#fff", borderRadius: 99, fontSize: 10, fontWeight: 800, padding: "1px 7px" }}>{unread}</span>}
             </button>
           ))}
@@ -1599,7 +1838,8 @@ function AdminPanel({ onLogout }) {
           {tab === "lunch" && (
             <div style={{ maxWidth: 700 }}>
               <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Lunch & Learn</h2>
-              <p style={{ color: "#7a6060", fontSize: 13, marginBottom: 32 }}>Set up the next event and manage RSVPs.</p>
+              <p style={{ color: "#7a6060", fontSize: 13, marginBottom: 32 }}>Access, comp codes, topic requests, and the live session link.</p>
+              <LnLManager btnRed={btnRed} btnGhost={btnGhost} inp={inp} lbl={lbl} />
 
               {lunchEvent && lunchEvent.status !== "cancelled" && (
                 <div style={{ background: "#150c0c", border: "1px solid #3a1515", borderRadius: 14, padding: 28, marginBottom: 32 }}>
@@ -1875,7 +2115,7 @@ function AdminPanel({ onLogout }) {
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: 3 }}>{course?.title || cId}</div>
                             <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 600, marginBottom: 2 }}>Lesson {lId}: {lesson?.title || "Unknown"}</div>
-                            <div style={{ color: "#7a6060", fontSize: 11 }}>📄 {pdf.filename} · {new Date(pdf.uploadedAt).toLocaleDateString()}</div>
+                            <div style={{ color: "#7a6060", fontSize: 11, display: "flex", alignItems: "center", gap: 6 }}><FileText size={12} /> {pdf.filename} · {new Date(pdf.uploadedAt).toLocaleDateString()}</div>
                           </div>
                           <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                             <button onClick={() => { setPdfCourse(cId); setPdfLesson(lId); document.getElementById("pdf-upload-input").click(); }} style={btnGhost}>Replace</button>
@@ -1954,7 +2194,7 @@ function AdminPanel({ onLogout }) {
                             <div style={{ minWidth: 0 }}>
                               <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: 3 }}>{course?.title || cId}</div>
                               <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 600, marginBottom: 2 }}>Lesson {lId}: {lesson?.title || "Unknown"}</div>
-                              <div style={{ color: "#7a6060", fontSize: 11 }}>🎬 {video.title || "YouTube Video"} · {new Date(video.addedAt).toLocaleDateString()}</div>
+                              <div style={{ color: "#7a6060", fontSize: 11, display: "flex", alignItems: "center", gap: 6 }}><Video size={12} /> {video.title || "YouTube Video"} · {new Date(video.addedAt).toLocaleDateString()}</div>
                             </div>
                           </div>
                           <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
@@ -2127,39 +2367,61 @@ const TIER_COLORS = { Free: "#6a6b69", Basic: "#b80101", Premium: "#b80101", Eli
 function UsersTab({ btnRed, btnGhost, inp, lbl }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [addForm, setAddForm] = useState({ name: "", email: "", tier: "Free" });
+  const [addForm, setAddForm] = useState({ name: "", email: "", tier: "Free", team: false, password: "" });
   const [addMsg, setAddMsg] = useState("");
   const [search, setSearch] = useState("");
   const [filterTier, setFilterTier] = useState("All");
+  const [tempPw, setTempPw] = useState(null); // { name, password } after a reset
 
-  useEffect(() => {
-    window.storage.get("admin:users").then(r => {
-      if (r) setUsers(JSON.parse(r.value));
-    }).catch(() => {}).finally(() => setLoading(false));
-  }, []);
+  const adminApi = async (method, body) => {
+    const res = await fetch("/api/users", {
+      method,
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + sessionStorage.getItem("adminToken") },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Request failed");
+    return data;
+  };
 
-  const saveUsers = async (data) => {
-    setUsers(data);
-    await window.storage.set("admin:users", JSON.stringify(data));
+  const loadUsers = () => adminApi("GET").then(setUsers).catch(() => {});
+
+  useEffect(() => { loadUsers().finally(() => setLoading(false)); }, []);
+
+  const genPassword = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+    return Array.from(crypto.getRandomValues(new Uint32Array(12))).map(n => chars[n % chars.length]).join("");
   };
 
   const addUser = async () => {
     if (!addForm.name || !addForm.email) { setAddMsg("Name and email required."); return; }
-    if (users.find(u => u.email === addForm.email)) { setAddMsg("A user with that email already exists."); return; }
-    const newUser = { id: Date.now().toString(), name: addForm.name, email: addForm.email, tier: addForm.tier, joinedAt: new Date().toISOString() };
-    await saveUsers([newUser, ...users]);
-    setAddForm({ name: "", email: "", tier: "Free" });
-    setAddMsg("User added.");
-    setTimeout(() => setAddMsg(""), 3000);
+    const password = addForm.password || genPassword();
+    try {
+      await adminApi("POST", { name: addForm.name, email: addForm.email, tier: addForm.tier, password, role: addForm.team ? "admin" : "member", badge: addForm.team ? "team" : undefined });
+      setTempPw({ name: addForm.name, password });
+      setAddForm({ name: "", email: "", tier: "Free", team: false, password: "" });
+      setAddMsg("User added — share the password below with them.");
+      await loadUsers();
+    } catch (e) { setAddMsg(e.message); }
+    setTimeout(() => setAddMsg(""), 5000);
   };
 
-  const changeTier = async (id, tier) => {
-    await saveUsers(users.map(u => u.id === id ? { ...u, tier } : u));
+  const patchUser = async (id, patch) => {
+    try { await adminApi("PATCH", { id, ...patch }); await loadUsers(); } catch (e) { setAddMsg(e.message); setTimeout(() => setAddMsg(""), 4000); }
+  };
+
+  const resetPassword = async (user) => {
+    if (!window.confirm(`Reset ${user.name}'s password? Their old password stops working immediately.`)) return;
+    const password = genPassword();
+    try {
+      await adminApi("PATCH", { id: user.id, new_password: password });
+      setTempPw({ name: user.name, password });
+    } catch (e) { setAddMsg(e.message); setTimeout(() => setAddMsg(""), 4000); }
   };
 
   const removeUser = async (id) => {
-    if (!window.confirm("Remove this user?")) return;
-    await saveUsers(users.filter(u => u.id !== id));
+    if (!window.confirm("Remove this user? This deletes their account, messages, and access.")) return;
+    try { await adminApi("DELETE", { id }); await loadUsers(); } catch (e) { setAddMsg(e.message); }
   };
 
   const filtered = users.filter(u => {
@@ -2169,28 +2431,41 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
   });
 
   const tierCounts = TIERS.reduce((acc, t) => ({ ...acc, [t]: users.filter(u => u.tier === t).length }), {});
+  const TIER_DISPLAY = { Free: "Free", Basic: "Member", Premium: "Premium", Elite: "Elite" };
 
   if (loading) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
 
   return (
     <div style={{ maxWidth: 800 }}>
-      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Users</h2>
-      <p style={{ color: "#7a6060", fontSize: 13, marginBottom: 32 }}>Manage members and their plan tiers.</p>
+      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Users & Team</h2>
+      <p style={{ color: "#7a6060", fontSize: 13, marginBottom: 32 }}>Manage members, plan tiers, team access, and password resets.</p>
+
+      {tempPw && (
+        <div style={{ background: "#0d0a04", border: "1px solid #c9a22750", borderRadius: 14, padding: "18px 24px", marginBottom: 24, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <div style={{ fontSize: 10, color: "#c9a227", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>Temporary password for {tempPw.name}</div>
+            <code style={{ color: "#f0d8d8", fontSize: 16, letterSpacing: "1px" }}>{tempPw.password}</code>
+            <div style={{ color: "#8a7070", fontSize: 11, fontFamily: "'DM Sans', sans-serif", marginTop: 6 }}>Share it with them privately — they can change it from their Membership page. It won't be shown again.</div>
+          </div>
+          <button onClick={() => { navigator.clipboard && navigator.clipboard.writeText(tempPw.password); }} style={{ ...btnGhost, fontSize: 11 }}>Copy</button>
+          <button onClick={() => setTempPw(null)} style={{ ...btnGhost, fontSize: 11 }}>Dismiss</button>
+        </div>
+      )}
 
       {/* Tier summary */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 32 }}>
         {TIERS.map(t => (
           <div key={t} onClick={() => setFilterTier(filterTier === t ? "All" : t)} style={{ background: filterTier === t ? "#1e1010" : "#120a0a", border: "1px solid " + (filterTier === t ? TIER_COLORS[t] + "60" : "#2a1010"), borderRadius: 12, padding: "16px 14px", textAlign: "center", cursor: "pointer", transition: "all 0.2s" }}>
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: TIER_COLORS[t], lineHeight: 1 }}>{tierCounts[t]}</div>
-            <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>{t}</div>
+            <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>{TIER_DISPLAY[t]}</div>
           </div>
         ))}
       </div>
 
-      {/* Add user */}
+      {/* Add user / team member */}
       <div style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 28 }}>
-        <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Add User</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 12, alignItems: "end" }}>
+        <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Add User or Team Member</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, alignItems: "end" }}>
           <div>
             <label style={lbl}>Name</label>
             <input value={addForm.name} onChange={e => setAddForm({ ...addForm, name: e.target.value })} placeholder="Full name" style={inp} />
@@ -2202,12 +2477,20 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
           <div>
             <label style={lbl}>Tier</label>
             <select value={addForm.tier} onChange={e => setAddForm({ ...addForm, tier: e.target.value })} style={{ ...inp, marginBottom: 0 }}>
-              {TIERS.map(t => <option key={t} value={t}>{t}</option>)}
+              {TIERS.map(t => <option key={t} value={t}>{TIER_DISPLAY[t]}</option>)}
             </select>
           </div>
+          <div>
+            <label style={lbl}>Password (blank = auto-generate)</label>
+            <input value={addForm.password} onChange={e => setAddForm({ ...addForm, password: e.target.value })} placeholder="Optional" style={inp} />
+          </div>
         </div>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14, cursor: "pointer" }}>
+          <input type="checkbox" checked={addForm.team} onChange={e => setAddForm({ ...addForm, team: e.target.checked })} />
+          <span style={{ color: "#c8a8a8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>Team member — can post announcements, gets the TEAM badge, sees member DMs</span>
+        </label>
         {addMsg && <div style={{ color: addMsg.includes("added") ? "#22c55e" : "#b80101", fontSize: 12, marginTop: 8, fontFamily: "'DM Sans', sans-serif" }}>{addMsg}</div>}
-        <button onClick={addUser} style={{ ...btnRed, marginTop: 14 }}>Add User</button>
+        <button onClick={addUser} style={{ ...btnRed, marginTop: 14 }}>Add {addForm.team ? "Team Member" : "User"}</button>
       </div>
 
       {/* Search + filter */}
@@ -2231,21 +2514,42 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
             {filtered.length} user{filtered.length !== 1 ? "s" : ""}
           </div>
           {filtered.map(user => (
-            <div key={user.id} style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 12, padding: "16px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+            <div key={user.id} style={{ background: "#150c0c", border: "1px solid " + (user.role === "admin" ? "#b8010140" : "#2a1010"), borderRadius: 12, padding: "16px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
               <div style={{ flex: 1, minWidth: 180 }}>
-                <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{user.name}</div>
+                <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
+                  {user.name}
+                  {user.role === "admin" && (
+                    user.badge === "drmerritt"
+                      ? <span style={{ background: "linear-gradient(135deg, #c9a227, #8a6d1a)", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, letterSpacing: "1px" }}>DR. MERRITT</span>
+                      : <span style={{ background: "#b80101", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, letterSpacing: "1px" }}>TEAM</span>
+                  )}
+                </div>
                 <div style={{ color: "#8a6060", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>{user.email}</div>
               </div>
               <div style={{ fontSize: 10, color: "#5a4040", fontFamily: "'DM Sans', sans-serif" }}>
-                Joined {new Date(user.joinedAt).toLocaleDateString()}
+                Joined {new Date(user.created_at).toLocaleDateString()}
               </div>
               <select
                 value={user.tier}
-                onChange={e => changeTier(user.id, e.target.value)}
+                onChange={e => patchUser(user.id, { tier: e.target.value })}
                 style={{ background: TIER_COLORS[user.tier] + "18", color: TIER_COLORS[user.tier], border: "1px solid " + TIER_COLORS[user.tier] + "50", borderRadius: 6, padding: "6px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer", outline: "none" }}
               >
-                {TIERS.map(t => <option key={t} value={t} style={{ background: "#150c0c", color: "#f0d8d8" }}>{t}</option>)}
+                {TIERS.map(t => <option key={t} value={t} style={{ background: "#150c0c", color: "#f0d8d8" }}>{TIER_DISPLAY[t]}</option>)}
               </select>
+              <select
+                value={user.role === "admin" ? (user.badge === "drmerritt" ? "drmerritt" : "team") : "member"}
+                onChange={e => {
+                  const v = e.target.value;
+                  if (v === "member") patchUser(user.id, { role: "member", badge: null });
+                  else patchUser(user.id, { role: "admin", badge: v });
+                }}
+                style={{ background: "#120a0a", color: user.role === "admin" ? "#b80101" : "#8a7070", border: "1px solid #2a1010", borderRadius: 6, padding: "6px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer", outline: "none" }}
+              >
+                <option value="member" style={{ background: "#150c0c" }}>Member</option>
+                <option value="team" style={{ background: "#150c0c" }}>Team</option>
+                <option value="drmerritt" style={{ background: "#150c0c" }}>Dr. Merritt</option>
+              </select>
+              <button onClick={() => resetPassword(user)} style={{ ...btnGhost, fontSize: 11, padding: "6px 12px", flexShrink: 0 }}>Reset password</button>
               <button onClick={() => removeUser(user.id)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "6px 12px", flexShrink: 0 }}>Remove</button>
             </div>
           ))}
@@ -2345,7 +2649,7 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
           </div>
         </div>
         <div style={{ background: "#120a0a", border: "1px solid #2a1010", borderRadius: 10, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 16 }}>🎁</span>
+          <Gift size={16} color="#c9a227" />
           <span style={{ color: "#a08888", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>Recipient gets <strong style={{ color: "#b80101" }}>7 days of Basic free</strong> — then prompted to upgrade or drop to Free.</span>
         </div>
         {msg && <div style={{ color: msg.includes("created") ? "#22c55e" : "#b80101", fontSize: 12, marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>{msg}</div>}
@@ -2413,7 +2717,7 @@ function ContentAgreementModal({ onAgree, onClose }) {
       <div onClick={e => e.stopPropagation()} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "40px clamp(24px,5vw,48px)", width: "100%", maxWidth: 540, position: "relative", maxHeight: "90vh", overflowY: "auto" }}>
         <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "transparent", border: "none", color: "#6a5050", fontSize: 20, cursor: "pointer", lineHeight: 1 }}>✕</button>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div style={{ fontSize: 28, marginBottom: 8 }}>🔒</div>
+          <div style={{ marginBottom: 8 }}><Lock size={24} color="#b80101" style={{ display: "inline-block" }} /></div>
           <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#f5e8e8", marginBottom: 8 }}>Content Agreement</h2>
           <div style={{ fontSize: 12, color: "#8a7070", fontFamily: "'DM Sans', sans-serif" }}>Please review and accept before accessing content</div>
         </div>
@@ -2648,7 +2952,7 @@ export default function App() {
       {showSignup && <AuthModal onClose={() => setShowSignup(false)} defaultTier={signupTier} onAuthed={(user) => { setMember(user); setShowSignup(false); sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); }} />}
       {trialBanner && (
         <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "#0d0a04", border: "1px solid #b8010140", borderRadius: 14, padding: "18px 28px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 8px 40px rgba(184,1,1,0.2)", maxWidth: 520, width: "calc(100% - 48px)" }}>
-          <span style={{ fontSize: 28, flexShrink: 0 }}>🎁</span>
+          <span style={{ flexShrink: 0, display: "flex" }}><Gift size={26} color="#c9a227" /></span>
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, color: "#f0d8d8", marginBottom: 3 }}>You've been invited — 7 days of Basic, free.</div>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#8a7070" }}>Invited by Dr. Merritt's team. Full access starts now. After 7 days, choose a plan to continue.</div>
@@ -2658,7 +2962,7 @@ export default function App() {
       )}
       {eventInviteBanner && (
         <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "#0d0a04", border: "1px solid #b8010140", borderRadius: 14, padding: "18px 28px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 8px 40px rgba(184,1,1,0.2)", maxWidth: 520, width: "calc(100% - 48px)" }}>
-          <span style={{ fontSize: 28, flexShrink: 0 }}>🎟️</span>
+          <span style={{ flexShrink: 0, display: "flex" }}><Ticket size={26} color="#c9a227" /></span>
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, color: "#f0d8d8", marginBottom: 3 }}>You've been invited to RSVP!</div>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#8a7070" }}>Special invite from Dr. Merritt's team{eventInviteBanner.eventTitle ? ` for ${eventInviteBanner.eventTitle}` : ""}. You can now RSVP for the upcoming event.</div>
@@ -2674,7 +2978,7 @@ export default function App() {
       {activePage === "community" && <CommunityPage member={member} isAdmin={member?.role === "admin"} onSignIn={() => member ? navigateTo("pricing") : openSignup("Basic")} />}
       {activePage === "about" && <AboutPage setActivePage={navigateTo} />}
       {activePage === "pricing" && <PricingPage onSignUp={openSignup} />}
-      {activePage === "lunchlearn" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><LunchLearnPage /></div>}
+      {activePage === "lunchlearn" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><LunchLearnPage member={member} onSignIn={() => openSignup("Free")} setActivePage={navigateTo} /></div>}
       {activePage === "contact" && <ContactPage setActivePage={navigateTo} />}
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#3a2a2a" }}>© {new Date().getFullYear()} GroundUp · Northern Real Estate Urban Ventures</div>

@@ -1,3 +1,4 @@
+import { BookOpen, MessagesSquare, Video, Handshake, Lock, Mail, Megaphone, Menu, X as XIcon, Eye } from "lucide-react";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 
 // ─── MEMBER SESSION HELPERS ─────────────────────────────────────────────────
@@ -141,6 +142,43 @@ const BENEFITS = {
   Partner: ["Custom organizational access", "Contact info@nreuv.com for your cohort setup"],
 };
 
+function ChangePasswordCard() {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [msg, setMsg] = useState(null); // { ok, text }
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true); setMsg(null);
+    try {
+      await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "change_password", current_password: current, new_password: next }) });
+      setCurrent(""); setNext("");
+      setMsg({ ok: true, text: "Password updated." });
+    } catch (err) {
+      setMsg({ ok: false, text: err.message });
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <div style={{ background: "#0a0808", border: "1px solid #1e0000", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
+      <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 16 }}>Change password</div>
+      <form onSubmit={submit} style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end" }}>
+        <div style={{ flex: 1, minWidth: 180 }}>
+          <label style={lbl}>Current password</label>
+          <input style={inp} type="password" value={current} onChange={e => setCurrent(e.target.value)} required autoComplete="current-password" />
+        </div>
+        <div style={{ flex: 1, minWidth: 180 }}>
+          <label style={lbl}>New password</label>
+          <input style={inp} type="password" value={next} onChange={e => setNext(e.target.value)} required minLength={8} autoComplete="new-password" placeholder="At least 8 characters" />
+        </div>
+        <button type="submit" disabled={busy} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>{busy ? "Saving…" : "Update"}</button>
+      </form>
+      {msg && <div style={{ color: msg.ok ? "#22c55e" : "#ff6b6b", fontSize: 13, fontFamily: font, marginTop: 12 }}>{msg.text}</div>}
+    </div>
+  );
+}
+
 export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
   if (!member) {
     return (
@@ -169,23 +207,23 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, marginBottom: 40 }}>
           <div onClick={() => setActivePage("courses")} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: "pointer" }}>
-            <div style={{ fontSize: 24, marginBottom: 12 }}>📚</div>
+            <div style={{ marginBottom: 12 }}><BookOpen size={24} color="#b80101" /></div>
             <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Your Courses</div>
             <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 1 ? "Full access to all 4 courses and every lesson." : member.free_lesson_key ? "You've used your free lesson. Upgrade for the full curriculum." : "One free lesson included. Upgrade for the full curriculum."}</p>
           </div>
           <div onClick={() => rank >= 1 && setActivePage("community")} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: rank >= 1 ? "pointer" : "default", opacity: rank >= 1 ? 1 : 0.55 }}>
-            <div style={{ fontSize: 24, marginBottom: 12 }}>💬</div>
-            <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Community {rank < 1 && "🔒"}</div>
+            <div style={{ marginBottom: 12 }}><MessagesSquare size={24} color="#b80101" /></div>
+            <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Community {rank < 1 && <Lock size={13} style={{ display: "inline", verticalAlign: "middle" }} />}</div>
             <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 2 ? "Post, reply, and network with fellow developers." : rank >= 1 ? "Read every channel. Upgrade to Premium to post and reply." : "Members-only. Upgrade to a membership to join the conversation."}</p>
           </div>
           <div onClick={() => setActivePage("lunchlearn")} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: "pointer", opacity: rank >= 2 ? 1 : 0.55 }}>
-            <div style={{ fontSize: 24, marginBottom: 12 }}>🎥</div>
-            <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Lunch & Learns {rank < 2 && "🔒"}</div>
+            <div style={{ marginBottom: 12 }}><Video size={24} color="#b80101" /></div>
+            <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Lunch & Learns {rank < 2 && <Lock size={13} style={{ display: "inline", verticalAlign: "middle" }} />}</div>
             <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 2 ? "Recordings and live session access included in your plan." : "Recordings are a Premium benefit. Live sessions open to all."}</p>
           </div>
           <div onClick={() => setActivePage("contact")} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: "pointer", opacity: rank >= 3 ? 1 : 0.55 }}>
-            <div style={{ fontSize: 24, marginBottom: 12 }}>🤝</div>
-            <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Advisory Access {rank < 3 && "🔒"}</div>
+            <div style={{ marginBottom: 12 }}><Handshake size={24} color="#b80101" /></div>
+            <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Advisory Access {rank < 3 && <Lock size={13} style={{ display: "inline", verticalAlign: "middle" }} />}</div>
             <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 3 ? "Your Elite advisory calls and priority Q&A with Dr. Merritt." : "One-on-one time with Dr. Merritt is an Elite benefit. Book single sessions anytime."}</p>
           </div>
         </div>
@@ -200,6 +238,18 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
             ))}
           </ul>
         </div>
+
+        <ChangePasswordCard />
+
+        {rank < 1 && member.lnl_discount_until && new Date(member.lnl_discount_until) > new Date() && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, background: "#0d0a04", border: "1px solid #c9a22740", borderRadius: 14, padding: "20px 26px", marginBottom: 16 }}>
+            <div>
+              <div style={{ color: "#c9a227", fontWeight: 800, fontSize: 15, fontFamily: font, marginBottom: 4 }}>Your Lunch & Learn perk: 25% off your first month</div>
+              <div style={{ color: "#8a7070", fontSize: 13, fontFamily: font }}>Become a member by {new Date(member.lnl_discount_until).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })} and mention it when you sign up.</div>
+            </div>
+            <button style={{ ...btnRed, background: "#c9a227", color: "#000" }} onClick={() => setActivePage("pricing")}>See Memberships →</button>
+          </div>
+        )}
 
         {rank < 3 && (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 14, padding: "20px 26px" }}>
@@ -238,7 +288,7 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread }) {
       <div style={{ color: "#c8b0b0", fontSize: 14, fontFamily: font, lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.body}</div>
       {!inThread && (
         <button onClick={() => onOpenThread(m)} style={{ background: "none", border: "none", color: Number(m.reply_count) > 0 ? "#b80101" : "#5a4040", cursor: "pointer", fontSize: 12, fontFamily: font, fontWeight: 700, padding: 0, marginTop: 6 }}>
-          {Number(m.reply_count) > 0 ? `💬 ${m.reply_count} repl${Number(m.reply_count) === 1 ? "y" : "ies"}` : "Reply in thread"}
+          {Number(m.reply_count) > 0 ? `${m.reply_count} repl${Number(m.reply_count) === 1 ? "y" : "ies"}` : "Reply in thread"}
         </button>
       )}
     </div>
@@ -350,7 +400,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
   if (!hasAccess) {
     return (
       <div style={{ background: "#000", minHeight: "100vh", padding: "140px 20px", textAlign: "center" }}>
-        <div style={{ fontSize: 40, marginBottom: 16 }}>💬</div>
+        <div style={{ marginBottom: 16 }}><MessagesSquare size={36} color="#b80101" style={{ display: "inline-block" }} /></div>
         <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "#f5e8e8", marginBottom: 14 }}>The GroundUp Community</h1>
         <p style={{ color: "#8a7070", fontFamily: font, fontSize: 15, maxWidth: 480, margin: "0 auto 28px", lineHeight: 1.8 }}>
           {member ? "The community is a paid-member benefit. Upgrade to Basic or above to join channels for deals, financing, JV partnerships, and direct announcements from Dr. Merritt's team." : "Sign in with a paid membership to chat with fellow developers and hear directly from Dr. Merritt's team."}
@@ -371,7 +421,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
           <button key={c.id} onClick={() => { setActive(c); setDmOpen(false); setSidebarOpen(false); }}
             style={{ display: "block", width: "100%", textAlign: "left", background: !dmOpen && active?.id === c.id ? "#b8010118" : "transparent", border: "none", borderRadius: 8, padding: "9px 12px", cursor: "pointer", marginBottom: 2 }}>
             <span style={{ color: !dmOpen && active?.id === c.id ? "#f0d8d8" : "#8a7070", fontWeight: 700, fontSize: 13.5, fontFamily: font }}>
-              {c.admin_only_post ? "📣" : "#"} {c.name}
+              {c.admin_only_post ? <Megaphone size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 2 }} /> : "#"} {c.name}
             </span>
             {c.min_tier !== "Basic" && <span style={{ marginLeft: 6, fontSize: 9, color: TIER_COLORS[c.min_tier], fontFamily: font, fontWeight: 800 }}>{(TIER_LABELS[c.min_tier] || c.min_tier).toUpperCase()}</span>}
           </button>
@@ -382,14 +432,14 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
             {!isAdmin && (
               <button onClick={() => { setDmOpen(true); setSidebarOpen(false); }}
                 style={{ display: "block", width: "100%", textAlign: "left", background: dmOpen ? "#b8010118" : "transparent", border: "none", borderRadius: 8, padding: "9px 12px", cursor: "pointer" }}>
-                <span style={{ color: dmOpen ? "#f0d8d8" : "#8a7070", fontWeight: 700, fontSize: 13.5, fontFamily: font }}>✉️ Dr. Merritt & Team</span>
+                <span style={{ color: dmOpen ? "#f0d8d8" : "#8a7070", fontWeight: 700, fontSize: 13.5, fontFamily: font }}><Mail size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> Dr. Merritt & Team</span>
               </button>
             )}
             {isAdmin && dmThreads.length === 0 && <div style={{ color: "#5a4040", fontSize: 12, fontFamily: font, padding: "0 12px" }}>No member DMs yet.</div>}
             {isAdmin && dmThreads.map(t => (
               <button key={t.id} onClick={() => { setDmTarget(t); setDmOpen(true); setSidebarOpen(false); }}
                 style={{ display: "block", width: "100%", textAlign: "left", background: dmOpen && dmTarget?.id === t.id ? "#b8010118" : "transparent", border: "none", borderRadius: 8, padding: "9px 12px", cursor: "pointer", marginBottom: 2 }}>
-                <span style={{ color: dmOpen && dmTarget?.id === t.id ? "#f0d8d8" : "#8a7070", fontWeight: 700, fontSize: 13.5, fontFamily: font }}>✉️ {t.name}</span>
+                <span style={{ color: dmOpen && dmTarget?.id === t.id ? "#f0d8d8" : "#8a7070", fontWeight: 700, fontSize: 13.5, fontFamily: font }}><Mail size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> {t.name}</span>
                 <span style={{ marginLeft: 6, fontSize: 9, color: TIER_COLORS[t.tier], fontFamily: font, fontWeight: 800 }}>{(TIER_LABELS[t.tier] || t.tier).toUpperCase()}</span>
               </button>
             ))}
@@ -403,9 +453,9 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
         {loading ? <div style={{ padding: 40, color: "#8a7070", fontFamily: font }}>Loading community…</div> : dmOpen ? (
           <>
             <div style={{ padding: "16px 24px", borderBottom: "1px solid #1a0000", display: "flex", alignItems: "center", gap: 12 }}>
-              <button className="community-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", background: "transparent", border: "1px solid #2a0000", borderRadius: 6, color: "#8a7070", padding: "6px 10px", cursor: "pointer", fontFamily: font }}>☰</button>
+              <button className="community-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", background: "transparent", border: "1px solid #2a0000", borderRadius: 6, color: "#8a7070", padding: "6px 10px", cursor: "pointer", fontFamily: font, display: "none" }}><Menu size={15} /></button>
               <div>
-                <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 16, fontFamily: font }}>✉️ {isAdmin ? (dmTarget?.name || "Direct Messages") : "Dr. Merritt & Team"}</div>
+                <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 16, fontFamily: font }}><Mail size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }} /> {isAdmin ? (dmTarget?.name || "Direct Messages") : "Dr. Merritt & Team"}</div>
                 <div style={{ color: "#7a5050", fontSize: 12, fontFamily: font }}>{isAdmin ? "Private thread with this member." : "Private line to Dr. Merritt and the GroundUp team — an Elite benefit."}</div>
               </div>
             </div>
@@ -430,9 +480,9 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
         ) : active && (
           <>
             <div style={{ padding: "16px 24px", borderBottom: "1px solid #1a0000", display: "flex", alignItems: "center", gap: 12 }}>
-              <button className="community-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", background: "transparent", border: "1px solid #2a0000", borderRadius: 6, color: "#8a7070", padding: "6px 10px", cursor: "pointer", fontFamily: font }}>☰</button>
+              <button className="community-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", background: "transparent", border: "1px solid #2a0000", borderRadius: 6, color: "#8a7070", padding: "6px 10px", cursor: "pointer", fontFamily: font, display: "none" }}><Menu size={15} /></button>
               <div>
-                <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 16, fontFamily: font }}>{active.admin_only_post ? "📣" : "#"} {active.name}</div>
+                <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 16, fontFamily: font }}>{active.admin_only_post ? <Megaphone size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> : "#"} {active.name}</div>
                 <div style={{ color: "#7a5050", fontSize: 12, fontFamily: font }}>{active.description}</div>
               </div>
             </div>
@@ -448,7 +498,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
                   <button type="submit" style={btnRed}>Send</button>
                 </form>
               ) : !canEngage ? (
-                <div style={{ color: "#b8a060", fontSize: 13, fontFamily: font, textAlign: "center", padding: "8px 0" }}>👀 Reading is included with your Member plan. Upgrade to Premium to post, reply, and network.</div>
+                <div style={{ color: "#b8a060", fontSize: 13, fontFamily: font, textAlign: "center", padding: "8px 0" }}><Eye size={13} style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }} /> Reading is included with your Member plan. Upgrade to Premium to post, reply, and network.</div>
               ) : (
                 <div style={{ color: "#7a5050", fontSize: 13, fontFamily: font, textAlign: "center", padding: "8px 0" }}>Only the GroundUp team posts in this channel. Reply in threads to join the discussion.</div>
               )}
