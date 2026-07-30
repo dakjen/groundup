@@ -1563,18 +1563,21 @@ function LaunchPage({ launchAt, onWaitlist, onAdmin }) {
 
       {/* Hero + countdown */}
       <div style={{ minHeight: "88vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "80px 20px 60px", position: "relative", overflow: "hidden" }}>
+        {/* Dr. Merritt photo backdrop, darkened so the text carries */}
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "url(/LIIF-Stills2.png)", backgroundSize: "cover", backgroundPosition: "center 25%", opacity: 0.28, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.75) 55%, #000 100%)", pointerEvents: "none" }} />
         <div className="gu-drift" style={{ position: "absolute", top: "0%", left: "20%", width: 700, height: 700, borderRadius: "50%", background: "radial-gradient(circle, #57040428 0%, transparent 65%)", pointerEvents: "none" }} />
-        <div className="gu-up" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#7a615118", border: "1px solid #7a615140", borderRadius: 99, padding: "8px 20px", marginBottom: 36 }}>
+        <div className="gu-up" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#0a050599", border: "1px solid #7a615140", borderRadius: 99, padding: "8px 20px", marginBottom: 36, position: "relative", zIndex: 1 }}>
           <span className="gu-pulse" style={{ width: 6, height: 6, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
           <span style={{ color: "#7a6151", fontSize: 11, fontFamily: font, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>Elite Insider Waitlist</span>
         </div>
-        <img src={IMG_LOGO} alt="GroundUp" className="gu-up gu-d1" style={{ width: 72, height: 72, objectFit: "contain", borderRadius: 14, marginBottom: 24 }} />
-        <h1 className="gu-up gu-d1" style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(44px,8vw,84px)", color: "#f5e8e8", lineHeight: 1.05, letterSpacing: "-1px", marginBottom: 10 }}>Get inside first.</h1>
-        <p className="gu-up gu-d2" style={{ color: "#9a9a98", fontSize: "clamp(14px,1.8vw,17px)", lineHeight: 1.9, maxWidth: 560, fontFamily: font, marginBottom: 40 }}>
+        <img src={IMG_LOGO} alt="GroundUp" className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, width: 72, height: 72, objectFit: "contain", borderRadius: 14, marginBottom: 24 }} />
+        <h1 className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, fontFamily: serif, fontWeight: 700, fontSize: "clamp(44px,8vw,84px)", color: "#f5e8e8", lineHeight: 1.05, letterSpacing: "-1px", marginBottom: 10 }}>Get inside first.</h1>
+        <p className="gu-up gu-d2" style={{ position: "relative", zIndex: 1, color: "#9a9a98", fontSize: "clamp(14px,1.8vw,17px)", lineHeight: 1.9, maxWidth: 560, fontFamily: font, marginBottom: 40 }}>
           Our mission is simple: <span style={{ color: "#e0c4c4", fontWeight: 700 }}>help you get your deals done and build a legacy.</span> Real development education, a community that has your back, and direct support from Dr. Gina Merritt — 30+ years and $600M+ of hands-on deal experience.
         </p>
         {cd && (
-          <div className="gu-up gu-d3" style={{ display: "flex", gap: "clamp(16px,4vw,36px)", marginBottom: 44 }}>
+          <div className="gu-up gu-d3" style={{ position: "relative", zIndex: 1, display: "flex", gap: "clamp(16px,4vw,36px)", marginBottom: 44 }}>
             {[["Days", cd.d], ["Hours", cd.h], ["Minutes", cd.m], ["Seconds", cd.s]].map(([l, v]) => (
               <div key={l} style={{ textAlign: "center" }}>
                 <div style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(40px,7vw,72px)", color: "#b80101", lineHeight: 1 }}>{String(v).padStart(2, "0")}</div>
@@ -1583,8 +1586,8 @@ function LaunchPage({ launchAt, onWaitlist, onAdmin }) {
             ))}
           </div>
         )}
-        <button className="gu-up gu-d4" onClick={onWaitlist} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 12, padding: "17px 44px", fontFamily: font, fontWeight: 800, fontSize: 15, cursor: "pointer", letterSpacing: "0.5px" }}>Join the Insider Waitlist →</button>
-        <div className="gu-up gu-d5" style={{ color: "#5a4040", fontSize: 12, fontFamily: font, marginTop: 16 }}>Insiders get first notice, first access, and a personal link to their plan at launch.</div>
+        <button className="gu-up gu-d4" onClick={onWaitlist} style={{ position: "relative", zIndex: 1, background: "#b80101", color: "#fff", border: "none", borderRadius: 12, padding: "17px 44px", fontFamily: font, fontWeight: 800, fontSize: 15, cursor: "pointer", letterSpacing: "0.5px" }}>Join the Insider Waitlist →</button>
+        <div className="gu-up gu-d5" style={{ position: "relative", zIndex: 1, color: "#5a4040", fontSize: 12, fontFamily: font, marginTop: 16 }}>Insiders get first notice, first access, and a personal link to their plan at launch.</div>
       </div>
 
       {/* What's included */}
