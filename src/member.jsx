@@ -464,7 +464,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
         {loading ? <div style={{ padding: 40, color: "#8a7070", fontFamily: font }}>Loading community…</div> : dmOpen ? (
           <>
             <div style={{ padding: "16px 24px", borderBottom: "1px solid #1a0000", display: "flex", alignItems: "center", gap: 12 }}>
-              <button className="community-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", background: "transparent", border: "1px solid #2a0000", borderRadius: 6, color: "#8a7070", padding: "6px 10px", cursor: "pointer", fontFamily: font, display: "none" }}><Menu size={15} /></button>
+              <button className="community-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", background: "transparent", border: "1px solid #2a0000", borderRadius: 6, color: "#8a7070", padding: "6px 10px", cursor: "pointer", fontFamily: font }}><Menu size={15} /></button>
               <div>
                 <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 16, fontFamily: font }}><Mail size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }} /> {isAdmin ? (dmTarget?.name || "Direct Messages") : "Dr. Merritt & Team"}</div>
                 <div style={{ color: "#7a5050", fontSize: 12, fontFamily: font }}>{isAdmin ? "Private thread with this member." : "Private line to Dr. Merritt and the GroundUp team — an Elite benefit."}</div>
@@ -491,7 +491,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
         ) : active && (
           <>
             <div style={{ padding: "16px 24px", borderBottom: "1px solid #1a0000", display: "flex", alignItems: "center", gap: 12 }}>
-              <button className="community-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", background: "transparent", border: "1px solid #2a0000", borderRadius: 6, color: "#8a7070", padding: "6px 10px", cursor: "pointer", fontFamily: font, display: "none" }}><Menu size={15} /></button>
+              <button className="community-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", background: "transparent", border: "1px solid #2a0000", borderRadius: 6, color: "#8a7070", padding: "6px 10px", cursor: "pointer", fontFamily: font }}><Menu size={15} /></button>
               <div>
                 <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 16, fontFamily: font }}>{active.admin_only_post ? <Megaphone size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> : "#"} {active.name}</div>
                 <div style={{ color: "#7a5050", fontSize: 12, fontFamily: font }}>{active.description}</div>
