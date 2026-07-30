@@ -85,6 +85,16 @@ CREATE TABLE IF NOT EXISTS lnl_requests (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Launch waitlist: joined with a chosen plan; launch email carries their plan link
+CREATE TABLE IF NOT EXISTS waitlist (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  plan TEXT DEFAULT 'Basic',        -- Free | Basic | Premium | Elite | pass_single | pass_all
+  launched_notified BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Simple key/value settings (e.g. the live Lunch & Learn session link)
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,

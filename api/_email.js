@@ -174,6 +174,40 @@ export function broadcastEmail(subject, message) {
   };
 }
 
+export function waitlistConfirmEmail(name, planLabel) {
+  return {
+    subject: "You're on the GroundUp waitlist",
+    html: `
+      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">You're on the list, ${name.split(' ')[0]}.</h2>
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">We've saved your spot for the <strong style="color:#e0c4c4;">${planLabel}</strong> plan. When GroundUp opens, you'll be the first to know — and you'll get a personal link to claim your plan before anyone else.</p>
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">Decades of affordable-housing deal experience, distilled into a curriculum and community for developers like you. It's almost time.</p>`,
+  };
+}
+
+export function countdownEmail(stage, launchText) {
+  return {
+    subject: `${stage} until GroundUp launches`,
+    html: `
+      <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Launch Countdown</div>
+      <h2 style="color:#f5e8e8;font-size:28px;margin:0 0 10px;">${stage} to go.</h2>
+      ${launchText ? `<p style="color:#e0c4c4;font-size:14px;font-weight:bold;margin:0 0 16px;">Doors open ${launchText}</p>` : ''}
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi {{FIRSTNAME}} — GroundUp is almost here. You're on the waitlist, which means you get first notice and a personal link to claim your plan the moment we open.</p>
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">Keep an eye on your inbox.</p>`,
+  };
+}
+
+export function launchEmail(name, planLabel, link) {
+  return {
+    subject: "We're live — claim your GroundUp plan",
+    html: `
+      <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">We're Live</div>
+      <h2 style="color:#f5e8e8;font-size:28px;margin:0 0 16px;">GroundUp is open, ${name.split(' ')[0]}.</h2>
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">You're getting this first because you're on the waitlist. Your <strong style="color:#e0c4c4;">${planLabel}</strong> spot is ready — this link takes you straight to it:</p>
+      <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:14px 30px;font-weight:bold;font-size:15px;text-decoration:none;margin:10px 0;">Claim Your ${planLabel} Plan</a>
+      <p style="color:#7a6060;font-size:12px;line-height:1.7;">This link is yours — it pre-selects the plan you chose when you joined the list.</p>`,
+  };
+}
+
 export function lnlAccessEmail(name, expiresAt, hasLink) {
   const through = expiresAt ? new Date(expiresAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
   return {

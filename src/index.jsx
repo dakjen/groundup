@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { FileText, Send, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2 } from "lucide-react";
-import { AuthModal, ResetPasswordModal, MemberPage, CommunityPage, TierBadge, TIER_RANK, TIER_LABELS, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
+import { FileText, Send, Hourglass, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2 } from "lucide-react";
+import { AuthModal, ResetPasswordModal, WaitlistModal, MemberPage, CommunityPage, TierBadge, TIER_RANK, TIER_LABELS, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -648,25 +648,26 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
     <div style={{ background: "#000", paddingTop: 64 }}>
       {/* Hero */}
       <div style={{ minHeight: "92vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "60px clamp(20px,5vw,80px)", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: "5%", left: "-5%", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, #57040415 0%, transparent 65%)", pointerEvents: "none" }} />
+        <div className="gu-drift" style={{ position: "absolute", top: "5%", left: "-5%", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, #57040425 0%, transparent 65%)", pointerEvents: "none" }} />
         <div style={{ maxWidth: 1100, width: "100%", display: "flex", alignItems: "center", gap: 60, flexWrap: "wrap" }}>
           <div style={{ flex: 1, minWidth: 300 }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#7a615118", border: "1px solid #7a615140", borderRadius: 99, padding: "8px 20px", marginBottom: 40 }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
+            <div className="gu-up" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#7a615118", border: "1px solid #7a615140", borderRadius: 99, padding: "8px 20px", marginBottom: 40 }}>
+              <span className="gu-pulse" style={{ width: 6, height: 6, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
               <span style={{ color: "#7a6151", fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>Built for Underrepresented Developers</span>
             </div>
-            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(48px,8vw,88px)", lineHeight: 1.0, color: "#f5e8e8", marginBottom: 12, letterSpacing: "-1px" }}>Build Wealth.</h1>
-            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(48px,8vw,88px)", lineHeight: 1.0, marginBottom: 12, letterSpacing: "-1px", background: "linear-gradient(135deg, #b80101 0%, #570404 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Build Legacy.</h1>
-            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontStyle: "italic", fontSize: "clamp(36px,6vw,68px)", lineHeight: 1.0, color: "#6a6b69", marginBottom: 44, letterSpacing: "-1px" }}>Build Home.</h1>
-            <p style={{ fontSize: "clamp(14px,1.8vw,17px)", color: "#9a9a98", lineHeight: 1.9, maxWidth: 520, marginBottom: 48, fontFamily: "'DM Sans', sans-serif" }}>
+            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(48px,8vw,88px)", lineHeight: 1.0, color: "#f5e8e8", marginBottom: 12, letterSpacing: "-1px" }} className="gu-up gu-d1">Build Wealth.</h1>
+            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(48px,8vw,88px)", lineHeight: 1.0, marginBottom: 12, letterSpacing: "-1px", background: "linear-gradient(135deg, #b80101 0%, #570404 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }} className="gu-up gu-d2">Build Legacy.</h1>
+            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontStyle: "italic", fontSize: "clamp(36px,6vw,68px)", lineHeight: 1.0, color: "#6a6b69", marginBottom: 44, letterSpacing: "-1px" }} className="gu-up gu-d3">Build Home.</h1>
+            <p className="gu-up gu-d4" style={{ fontSize: "clamp(14px,1.8vw,17px)", color: "#9a9a98", lineHeight: 1.9, maxWidth: 520, marginBottom: 48, fontFamily: "'DM Sans', sans-serif" }}>
               Real development education for underrepresented developers — built from Dr. Gina Merritt's 30+ years of hands-on deal experience.
             </p>
-            <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+            <div className="gu-up gu-d5" style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
               <button onClick={() => setActivePage("courses")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "15px 36px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", letterSpacing: "0.5px" }}>EXPLORE COURSES</button>
               <button onClick={() => setActivePage("about")} style={{ background: "transparent", color: "#6a6b69", border: "1px solid #2a1a1a", borderRadius: 10, padding: "15px 36px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 14, cursor: "pointer", letterSpacing: "0.5px" }}>ABOUT DR. MERRITT</button>
             </div>
           </div>
-          <div style={{ flexShrink: 0, width: "clamp(280px,40%,460px)", position: "relative" }}>
+          <div className="gu-up gu-d6" style={{ flexShrink: 0, width: "clamp(280px,40%,460px)", position: "relative" }}>
+            <div className="gu-float">
             <div style={{ width: "100%", borderRadius: 20, overflow: "hidden", background: "#0d0404", border: "1px solid #2a0000" }}>
               <img src="/LIIF-Stills1.png" alt="Dr. Gina Merritt" style={{ width: "100%", height: 300, objectFit: "cover", objectPosition: "center top", display: "block" }} />
               <div style={{ padding: "24px 28px 28px" }}>
@@ -680,6 +681,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
                   ))}
                 </div>
               </div>
+            </div>
             </div>
           </div>
         </div>
@@ -767,7 +769,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
             </p>
           </div>
           <div style={{ width: "clamp(260px,35%,360px)", flexShrink: 0, borderRadius: 16, overflow: "hidden", border: "1px solid #2a0000" }}>
-            <img src="/LIIF-Stills1.png" alt="Dr. Merritt on site" style={{ width: "100%", height: 320, objectFit: "cover", display: "block" }} />
+            <img src="/LIIF-Stills3.png" alt="Dr. Merritt on site" style={{ width: "100%", height: 320, objectFit: "cover", display: "block" }} />
           </div>
         </div>
 
@@ -918,7 +920,7 @@ function AboutPage({ setActivePage }) {
     <div style={{ background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 40, borderRadius: 16, overflow: "hidden" }}>
-          <img src="/LIIF-Stills5.png" alt="Dr. Gina Merritt" style={{ width: "100%", height: 240, objectFit: "cover", display: "block", borderRadius: 12 }} />
+          <img src="/LIIF-Stills4.png" alt="Dr. Gina Merritt" style={{ width: "100%", height: 240, objectFit: "cover", display: "block", borderRadius: 12 }} />
           <img src="/SISAwards-Award.jpg" alt="Dr. Merritt accepting award on stage" style={{ width: "100%", height: 240, objectFit: "cover", display: "block", borderRadius: 12 }} />
         </div>
         <div style={{ marginBottom: 64 }}>
@@ -965,8 +967,10 @@ function AboutPage({ setActivePage }) {
             {[
               { src: "/DSC00837.jpg", label: "Mary's House — Groundbreaking", sub: "Cleveland, OH" },
               { src: "/SIS-AWARD-GM.jpg", label: "SIS Award — Economic Empowerment", sub: "Social Innovation Summit 2022" },
-              { src: "/LIIF-Stills5.png", label: "Industry Work", sub: "Deal analysis" },
+              { src: "/IMG_8113.jpeg", label: "Honoree — Fireside Chat", sub: "National DCRE Conference" },
               { src: "/SISAwards-acceptance.jpg", label: "Speaking Engagement", sub: "Social Innovation Summit 2022" },
+              { src: "/StevieAwards-GroupPhoto.png", label: "Stevie Awards", sub: "With the team" },
+              { src: "/GM at DCRE.png", label: "On Stage", sub: "National DCRE Conference" },
             ].map((p, i) => (
               <div key={i} style={{ borderRadius: 12, overflow: "hidden", position: "relative", border: "1px solid #2a0000" }}>
                 <img src={p.src} alt={p.label} style={{ width: "100%", height: 180, objectFit: "cover", display: "block" }} />
@@ -1143,7 +1147,7 @@ function PlanCard({ plan, onSelect }) {
   );
 }
 
-function PricingPage({ onSignUp }) {
+function PricingPage({ onSignUp, onWaitlist }) {
   return (
     <div style={{ background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
@@ -1153,6 +1157,12 @@ function PricingPage({ onSignUp }) {
             Invest in yourself.<br />The returns are generational.
           </h1>
           <p style={{ color: "#7a6151", fontSize: 15, maxWidth: 420, margin: "0 auto", lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif" }}>Start free. Upgrade when you're ready. Cancel anytime.</p>
+          {onWaitlist && (
+            <div style={{ marginTop: 26, display: "inline-flex", alignItems: "center", gap: 14, background: "#0d0404", border: "1px solid #b8010130", borderRadius: 12, padding: "14px 22px", flexWrap: "wrap", justifyContent: "center" }}>
+              <span style={{ color: "#c8a8a8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>Launching soon — save your spot and your plan.</span>
+              <button onClick={onWaitlist} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Join the Waitlist</button>
+            </div>
+          )}
         </div>
 
         {/* One-time passes */}
@@ -1518,6 +1528,133 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
   );
 }
 
+// ─── LAUNCH PAGE (pre-launch mode) ──────────────────────────────────────────
+
+function LaunchPage({ launchAt, onWaitlist, onAdmin }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
+  const ms = new Date(launchAt).getTime() - now;
+  const cd = ms > 0 ? {
+    d: Math.floor(ms / 86400000),
+    h: Math.floor((ms % 86400000) / 3600000),
+    m: Math.floor((ms % 3600000) / 60000),
+    s: Math.floor((ms % 60000) / 1000),
+  } : null;
+  const font = "'DM Sans', sans-serif";
+  const serif = "'Cormorant Garamond', serif";
+
+  return (
+    <div style={{ background: "#000", minHeight: "100vh" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=DM+Sans:wght@400;500;600;700;800&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; color: #f5e8e8; font-family: 'DM Sans', sans-serif; }
+        @keyframes guFadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+        @keyframes guPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(0.82); } }
+        @keyframes guDrift { 0% { transform: translate(0,0) scale(1); } 50% { transform: translate(40px,-30px) scale(1.12); } 100% { transform: translate(0,0) scale(1); } }
+        .gu-up { opacity: 0; animation: guFadeUp 0.8s cubic-bezier(0.22,1,0.36,1) forwards; }
+        .gu-d1 { animation-delay: 0.08s; } .gu-d2 { animation-delay: 0.18s; } .gu-d3 { animation-delay: 0.28s; }
+        .gu-d4 { animation-delay: 0.4s; } .gu-d5 { animation-delay: 0.52s; }
+        .gu-pulse { animation: guPulse 2s ease-in-out infinite; }
+        .gu-drift { animation: guDrift 18s ease-in-out infinite; }
+        button { transition: transform 0.18s ease, background 0.2s ease; }
+        button:hover { transform: translateY(-1px); }
+      `}</style>
+
+      {/* Hero + countdown */}
+      <div style={{ minHeight: "88vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "80px 20px 60px", position: "relative", overflow: "hidden" }}>
+        <div className="gu-drift" style={{ position: "absolute", top: "0%", left: "20%", width: 700, height: 700, borderRadius: "50%", background: "radial-gradient(circle, #57040428 0%, transparent 65%)", pointerEvents: "none" }} />
+        <div className="gu-up" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#7a615118", border: "1px solid #7a615140", borderRadius: 99, padding: "8px 20px", marginBottom: 36 }}>
+          <span className="gu-pulse" style={{ width: 6, height: 6, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
+          <span style={{ color: "#7a6151", fontSize: 11, fontFamily: font, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>Launching Soon</span>
+        </div>
+        <img src={IMG_LOGO} alt="GroundUp" className="gu-up gu-d1" style={{ width: 72, height: 72, objectFit: "contain", borderRadius: 14, marginBottom: 24 }} />
+        <h1 className="gu-up gu-d1" style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(44px,8vw,84px)", color: "#f5e8e8", lineHeight: 1.05, letterSpacing: "-1px", marginBottom: 10 }}>GroundUp is coming.</h1>
+        <p className="gu-up gu-d2" style={{ color: "#9a9a98", fontSize: "clamp(14px,1.8vw,17px)", lineHeight: 1.9, maxWidth: 560, fontFamily: font, marginBottom: 40 }}>
+          Real development education for underrepresented developers — built from Dr. Gina Merritt's 30+ years and $600M+ of hands-on deal experience.
+        </p>
+        {cd && (
+          <div className="gu-up gu-d3" style={{ display: "flex", gap: "clamp(16px,4vw,36px)", marginBottom: 44 }}>
+            {[["Days", cd.d], ["Hours", cd.h], ["Minutes", cd.m], ["Seconds", cd.s]].map(([l, v]) => (
+              <div key={l} style={{ textAlign: "center" }}>
+                <div style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(40px,7vw,72px)", color: "#b80101", lineHeight: 1 }}>{String(v).padStart(2, "0")}</div>
+                <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginTop: 8 }}>{l}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        <button className="gu-up gu-d4" onClick={onWaitlist} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 12, padding: "17px 44px", fontFamily: font, fontWeight: 800, fontSize: 15, cursor: "pointer", letterSpacing: "0.5px" }}>Join the Waitlist →</button>
+        <div className="gu-up gu-d5" style={{ color: "#5a4040", fontSize: 12, fontFamily: font, marginTop: 16 }}>Pick your plan now — waitlist members get first access at launch.</div>
+      </div>
+
+      {/* What's included */}
+      <div style={{ padding: "70px clamp(20px,5vw,80px)", maxWidth: 1100, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 48 }}>
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>What's Inside</div>
+          <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4vw,44px)", color: "#f5e8e8" }}>Four courses. One community.<br />Direct access to Dr. Merritt.</h2>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18, marginBottom: 22 }}>
+          {miniCourses.map((course, i) => (
+            <div key={course.id} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                <span style={{ background: course.stageColor + "18", color: course.stageColor, border: "1px solid " + course.stageColor + "35", borderRadius: 4, padding: "3px 10px", fontSize: 10, fontFamily: font, fontWeight: 800, letterSpacing: "1px" }}>{course.stage}</span>
+                <span style={{ color: "#7a5050", fontSize: 12, fontFamily: font }}>{course.lessons.length} lessons</span>
+              </div>
+              <h3 style={{ fontFamily: serif, fontWeight: 700, fontSize: 21, color: "#f0d8d8", marginBottom: 10, lineHeight: 1.25 }}>{course.title}</h3>
+              <p style={{ fontSize: 13, color: "#8a7070", lineHeight: 1.75, fontFamily: font }}>{course.description}</p>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 18 }}>
+          {[
+            { Icon: MessagesSquare, title: "A members-only community", desc: "Channels for deals, financing, and JV partnerships — with announcements and answers straight from Dr. Merritt's team." },
+            { Icon: Calendar, title: "Live Lunch & Learns", desc: "Live sessions with Dr. Merritt on financing structures, JV strategy, and construction — plus the recording library." },
+            { Icon: Handshake, title: "Work directly with Dr. Merritt", desc: "1-on-1 deal reviews, strategy sessions, and Elite advisory calls with someone who has closed $600M+ in deals." },
+          ].map((f, i) => (
+            <div key={i} style={{ background: "#0a0808", border: "1px solid #1e0000", borderRadius: 16, padding: "26px 28px" }}>
+              <f.Icon size={22} color="#b80101" style={{ marginBottom: 14 }} />
+              <h3 style={{ fontFamily: font, fontWeight: 800, fontSize: 15, color: "#f0d8d8", marginBottom: 8 }}>{f.title}</h3>
+              <p style={{ fontSize: 13, color: "#8a7070", lineHeight: 1.75, fontFamily: font }}>{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Pricing preview */}
+      <div style={{ padding: "40px clamp(20px,5vw,80px) 80px", maxWidth: 1100, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Pricing at Launch</div>
+          <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(28px,4vw,40px)", color: "#f5e8e8" }}>Pick your path now — pay at launch.</h2>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
+          {[
+            { name: "One Course", price: "$100", period: "one-time", desc: "30 days of one course of your choice." },
+            { name: "All-Access Pass", price: "$250", period: "one-time", desc: "30 days of the entire curriculum." },
+            { name: "Member", price: "$59.99", period: "/mo", desc: "Every course, every new course, community access." },
+            { name: "Premium", price: "$165.99", period: "/mo", desc: "Engage the community, deal tools, a free work session.", popular: true },
+            { name: "Elite", price: "$599.99", period: "/mo", desc: "Direct line to Dr. Merritt — advisory calls and DMs." },
+          ].map((p, i) => (
+            <div key={i} style={{ background: p.popular ? "#0d0404" : "#080404", border: "1px solid " + (p.popular ? "#b8010140" : "#150000"), borderRadius: 16, padding: "26px 24px", textAlign: "center", position: "relative" }}>
+              {p.popular && <div style={{ position: "absolute", top: 12, right: 12, background: "#b8010115", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "2px 8px", fontSize: 8, fontFamily: font, fontWeight: 800, letterSpacing: "1.5px" }}>POPULAR</div>}
+              <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>{p.name}</div>
+              <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 34, color: "#f5e8e8", lineHeight: 1 }}>{p.price}<span style={{ fontSize: 14, color: "#8a7070", fontFamily: font, fontWeight: 400 }}>{p.period}</span></div>
+              <p style={{ fontSize: 12, color: "#7a6060", lineHeight: 1.7, fontFamily: font, marginTop: 10 }}>{p.desc}</p>
+            </div>
+          ))}
+        </div>
+        <div style={{ textAlign: "center", marginTop: 40 }}>
+          <button onClick={onWaitlist} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 12, padding: "16px 40px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Save My Spot →</button>
+        </div>
+      </div>
+
+      <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>
+        <div style={{ fontFamily: font, fontSize: 12, color: "#3a2a2a" }}>© {new Date().getFullYear()} GroundUp · Northern Real Estate Urban Ventures</div>
+        <button onClick={onAdmin} style={{ background: "transparent", border: "none", color: "#2a1a1a", fontFamily: font, fontSize: 11, cursor: "pointer", letterSpacing: "1px" }}>Admin</button>
+      </footer>
+    </div>
+  );
+}
+
 // ─── ADMIN ───────────────────────────────────────────────────────────────────
 
 function SiteGatePage({ onUnlock }) {
@@ -1826,7 +1963,7 @@ function AdminPanel({ onLogout }) {
       </div>
       <div style={{ display: "flex", minHeight: "calc(100vh - 60px)" }}>
         <div style={{ width: 220, background: "#100808", borderRight: "1px solid #2a1010", padding: "24px 12px", flexShrink: 0 }}>
-          {[{ id: "lunch", label: "Lunch & Learn", Icon: Calendar }, { id: "inbox", label: "Inbox", Icon: Inbox }, { id: "courses", label: "Courses", Icon: GraduationCap }, { id: "referrals", label: "Referrals", Icon: Link2 }, { id: "users", label: "Users", Icon: UsersIcon }, { id: "email", label: "Email", Icon: Send }, { id: "revenue", label: "Revenue", Icon: DollarSign }].map(t => (
+          {[{ id: "lunch", label: "Lunch & Learn", Icon: Calendar }, { id: "inbox", label: "Inbox", Icon: Inbox }, { id: "courses", label: "Courses", Icon: GraduationCap }, { id: "referrals", label: "Referrals", Icon: Link2 }, { id: "users", label: "Users", Icon: UsersIcon }, { id: "email", label: "Email", Icon: Send }, { id: "waitlist", label: "Waitlist", Icon: Hourglass }, { id: "revenue", label: "Revenue", Icon: DollarSign }].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} style={{ width: "100%", textAlign: "left", background: tab === t.id ? "#1e1010" : "transparent", color: tab === t.id ? "#f0d8d8" : "#7a6060", border: tab === t.id ? "1px solid #3a1515" : "1px solid transparent", borderRadius: 8, padding: "10px 14px", marginBottom: 4, cursor: "pointer", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
               <t.Icon size={15} /><span>{t.label}</span>
               {t.id === "inbox" && unread > 0 && <span style={{ marginLeft: "auto", background: "#b80101", color: "#fff", borderRadius: 99, fontSize: 10, fontWeight: 800, padding: "1px 7px" }}>{unread}</span>}
@@ -2216,7 +2353,7 @@ function AdminPanel({ onLogout }) {
             </div>
           )}
 
-          {tab === "email" && <EmailTab btnRed={btnRed} btnGhost={btnGhost} inp={inp} lbl={lbl} />}
+          {tab === "email" && <EmailTab btnRed={btnRed} btnGhost={btnGhost} inp={inp} lbl={lbl} />}\n          {tab === "waitlist" && <WaitlistTab btnRed={btnRed} btnGhost={btnGhost} inp={inp} lbl={lbl} />}
           {tab === "revenue" && <RevenueTab />}
 
           {tab === "users" && (
@@ -2659,6 +2796,145 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
   );
 }
 
+function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
+  const PLAN_LABELS = { Basic: "Member", Premium: "Premium", Elite: "Elite", pass_single: "One Course", pass_all: "All-Access" };
+  const [data, setData] = useState(null);
+  const [launchAt, setLaunchAt] = useState("");
+  const [msg, setMsg] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [now, setNow] = useState(Date.now());
+
+  const call = async (method, body) => {
+    const res = await fetch("/api/waitlist", {
+      method,
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + sessionStorage.getItem("adminToken") },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(d.error || "Request failed");
+    return d;
+  };
+
+  const load = () => call("GET").then(d => { setData(d); if (d.launch_at) setLaunchAt(d.launch_at); }).catch(e => setMsg({ ok: false, text: e.message }));
+  useEffect(() => { load(); }, []);
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
+
+  const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 6000); };
+
+  const saveLaunch = async () => {
+    try { await call("POST", { action: "set_launch", launch_at: launchAt }); flash(true, "Launch date saved."); await load(); } catch (e) { flash(false, e.message); }
+  };
+
+  const sendStage = async (stage) => {
+    if (!window.confirm(`Send the "${stage}" countdown email to everyone on the waitlist?`)) return;
+    setBusy(true);
+    try { const d = await call("POST", { action: "countdown", stage }); flash(true, `Countdown sent to ${d.sent} of ${d.total}.`); } catch (e) { flash(false, e.message); } finally { setBusy(false); }
+  };
+
+  const sendLaunch = async () => {
+    if (!window.confirm("LAUNCH: send everyone their personal claim-your-plan link? This can only happen once per person.")) return;
+    setBusy(true);
+    try { const d = await call("POST", { action: "launch" }); flash(true, `Launch email sent to ${d.sent} of ${d.total}.`); await load(); } catch (e) { flash(false, e.message); } finally { setBusy(false); }
+  };
+
+  const removeEntry = async (entry) => {
+    if (!window.confirm(`Remove ${entry.name} from the waitlist?`)) return;
+    try { await call("POST", { action: "remove", id: entry.id }); await load(); } catch (e) { flash(false, e.message); }
+  };
+
+  const section = { background: "#150c0c", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 20 };
+  const heading = { fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 };
+  const statCard = (label, value, sub) => (
+    <div style={{ background: "#120a0a", border: "1px solid #2a1010", borderRadius: 12, padding: "20px 18px", textAlign: "center" }}>
+      <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 34, color: "#f0d8d8", lineHeight: 1.1 }}>{value}</div>
+      <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 6 }}>{label}</div>
+      {sub && <div style={{ fontSize: 11, color: "#7a6060", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>{sub}</div>}
+    </div>
+  );
+
+  if (!data) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
+
+  const launchMs = data.launch_at ? new Date(data.launch_at).getTime() - now : null;
+  const cd = launchMs !== null && launchMs > 0 ? {
+    d: Math.floor(launchMs / 86400000),
+    h: Math.floor((launchMs % 86400000) / 3600000),
+    m: Math.floor((launchMs % 3600000) / 60000),
+    s: Math.floor((launchMs % 60000) / 1000),
+  } : null;
+
+  return (
+    <div style={{ maxWidth: 760 }}>
+      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Waitlist</h2>
+      <p style={{ color: "#7a6060", fontSize: 13, marginBottom: 28 }}>Who's waiting, what they'll pay, and the countdown to launch.</p>
+
+      {msg && <div style={{ background: msg.ok ? "#06170d" : "#170606", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
+
+      {/* Countdown */}
+      <div style={{ ...section, textAlign: "center" }}>
+        <div style={heading}>Countdown to Launch</div>
+        {cd ? (
+          <div style={{ display: "flex", justifyContent: "center", gap: 22, marginBottom: 14 }}>
+            {[["Days", cd.d], ["Hours", cd.h], ["Min", cd.m], ["Sec", cd.s]].map(([l, v]) => (
+              <div key={l}>
+                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 44, color: "#b80101", lineHeight: 1 }}>{String(v).padStart(2, "0")}</div>
+                <div style={{ fontSize: 9, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>{l}</div>
+              </div>
+            ))}
+          </div>
+        ) : launchMs !== null && launchMs <= 0 ? (
+          <div style={{ color: "#22c55e", fontWeight: 800, fontSize: 20, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Launch time has arrived.</div>
+        ) : (
+          <div style={{ color: "#7a6060", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Set your launch date to start the clock.</div>
+        )}
+        <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+          <input type="datetime-local" value={launchAt ? launchAt.slice(0, 16) : ""} onChange={e => setLaunchAt(e.target.value ? new Date(e.target.value).toISOString() : "")} style={{ ...inp, marginBottom: 0, width: 230, colorScheme: "dark" }} />
+          <button onClick={saveLaunch} style={btnRed}>Save Launch Date</button>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 20 }}>
+        {statCard("On the waitlist", data.entries.length)}
+        {statCard("Anticipated MRR", "$" + data.mrr.toLocaleString(undefined, { minimumFractionDigits: 2 }), "from membership picks")}
+        {statCard("One-time revenue", "$" + data.oneTime.toLocaleString(undefined, { minimumFractionDigits: 2 }), "from course passes")}
+        {statCard("First-month total", "$" + (data.mrr * 0.75 + data.oneTime).toLocaleString(undefined, { minimumFractionDigits: 2 }), "with 25% L&L discounts")}
+      </div>
+
+      {/* Countdown emails */}
+      <div style={section}>
+        <div style={heading}>Countdown Emails</div>
+        <p style={{ color: "#7a6060", fontSize: 12, marginBottom: 14, fontFamily: "'DM Sans', sans-serif" }}>Each button sends one countdown email to the whole waitlist. Launch sends everyone their personal claim link for the plan they chose.</p>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          {["2 days", "1 day", "12 hours", "5 hours"].map(stage => (
+            <button key={stage} disabled={busy} onClick={() => sendStage(stage)} style={{ ...btnGhost, opacity: busy ? 0.6 : 1 }}>{stage}</button>
+          ))}
+          <button disabled={busy} onClick={sendLaunch} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>We're Live — Send Launch</button>
+        </div>
+      </div>
+
+      {/* Entries */}
+      {data.entries.length === 0 ? (
+        <div style={{ background: "#120a0a", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#5a4040", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No one on the waitlist yet — the join form is on the pricing page.</div>
+      ) : (
+        <div>
+          {data.entries.map(e => (
+            <div key={e.id} style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: 170 }}>
+                <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{e.name}</div>
+                <div style={{ color: "#8a6060", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{e.email}</div>
+              </div>
+              <span style={{ color: "#e0c4c4", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{PLAN_LABELS[e.plan] || e.plan}</span>
+              {e.launched_notified && <span style={{ color: "#22c55e", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px" }}>NOTIFIED</span>}
+              <span style={{ color: "#5a4040", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>{new Date(e.created_at).toLocaleDateString()}</span>
+              <button onClick={() => removeEntry(e)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Remove</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function EmailTab({ btnRed, btnGhost, inp, lbl }) {
   const AUDIENCES = [
     { id: "all", label: "Everyone" },
@@ -2928,6 +3204,20 @@ export default function App() {
   const [authMode, setAuthMode] = useState("signup");
   const [member, setMember] = useState(() => getMember());
   const [resetToken, setResetToken] = useState(() => new URLSearchParams(window.location.search).get("reset"));
+  const [showWaitlist, setShowWaitlist] = useState(false);
+  const [launchAt, setLaunchAt] = useState(null);
+  const [launchChecked, setLaunchChecked] = useState(false);
+  const [clockTick, setClockTick] = useState(0);
+
+  useEffect(() => {
+    fetch("/api/waitlist?public=1").then(r => r.ok ? r.json() : null)
+      .then(d => { if (d && d.launch_at) setLaunchAt(d.launch_at); })
+      .catch(() => {})
+      .finally(() => setLaunchChecked(true));
+  }, []);
+  // Re-evaluate once a minute so the site opens itself at launch time
+  useEffect(() => { const t = setInterval(() => setClockTick(x => x + 1), 60000); return () => clearInterval(t); }, []);
+  const prelaunch = launchChecked && launchAt && new Date(launchAt).getTime() > Date.now();
   const [contentAgreed, setContentAgreed] = useState(() => sessionStorage.getItem("contentAgreed") === "true");
   const [showAgreement, setShowAgreement] = useState(false);
   const [pendingPage, setPendingPage] = useState(null);
@@ -2946,6 +3236,13 @@ export default function App() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    // Launch email links: /?join=1&plan=X — land on the right door for their plan
+    if (params.get("join")) {
+      const plan = params.get("plan") || "Basic";
+      if (["Basic", "Premium", "Elite"].includes(plan)) { setSignupTier(plan); setShowSignup(true); }
+      setActivePage("pricing");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
     const ref = params.get("ref");
     if (ref) {
       window.storage.get("admin:referrals").then(r => {
@@ -3000,7 +3297,15 @@ export default function App() {
     if (pendingPage) { setActivePage(pendingPage); setPendingPage(null); }
   };
 
-  if (!siteUnlocked) return <SiteGatePage onUnlock={() => setSiteUnlocked(true)} />;
+  if (prelaunch && !isAdmin && !showAdminLogin) {
+    return (
+      <>
+        {showWaitlist && <WaitlistModal onClose={() => setShowWaitlist(false)} />}
+        <LaunchPage launchAt={launchAt} onWaitlist={() => setShowWaitlist(true)} onAdmin={() => setShowAdminLogin(true)} />
+      </>
+    );
+  }
+  if (!siteUnlocked && !isAdmin && !showAdminLogin) return <SiteGatePage onUnlock={() => setSiteUnlocked(true)} />;
   if (showAdminLogin && !isAdmin) return <AdminLoginPage onLogin={(token) => { sessionStorage.setItem("isAdmin", "true"); sessionStorage.setItem("adminToken", token || ""); setIsAdmin(true); setShowAdminLogin(false); }} />;
   if (isAdmin) return <AdminPanel onLogout={() => { sessionStorage.removeItem("isAdmin"); sessionStorage.removeItem("adminToken"); setIsAdmin(false); }} />;
 
@@ -3017,7 +3322,27 @@ export default function App() {
         .content-protected img { -webkit-user-drag: none; user-drag: none; pointer-events: none; }
         .content-protected iframe { pointer-events: auto; }
         .content-protected video { pointer-events: auto; }
+        @keyframes guFadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+        @keyframes guFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes guPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(0.82); } }
+        @keyframes guFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes guDrift { 0% { transform: translate(0,0) scale(1); } 50% { transform: translate(40px,-30px) scale(1.12); } 100% { transform: translate(0,0) scale(1); } }
+        .gu-up { opacity: 0; animation: guFadeUp 0.8s cubic-bezier(0.22,1,0.36,1) forwards; }
+        .gu-d1 { animation-delay: 0.08s; } .gu-d2 { animation-delay: 0.18s; } .gu-d3 { animation-delay: 0.28s; }
+        .gu-d4 { animation-delay: 0.4s; } .gu-d5 { animation-delay: 0.52s; } .gu-d6 { animation-delay: 0.66s; }
+        .gu-pulse { animation: guPulse 2s ease-in-out infinite; }
+        .gu-float { animation: guFloat 7s ease-in-out infinite; }
+        .gu-drift { animation: guDrift 18s ease-in-out infinite; }
+        .gu-page { animation: guFadeIn 0.45s ease forwards; }
+        button { transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease; }
+        button:hover { transform: translateY(-1px); }
+        button:active { transform: translateY(0) scale(0.98); }
+        @media (prefers-reduced-motion: reduce) {
+          .gu-up, .gu-pulse, .gu-float, .gu-drift, .gu-page { animation: none !important; opacity: 1 !important; }
+          button { transition: none; }
+        }
       `}</style>
+      {showWaitlist && <WaitlistModal onClose={() => setShowWaitlist(false)} />}
       {resetToken && <ResetPasswordModal token={resetToken} onDone={() => { setResetToken(null); window.history.replaceState({}, "", window.location.pathname); setAuthMode("login"); setShowSignup(true); }} />}
       {showSignup && <AuthModal startMode={authMode} onClose={() => { setShowSignup(false); setAuthMode("signup"); }} defaultTier={signupTier} onAuthed={(user) => { setMember(user); setShowSignup(false); sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); }} />}
       {trialBanner && (
@@ -3047,7 +3372,7 @@ export default function App() {
       {activePage === "membership" && <MemberPage member={member} setActivePage={navigateTo} onSignIn={() => openSignup("Free")} onSignOut={() => { clearMember(); setMember(null); sessionStorage.removeItem("currentUser"); setCurrentUser(null); navigateTo("home"); }} />}
       {activePage === "community" && <CommunityPage member={member} isAdmin={member?.role === "admin"} onSignIn={() => member ? navigateTo("pricing") : openSignup("Basic")} />}
       {activePage === "about" && <AboutPage setActivePage={navigateTo} />}
-      {activePage === "pricing" && <PricingPage onSignUp={openSignup} />}
+      {activePage === "pricing" && <PricingPage onSignUp={openSignup} onWaitlist={() => setShowWaitlist(true)} />}
       {activePage === "lunchlearn" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><LunchLearnPage member={member} onSignIn={() => openSignup("Free")} setActivePage={navigateTo} /></div>}
       {activePage === "contact" && <ContactPage setActivePage={navigateTo} />}
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>

@@ -594,3 +594,78 @@ export function ResetPasswordModal({ token, onDone }) {
     </div>
   );
 }
+
+
+// ─── WAITLIST (public join modal) ───────────────────────────────────────────
+
+const WL_PLANS = [
+  { id: "pass_single", label: "One Course", price: "$100 one-time", desc: "30 days of one course, your pick" },
+  { id: "pass_all", label: "The Full Boat", price: "$250 one-time", desc: "30 days of all four courses" },
+  { id: "Basic", label: "Member", price: "$59.99/mo", desc: "Every course + community, ongoing" },
+  { id: "Premium", label: "Premium", price: "$165.99/mo", desc: "Engage the community + deal tools" },
+  { id: "Elite", label: "Elite", price: "$599.99/mo", desc: "Direct access to Dr. Merritt" },
+];
+
+export function WaitlistModal({ onClose }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [plan, setPlan] = useState("Basic");
+  const [msg, setMsg] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true); setMsg(null);
+    try {
+      await api("/api/waitlist", { method: "POST", body: JSON.stringify({ action: "join", name, email, plan }) });
+      setDone(true);
+    } catch (err) {
+      setMsg(err.message);
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "36px 36px 32px", width: "100%", maxWidth: 460, maxHeight: "90vh", overflowY: "auto" }}>
+        {done ? (
+          <div style={{ textAlign: "center", padding: "20px 0" }}>
+            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 12 }}>You're on the list.</h2>
+            <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font, lineHeight: 1.8, marginBottom: 24 }}>Check your inbox — your spot is saved, and you'll get first notice with a personal link the moment we launch.</p>
+            <button onClick={onClose} style={btnRed}>Done</button>
+          </div>
+        ) : (
+          <>
+            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>Launching Soon</div>
+            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>Join the waitlist</h2>
+            <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginBottom: 22 }}>Save your spot and be first through the door — with a personal link to the plan you pick.</p>
+            <form onSubmit={submit}>
+              <div style={{ marginBottom: 14 }}>
+                <label style={lbl}>Full name</label>
+                <input style={inp} value={name} onChange={e => setName(e.target.value)} required placeholder="Your name" />
+              </div>
+              <div style={{ marginBottom: 18 }}>
+                <label style={lbl}>Email</label>
+                <input style={inp} type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@example.com" />
+              </div>
+              <label style={lbl}>How do you want to learn?</label>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
+                {WL_PLANS.map(p => (
+                  <button type="button" key={p.id} onClick={() => setPlan(p.id)} style={{ background: plan === p.id ? "#b8010118" : "transparent", border: plan === p.id ? "1px solid #b80101" : "1px solid #2a0000", borderRadius: 10, padding: "12px 16px", cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                    <span>
+                      <span style={{ display: "block", color: plan === p.id ? "#f0d8d8" : "#c8a8a8", fontWeight: 800, fontSize: 14, fontFamily: font }}>{p.label}</span>
+                      <span style={{ display: "block", color: "#7a5050", fontSize: 12, fontFamily: font, marginTop: 2 }}>{p.desc}</span>
+                    </span>
+                    <span style={{ color: plan === p.id ? "#e0c4c4" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font, whiteSpace: "nowrap" }}>{p.price}</span>
+                  </button>
+                ))}
+              </div>
+              {msg && <div style={{ color: "#ff6b6b", fontSize: 13, fontFamily: font, marginBottom: 12 }}>{msg}</div>}
+              <button type="submit" disabled={busy} style={{ ...btnRed, width: "100%", opacity: busy ? 0.6 : 1 }}>{busy ? "Saving your spot…" : "Join the Waitlist →"}</button>
+            </form>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
