@@ -3288,28 +3288,41 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
       <p style={{ color: "#666666", fontSize: 13, marginBottom: 28 }}>Everything on the member Resources page is edited here — links, templates, and the Elite partner network with referral codes.</p>
       {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
 
-      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 28 }}>
-        <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Add Resource</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          <div><label style={lbl}>Title</label><input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="DakJen Creative — Marketing" style={inp} /></div>
-          <div><label style={lbl}>Link</label><input value={form.url} onChange={e => setForm({ ...form, url: e.target.value })} placeholder="https://…" style={inp} /></div>
-          <div><label style={lbl}>Referral / coupon code (optional)</label><input value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} placeholder="GROUNDUP20" style={inp} /></div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <div><label style={lbl}>Section</label>
-              <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value, min_tier: e.target.value === "partner" ? "Elite" : form.min_tier })} style={{ ...inp, marginBottom: 0 }}>
-                <option value="resource">Resource</option><option value="template">Template</option><option value="partner">Partner</option>
-              </select>
-            </div>
-            <div><label style={lbl}>Unlocks at</label>
-              <select value={form.min_tier} onChange={e => setForm({ ...form, min_tier: e.target.value })} style={{ ...inp, marginBottom: 0 }}>
-                <option value="Premium">Premium</option><option value="Elite">Elite</option>
-              </select>
-            </div>
+      <div style={{ background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 14, padding: "28px 32px", marginBottom: 28 }}>
+        <div style={{ fontSize: 10, color: "#8a8a8a", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>Add Resource</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", columnGap: 20, rowGap: 18 }}>
+          <div>
+            <label style={lbl}>Title</label>
+            <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="DakJen Creative — Marketing" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} />
+          </div>
+          <div>
+            <label style={lbl}>Link</label>
+            <input value={form.url} onChange={e => setForm({ ...form, url: e.target.value })} placeholder="https://…" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} />
+          </div>
+          <div>
+            <label style={lbl}>Referral / coupon code <span style={{ textTransform: "none", letterSpacing: 0, color: "#9a9a9a" }}>(optional)</span></label>
+            <input value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} placeholder="GROUNDUP20" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} />
+          </div>
+          <div>
+            <label style={lbl}>Section</label>
+            <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value, min_tier: e.target.value === "partner" ? "Elite" : form.min_tier })} style={{ ...inp, maxWidth: "none", marginBottom: 0, cursor: "pointer" }}>
+              <option value="resource">Resource</option><option value="template">Template</option><option value="partner">Partner</option>
+            </select>
+          </div>
+          <div>
+            <label style={lbl}>Unlocks at</label>
+            <select value={form.min_tier} onChange={e => setForm({ ...form, min_tier: e.target.value })} style={{ ...inp, maxWidth: "none", marginBottom: 0, cursor: "pointer" }}>
+              <option value="Premium">Premium</option><option value="Elite">Elite</option>
+            </select>
           </div>
         </div>
-        <label style={{ ...lbl, marginTop: 12 }}>Description</label>
-        <input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="What it is and why members should care" style={inp} />
-        <button onClick={add} style={{ ...btnRed, marginTop: 14 }}>Add</button>
+        <div style={{ marginTop: 18 }}>
+          <label style={lbl}>Description</label>
+          <input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="What it is and why members should care" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} />
+        </div>
+        <div style={{ marginTop: 22 }}>
+          <button onClick={add} style={{ ...btnRed, padding: "12px 28px" }}>Add Resource</button>
+        </div>
       </div>
 
       {rows.length === 0 ? (
