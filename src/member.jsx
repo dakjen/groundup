@@ -818,7 +818,7 @@ export function WaitlistForm() {
     if (!budget) { setMsg("Pick the monthly budget that fits you."); return; }
     setBusy(true); setMsg(null);
     try {
-      await api("/api/waitlist", { method: "POST", body: JSON.stringify({ action: "join", name, email, phone, learn: learnVal, pain: painVal, budget, source: source || undefined }) });
+      await api("/api/waitlist", { method: "POST", body: JSON.stringify({ action: "join", name, email, phone, learn: learnVal, pain: painVal, budget, source: source || undefined, list: "insider" }) });
       setDone(true);
     } catch (err) {
       setMsg(err.message);
@@ -952,8 +952,18 @@ export function ResourcesPage({ member, onUpgrade }) {
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
                   {items.map(r => (
                     <div key={r.id} style={{ background: "#ffffff", border: "1px solid #2a0000", borderRadius: 14, padding: "22px 24px", display: "flex", flexDirection: "column", gap: 8 }}>
-                      <div style={{ color: "#222222", fontWeight: 800, fontSize: 15, fontFamily: font }}>{r.title}</div>
+                      {r.url && !/youtube\.com|youtu\.be/.test(r.url) ? (
+                        <a href={r.url} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontWeight: 800, fontSize: 16, fontFamily: font, textDecoration: "none" }}>{r.title} ↗</a>
+                      ) : (
+                        <div style={{ color: "#222222", fontWeight: 800, fontSize: 16, fontFamily: font }}>{r.title}</div>
+                      )}
                       {r.description && <div style={{ color: "#666666", fontSize: 13, fontFamily: font, lineHeight: 1.7, flex: 1 }}>{r.description}</div>}
+                      {r.recommendation && (
+                        <div style={{ background: "#fdf1f1", border: "1px solid #b8010120", borderRadius: 8, padding: "10px 14px" }}>
+                          <div style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 4 }}>Why NREUV recommends it</div>
+                          <div style={{ color: "#3a3a3a", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{r.recommendation}</div>
+                        </div>
+                      )}
                       {r.code && (
                         <div style={{ background: "#fafafa", border: "1px dashed #e0c4c440", borderRadius: 8, padding: "8px 12px", display: "flex", alignItems: "center", gap: 10 }}>
                           <span style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", fontFamily: font }}>CODE</span>

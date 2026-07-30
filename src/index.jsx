@@ -3120,9 +3120,11 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
   const PLAN_LABELS = { Basic: "Member", Premium: "Premium", Elite: "Elite", pass_single: "One Course", pass_all: "All-Access" };
   const [data, setData] = useState(null);
   const [launchAt, setLaunchAt] = useState("");
+  const [insiderAt, setInsiderAt] = useState("");
   const [msg, setMsg] = useState(null);
   const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const [listFilter, setListFilter] = useState("all");
 
   const call = async (method, body) => {
     const res = await fetch("/api/waitlist", {
@@ -3135,14 +3137,14 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
     return d;
   };
 
-  const load = () => call("GET").then(d => { setData(d); if (d.launch_at) setLaunchAt(d.launch_at); }).catch(e => setMsg({ ok: false, text: e.message }));
+  const load = () => call("GET").then(d => { setData(d); if (d.launch_at) setLaunchAt(d.launch_at); if (d.launch_insider_at) setInsiderAt(d.launch_insider_at); }).catch(e => setMsg({ ok: false, text: e.message }));
   useEffect(() => { load(); }, []);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
 
   const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 6000); };
 
-  const saveLaunch = async () => {
-    try { await call("POST", { action: "set_launch", launch_at: launchAt }); flash(true, "Launch date saved."); await load(); } catch (e) { flash(false, e.message); }
+  const saveLaunch = async (which, at) => {
+    try { await call("POST", { action: "set_launch", which, launch_at: at }); flash(true, which === "insider" ? "Insider launch date saved." : "General launch date saved."); await load(); } catch (e) { flash(false, e.message); }
   };
 
   const sendStage = async (stage) => {
@@ -3172,6 +3174,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
     </div>
   );
 
+  const entries = data ? data.entries.filter(e => listFilter === "all" || (e.list || "insider") === listFilter) : [];
   if (!data) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
 
   const launchMs = data.launch_at ? new Date(data.launch_at).getTime() - now : null;
@@ -3189,32 +3192,53 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
 
       {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
 
-      {/* Countdown */}
-      <div style={{ ...section, textAlign: "center" }}>
-        <div style={heading}>Countdown to Launch</div>
-        {cd ? (
-          <div style={{ display: "flex", justifyContent: "center", gap: 22, marginBottom: 14 }}>
-            {[["Days", cd.d], ["Hours", cd.h], ["Min", cd.m], ["Sec", cd.s]].map(([l, v]) => (
-              <div key={l}>
-                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 44, color: "#b80101", lineHeight: 1 }}>{String(v).padStart(2, "0")}</div>
-                <div style={{ fontSize: 9, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>{l}</div>
+      {/* Two launch timelines */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16, marginBottom: 20 }}>
+        {[
+          { which: "insider", label: "Elite Insider Launch", sub: "Insiders get alerted and get in first", at: insiderAt, set: setInsiderAt },
+          { which: "general", label: "General Launch", sub: "Doors open to everyone — ends pre-launch mode", at: launchAt, set: setLaunchAt },
+        ].map(t => {
+          const tms = t.at ? new Date(t.at).getTime() - now : null;
+          const tcd = tms !== null && tms > 0 ? { d: Math.floor(tms / 86400000), h: Math.floor((tms % 86400000) / 3600000), m: Math.floor((tms % 3600000) / 60000), s: Math.floor((tms % 60000) / 1000) } : null;
+          return (
+            <div key={t.which} style={{ background: "#ffffff", border: t.which === "insider" ? "1px solid #b8010140" : "1px solid #dcdcdc", borderRadius: 14, padding: "24px 26px", textAlign: "center" }}>
+              <div style={{ fontSize: 10, color: t.which === "insider" ? "#b80101" : "#8a8a8a", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 4 }}>{t.label}</div>
+              <div style={{ fontSize: 11, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>{t.sub}</div>
+              {tcd ? (
+                <div style={{ display: "flex", justifyContent: "center", gap: 16, marginBottom: 14 }}>
+                  {[["Days", tcd.d], ["Hrs", tcd.h], ["Min", tcd.m], ["Sec", tcd.s]].map(([l, v]) => (
+                    <div key={l}>
+                      <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#b80101", lineHeight: 1 }}>{String(v).padStart(2, "0")}</div>
+                      <div style={{ fontSize: 8, color: "#9a9a9a", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>{l}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : tms !== null && tms <= 0 ? (
+                <div style={{ color: "#22c55e", fontWeight: 800, fontSize: 16, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Launched.</div>
+              ) : (
+                <div style={{ color: "#9a9a9a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>No date set.</div>
+              )}
+              <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+                <input type="datetime-local" value={t.at ? t.at.slice(0, 16) : ""} onChange={e => t.set(e.target.value ? new Date(e.target.value).toISOString() : "")} style={{ ...inp, maxWidth: "none", marginBottom: 0, width: 210, colorScheme: "light" }} />
+                <button onClick={() => saveLaunch(t.which, t.at)} style={btnRed}>Save</button>
               </div>
-            ))}
-          </div>
-        ) : launchMs !== null && launchMs <= 0 ? (
-          <div style={{ color: "#22c55e", fontWeight: 800, fontSize: 20, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Launch time has arrived.</div>
-        ) : (
-          <div style={{ color: "#666666", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Set your launch date to start the clock.</div>
-        )}
-        <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-          <input type="datetime-local" value={launchAt ? launchAt.slice(0, 16) : ""} onChange={e => setLaunchAt(e.target.value ? new Date(e.target.value).toISOString() : "")} style={{ ...inp, marginBottom: 0, width: 230, colorScheme: "dark" }} />
-          <button onClick={saveLaunch} style={btnRed}>Save Launch Date</button>
-        </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* List filter */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        {[["all", "All"], ["insider", "Elite Insider"], ["general", "General"]].map(([id, label]) => (
+          <button key={id} onClick={() => setListFilter(id)} style={{ background: listFilter === id ? "#b80101" : "transparent", color: listFilter === id ? "#fff" : "#666666", border: listFilter === id ? "1px solid #b80101" : "1px solid #dcdcdc", borderRadius: 99, padding: "7px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
+            {label} · {data.entries.filter(e => id === "all" || (e.list || "insider") === id).length}
+          </button>
+        ))}
       </div>
 
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 20 }}>
-        {statCard("On the waitlist", data.entries.length)}
+        {statCard("On the waitlist", entries.length)}
         {statCard("Anticipated MRR", "$" + data.mrr.toLocaleString(undefined, { minimumFractionDigits: 2 }), "from membership picks")}
         {statCard("One-time revenue", "$" + data.oneTime.toLocaleString(undefined, { minimumFractionDigits: 2 }), "from course passes")}
         {statCard("First-month total", "$" + (data.mrr * 0.75 + data.oneTime).toLocaleString(undefined, { minimumFractionDigits: 2 }), "with 25% L&L discounts")}
@@ -3233,11 +3257,11 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
       </div>
 
       {/* Entries */}
-      {data.entries.length === 0 ? (
+      {entries.length === 0 ? (
         <div style={{ background: "#ececec", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No one on the waitlist yet — the join form is on the pricing page.</div>
       ) : (
         <div>
-          {data.entries.map(e => (
+          {entries.map(e => (
             <div key={e.id} style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
               <div style={{ flex: 1, minWidth: 170 }}>
                 <div style={{ color: "#222222", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{e.name}</div>
@@ -3245,6 +3269,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
               </div>
               <span style={{ color: "#b80101", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{PLAN_LABELS[e.plan] || e.plan}</span>
               {e.phone && <span style={{ color: "#666666", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{e.phone}</span>}
+              <span style={{ color: (e.list || "insider") === "insider" ? "#b80101" : "#8a8a8a", fontSize: 9, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{(e.list || "insider") === "insider" ? "Insider" : "General"}</span>
               {e.launched_notified && <span style={{ color: "#22c55e", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px" }}>NOTIFIED</span>}
               <span style={{ color: "#9a9a9a", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>{new Date(e.created_at).toLocaleDateString()}</span>
               <button onClick={() => removeEntry(e)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Remove</button>
@@ -3259,7 +3284,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
 
 function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
   const [rows, setRows] = useState(null);
-  const [form, setForm] = useState({ title: "", description: "", url: "", code: "", category: "resource", min_tier: "Premium" });
+  const [form, setForm] = useState({ title: "", description: "", url: "", code: "", category: "resource", min_tier: "Premium", recommendation: "" });
   const [msg, setMsg] = useState(null);
 
   const call = async (method, body) => {
@@ -3278,7 +3303,7 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
 
   const add = async () => {
     if (!form.title) { flash(false, "Title required."); return; }
-    try { await call("POST", form); setForm({ title: "", description: "", url: "", code: "", category: form.category, min_tier: form.min_tier }); flash(true, "Added."); await load(); } catch (e) { flash(false, e.message); }
+    try { await call("POST", form); setForm({ title: "", description: "", url: "", code: "", category: form.category, min_tier: form.min_tier, recommendation: "" }); flash(true, "Added."); await load(); } catch (e) { flash(false, e.message); }
   };
   const patch = async (id, p) => { try { await call("PATCH", { id, ...p }); await load(); } catch (e) { flash(false, e.message); } };
   const remove = async (id) => { if (!window.confirm("Delete this resource?")) return; try { await call("DELETE", { id }); await load(); } catch (e) { flash(false, e.message); } };
@@ -3321,8 +3346,12 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
           </div>
         </div>
         <div style={{ marginTop: 18 }}>
-          <label style={lbl}>Description</label>
-          <input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="What it is and why members should care" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} />
+          <label style={lbl}>The pitch — what it is and why a member needs it (Gina's voice)</label>
+          <textarea rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Why might you need this? Sell it the way Dr. Merritt would across the table." style={{ ...inp, maxWidth: "none", marginBottom: 0, resize: "vertical" }} />
+        </div>
+        <div style={{ marginTop: 18 }}>
+          <label style={lbl}>Why NREUV recommends it <span style={{ textTransform: "none", letterSpacing: 0, color: "#9a9a9a" }}>(optional — great for partners)</span></label>
+          <textarea rows={2} value={form.recommendation} onChange={e => setForm({ ...form, recommendation: e.target.value })} placeholder="We've worked with them on… here's what they did for us." style={{ ...inp, maxWidth: "none", marginBottom: 0, resize: "vertical" }} />
         </div>
         <div style={{ marginTop: 22 }}>
           <button onClick={add} style={{ ...btnRed, padding: "12px 28px" }}>Add Resource</button>
@@ -3634,12 +3663,13 @@ export default function App() {
   const [resetToken, setResetToken] = useState(() => new URLSearchParams(window.location.search).get("reset"));
   const [showWaitlist, setShowWaitlist] = useState(false);
   const [launchAt, setLaunchAt] = useState(null);
+  const [insiderAt, setInsiderAt] = useState(null);
   const [launchChecked, setLaunchChecked] = useState(false);
   const [clockTick, setClockTick] = useState(0);
 
   useEffect(() => {
     fetch("/api/waitlist?public=1").then(r => r.ok ? r.json() : null)
-      .then(d => { if (d && d.launch_at) setLaunchAt(d.launch_at); })
+      .then(d => { if (d) { if (d.launch_at) setLaunchAt(d.launch_at); if (d.launch_insider_at) setInsiderAt(d.launch_insider_at); } })
       .catch(() => {})
       .finally(() => setLaunchChecked(true));
   }, []);
@@ -3728,10 +3758,10 @@ export default function App() {
   // Hidden, public waitlist page — shareable at /waitlist, linked from nowhere
   const isWaitlistPage = window.location.pathname.replace(/\/+$/, "") === "/waitlist" || new URLSearchParams(window.location.search).has("waitlist");
   if (isWaitlistPage && !isAdmin && !showAdminLogin) {
-    return <LaunchPage launchAt={launchAt} onAdmin={() => setShowAdminLogin(true)} />;
+    return <LaunchPage launchAt={insiderAt || launchAt} onAdmin={() => setShowAdminLogin(true)} />;
   }
   if (prelaunch && !isAdmin && !showAdminLogin) {
-    return <LaunchPage launchAt={launchAt} onAdmin={() => setShowAdminLogin(true)} />;
+    return <LaunchPage launchAt={insiderAt || launchAt} onAdmin={() => setShowAdminLogin(true)} />;
   }
   if (!siteUnlocked && !isAdmin && !showAdminLogin) return <SiteGatePage onUnlock={() => setSiteUnlocked(true)} />;
   if (showAdminLogin && !isAdmin) return <AdminLoginPage onLogin={(token) => { sessionStorage.setItem("isAdmin", "true"); sessionStorage.setItem("adminToken", token || ""); setIsAdmin(true); setShowAdminLogin(false); }} />;

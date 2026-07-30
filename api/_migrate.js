@@ -55,10 +55,12 @@ const STATEMENTS = [
   `ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS learn TEXT`,
   `ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS budget TEXT`,
   `ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS source TEXT`,
+  `ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS list TEXT DEFAULT 'insider'`,
   `CREATE TABLE IF NOT EXISTS resources (
     id SERIAL PRIMARY KEY, title TEXT NOT NULL, description TEXT, url TEXT, code TEXT,
     category TEXT DEFAULT 'resource', min_tier TEXT DEFAULT 'Premium',
     position INTEGER DEFAULT 0, created_at TIMESTAMP DEFAULT NOW())`,
+  `ALTER TABLE resources ADD COLUMN IF NOT EXISTS recommendation TEXT`,
   `CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)`,
   `CREATE TABLE IF NOT EXISTS dms (
     id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
