@@ -144,6 +144,15 @@ CREATE TABLE IF NOT EXISTS resources (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- RSVPs for the next Lunch & Learn session (event_key = session date ISO)
+CREATE TABLE IF NOT EXISTS lnl_rsvps (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  event_key TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(user_id, event_key)
+);
+
 -- Simple key/value settings (e.g. the live Lunch & Learn session link)
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,

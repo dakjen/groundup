@@ -65,7 +65,12 @@ export default async function handler(req, res) {
         FROM entitlements e JOIN users u ON u.id = e.user_id
         WHERE e.course_id = 'lunchlearn' AND (e.expires_at IS NULL OR e.expires_at > NOW())
         ORDER BY e.created_at DESC LIMIT 200`;
-      return res.json({ link: linkRow?.value || '', recordings: recRow?.value ? JSON.parse(recRow.value) : [], coupons, requests, attendees });
+      const [evRow] = await sql`SELECT value FROM settings WHERE key = 'lnl_event'`;
+      const event = evRow?.value ? JSON.parse(evRow.value) : null;
+      const rsvps = event ? await sql`
+        SELECT u.name, u.email FROM lnl_rsvps r JOIN users u ON u.id = r.user_id
+        WHERE r.event_key = ${event.date} ORDER BY r.created_at ASC` : [];
+      return res.json({ event, rsvps, link: linkRow?.value || '', recordings: recRow?.value ? JSON.parse(recRow.value) : [], coupons, requests, attendees });
     }
 
     // ── Member: my Lunch & Learn status ──
@@ -84,7 +89,15 @@ export default async function handler(req, res) {
         const [recRow] = await sql`SELECT value FROM settings WHERE key = 'lnl_recordings'`;
         recordings = recRow?.value ? JSON.parse(recRow.value) : [];
       }
+      const [evRow] = await sql`SELECT value FROM settings WHERE key = 'lnl_event'`;
+      const event = evRow?.value ? JSON.parse(evRow.value) : null;
+      let my_rsvp = false;
+      if (event && session.uid) {
+        const [r] = await sql`SELECT id FROM lnl_rsvps WHERE user_id = ${session.uid} AND event_key = ${event.date}`;
+        my_rsvp = !!r;
+      }
       return res.json({
+        event, my_rsvp,
         active: !!access || !!admin,
         expires_at: access?.expires_at || null,
         link,
@@ -98,6 +111,19 @@ export default async function handler(req, res) {
     const action = req.body?.action;
 
     // ── Admin actions ──
+    if (action === 'set_event') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const { title, date, time, description } = req.body;
+      if (!title || !date) {
+        await sql`INSERT INTO settings (key, value) VALUES ('lnl_event', '') ON CONFLICT (key) DO UPDATE SET value = ''`;
+        return res.json({ success: true, cleared: true });
+      }
+      if (isNaN(Date.parse(date))) return res.status(400).json({ error: 'Invalid date' });
+      const val = JSON.stringify({ title: String(title).slice(0, 200), date, time: (time || '').slice(0, 50), description: (description || '').slice(0, 500) });
+      await sql`INSERT INTO settings (key, value) VALUES ('lnl_event', ${val}) ON CONFLICT (key) DO UPDATE SET value = ${val}`;
+      return res.json({ success: true });
+    }
+
     if (action === 'set_link') {
       if (!admin) return res.status(401).json({ error: 'Unauthorized' });
       const url = (req.body.url || '').trim();
@@ -151,6 +177,20 @@ export default async function handler(req, res) {
 
     // ── Member actions ──
     if (!session || !session.uid) return res.status(401).json({ error: 'Sign in required' });
+
+    if (action === 'rsvp') {
+      const access = await getAccess(sql, session.uid);
+      if (!access) return res.status(403).json({ error: 'Lunch & Learn access required to RSVP' });
+      const [evRow] = await sql`SELECT value FROM settings WHERE key = 'lnl_event'`;
+      const event = evRow?.value ? JSON.parse(evRow.value) : null;
+      if (!event) return res.status(400).json({ error: 'No upcoming session scheduled' });
+      if (req.body.going) {
+        await sql`INSERT INTO lnl_rsvps (user_id, event_key, created_at) VALUES (${session.uid}, ${event.date}, NOW()) ON CONFLICT (user_id, event_key) DO NOTHING`;
+      } else {
+        await sql`DELETE FROM lnl_rsvps WHERE user_id = ${session.uid} AND event_key = ${event.date}`;
+      }
+      return res.json({ success: true });
+    }
 
     if (action === 'redeem') {
       const code = (req.body.code || '').trim().toUpperCase();

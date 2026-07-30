@@ -44,13 +44,18 @@ export default async function handler(req, res) {
       return ok ? res.json({ success: true, sent: 1, total: 1 }) : res.status(502).json({ error: 'Email failed to send — is Brevo configured?' });
     }
 
-    // Lunch & Learn reminder with the stored join link, to everyone with active access
+    // Lunch & Learn reminder with the join link — goes to everyone who RSVP'd
     if (kind === 'lnl_reminder') {
       if (!date) return res.status(400).json({ error: 'Date required' });
       const [linkRow] = await sql`SELECT value FROM settings WHERE key = 'lnl_link'`;
       if (!linkRow?.value) return res.status(400).json({ error: 'Set the live session link first (Lunch & Learn tab)' });
-      const rows = await recipients(sql, 'lnl');
-      if (rows.length === 0) return res.status(400).json({ error: 'No one has active Lunch & Learn access yet' });
+      const [evRow] = await sql`SELECT value FROM settings WHERE key = 'lnl_event'`;
+      const event = evRow?.value ? JSON.parse(evRow.value) : null;
+      if (!event) return res.status(400).json({ error: 'Schedule the next session first (Lunch & Learn tab)' });
+      const rows = await sql`
+        SELECT u.name, u.email FROM lnl_rsvps r JOIN users u ON u.id = r.user_id
+        WHERE r.event_key = ${event.date}`;
+      if (rows.length === 0) return res.status(400).json({ error: 'No RSVPs yet for this session' });
       const mail = lnlReminderEmail(title, date, time || '', linkRow.value);
       const sent = await sendBulk(rows, mail.subject, mail.html);
       return res.json({ success: true, sent, total: rows.length });

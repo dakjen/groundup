@@ -1499,6 +1499,21 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
 
         {active && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, marginBottom: 28 }}>
+            {status?.event && new Date(status.event.date) > new Date() && (
+              <div style={{ ...card, padding: "28px 30px", border: "1px solid #b8010150" }}>
+                <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Next Session</div>
+                <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 17, fontFamily: font, marginBottom: 6 }}>{status.event.title}</div>
+                <div style={{ color: "#e0c4c4", fontSize: 13, fontFamily: font, fontWeight: 700, marginBottom: 14 }}>{new Date(status.event.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}{status.event.time ? ` · ${status.event.time}` : ""}</div>
+                <button onClick={async () => {
+                  try {
+                    await fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "rsvp", going: !status.my_rsvp }) });
+                    await loadStatus();
+                  } catch {}
+                }} style={{ background: status.my_rsvp ? "transparent" : "#b80101", color: status.my_rsvp ? "#22c55e" : "#fff", border: status.my_rsvp ? "1px solid #22c55e60" : "none", borderRadius: 8, padding: "11px 22px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>
+                  {status.my_rsvp ? "✓ You're going — tap to cancel" : "RSVP — I'll be there"}
+                </button>
+              </div>
+            )}
             <div style={{ ...card, padding: "28px 30px" }}>
               <div style={{ fontSize: 9, color: "#22c55e", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>You're in</div>
               <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 17, fontFamily: font, marginBottom: 8 }}>Live Session Access</div>
@@ -1899,7 +1914,6 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
   const [videoUrl, setVideoUrl] = useState("");
   const [msg, setMsg] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const fileRef = React.useRef ? React.useRef(null) : { current: null };
 
   const authHeaders = () => ({ Authorization: "Bearer " + sessionStorage.getItem("adminToken") });
   const load = () => fetch("/api/resources?attachments=1", { headers: authHeaders() }).then(r => r.json()).then(d => setAttachments(d.attachments || {})).catch(() => setAttachments({}));
@@ -2029,6 +2043,7 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
   const [link, setLink] = useState("");
   const [couponUses, setCouponUses] = useState(1);
   const [recForm, setRecForm] = useState({ title: "", url: "", date: "", description: "" });
+  const [evForm, setEvForm] = useState({ title: "", date: "", time: "", description: "" });
   const [msg, setMsg] = useState(null);
   const [showRequests, setShowRequests] = useState(false);
 
@@ -2043,7 +2058,7 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
     return d;
   };
 
-  const load = () => call("GET").then(d => { setData(d); setLink(d.link); }).catch(e => setMsg({ ok: false, text: e.message }));
+  const load = () => call("GET").then(d => { setData(d); setLink(d.link); if (d.event) setEvForm(d.event); }).catch(e => setMsg({ ok: false, text: e.message }));
   useEffect(() => { load(); }, []);
 
   const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 4000); };
@@ -2082,6 +2097,27 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
   return (
     <div style={{ marginBottom: 36 }}>
       {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
+
+      {/* Next session + RSVPs */}
+      <div style={section}>
+        <div style={heading}><Calendar size={13} color="#b80101" /> Next Session</div>
+        <p style={{ color: "#8d847a", fontSize: 12, marginBottom: 14, fontFamily: "'DM Sans', sans-serif" }}>Schedule the upcoming Lunch & Learn — members with access see it and RSVP; the reminder email goes to RSVPs only.</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", columnGap: 20, rowGap: 18, marginBottom: 16 }}>
+          <div><label style={lbl}>Title</label><input value={evForm.title} onChange={e => setEvForm({ ...evForm, title: e.target.value })} placeholder="Capital Stacks 101" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div><label style={lbl}>Date</label><input type="datetime-local" value={evForm.date ? evForm.date.slice(0, 16) : ""} onChange={e => setEvForm({ ...evForm, date: e.target.value ? new Date(e.target.value).toISOString() : "" })} style={{ ...inp, maxWidth: "none", marginBottom: 0, colorScheme: "light" }} /></div>
+          <div><label style={lbl}>Time label</label><input value={evForm.time} onChange={e => setEvForm({ ...evForm, time: e.target.value })} placeholder="12:00 PM ET" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+        </div>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <button onClick={async () => { try { await call("POST", { action: "set_event", ...evForm }); flash(true, "Session scheduled — RSVPs are open."); await load(); } catch (e) { flash(false, e.message); } }} style={btnRed}>Save Session</button>
+          {data.event && <button onClick={async () => { try { await call("POST", { action: "set_event" }); setEvForm({ title: "", date: "", time: "", description: "" }); flash(true, "Session cleared."); await load(); } catch (e) { flash(false, e.message); } }} style={btnGhost}>Clear</button>}
+          {data.rsvps && <span style={{ color: "#6b6259", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>{data.rsvps.length} RSVP{data.rsvps.length === 1 ? "" : "s"}</span>}
+        </div>
+        {data.rsvps && data.rsvps.length > 0 && (
+          <div style={{ marginTop: 12, color: "#6b6259", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8 }}>
+            {data.rsvps.map(r => r.name).join(", ")}
+          </div>
+        )}
+      </div>
 
       {/* Session link */}
       <div style={section}>
@@ -3286,6 +3322,8 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
   const [rows, setRows] = useState(null);
   const [form, setForm] = useState({ title: "", description: "", url: "", code: "", category: "resource", min_tier: "Premium", recommendation: "" });
   const [msg, setMsg] = useState(null);
+  const [editId, setEditId] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   const call = async (method, body) => {
     const res = await fetch("/api/resources", {
@@ -3301,9 +3339,32 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
   useEffect(() => { load(); }, []);
   const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 4000); };
 
+  const blank = () => ({ title: "", description: "", url: "", code: "", category: form.category, min_tier: form.min_tier, recommendation: "" });
   const add = async () => {
     if (!form.title) { flash(false, "Title required."); return; }
-    try { await call("POST", form); setForm({ title: "", description: "", url: "", code: "", category: form.category, min_tier: form.min_tier, recommendation: "" }); flash(true, "Added."); await load(); } catch (e) { flash(false, e.message); }
+    try {
+      if (editId) { await call("PATCH", { id: editId, ...form }); flash(true, "Saved."); }
+      else { await call("POST", form); flash(true, "Added."); }
+      setForm(blank()); setEditId(null); await load();
+    } catch (e) { flash(false, e.message); }
+  };
+  const startEdit = (r) => {
+    setEditId(r.id);
+    setForm({ title: r.title || "", description: r.description || "", url: r.url || "", code: r.code || "", category: r.category || "resource", min_tier: r.min_tier || "Premium", recommendation: r.recommendation || "" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  const uploadPdf = async (file) => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/lesson-pdfs", { method: "POST", headers: { Authorization: "Bearer " + sessionStorage.getItem("adminToken") }, body: fd });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Upload failed");
+      setForm(f => ({ ...f, url: d.url }));
+      flash(true, "PDF uploaded — link filled in below.");
+    } catch (e) { flash(false, e.message); } finally { setUploading(false); }
   };
   const patch = async (id, p) => { try { await call("PATCH", { id, ...p }); await load(); } catch (e) { flash(false, e.message); } };
   const remove = async (id) => { if (!window.confirm("Delete this resource?")) return; try { await call("DELETE", { id }); await load(); } catch (e) { flash(false, e.message); } };
@@ -3325,8 +3386,14 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
             <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="DakJen Creative — Marketing" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} />
           </div>
           <div>
-            <label style={lbl}>Link</label>
-            <input value={form.url} onChange={e => setForm({ ...form, url: e.target.value })} placeholder="https://…" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} />
+            <label style={lbl}>Link — or upload a PDF</label>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <input value={form.url} onChange={e => setForm({ ...form, url: e.target.value })} placeholder="https://… (Excel, Drive, anything)" style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1 }} />
+              <label style={{ ...btnGhost, cursor: "pointer", whiteSpace: "nowrap", padding: "10px 14px" }}>
+                {uploading ? "Uploading…" : "Upload PDF"}
+                <input type="file" accept="application/pdf" style={{ display: "none" }} onChange={e => uploadPdf(e.target.files[0])} />
+              </label>
+            </div>
           </div>
           <div>
             <label style={lbl}>Referral / coupon code <span style={{ textTransform: "none", letterSpacing: 0, color: "#9a9a9a" }}>(optional)</span></label>
@@ -3354,7 +3421,8 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
           <textarea rows={2} value={form.recommendation} onChange={e => setForm({ ...form, recommendation: e.target.value })} placeholder="We've worked with them on… here's what they did for us." style={{ ...inp, maxWidth: "none", marginBottom: 0, resize: "vertical" }} />
         </div>
         <div style={{ marginTop: 22 }}>
-          <button onClick={add} style={{ ...btnRed, padding: "12px 28px" }}>Add Resource</button>
+          <button onClick={add} style={{ ...btnRed, padding: "12px 28px" }}>{editId ? "Save Changes" : "Add Resource"}</button>
+          {editId && <button onClick={() => { setEditId(null); setForm(blank()); }} style={{ ...btnGhost, marginLeft: 10 }}>Cancel Edit</button>}
         </div>
       </div>
 
@@ -3370,6 +3438,7 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
           <select value={r.min_tier} onChange={e => patch(r.id, { min_tier: e.target.value })} style={{ background: "#ececec", color: "#b80101", border: "1px solid #2a1010", borderRadius: 6, padding: "5px 8px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 11, cursor: "pointer", outline: "none" }}>
             <option value="Premium">Premium</option><option value="Elite">Elite</option>
           </select>
+          <button onClick={() => startEdit(r)} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Edit</button>
           <button onClick={() => remove(r.id)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Delete</button>
         </div>
       ))}
@@ -3468,7 +3537,7 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
       {/* L&L reminder */}
       <div style={section}>
         <div style={heading}>Lunch & Learn Reminder</div>
-        <p style={sub}>Sends the join link (from the Lunch & Learn tab) to everyone with active access. Use it the day of the session.</p>
+        <p style={sub}>Sends the join link to everyone who RSVP’d to the scheduled session. Use it the day of.</p>
         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", columnGap: 20, rowGap: 18, marginBottom: 12 }}>
           <div><label style={lbl}>Title (optional)</label><input value={event.title} onChange={e => setEvent({ ...event, title: e.target.value })} style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
           <div><label style={lbl}>Date</label><input value={event.date} onChange={e => setEvent({ ...event, date: e.target.value })} placeholder="Today" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
