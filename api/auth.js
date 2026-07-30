@@ -24,6 +24,11 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
     if (action === 'signup') {
+      // Pre-launch: no signups until the launch moment passes (waitlist only)
+      const [launchRow] = await sql`SELECT value FROM settings WHERE key = 'launch_at'`;
+      if (!launchRow?.value || new Date(launchRow.value).getTime() > Date.now()) {
+        return res.status(403).json({ error: "We haven't launched yet — join the waitlist to be first in." });
+      }
       const { name, email, password, tier } = req.body;
       if (!name || !email || !password) return res.status(400).json({ error: 'Name, email, and password are required' });
       if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileText, Send, Hourglass, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2 } from "lucide-react";
+import { FileText, Send, Hourglass, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2 } from "lucide-react";
 import { AuthModal, ResetPasswordModal, WaitlistModal, MemberPage, CommunityPage, TierBadge, TIER_RANK, TIER_LABELS, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
@@ -1533,7 +1533,7 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
 function LaunchPage({ launchAt, onWaitlist, onAdmin }) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
-  const ms = new Date(launchAt).getTime() - now;
+  const ms = launchAt ? new Date(launchAt).getTime() - now : 0;
   const cd = ms > 0 ? {
     d: Math.floor(ms / 86400000),
     h: Math.floor((ms % 86400000) / 3600000),
@@ -1566,12 +1566,12 @@ function LaunchPage({ launchAt, onWaitlist, onAdmin }) {
         <div className="gu-drift" style={{ position: "absolute", top: "0%", left: "20%", width: 700, height: 700, borderRadius: "50%", background: "radial-gradient(circle, #57040428 0%, transparent 65%)", pointerEvents: "none" }} />
         <div className="gu-up" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#7a615118", border: "1px solid #7a615140", borderRadius: 99, padding: "8px 20px", marginBottom: 36 }}>
           <span className="gu-pulse" style={{ width: 6, height: 6, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
-          <span style={{ color: "#7a6151", fontSize: 11, fontFamily: font, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>Launching Soon</span>
+          <span style={{ color: "#7a6151", fontSize: 11, fontFamily: font, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>Elite Insider Waitlist</span>
         </div>
         <img src={IMG_LOGO} alt="GroundUp" className="gu-up gu-d1" style={{ width: 72, height: 72, objectFit: "contain", borderRadius: 14, marginBottom: 24 }} />
-        <h1 className="gu-up gu-d1" style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(44px,8vw,84px)", color: "#f5e8e8", lineHeight: 1.05, letterSpacing: "-1px", marginBottom: 10 }}>GroundUp is coming.</h1>
+        <h1 className="gu-up gu-d1" style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(44px,8vw,84px)", color: "#f5e8e8", lineHeight: 1.05, letterSpacing: "-1px", marginBottom: 10 }}>Get inside first.</h1>
         <p className="gu-up gu-d2" style={{ color: "#9a9a98", fontSize: "clamp(14px,1.8vw,17px)", lineHeight: 1.9, maxWidth: 560, fontFamily: font, marginBottom: 40 }}>
-          Real development education for underrepresented developers — built from Dr. Gina Merritt's 30+ years and $600M+ of hands-on deal experience.
+          Our mission is simple: <span style={{ color: "#e0c4c4", fontWeight: 700 }}>help you get your deals done and build a legacy.</span> Real development education, a community that has your back, and direct support from Dr. Gina Merritt — 30+ years and $600M+ of hands-on deal experience.
         </p>
         {cd && (
           <div className="gu-up gu-d3" style={{ display: "flex", gap: "clamp(16px,4vw,36px)", marginBottom: 44 }}>
@@ -1583,8 +1583,8 @@ function LaunchPage({ launchAt, onWaitlist, onAdmin }) {
             ))}
           </div>
         )}
-        <button className="gu-up gu-d4" onClick={onWaitlist} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 12, padding: "17px 44px", fontFamily: font, fontWeight: 800, fontSize: 15, cursor: "pointer", letterSpacing: "0.5px" }}>Join the Waitlist →</button>
-        <div className="gu-up gu-d5" style={{ color: "#5a4040", fontSize: 12, fontFamily: font, marginTop: 16 }}>Pick your plan now — waitlist members get first access at launch.</div>
+        <button className="gu-up gu-d4" onClick={onWaitlist} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 12, padding: "17px 44px", fontFamily: font, fontWeight: 800, fontSize: 15, cursor: "pointer", letterSpacing: "0.5px" }}>Join the Insider Waitlist →</button>
+        <div className="gu-up gu-d5" style={{ color: "#5a4040", fontSize: 12, fontFamily: font, marginTop: 16 }}>Insiders get first notice, first access, and a personal link to their plan at launch.</div>
       </div>
 
       {/* What's included */}
@@ -1607,8 +1607,8 @@ function LaunchPage({ launchAt, onWaitlist, onAdmin }) {
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 18 }}>
           {[
-            { Icon: MessagesSquare, title: "A members-only community", desc: "Channels for deals, financing, and JV partnerships — with announcements and answers straight from Dr. Merritt's team." },
-            { Icon: Calendar, title: "Live Lunch & Learns", desc: "Live sessions with Dr. Merritt on financing structures, JV strategy, and construction — plus the recording library." },
+            { Icon: MessagesSquare, title: "Support that has your back", desc: "A helping hand from people who've done it — a members-only community for deals, financing, and JV partnerships, with answers straight from Dr. Merritt's team." },
+            { Icon: Calendar, title: "Live Lunch & Learns + templates", desc: "Live sessions with Dr. Merritt on financing, JV strategy, and construction — plus recordings, worksheets, and development timeline templates." },
             { Icon: Handshake, title: "Work directly with Dr. Merritt", desc: "1-on-1 deal reviews, strategy sessions, and Elite advisory calls with someone who has closed $600M+ in deals." },
           ].map((f, i) => (
             <div key={i} style={{ background: "#0a0808", border: "1px solid #1e0000", borderRadius: 16, padding: "26px 28px" }}>
@@ -1624,13 +1624,13 @@ function LaunchPage({ launchAt, onWaitlist, onAdmin }) {
       <div style={{ padding: "40px clamp(20px,5vw,80px) 80px", maxWidth: 1100, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 40 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Pricing at Launch</div>
-          <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(28px,4vw,40px)", color: "#f5e8e8" }}>Pick your path now — pay at launch.</h2>
+          <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(28px,4vw,40px)", color: "#f5e8e8" }}>Insiders pick their path now — pay at launch.</h2>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
           {[
             { name: "One Course", price: "$100", period: "one-time", desc: "30 days of one course of your choice." },
             { name: "All-Access Pass", price: "$250", period: "one-time", desc: "30 days of the entire curriculum." },
-            { name: "Member", price: "$59.99", period: "/mo", desc: "Every course, every new course, community access." },
+            { name: "Member", price: "$59.99", period: "/mo", desc: "Constant access + support — every course, every new course, and the community." },
             { name: "Premium", price: "$165.99", period: "/mo", desc: "Engage the community, deal tools, a free work session.", popular: true },
             { name: "Elite", price: "$599.99", period: "/mo", desc: "Direct line to Dr. Merritt — advisory calls and DMs." },
           ].map((p, i) => (
@@ -1643,7 +1643,7 @@ function LaunchPage({ launchAt, onWaitlist, onAdmin }) {
           ))}
         </div>
         <div style={{ textAlign: "center", marginTop: 40 }}>
-          <button onClick={onWaitlist} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 12, padding: "16px 40px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Save My Spot →</button>
+          <button onClick={onWaitlist} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 12, padding: "16px 40px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Claim My Insider Spot →</button>
         </div>
       </div>
 
@@ -2924,9 +2924,11 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
                 <div style={{ color: "#8a6060", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{e.email}</div>
               </div>
               <span style={{ color: "#e0c4c4", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{PLAN_LABELS[e.plan] || e.plan}</span>
+              {e.phone && <span style={{ color: "#8a7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{e.phone}</span>}
               {e.launched_notified && <span style={{ color: "#22c55e", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px" }}>NOTIFIED</span>}
               <span style={{ color: "#5a4040", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>{new Date(e.created_at).toLocaleDateString()}</span>
               <button onClick={() => removeEntry(e)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Remove</button>
+              {e.reason && <div style={{ width: "100%", color: "#8a7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, borderTop: "1px solid #241010", paddingTop: 8, marginTop: 2 }}>&ldquo;{e.reason}&rdquo;</div>}
             </div>
           ))}
         </div>
@@ -3297,6 +3299,16 @@ export default function App() {
     if (pendingPage) { setActivePage(pendingPage); setPendingPage(null); }
   };
 
+  // Hidden, public waitlist page — shareable at /waitlist, linked from nowhere
+  const isWaitlistPage = window.location.pathname.replace(/\/+$/, "") === "/waitlist" || new URLSearchParams(window.location.search).has("waitlist");
+  if (isWaitlistPage && !isAdmin && !showAdminLogin) {
+    return (
+      <>
+        {showWaitlist && <WaitlistModal onClose={() => setShowWaitlist(false)} />}
+        <LaunchPage launchAt={launchAt} onWaitlist={() => setShowWaitlist(true)} onAdmin={() => setShowAdminLogin(true)} />
+      </>
+    );
+  }
   if (prelaunch && !isAdmin && !showAdminLogin) {
     return (
       <>

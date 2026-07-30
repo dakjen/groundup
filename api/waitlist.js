@@ -40,19 +40,23 @@ export default async function handler(req, res) {
 
     // Public: join the waitlist with a chosen plan
     if (action === 'join') {
-      const { name, email, plan } = req.body;
+      const { name, email, plan, phone, reason } = req.body;
       if (!name || !email) return res.status(400).json({ error: 'Name and email required' });
+      if (!phone || !String(phone).trim()) return res.status(400).json({ error: 'Phone number required' });
+      if (!reason || !String(reason).trim()) return res.status(400).json({ error: 'Tell us why you want to join' });
       const safePlan = PLAN_INFO[plan] ? plan : 'Basic';
       const cleanEmail = String(email).trim().toLowerCase();
+      const cleanPhone = String(phone).trim().slice(0, 30);
+      const cleanReason = String(reason).trim().slice(0, 2000);
       const [entry] = await sql`
-        INSERT INTO waitlist (name, email, plan, created_at)
-        VALUES (${String(name).trim()}, ${cleanEmail}, ${safePlan}, NOW())
-        ON CONFLICT (email) DO UPDATE SET plan = ${safePlan}, name = ${String(name).trim()}
+        INSERT INTO waitlist (name, email, plan, phone, reason, created_at)
+        VALUES (${String(name).trim()}, ${cleanEmail}, ${safePlan}, ${cleanPhone}, ${cleanReason}, NOW())
+        ON CONFLICT (email) DO UPDATE SET plan = ${safePlan}, name = ${String(name).trim()}, phone = ${cleanPhone}, reason = ${cleanReason}
         RETURNING *`;
       const mail = waitlistConfirmEmail(entry.name, PLAN_INFO[safePlan].label);
       await Promise.allSettled([
         sendEmail(entry.email, mail.subject, mail.html),
-        addContact(entry.email, entry.name, { WAITLIST_PLAN: safePlan }),
+        addContact(entry.email, entry.name, { WAITLIST_PLAN: safePlan, SMS: cleanPhone }),
       ]);
       return res.status(201).json({ success: true });
     }

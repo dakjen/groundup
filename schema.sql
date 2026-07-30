@@ -91,9 +91,14 @@ CREATE TABLE IF NOT EXISTS waitlist (
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   plan TEXT DEFAULT 'Basic',        -- Free | Basic | Premium | Elite | pass_single | pass_all
+  phone TEXT,
+  reason TEXT,
   launched_notified BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS reason TEXT;
 
 -- Simple key/value settings (e.g. the live Lunch & Learn session link)
 CREATE TABLE IF NOT EXISTS settings (

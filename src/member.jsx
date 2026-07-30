@@ -609,6 +609,8 @@ const WL_PLANS = [
 export function WaitlistModal({ onClose }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [reason, setReason] = useState("");
   const [plan, setPlan] = useState("Basic");
   const [msg, setMsg] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -618,7 +620,7 @@ export function WaitlistModal({ onClose }) {
     e.preventDefault();
     setBusy(true); setMsg(null);
     try {
-      await api("/api/waitlist", { method: "POST", body: JSON.stringify({ action: "join", name, email, plan }) });
+      await api("/api/waitlist", { method: "POST", body: JSON.stringify({ action: "join", name, email, phone, reason, plan }) });
       setDone(true);
     } catch (err) {
       setMsg(err.message);
@@ -630,25 +632,33 @@ export function WaitlistModal({ onClose }) {
       <div onClick={e => e.stopPropagation()} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "36px 36px 32px", width: "100%", maxWidth: 460, maxHeight: "90vh", overflowY: "auto" }}>
         {done ? (
           <div style={{ textAlign: "center", padding: "20px 0" }}>
-            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 12 }}>You're on the list.</h2>
+            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 12 }}>You're an insider.</h2>
             <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font, lineHeight: 1.8, marginBottom: 24 }}>Check your inbox — your spot is saved, and you'll get first notice with a personal link the moment we launch.</p>
             <button onClick={onClose} style={btnRed}>Done</button>
           </div>
         ) : (
           <>
-            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>Launching Soon</div>
-            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>Join the waitlist</h2>
-            <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginBottom: 22 }}>Save your spot and be first through the door — with a personal link to the plan you pick.</p>
+            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>Elite Insider Waitlist</div>
+            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>Become an insider</h2>
+            <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginBottom: 22 }}>The inside track: first notice, first access, and a personal link to the plan you pick — before the doors open to anyone else.</p>
             <form onSubmit={submit}>
               <div style={{ marginBottom: 14 }}>
                 <label style={lbl}>Full name</label>
                 <input style={inp} value={name} onChange={e => setName(e.target.value)} required placeholder="Your name" />
               </div>
-              <div style={{ marginBottom: 18 }}>
+              <div style={{ marginBottom: 14 }}>
                 <label style={lbl}>Email</label>
                 <input style={inp} type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@example.com" />
               </div>
-              <label style={lbl}>How do you want to learn?</label>
+              <div style={{ marginBottom: 14 }}>
+                <label style={lbl}>Phone</label>
+                <input style={inp} type="tel" value={phone} onChange={e => setPhone(e.target.value)} required placeholder="(555) 555-5555" />
+              </div>
+              <div style={{ marginBottom: 18 }}>
+                <label style={lbl}>Why do you want to join?</label>
+                <textarea style={{ ...inp, resize: "vertical" }} rows={3} value={reason} onChange={e => setReason(e.target.value)} required maxLength={2000} placeholder="Where are you in your development journey, and what are you trying to get done?" />
+              </div>
+              <label style={lbl}>What are you interested in?</label>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
                 {WL_PLANS.map(p => (
                   <button type="button" key={p.id} onClick={() => setPlan(p.id)} style={{ background: plan === p.id ? "#b8010118" : "transparent", border: plan === p.id ? "1px solid #b80101" : "1px solid #2a0000", borderRadius: 10, padding: "12px 16px", cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
@@ -661,7 +671,7 @@ export function WaitlistModal({ onClose }) {
                 ))}
               </div>
               {msg && <div style={{ color: "#ff6b6b", fontSize: 13, fontFamily: font, marginBottom: 12 }}>{msg}</div>}
-              <button type="submit" disabled={busy} style={{ ...btnRed, width: "100%", opacity: busy ? 0.6 : 1 }}>{busy ? "Saving your spot…" : "Join the Waitlist →"}</button>
+              <button type="submit" disabled={busy} style={{ ...btnRed, width: "100%", opacity: busy ? 0.6 : 1 }}>{busy ? "Saving your spot…" : "Join the Insider Waitlist →"}</button>
             </form>
           </>
         )}
