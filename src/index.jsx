@@ -583,7 +583,7 @@ function EventCard({ currentUser, eventInvited, onSignUp, setActivePage }) {
 function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const pages = member
-    ? ["home", "courses", "community", "membership", "lunchlearn", "contact"]
+    ? ["home", "courses", "community", "membership", "pricing", "lunchlearn", "contact"]
     : ["home", "courses", "about", "pricing", "lunchlearn", "contact"];
   const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", contact: "Contact", community: "Community", membership: "Membership" };
   return (
