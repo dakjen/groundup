@@ -578,6 +578,50 @@ function EventCard({ currentUser, eventInvited, onSignUp, setActivePage }) {
   );
 }
 
+// GroundUp mark — the original brownstone facade, redrawn: a symmetrical
+// multifamily building (center tower + two wings) over a faint city skyline.
+function GULogo({ size = 40 }) {
+  const w = "#f5e8e8";
+  const win = (x, y, wd = 4, ht = 5) => (
+    <rect key={x + "-" + y} x={x} y={y} width={wd} height={ht} rx={0.6} fill="none" stroke={w} strokeWidth="1.4" />
+  );
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="GroundUp">
+      <rect x="2" y="2" width="60" height="60" rx="14" fill="#0d0404" stroke="#b8010160" strokeWidth="1.5" />
+      {/* faint skyline behind */}
+      <g opacity="0.35">
+        <rect x="8" y="20" width="6" height="30" fill="#b8010145" />
+        <rect x="50" y="16" width="7" height="34" fill="#b8010145" />
+        <rect x="44" y="26" width="5" height="24" fill="#b8010130" />
+        <rect x="14" y="28" width="4" height="22" fill="#b8010130" />
+      </g>
+      {/* ground line */}
+      <path d="M8 51.5 H56" stroke={w} strokeWidth="2" strokeLinecap="round" />
+      {/* center tower */}
+      <rect x="25" y="13" width="14" height="38.5" fill="#0d0404" stroke={w} strokeWidth="2" />
+      <path d="M23.5 13 H40.5" stroke={w} strokeWidth="2" strokeLinecap="round" />
+      {/* wings */}
+      <rect x="13" y="22" width="12" height="29.5" fill="#0d0404" stroke={w} strokeWidth="2" />
+      <rect x="39" y="22" width="12" height="29.5" fill="#0d0404" stroke={w} strokeWidth="2" />
+      <path d="M11.5 22 H25" stroke={w} strokeWidth="2" strokeLinecap="round" />
+      <path d="M39 22 H52.5" stroke={w} strokeWidth="2" strokeLinecap="round" />
+      {/* tower windows */}
+      {win(27.5, 17)} {win(32.5, 17)}
+      {win(27.5, 25)} {win(32.5, 25)}
+      {win(27.5, 33)} {win(32.5, 33)}
+      {/* wing windows */}
+      {win(15.5, 26)} {win(20, 26)}
+      {win(15.5, 34)} {win(20, 34)}
+      {win(15.5, 42)} {win(20, 42)}
+      {win(41.5, 26)} {win(46, 26)}
+      {win(41.5, 34)} {win(46, 34)}
+      {win(41.5, 42)} {win(46, 42)}
+      {/* arched entry, brand red */}
+      <path d="M28.5 51.5 V45 a3.5 3.5 0 0 1 7 0 V51.5" fill="#b80101" stroke={w} strokeWidth="1.6" />
+    </svg>
+  );
+}
+
 // ─── NAV ────────────────────────────────────────────────────────────────────
 
 function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member }) {
@@ -590,7 +634,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member }) {
     <>
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: "rgba(0,0,0,0.97)", backdropFilter: "blur(16px)", borderBottom: "1px solid #1a0000", padding: "0 clamp(16px,4vw,48px)", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }} onClick={() => { setActivePage("home"); setMenuOpen(false); onLogoClick && onLogoClick(); }}>
-          <img src={IMG_LOGO} alt="GroundUp" style={{ width: 38, height: 38, objectFit: "contain", borderRadius: 8 }} />
+          <GULogo size={38} />
           <div>
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 20, color: "#fff", lineHeight: 1, letterSpacing: "1px" }}>GROUNDUP</div>
             <div style={{ fontSize: 9, color: "#7a6151", letterSpacing: "2px", textTransform: "uppercase", fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>for underrepresented developers</div>
@@ -1582,7 +1626,7 @@ function LaunchPage({ launchAt, onAdmin }) {
           <span className="gu-pulse" style={{ width: 6, height: 6, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
           <span style={{ color: "#7a6151", fontSize: 11, fontFamily: font, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>Elite Insider Waitlist</span>
         </div>
-        <img src={IMG_LOGO} alt="GroundUp" className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, width: 72, height: 72, objectFit: "contain", borderRadius: 14, marginBottom: 24 }} />
+        <div className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, marginBottom: 24 }}><GULogo size={72} /></div>
         <h1 className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, fontFamily: serif, fontWeight: 700, fontSize: "clamp(44px,8vw,84px)", color: "#f5e8e8", lineHeight: 1.05, letterSpacing: "-1px", marginBottom: 10 }}>Get access first.</h1>
         <p className="gu-up gu-d2" style={{ position: "relative", zIndex: 1, color: "#c8b0b0", fontSize: "clamp(14px,1.8vw,17px)", lineHeight: 1.9, maxWidth: 580, fontFamily: font, marginBottom: 40 }}>
           Our mission is simple: <span style={{ color: "#e0c4c4", fontWeight: 700 }}>help you get your deals done and build a legacy.</span> Something new is coming for underrepresented developers — built on 30+ years and $600M+ of real deals.
@@ -1611,7 +1655,7 @@ function LaunchPage({ launchAt, onAdmin }) {
             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 14 }}>The Real Value</div>
             <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4vw,44px)", color: "#f5e8e8", lineHeight: 1.15, marginBottom: 18 }}>You're not just buying courses.<br />You're buying expertise.</h2>
             <p style={{ color: "#a89080", fontSize: 15, lineHeight: 1.9, fontFamily: font, marginBottom: 22 }}>
-              Raised in the Bronx. Bootstrapped from public housing to $600M+ in development deals across DC, Baltimore, and Cleveland. The people who know this business almost never teach it — she's about to.
+              This is bigger than one person. GroundUp runs through Dr. Merritt — Bronx-raised, public housing to $600M+ in deals — but it exists for you: the knowledge, the community, and the resources to build wealth from the ground up. What she fought to learn alone, you get handed with people in your corner.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
