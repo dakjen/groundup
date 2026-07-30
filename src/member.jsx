@@ -521,7 +521,10 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
 
   const createChannel = async () => {
     try {
-      await api("/api/community", { method: "POST", body: JSON.stringify({ action: "create_channel", ...newChan }) });
+      const payload = newChan.min_tier === "team"
+        ? { ...newChan, min_tier: "Basic", team_only: true }
+        : newChan;
+      await api("/api/community", { method: "POST", body: JSON.stringify({ action: "create_channel", ...payload }) });
       setNewChanOpen(false);
       setNewChan({ name: "", min_tier: "Basic", admin_only_post: false });
       await loadChannels();
@@ -565,6 +568,31 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
             {c.min_tier !== "Basic" && <span style={{ marginLeft: 6, fontSize: 9, color: TIER_COLORS[c.min_tier], fontFamily: font, fontWeight: 800 }}>{(TIER_LABELS[c.min_tier] || c.min_tier).toUpperCase()}</span>}
           </button>
         ))}
+        {isAdmin && (
+          <div style={{ margin: "8px 0 4px" }}>
+            {!newChanOpen ? (
+              <button onClick={() => setNewChanOpen(true)} style={{ width: "100%", background: "transparent", border: "1px dashed #cccccc", borderRadius: 8, padding: "9px 12px", color: "#8a8a8a", fontSize: 12.5, fontFamily: font, fontWeight: 700, cursor: "pointer", textAlign: "left" }}>+ New channel</button>
+            ) : (
+              <div style={{ background: "#f0f0f0", border: "1px solid #e0e0e0", borderRadius: 10, padding: 12 }}>
+                <input style={{ ...inp, background: "#ffffff", border: "1px solid #dcdcdc", color: "#161616", marginBottom: 8, fontSize: 13, padding: "9px 11px" }} value={newChan.name} onChange={e => setNewChan({ ...newChan, name: e.target.value })} placeholder="Channel name" maxLength={40} />
+                <select style={{ ...inp, background: "#ffffff", border: "1px solid #dcdcdc", color: "#161616", marginBottom: 8, fontSize: 13, padding: "9px 11px", cursor: "pointer" }} value={newChan.min_tier} onChange={e => setNewChan({ ...newChan, min_tier: e.target.value })}>
+                  <option value="Basic">All members</option>
+                  <option value="Premium">Premium+</option>
+                  <option value="Elite">Elite only</option>
+                  <option value="team">Team only (private)</option>
+                </select>
+                <label style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10, cursor: "pointer" }}>
+                  <input type="checkbox" checked={newChan.admin_only_post} onChange={e => setNewChan({ ...newChan, admin_only_post: e.target.checked })} />
+                  <span style={{ color: "#666666", fontSize: 12, fontFamily: font, fontWeight: 600 }}>Only team can post</span>
+                </label>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button onClick={createChannel} style={{ ...btnRed, flex: 1, padding: "9px 10px", fontSize: 12 }}>Create</button>
+                  <button onClick={() => setNewChanOpen(false)} style={{ ...btnGhost, padding: "9px 10px", fontSize: 12 }}>Cancel</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
         {canDm && (
           <>
             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "0 12px", margin: "20px 0 10px" }}>Direct Messages</div>
@@ -585,29 +613,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
           </>
         )}
         {isAdmin && (
-          <div style={{ margin: "18px 12px 0" }}>
-            {!newChanOpen ? (
-              <button onClick={() => setNewChanOpen(true)} style={{ width: "100%", background: "transparent", border: "1px dashed #3a2c1a", borderRadius: 8, padding: "9px 12px", color: "#666666", fontSize: 12.5, fontFamily: font, fontWeight: 700, cursor: "pointer", textAlign: "left" }}>+ New channel</button>
-            ) : (
-              <div style={{ background: "#f0f0f0", border: "1px solid #2c2214", borderRadius: 10, padding: 12 }}>
-                <input style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#161616", marginBottom: 8, fontSize: 13, padding: "9px 11px" }} value={newChan.name} onChange={e => setNewChan({ ...newChan, name: e.target.value })} placeholder="Channel name" maxLength={40} />
-                <select style={{ ...inp, background: "#ffffff", border: "1px solid #e0dbd2", color: "#161616", marginBottom: 8, fontSize: 13, padding: "9px 11px", cursor: "pointer" }} value={newChan.min_tier} onChange={e => setNewChan({ ...newChan, min_tier: e.target.value })}>
-                  <option value="Basic">All members</option>
-                  <option value="Premium">Premium+</option>
-                  <option value="Elite">Elite only</option>
-                </select>
-                <label style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10, cursor: "pointer" }}>
-                  <input type="checkbox" checked={newChan.admin_only_post} onChange={e => setNewChan({ ...newChan, admin_only_post: e.target.checked })} />
-                  <span style={{ color: "#666666", fontSize: 12, fontFamily: font, fontWeight: 600 }}>Only team can post</span>
-                </label>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <button onClick={createChannel} style={{ ...btnRed, flex: 1, padding: "9px 10px", fontSize: 12 }}>Create</button>
-                  <button onClick={() => setNewChanOpen(false)} style={{ ...btnGhost, padding: "9px 10px", fontSize: 12 }}>Cancel</button>
-                </div>
-              </div>
-            )}
-            <div style={{ marginTop: 10, padding: "8px 12px", background: "#fdf1f1", border: "1px solid #b8010130", borderRadius: 8, color: "#b80101", fontSize: 11, fontFamily: font, fontWeight: 700 }}>You're posting as the GroundUp team.</div>
-          </div>
+          <div style={{ margin: "16px 12px 0", padding: "8px 12px", background: "#fdf1f1", border: "1px solid #b8010130", borderRadius: 8, color: "#b80101", fontSize: 11, fontFamily: font, fontWeight: 700 }}>You're posting as the GroundUp team.</div>
         )}
       </div>
 
