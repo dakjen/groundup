@@ -14,6 +14,8 @@ export default async function handler(req, res) {
       if (!session || !session.uid) return res.status(401).json({ error: 'Not signed in' });
       const [user] = await sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, created_at FROM users WHERE id = ${session.uid}`;
       if (!user) return res.status(401).json({ error: 'Account not found' });
+      // Active one-time passes: course_id 'all' or 'mc1'..'mc4', unexpired
+      user.entitlements = await sql`SELECT course_id, expires_at FROM entitlements WHERE user_id = ${user.id} AND (expires_at IS NULL OR expires_at > NOW())`;
       return res.json({ user });
     }
 
@@ -46,6 +48,7 @@ export default async function handler(req, res) {
       }
       const token = signToken({ uid: user.id, role: user.role === 'admin' ? 'admin' : 'member' });
       const { password_hash, ...safe } = user;
+      safe.entitlements = await sql`SELECT course_id, expires_at FROM entitlements WHERE user_id = ${user.id} AND (expires_at IS NULL OR expires_at > NOW())`;
       return res.json({ user: safe, token });
     }
 

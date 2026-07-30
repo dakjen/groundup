@@ -63,6 +63,15 @@ CREATE TABLE IF NOT EXISTS messages (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Direct messages: one private thread per member with Dr. Merritt & the team (Elite benefit)
+CREATE TABLE IF NOT EXISTS dms (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  from_admin BOOLEAN DEFAULT FALSE,
+  body TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Default channels
 INSERT INTO channels (slug, name, description, min_tier, admin_only_post, position) VALUES
   ('announcements', 'Announcements', 'Official updates from Dr. Merritt and the GroundUp team.', 'Basic', TRUE, 0),
@@ -78,3 +87,4 @@ CREATE INDEX IF NOT EXISTS idx_referrals_code ON referrals(code);
 CREATE INDEX IF NOT EXISTS idx_users_created ON users(created_at);
 CREATE INDEX IF NOT EXISTS idx_entitlements_user ON entitlements(user_id);
 CREATE INDEX IF NOT EXISTS idx_messages_channel ON messages(channel_id, parent_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_dms_user ON dms(user_id, created_at);

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { AuthModal, MemberPage, CommunityPage, TierBadge, TIER_RANK, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
+import { AuthModal, MemberPage, CommunityPage, TierBadge, TIER_RANK, TIER_LABELS, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -305,10 +305,13 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
   // Paid members (Basic+) get every lesson. Free members get ONE lesson total across
   // all courses: the first they open is claimed server-side and everything else locks.
   const memberRank = member ? (TIER_RANK[member.tier] ?? 0) : 0;
+  // A subscription (Basic+) or an active one-time pass ('all' or this course) unlocks everything here
+  const hasPass = (member?.entitlements || []).some(e => e.course_id === "all" || e.course_id === course.id);
+  const fullAccess = memberRank >= 1 || hasPass;
   const freeKey = member?.free_lesson_key || null;
-  const lessonUnlocked = (i) => memberRank >= 1 || (freeKey ? freeKey === `${course.id}:${i}` : i === 0);
+  const lessonUnlocked = (i) => fullAccess || (freeKey ? freeKey === `${course.id}:${i}` : i === 0);
   const openLesson = async (i) => {
-    if (memberRank >= 1) return setActiveLesson(i);
+    if (fullAccess) return setActiveLesson(i);
     const key = `${course.id}:${i}`;
     if (freeKey === key) return setActiveLesson(i);
     if (!freeKey && i === 0) {
@@ -462,7 +465,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
             </div>
           ))}
         </div>
-        {memberRank < 1 && (
+        {!fullAccess && (
           <div style={{ marginTop: 28, background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 14, padding: "20px 26px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
             <div style={{ color: "#b8a060", fontSize: 14, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{freeKey ? "You've used your one free lesson. Upgrade to Basic to unlock every course." : "Your Free plan includes one lesson, total — the first one you open. Choose wisely, or go Basic for everything."}</div>
             <button onClick={onUpgrade} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>View Plans →</button>
@@ -598,7 +601,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member }) {
             <button key={page} onClick={() => setActivePage(page)} style={{ background: activePage === page ? "#57040418" : "transparent", color: activePage === page ? "#b80101" : "#6a6b69", border: activePage === page ? "1px solid #57040440" : "1px solid transparent", borderRadius: 7, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }}>{pageLabels[page] || page}</button>
           ))}
           {member ? (
-            <button onClick={() => setActivePage("membership")} style={{ background: "transparent", color: "#f0d8d8", border: "1px solid #57040440", borderRadius: 7, padding: "8px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer", marginLeft: 8 }}>{member.name.split(" ")[0]} · {member.tier}</button>
+            <button onClick={() => setActivePage("membership")} style={{ background: "transparent", color: "#f0d8d8", border: "1px solid #57040440", borderRadius: 7, padding: "8px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer", marginLeft: 8 }}>{member.name.split(" ")[0]} · {TIER_LABELS[member.tier] || member.tier}</button>
           ) : (
             <button onClick={onSignUp} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 7, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", marginLeft: 8 }}>Sign In / Join</button>
           )}
@@ -617,7 +620,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member }) {
             <button key={page} onClick={() => { setActivePage(page); setMenuOpen(false); }} style={{ background: activePage === page ? "#57040418" : "transparent", color: activePage === page ? "#b80101" : "#c8a0a0", border: activePage === page ? "1px solid #57040440" : "1px solid transparent", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>{pageLabels[page] || page}</button>
           ))}
           {member ? (
-            <button onClick={() => { setMenuOpen(false); setActivePage("membership"); }} style={{ background: "transparent", color: "#f0d8d8", border: "1px solid #57040440", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 15, cursor: "pointer", marginTop: 8, textAlign: "left" }}>{member.name.split(" ")[0]} · {member.tier}</button>
+            <button onClick={() => { setMenuOpen(false); setActivePage("membership"); }} style={{ background: "transparent", color: "#f0d8d8", border: "1px solid #57040440", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 15, cursor: "pointer", marginTop: 8, textAlign: "left" }}>{member.name.split(" ")[0]} · {TIER_LABELS[member.tier] || member.tier}</button>
           ) : (
             <button onClick={() => { setMenuOpen(false); onSignUp(); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 15, cursor: "pointer", marginTop: 8 }}>Sign In / Join →</button>
           )}
@@ -985,59 +988,80 @@ function AboutPage({ setActivePage }) {
 
 // ─── PRICING PAGE ────────────────────────────────────────────────────────────
 
-const plans = [
+// One-time course passes: pay once, 30 days of access. No membership benefits.
+const passPlans = [
   {
-    name: "Free",
-    price: "$0",
-    period: "",
-    description: "Sample the curriculum. No credit card, no commitment.",
-    accent: "#6a6b69",
-    popular: false,
-    cta: "Join Free",
+    name: "Single Course Pass",
+    price: "$49",
+    period: "one-time",
+    description: "30 days of access to one course of your choice — every lesson, case study, and worksheet in it.",
+    accent: "#b80101",
+    cta: "Get a Course Pass",
     features: [
-      "Intro lesson from each of the 4 courses",
-      "1 curated case study",
-      "Glossary & resource sheet",
+      "Any 1 of the 4 courses",
+      "30 days of full access",
+      "All lessons, case studies & worksheets in that course",
     ],
-    locked: ["Full course access", "Worksheets & reading guides", "Lunch & Learn recordings", "Work sessions & advisory calls"],
+    locked: ["Community access", "New courses as they're added"],
   },
   {
-    name: "Basic",
+    name: "All-Access Pass",
+    price: "$149",
+    period: "one-time",
+    description: "30 days of access to the entire GroundUp curriculum — all four courses at once.",
+    accent: "#b80101",
+    cta: "Get All-Access",
+    features: [
+      "All 4 courses",
+      "30 days of full access",
+      "Every lesson, case study & worksheet",
+    ],
+    locked: ["Community access", "New courses as they're added"],
+  },
+];
+
+// Subscriptions: constant access, every new course we add, plus membership benefits.
+// `tier` is the internal access level stored on the account.
+const plans = [
+  {
+    name: "Member",
+    tier: "Basic",
     price: "$59.99",
     period: "/mo",
-    description: "Full access to every course, lesson, and written resource in the GroundUp library.",
+    description: "Constant access to every course — including new ones as we add them — plus a seat in the community.",
     accent: "#b80101",
     popular: false,
-    cta: "Start Basic",
+    cta: "Become a Member",
     features: [
-      "Access to all 4 courses",
-      "All written lessons",
-      "Case studies",
-      "Worksheets & reading guides",
-      "Resource lists",
+      "All 4 courses + every new course we add",
+      "All written lessons, case studies & worksheets",
+      "Resource lists & reading guides",
+      "Community access — read every channel",
     ],
-    locked: ["Development timeline templates", "Lunch & Learn recordings", "1 free work session (1 hr)", "Advisory calls with Dr. Merritt"],
+    locked: ["Posting in the community", "Timeline templates & Lunch & Learn recordings", "Work sessions & advisory calls"],
   },
   {
     name: "Premium",
+    tier: "Premium",
     price: "$165.99",
     period: "/mo",
-    description: "Everything in Basic — plus deal tools, Lunch & Learns, and a free advisory hour.",
+    description: "Everything in Member — plus full community engagement, deal tools, and a free advisory hour.",
     accent: "#b80101",
     popular: true,
     cta: "Go Premium",
     features: [
-      "Everything in Basic",
+      "Everything in Member",
+      "Engage in the community — post, reply & network",
+      "JV & Partnerships channel",
       "Development timeline templates",
       "Lunch & Learn recordings",
-      "Case studies",
-      "1 free work session (1 hr)",
-      "Priority booking (session price not included)",
+      "1 free work session (1 hr) + priority booking",
     ],
-    locked: ["3 advisory calls/yr with Dr. Merritt", "Priority Q&A submissions", "Small group advisory sessions", "Exclusive networking event invite"],
+    locked: ["Advisory calls with Dr. Merritt", "Priority responses & direct messages"],
   },
   {
     name: "Elite",
+    tier: "Elite",
     price: "$599.99",
     period: "/mo",
     description: "Direct access to Dr. Gina Merritt. For serious developers ready to move at the highest level.",
@@ -1046,10 +1070,30 @@ const plans = [
     cta: "Join Elite",
     features: [
       "Everything in Premium",
+      "Priority responses in the community",
+      "Direct messages to Dr. Merritt & her team",
+      "Elite Lounge — private channel",
       "3 one-on-one advisory calls/yr with Dr. Merritt",
       "Priority Q&A submissions",
       "1–2 small group advisory sessions/yr",
       "1 invite to exclusive networking event",
+    ],
+    locked: [],
+  },
+  {
+    name: "Partner",
+    tier: "Partner",
+    price: "Contact Us",
+    period: "",
+    description: "For organizations and institutions — cohort licensing, custom scope and pricing.",
+    accent: "#c9a227",
+    popular: false,
+    cta: "Talk to Us",
+    features: [
+      "Multi-seat cohort licenses",
+      "Custom curriculum scope",
+      "Dedicated onboarding",
+      "Built for agencies, CDFIs & nonprofit developer programs",
     ],
     locked: [],
   },
@@ -1058,6 +1102,43 @@ const plans = [
 function Chip({ text, color }) {
   return (
     <span style={{ background: color + "18", color, border: "1px solid " + color + "40", borderRadius: 4, padding: "3px 10px", fontSize: 10, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase" }}>{text}</span>
+  );
+}
+
+function PlanCard({ plan, onSelect }) {
+  return (
+    <div style={{ background: plan.popular ? "#0d0404" : "#080404", border: "1px solid " + (plan.popular ? "#b8010130" : "#150000"), borderRadius: 20, padding: "40px 32px", position: "relative", boxShadow: plan.popular ? "0 0 60px rgba(184,1,1,0.08)" : "none" }}>
+      {plan.popular && <div style={{ position: "absolute", top: -1, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, transparent, #b80101, transparent)", borderRadius: "20px 20px 0 0" }} />}
+      {plan.popular && <div style={{ position: "absolute", top: 16, right: 16, background: "#b8010115", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "3px 10px", fontSize: 9, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase" }}>POPULAR</div>}
+
+      <Chip text={plan.name} color={plan.accent} />
+
+      <div style={{ display: "flex", alignItems: "baseline", gap: 4, margin: "20px 0 8px" }}>
+        <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: plan.price.length > 8 ? 34 : 56, color: "#f5e8e8", lineHeight: 1.2 }}>{plan.price}</span>
+        <span style={{ color: "#8a7070", fontSize: 16, fontFamily: "'DM Sans', sans-serif" }}>{plan.period}</span>
+      </div>
+      <p style={{ color: "#8a7070", fontSize: 13, marginBottom: 28, lineHeight: 1.65, fontFamily: "'DM Sans', sans-serif" }}>{plan.description}</p>
+
+      <button onClick={onSelect} style={{ width: "100%", padding: "13px", background: plan.popular ? "#b80101" : "transparent", color: plan.popular ? "#fff" : "#6a6b69", border: "1px solid " + (plan.popular ? "#b80101" : "#2a1a1a"), borderRadius: 10, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", marginBottom: 28, letterSpacing: "0.5px" }}
+        onMouseEnter={e => { e.currentTarget.style.background = plan.popular ? "#d40101" : "#57040418"; e.currentTarget.style.color = plan.popular ? "#fff" : "#f5e8e8"; }}
+        onMouseLeave={e => { e.currentTarget.style.background = plan.popular ? "#b80101" : "transparent"; e.currentTarget.style.color = plan.popular ? "#fff" : "#6a6b69"; }}
+      >{plan.cta}</button>
+
+      <div style={{ borderTop: "1px solid #150000", paddingTop: 24 }}>
+        {plan.features.map((f, j) => (
+          <div key={j} style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 13 }}>
+            <span style={{ color: plan.accent, fontSize: 13, marginTop: 2, flexShrink: 0 }}>✓</span>
+            <span style={{ color: "#a89080", fontSize: 13, lineHeight: 1.5, fontFamily: "'DM Sans', sans-serif" }}>{f}</span>
+          </div>
+        ))}
+        {plan.locked.map((f, j) => (
+          <div key={j} style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 13 }}>
+            <span style={{ color: "#3a2020", fontSize: 13, marginTop: 2, flexShrink: 0 }}>—</span>
+            <span style={{ color: "#4a3030", fontSize: 13, lineHeight: 1.5, fontFamily: "'DM Sans', sans-serif" }}>{f}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -1073,40 +1154,28 @@ function PricingPage({ onSignUp }) {
           <p style={{ color: "#7a6151", fontSize: 15, maxWidth: 420, margin: "0 auto", lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif" }}>Start free. Upgrade when you're ready. Cancel anytime.</p>
         </div>
 
+        {/* One-time passes */}
+        <div style={{ marginBottom: 64 }}>
+          <div style={{ textAlign: "center", marginBottom: 28 }}>
+            <div style={{ fontSize: 10, color: "#c9a227", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>One-Time Course Passes</div>
+            <p style={{ color: "#8a7070", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Pay once, learn for 30 days. No subscription, no membership.</p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, alignItems: "start", maxWidth: 720, margin: "0 auto" }}>
+            {passPlans.map((plan, i) => <PlanCard key={i} plan={plan} onSelect={() => { window.location.href = `mailto:info@nreuv.com?subject=${encodeURIComponent("GroundUp — " + plan.name)}`; }} />)}
+          </div>
+        </div>
+
+        {/* Subscriptions */}
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Memberships</div>
+          <p style={{ color: "#8a7070", fontSize: 14, fontFamily: "'DM Sans', sans-serif", maxWidth: 520, margin: "0 auto", lineHeight: 1.7 }}>Constant access to every course — including new ones as we add them — plus community membership benefits at every level.</p>
+        </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, alignItems: "start" }}>
           {plans.map((plan, i) => (
-            <div key={i} style={{ background: plan.popular ? "#0d0404" : "#080404", border: "1px solid " + (plan.popular ? "#b8010130" : "#150000"), borderRadius: 20, padding: "40px 32px", position: "relative", boxShadow: plan.popular ? "0 0 60px rgba(184,1,1,0.08)" : "none" }}>
-              {plan.popular && <div style={{ position: "absolute", top: -1, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, transparent, #b80101, transparent)", borderRadius: "20px 20px 0 0" }} />}
-              {plan.popular && <div style={{ position: "absolute", top: 16, right: 16, background: "#b8010115", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "3px 10px", fontSize: 9, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase" }}>POPULAR</div>}
-
-              <Chip text={plan.name} color={plan.accent} />
-
-              <div style={{ display: "flex", alignItems: "baseline", gap: 4, margin: "20px 0 8px" }}>
-                <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 56, color: "#f5e8e8", lineHeight: 1 }}>{plan.price}</span>
-                <span style={{ color: "#8a7070", fontSize: 16, fontFamily: "'DM Sans', sans-serif" }}>{plan.period}</span>
-              </div>
-              <p style={{ color: "#8a7070", fontSize: 13, marginBottom: 28, lineHeight: 1.65, fontFamily: "'DM Sans', sans-serif" }}>{plan.description}</p>
-
-              <button onClick={() => onSignUp && onSignUp(plan.name)} style={{ width: "100%", padding: "13px", background: plan.popular ? "#b80101" : "transparent", color: plan.popular ? "#fff" : "#6a6b69", border: "1px solid " + (plan.popular ? "#b80101" : "#2a1a1a"), borderRadius: 10, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", marginBottom: 28, letterSpacing: "0.5px" }}
-                onMouseEnter={e => { e.currentTarget.style.background = plan.popular ? "#d40101" : "#57040418"; e.currentTarget.style.color = plan.popular ? "#fff" : "#f5e8e8"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = plan.popular ? "#b80101" : "transparent"; e.currentTarget.style.color = plan.popular ? "#fff" : "#6a6b69"; }}
-              >{plan.cta}</button>
-
-              <div style={{ borderTop: "1px solid #150000", paddingTop: 24 }}>
-                {plan.features.map((f, j) => (
-                  <div key={j} style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 13 }}>
-                    <span style={{ color: plan.accent, fontSize: 13, marginTop: 2, flexShrink: 0 }}>✓</span>
-                    <span style={{ color: "#a89080", fontSize: 13, lineHeight: 1.5, fontFamily: "'DM Sans', sans-serif" }}>{f}</span>
-                  </div>
-                ))}
-                {plan.locked.map((f, j) => (
-                  <div key={j} style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 13 }}>
-                    <span style={{ color: "#3a2020", fontSize: 13, marginTop: 2, flexShrink: 0 }}>—</span>
-                    <span style={{ color: "#4a3030", fontSize: 13, lineHeight: 1.5, fontFamily: "'DM Sans', sans-serif" }}>{f}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <PlanCard key={i} plan={plan} onSelect={() => {
+              if (plan.tier === "Partner") { window.location.href = "mailto:info@nreuv.com?subject=" + encodeURIComponent("GroundUp — Partner tier"); return; }
+              onSignUp && onSignUp(plan.tier);
+            }} />
           ))}
         </div>
 

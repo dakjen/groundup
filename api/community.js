@@ -56,9 +56,55 @@ export default async function handler(req, res) {
       return res.json({ messages: rows });
     }
 
+    // ── Direct messages (Elite benefit): one private thread per member with the team ──
+    const isAdminReq = user.role === 'admin';
+
+    // GET ?resource=dm-threads — admin: list members who have DM threads
+    if (req.method === 'GET' && req.query.resource === 'dm-threads') {
+      if (!isAdminReq) return res.status(403).json({ error: 'Admins only' });
+      const threads = await sql`
+        SELECT u.id, u.name, u.tier, MAX(d.created_at) AS last_at, COUNT(*) AS msg_count
+        FROM dms d JOIN users u ON u.id = d.user_id
+        GROUP BY u.id, u.name, u.tier ORDER BY last_at DESC LIMIT 100`;
+      return res.json({ threads });
+    }
+
+    // GET ?resource=dm[&user=<id>] — member reads own thread; admin reads any
+    if (req.method === 'GET' && req.query.resource === 'dm') {
+      let targetId = user.id;
+      if (isAdminReq && req.query.user) targetId = Number(req.query.user);
+      else if (!isAdminReq && user.rank < TIER_RANK.Elite) return res.status(403).json({ error: 'Direct messages are an Elite benefit' });
+      if (!targetId) return res.status(400).json({ error: 'No thread' });
+      const msgs = await sql`SELECT * FROM dms WHERE user_id = ${targetId} ORDER BY created_at ASC LIMIT 200`;
+      return res.json({ messages: msgs });
+    }
+
+    // POST { dm: true, body, user_id? } — Elite member messages the team; admin replies
+    if (req.method === 'POST' && req.body && req.body.dm) {
+      const text = (req.body.body || '').trim();
+      if (!text) return res.status(400).json({ error: 'body required' });
+      if (text.length > 4000) return res.status(400).json({ error: 'Message too long' });
+      let targetId;
+      if (isAdminReq) {
+        targetId = Number(req.body.user_id);
+        if (!targetId) return res.status(400).json({ error: 'user_id required' });
+      } else {
+        if (user.rank < TIER_RANK.Elite) return res.status(403).json({ error: 'Direct messages are an Elite benefit' });
+        targetId = user.id;
+      }
+      const [msg] = await sql`
+        INSERT INTO dms (user_id, from_admin, body, created_at)
+        VALUES (${targetId}, ${isAdminReq}, ${text}, NOW()) RETURNING *`;
+      return res.status(201).json({ message: msg });
+    }
+
     // POST { channel_id, body, parent_id? } — post a message or thread reply
+    // Posting requires Premium+; Basic is read-only. Admins always post.
     if (req.method === 'POST') {
       const { channel_id, body, parent_id } = req.body;
+      if (!isAdminReq && user.rank < TIER_RANK.Premium) {
+        return res.status(403).json({ error: 'Posting requires a Premium or Elite membership — Basic includes read access' });
+      }
       const text = (body || '').trim();
       if (!channel_id || !text) return res.status(400).json({ error: 'channel_id and body required' });
       if (text.length > 4000) return res.status(400).json({ error: 'Message too long' });

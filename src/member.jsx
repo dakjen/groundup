@@ -42,12 +42,14 @@ const lbl = { display: "block", fontSize: 10, color: "#8a7070", fontWeight: 700,
 const btnRed = { background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "12px 22px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" };
 const btnGhost = { background: "transparent", color: "#8a7070", border: "1px solid #2a0000", borderRadius: 8, padding: "12px 22px", fontFamily: font, fontWeight: 600, fontSize: 13, cursor: "pointer" };
 
-const TIER_COLORS = { Free: "#6a6b69", Basic: "#b80101", Premium: "#c9a227", Elite: "#e0c4c4" };
+const TIER_COLORS = { Free: "#6a6b69", Basic: "#b80101", Premium: "#c9a227", Elite: "#e0c4c4", Partner: "#c9a227" };
+// Display names — 'Basic' is the internal value for the Member subscription tier
+export const TIER_LABELS = { Free: "Free", Basic: "Member", Premium: "Premium", Elite: "Elite", Partner: "Partner" };
 
 export function TierBadge({ tier, small }) {
   const c = TIER_COLORS[tier] || "#6a6b69";
   return (
-    <span style={{ background: c + "18", color: c, border: `1px solid ${c}40`, borderRadius: 5, padding: small ? "1px 7px" : "3px 10px", fontSize: small ? 9 : 10, fontFamily: font, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", whiteSpace: "nowrap" }}>{tier}</span>
+    <span style={{ background: c + "18", color: c, border: `1px solid ${c}40`, borderRadius: 5, padding: small ? "1px 7px" : "3px 10px", fontSize: small ? 9 : 10, fontFamily: font, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", whiteSpace: "nowrap" }}>{TIER_LABELS[tier] || tier}</span>
   );
 }
 
@@ -105,7 +107,7 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                 {["Free", "Basic", "Premium", "Elite"].map(t => (
                   <button type="button" key={t} onClick={() => setTier(t)} style={{ background: tier === t ? "#b8010118" : "transparent", border: tier === t ? "1px solid #b80101" : "1px solid #2a0000", borderRadius: 8, padding: "10px 12px", cursor: "pointer", textAlign: "left" }}>
-                    <div style={{ color: tier === t ? "#f0d8d8" : "#8a7070", fontWeight: 800, fontSize: 13, fontFamily: font }}>{t}</div>
+                    <div style={{ color: tier === t ? "#f0d8d8" : "#8a7070", fontWeight: 800, fontSize: 13, fontFamily: font }}>{TIER_LABELS[t]}</div>
                     <div style={{ color: "#7a5050", fontSize: 11, fontFamily: font }}>{{ Free: "$0", Basic: "$59.99/mo", Premium: "$165.99/mo", Elite: "$599.99/mo" }[t]}</div>
                   </button>
                 ))}
@@ -133,9 +135,10 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
 
 const BENEFITS = {
   Free: ["One lesson of your choice — the first you open", "1 curated case study", "Glossary & resource sheet"],
-  Basic: ["All 4 courses & every written lesson", "Case studies, worksheets & reading guides", "Community access — Announcements, General, Deals & Financing"],
-  Premium: ["Everything in Basic", "Development timeline templates", "Lunch & Learn recordings", "1 free work session (1 hr) + priority booking", "JV & Partnerships channel"],
-  Elite: ["Everything in Premium", "3 one-on-one advisory calls/yr with Dr. Merritt", "Priority Q&A submissions", "Small group advisory sessions", "Elite Lounge — private channel"],
+  Basic: ["All 4 courses + every new course we add", "Case studies, worksheets & reading guides", "Community access — read every channel"],
+  Premium: ["Everything in Member", "Engage in the community — post, reply & network", "JV & Partnerships channel", "Development timeline templates", "Lunch & Learn recordings", "1 free work session (1 hr) + priority booking"],
+  Elite: ["Everything in Premium", "Priority responses in the community", "Direct messages to Dr. Merritt & her team", "Elite Lounge — private channel", "3 one-on-one advisory calls/yr with Dr. Merritt", "Priority Q&A submissions"],
+  Partner: ["Custom organizational access", "Contact info@nreuv.com for your cohort setup"],
 };
 
 export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
@@ -173,7 +176,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
           <div onClick={() => rank >= 1 && setActivePage("community")} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: rank >= 1 ? "pointer" : "default", opacity: rank >= 1 ? 1 : 0.55 }}>
             <div style={{ fontSize: 24, marginBottom: 12 }}>💬</div>
             <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Community {rank < 1 && "🔒"}</div>
-            <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 1 ? "Chat with fellow developers, get announcements from Dr. Merritt's team." : "Members-only. Upgrade to Basic or above to join the conversation."}</p>
+            <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 2 ? "Post, reply, and network with fellow developers." : rank >= 1 ? "Read every channel. Upgrade to Premium to post and reply." : "Members-only. Upgrade to a membership to join the conversation."}</p>
           </div>
           <div onClick={() => setActivePage("lunchlearn")} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: "pointer", opacity: rank >= 2 ? 1 : 0.55 }}>
             <div style={{ fontSize: 24, marginBottom: 12 }}>🎥</div>
@@ -253,8 +256,16 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [dmOpen, setDmOpen] = useState(false);          // member DM view, or admin DM inbox thread
+  const [dmMsgs, setDmMsgs] = useState([]);
+  const [dmDraft, setDmDraft] = useState("");
+  const [dmThreads, setDmThreads] = useState([]);       // admin inbox
+  const [dmTarget, setDmTarget] = useState(null);       // admin: selected member thread
   const feedRef = useRef(null);
-  const hasAccess = isAdmin || (member && (TIER_RANK[member.tier] ?? 0) >= 1);
+  const rank = member ? (TIER_RANK[member.tier] ?? 0) : 0;
+  const hasAccess = isAdmin || rank >= 1;
+  const canEngage = isAdmin || rank >= 2;               // Basic (Member) is read-only
+  const canDm = isAdmin || rank >= 3;                   // DMs are an Elite benefit
 
   const loadChannels = useCallback(async () => {
     const data = await api("/api/community?resource=channels");
@@ -271,7 +282,34 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
   useEffect(() => {
     if (!hasAccess) { setLoading(false); return; }
     loadChannels().catch(e => setError(e.message)).finally(() => setLoading(false));
-  }, [hasAccess, loadChannels]);
+    if (isAdmin) api("/api/community?resource=dm-threads").then(d => setDmThreads(d.threads)).catch(() => {});
+  }, [hasAccess, isAdmin, loadChannels]);
+
+  const loadDm = useCallback(async (targetId) => {
+    const q = targetId ? `&user=${targetId}` : "";
+    const data = await api(`/api/community?resource=dm${q}`);
+    setDmMsgs(data.messages);
+  }, []);
+
+  useEffect(() => {
+    if (!dmOpen) return;
+    const target = isAdmin ? dmTarget?.id : null;
+    if (isAdmin && !target) return;
+    loadDm(target).catch(e => setError(e.message));
+    const t = setInterval(() => loadDm(target).catch(() => {}), 8000);
+    return () => clearInterval(t);
+  }, [dmOpen, dmTarget, isAdmin, loadDm]);
+
+  const sendDm = async (e) => {
+    e.preventDefault();
+    const text = dmDraft.trim();
+    if (!text) return;
+    try {
+      await api("/api/community", { method: "POST", body: JSON.stringify({ dm: true, body: text, user_id: isAdmin ? dmTarget?.id : undefined }) });
+      setDmDraft("");
+      await loadDm(isAdmin ? dmTarget?.id : null);
+    } catch (err) { setError(err.message); }
+  };
 
   useEffect(() => {
     if (!active) return;
@@ -322,7 +360,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
     );
   }
 
-  const canPost = active && (!active.admin_only_post || isAdmin);
+  const canPost = canEngage && active && (!active.admin_only_post || isAdmin);
 
   return (
     <div style={{ background: "#000", minHeight: "100vh", paddingTop: 64, display: "flex", height: "100vh", boxSizing: "border-box" }}>
@@ -330,20 +368,66 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
       <div className="community-sidebar" style={{ width: 240, flexShrink: 0, borderRight: "1px solid #1a0000", background: "#070303", padding: "24px 12px", overflowY: "auto", display: sidebarOpen ? "block" : undefined }}>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "0 12px", marginBottom: 14 }}>Channels</div>
         {channels.map(c => (
-          <button key={c.id} onClick={() => { setActive(c); setSidebarOpen(false); }}
-            style={{ display: "block", width: "100%", textAlign: "left", background: active?.id === c.id ? "#b8010118" : "transparent", border: "none", borderRadius: 8, padding: "9px 12px", cursor: "pointer", marginBottom: 2 }}>
-            <span style={{ color: active?.id === c.id ? "#f0d8d8" : "#8a7070", fontWeight: 700, fontSize: 13.5, fontFamily: font }}>
+          <button key={c.id} onClick={() => { setActive(c); setDmOpen(false); setSidebarOpen(false); }}
+            style={{ display: "block", width: "100%", textAlign: "left", background: !dmOpen && active?.id === c.id ? "#b8010118" : "transparent", border: "none", borderRadius: 8, padding: "9px 12px", cursor: "pointer", marginBottom: 2 }}>
+            <span style={{ color: !dmOpen && active?.id === c.id ? "#f0d8d8" : "#8a7070", fontWeight: 700, fontSize: 13.5, fontFamily: font }}>
               {c.admin_only_post ? "📣" : "#"} {c.name}
             </span>
-            {c.min_tier !== "Basic" && <span style={{ marginLeft: 6, fontSize: 9, color: TIER_COLORS[c.min_tier], fontFamily: font, fontWeight: 800 }}>{c.min_tier.toUpperCase()}</span>}
+            {c.min_tier !== "Basic" && <span style={{ marginLeft: 6, fontSize: 9, color: TIER_COLORS[c.min_tier], fontFamily: font, fontWeight: 800 }}>{(TIER_LABELS[c.min_tier] || c.min_tier).toUpperCase()}</span>}
           </button>
         ))}
+        {canDm && (
+          <>
+            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "0 12px", margin: "20px 0 10px" }}>Direct Messages</div>
+            {!isAdmin && (
+              <button onClick={() => { setDmOpen(true); setSidebarOpen(false); }}
+                style={{ display: "block", width: "100%", textAlign: "left", background: dmOpen ? "#b8010118" : "transparent", border: "none", borderRadius: 8, padding: "9px 12px", cursor: "pointer" }}>
+                <span style={{ color: dmOpen ? "#f0d8d8" : "#8a7070", fontWeight: 700, fontSize: 13.5, fontFamily: font }}>✉️ Dr. Merritt & Team</span>
+              </button>
+            )}
+            {isAdmin && dmThreads.length === 0 && <div style={{ color: "#5a4040", fontSize: 12, fontFamily: font, padding: "0 12px" }}>No member DMs yet.</div>}
+            {isAdmin && dmThreads.map(t => (
+              <button key={t.id} onClick={() => { setDmTarget(t); setDmOpen(true); setSidebarOpen(false); }}
+                style={{ display: "block", width: "100%", textAlign: "left", background: dmOpen && dmTarget?.id === t.id ? "#b8010118" : "transparent", border: "none", borderRadius: 8, padding: "9px 12px", cursor: "pointer", marginBottom: 2 }}>
+                <span style={{ color: dmOpen && dmTarget?.id === t.id ? "#f0d8d8" : "#8a7070", fontWeight: 700, fontSize: 13.5, fontFamily: font }}>✉️ {t.name}</span>
+                <span style={{ marginLeft: 6, fontSize: 9, color: TIER_COLORS[t.tier], fontFamily: font, fontWeight: 800 }}>{(TIER_LABELS[t.tier] || t.tier).toUpperCase()}</span>
+              </button>
+            ))}
+          </>
+        )}
         {isAdmin && <div style={{ margin: "18px 12px 0", padding: "10px 12px", background: "#12060a", border: "1px solid #b8010130", borderRadius: 8, color: "#b80101", fontSize: 11, fontFamily: font, fontWeight: 700 }}>You're posting as the GroundUp team.</div>}
       </div>
 
       {/* Main feed */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        {loading ? <div style={{ padding: 40, color: "#8a7070", fontFamily: font }}>Loading community…</div> : active && (
+        {loading ? <div style={{ padding: 40, color: "#8a7070", fontFamily: font }}>Loading community…</div> : dmOpen ? (
+          <>
+            <div style={{ padding: "16px 24px", borderBottom: "1px solid #1a0000", display: "flex", alignItems: "center", gap: 12 }}>
+              <button className="community-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", background: "transparent", border: "1px solid #2a0000", borderRadius: 6, color: "#8a7070", padding: "6px 10px", cursor: "pointer", fontFamily: font }}>☰</button>
+              <div>
+                <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 16, fontFamily: font }}>✉️ {isAdmin ? (dmTarget?.name || "Direct Messages") : "Dr. Merritt & Team"}</div>
+                <div style={{ color: "#7a5050", fontSize: 12, fontFamily: font }}>{isAdmin ? "Private thread with this member." : "Private line to Dr. Merritt and the GroundUp team — an Elite benefit."}</div>
+              </div>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "20px 20px 12px" }}>
+              {dmMsgs.length === 0 && <div style={{ color: "#5a4040", fontFamily: font, fontSize: 14, textAlign: "center", marginTop: 60 }}>{isAdmin ? "No messages in this thread yet." : "Start the conversation — Dr. Merritt's team will respond here."}</div>}
+              {dmMsgs.map(m => (
+                <div key={m.id} style={{ display: "flex", justifyContent: m.from_admin === !isAdmin ? "flex-start" : "flex-end", marginBottom: 10 }}>
+                  <div style={{ maxWidth: "78%", background: m.from_admin ? "#12060a" : "#0d0404", border: m.from_admin ? "1px solid #b8010130" : "1px solid #1a0000", borderRadius: 12, padding: "10px 14px" }}>
+                    {m.from_admin && <div style={{ marginBottom: 4 }}><span style={{ background: "#b80101", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, fontFamily: font, letterSpacing: "1px" }}>TEAM</span></div>}
+                    <div style={{ color: "#c8b0b0", fontSize: 14, fontFamily: font, lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.body}</div>
+                    <div style={{ color: "#5a4040", fontSize: 10, fontFamily: font, marginTop: 4 }}>{timeAgo(m.created_at)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {error && <div style={{ color: "#ff6b6b", fontSize: 12, fontFamily: font, padding: "0 24px 6px" }}>{error}</div>}
+            <form onSubmit={sendDm} style={{ display: "flex", gap: 10, padding: "12px 20px 20px", borderTop: "1px solid #1a0000" }}>
+              <input style={{ ...inp, flex: 1 }} value={dmDraft} onChange={e => setDmDraft(e.target.value)} placeholder={isAdmin ? `Reply to ${dmTarget?.name || "member"}…` : "Message Dr. Merritt & team…"} maxLength={4000} />
+              <button type="submit" style={btnRed}>Send</button>
+            </form>
+          </>
+        ) : active && (
           <>
             <div style={{ padding: "16px 24px", borderBottom: "1px solid #1a0000", display: "flex", alignItems: "center", gap: 12 }}>
               <button className="community-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", background: "transparent", border: "1px solid #2a0000", borderRadius: 6, color: "#8a7070", padding: "6px 10px", cursor: "pointer", fontFamily: font }}>☰</button>
@@ -363,6 +447,8 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
                   <input style={{ ...inp, flex: 1 }} value={draft} onChange={e => setDraft(e.target.value)} placeholder={`Message ${active.name}`} maxLength={4000} />
                   <button type="submit" style={btnRed}>Send</button>
                 </form>
+              ) : !canEngage ? (
+                <div style={{ color: "#b8a060", fontSize: 13, fontFamily: font, textAlign: "center", padding: "8px 0" }}>👀 Reading is included with your Member plan. Upgrade to Premium to post, reply, and network.</div>
               ) : (
                 <div style={{ color: "#7a5050", fontSize: 13, fontFamily: font, textAlign: "center", padding: "8px 0" }}>Only the GroundUp team posts in this channel. Reply in threads to join the discussion.</div>
               )}
@@ -383,10 +469,14 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
             <div style={{ borderTop: "1px solid #1a0000", margin: "10px 0" }} />
             {threadMsgs.map(m => <Message key={m.id} m={m} inThread onDelete={deleteMsg} canDelete={isAdmin || (member && m.user_id === member.id)} />)}
           </div>
-          <form onSubmit={e => { e.preventDefault(); send(thread.id, threadDraft, () => setThreadDraft("")); }} style={{ display: "flex", gap: 8, padding: "12px 14px 16px", borderTop: "1px solid #1a0000" }}>
-            <input style={{ ...inp, flex: 1 }} value={threadDraft} onChange={e => setThreadDraft(e.target.value)} placeholder="Reply…" maxLength={4000} />
-            <button type="submit" style={{ ...btnRed, padding: "12px 16px" }}>↑</button>
-          </form>
+          {canEngage ? (
+            <form onSubmit={e => { e.preventDefault(); send(thread.id, threadDraft, () => setThreadDraft("")); }} style={{ display: "flex", gap: 8, padding: "12px 14px 16px", borderTop: "1px solid #1a0000" }}>
+              <input style={{ ...inp, flex: 1 }} value={threadDraft} onChange={e => setThreadDraft(e.target.value)} placeholder="Reply…" maxLength={4000} />
+              <button type="submit" style={{ ...btnRed, padding: "12px 16px" }}>↑</button>
+            </form>
+          ) : (
+            <div style={{ color: "#b8a060", fontSize: 12, fontFamily: font, textAlign: "center", padding: "12px 14px", borderTop: "1px solid #1a0000" }}>Upgrade to Premium to reply.</div>
+          )}
         </div>
       )}
 
