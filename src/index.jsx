@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { FileText, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2 } from "lucide-react";
-import { AuthModal, MemberPage, CommunityPage, TierBadge, TIER_RANK, TIER_LABELS, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
+import { FileText, Send, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2 } from "lucide-react";
+import { AuthModal, ResetPasswordModal, MemberPage, CommunityPage, TierBadge, TIER_RANK, TIER_LABELS, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -1087,7 +1087,7 @@ const plans = [
     price: "Contact Us",
     period: "",
     description: "For organizations and institutions — cohort licensing, custom scope and pricing.",
-    accent: "#c9a227",
+    accent: "#e0c4c4",
     popular: false,
     cta: "Talk to Us",
     features: [
@@ -1158,7 +1158,7 @@ function PricingPage({ onSignUp }) {
         {/* One-time passes */}
         <div style={{ marginBottom: 64 }}>
           <div style={{ textAlign: "center", marginBottom: 28 }}>
-            <div style={{ fontSize: 10, color: "#c9a227", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>One-Time Course Passes</div>
+            <div style={{ fontSize: 10, color: "#e0c4c4", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>One-Time Course Passes</div>
             <p style={{ color: "#8a7070", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Pay once, learn for 30 days. No subscription, no membership.</p>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, alignItems: "start", maxWidth: 720, margin: "0 auto" }}>
@@ -1403,7 +1403,7 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
               <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 54, color: "#f5e8e8", lineHeight: 1 }}>$39.99</span>
               <span style={{ color: "#8a7070", fontSize: 15, fontFamily: font }}>· 6 months of sessions</span>
             </div>
-            <p style={{ color: "#c9a227", fontSize: 13, fontFamily: font, fontWeight: 700, marginBottom: 10 }}>A $99.99 value — offered at $39.99 because Dr. Merritt believes access shouldn't be the barrier.</p>
+            <p style={{ color: "#e0c4c4", fontSize: 13, fontFamily: font, fontWeight: 700, marginBottom: 10 }}>A $99.99 value — offered at $39.99 because Dr. Merritt believes access shouldn't be the barrier.</p>
             <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font, lineHeight: 1.8, maxWidth: 520, margin: "0 auto 24px" }}>
               Every live session for six months, plus the recordings — and attending unlocks 25% off your first month if you become a member within two months.
             </p>
@@ -1412,7 +1412,7 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
                 <button onClick={() => { window.location.href = "mailto:info@nreuv.com?subject=" + encodeURIComponent("GroundUp — Lunch & Learn access"); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "14px 32px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Get Access — $39.99</button>
                 <form onSubmit={redeem} style={{ marginTop: 22, display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
                   <input value={code} onChange={e => setCode(e.target.value)} placeholder="Have a code from Dr. Merritt?" style={{ background: "#0a0505", border: "1px solid #2a0000", borderRadius: 8, padding: "12px 14px", color: "#f5e8e8", fontFamily: font, fontSize: 13, outline: "none", width: 260, textTransform: "uppercase" }} />
-                  <button type="submit" style={{ background: "transparent", color: "#c9a227", border: "1px solid #c9a22750", borderRadius: 8, padding: "12px 20px", fontFamily: font, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Redeem</button>
+                  <button type="submit" style={{ background: "transparent", color: "#e0c4c4", border: "1px solid #e0c4c450", borderRadius: 8, padding: "12px 20px", fontFamily: font, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Redeem</button>
                 </form>
                 {codeMsg && <div style={{ color: codeMsg.ok ? "#22c55e" : "#ff6b6b", fontSize: 13, fontFamily: font, marginTop: 12 }}>{codeMsg.text}</div>}
               </>
@@ -1452,12 +1452,12 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
 
         {/* Membership discount window */}
         {member && status?.discount_until && new Date(status.discount_until) > new Date() && memberRank < 1 && (
-          <div style={{ background: "#0d0a04", border: "1px solid #c9a22740", borderRadius: 14, padding: "20px 26px", marginBottom: 36, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
+          <div style={{ background: "#0d0a04", border: "1px solid #e0c4c440", borderRadius: 14, padding: "20px 26px", marginBottom: 36, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
             <div>
-              <div style={{ color: "#c9a227", fontWeight: 800, fontSize: 15, fontFamily: font, marginBottom: 4 }}>25% off your first month of membership</div>
+              <div style={{ color: "#e0c4c4", fontWeight: 800, fontSize: 15, fontFamily: font, marginBottom: 4 }}>25% off your first month of membership</div>
               <div style={{ color: "#8a7070", fontSize: 13, fontFamily: font }}>Your Lunch & Learn perk — join by {fmt(status.discount_until)} and mention it when you sign up.</div>
             </div>
-            <button onClick={() => setActivePage && setActivePage("pricing")} style={{ background: "#c9a227", color: "#000", border: "none", borderRadius: 8, padding: "11px 22px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>See Memberships</button>
+            <button onClick={() => setActivePage && setActivePage("pricing")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "11px 22px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>See Memberships</button>
           </div>
         )}
 
@@ -1687,7 +1687,7 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
           <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 220, overflowY: "auto" }}>
             {data.coupons.map(c => (
               <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "#120a0a", border: "1px solid #241010", borderRadius: 8, padding: "10px 14px", flexWrap: "wrap" }}>
-                <code style={{ color: "#c9a227", fontSize: 14, letterSpacing: "1px", flex: 1, minWidth: 140 }}>{c.code}</code>
+                <code style={{ color: "#e0c4c4", fontSize: 14, letterSpacing: "1px", flex: 1, minWidth: 140 }}>{c.code}</code>
                 <span style={{ color: c.used_count >= c.max_uses ? "#b80101" : "#8a7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>{c.used_count}/{c.max_uses} used</span>
                 <button onClick={() => { navigator.clipboard && navigator.clipboard.writeText(c.code); flash(true, "Copied " + c.code); }} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Copy</button>
               </div>
@@ -1826,7 +1826,7 @@ function AdminPanel({ onLogout }) {
       </div>
       <div style={{ display: "flex", minHeight: "calc(100vh - 60px)" }}>
         <div style={{ width: 220, background: "#100808", borderRight: "1px solid #2a1010", padding: "24px 12px", flexShrink: 0 }}>
-          {[{ id: "lunch", label: "Lunch & Learn", Icon: Calendar }, { id: "inbox", label: "Inbox", Icon: Inbox }, { id: "courses", label: "Courses", Icon: GraduationCap }, { id: "referrals", label: "Referrals", Icon: Link2 }, { id: "users", label: "Users", Icon: UsersIcon }, { id: "revenue", label: "Revenue", Icon: DollarSign }].map(t => (
+          {[{ id: "lunch", label: "Lunch & Learn", Icon: Calendar }, { id: "inbox", label: "Inbox", Icon: Inbox }, { id: "courses", label: "Courses", Icon: GraduationCap }, { id: "referrals", label: "Referrals", Icon: Link2 }, { id: "users", label: "Users", Icon: UsersIcon }, { id: "email", label: "Email", Icon: Send }, { id: "revenue", label: "Revenue", Icon: DollarSign }].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} style={{ width: "100%", textAlign: "left", background: tab === t.id ? "#1e1010" : "transparent", color: tab === t.id ? "#f0d8d8" : "#7a6060", border: tab === t.id ? "1px solid #3a1515" : "1px solid transparent", borderRadius: 8, padding: "10px 14px", marginBottom: 4, cursor: "pointer", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
               <t.Icon size={15} /><span>{t.label}</span>
               {t.id === "inbox" && unread > 0 && <span style={{ marginLeft: "auto", background: "#b80101", color: "#fff", borderRadius: 99, fontSize: 10, fontWeight: 800, padding: "1px 7px" }}>{unread}</span>}
@@ -2216,6 +2216,7 @@ function AdminPanel({ onLogout }) {
             </div>
           )}
 
+          {tab === "email" && <EmailTab btnRed={btnRed} btnGhost={btnGhost} inp={inp} lbl={lbl} />}
           {tab === "revenue" && <RevenueTab />}
 
           {tab === "users" && (
@@ -2442,9 +2443,9 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
       <p style={{ color: "#7a6060", fontSize: 13, marginBottom: 32 }}>Manage members, plan tiers, team access, and password resets.</p>
 
       {tempPw && (
-        <div style={{ background: "#0d0a04", border: "1px solid #c9a22750", borderRadius: 14, padding: "18px 24px", marginBottom: 24, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+        <div style={{ background: "#0d0a04", border: "1px solid #e0c4c450", borderRadius: 14, padding: "18px 24px", marginBottom: 24, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
           <div style={{ flex: 1, minWidth: 220 }}>
-            <div style={{ fontSize: 10, color: "#c9a227", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>Temporary password for {tempPw.name}</div>
+            <div style={{ fontSize: 10, color: "#e0c4c4", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>Temporary password for {tempPw.name}</div>
             <code style={{ color: "#f0d8d8", fontSize: 16, letterSpacing: "1px" }}>{tempPw.password}</code>
             <div style={{ color: "#8a7070", fontSize: 11, fontFamily: "'DM Sans', sans-serif", marginTop: 6 }}>Share it with them privately — they can change it from their Membership page. It won't be shown again.</div>
           </div>
@@ -2521,7 +2522,7 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
                   {user.name}
                   {user.role === "admin" && (
                     user.badge === "drmerritt"
-                      ? <span style={{ background: "linear-gradient(135deg, #c9a227, #8a6d1a)", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, letterSpacing: "1px" }}>DR. MERRITT</span>
+                      ? <span style={{ background: "linear-gradient(135deg, #c9a0a0, #7a4a4a)", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, letterSpacing: "1px" }}>DR. MERRITT</span>
                       : <span style={{ background: "#b80101", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, letterSpacing: "1px" }}>TEAM</span>
                   )}
                 </div>
@@ -2564,152 +2565,217 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
 
 function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
   const [invites, setInvites] = useState([]);
-  const [form, setForm] = useState({ name: "", email: "" });
-  const [msg, setMsg] = useState("");
-  const [copied, setCopied] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ name: "", email: "" });
+  const [msg, setMsg] = useState(null);
 
-  useEffect(() => {
-    window.storage.get("admin:referrals").then(r => {
-      if (r) setInvites(JSON.parse(r.value));
-    }).catch(() => {}).finally(() => setLoading(false));
-  }, []);
-
-  const saveInvites = async (data) => {
-    setInvites(data);
-    await window.storage.set("admin:referrals", JSON.stringify(data));
+  const call = async (method, body) => {
+    const res = await fetch("/api/referrals", {
+      method,
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + sessionStorage.getItem("adminToken") },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Request failed");
+    return data;
   };
 
-  const generateCode = () => Math.random().toString(36).substring(2, 10).toUpperCase();
+  const load = () => call("GET").then(setInvites).catch(() => {});
+  useEffect(() => { load().finally(() => setLoading(false)); }, []);
 
-  const createInvite = async () => {
-    if (!form.name || !form.email) { setMsg("Name and email required."); return; }
-    const code = generateCode();
-    const created = new Date().toISOString();
-    const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-    const newInvite = { id: Date.now().toString(), name: form.name, email: form.email, code, created, expires, status: "pending", used: false };
-    await saveInvites([newInvite, ...invites]);
-    setForm({ name: "", email: "" });
-    setMsg("Invite created!");
-    setTimeout(() => setMsg(""), 3000);
+  const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 5000); };
+
+  const sendInvite = async () => {
+    if (!form.name || !form.email) { flash(false, "Name and email required."); return; }
+    try {
+      const inv = await call("POST", form);
+      flash(true, inv.emailed ? `Invite emailed to ${inv.email}.` : `Invite created — email didn't send (check Brevo). Copy the link below to share manually.`);
+      setForm({ name: "", email: "" });
+      await load();
+    } catch (e) { flash(false, e.message); }
   };
 
-  const revokeInvite = async (id) => {
-    await saveInvites(invites.map(i => i.id === id ? { ...i, status: "revoked" } : i));
+  const getLink = (code) => `${window.location.origin}/?ref=${code}`;
+  const copyLink = (code) => { navigator.clipboard && navigator.clipboard.writeText(getLink(code)); flash(true, "Invite link copied."); };
+  const revoke = async (inv) => {
+    if (!window.confirm(`Revoke ${inv.name}'s invite?`)) return;
+    try { await call("PATCH", { id: inv.id, status: "revoked", used: inv.used, used_at: inv.used_at }); await load(); } catch (e) { flash(false, e.message); }
   };
 
-  const getLink = (code) => `${window.location.origin}${window.location.pathname}?ref=${code}`;
-
-  const copyLink = (code) => {
-    navigator.clipboard.writeText(getLink(code));
-    setCopied(code);
-    setTimeout(() => setCopied(null), 2000);
-  };
-
-  const active = invites.filter(i => i.status === "pending" && !i.used);
-  const used = invites.filter(i => i.used);
-  const revoked = invites.filter(i => i.status === "revoked");
-
-  const daysLeft = (expires) => {
-    const diff = new Date(expires) - new Date();
-    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
-  };
-
-  const statusColor = (invite) => {
-    if (invite.used) return "#22c55e";
-    if (invite.status === "revoked") return "#4a3030";
-    if (daysLeft(invite.expires) === 0) return "#b80101";
-    return "#a08030";
-  };
-
-  const statusLabel = (invite) => {
-    if (invite.used) return "Used";
-    if (invite.status === "revoked") return "Revoked";
-    if (daysLeft(invite.expires) === 0) return "Expired";
-    return `${daysLeft(invite.expires)}d left`;
+  const statusOf = (inv) => {
+    if (inv.status === "revoked") return { label: "Revoked", color: "#5a4040" };
+    if (inv.used) return { label: "Accepted", color: "#22c55e" };
+    if (new Date(inv.expires_at) < new Date()) return { label: "Expired", color: "#5a4040" };
+    const days = Math.ceil((new Date(inv.expires_at) - Date.now()) / 86400000);
+    return { label: `${days}d left`, color: "#e0c4c4" };
   };
 
   if (loading) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
 
   return (
-    <div style={{ maxWidth: 700 }}>
+    <div style={{ maxWidth: 760 }}>
       <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Referral Invites</h2>
-      <p style={{ color: "#7a6060", fontSize: 13, marginBottom: 32 }}>Create unique invite links that give recipients 7 days of Basic access free.</p>
+      <p style={{ color: "#7a6060", fontSize: 13, marginBottom: 32 }}>Send a personal invite — they get a branded email explaining GroundUp with a 7-day trial link.</p>
 
-      {/* Create invite */}
-      <div style={{ background: "#150c0c", border: "1px solid #3a1515", borderRadius: 14, padding: 28, marginBottom: 32 }}>
-        <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>Create New Invite</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      {msg && <div style={{ background: msg.ok ? "#06170d" : "#170606", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
+
+      <div style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 28 }}>
+        <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Send an Invite</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 12, alignItems: "end" }}>
           <div>
-            <label style={lbl}>Recipient Name</label>
+            <label style={lbl}>Name</label>
             <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Full name" style={inp} />
           </div>
           <div>
-            <label style={lbl}>Email Address</label>
+            <label style={lbl}>Email</label>
             <input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} type="email" placeholder="their@email.com" style={inp} />
           </div>
+          <button onClick={sendInvite} style={btnRed}>Send Invite</button>
         </div>
-        <div style={{ background: "#120a0a", border: "1px solid #2a1010", borderRadius: 10, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
-          <Gift size={16} color="#c9a227" />
-          <span style={{ color: "#a08888", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>Recipient gets <strong style={{ color: "#b80101" }}>7 days of Basic free</strong> — then prompted to upgrade or drop to Free.</span>
-        </div>
-        {msg && <div style={{ color: msg.includes("created") ? "#22c55e" : "#b80101", fontSize: 12, marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>{msg}</div>}
-        <button onClick={createInvite} style={btnRed}>Generate Invite Link</button>
       </div>
 
-      {/* Active invites */}
-      <div style={{ marginBottom: 32 }}>
-        <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>
-          Active Invites ({active.length})
-        </div>
-        {active.length === 0 ? (
-          <div style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 12, padding: 24, textAlign: "center", color: "#5a4040", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No active invites yet.</div>
-        ) : active.map(invite => (
-          <div key={invite.id} style={{ background: "#150c0c", border: "1px solid #3a1515", borderRadius: 12, padding: "18px 22px", marginBottom: 10 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-              <div>
-                <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{invite.name}</div>
-                <div style={{ color: "#8a6060", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>{invite.email}</div>
-              </div>
-              <span style={{ background: "#1a1a0a", color: statusColor(invite), border: "1px solid " + statusColor(invite) + "40", borderRadius: 4, padding: "2px 10px", fontSize: 10, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{statusLabel(invite)}</span>
-            </div>
-            <div style={{ background: "#120a0a", border: "1px solid #2a1010", borderRadius: 8, padding: "10px 14px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-              <code style={{ color: "#b80101", fontSize: 12, fontFamily: "monospace", wordBreak: "break-all" }}>{getLink(invite.code)}</code>
-              <button onClick={() => copyLink(invite.code)} style={{ ...btnGhost, flexShrink: 0, fontSize: 11, padding: "6px 14px" }}>
-                {copied === invite.code ? "✓ Copied" : "Copy"}
-              </button>
-            </div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <span style={{ fontSize: 11, color: "#5a4040", fontFamily: "'DM Sans', sans-serif" }}>Code: <strong style={{ color: "#8a6060", letterSpacing: "1px" }}>{invite.code}</strong></span>
-              <span style={{ fontSize: 11, color: "#3a2020", fontFamily: "'DM Sans', sans-serif", marginLeft: "auto" }}>Created {new Date(invite.created).toLocaleDateString()}</span>
-              <button onClick={() => revokeInvite(invite.id)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Revoke</button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Used / history */}
-      {(used.length > 0 || revoked.length > 0) && (
+      {invites.length === 0 ? (
+        <div style={{ background: "#120a0a", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#5a4040", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No invites yet.</div>
+      ) : (
         <div>
-          <div style={{ fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>
-            History ({used.length + revoked.length})
-          </div>
-          {[...used, ...revoked].map(invite => (
-            <div key={invite.id} style={{ background: "#100808", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 18px", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center", opacity: 0.7 }}>
-              <div>
-                <div style={{ color: "#8a6060", fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{invite.name}</div>
-                <div style={{ color: "#5a4040", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>{invite.email} · {invite.code}</div>
+          {invites.map(inv => {
+            const st = statusOf(inv);
+            return (
+              <div key={inv.id} style={{ background: "#150c0c", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+                <div style={{ flex: 1, minWidth: 170 }}>
+                  <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{inv.name}</div>
+                  <div style={{ color: "#8a6060", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{inv.email}</div>
+                </div>
+                <code style={{ color: "#e0c4c4", fontSize: 12, letterSpacing: "1px" }}>{inv.code}</code>
+                <span style={{ color: st.color, fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{st.label}</span>
+                <button onClick={() => copyLink(inv.code)} style={{ ...btnGhost, fontSize: 11, padding: "6px 12px" }}>Copy link</button>
+                {!inv.used && inv.status !== "revoked" && <button onClick={() => revoke(inv)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "6px 12px" }}>Revoke</button>}
               </div>
-              <span style={{ background: "transparent", color: statusColor(invite), fontSize: 10, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{statusLabel(invite)}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
 
-// ─── CONTENT AGREEMENT MODAL ──────────────────────────────────────────────────
+function EmailTab({ btnRed, btnGhost, inp, lbl }) {
+  const AUDIENCES = [
+    { id: "all", label: "Everyone" },
+    { id: "Free", label: "Free accounts" },
+    { id: "Basic", label: "Members" },
+    { id: "Premium", label: "Premium" },
+    { id: "Elite", label: "Elite" },
+    { id: "paid", label: "All paid members" },
+    { id: "lnl", label: "Lunch & Learn attendees" },
+  ];
+  const [audience, setAudience] = useState("all");
+  const [count, setCount] = useState(null);
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [event, setEvent] = useState({ title: "", date: "", time: "", description: "" });
+  const [meeting, setMeeting] = useState({ to_name: "", to_email: "", title: "", date: "", time: "", link: "" });
+  const [msg, setMsg] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  const call = async (method, body, qs = "") => {
+    const res = await fetch("/api/broadcast" + qs, {
+      method,
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + sessionStorage.getItem("adminToken") },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Request failed");
+    return data;
+  };
+
+  useEffect(() => { call("GET", null, `?audience=${audience}`).then(d => setCount(d.count)).catch(() => setCount(null)); }, [audience]);
+
+  const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 6000); };
+
+  const send = async (body, confirmText) => {
+    if (!window.confirm(confirmText)) return;
+    setBusy(true);
+    try {
+      const d = await call("POST", body);
+      flash(true, `Sent to ${d.sent} of ${d.total} recipient${d.total !== 1 ? "s" : ""}.`);
+    } catch (e) { flash(false, e.message); } finally { setBusy(false); }
+  };
+
+  const section = { background: "#150c0c", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 20 };
+  const heading = { fontSize: 10, color: "#a08888", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 };
+  const sub = { color: "#7a6060", fontSize: 12, marginBottom: 14, fontFamily: "'DM Sans', sans-serif" };
+
+  return (
+    <div style={{ maxWidth: 760 }}>
+      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Email</h2>
+      <p style={{ color: "#7a6060", fontSize: 13, marginBottom: 28 }}>Send from the team — announcements, sales, reminders. Everything is manual: nothing sends until you hit the button.</p>
+
+      {msg && <div style={{ background: msg.ok ? "#06170d" : "#170606", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
+
+      {/* Broadcast */}
+      <div style={section}>
+        <div style={heading}>Broadcast</div>
+        <p style={sub}>A custom email to a segment — sales pushes, new course alerts, updates.</p>
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap", marginBottom: 12 }}>
+          <div>
+            <label style={lbl}>Audience</label>
+            <select value={audience} onChange={e => setAudience(e.target.value)} style={{ ...inp, marginBottom: 0, width: 220 }}>
+              {AUDIENCES.map(a => <option key={a.id} value={a.id}>{a.label}</option>)}
+            </select>
+          </div>
+          <div style={{ color: "#8a7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif", paddingBottom: 12 }}>{count === null ? "" : `${count} recipient${count !== 1 ? "s" : ""}`}</div>
+        </div>
+        <label style={lbl}>Subject</label>
+        <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Subject line" style={{ ...inp, marginBottom: 12 }} />
+        <label style={lbl}>Message</label>
+        <textarea value={message} onChange={e => setMessage(e.target.value)} rows={6} placeholder={"Write your message. Blank lines start new paragraphs.\nEach email opens with \u201cHi <first name>,\u201d automatically."} style={{ ...inp, resize: "vertical", marginBottom: 12 }} />
+        <button disabled={busy} onClick={() => send({ kind: "broadcast", audience, subject, message }, `Send this email to ${count ?? "?"} recipient(s)?`)} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>Send Broadcast</button>
+      </div>
+
+      {/* Event announcement */}
+      <div style={section}>
+        <div style={heading}>Event Announcement</div>
+        <p style={sub}>A formatted announcement for an upcoming session — goes to the audience selected above.</p>
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
+          <div><label style={lbl}>Title</label><input value={event.title} onChange={e => setEvent({ ...event, title: e.target.value })} placeholder="Lunch & Learn: Capital Stacks 101" style={inp} /></div>
+          <div><label style={lbl}>Date</label><input value={event.date} onChange={e => setEvent({ ...event, date: e.target.value })} placeholder="August 14" style={inp} /></div>
+          <div><label style={lbl}>Time</label><input value={event.time} onChange={e => setEvent({ ...event, time: e.target.value })} placeholder="12:00 PM ET" style={inp} /></div>
+        </div>
+        <label style={lbl}>Description (optional)</label>
+        <textarea value={event.description} onChange={e => setEvent({ ...event, description: e.target.value })} rows={2} style={{ ...inp, resize: "vertical", marginBottom: 12 }} />
+        <button disabled={busy} onClick={() => send({ kind: "event", audience, ...event }, `Announce "${event.title}" to ${count ?? "?"} recipient(s)?`)} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>Send Announcement</button>
+      </div>
+
+      {/* L&L reminder */}
+      <div style={section}>
+        <div style={heading}>Lunch & Learn Reminder</div>
+        <p style={sub}>Sends the join link (from the Lunch & Learn tab) to everyone with active access. Use it the day of the session.</p>
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
+          <div><label style={lbl}>Title (optional)</label><input value={event.title} onChange={e => setEvent({ ...event, title: e.target.value })} style={inp} /></div>
+          <div><label style={lbl}>Date</label><input value={event.date} onChange={e => setEvent({ ...event, date: e.target.value })} placeholder="Today" style={inp} /></div>
+          <div><label style={lbl}>Time</label><input value={event.time} onChange={e => setEvent({ ...event, time: e.target.value })} placeholder="12:00 PM ET" style={inp} /></div>
+        </div>
+        <button disabled={busy} onClick={() => send({ kind: "lnl_reminder", title: event.title, date: event.date, time: event.time }, "Send the join link to all active Lunch & Learn attendees?")} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>Send Reminder with Join Link</button>
+      </div>
+
+      {/* Personal meeting */}
+      <div style={section}>
+        <div style={heading}>Personal Meeting Email</div>
+        <p style={sub}>For 1-on-1 sessions — drop the meeting link and send it straight to the client.</p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+          <div><label style={lbl}>Client name</label><input value={meeting.to_name} onChange={e => setMeeting({ ...meeting, to_name: e.target.value })} style={inp} /></div>
+          <div><label style={lbl}>Client email</label><input value={meeting.to_email} onChange={e => setMeeting({ ...meeting, to_email: e.target.value })} type="email" style={inp} /></div>
+          <div><label style={lbl}>Session</label><input value={meeting.title} onChange={e => setMeeting({ ...meeting, title: e.target.value })} placeholder="Deal Review with Dr. Merritt" style={inp} /></div>
+          <div><label style={lbl}>Meeting link</label><input value={meeting.link} onChange={e => setMeeting({ ...meeting, link: e.target.value })} placeholder="https://zoom.us/j/..." style={inp} /></div>
+          <div><label style={lbl}>Date</label><input value={meeting.date} onChange={e => setMeeting({ ...meeting, date: e.target.value })} placeholder="August 14" style={inp} /></div>
+          <div><label style={lbl}>Time</label><input value={meeting.time} onChange={e => setMeeting({ ...meeting, time: e.target.value })} placeholder="2:00 PM ET" style={inp} /></div>
+        </div>
+        <button disabled={busy} onClick={() => send({ kind: "meeting", ...meeting }, `Send the meeting email to ${meeting.to_email || "?"}?`)} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>Send Meeting Email</button>
+      </div>
+    </div>
+  );
+}
 
 function ContentAgreementModal({ onAgree, onClose }) {
   const [checked, setChecked] = useState(false);
@@ -2859,7 +2925,9 @@ export default function App() {
   const [trialBanner, setTrialBanner] = useState(null);
   const [showSignup, setShowSignup] = useState(false);
   const [signupTier, setSignupTier] = useState("Free");
+  const [authMode, setAuthMode] = useState("signup");
   const [member, setMember] = useState(() => getMember());
+  const [resetToken, setResetToken] = useState(() => new URLSearchParams(window.location.search).get("reset"));
   const [contentAgreed, setContentAgreed] = useState(() => sessionStorage.getItem("contentAgreed") === "true");
   const [showAgreement, setShowAgreement] = useState(false);
   const [pendingPage, setPendingPage] = useState(null);
@@ -2950,10 +3018,11 @@ export default function App() {
         .content-protected iframe { pointer-events: auto; }
         .content-protected video { pointer-events: auto; }
       `}</style>
-      {showSignup && <AuthModal onClose={() => setShowSignup(false)} defaultTier={signupTier} onAuthed={(user) => { setMember(user); setShowSignup(false); sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); }} />}
+      {resetToken && <ResetPasswordModal token={resetToken} onDone={() => { setResetToken(null); window.history.replaceState({}, "", window.location.pathname); setAuthMode("login"); setShowSignup(true); }} />}
+      {showSignup && <AuthModal startMode={authMode} onClose={() => { setShowSignup(false); setAuthMode("signup"); }} defaultTier={signupTier} onAuthed={(user) => { setMember(user); setShowSignup(false); sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); }} />}
       {trialBanner && (
         <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "#0d0a04", border: "1px solid #b8010140", borderRadius: 14, padding: "18px 28px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 8px 40px rgba(184,1,1,0.2)", maxWidth: 520, width: "calc(100% - 48px)" }}>
-          <span style={{ flexShrink: 0, display: "flex" }}><Gift size={26} color="#c9a227" /></span>
+          <span style={{ flexShrink: 0, display: "flex" }}><Gift size={26} color="#e0c4c4" /></span>
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, color: "#f0d8d8", marginBottom: 3 }}>You've been invited — 7 days of Basic, free.</div>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#8a7070" }}>Invited by Dr. Merritt's team. Full access starts now. After 7 days, choose a plan to continue.</div>
@@ -2963,7 +3032,7 @@ export default function App() {
       )}
       {eventInviteBanner && (
         <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "#0d0a04", border: "1px solid #b8010140", borderRadius: 14, padding: "18px 28px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 8px 40px rgba(184,1,1,0.2)", maxWidth: 520, width: "calc(100% - 48px)" }}>
-          <span style={{ flexShrink: 0, display: "flex" }}><Ticket size={26} color="#c9a227" /></span>
+          <span style={{ flexShrink: 0, display: "flex" }}><Ticket size={26} color="#e0c4c4" /></span>
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, color: "#f0d8d8", marginBottom: 3 }}>You've been invited to RSVP!</div>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#8a7070" }}>Special invite from Dr. Merritt's team{eventInviteBanner.eventTitle ? ` for ${eventInviteBanner.eventTitle}` : ""}. You can now RSVP for the upcoming event.</div>

@@ -76,6 +76,104 @@ export function welcomeEmail(name, tier) {
   };
 }
 
+// Send to many recipients individually (no shared 'to' — keeps addresses private)
+export async function sendBulk(recipients, subject, innerHtml) {
+  let sent = 0;
+  for (let i = 0; i < recipients.length; i += 10) {
+    const chunk = recipients.slice(i, i + 10);
+    const results = await Promise.allSettled(chunk.map(r => sendEmail(r.email, subject, innerHtml.replaceAll('{{FIRSTNAME}}', (r.name || 'there').split(' ')[0]))));
+    sent += results.filter(x => x.status === 'fulfilled' && x.value).length;
+  }
+  return sent;
+}
+
+export function siteUrl() {
+  return process.env.SITE_URL || 'https://groundup.nreuv.com';
+}
+
+export function resetEmail(name, link) {
+  return {
+    subject: 'Reset your GroundUp password',
+    html: `
+      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">Password reset</h2>
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${name.split(' ')[0]} — we received a request to reset your GroundUp password. This link works for one hour:</p>
+      <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin:8px 0;">Reset Password</a>
+      <p style="color:#7a6060;font-size:12px;line-height:1.7;">If you didn't request this, you can safely ignore this email — your password won't change.</p>`,
+  };
+}
+
+export function inviteEmail(name, link) {
+  return {
+    subject: "You're invited to GroundUp",
+    html: `
+      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">You're invited, ${name.split(' ')[0]}.</h2>
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">Dr. Gina Merritt's team invited you to GroundUp — a curriculum and community for aspiring and emerging affordable-housing developers, built on 30+ years of real deals.</p>
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">Your invite includes a free trial week — it's live for the next 7 days.</p>
+      <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Accept Your Invite</a>`,
+  };
+}
+
+export function dmReplyEmail(name) {
+  return {
+    subject: 'Dr. Merritt\\u2019s team replied to your message',
+    html: `
+      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">You have a reply.</h2>
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${name.split(' ')[0]} — Dr. Merritt's team responded to your direct message. Sign in to read it in your private thread.</p>
+      <a href="${siteUrl()}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Read the Reply</a>`,
+  };
+}
+
+export function eventEmail(title, date, time, description, audienceHasAccess) {
+  return {
+    subject: `Upcoming: ${title}`,
+    html: `
+      <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Upcoming Session</div>
+      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 10px;">${title}</h2>
+      <p style="color:#c9a227;font-size:14px;font-weight:bold;margin:0 0 16px;">${date}${time ? ' · ' + time : ''}</p>
+      ${description ? `<p style="color:#a89080;font-size:14px;line-height:1.8;">${description}</p>` : ''}
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">${audienceHasAccess ? 'Your join link is on your Lunch & Learn page — see you there.' : 'Grab Lunch & Learn access to join live — every session for six months, $39.99.'}</p>
+      <a href="${siteUrl()}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">${audienceHasAccess ? 'Open Lunch & Learn' : 'Get Access'}</a>`,
+  };
+}
+
+export function lnlReminderEmail(title, date, time, link) {
+  return {
+    subject: `Reminder: ${title || 'Lunch & Learn'} — ${date}${time ? ' at ' + time : ''}`,
+    html: `
+      <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Session Reminder</div>
+      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 10px;">${title || 'Lunch & Learn with Dr. Merritt'}</h2>
+      <p style="color:#c9a227;font-size:14px;font-weight:bold;margin:0 0 16px;">${date}${time ? ' · ' + time : ''}</p>
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi {{FIRSTNAME}} — your session is coming up. Join with the link below:</p>
+      <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Join the Session</a>
+      <p style="color:#7a6060;font-size:12px;line-height:1.7;margin-top:14px;">This link is for you — please don't forward it.</p>`,
+  };
+}
+
+export function meetingEmail(name, title, date, time, link) {
+  return {
+    subject: `Your session with Dr. Merritt — ${date}${time ? ' at ' + time : ''}`,
+    html: `
+      <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Your 1-on-1 Session</div>
+      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 10px;">${title || 'Session with Dr. Merritt'}</h2>
+      <p style="color:#c9a227;font-size:14px;font-weight:bold;margin:0 0 16px;">${date}${time ? ' · ' + time : ''}</p>
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${(name || 'there').split(' ')[0]} — your session is coming up. Join with the link below:</p>
+      ${link ? `<a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Join the Meeting</a>` : ''}
+      <p style="color:#7a6060;font-size:12px;line-height:1.7;margin-top:14px;">Need to reschedule? Reply to this email and the team will take care of it.</p>`,
+  };
+}
+
+export function broadcastEmail(subject, message) {
+  const paragraphs = message.split(/\\n{2,}/).map(p =>
+    `<p style="color:#a89080;font-size:14px;line-height:1.8;">${p.replace(/\\n/g, '<br/>')}</p>`).join('');
+  return {
+    subject,
+    html: `
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi {{FIRSTNAME}},</p>
+      ${paragraphs}
+      <a href="${siteUrl()}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Open GroundUp</a>`,
+  };
+}
+
 export function lnlAccessEmail(name, expiresAt, hasLink) {
   const through = expiresAt ? new Date(expiresAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
   return {

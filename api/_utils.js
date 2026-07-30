@@ -10,8 +10,8 @@ function secret() {
 
 const TOKEN_TTL_MS = 1000 * 60 * 60 * 24 * 14; // 14 days
 
-export function signToken(payload) {
-  const body = Buffer.from(JSON.stringify({ ...payload, exp: Date.now() + TOKEN_TTL_MS })).toString('base64url');
+export function signToken(payload, ttlMs = TOKEN_TTL_MS) {
+  const body = Buffer.from(JSON.stringify({ ...payload, exp: Date.now() + ttlMs })).toString('base64url');
   const sig = crypto.createHmac('sha256', secret()).update(body).digest('base64url');
   return `${body}.${sig}`;
 }

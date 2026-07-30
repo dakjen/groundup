@@ -1,6 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 import { signToken, getSession, hashPassword, verifyPassword } from './_utils.js';
-import { sendEmail, addContact, welcomeEmail } from './_email.js';
+import { sendEmail, addContact, welcomeEmail, resetEmail, siteUrl } from './_email.js';
+import { verifyToken } from './_utils.js';
 
 const PUBLIC_FIELDS = 'id, name, email, tier, role, membership_status, created_at';
 
@@ -57,6 +58,32 @@ export default async function handler(req, res) {
       const { password_hash, ...safe } = user;
       safe.entitlements = await sql`SELECT course_id, expires_at FROM entitlements WHERE user_id = ${user.id} AND (expires_at IS NULL OR expires_at > NOW())`;
       return res.json({ user: safe, token });
+    }
+
+    // Forgot password: always succeed (no account enumeration); email a 1-hour reset link
+    if (action === 'forgot_password') {
+      const { email } = req.body;
+      if (!email) return res.status(400).json({ error: 'Email required' });
+      const cleanEmail = String(email).trim().toLowerCase();
+      const [user] = await sql`SELECT id, name, email FROM users WHERE email = ${cleanEmail}`;
+      if (user) {
+        const token = signToken({ uid: user.id, purpose: 'reset' }, 1000 * 60 * 60);
+        const mail = resetEmail(user.name, `${siteUrl()}/?reset=${encodeURIComponent(token)}`);
+        await sendEmail(user.email, mail.subject, mail.html);
+      }
+      return res.json({ success: true });
+    }
+
+    // Complete a reset from the emailed link
+    if (action === 'reset_password') {
+      const { token, new_password } = req.body;
+      if (!new_password || new_password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+      const payload = verifyToken(token);
+      if (!payload || payload.purpose !== 'reset' || !payload.uid) {
+        return res.status(400).json({ error: 'That reset link is invalid or expired — request a new one' });
+      }
+      await sql`UPDATE users SET password_hash = ${hashPassword(new_password)} WHERE id = ${payload.uid}`;
+      return res.json({ success: true });
     }
 
     // Logged-in password change (members and team alike)

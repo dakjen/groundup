@@ -43,7 +43,7 @@ const lbl = { display: "block", fontSize: 10, color: "#8a7070", fontWeight: 700,
 const btnRed = { background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "12px 22px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" };
 const btnGhost = { background: "transparent", color: "#8a7070", border: "1px solid #2a0000", borderRadius: 8, padding: "12px 22px", fontFamily: font, fontWeight: 600, fontSize: 13, cursor: "pointer" };
 
-const TIER_COLORS = { Free: "#6a6b69", Basic: "#b80101", Premium: "#c9a227", Elite: "#e0c4c4", Partner: "#c9a227" };
+const TIER_COLORS = { Free: "#6a6b69", Basic: "#b80101", Premium: "#e06767", Elite: "#e0c4c4", Partner: "#e0c4c4" };
 // Display names — 'Basic' is the internal value for the Member subscription tier
 export const TIER_LABELS = { Free: "Free", Basic: "Member", Premium: "Premium", Elite: "Elite", Partner: "Partner" };
 
@@ -65,10 +65,17 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const [notice, setNotice] = useState("");
+
   const submit = async (e) => {
     e.preventDefault();
-    setError(""); setBusy(true);
+    setError(""); setNotice(""); setBusy(true);
     try {
+      if (mode === "forgot") {
+        await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "forgot_password", email }) });
+        setNotice("If that email has an account, a reset link is on its way. It works for one hour.");
+        return;
+      }
       const data = mode === "signup"
         ? await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "signup", name, email, password, tier }) })
         : await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "login", email, password }) });
@@ -83,9 +90,9 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
     <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "36px 36px 32px", width: "100%", maxWidth: 440, maxHeight: "90vh", overflowY: "auto" }}>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>GroundUp Membership</div>
-        <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>{mode === "signup" ? "Create your account" : "Welcome back"}</h2>
+        <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>{mode === "signup" ? "Create your account" : mode === "forgot" ? "Reset your password" : "Welcome back"}</h2>
         <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginBottom: 24 }}>
-          {mode === "signup" ? "One account for your courses, your community, and your membership benefits." : "Sign in to get back to your courses and the community."}
+          {mode === "signup" ? "One account for your courses, your community, and your membership benefits." : mode === "forgot" ? "Enter your email and we’ll send you a reset link." : "Sign in to get back to your courses and the community."}
         </p>
         <form onSubmit={submit}>
           {mode === "signup" && (
@@ -98,10 +105,12 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
             <label style={lbl}>Email</label>
             <input style={inp} type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@example.com" />
           </div>
-          <div style={{ marginBottom: 16 }}>
-            <label style={lbl}>Password</label>
-            <input style={inp} type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} placeholder={mode === "signup" ? "At least 8 characters" : "Your password"} />
-          </div>
+          {mode !== "forgot" && (
+            <div style={{ marginBottom: 16 }}>
+              <label style={lbl}>Password</label>
+              <input style={inp} type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} placeholder={mode === "signup" ? "At least 8 characters" : "Your password"} />
+            </div>
+          )}
           {mode === "signup" && (
             <div style={{ marginBottom: 20 }}>
               <label style={lbl}>Plan</label>
@@ -121,11 +130,13 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
             </div>
           )}
           {error && <div style={{ color: "#ff6b6b", fontSize: 13, fontFamily: font, marginBottom: 14 }}>{error}</div>}
-          <button type="submit" disabled={busy} style={{ ...btnRed, width: "100%", opacity: busy ? 0.6 : 1 }}>{busy ? "One moment…" : mode === "signup" ? "Create Account →" : "Sign In →"}</button>
+          {notice && <div style={{ color: "#22c55e", fontSize: 13, fontFamily: font, marginBottom: 14 }}>{notice}</div>}
+          <button type="submit" disabled={busy} style={{ ...btnRed, width: "100%", opacity: busy ? 0.6 : 1 }}>{busy ? "One moment…" : mode === "signup" ? "Create Account →" : mode === "forgot" ? "Send Reset Link →" : "Sign In →"}</button>
         </form>
         <div style={{ marginTop: 18, textAlign: "center", fontSize: 13, fontFamily: font, color: "#8a7070" }}>
           {mode === "signup" ? <>Already a member? <button onClick={() => { setMode("login"); setError(""); }} style={{ background: "none", border: "none", color: "#b80101", cursor: "pointer", fontWeight: 700, fontFamily: font, fontSize: 13 }}>Sign in</button></>
-            : <>New here? <button onClick={() => { setMode("signup"); setError(""); }} style={{ background: "none", border: "none", color: "#b80101", cursor: "pointer", fontWeight: 700, fontFamily: font, fontSize: 13 }}>Create an account</button></>}
+            : mode === "forgot" ? <button onClick={() => { setMode("login"); setError(""); setNotice(""); }} style={{ background: "none", border: "none", color: "#b80101", cursor: "pointer", fontWeight: 700, fontFamily: font, fontSize: 13 }}>← Back to sign in</button>
+            : <>New here? <button onClick={() => { setMode("signup"); setError(""); }} style={{ background: "none", border: "none", color: "#b80101", cursor: "pointer", fontWeight: 700, fontFamily: font, fontSize: 13 }}>Create an account</button><span style={{ margin: "0 8px", color: "#3a2a2a" }}>·</span><button onClick={() => { setMode("forgot"); setError(""); }} style={{ background: "none", border: "none", color: "#8a7070", cursor: "pointer", fontWeight: 600, fontFamily: font, fontSize: 13 }}>Forgot password?</button></>}
         </div>
       </div>
     </div>
@@ -242,12 +253,12 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
         <ChangePasswordCard />
 
         {rank < 1 && member.lnl_discount_until && new Date(member.lnl_discount_until) > new Date() && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, background: "#0d0a04", border: "1px solid #c9a22740", borderRadius: 14, padding: "20px 26px", marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, background: "#0d0a04", border: "1px solid #e0c4c440", borderRadius: 14, padding: "20px 26px", marginBottom: 16 }}>
             <div>
-              <div style={{ color: "#c9a227", fontWeight: 800, fontSize: 15, fontFamily: font, marginBottom: 4 }}>Your Lunch & Learn perk: 25% off your first month</div>
+              <div style={{ color: "#e0c4c4", fontWeight: 800, fontSize: 15, fontFamily: font, marginBottom: 4 }}>Your Lunch & Learn perk: 25% off your first month</div>
               <div style={{ color: "#8a7070", fontSize: 13, fontFamily: font }}>Become a member by {new Date(member.lnl_discount_until).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })} and mention it when you sign up.</div>
             </div>
-            <button style={{ ...btnRed, background: "#c9a227", color: "#000" }} onClick={() => setActivePage("pricing")}>See Memberships →</button>
+            <button style={btnRed} onClick={() => setActivePage("pricing")}>See Memberships →</button>
           </div>
         )}
 
@@ -276,10 +287,10 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread }) {
   return (
     <div style={{ padding: "12px 16px", borderRadius: 10, background: m.is_admin ? "#12060a" : "transparent", border: m.is_admin ? "1px solid #b8010130" : "1px solid transparent", marginBottom: 4 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-        <span style={{ color: m.is_admin ? (m.author_badge === "drmerritt" ? "#c9a227" : "#b80101") : "#f0d8d8", fontWeight: 800, fontSize: 13, fontFamily: font }}>{m.author_name || "Member"}</span>
+        <span style={{ color: m.is_admin ? (m.author_badge === "drmerritt" ? "#e0c4c4" : "#b80101") : "#f0d8d8", fontWeight: 800, fontSize: 13, fontFamily: font }}>{m.author_name || "Member"}</span>
         {m.is_admin ? (
           m.author_badge === "drmerritt"
-            ? <span style={{ background: "linear-gradient(135deg, #c9a227, #8a6d1a)", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, fontFamily: font, letterSpacing: "1px" }}>DR. MERRITT</span>
+            ? <span style={{ background: "linear-gradient(135deg, #c9a0a0, #7a4a4a)", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, fontFamily: font, letterSpacing: "1px" }}>DR. MERRITT</span>
             : <span style={{ background: "#b80101", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, fontFamily: font, letterSpacing: "1px" }}>TEAM</span>
         ) : m.author_tier && <TierBadge tier={m.author_tier} small />}
         <span style={{ color: "#5a4040", fontSize: 11, fontFamily: font }}>{timeAgo(m.created_at)}</span>
@@ -536,6 +547,50 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
           .community-menu-btn { display: inline-block !important; }
         }
       `}</style>
+    </div>
+  );
+}
+
+
+// ─── RESET PASSWORD (from emailed link) ─────────────────────────────────────
+
+export function ResetPasswordModal({ token, onDone }) {
+  const [pw, setPw] = useState("");
+  const [msg, setMsg] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true); setMsg(null);
+    try {
+      await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "reset_password", token, new_password: pw }) });
+      setDone(true);
+      setMsg({ ok: true, text: "Password updated — sign in with your new password." });
+    } catch (err) {
+      setMsg({ ok: false, text: err.message });
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "36px 36px 32px", width: "100%", maxWidth: 420 }}>
+        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>GroundUp</div>
+        <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 28, color: "#f5e8e8", marginBottom: 18 }}>Choose a new password</h2>
+        {!done ? (
+          <form onSubmit={submit}>
+            <label style={lbl}>New password</label>
+            <input style={inp} type="password" value={pw} onChange={e => setPw(e.target.value)} required minLength={8} placeholder="At least 8 characters" autoComplete="new-password" />
+            {msg && <div style={{ color: msg.ok ? "#22c55e" : "#ff6b6b", fontSize: 13, fontFamily: font, marginTop: 12 }}>{msg.text}</div>}
+            <button type="submit" disabled={busy} style={{ ...btnRed, width: "100%", marginTop: 16, opacity: busy ? 0.6 : 1 }}>{busy ? "Saving…" : "Set New Password"}</button>
+          </form>
+        ) : (
+          <>
+            <div style={{ color: "#22c55e", fontSize: 14, fontFamily: font, marginBottom: 18 }}>{msg?.text}</div>
+            <button onClick={onDone} style={{ ...btnRed, width: "100%" }}>Sign In →</button>
+          </>
+        )}
+      </div>
     </div>
   );
 }

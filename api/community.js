@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { getSession, getAdmin, TIER_RANK } from './_utils.js';
+import { sendEmail, dmReplyEmail } from './_email.js';
 
 // Resolve the requesting user (member or admin). Admins get Elite-level access.
 async function resolveUser(req, sql) {
@@ -95,6 +96,16 @@ export default async function handler(req, res) {
       const [msg] = await sql`
         INSERT INTO dms (user_id, from_admin, body, created_at)
         VALUES (${targetId}, ${isAdminReq}, ${text}, NOW()) RETURNING *`;
+      // Team replied → let the member know by email (fire-and-forget)
+      if (isAdminReq) {
+        try {
+          const [target] = await sql`SELECT name, email FROM users WHERE id = ${targetId}`;
+          if (target) {
+            const mail = dmReplyEmail(target.name);
+            await sendEmail(target.email, mail.subject, mail.html);
+          }
+        } catch (e) { console.error('dm email failed', e); }
+      }
       return res.status(201).json({ message: msg });
     }
 

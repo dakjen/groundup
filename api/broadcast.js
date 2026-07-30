@@ -1,0 +1,78 @@
+import { neon } from '@neondatabase/serverless';
+import { requireAdmin } from './_utils.js';
+import { sendBulk, sendEmail, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail } from './_email.js';
+
+// Team email tools: send a custom email or an event announcement to a segment.
+// Audiences: all | Free | Basic | Premium | Elite | lnl (active Lunch & Learn access)
+
+async function recipients(sql, audience) {
+  if (audience === 'lnl') {
+    return sql`
+      SELECT DISTINCT u.name, u.email FROM entitlements e
+      JOIN users u ON u.id = e.user_id
+      WHERE e.course_id = 'lunchlearn' AND (e.expires_at IS NULL OR e.expires_at > NOW())`;
+  }
+  if (['Free', 'Basic', 'Premium', 'Elite'].includes(audience)) {
+    return sql`SELECT name, email FROM users WHERE tier = ${audience} AND membership_status = 'active'`;
+  }
+  if (audience === 'paid') {
+    return sql`SELECT name, email FROM users WHERE tier IN ('Basic','Premium','Elite') AND membership_status = 'active'`;
+  }
+  return sql`SELECT name, email FROM users WHERE membership_status = 'active'`;
+}
+
+export default async function handler(req, res) {
+  if (!requireAdmin(req, res)) return;
+  const sql = neon(process.env.DATABASE_URL);
+
+  try {
+    // GET ?audience=... → recipient count preview
+    if (req.method === 'GET') {
+      const rows = await recipients(sql, req.query.audience || 'all');
+      return res.json({ count: rows.length });
+    }
+
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const { kind, audience, subject, message, title, date, time, description, to_email, to_name, link } = req.body;
+
+    // One-off personal meeting email (1:1 sessions) — team drops the link, we send it
+    if (kind === 'meeting') {
+      if (!to_email || !date) return res.status(400).json({ error: 'Recipient email and date required' });
+      if (link) { try { new URL(link); } catch { return res.status(400).json({ error: 'Invalid meeting link' }); } }
+      const mail = meetingEmail(to_name || '', title, date, time, link);
+      const ok = await sendEmail(to_email, mail.subject, mail.html);
+      return ok ? res.json({ success: true, sent: 1, total: 1 }) : res.status(502).json({ error: 'Email failed to send — is Brevo configured?' });
+    }
+
+    // Lunch & Learn reminder with the stored join link, to everyone with active access
+    if (kind === 'lnl_reminder') {
+      if (!date) return res.status(400).json({ error: 'Date required' });
+      const [linkRow] = await sql`SELECT value FROM settings WHERE key = 'lnl_link'`;
+      if (!linkRow?.value) return res.status(400).json({ error: 'Set the live session link first (Lunch & Learn tab)' });
+      const rows = await recipients(sql, 'lnl');
+      if (rows.length === 0) return res.status(400).json({ error: 'No one has active Lunch & Learn access yet' });
+      const mail = lnlReminderEmail(title, date, time || '', linkRow.value);
+      const sent = await sendBulk(rows, mail.subject, mail.html);
+      return res.json({ success: true, sent, total: rows.length });
+    }
+
+    const rows = await recipients(sql, audience || 'all');
+    if (rows.length === 0) return res.status(400).json({ error: 'No recipients in that audience' });
+
+    let sent = 0;
+    if (kind === 'event') {
+      if (!title || !date) return res.status(400).json({ error: 'Event title and date required' });
+      const mail = eventEmail(title, date, time || '', description || '', audience === 'lnl');
+      sent = await sendBulk(rows, mail.subject, mail.html);
+    } else {
+      if (!subject || !message) return res.status(400).json({ error: 'Subject and message required' });
+      if (message.length > 10000) return res.status(400).json({ error: 'Message too long' });
+      const mail = broadcastEmail(subject, message);
+      sent = await sendBulk(rows, mail.subject, mail.html);
+    }
+    return res.json({ success: true, sent, total: rows.length });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
