@@ -578,46 +578,35 @@ function EventCard({ currentUser, eventInvited, onSignUp, setActivePage }) {
   );
 }
 
-// GroundUp mark — the original brownstone facade, redrawn: a symmetrical
-// multifamily building (center tower + two wings) over a faint city skyline.
+// GroundUp mark — a brownstone with a stoop climbing to the door, city rising
+// behind it. Cream line-art + warm tan skyline, like the original; red only at
+// the door. Asymmetric on purpose: this is a climb, not a monument.
 function GULogo({ size = 40 }) {
   const w = "#f5e8e8";
-  const win = (x, y, wd = 4, ht = 5) => (
-    <rect key={x + "-" + y} x={x} y={y} width={wd} height={ht} rx={0.6} fill="none" stroke={w} strokeWidth="1.4" />
-  );
+  const tan = "#7a6151";
+  const win = (x, y) => <rect key={x + "-" + y} x={x} y={y} width={4.4} height={5.4} rx={0.7} fill="none" stroke={w} strokeWidth="1.5" />;
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="GroundUp">
-      <rect x="2" y="2" width="60" height="60" rx="14" fill="#0d0404" stroke="#b8010160" strokeWidth="1.5" />
-      {/* faint skyline behind */}
-      <g opacity="0.35">
-        <rect x="8" y="20" width="6" height="30" fill="#b8010145" />
-        <rect x="50" y="16" width="7" height="34" fill="#b8010145" />
-        <rect x="44" y="26" width="5" height="24" fill="#b8010130" />
-        <rect x="14" y="28" width="4" height="22" fill="#b8010130" />
+      {/* rising skyline behind, warm tan */}
+      <g stroke={tan} strokeWidth="1.8" fill="none" opacity="0.85">
+        <path d="M40 51 V14 H52 V51" />
+        <path d="M43.5 14 V10.5 H48.5 V14" />
+        <path d="M43.5 20 h5 M43.5 26 h5 M43.5 32 h5 M43.5 38 h5" />
+        <path d="M53.5 51 V24 H59.5" />
       </g>
-      {/* ground line */}
-      <path d="M8 51.5 H56" stroke={w} strokeWidth="2" strokeLinecap="round" />
-      {/* center tower */}
-      <rect x="25" y="13" width="14" height="38.5" fill="#0d0404" stroke={w} strokeWidth="2" />
-      <path d="M23.5 13 H40.5" stroke={w} strokeWidth="2" strokeLinecap="round" />
-      {/* wings */}
-      <rect x="13" y="22" width="12" height="29.5" fill="#0d0404" stroke={w} strokeWidth="2" />
-      <rect x="39" y="22" width="12" height="29.5" fill="#0d0404" stroke={w} strokeWidth="2" />
-      <path d="M11.5 22 H25" stroke={w} strokeWidth="2" strokeLinecap="round" />
-      <path d="M39 22 H52.5" stroke={w} strokeWidth="2" strokeLinecap="round" />
-      {/* tower windows */}
-      {win(27.5, 17)} {win(32.5, 17)}
-      {win(27.5, 25)} {win(32.5, 25)}
-      {win(27.5, 33)} {win(32.5, 33)}
-      {/* wing windows */}
-      {win(15.5, 26)} {win(20, 26)}
-      {win(15.5, 34)} {win(20, 34)}
-      {win(15.5, 42)} {win(20, 42)}
-      {win(41.5, 26)} {win(46, 26)}
-      {win(41.5, 34)} {win(46, 34)}
-      {win(41.5, 42)} {win(46, 42)}
-      {/* arched entry, brand red */}
-      <path d="M28.5 51.5 V45 a3.5 3.5 0 0 1 7 0 V51.5" fill="#b80101" stroke={w} strokeWidth="1.6" />
+      {/* the brownstone, front and proud */}
+      <path d="M10 51 V19 H38 V51" stroke={w} strokeWidth="2.2" fill="#00000001" strokeLinejoin="round" />
+      <path d="M8 19 H40" stroke={w} strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M12.5 15.5 H35.5 M14 15.5 V19 M34 15.5 V19" stroke={w} strokeWidth="1.8" strokeLinecap="round" />
+      {win(14, 23)} {win(21.5, 23)} {win(29, 23)}
+      {win(14, 32)} {win(21.5, 32)}
+      {win(14, 41)}
+      {/* red door up the stoop */}
+      <path d="M28.5 51 V37.5 a3.2 3.2 0 0 1 6.4 0 V51" fill="#b80101" stroke={w} strokeWidth="1.6" />
+      {/* the stoop — steps rising from the ground */}
+      <path d="M21 51 h3.5 v-2.6 h3.5 v-2.6 h2.5" stroke={w} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      {/* ground */}
+      <path d="M4 51 H60" stroke={w} strokeWidth="2.4" strokeLinecap="round" />
     </svg>
   );
 }
