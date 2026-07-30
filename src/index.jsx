@@ -2885,7 +2885,7 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
     return matchSearch && matchTier;
   });
 
-  const tierCounts = TIERS.reduce((acc, t) => ({ ...acc, [t]: users.filter(u => u.tier === t).length }), {});
+  const tierCounts = TIERS.reduce((acc, t) => ({ ...acc, [t]: users.filter(u => u.tier === t && u.role !== "admin").length }), {});
   const TIER_DISPLAY = { Free: "Free", Basic: "Member", Premium: "Premium", Elite: "Elite" };
 
   if (loading) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
@@ -2984,6 +2984,9 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
               <div style={{ fontSize: 10, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif" }}>
                 Joined {new Date(user.created_at).toLocaleDateString()}
               </div>
+              {user.role === "admin" ? (
+                <span style={{ color: "#8a8a8a", fontSize: 12, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>Team — no tier</span>
+              ) : (
               <select
                 value={user.tier}
                 onChange={e => patchUser(user.id, { tier: e.target.value })}
@@ -2991,6 +2994,7 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
               >
                 {TIERS.map(t => <option key={t} value={t} style={{ background: "#ffffff", color: "#222222" }}>{TIER_DISPLAY[t]}</option>)}
               </select>
+              )}
               <select
                 value={user.role === "admin" ? (user.badge === "drmerritt" ? "drmerritt" : "team") : "member"}
                 onChange={e => {
