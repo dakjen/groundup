@@ -562,7 +562,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
         {channels.map(c => (
           <button key={c.id} onClick={() => { setActive(c); setDmOpen(false); setSidebarOpen(false); }}
             style={{ display: "block", width: "100%", textAlign: "left", background: !dmOpen && active?.id === c.id ? "#b80101" : "transparent", border: "none", borderRadius: 6, padding: "9px 12px", cursor: "pointer", marginBottom: 2 }}>
-            <span style={{ color: !dmOpen && active?.id === c.id ? "#222222" : "#666666", fontWeight: 700, fontSize: 13.5, fontFamily: font }}>
+            <span style={{ color: "#ffffff", fontWeight: !dmOpen && active?.id === c.id ? 800 : 600, fontSize: 13.5, fontFamily: font }}>
               {c.admin_only_post ? <Megaphone size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 2 }} /> : "#"} {c.name}
             </span>
             {c.min_tier !== "Basic" && <span style={{ marginLeft: 6, fontSize: 9, color: TIER_COLORS[c.min_tier], fontFamily: font, fontWeight: 800 }}>{(TIER_LABELS[c.min_tier] || c.min_tier).toUpperCase()}</span>}
