@@ -697,7 +697,7 @@ export function WaitlistModal({ onClose }) {
                 {pain === "Other" && <input style={{ ...inp, marginTop: 8 }} value={painOther} onChange={e => setPainOther(e.target.value)} placeholder="Tell us in your own words" required />}
               </div>
               <div style={{ marginBottom: 14 }}>
-                <label style={lbl}>Monthly budget for a course + community that helps you get this done</label>
+                <label style={lbl}>Monthly budget for a course, community, and access to support</label>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   {WL_BUDGETS.map(b => (
                     <button type="button" key={b} onClick={() => setBudget(b)} style={{ background: budget === b ? "#b8010118" : "transparent", border: budget === b ? "1px solid #b80101" : "1px solid #2a0000", borderRadius: 8, padding: "11px 12px", cursor: "pointer", color: budget === b ? "#f0d8d8" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font }}>{b}</button>
