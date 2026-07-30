@@ -787,7 +787,15 @@ export function ResourcesPage({ member, onUpgrade }) {
                           <button onClick={() => navigator.clipboard && navigator.clipboard.writeText(r.code)} style={{ marginLeft: "auto", background: "none", border: "none", color: "#8a7070", cursor: "pointer", fontSize: 11, fontFamily: font, fontWeight: 700 }}>Copy</button>
                         </div>
                       )}
-                      {r.url && <a href={r.url} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontSize: 13, fontFamily: font, fontWeight: 800, textDecoration: "none" }}>Open →</a>}
+                      {r.url && (() => {
+                        const yt = r.url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{6,})/);
+                        if (yt) return (
+                          <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, borderRadius: 10, overflow: "hidden", background: "#000" }}>
+                            <iframe src={`https://www.youtube.com/embed/${yt[1]}`} title={r.title} allowFullScreen allow="accelerometer; encrypted-media; picture-in-picture" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }} />
+                          </div>
+                        );
+                        return <a href={r.url} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontSize: 13, fontFamily: font, fontWeight: 800, textDecoration: "none" }}>Open →</a>;
+                      })()}
                     </div>
                   ))}
                 </div>
