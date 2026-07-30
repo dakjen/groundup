@@ -24,9 +24,17 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'PATCH') {
-      const { id, tier } = req.body;
+      const { id, tier, role, badge } = req.body;
+      if (role !== undefined && !['member', 'admin'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
+      if (badge !== undefined && badge !== null && !['team', 'drmerritt'].includes(badge)) return res.status(400).json({ error: 'Invalid badge' });
+      // Only fields present in the request change; badge may be set to null to clear it
+      const hasBadge = 'badge' in req.body;
       const [user] = await sql`
-        UPDATE users SET tier = ${tier} WHERE id = ${id} RETURNING *
+        UPDATE users SET
+          tier = COALESCE(${tier ?? null}, tier),
+          role = COALESCE(${role ?? null}, role),
+          badge = CASE WHEN ${hasBadge} THEN ${badge ?? null} ELSE badge END
+        WHERE id = ${id} RETURNING id, name, email, tier, role, badge, created_at
       `;
       return res.json(user);
     }

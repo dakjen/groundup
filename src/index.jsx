@@ -992,7 +992,7 @@ function AboutPage({ setActivePage }) {
 const passPlans = [
   {
     name: "Single Course Pass",
-    price: "$49",
+    price: "$100",
     period: "one-time",
     description: "30 days of access to one course of your choice — every lesson, case study, and worksheet in it.",
     accent: "#b80101",
@@ -1006,7 +1006,7 @@ const passPlans = [
   },
   {
     name: "All-Access Pass",
-    price: "$149",
+    price: "$250",
     period: "one-time",
     description: "30 days of access to the entire GroundUp curriculum — all four courses at once.",
     accent: "#b80101",
