@@ -1256,7 +1256,16 @@ function PricingPage({ onSignUp }) {
           ))}
         </div>
 
-        <div style={{ marginTop: 56, background: "#110606", border: "1px solid #150000", borderRadius: 14, padding: "28px 36px", display: "flex", gap: 40, flexWrap: "wrap", justifyContent: "center", alignItems: "center" }}>
+        <div style={{ marginTop: 56, borderRadius: 16, overflow: "hidden", position: "relative", border: "1px solid #2a0000" }}>
+          <img src="/IMG_8087.jpeg" alt="Dr. Merritt speaking at the National DCRE Conference" style={{ width: "100%", height: 340, objectFit: "cover", objectPosition: "center 30%", display: "block" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.85) 100%)" }} />
+          <div style={{ position: "absolute", bottom: 22, left: 28, right: 28 }}>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(20px,3vw,28px)", color: "#f5e8e8", marginBottom: 4 }}>Learn from someone who's actually done it.</div>
+            <div style={{ color: "#c8a8a8", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>Dr. Merritt — honoree, National DCRE Conference</div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 24, background: "#110606", border: "1px solid #150000", borderRadius: 14, padding: "28px 36px", display: "flex", gap: 40, flexWrap: "wrap", justifyContent: "center", alignItems: "center" }}>
           {[
             { Icon: CreditCard, text: "No credit card to start free" },
             { Icon: RefreshCw, text: "Cancel anytime, no questions" },
@@ -1330,6 +1339,13 @@ function ContactPage({ setActivePage }) {
           <p style={{ color: "#8a7070", fontSize: 15, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif" }}>
             45 minutes with Dr. Gina Merritt. Select a session type, pay to reserve, then tell her what you're working on.
           </p>
+        <div style={{ borderRadius: 16, overflow: "hidden", position: "relative", border: "1px solid #2a0000", margin: "28px 0 8px" }}>
+          <img src="/DCREC2022-still4.png" alt="Dr. Merritt on an industry panel" style={{ width: "100%", height: 260, objectFit: "cover", objectPosition: "center 20%", display: "block" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.8) 100%)" }} />
+          <div style={{ position: "absolute", bottom: 16, left: 24 }}>
+            <div style={{ color: "#f0d8d8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>45 minutes, one-on-one, with the person other developers ask for advice.</div>
+          </div>
+        </div>
         </div>
 
         {/* Step 1 */}
@@ -1550,6 +1566,15 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
             <button onClick={() => setActivePage && setActivePage("pricing")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "11px 22px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>See Memberships</button>
           </div>
         )}
+
+        {/* Dr. Merritt live */}
+        <div style={{ borderRadius: 16, overflow: "hidden", position: "relative", border: "1px solid #2a0000", marginBottom: 36 }}>
+          <img src="/IMG_8084.jpeg" alt="Dr. Gina Merritt speaking live" style={{ width: "100%", height: 300, objectFit: "cover", objectPosition: "center 35%", display: "block" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 35%, rgba(0,0,0,0.85) 100%)" }} />
+          <div style={{ position: "absolute", bottom: 20, left: 26, right: 26 }}>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(18px,2.5vw,24px)", color: "#f5e8e8" }}>Live. Unfiltered. Real numbers from real deals.</div>
+          </div>
+        </div>
 
         {/* Recordings */}
         <div style={{ textAlign: "center", marginBottom: 28 }}>
