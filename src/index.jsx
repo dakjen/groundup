@@ -1902,19 +1902,19 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
     } catch (e) { flash(false, e.message); }
   };
 
-  const section = { background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 20 };
-  const heading = { fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14, display: "flex", alignItems: "center", gap: 8 };
+  const section = { background: "#0d0404", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 20 };
+  const heading = { fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14, display: "flex", alignItems: "center", gap: 8 };
 
-  if (!data) return <div style={{ color: "#8a7a66", fontSize: 13, marginBottom: 24 }}>Loading Lunch & Learn manager…</div>;
+  if (!data) return <div style={{ color: "#8a7070", fontSize: 13, marginBottom: 24 }}>Loading Lunch & Learn manager…</div>;
 
   return (
     <div style={{ marginBottom: 36 }}>
-      {msg && <div style={{ background: msg.ok ? "#eaf6ea" : "#fdeeee", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#1a9a4a" : "#c02020", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
+      {msg && <div style={{ background: msg.ok ? "#06170d" : "#170606", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
 
       {/* Session link */}
       <div style={section}>
         <div style={heading}><Link2 size={13} color="#b80101" /> Live Session Link</div>
-        <p style={{ color: "#8a7a66", fontSize: 12, marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>Everyone with Lunch & Learn access sees this link on their page. Update it before each session.</p>
+        <p style={{ color: "#8a7070", fontSize: 12, marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>Everyone with Lunch & Learn access sees this link on their page. Update it before each session.</p>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <input value={link} onChange={e => setLink(e.target.value)} placeholder="https://zoom.us/j/..." style={{ ...inp, marginBottom: 0, flex: 1, minWidth: 240 }} />
           <button onClick={saveLink} style={btnRed}>Save Link</button>
@@ -1924,7 +1924,7 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
       {/* Comp codes */}
       <div style={section}>
         <div style={heading}><Ticket size={13} color="#b80101" /> Comp Codes</div>
-        <p style={{ color: "#8a7a66", fontSize: 12, marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>Generate codes Dr. Merritt can hand out. Each grants 6 months of Lunch & Learn access, free.</p>
+        <p style={{ color: "#8a7070", fontSize: 12, marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>Generate codes Dr. Merritt can hand out. Each grants 6 months of Lunch & Learn access, free.</p>
         <div style={{ display: "flex", gap: 10, alignItems: "flex-end", flexWrap: "wrap", marginBottom: 16 }}>
           <div>
             <label style={lbl}>Uses per code</label>
@@ -1937,9 +1937,9 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
         {data.coupons.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 220, overflowY: "auto" }}>
             {data.coupons.map(c => (
-              <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "#faf6ed", border: "1px solid #241010", borderRadius: 8, padding: "10px 14px", flexWrap: "wrap" }}>
-                <code style={{ color: "#8a6a28", fontSize: 14, letterSpacing: "1px", flex: 1, minWidth: 140 }}>{c.code}</code>
-                <span style={{ color: c.used_count >= c.max_uses ? "#b80101" : "#7a6151", fontSize: 12, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>{c.used_count}/{c.max_uses} used</span>
+              <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "#0a0505", border: "1px solid #241010", borderRadius: 8, padding: "10px 14px", flexWrap: "wrap" }}>
+                <code style={{ color: "#e0c4c4", fontSize: 14, letterSpacing: "1px", flex: 1, minWidth: 140 }}>{c.code}</code>
+                <span style={{ color: c.used_count >= c.max_uses ? "#b80101" : "#8a7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>{c.used_count}/{c.max_uses} used</span>
                 <button onClick={() => { navigator.clipboard && navigator.clipboard.writeText(c.code); flash(true, "Copied " + c.code); }} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Copy</button>
               </div>
             ))}
@@ -1950,7 +1950,7 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
       {/* Recordings */}
       <div style={section}>
         <div style={heading}><Video size={13} color="#b80101" /> Session Recordings</div>
-        <p style={{ color: "#8a7a66", fontSize: 12, marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>Upload the video to YouTube as Unlisted, then paste the link here. It appears instantly on the Lunch & Learn page for everyone with access (and Premium+).</p>
+        <p style={{ color: "#8a7070", fontSize: 12, marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>Upload the video to YouTube as Unlisted, then paste the link here. It appears instantly on the Lunch & Learn page for everyone with access (and Premium+).</p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
           <div><label style={lbl}>Title</label><input value={recForm.title} onChange={e => setRecForm({ ...recForm, title: e.target.value })} placeholder="Capital Stacks 101" style={inp} /></div>
           <div><label style={lbl}>YouTube link</label><input value={recForm.url} onChange={e => setRecForm({ ...recForm, url: e.target.value })} placeholder="https://youtu.be/…" style={inp} /></div>
@@ -1961,10 +1961,10 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
         {data.recordings && data.recordings.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 14, maxHeight: 220, overflowY: "auto" }}>
             {data.recordings.map(r => (
-              <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "#faf6ed", border: "1px solid #241010", borderRadius: 8, padding: "10px 14px", flexWrap: "wrap" }}>
+              <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "#0a0505", border: "1px solid #241010", borderRadius: 8, padding: "10px 14px", flexWrap: "wrap" }}>
                 <div style={{ flex: 1, minWidth: 160 }}>
-                  <span style={{ color: "#2c2014", fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{r.title}</span>
-                  <span style={{ color: "#8a7660", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 8 }}>{r.date}</span>
+                  <span style={{ color: "#f0d8d8", fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{r.title}</span>
+                  <span style={{ color: "#8a6060", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 8 }}>{r.date}</span>
                 </div>
                 <button onClick={() => removeRecording(r)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Remove</button>
               </div>
@@ -1976,16 +1976,16 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
       {/* Topic requests */}
       <div style={section}>
         <div style={{ ...heading, cursor: "pointer" }} onClick={() => setShowRequests(!showRequests)}>
-          <Inbox size={13} color="#b80101" /> Topic Requests ({data.requests.length}) <span style={{ marginLeft: "auto", color: "#a09378" }}>{showRequests ? "Hide" : "Show"}</span>
+          <Inbox size={13} color="#b80101" /> Topic Requests ({data.requests.length}) <span style={{ marginLeft: "auto", color: "#5a4040" }}>{showRequests ? "Hide" : "Show"}</span>
         </div>
         {showRequests && (data.requests.length === 0 ? (
-          <p style={{ color: "#a09378", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No submissions yet — attendees are asked what they want to learn when they get access.</p>
+          <p style={{ color: "#5a4040", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No submissions yet — attendees are asked what they want to learn when they get access.</p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 320, overflowY: "auto" }}>
             {data.requests.map(r => (
-              <div key={r.id} style={{ background: "#faf6ed", border: "1px solid #241010", borderRadius: 8, padding: "12px 16px" }}>
-                <div style={{ color: "#4a3c2c", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 6 }}>{r.body}</div>
-                <div style={{ color: "#a09378", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>{r.name || "Unknown"} · {r.email || ""} · {new Date(r.created_at).toLocaleDateString()}</div>
+              <div key={r.id} style={{ background: "#0a0505", border: "1px solid #241010", borderRadius: 8, padding: "12px 16px" }}>
+                <div style={{ color: "#c8a8a8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 6 }}>{r.body}</div>
+                <div style={{ color: "#5a4040", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>{r.name || "Unknown"} · {r.email || ""} · {new Date(r.created_at).toLocaleDateString()}</div>
               </div>
             ))}
           </div>
@@ -1996,16 +1996,16 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
       <div style={section}>
         <div style={heading}><UsersIcon size={13} color="#b80101" /> Active Access ({data.attendees.length})</div>
         {data.attendees.length === 0 ? (
-          <p style={{ color: "#a09378", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No one has Lunch & Learn access yet. Grant it from the Users tab, sell it, or hand out a comp code.</p>
+          <p style={{ color: "#5a4040", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No one has Lunch & Learn access yet. Grant it from the Users tab, sell it, or hand out a comp code.</p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 220, overflowY: "auto" }}>
             {data.attendees.map(a => (
-              <div key={a.id + (a.expires_at || "")} style={{ display: "flex", alignItems: "center", gap: 12, background: "#faf6ed", border: "1px solid #241010", borderRadius: 8, padding: "10px 14px", flexWrap: "wrap" }}>
+              <div key={a.id + (a.expires_at || "")} style={{ display: "flex", alignItems: "center", gap: 12, background: "#0a0505", border: "1px solid #241010", borderRadius: 8, padding: "10px 14px", flexWrap: "wrap" }}>
                 <div style={{ flex: 1, minWidth: 160 }}>
-                  <span style={{ color: "#2c2014", fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{a.name}</span>
-                  <span style={{ color: "#8a7660", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 8 }}>{a.email}</span>
+                  <span style={{ color: "#f0d8d8", fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{a.name}</span>
+                  <span style={{ color: "#8a6060", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 8 }}>{a.email}</span>
                 </div>
-                <span style={{ color: "#7a6151", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>{a.source === "coupon" ? "Comped" : a.source === "manual" ? "Granted" : "Paid"} · through {a.expires_at ? new Date(a.expires_at).toLocaleDateString() : "—"}</span>
+                <span style={{ color: "#8a7070", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>{a.source === "coupon" ? "Comped" : a.source === "manual" ? "Granted" : "Paid"} · through {a.expires_at ? new Date(a.expires_at).toLocaleDateString() : "—"}</span>
               </div>
             ))}
           </div>
@@ -2075,10 +2075,10 @@ function AdminPanel({ onLogout, onExit }) {
     })();
   }, []);
 
-  const inp = { width: "100%", background: "#f3ecdd", border: "1px solid #3a1515", borderRadius: 8, padding: "10px 14px", color: "#2c2014", fontSize: 13, fontFamily: "'DM Sans', sans-serif", outline: "none", marginBottom: 12 };
-  const lbl = { fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", display: "block", marginBottom: 6 };
+  const inp = { width: "100%", background: "#140a0a", border: "1px solid #3a1515", borderRadius: 8, padding: "10px 14px", color: "#f0d8d8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", outline: "none", marginBottom: 12 };
+  const lbl = { fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", display: "block", marginBottom: 6 };
   const btnRed = { background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer" };
-  const btnGhost = { background: "transparent", color: "#7a6151", border: "1px solid #3a1515", borderRadius: 8, padding: "9px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 12, cursor: "pointer" };
+  const btnGhost = { background: "transparent", color: "#8a7070", border: "1px solid #3a1515", borderRadius: 8, padding: "9px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 12, cursor: "pointer" };
 
   const unread = inbox.filter(m => m.status === "unread").length;
 
@@ -2090,13 +2090,13 @@ function AdminPanel({ onLogout, onExit }) {
   const saveLunchRecordings = async (data) => { setLunchRecordings(data); await window.storage.set("admin:lunchRecordings", JSON.stringify(data)); };
   const saveEventInvites = async (data) => { setEventInvites(data); await window.storage.set("admin:eventInvites", JSON.stringify(data)); };
 
-  if (loading) return <div style={{ minHeight: "100vh", background: "#f2ece2", display: "flex", alignItems: "center", justifyContent: "center", color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
+  if (loading) return <div style={{ minHeight: "100vh", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center", color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f2ece2", fontFamily: "'DM Sans', sans-serif" }}>
-      <div style={{ background: "#faf6ed", borderBottom: "1px solid #3a1515", padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 60 }}>
+    <div style={{ minHeight: "100vh", background: "#000000", fontFamily: "'DM Sans', sans-serif" }}>
+      <div style={{ background: "#0a0505", borderBottom: "1px solid #3a1515", padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 60 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 20, color: "#241a10" }}>GroundUp Admin</div>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 20, color: "#f5e8e8" }}>GroundUp Admin</div>
           <span style={{ background: "#b8010120", color: "#b80101", border: "1px solid #b8010140", borderRadius: 4, padding: "2px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "1px" }}>ADMIN</span>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
@@ -2105,9 +2105,9 @@ function AdminPanel({ onLogout, onExit }) {
         </div>
       </div>
       <div style={{ display: "flex", minHeight: "calc(100vh - 60px)" }}>
-        <div style={{ width: 220, background: "#ece4d4", borderRight: "1px solid #2a1010", padding: "24px 12px", flexShrink: 0 }}>
+        <div style={{ width: 220, background: "#0a0505", borderRight: "1px solid #2a1010", padding: "24px 12px", flexShrink: 0 }}>
           {[{ id: "lunch", label: "Lunch & Learn", Icon: Calendar }, { id: "inbox", label: "Inbox", Icon: Inbox }, { id: "courses", label: "Courses", Icon: GraduationCap }, { id: "referrals", label: "Referrals", Icon: Link2 }, { id: "users", label: "Users", Icon: UsersIcon }, { id: "email", label: "Email", Icon: Send }, { id: "waitlist", label: "Waitlist", Icon: Hourglass }, { id: "resources", label: "Resources", Icon: FolderOpen }, { id: "revenue", label: "Revenue", Icon: DollarSign }].map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{ width: "100%", textAlign: "left", background: tab === t.id ? "#f3ecdd" : "transparent", color: tab === t.id ? "#2c2014" : "#8a7a66", border: tab === t.id ? "1px solid #3a1515" : "1px solid transparent", borderRadius: 8, padding: "10px 14px", marginBottom: 4, cursor: "pointer", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
+            <button key={t.id} onClick={() => setTab(t.id)} style={{ width: "100%", textAlign: "left", background: tab === t.id ? "#140a0a" : "transparent", color: tab === t.id ? "#f0d8d8" : "#8a7070", border: tab === t.id ? "1px solid #3a1515" : "1px solid transparent", borderRadius: 8, padding: "10px 14px", marginBottom: 4, cursor: "pointer", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
               <t.Icon size={15} /><span>{t.label}</span>
               {t.id === "inbox" && unread > 0 && <span style={{ marginLeft: "auto", background: "#b80101", color: "#fff", borderRadius: 99, fontSize: 10, fontWeight: 800, padding: "1px 7px" }}>{unread}</span>}
             </button>
@@ -2118,38 +2118,38 @@ function AdminPanel({ onLogout, onExit }) {
 
           {tab === "lunch" && (
             <div style={{ maxWidth: 700 }}>
-              <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#241a10", marginBottom: 8 }}>Lunch & Learn</h2>
-              <p style={{ color: "#8a7a66", fontSize: 13, marginBottom: 32 }}>Access, comp codes, topic requests, and the live session link.</p>
+              <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Lunch & Learn</h2>
+              <p style={{ color: "#8a7070", fontSize: 13, marginBottom: 32 }}>Access, comp codes, topic requests, and the live session link.</p>
               <LnLManager btnRed={btnRed} btnGhost={btnGhost} inp={inp} lbl={lbl} />
 
               {lunchEvent && lunchEvent.status !== "cancelled" && (
-                <div style={{ background: "#ffffff", border: "1px solid #3a1515", borderRadius: 14, padding: 28, marginBottom: 32 }}>
-                  <div style={{ fontSize: 10, color: lunchEvent.status === "confirmed" ? "#1a9a4a" : "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 8 }}>{lunchEvent.status === "confirmed" ? "✓ Confirmed" : "● Active"}</div>
-                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#2c2014", fontWeight: 700, marginBottom: 4 }}>{lunchEvent.title}</div>
-                  <div style={{ color: "#7a6151", fontSize: 13, marginBottom: 8 }}>{lunchEvent.date}{lunchEvent.time ? " · " + lunchEvent.time : ""}</div>
-                  {lunchEvent.description && <div style={{ color: "#8a7660", fontSize: 13, lineHeight: 1.6, marginBottom: 8 }}>{lunchEvent.description}</div>}
-                  {lunchEvent.zoomLink && <div style={{ marginBottom: 8 }}><span style={{ fontSize: 11, color: "#7a6151", fontWeight: 700 }}>Zoom: </span><a href={lunchEvent.zoomLink} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontSize: 13 }}>{lunchEvent.zoomLink}</a></div>}
+                <div style={{ background: "#0d0404", border: "1px solid #3a1515", borderRadius: 14, padding: 28, marginBottom: 32 }}>
+                  <div style={{ fontSize: 10, color: lunchEvent.status === "confirmed" ? "#22c55e" : "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 8 }}>{lunchEvent.status === "confirmed" ? "✓ Confirmed" : "● Active"}</div>
+                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#f0d8d8", fontWeight: 700, marginBottom: 4 }}>{lunchEvent.title}</div>
+                  <div style={{ color: "#8a7070", fontSize: 13, marginBottom: 8 }}>{lunchEvent.date}{lunchEvent.time ? " · " + lunchEvent.time : ""}</div>
+                  {lunchEvent.description && <div style={{ color: "#8a6060", fontSize: 13, lineHeight: 1.6, marginBottom: 8 }}>{lunchEvent.description}</div>}
+                  {lunchEvent.zoomLink && <div style={{ marginBottom: 8 }}><span style={{ fontSize: 11, color: "#8a7070", fontWeight: 700 }}>Zoom: </span><a href={lunchEvent.zoomLink} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontSize: 13 }}>{lunchEvent.zoomLink}</a></div>}
                   <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
                     {lunchEvent.status !== "confirmed" && <button onClick={() => saveLunch({ ...lunchEvent, status: "confirmed" })} style={btnRed}>✓ Confirm Event</button>}
                     <button onClick={() => saveLunch({ ...lunchEvent, status: "cancelled" })} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010140" }}>Cancel Event</button>
                   </div>
-                  {lunchMsg && <div style={{ color: "#1a9a4a", fontSize: 12, marginTop: 12 }}>{lunchMsg}</div>}
+                  {lunchMsg && <div style={{ color: "#22c55e", fontSize: 12, marginTop: 12 }}>{lunchMsg}</div>}
                 </div>
               )}
 
-              <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 32 }}>
-                <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 16 }}>RSVPs ({rsvps.length})</div>
-                {rsvps.length === 0 ? <div style={{ color: "#a09378", fontSize: 13 }}>No RSVPs yet.</div> : rsvps.map((r, i) => (
+              <div style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 32 }}>
+                <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 16 }}>RSVPs ({rsvps.length})</div>
+                {rsvps.length === 0 ? <div style={{ color: "#5a4040", fontSize: 13 }}>No RSVPs yet.</div> : rsvps.map((r, i) => (
                   <div key={i} style={{ background: "#1a0e0e", border: "1px solid #2e1515", borderRadius: 8, padding: "10px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ color: "#2c2014", fontSize: 13 }}>{r.name || "Anonymous"}</span>
-                    {r.email && <span style={{ color: "#8a7660", fontSize: 12 }}>{r.email}</span>}
+                    <span style={{ color: "#f0d8d8", fontSize: 13 }}>{r.name || "Anonymous"}</span>
+                    {r.email && <span style={{ color: "#8a6060", fontSize: 12 }}>{r.email}</span>}
                   </div>
                 ))}
               </div>
 
               {(!lunchEvent || lunchEvent.status === "cancelled") && (
-                <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28 }}>
-                  <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Create New Event</div>
+                <div style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 14, padding: 28 }}>
+                  <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Create New Event</div>
                   <label style={lbl}>Title</label>
                   <input value={lunchForm.title} onChange={e => setLunchForm({ ...lunchForm, title: e.target.value })} placeholder="e.g. Lunch & Learn: Financing Without Tax Credits" style={inp} />
                   <label style={lbl}>Date</label>
@@ -2172,8 +2172,8 @@ function AdminPanel({ onLogout, onExit }) {
 
               {/* ─── Past Recordings ─── */}
               <div style={{ marginTop: 48 }}>
-                <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Past Recordings</div>
-                <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 24 }}>
+                <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Past Recordings</div>
+                <div style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 24 }}>
                   <label style={lbl}>Title</label>
                   <input value={recTitle} onChange={e => setRecTitle(e.target.value)} placeholder="e.g. Lunch & Learn: HUD Programs" style={inp} />
                   <label style={lbl}>Date</label>
@@ -2182,7 +2182,7 @@ function AdminPanel({ onLogout, onExit }) {
                   <textarea value={recDescription} onChange={e => setRecDescription(e.target.value)} rows={2} style={{ ...inp, resize: "vertical", height: 60 }} />
                   <label style={lbl}>YouTube URL</label>
                   <input value={recUrl} onChange={e => setRecUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." style={inp} />
-                  {recMsg && <div style={{ color: recMsg.includes("Added") ? "#1a9a4a" : "#b80101", fontSize: 12, marginBottom: 12 }}>{recMsg}</div>}
+                  {recMsg && <div style={{ color: recMsg.includes("Added") ? "#22c55e" : "#b80101", fontSize: 12, marginBottom: 12 }}>{recMsg}</div>}
                   <button onClick={async () => {
                     if (!recTitle || !recDate) { setRecMsg("Title and date required."); setTimeout(() => setRecMsg(""), 3000); return; }
                     if (!recUrl.trim()) { setRecMsg("YouTube URL required."); setTimeout(() => setRecMsg(""), 3000); return; }
@@ -2199,14 +2199,14 @@ function AdminPanel({ onLogout, onExit }) {
 
                 {lunchRecordings.length > 0 && (
                   <div>
-                    <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 12 }}>Recordings ({lunchRecordings.length})</div>
+                    <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 12 }}>Recordings ({lunchRecordings.length})</div>
                     {lunchRecordings.map(rec => (
-                      <div key={rec.id} style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
+                      <div key={rec.id} style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
                         <img src={`https://img.youtube.com/vi/${rec.videoId}/default.jpg`} alt="" style={{ width: 80, height: 60, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ color: "#2c2014", fontSize: 14, fontWeight: 700 }}>{rec.title}</div>
-                          <div style={{ color: "#7a6151", fontSize: 12 }}>{rec.date}</div>
-                          {rec.description && <div style={{ color: "#8a7a66", fontSize: 12, marginTop: 2 }}>{rec.description}</div>}
+                          <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 700 }}>{rec.title}</div>
+                          <div style={{ color: "#8a7070", fontSize: 12 }}>{rec.date}</div>
+                          {rec.description && <div style={{ color: "#8a7070", fontSize: 12, marginTop: 2 }}>{rec.description}</div>}
                         </div>
                         <button onClick={async () => {
                           if (!window.confirm("Remove this recording?")) return;
@@ -2220,9 +2220,9 @@ function AdminPanel({ onLogout, onExit }) {
 
               {/* ─── Event Invites ─── */}
               <div style={{ marginTop: 48 }}>
-                <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Event Invites</div>
-                <p style={{ color: "#8a7a66", fontSize: 13, marginBottom: 20 }}>Generate invite links to let non-paid users RSVP for events.</p>
-                <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 24 }}>
+                <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Event Invites</div>
+                <p style={{ color: "#8a7070", fontSize: 13, marginBottom: 20 }}>Generate invite links to let non-paid users RSVP for events.</p>
+                <div style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 24 }}>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                     <div>
                       <label style={lbl}>Recipient Name</label>
@@ -2233,7 +2233,7 @@ function AdminPanel({ onLogout, onExit }) {
                       <input value={eventInvEmail} onChange={e => setEventInvEmail(e.target.value)} type="email" placeholder="jane@email.com" style={inp} />
                     </div>
                   </div>
-                  {eventInvMsg && <div style={{ color: eventInvMsg.includes("created") ? "#1a9a4a" : "#b80101", fontSize: 12, marginBottom: 12 }}>{eventInvMsg}</div>}
+                  {eventInvMsg && <div style={{ color: eventInvMsg.includes("created") ? "#22c55e" : "#b80101", fontSize: 12, marginBottom: 12 }}>{eventInvMsg}</div>}
                   <button onClick={async () => {
                     if (!eventInvName || !eventInvEmail) { setEventInvMsg("Name and email required."); return; }
                     const code = Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -2247,17 +2247,17 @@ function AdminPanel({ onLogout, onExit }) {
 
                 {eventInvites.length > 0 && (
                   <div>
-                    <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 12 }}>Sent Invites ({eventInvites.length})</div>
+                    <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 12 }}>Sent Invites ({eventInvites.length})</div>
                     {eventInvites.map(inv => {
                       const link = `${window.location.origin}${window.location.pathname}?eventInvite=${inv.code}`;
                       return (
-                        <div key={inv.id} style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
+                        <div key={inv.id} style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ color: "#2c2014", fontSize: 14, fontWeight: 700 }}>{inv.name}</div>
-                            <div style={{ color: "#7a6151", fontSize: 12 }}>{inv.email}</div>
-                            {inv.eventTitle && <div style={{ color: "#8a7a66", fontSize: 11, marginTop: 2 }}>{inv.eventTitle}</div>}
+                            <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 700 }}>{inv.name}</div>
+                            <div style={{ color: "#8a7070", fontSize: 12 }}>{inv.email}</div>
+                            {inv.eventTitle && <div style={{ color: "#8a7070", fontSize: 11, marginTop: 2 }}>{inv.eventTitle}</div>}
                           </div>
-                          <span style={{ fontSize: 10, fontWeight: 700, color: inv.used ? "#1a9a4a" : "#a08030", letterSpacing: "1px", textTransform: "uppercase", flexShrink: 0 }}>{inv.used ? "Used" : "Pending"}</span>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: inv.used ? "#22c55e" : "#a08030", letterSpacing: "1px", textTransform: "uppercase", flexShrink: 0 }}>{inv.used ? "Used" : "Pending"}</span>
                           <button onClick={() => { navigator.clipboard.writeText(link); setEventInvCopied(inv.id); setTimeout(() => setEventInvCopied(null), 2000); }} style={{ ...btnGhost, flexShrink: 0 }}>{eventInvCopied === inv.id ? "✓ Copied" : "Copy Link"}</button>
                         </div>
                       );
@@ -2270,24 +2270,24 @@ function AdminPanel({ onLogout, onExit }) {
 
           {tab === "inbox" && (
             <div style={{ maxWidth: 700 }}>
-              <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#241a10", marginBottom: 8 }}>Inbox</h2>
-              <p style={{ color: "#8a7a66", fontSize: 13, marginBottom: 32 }}>1-on-1 session requests from students.</p>
+              <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Inbox</h2>
+              <p style={{ color: "#8a7070", fontSize: 13, marginBottom: 32 }}>1-on-1 session requests from students.</p>
               {inbox.length === 0 ? (
-                <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#a09378", fontSize: 14 }}>No messages yet.</div>
+                <div style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#5a4040", fontSize: 14 }}>No messages yet.</div>
               ) : inbox.map(msg => (
-                <div key={msg.id} style={{ background: "#ffffff", border: "1px solid " + (msg.status === "unread" ? "#d8ccb4" : "#e2d8c2"), borderRadius: 14, padding: 24, marginBottom: 14, opacity: msg.status === "responded" ? 0.6 : 1 }}>
+                <div key={msg.id} style={{ background: "#0d0404", border: "1px solid " + (msg.status === "unread" ? "#2a0000" : "#1a0000"), borderRadius: 14, padding: 24, marginBottom: 14, opacity: msg.status === "responded" ? 0.6 : 1 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                         {msg.status === "unread" && <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />}
-                        <span style={{ color: "#2c2014", fontSize: 15, fontWeight: 700 }}>{msg.name}</span>
-                        {msg.sessionType && <span style={{ background: "#f3ecdd", color: "#b80101", border: "1px solid #3a1515", borderRadius: 4, padding: "2px 8px", fontSize: 10, fontWeight: 700 }}>{msg.sessionType}</span>}
+                        <span style={{ color: "#f0d8d8", fontSize: 15, fontWeight: 700 }}>{msg.name}</span>
+                        {msg.sessionType && <span style={{ background: "#140a0a", color: "#b80101", border: "1px solid #3a1515", borderRadius: 4, padding: "2px 8px", fontSize: 10, fontWeight: 700 }}>{msg.sessionType}</span>}
                       </div>
-                      <div style={{ color: "#8a7660", fontSize: 12 }}>{msg.email}</div>
+                      <div style={{ color: "#8a6060", fontSize: 12 }}>{msg.email}</div>
                     </div>
-                    <span style={{ background: msg.status === "responded" ? "#0f3020" : msg.status === "read" ? "#1a1a0a" : "#f3ecdd", color: msg.status === "responded" ? "#1a9a4a" : msg.status === "read" ? "#a0a020" : "#b80101", borderRadius: 4, padding: "2px 10px", fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>{msg.status}</span>
+                    <span style={{ background: msg.status === "responded" ? "#0f3020" : msg.status === "read" ? "#1a1a0a" : "#140a0a", color: msg.status === "responded" ? "#22c55e" : msg.status === "read" ? "#a0a020" : "#b80101", borderRadius: 4, padding: "2px 10px", fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>{msg.status}</span>
                   </div>
-                  <div style={{ color: "#9a8080", fontSize: 14, lineHeight: 1.75, background: "#faf6ed", borderRadius: 8, padding: "12px 16px", marginBottom: 14 }}>{msg.message}</div>
+                  <div style={{ color: "#9a8080", fontSize: 14, lineHeight: 1.75, background: "#0a0505", borderRadius: 8, padding: "12px 16px", marginBottom: 14 }}>{msg.message}</div>
                   <div style={{ display: "flex", gap: 8 }}>
                     {msg.status === "unread" && <button onClick={() => saveInboxData(inbox.map(m => m.id === msg.id ? { ...m, status: "read" } : m))} style={btnGhost}>Mark Read</button>}
                     {msg.status !== "responded" && <button onClick={() => saveInboxData(inbox.map(m => m.id === msg.id ? { ...m, status: "responded" } : m))} style={btnRed}>Mark Responded</button>}
@@ -2300,10 +2300,10 @@ function AdminPanel({ onLogout, onExit }) {
 
           {tab === "courses" && (
             <div style={{ maxWidth: 800 }}>
-              <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#241a10", marginBottom: 8 }}>Courses</h2>
-              <p style={{ color: "#8a7a66", fontSize: 13, marginBottom: 32 }}>Add or remove courses from the platform.</p>
-              <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 32 }}>
-                <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Add New Course</div>
+              <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Courses</h2>
+              <p style={{ color: "#8a7070", fontSize: 13, marginBottom: 32 }}>Add or remove courses from the platform.</p>
+              <div style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 32 }}>
+                <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Add New Course</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                   <div><label style={lbl}>Title</label><input value={newCourse.title} onChange={e => setNewCourse({ ...newCourse, title: e.target.value })} placeholder="Course title" style={inp} /></div>
                   <div><label style={lbl}>Stage</label><input value={newCourse.stage} onChange={e => setNewCourse({ ...newCourse, stage: e.target.value })} placeholder="e.g. Stage 5 of 4" style={inp} /></div>
@@ -2311,7 +2311,7 @@ function AdminPanel({ onLogout, onExit }) {
                 </div>
                 <label style={lbl}>Description</label>
                 <textarea value={newCourse.description} onChange={e => setNewCourse({ ...newCourse, description: e.target.value })} rows={3} style={{ ...inp, resize: "vertical", height: 80 }} />
-                {courseMsg && <div style={{ color: courseMsg.includes("success") ? "#1a9a4a" : "#b80101", fontSize: 12, marginBottom: 12 }}>{courseMsg}</div>}
+                {courseMsg && <div style={{ color: courseMsg.includes("success") ? "#22c55e" : "#b80101", fontSize: 12, marginBottom: 12 }}>{courseMsg}</div>}
                 <button onClick={async () => {
                   if (!newCourse.title) { setCourseMsg("Title required."); return; }
                   await saveCourseData([...courses, { ...newCourse, id: Date.now().toString() }]);
@@ -2320,14 +2320,14 @@ function AdminPanel({ onLogout, onExit }) {
                   setTimeout(() => setCourseMsg(""), 3000);
                 }} style={btnRed}>Add Course</button>
               </div>
-              <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 16 }}>Added Courses ({courses.length})</div>
+              <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 16 }}>Added Courses ({courses.length})</div>
               {courses.length === 0 ? (
-                <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 32, textAlign: "center", color: "#a09378", fontSize: 13 }}>No courses added yet.</div>
+                <div style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 14, padding: 32, textAlign: "center", color: "#5a4040", fontSize: 13 }}>No courses added yet.</div>
               ) : courses.map(c => (
-                <div key={c.id} style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 12, padding: "18px 22px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 12 }}>
+                <div key={c.id} style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 12, padding: "18px 22px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 12 }}>
                   <div>
                     <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: 4 }}>{c.stage} · {c.duration}</div>
-                    <div style={{ color: "#2c2014", fontSize: 15, fontWeight: 700 }}>{c.title}</div>
+                    <div style={{ color: "#f0d8d8", fontSize: 15, fontWeight: 700 }}>{c.title}</div>
                   </div>
                   <button onClick={async () => { if (window.confirm("Remove?")) await saveCourseData(courses.filter(x => x.id !== c.id)); }} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", flexShrink: 0 }}>Remove</button>
                 </div>
@@ -2335,8 +2335,8 @@ function AdminPanel({ onLogout, onExit }) {
 
               {/* ─── Lesson PDF Attachments ─── */}
               <div style={{ marginTop: 48 }}>
-                <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Lesson PDF Attachments</div>
-                <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 24 }}>
+                <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Lesson PDF Attachments</div>
+                <div style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 24 }}>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
                     <div>
                       <label style={lbl}>Course</label>
@@ -2380,23 +2380,23 @@ function AdminPanel({ onLogout, onExit }) {
                     <button onClick={() => { if (!pdfCourse || !pdfLesson) { setPdfMsg("Select a course and lesson first."); setTimeout(() => setPdfMsg(""), 3000); return; } document.getElementById("pdf-upload-input").click(); }} disabled={pdfUploading} style={{ ...btnRed, opacity: pdfUploading ? 0.6 : 1 }}>
                       {pdfUploading ? "Uploading..." : "Upload PDF"}
                     </button>
-                    {pdfMsg && <span style={{ color: pdfMsg.includes("success") ? "#1a9a4a" : "#b80101", fontSize: 12 }}>{pdfMsg}</span>}
+                    {pdfMsg && <span style={{ color: pdfMsg.includes("success") ? "#22c55e" : "#b80101", fontSize: 12 }}>{pdfMsg}</span>}
                   </div>
                 </div>
 
                 {Object.keys(lessonPdfs).length > 0 && (
                   <div>
-                    <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 12 }}>Assigned PDFs ({Object.keys(lessonPdfs).length})</div>
+                    <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 12 }}>Assigned PDFs ({Object.keys(lessonPdfs).length})</div>
                     {Object.entries(lessonPdfs).map(([key, pdf]) => {
                       const [cId, lId] = key.split(":");
                       const course = miniCourses.find(c => c.id === cId);
                       const lesson = course?.lessons.find(l => String(l.id) === lId);
                       return (
-                        <div key={key} style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, marginBottom: 10 }}>
+                        <div key={key} style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, marginBottom: 10 }}>
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: 3 }}>{course?.title || cId}</div>
-                            <div style={{ color: "#2c2014", fontSize: 14, fontWeight: 600, marginBottom: 2 }}>Lesson {lId}: {lesson?.title || "Unknown"}</div>
-                            <div style={{ color: "#8a7a66", fontSize: 11, display: "flex", alignItems: "center", gap: 6 }}><FileText size={12} /> {pdf.filename} · {new Date(pdf.uploadedAt).toLocaleDateString()}</div>
+                            <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 600, marginBottom: 2 }}>Lesson {lId}: {lesson?.title || "Unknown"}</div>
+                            <div style={{ color: "#8a7070", fontSize: 11, display: "flex", alignItems: "center", gap: 6 }}><FileText size={12} /> {pdf.filename} · {new Date(pdf.uploadedAt).toLocaleDateString()}</div>
                           </div>
                           <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                             <button onClick={() => { setPdfCourse(cId); setPdfLesson(lId); document.getElementById("pdf-upload-input").click(); }} style={btnGhost}>Replace</button>
@@ -2417,8 +2417,8 @@ function AdminPanel({ onLogout, onExit }) {
 
               {/* ─── Lesson Video Attachments ─── */}
               <div style={{ marginTop: 48 }}>
-                <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Lesson Video Attachments</div>
-                <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 24 }}>
+                <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 20 }}>Lesson Video Attachments</div>
+                <div style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 24 }}>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
                     <div>
                       <label style={lbl}>Course</label>
@@ -2457,25 +2457,25 @@ function AdminPanel({ onLogout, onExit }) {
                       setVideoMsg("Video added successfully.");
                       setTimeout(() => setVideoMsg(""), 4000);
                     }} style={btnRed}>Add Video</button>
-                    {videoMsg && <span style={{ color: videoMsg.includes("success") ? "#1a9a4a" : "#b80101", fontSize: 12 }}>{videoMsg}</span>}
+                    {videoMsg && <span style={{ color: videoMsg.includes("success") ? "#22c55e" : "#b80101", fontSize: 12 }}>{videoMsg}</span>}
                   </div>
                 </div>
 
                 {Object.keys(lessonVideos).length > 0 && (
                   <div>
-                    <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 12 }}>Assigned Videos ({Object.keys(lessonVideos).length})</div>
+                    <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 12 }}>Assigned Videos ({Object.keys(lessonVideos).length})</div>
                     {Object.entries(lessonVideos).map(([key, video]) => {
                       const [cId, lId] = key.split(":");
                       const course = miniCourses.find(c => c.id === cId);
                       const lesson = course?.lessons.find(l => String(l.id) === lId);
                       return (
-                        <div key={key} style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, marginBottom: 10 }}>
+                        <div key={key} style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, marginBottom: 10 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
                             <img src={`https://img.youtube.com/vi/${video.videoId}/default.jpg`} alt="" style={{ width: 60, height: 45, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
                             <div style={{ minWidth: 0 }}>
                               <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: 3 }}>{course?.title || cId}</div>
-                              <div style={{ color: "#2c2014", fontSize: 14, fontWeight: 600, marginBottom: 2 }}>Lesson {lId}: {lesson?.title || "Unknown"}</div>
-                              <div style={{ color: "#8a7a66", fontSize: 11, display: "flex", alignItems: "center", gap: 6 }}><Video size={12} /> {video.title || "YouTube Video"} · {new Date(video.addedAt).toLocaleDateString()}</div>
+                              <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 600, marginBottom: 2 }}>Lesson {lId}: {lesson?.title || "Unknown"}</div>
+                              <div style={{ color: "#8a7070", fontSize: 11, display: "flex", alignItems: "center", gap: 6 }}><Video size={12} /> {video.title || "YouTube Video"} · {new Date(video.addedAt).toLocaleDateString()}</div>
                             </div>
                           </div>
                           <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
@@ -2565,29 +2565,29 @@ function RevenueTab() {
   const trialPending = referrals.filter(r => !r.used && r.status === "pending").length;
 
   const statCard = (label, value, sub, color = "#b80101") => (
-    <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: "22px 24px" }}>
-      <div style={{ fontSize: 10, color: "#8a7a66", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>{label}</div>
+    <div style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 14, padding: "22px 24px" }}>
+      <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>{label}</div>
       <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 36, color, lineHeight: 1, marginBottom: 6 }}>{value}</div>
-      {sub && <div style={{ fontSize: 12, color: "#a09378", fontFamily: "'DM Sans', sans-serif" }}>{sub}</div>}
+      {sub && <div style={{ fontSize: 12, color: "#5a4040", fontFamily: "'DM Sans', sans-serif" }}>{sub}</div>}
     </div>
   );
 
   return (
     <div style={{ maxWidth: 780 }}>
-      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#241a10", marginBottom: 8 }}>Revenue</h2>
-      <p style={{ color: "#8a7a66", fontSize: 13, marginBottom: 32 }}>Based on current users and their plan tiers.</p>
+      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Revenue</h2>
+      <p style={{ color: "#8a7070", fontSize: 13, marginBottom: 32 }}>Based on current users and their plan tiers.</p>
 
       {/* Top stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 32 }}>
         {statCard("MRR", `$${mrr.toFixed(2)}`, `${paying.length} paying member${paying.length !== 1 ? "s" : ""}`)}
-        {statCard("ARR", `$${arr.toFixed(2)}`, "projected annual", "#2c2014")}
-        {statCard("Total Members", users.length, `${tierCounts.Free} on free tier`, "#8a8478")}
+        {statCard("ARR", `$${arr.toFixed(2)}`, "projected annual", "#f0d8d8")}
+        {statCard("Total Members", users.length, `${tierCounts.Free} on free tier`, "#6a6b69")}
         {statCard("Trial Conversions", trialConversions, `${trialPending} invites pending`, "#a08030")}
       </div>
 
       {/* Revenue by tier */}
-      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 20 }}>
-        <div style={{ fontSize: 10, color: "#8a7a66", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>Revenue by Tier</div>
+      <div style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 20 }}>
+        <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>Revenue by Tier</div>
         {["Basic", "Premium", "Elite"].map(t => {
           const rev = tierRevenue[t];
           const pct = mrr > 0 ? (rev / mrr) * 100 : 0;
@@ -2595,10 +2595,10 @@ function RevenueTab() {
           return (
             <div key={t} style={{ marginBottom: 18 }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 7 }}>
-                <span style={{ fontSize: 13, color: "#4a3c2c", fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{t} <span style={{ color: "#a09378", fontWeight: 400 }}>· {tierCounts[t]} user{tierCounts[t] !== 1 ? "s" : ""}</span></span>
-                <span style={{ fontSize: 13, color: "#2c2014", fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>${rev.toFixed(2)}/mo</span>
+                <span style={{ fontSize: 13, color: "#c8a8a8", fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{t} <span style={{ color: "#5a4040", fontWeight: 400 }}>· {tierCounts[t]} user{tierCounts[t] !== 1 ? "s" : ""}</span></span>
+                <span style={{ fontSize: 13, color: "#f0d8d8", fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>${rev.toFixed(2)}/mo</span>
               </div>
-              <div style={{ height: 8, background: "#e8dfca", borderRadius: 99, overflow: "hidden" }}>
+              <div style={{ height: 8, background: "#2a0000", borderRadius: 99, overflow: "hidden" }}>
                 <div style={{ height: "100%", width: `${pct}%`, background: `linear-gradient(90deg, ${color}, ${color}aa)`, borderRadius: 99, transition: "width 0.6s ease" }} />
               </div>
             </div>
@@ -2608,14 +2608,14 @@ function RevenueTab() {
       </div>
 
       {/* Signup trend */}
-      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 20 }}>
-        <div style={{ fontSize: 10, color: "#8a7a66", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>New Signups — Last 6 Months</div>
+      <div style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 20 }}>
+        <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>New Signups — Last 6 Months</div>
         <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 100 }}>
           {signupsByMonth.map((m, i) => (
             <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-              <div style={{ fontSize: 11, color: "#4a3c2c", fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>{m.count > 0 ? m.count : ""}</div>
-              <div style={{ width: "100%", background: m.count > 0 ? "#b80101" : "#e8dfca", borderRadius: "4px 4px 0 0", height: `${Math.max((m.count / maxSignups) * 72, m.count > 0 ? 8 : 4)}px`, transition: "height 0.4s ease" }} />
-              <div style={{ fontSize: 10, color: "#a09378", fontFamily: "'DM Sans', sans-serif" }}>{m.label}</div>
+              <div style={{ fontSize: 11, color: "#c8a8a8", fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>{m.count > 0 ? m.count : ""}</div>
+              <div style={{ width: "100%", background: m.count > 0 ? "#b80101" : "#2a0000", borderRadius: "4px 4px 0 0", height: `${Math.max((m.count / maxSignups) * 72, m.count > 0 ? 8 : 4)}px`, transition: "height 0.4s ease" }} />
+              <div style={{ fontSize: 10, color: "#5a4040", fontFamily: "'DM Sans', sans-serif" }}>{m.label}</div>
             </div>
           ))}
         </div>
@@ -2623,17 +2623,17 @@ function RevenueTab() {
       </div>
 
       {/* Referral conversion */}
-      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 24 }}>
-        <div style={{ fontSize: 10, color: "#8a7a66", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Referral Trials</div>
+      <div style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 14, padding: 24 }}>
+        <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Referral Trials</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
           {[
-            { label: "Sent", value: referrals.length, color: "#8a8478" },
+            { label: "Sent", value: referrals.length, color: "#6a6b69" },
             { label: "Activated", value: trialConversions, color: "#a08030" },
             { label: "Conversion Rate", value: referrals.length > 0 ? `${Math.round((trialConversions / referrals.length) * 100)}%` : "—", color: "#b80101" },
           ].map((s, i) => (
-            <div key={i} style={{ background: "#faf6ed", border: "1px solid #2a1010", borderRadius: 10, padding: "16px 14px", textAlign: "center" }}>
+            <div key={i} style={{ background: "#0a0505", border: "1px solid #2a1010", borderRadius: 10, padding: "16px 14px", textAlign: "center" }}>
               <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 30, color: s.color, lineHeight: 1, marginBottom: 4 }}>{s.value}</div>
-              <div style={{ fontSize: 10, color: "#a09378", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{s.label}</div>
+              <div style={{ fontSize: 10, color: "#5a4040", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -2645,7 +2645,7 @@ function RevenueTab() {
 // ─── USERS TAB ────────────────────────────────────────────────────────────────
 
 const TIERS = ["Free", "Basic", "Premium", "Elite"];
-const TIER_COLORS = { Free: "#8a8478", Basic: "#b80101", Premium: "#b80101", Elite: "#570404" };
+const TIER_COLORS = { Free: "#6a6b69", Basic: "#b80101", Premium: "#b80101", Elite: "#570404" };
 
 function UsersTab({ btnRed, btnGhost, inp, lbl }) {
   const [users, setUsers] = useState([]);
@@ -2720,15 +2720,15 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
 
   return (
     <div style={{ maxWidth: 800 }}>
-      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#241a10", marginBottom: 8 }}>Users & Team</h2>
-      <p style={{ color: "#8a7a66", fontSize: 13, marginBottom: 32 }}>Manage members, plan tiers, team access, and password resets.</p>
+      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Users & Team</h2>
+      <p style={{ color: "#8a7070", fontSize: 13, marginBottom: 32 }}>Manage members, plan tiers, team access, and password resets.</p>
 
       {tempPw && (
-        <div style={{ background: "#fdf6e6", border: "1px solid #e0c4c450", borderRadius: 14, padding: "18px 24px", marginBottom: 24, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+        <div style={{ background: "#0d0a04", border: "1px solid #e0c4c450", borderRadius: 14, padding: "18px 24px", marginBottom: 24, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
           <div style={{ flex: 1, minWidth: 220 }}>
-            <div style={{ fontSize: 10, color: "#8a6a28", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>Temporary password for {tempPw.name}</div>
-            <code style={{ color: "#2c2014", fontSize: 16, letterSpacing: "1px" }}>{tempPw.password}</code>
-            <div style={{ color: "#7a6151", fontSize: 11, fontFamily: "'DM Sans', sans-serif", marginTop: 6 }}>Share it with them privately — they can change it from their Membership page. It won't be shown again.</div>
+            <div style={{ fontSize: 10, color: "#e0c4c4", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>Temporary password for {tempPw.name}</div>
+            <code style={{ color: "#f0d8d8", fontSize: 16, letterSpacing: "1px" }}>{tempPw.password}</code>
+            <div style={{ color: "#8a7070", fontSize: 11, fontFamily: "'DM Sans', sans-serif", marginTop: 6 }}>Share it with them privately — they can change it from their Membership page. It won't be shown again.</div>
           </div>
           <button onClick={() => { navigator.clipboard && navigator.clipboard.writeText(tempPw.password); }} style={{ ...btnGhost, fontSize: 11 }}>Copy</button>
           <button onClick={() => setTempPw(null)} style={{ ...btnGhost, fontSize: 11 }}>Dismiss</button>
@@ -2738,16 +2738,16 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
       {/* Tier summary */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 32 }}>
         {TIERS.map(t => (
-          <div key={t} onClick={() => setFilterTier(filterTier === t ? "All" : t)} style={{ background: filterTier === t ? "#f3ecdd" : "#faf6ed", border: "1px solid " + (filterTier === t ? TIER_COLORS[t] + "60" : "#e2d8c2"), borderRadius: 12, padding: "16px 14px", textAlign: "center", cursor: "pointer", transition: "all 0.2s" }}>
+          <div key={t} onClick={() => setFilterTier(filterTier === t ? "All" : t)} style={{ background: filterTier === t ? "#140a0a" : "#0a0505", border: "1px solid " + (filterTier === t ? TIER_COLORS[t] + "60" : "#1a0000"), borderRadius: 12, padding: "16px 14px", textAlign: "center", cursor: "pointer", transition: "all 0.2s" }}>
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: TIER_COLORS[t], lineHeight: 1 }}>{tierCounts[t]}</div>
-            <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>{TIER_DISPLAY[t]}</div>
+            <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>{TIER_DISPLAY[t]}</div>
           </div>
         ))}
       </div>
 
       {/* Add user / team member */}
-      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 28 }}>
-        <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Add User or Team Member</div>
+      <div style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 28 }}>
+        <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Add User or Team Member</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, alignItems: "end" }}>
           <div>
             <label style={lbl}>Name</label>
@@ -2770,9 +2770,9 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
         </div>
         <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14, cursor: "pointer" }}>
           <input type="checkbox" checked={addForm.team} onChange={e => setAddForm({ ...addForm, team: e.target.checked })} />
-          <span style={{ color: "#4a3c2c", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>Team member — can post announcements, gets the TEAM badge, sees member DMs</span>
+          <span style={{ color: "#c8a8a8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>Team member — can post announcements, gets the TEAM badge, sees member DMs</span>
         </label>
-        {addMsg && <div style={{ color: addMsg.includes("added") ? "#1a9a4a" : "#b80101", fontSize: 12, marginTop: 8, fontFamily: "'DM Sans', sans-serif" }}>{addMsg}</div>}
+        {addMsg && <div style={{ color: addMsg.includes("added") ? "#22c55e" : "#b80101", fontSize: 12, marginTop: 8, fontFamily: "'DM Sans', sans-serif" }}>{addMsg}</div>}
         <button onClick={addUser} style={{ ...btnRed, marginTop: 14 }}>Add {addForm.team ? "Team Member" : "User"}</button>
       </div>
 
@@ -2788,18 +2788,18 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
 
       {/* Users list */}
       {filtered.length === 0 ? (
-        <div style={{ background: "#faf6ed", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#a09378", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>
+        <div style={{ background: "#0a0505", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#5a4040", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>
           {users.length === 0 ? "No users yet. Add your first user above." : "No users match your search."}
         </div>
       ) : (
         <div>
-          <div style={{ fontSize: 10, color: "#a09378", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>
+          <div style={{ fontSize: 10, color: "#5a4040", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>
             {filtered.length} user{filtered.length !== 1 ? "s" : ""}
           </div>
           {filtered.map(user => (
-            <div key={user.id} style={{ background: "#ffffff", border: "1px solid " + (user.role === "admin" ? "#b8010140" : "#e2d8c2"), borderRadius: 12, padding: "16px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+            <div key={user.id} style={{ background: "#0d0404", border: "1px solid " + (user.role === "admin" ? "#b8010140" : "#1a0000"), borderRadius: 12, padding: "16px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
               <div style={{ flex: 1, minWidth: 180 }}>
-                <div style={{ color: "#2c2014", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
                   {user.name}
                   {user.role === "admin" && (
                     user.badge === "drmerritt"
@@ -2807,9 +2807,9 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
                       : <span style={{ background: "#b80101", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, letterSpacing: "1px" }}>TEAM</span>
                   )}
                 </div>
-                <div style={{ color: "#8a7660", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>{user.email}</div>
+                <div style={{ color: "#8a6060", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>{user.email}</div>
               </div>
-              <div style={{ fontSize: 10, color: "#a09378", fontFamily: "'DM Sans', sans-serif" }}>
+              <div style={{ fontSize: 10, color: "#5a4040", fontFamily: "'DM Sans', sans-serif" }}>
                 Joined {new Date(user.created_at).toLocaleDateString()}
               </div>
               <select
@@ -2817,7 +2817,7 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
                 onChange={e => patchUser(user.id, { tier: e.target.value })}
                 style={{ background: TIER_COLORS[user.tier] + "18", color: TIER_COLORS[user.tier], border: "1px solid " + TIER_COLORS[user.tier] + "50", borderRadius: 6, padding: "6px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer", outline: "none" }}
               >
-                {TIERS.map(t => <option key={t} value={t} style={{ background: "#ffffff", color: "#2c2014" }}>{TIER_DISPLAY[t]}</option>)}
+                {TIERS.map(t => <option key={t} value={t} style={{ background: "#0d0404", color: "#f0d8d8" }}>{TIER_DISPLAY[t]}</option>)}
               </select>
               <select
                 value={user.role === "admin" ? (user.badge === "drmerritt" ? "drmerritt" : "team") : "member"}
@@ -2826,11 +2826,11 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
                   if (v === "member") patchUser(user.id, { role: "member", badge: null });
                   else patchUser(user.id, { role: "admin", badge: v });
                 }}
-                style={{ background: "#faf6ed", color: user.role === "admin" ? "#b80101" : "#7a6151", border: "1px solid #2a1010", borderRadius: 6, padding: "6px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer", outline: "none" }}
+                style={{ background: "#0a0505", color: user.role === "admin" ? "#b80101" : "#8a7070", border: "1px solid #2a1010", borderRadius: 6, padding: "6px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer", outline: "none" }}
               >
-                <option value="member" style={{ background: "#ffffff" }}>Member</option>
-                <option value="team" style={{ background: "#ffffff" }}>Team</option>
-                <option value="drmerritt" style={{ background: "#ffffff" }}>Dr. Merritt</option>
+                <option value="member" style={{ background: "#0d0404" }}>Member</option>
+                <option value="team" style={{ background: "#0d0404" }}>Team</option>
+                <option value="drmerritt" style={{ background: "#0d0404" }}>Dr. Merritt</option>
               </select>
               <button onClick={() => resetPassword(user)} style={{ ...btnGhost, fontSize: 11, padding: "6px 12px", flexShrink: 0 }}>Reset password</button>
               <button onClick={() => removeUser(user.id)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "6px 12px", flexShrink: 0 }}>Remove</button>
@@ -2884,24 +2884,24 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
   };
 
   const statusOf = (inv) => {
-    if (inv.status === "revoked") return { label: "Revoked", color: "#a09378" };
-    if (inv.used) return { label: "Accepted", color: "#1a9a4a" };
-    if (new Date(inv.expires_at) < new Date()) return { label: "Expired", color: "#a09378" };
+    if (inv.status === "revoked") return { label: "Revoked", color: "#5a4040" };
+    if (inv.used) return { label: "Accepted", color: "#22c55e" };
+    if (new Date(inv.expires_at) < new Date()) return { label: "Expired", color: "#5a4040" };
     const days = Math.ceil((new Date(inv.expires_at) - Date.now()) / 86400000);
-    return { label: `${days}d left`, color: "#8a6a28" };
+    return { label: `${days}d left`, color: "#e0c4c4" };
   };
 
   if (loading) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
 
   return (
     <div style={{ maxWidth: 760 }}>
-      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#241a10", marginBottom: 8 }}>Referral Invites</h2>
-      <p style={{ color: "#8a7a66", fontSize: 13, marginBottom: 32 }}>Send a personal invite — they get a branded email explaining GroundUp with a 7-day trial link.</p>
+      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Referral Invites</h2>
+      <p style={{ color: "#8a7070", fontSize: 13, marginBottom: 32 }}>Send a personal invite — they get a branded email explaining GroundUp with a 7-day trial link.</p>
 
-      {msg && <div style={{ background: msg.ok ? "#eaf6ea" : "#fdeeee", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#1a9a4a" : "#c02020", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
+      {msg && <div style={{ background: msg.ok ? "#06170d" : "#170606", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
 
-      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 28 }}>
-        <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Send an Invite</div>
+      <div style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 28 }}>
+        <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Send an Invite</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 12, alignItems: "end" }}>
           <div>
             <label style={lbl}>Name</label>
@@ -2916,18 +2916,18 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
       </div>
 
       {invites.length === 0 ? (
-        <div style={{ background: "#faf6ed", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#a09378", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No invites yet.</div>
+        <div style={{ background: "#0a0505", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#5a4040", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No invites yet.</div>
       ) : (
         <div>
           {invites.map(inv => {
             const st = statusOf(inv);
             return (
-              <div key={inv.id} style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+              <div key={inv.id} style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
                 <div style={{ flex: 1, minWidth: 170 }}>
-                  <div style={{ color: "#2c2014", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{inv.name}</div>
-                  <div style={{ color: "#8a7660", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{inv.email}</div>
+                  <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{inv.name}</div>
+                  <div style={{ color: "#8a6060", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{inv.email}</div>
                 </div>
-                <code style={{ color: "#8a6a28", fontSize: 12, letterSpacing: "1px" }}>{inv.code}</code>
+                <code style={{ color: "#e0c4c4", fontSize: 12, letterSpacing: "1px" }}>{inv.code}</code>
                 <span style={{ color: st.color, fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{st.label}</span>
                 <button onClick={() => copyLink(inv.code)} style={{ ...btnGhost, fontSize: 11, padding: "6px 12px" }}>Copy link</button>
                 {!inv.used && inv.status !== "revoked" && <button onClick={() => revoke(inv)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "6px 12px" }}>Revoke</button>}
@@ -2986,13 +2986,13 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
     try { await call("POST", { action: "remove", id: entry.id }); await load(); } catch (e) { flash(false, e.message); }
   };
 
-  const section = { background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 20 };
-  const heading = { fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 };
+  const section = { background: "#0d0404", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 20 };
+  const heading = { fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 };
   const statCard = (label, value, sub) => (
-    <div style={{ background: "#faf6ed", border: "1px solid #2a1010", borderRadius: 12, padding: "20px 18px", textAlign: "center" }}>
-      <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 34, color: "#2c2014", lineHeight: 1.1 }}>{value}</div>
-      <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 6 }}>{label}</div>
-      {sub && <div style={{ fontSize: 11, color: "#8a7a66", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>{sub}</div>}
+    <div style={{ background: "#0a0505", border: "1px solid #2a1010", borderRadius: 12, padding: "20px 18px", textAlign: "center" }}>
+      <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 34, color: "#f0d8d8", lineHeight: 1.1 }}>{value}</div>
+      <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 6 }}>{label}</div>
+      {sub && <div style={{ fontSize: 11, color: "#8a7070", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>{sub}</div>}
     </div>
   );
 
@@ -3008,10 +3008,10 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
 
   return (
     <div style={{ maxWidth: 760 }}>
-      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#241a10", marginBottom: 8 }}>Waitlist</h2>
-      <p style={{ color: "#8a7a66", fontSize: 13, marginBottom: 28 }}>Who's waiting, what they'll pay, and the countdown to launch.</p>
+      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Waitlist</h2>
+      <p style={{ color: "#8a7070", fontSize: 13, marginBottom: 28 }}>Who's waiting, what they'll pay, and the countdown to launch.</p>
 
-      {msg && <div style={{ background: msg.ok ? "#eaf6ea" : "#fdeeee", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#1a9a4a" : "#c02020", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
+      {msg && <div style={{ background: msg.ok ? "#06170d" : "#170606", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
 
       {/* Countdown */}
       <div style={{ ...section, textAlign: "center" }}>
@@ -3021,14 +3021,14 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
             {[["Days", cd.d], ["Hours", cd.h], ["Min", cd.m], ["Sec", cd.s]].map(([l, v]) => (
               <div key={l}>
                 <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 44, color: "#b80101", lineHeight: 1 }}>{String(v).padStart(2, "0")}</div>
-                <div style={{ fontSize: 9, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>{l}</div>
+                <div style={{ fontSize: 9, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>{l}</div>
               </div>
             ))}
           </div>
         ) : launchMs !== null && launchMs <= 0 ? (
-          <div style={{ color: "#1a9a4a", fontWeight: 800, fontSize: 20, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Launch time has arrived.</div>
+          <div style={{ color: "#22c55e", fontWeight: 800, fontSize: 20, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Launch time has arrived.</div>
         ) : (
-          <div style={{ color: "#8a7a66", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Set your launch date to start the clock.</div>
+          <div style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Set your launch date to start the clock.</div>
         )}
         <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
           <input type="datetime-local" value={launchAt ? launchAt.slice(0, 16) : ""} onChange={e => setLaunchAt(e.target.value ? new Date(e.target.value).toISOString() : "")} style={{ ...inp, marginBottom: 0, width: 230, colorScheme: "dark" }} />
@@ -3047,7 +3047,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
       {/* Countdown emails */}
       <div style={section}>
         <div style={heading}>Countdown Emails</div>
-        <p style={{ color: "#8a7a66", fontSize: 12, marginBottom: 14, fontFamily: "'DM Sans', sans-serif" }}>Each button sends one countdown email to the whole waitlist. Launch sends everyone their personal claim link for the plan they chose.</p>
+        <p style={{ color: "#8a7070", fontSize: 12, marginBottom: 14, fontFamily: "'DM Sans', sans-serif" }}>Each button sends one countdown email to the whole waitlist. Launch sends everyone their personal claim link for the plan they chose.</p>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           {["2 days", "1 day", "12 hours", "5 hours"].map(stage => (
             <button key={stage} disabled={busy} onClick={() => sendStage(stage)} style={{ ...btnGhost, opacity: busy ? 0.6 : 1 }}>{stage}</button>
@@ -3058,21 +3058,21 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
 
       {/* Entries */}
       {data.entries.length === 0 ? (
-        <div style={{ background: "#faf6ed", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#a09378", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No one on the waitlist yet — the join form is on the pricing page.</div>
+        <div style={{ background: "#0a0505", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#5a4040", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No one on the waitlist yet — the join form is on the pricing page.</div>
       ) : (
         <div>
           {data.entries.map(e => (
-            <div key={e.id} style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+            <div key={e.id} style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
               <div style={{ flex: 1, minWidth: 170 }}>
-                <div style={{ color: "#2c2014", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{e.name}</div>
-                <div style={{ color: "#8a7660", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{e.email}</div>
+                <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{e.name}</div>
+                <div style={{ color: "#8a6060", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{e.email}</div>
               </div>
-              <span style={{ color: "#8a6a28", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{PLAN_LABELS[e.plan] || e.plan}</span>
-              {e.phone && <span style={{ color: "#7a6151", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{e.phone}</span>}
-              {e.launched_notified && <span style={{ color: "#1a9a4a", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px" }}>NOTIFIED</span>}
-              <span style={{ color: "#a09378", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>{new Date(e.created_at).toLocaleDateString()}</span>
+              <span style={{ color: "#e0c4c4", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{PLAN_LABELS[e.plan] || e.plan}</span>
+              {e.phone && <span style={{ color: "#8a7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{e.phone}</span>}
+              {e.launched_notified && <span style={{ color: "#22c55e", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px" }}>NOTIFIED</span>}
+              <span style={{ color: "#5a4040", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>{new Date(e.created_at).toLocaleDateString()}</span>
               <button onClick={() => removeEntry(e)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Remove</button>
-              {e.reason && <div style={{ width: "100%", color: "#7a6151", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, borderTop: "1px solid #241010", paddingTop: 8, marginTop: 2 }}>&ldquo;{e.reason}&rdquo;</div>}
+              {e.reason && <div style={{ width: "100%", color: "#8a7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, borderTop: "1px solid #241010", paddingTop: 8, marginTop: 2 }}>&ldquo;{e.reason}&rdquo;</div>}
             </div>
           ))}
         </div>
@@ -3112,12 +3112,12 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
 
   return (
     <div style={{ maxWidth: 760 }}>
-      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#241a10", marginBottom: 8 }}>Resources & Templates</h2>
-      <p style={{ color: "#8a7a66", fontSize: 13, marginBottom: 28 }}>Everything on the member Resources page is edited here — links, templates, and the Elite partner network with referral codes.</p>
-      {msg && <div style={{ background: msg.ok ? "#eaf6ea" : "#fdeeee", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#1a9a4a" : "#c02020", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
+      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Resources & Templates</h2>
+      <p style={{ color: "#8a7070", fontSize: 13, marginBottom: 28 }}>Everything on the member Resources page is edited here — links, templates, and the Elite partner network with referral codes.</p>
+      {msg && <div style={{ background: msg.ok ? "#06170d" : "#170606", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
 
-      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 28 }}>
-        <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Add Resource</div>
+      <div style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 28 }}>
+        <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Add Resource</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div><label style={lbl}>Title</label><input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="DakJen Creative — Marketing" style={inp} /></div>
           <div><label style={lbl}>Link</label><input value={form.url} onChange={e => setForm({ ...form, url: e.target.value })} placeholder="https://…" style={inp} /></div>
@@ -3141,15 +3141,15 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
       </div>
 
       {rows.length === 0 ? (
-        <div style={{ background: "#faf6ed", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#a09378", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No resources yet — add your first one above.</div>
+        <div style={{ background: "#0a0505", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#5a4040", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No resources yet — add your first one above.</div>
       ) : rows.map(r => (
-        <div key={r.id} style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <div key={r.id} style={{ background: "#0d0404", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div style={{ flex: 1, minWidth: 180 }}>
-            <div style={{ color: "#2c2014", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{r.title}</div>
-            <div style={{ color: "#8a7660", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{r.url || "no link"}{r.code ? ` · code ${r.code}` : ""}</div>
+            <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{r.title}</div>
+            <div style={{ color: "#8a6060", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{r.url || "no link"}{r.code ? ` · code ${r.code}` : ""}</div>
           </div>
-          <span style={{ color: "#7a6151", fontSize: 10, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{CAT_LABEL[r.category]}</span>
-          <select value={r.min_tier} onChange={e => patch(r.id, { min_tier: e.target.value })} style={{ background: "#faf6ed", color: "#8a6a28", border: "1px solid #2a1010", borderRadius: 6, padding: "5px 8px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 11, cursor: "pointer", outline: "none" }}>
+          <span style={{ color: "#8a7070", fontSize: 10, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{CAT_LABEL[r.category]}</span>
+          <select value={r.min_tier} onChange={e => patch(r.id, { min_tier: e.target.value })} style={{ background: "#0a0505", color: "#e0c4c4", border: "1px solid #2a1010", borderRadius: 6, padding: "5px 8px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 11, cursor: "pointer", outline: "none" }}>
             <option value="Premium">Premium</option><option value="Elite">Elite</option>
           </select>
           <button onClick={() => remove(r.id)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Delete</button>
@@ -3202,16 +3202,16 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
     } catch (e) { flash(false, e.message); } finally { setBusy(false); }
   };
 
-  const section = { background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 20 };
-  const heading = { fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 };
-  const sub = { color: "#8a7a66", fontSize: 12, marginBottom: 14, fontFamily: "'DM Sans', sans-serif" };
+  const section = { background: "#0d0404", border: "1px solid #2a1010", borderRadius: 14, padding: 24, marginBottom: 20 };
+  const heading = { fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 };
+  const sub = { color: "#8a7070", fontSize: 12, marginBottom: 14, fontFamily: "'DM Sans', sans-serif" };
 
   return (
     <div style={{ maxWidth: 760 }}>
-      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#241a10", marginBottom: 8 }}>Email</h2>
-      <p style={{ color: "#8a7a66", fontSize: 13, marginBottom: 28 }}>Send from the team — announcements, sales, reminders. Everything is manual: nothing sends until you hit the button.</p>
+      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 8 }}>Email</h2>
+      <p style={{ color: "#8a7070", fontSize: 13, marginBottom: 28 }}>Send from the team — announcements, sales, reminders. Everything is manual: nothing sends until you hit the button.</p>
 
-      {msg && <div style={{ background: msg.ok ? "#eaf6ea" : "#fdeeee", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#1a9a4a" : "#c02020", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
+      {msg && <div style={{ background: msg.ok ? "#06170d" : "#170606", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
 
       {/* Broadcast */}
       <div style={section}>
@@ -3224,7 +3224,7 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
               {AUDIENCES.map(a => <option key={a.id} value={a.id}>{a.label}</option>)}
             </select>
           </div>
-          <div style={{ color: "#7a6151", fontSize: 12, fontFamily: "'DM Sans', sans-serif", paddingBottom: 12 }}>{count === null ? "" : `${count} recipient${count !== 1 ? "s" : ""}`}</div>
+          <div style={{ color: "#8a7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif", paddingBottom: 12 }}>{count === null ? "" : `${count} recipient${count !== 1 ? "s" : ""}`}</div>
         </div>
         <label style={lbl}>Subject</label>
         <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Subject line" style={{ ...inp, marginBottom: 12 }} />

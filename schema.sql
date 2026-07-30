@@ -63,6 +63,15 @@ CREATE TABLE IF NOT EXISTS messages (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Free 1-on-1 session credits (Premium: 1 work session, Elite: 3 advisory calls)
+CREATE TABLE IF NOT EXISTS session_requests (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  note TEXT,
+  status TEXT DEFAULT 'pending',   -- pending | scheduled | done | declined
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Team-posted polls live on messages; members vote once each (can change)
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS poll JSONB;
 CREATE TABLE IF NOT EXISTS poll_votes (

@@ -153,6 +153,50 @@ const BENEFITS = {
   Partner: ["Custom organizational access", "Contact info@nreuv.com for your cohort setup"],
 };
 
+function SessionCreditsCard({ member }) {
+  const [note, setNote] = useState("");
+  const [open, setOpen] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [sessions, setSessions] = useState(member.sessions || null);
+  if (!sessions || sessions.total === 0) return null;
+
+  const request = async (e) => {
+    e.preventDefault();
+    setBusy(true); setMsg(null);
+    try {
+      await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "request_session", note }) });
+      setSessions({ ...sessions, used: sessions.used + 1, remaining: sessions.remaining - 1 });
+      setNote(""); setOpen(false);
+      setMsg({ ok: true, text: "Request sent — Dr. Merritt's team will reach out to schedule." });
+    } catch (err) { setMsg({ ok: false, text: err.message }); } finally { setBusy(false); }
+  };
+
+  return (
+    <div style={{ background: "#0a0808", border: "1px solid #1e0000", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>Your 1-on-1 Sessions</div>
+          <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 16, fontFamily: font }}>{sessions.remaining} of {sessions.total} remaining</div>
+          <div style={{ color: "#8a7070", fontSize: 13, fontFamily: font, marginTop: 4 }}>{member.tier === "Elite" ? "Advisory calls with Dr. Merritt, included in Elite." : "Your free work session, included in Premium."}</div>
+        </div>
+        {sessions.remaining > 0 && !open && <button style={btnRed} onClick={() => setOpen(true)}>Request a Session</button>}
+      </div>
+      {open && (
+        <form onSubmit={request} style={{ marginTop: 16 }}>
+          <label style={lbl}>What do you want to cover? (optional)</label>
+          <textarea style={{ ...inp, resize: "vertical" }} rows={2} value={note} onChange={e => setNote(e.target.value)} maxLength={2000} placeholder="Your deal, your question, where you're stuck…" />
+          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+            <button type="submit" disabled={busy} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>{busy ? "Sending…" : "Send Request"}</button>
+            <button type="button" onClick={() => setOpen(false)} style={btnGhost}>Cancel</button>
+          </div>
+        </form>
+      )}
+      {msg && <div style={{ color: msg.ok ? "#22c55e" : "#ff6b6b", fontSize: 13, fontFamily: font, marginTop: 12 }}>{msg.text}</div>}
+    </div>
+  );
+}
+
 function ChangePasswordCard() {
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -250,6 +294,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
           </ul>
         </div>
 
+        <SessionCreditsCard member={member} />
         <ChangePasswordCard />
 
         {rank < 1 && member.lnl_discount_until && new Date(member.lnl_discount_until) > new Date() && (
@@ -283,7 +328,14 @@ function timeAgo(ts) {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-function Message({ m, onOpenThread, onDelete, canDelete, inThread }) {
+function linkify(text) {
+  const parts = String(text).split(/(https?:\/\/[^\s]+)/g);
+  return parts.map((p, i) => /^https?:\/\//.test(p)
+    ? <a key={i} href={p} target="_blank" rel="noreferrer" style={{ color: "#b80101", wordBreak: "break-all" }}>{p}</a>
+    : p);
+}
+
+function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote }) {
   return (
     <div style={{ padding: "12px 16px", borderRadius: 10, background: m.is_admin ? "#12060a" : "transparent", border: m.is_admin ? "1px solid #b8010130" : "1px solid transparent", marginBottom: 4 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
@@ -296,7 +348,30 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread }) {
         <span style={{ color: "#5a4040", fontSize: 11, fontFamily: font }}>{timeAgo(m.created_at)}</span>
         {canDelete && <button onClick={() => onDelete(m)} style={{ background: "none", border: "none", color: "#5a4040", cursor: "pointer", fontSize: 11, fontFamily: font, marginLeft: "auto" }}>delete</button>}
       </div>
-      <div style={{ color: "#c8b0b0", fontSize: 14, fontFamily: font, lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.body}</div>
+      <div style={{ color: "#c8b0b0", fontSize: 14, fontFamily: font, lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{linkify(m.body)}</div>
+      {m.poll && m.poll_results && (
+        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6, maxWidth: 420 }}>
+          {(m.poll.options || []).map((opt, i) => {
+            const count = m.poll_results.counts[i] || 0;
+            const total = m.poll_results.total || 0;
+            const pct = total ? Math.round((count / total) * 100) : 0;
+            const mine = m.poll_results.my_vote === i;
+            return (
+              <button key={i} onClick={() => onVote && onVote(m, i)} style={{ position: "relative", overflow: "hidden", textAlign: "left", background: "#17110b", border: mine ? "1px solid #b80101" : "1px solid #2c2214", borderRadius: 9, padding: "9px 12px", cursor: "pointer" }}>
+                <span style={{ position: "absolute", inset: 0, width: `${pct}%`, background: mine ? "#b8010128" : "#e0c4c414" }} />
+                <span style={{ position: "relative", display: "flex", justifyContent: "space-between", gap: 10 }}>
+                  <span style={{ color: mine ? "#f0d8d8" : "#c8a8a8", fontSize: 13, fontFamily: font, fontWeight: 700 }}>{mine ? "● " : ""}{opt}</span>
+                  <span style={{ color: "#8a7060", fontSize: 12, fontFamily: font, fontWeight: 700 }}>{count} · {pct}%</span>
+                </span>
+                {m.poll_results.voters && count > 0 && (
+                  <span style={{ position: "relative", display: "block", color: "#8a7060", fontSize: 11, fontFamily: font, marginTop: 3 }}>{m.poll_results.voters[i].join(", ")}</span>
+                )}
+              </button>
+            );
+          })}
+          <span style={{ color: "#6a5a48", fontSize: 11, fontFamily: font }}>{m.poll_results.total} vote{m.poll_results.total === 1 ? "" : "s"} — tap to vote or change your vote</span>
+        </div>
+      )}
       {!inThread && (
         <button onClick={() => onOpenThread(m)} style={{ background: "none", border: "none", color: Number(m.reply_count) > 0 ? "#b80101" : "#5a4040", cursor: "pointer", fontSize: 12, fontFamily: font, fontWeight: 700, padding: 0, marginTop: 6 }}>
           {Number(m.reply_count) > 0 ? `${m.reply_count} repl${Number(m.reply_count) === 1 ? "y" : "ies"}` : "Reply in thread"}
@@ -323,6 +398,8 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
   const [dmThreads, setDmThreads] = useState([]);       // admin inbox
   const [dmTarget, setDmTarget] = useState(null);       // admin: selected member thread
   const [newChanOpen, setNewChanOpen] = useState(false);
+  const [pollOpen, setPollOpen] = useState(false);
+  const [pollForm, setPollForm] = useState({ question: "", options: ["", ""] });
   const [newChan, setNewChan] = useState({ name: "", min_tier: "Basic", admin_only_post: false });
   const feedRef = useRef(null);
   const rank = member ? (TIER_RANK[member.tier] ?? 0) : 0;
@@ -399,6 +476,24 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
       clear();
       await loadMessages(active.id, parentId || undefined);
       if (parentId) await loadMessages(active.id); // refresh reply counts
+    } catch (e) { setError(e.message); }
+  };
+
+  const votePoll = async (msg, idx) => {
+    try {
+      await api("/api/community", { method: "POST", body: JSON.stringify({ action: "vote", message_id: msg.id, option_idx: idx }) });
+      await loadMessages(active.id);
+    } catch (e) { setError(e.message); }
+  };
+
+  const createPoll = async () => {
+    const opts = pollForm.options.map(o => o.trim()).filter(Boolean);
+    if (!pollForm.question.trim() || opts.length < 2) { setError("Poll needs a question and at least 2 options."); return; }
+    try {
+      await api("/api/community", { method: "POST", body: JSON.stringify({ action: "create_poll", channel_id: active.id, question: pollForm.question, options: opts }) });
+      setPollOpen(false);
+      setPollForm({ question: "", options: ["", ""] });
+      await loadMessages(active.id);
     } catch (e) { setError(e.message); }
   };
 
@@ -534,15 +629,31 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
             </div>
             <div ref={feedRef} style={{ flex: 1, overflowY: "auto", padding: "20px 20px 12px" }}>
               {messages.length === 0 && <div style={{ color: "#5a4040", fontFamily: font, fontSize: 14, textAlign: "center", marginTop: 60 }}>No messages yet. {canPost ? "Start the conversation." : ""}</div>}
-              {messages.map(m => <Message key={m.id} m={m} onOpenThread={setThread} onDelete={deleteMsg} canDelete={isAdmin || (member && m.user_id === member.id)} />)}
+              {messages.map(m => <Message key={m.id} m={m} onOpenThread={setThread} onDelete={deleteMsg} canDelete={isAdmin || (member && m.user_id === member.id)} onVote={votePoll} />)}
             </div>
             {error && <div style={{ color: "#ff6b6b", fontSize: 12, fontFamily: font, padding: "0 24px 6px" }}>{error}</div>}
             <div style={{ padding: "12px 20px 20px", borderTop: "1px solid #1a0000" }}>
               {canPost ? (
+                <>
+                {isAdmin && pollOpen && (
+                  <div style={{ background: "#17110b", border: "1px solid #2c2214", borderRadius: 12, padding: 14, marginBottom: 10, maxWidth: 480 }}>
+                    <input style={{ ...inp, marginBottom: 8 }} value={pollForm.question} onChange={e => setPollForm({ ...pollForm, question: e.target.value })} placeholder="Poll question — e.g. Dr. Merritt has 4 event tickets. Interested?" maxLength={500} />
+                    {pollForm.options.map((o, i) => (
+                      <input key={i} style={{ ...inp, marginBottom: 8 }} value={o} onChange={e => setPollForm({ ...pollForm, options: pollForm.options.map((x, j) => j === i ? e.target.value : x) })} placeholder={`Option ${i + 1}`} maxLength={100} />
+                    ))}
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      {pollForm.options.length < 6 && <button type="button" onClick={() => setPollForm({ ...pollForm, options: [...pollForm.options, ""] })} style={{ ...btnGhost, padding: "8px 14px", fontSize: 12 }}>+ Option</button>}
+                      <button type="button" onClick={createPoll} style={{ ...btnRed, padding: "8px 16px", fontSize: 12 }}>Post Poll</button>
+                      <button type="button" onClick={() => setPollOpen(false)} style={{ ...btnGhost, padding: "8px 14px", fontSize: 12 }}>Cancel</button>
+                    </div>
+                  </div>
+                )}
                 <form onSubmit={e => { e.preventDefault(); send(null, draft, () => setDraft("")); }} style={{ display: "flex", gap: 10 }}>
                   <input style={{ ...inp, flex: 1 }} value={draft} onChange={e => setDraft(e.target.value)} placeholder={`Message ${active.name}`} maxLength={4000} />
+                  {isAdmin && <button type="button" onClick={() => setPollOpen(!pollOpen)} style={btnGhost}>Poll</button>}
                   <button type="submit" style={btnRed}>Send</button>
                 </form>
+                </>
               ) : !canEngage ? (
                 <div style={{ color: "#b8a060", fontSize: 13, fontFamily: font, textAlign: "center", padding: "8px 0" }}><Eye size={13} style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }} /> Reading is included with your Member plan. Upgrade to Premium to post, reply, and network.</div>
               ) : (

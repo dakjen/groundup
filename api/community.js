@@ -54,6 +54,25 @@ export default async function handler(req, res) {
             FROM messages m LEFT JOIN users u ON u.id = m.user_id
             WHERE m.channel_id = ${channelId} AND m.parent_id IS NULL AND m.deleted = FALSE
             ORDER BY m.created_at ASC LIMIT 200`;
+      // Attach poll results (counts, your vote; voter names for the team)
+      const pollMsgs = rows.filter(r => r.poll);
+      if (pollMsgs.length) {
+        const ids = pollMsgs.map(r => r.id);
+        const votes = await sql`
+          SELECT v.message_id, v.option_idx, v.user_id, u.name
+          FROM poll_votes v LEFT JOIN users u ON u.id = v.user_id
+          WHERE v.message_id = ANY(${ids})`;
+        for (const m of pollMsgs) {
+          const mine = votes.find(v => v.message_id === m.id && v.user_id === user.id);
+          const counts = (m.poll.options || []).map((_, i) => votes.filter(v => v.message_id === m.id && v.option_idx === i).length);
+          m.poll_results = {
+            counts,
+            total: counts.reduce((a, b) => a + b, 0),
+            my_vote: mine ? mine.option_idx : null,
+            ...(user.role === 'admin' ? { voters: (m.poll.options || []).map((_, i) => votes.filter(v => v.message_id === m.id && v.option_idx === i).map(v => v.name || 'Member')) } : {}),
+          };
+        }
+      }
       return res.json({ messages: rows });
     }
 
@@ -107,6 +126,35 @@ export default async function handler(req, res) {
         } catch (e) { console.error('dm email failed', e); }
       }
       return res.status(201).json({ message: msg });
+    }
+
+    // Team: post a poll into a channel (e.g. event interest in Announcements / Elite Lounge)
+    if (req.method === 'POST' && req.body && req.body.action === 'create_poll') {
+      if (!isAdminReq) return res.status(403).json({ error: 'Team only' });
+      const { channel_id, question, options } = req.body;
+      const opts = (Array.isArray(options) ? options : []).map(o => String(o).trim()).filter(Boolean).slice(0, 6);
+      if (!channel_id || !question || opts.length < 2) return res.status(400).json({ error: 'Question and at least 2 options required' });
+      const [msg] = await sql`
+        INSERT INTO messages (channel_id, user_id, body, is_admin, poll, created_at)
+        VALUES (${channel_id}, ${user.id}, ${String(question).trim().slice(0, 500)}, TRUE, ${JSON.stringify({ options: opts })}, NOW())
+        RETURNING *`;
+      return res.status(201).json({ message: msg });
+    }
+
+    // Anyone with channel access votes (single choice, changeable) — Basic readers included
+    if (req.method === 'POST' && req.body && req.body.action === 'vote') {
+      const { message_id, option_idx } = req.body;
+      const [msg] = await sql`SELECT m.*, c.min_tier FROM messages m JOIN channels c ON c.id = m.channel_id WHERE m.id = ${Number(message_id)}`;
+      if (!msg || !msg.poll) return res.status(404).json({ error: 'Poll not found' });
+      if (user.rank < (TIER_RANK[msg.min_tier] ?? 1)) return res.status(403).json({ error: 'No access to this channel' });
+      const idx = Number(option_idx);
+      if (!(idx >= 0 && idx < (msg.poll.options || []).length)) return res.status(400).json({ error: 'Invalid option' });
+      if (!user.id) return res.status(400).json({ error: 'Vote from a member account' });
+      await sql`
+        INSERT INTO poll_votes (message_id, user_id, option_idx, created_at)
+        VALUES (${msg.id}, ${user.id}, ${idx}, NOW())
+        ON CONFLICT (message_id, user_id) DO UPDATE SET option_idx = ${idx}`;
+      return res.json({ success: true });
     }
 
     // Team: create a channel (max 10)

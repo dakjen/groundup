@@ -18,6 +18,9 @@ export default async function handler(req, res) {
       if (!user) return res.status(401).json({ error: 'Account not found' });
       // Active one-time passes: course_id 'all' or 'mc1'..'mc4', unexpired
       user.entitlements = await sql`SELECT course_id, expires_at FROM entitlements WHERE user_id = ${user.id} AND (expires_at IS NULL OR expires_at > NOW())`;
+      const allowance = user.tier === 'Elite' ? 3 : user.tier === 'Premium' ? 1 : 0;
+      const [{ used }] = await sql`SELECT COUNT(*)::int AS used FROM session_requests WHERE user_id = ${user.id} AND status != 'declined'`;
+      user.sessions = { total: allowance, used, remaining: Math.max(0, allowance - used) };
       return res.json({ user });
     }
 
@@ -89,6 +92,29 @@ export default async function handler(req, res) {
       }
       await sql`UPDATE users SET password_hash = ${hashPassword(new_password)} WHERE id = ${payload.uid}`;
       return res.json({ success: true });
+    }
+
+    // Request one of your included 1-on-1 sessions (Premium/Elite benefit)
+    if (action === 'request_session') {
+      const session = getSession(req);
+      if (!session || !session.uid) return res.status(401).json({ error: 'Not signed in' });
+      const [u] = await sql`SELECT id, name, email, tier FROM users WHERE id = ${session.uid}`;
+      if (!u) return res.status(401).json({ error: 'Account not found' });
+      const allowance = u.tier === 'Elite' ? 3 : u.tier === 'Premium' ? 1 : 0;
+      const [{ used }] = await sql`SELECT COUNT(*)::int AS used FROM session_requests WHERE user_id = ${u.id} AND status != 'declined'`;
+      if (used >= allowance) return res.status(400).json({ error: 'No sessions remaining on your plan' });
+      const note = (req.body.note || '').trim().slice(0, 2000);
+      await sql`INSERT INTO session_requests (user_id, note, created_at) VALUES (${u.id}, ${note}, NOW())`;
+      // Alert the team by email — they reply to schedule
+      await sendEmail(
+        process.env.ADMIN_EMAIL || 'info@nreuv.com',
+        `Session request from ${u.name} (${u.tier})`,
+        `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">1-on-1 session request</h2>
+         <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${u.name}</strong> (${u.email}, ${u.tier}) requested one of their included sessions.</p>
+         ${note ? `<p style="color:#a89080;font-size:14px;line-height:1.8;">What they want to cover: ${note}</p>` : ''}
+         <p style="color:#a89080;font-size:14px;line-height:1.8;">Reply to them directly or send a meeting email from the back office.</p>`
+      );
+      return res.status(201).json({ success: true });
     }
 
     // Logged-in password change (members and team alike)
