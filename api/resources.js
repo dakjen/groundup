@@ -9,6 +9,22 @@ export default async function handler(req, res) {
   const admin = getAdmin(req);
 
   try {
+    // Lesson attachments (PDFs/videos per lesson) — readable by any signed-in member
+    if (req.method === 'GET' && req.query.attachments === '1') {
+      const session = getSession(req);
+      if (!admin && (!session || !session.uid)) return res.status(401).json({ error: 'Sign in required' });
+      const [row] = await sql`SELECT value FROM settings WHERE key = 'lesson_attachments'`;
+      return res.json({ attachments: row?.value ? JSON.parse(row.value) : {} });
+    }
+
+    if (req.method === 'POST' && req.body && req.body.action === 'set_attachments') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const val = JSON.stringify(req.body.attachments || {});
+      if (val.length > 200000) return res.status(400).json({ error: 'Too large' });
+      await sql`INSERT INTO settings (key, value) VALUES ('lesson_attachments', ${val}) ON CONFLICT (key) DO UPDATE SET value = ${val}`;
+      return res.json({ success: true });
+    }
+
     if (req.method === 'GET') {
       if (admin) {
         const rows = await sql`SELECT * FROM resources ORDER BY category, position, id`;
