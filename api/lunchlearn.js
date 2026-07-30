@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { getSession, getAdmin } from './_utils.js';
+import { sendEmail, lnlAccessEmail } from './_email.js';
 
 // Lunch & Learn onboarding: $69.99 buys 6 months of access (entitlement
 // course_id 'lunchlearn'); comp coupons grant the same. Access also starts a
@@ -22,6 +23,15 @@ async function grantAccess(sql, userId, source) {
     RETURNING expires_at`;
   // Open (or refresh) the 25%-off-first-month window: 2 months from now
   await sql`UPDATE users SET lnl_discount_until = NOW() + interval '2 months' WHERE id = ${userId} AND (lnl_discount_until IS NULL OR lnl_discount_until < NOW() + interval '2 months')`;
+  // Confirmation email — fire-and-forget
+  try {
+    const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
+    const [linkRow] = await sql`SELECT value FROM settings WHERE key = 'lnl_link'`;
+    if (u) {
+      const mail = lnlAccessEmail(u.name, ent.expires_at, !!linkRow?.value);
+      await sendEmail(u.email, mail.subject, mail.html);
+    }
+  } catch (e) { console.error('lnl email failed', e); }
   return ent;
 }
 

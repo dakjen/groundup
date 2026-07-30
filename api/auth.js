@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { signToken, getSession, hashPassword, verifyPassword } from './_utils.js';
+import { sendEmail, addContact, welcomeEmail } from './_email.js';
 
 const PUBLIC_FIELDS = 'id, name, email, tier, role, membership_status, created_at';
 
@@ -35,6 +36,12 @@ export default async function handler(req, res) {
       `;
       if (!user) return res.status(409).json({ error: 'An account with that email already exists' });
       const token = signToken({ uid: user.id, role: 'member' });
+      // Welcome email + Brevo contact — never block signup on email delivery
+      const mail = welcomeEmail(user.name, user.tier);
+      await Promise.allSettled([
+        sendEmail(user.email, mail.subject, mail.html),
+        addContact(user.email, user.name, { TIER: user.tier }),
+      ]);
       return res.status(201).json({ user, token });
     }
 

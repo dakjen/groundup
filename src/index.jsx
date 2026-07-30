@@ -1202,10 +1202,11 @@ function PricingPage({ onSignUp }) {
 
 function ContactPage({ setActivePage }) {
   const SESSION_TYPES = [
-    { id: "deal", title: "Deal Review", desc: "Dr. Merritt reviews a specific site or deal — feasibility, market read, deal structure, and whether it's worth pursuing.", price: "$415", duration: "45 min", Icon: Building2, stripe: "https://buy.stripe.com/placeholder_deal" },
-    { id: "strategy", title: "Strategy Session", desc: "Big picture direction: where to focus, how to grow your pipeline, what JV structures make sense for your stage.", price: "$395", duration: "45 min", Icon: Compass, stripe: "https://buy.stripe.com/placeholder_strategy" },
+    { id: "deal", title: "Deal Review", desc: "Dr. Merritt reviews a specific site or deal — feasibility, market read, deal structure, and whether it's worth pursuing.", price: "$500", duration: "45 min", Icon: Building2, stripe: "https://buy.stripe.com/placeholder_deal" },
+    { id: "strategy", title: "Strategy Session", desc: "Big picture direction: where to focus, how to grow your pipeline, what JV structures make sense for your stage.", price: "$425", duration: "45 min", Icon: Compass, stripe: "https://buy.stripe.com/placeholder_strategy" },
     { id: "capital", title: "Capital Stack Review", desc: "Deep dive into your financing structure — tax credit sizing, subsidy sequencing, gap analysis, and how to close the deal.", price: "$550", duration: "45 min", Icon: BarChart3, stripe: "https://buy.stripe.com/placeholder_capital" },
     { id: "community", title: "Community Development", desc: "Community engagement strategy, political capital, government relationships, and neighborhood support for your project.", price: "$375", duration: "45 min", Icon: Handshake, stripe: "https://buy.stripe.com/placeholder_community" },
+    { id: "bipoc", title: "BIPOC Developer Session", desc: "A dedicated session for BIPOC developers — navigating the industry, building capital relationships, and growing as an underrepresented developer. Reserved for BIPOC clients.", price: "$275", duration: "45 min", Icon: UsersIcon, stripe: "https://buy.stripe.com/placeholder_bipoc" },
   ];
 
   const [selected, setSelected] = useState(null);
