@@ -1939,6 +1939,7 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
   const [videoUrl, setVideoUrl] = useState("");
   const [msg, setMsg] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [openLesson, setOpenLesson] = useState(null); // "courseId:idx"
 
   const authHeaders = () => ({ Authorization: "Bearer " + sessionStorage.getItem("adminToken") });
   const load = () => fetch("/api/resources?attachments=1", { headers: authHeaders() }).then(r => r.json()).then(d => setAttachments(d.attachments || {})).catch(() => setAttachments({}));
@@ -2040,6 +2041,30 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
             )}
           </div>
         </div>
+
+        {/* Live preview — how this lesson renders for members */}
+        {(attachments[key]?.pdf || attachments[key]?.video) && (
+          <div style={{ marginTop: 22, borderTop: "1px solid #eeebe4", paddingTop: 18 }}>
+            <div style={{ fontSize: 10, color: "#8a8a8a", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>Member preview — {course.lessons[lessonIdx].title}</div>
+            <div style={{ background: "#000", borderRadius: 14, padding: "22px 24px", maxWidth: 640 }}>
+              {attachments[key]?.video && (
+                <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, borderRadius: 10, overflow: "hidden", marginBottom: attachments[key]?.pdf ? 14 : 0 }}>
+                  <iframe src={`https://www.youtube.com/embed/${attachments[key].video.videoId}`} title="Lesson video preview" allowFullScreen style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }} />
+                </div>
+              )}
+              {attachments[key]?.pdf && (
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                    <FileText size={16} color="#b80101" />
+                    <span style={{ color: "#f0d8d8", fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{attachments[key].pdf.filename}</span>
+                    <span style={{ color: "#8a7070", fontSize: 10, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>View only</span>
+                  </div>
+                  <iframe src={attachments[key].pdf.url + "#toolbar=0"} title="Lesson PDF preview" style={{ width: "100%", height: 280, border: "1px solid #1a0000", borderRadius: 8, background: "#fff" }} />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Course overviews — the written content at a glance */}
@@ -2053,13 +2078,46 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
             </div>
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#161616", marginBottom: 8 }}>{c.title}</div>
             <p style={{ color: "#666666", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 14 }}>{c.description}</p>
-            <div style={{ borderTop: "1px solid #eeebe4", paddingTop: 12 }}>
-              {c.lessons.map((l, i) => (
-                <div key={i} style={{ display: "flex", gap: 10, padding: "5px 0", alignItems: "baseline" }}>
-                  <span style={{ color: "#b80101", fontSize: 12, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>{i + 1}.</span>
-                  <span style={{ color: "#333333", fontSize: 13, fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>{l.title}</span>
-                </div>
-              ))}
+            <div style={{ borderTop: "1px solid #eeebe4", paddingTop: 8 }}>
+              {c.lessons.map((l, i) => {
+                const k = `${c.id}:${i}`;
+                const open = openLesson === k;
+                const att = attachments[`${c.id}:${l.id ?? i}`] || {};
+                return (
+                  <div key={i} style={{ borderBottom: "1px solid #f2efe8" }}>
+                    <button onClick={() => setOpenLesson(open ? null : k)} style={{ display: "flex", gap: 10, padding: "10px 4px", alignItems: "center", width: "100%", background: "transparent", border: "none", cursor: "pointer", textAlign: "left" }}>
+                      <span style={{ color: "#b80101", fontSize: 12, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>{i + 1}.</span>
+                      <span style={{ color: "#222222", fontSize: 13.5, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", flex: 1 }}>{l.title}</span>
+                      {att.pdf && <FileText size={13} color="#8a8a8a" />}
+                      {att.video && <Video size={13} color="#8a8a8a" />}
+                      <span style={{ color: "#9a9a9a", fontSize: 14, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>▾</span>
+                    </button>
+                    {open && (
+                      <div style={{ padding: "4px 4px 18px 26px" }}>
+                        <p style={{ color: "#444444", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8, marginBottom: 12 }}>{l.summary}</p>
+                        {l.takeaways && l.takeaways.length > 0 && (
+                          <div style={{ marginBottom: 12 }}>
+                            <div style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>Key takeaways</div>
+                            {l.takeaways.map((t, ti) => (
+                              <div key={ti} style={{ display: "flex", gap: 8, marginBottom: 5 }}>
+                                <span style={{ color: "#b80101", flexShrink: 0 }}>→</span>
+                                <span style={{ color: "#555555", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>{t}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {l.quote && <p style={{ borderLeft: "3px solid #b80101", paddingLeft: 12, fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 15, color: "#333333", lineHeight: 1.6, marginBottom: 10 }}>&ldquo;{l.quote}&rdquo;</p>}
+                        {l.actionItem && (
+                          <div style={{ background: "#faf6ec", border: "1px solid #e8dfc8", borderRadius: 8, padding: "10px 14px" }}>
+                            <span style={{ fontSize: 9, color: "#8a6a20", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginRight: 8 }}>Action item</span>
+                            <span style={{ color: "#555555", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>{l.actionItem}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}
