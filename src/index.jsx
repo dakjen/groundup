@@ -1549,10 +1549,10 @@ function LaunchPage({ launchAt, onAdmin }) {
   const TOPICS = [
     { num: "01", title: "Finding & Controlling the Deal", teaser: "How Dr. Merritt reads a market, values land, and locks down a site — before spending real money." },
     { num: "02", title: "Teams, Partners & Joint Ventures", teaser: "What you actually bring to the table, and the structures that protect you when the deal gets real." },
-    { num: "03", title: "Financing & the Capital Stack", teaser: "How multimillion-dollar deals actually get funded — the layers, the levers, and the money most people never find." },
+    { num: "03", locked: true },
     { num: "04", locked: true },
-    { num: "05", locked: true },
-    { num: "06", locked: true },
+    { num: "05", ghost: true },
+    { num: "06", ghost: true },
   ];
 
   return (
@@ -1583,7 +1583,7 @@ function LaunchPage({ launchAt, onAdmin }) {
           <span style={{ color: "#7a6151", fontSize: 11, fontFamily: font, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>Elite Insider Waitlist</span>
         </div>
         <img src={IMG_LOGO} alt="GroundUp" className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, width: 72, height: 72, objectFit: "contain", borderRadius: 14, marginBottom: 24 }} />
-        <h1 className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, fontFamily: serif, fontWeight: 700, fontSize: "clamp(44px,8vw,84px)", color: "#f5e8e8", lineHeight: 1.05, letterSpacing: "-1px", marginBottom: 10 }}>Get inside first.</h1>
+        <h1 className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, fontFamily: serif, fontWeight: 700, fontSize: "clamp(44px,8vw,84px)", color: "#f5e8e8", lineHeight: 1.05, letterSpacing: "-1px", marginBottom: 10 }}>Get access first.</h1>
         <p className="gu-up gu-d2" style={{ position: "relative", zIndex: 1, color: "#c8b0b0", fontSize: "clamp(14px,1.8vw,17px)", lineHeight: 1.9, maxWidth: 580, fontFamily: font, marginBottom: 40 }}>
           Our mission is simple: <span style={{ color: "#e0c4c4", fontWeight: 700 }}>help you get your deals done and build a legacy.</span> Something new is coming for underrepresented developers — built on 30+ years and $600M+ of real deals.
         </p>
@@ -1609,7 +1609,7 @@ function LaunchPage({ launchAt, onAdmin }) {
           </div>
           <div style={{ flex: 1, minWidth: 300 }}>
             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 14 }}>The Real Value</div>
-            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4vw,44px)", color: "#f5e8e8", lineHeight: 1.15, marginBottom: 18 }}>You're not buying courses.<br />You're getting Dr. Gina Merritt.</h2>
+            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4vw,44px)", color: "#f5e8e8", lineHeight: 1.15, marginBottom: 18 }}>You're not just buying courses.<br />You're buying expertise.</h2>
             <p style={{ color: "#a89080", fontSize: 15, lineHeight: 1.9, fontFamily: font, marginBottom: 22 }}>
               Raised in the Bronx. Bootstrapped from public housing to $600M+ in development deals across DC, Baltimore, and Cleveland. The people who know this business almost never teach it — she's about to.
             </p>
@@ -1619,6 +1619,7 @@ function LaunchPage({ launchAt, onAdmin }) {
                 "Office hours & work sessions — bring your deal, leave with a plan",
                 "She's in the community — answers from her and her team",
                 "One-on-one advisory for the developers ready to move",
+                "Resources for business growth, project management & capital structuring",
               ].map((t, i) => (
                 <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                   <span style={{ color: "#b80101", fontWeight: 800, flexShrink: 0 }}>→</span>
@@ -1634,13 +1635,24 @@ function LaunchPage({ launchAt, onAdmin }) {
       <div style={{ padding: "40px clamp(20px,5vw,80px) 70px", maxWidth: 1100, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 40 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>The Curriculum</div>
-          <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4vw,44px)", color: "#f5e8e8" }}>Community. Support.<br />A constant influx of courses.</h2>
+          <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4vw,44px)", color: "#f5e8e8" }}>Community. Support.<br />New expertise added each quarter.</h2>
           <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font, marginTop: 14, maxWidth: 560, marginLeft: "auto", marginRight: "auto", lineHeight: 1.8 }}>
-            The full development lifecycle, taught from deals that actually closed — and the curriculum keeps growing after launch. Here's a taste. The rest stays under wraps until the doors open.
+            The full development lifecycle, taught from deals that actually closed — with new expertise added each quarter, plus resources for business growth, project management, and capital structuring. A taste below; the rest stays under wraps until the doors open.
           </p>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18 }}>
-          {TOPICS.map((t) => t.locked ? (
+          {TOPICS.map((t) => t.ghost ? (
+            <div key={t.num} style={{ background: "#0a0505", border: "1px solid #1c0d0d", borderRadius: 16, padding: "26px 28px", minHeight: 150, position: "relative", overflow: "hidden" }}>
+              <div style={{ filter: "blur(7px)", opacity: 0.5, userSelect: "none", pointerEvents: "none" }}>
+                <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "#b8010150", lineHeight: 1, marginBottom: 12 }}>{t.num}</div>
+                <h3 style={{ fontFamily: serif, fontWeight: 700, fontSize: 21, color: "#f0d8d8", marginBottom: 10 }}>{t.num === "05" ? "Something Bigger" : "The Long Game"}</h3>
+                <p style={{ fontSize: 13, color: "#8a7070", lineHeight: 1.75, fontFamily: font }}>You will have to wait and see — this one stays under wraps a while longer.</p>
+              </div>
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Lock size={18} color="#5a3a3a" />
+              </div>
+            </div>
+          ) : t.locked ? (
             <div key={t.num} style={{ background: "#070303", border: "1px dashed #2a1010", borderRadius: 16, padding: "26px 28px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 150, gap: 10 }}>
               <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "#241010", lineHeight: 1 }}>{t.num}</div>
               <Lock size={16} color="#3a2020" />
@@ -1681,12 +1693,17 @@ function LaunchPage({ launchAt, onAdmin }) {
       </div>
 
       {/* Inline waitlist form */}
-      <div id="insider-form" style={{ padding: "50px clamp(20px,5vw,80px) 90px", maxWidth: 1100, margin: "0 auto", scrollMarginTop: 20 }}>
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Your Move</div>
-          <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(28px,4vw,40px)", color: "#f5e8e8" }}>Claim your insider spot.</h2>
+      <div id="insider-form" style={{ padding: "70px clamp(20px,5vw,80px) 100px", scrollMarginTop: 20, position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "url(/pexels-realcereal-15480506.jpg)", backgroundSize: "cover", backgroundPosition: "center", opacity: 0.22, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, #000 0%, rgba(0,0,0,0.6) 35%, rgba(0,0,0,0.75) 100%)", pointerEvents: "none" }} />
+        <div style={{ position: "relative", zIndex: 1, maxWidth: 1100, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 32 }}>
+            <div style={{ fontSize: 10, color: "#e0c4c4", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Your Move</div>
+            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4.5vw,44px)", color: "#f5e8e8", marginBottom: 12 }}>Claim your insider spot.</h2>
+            <p style={{ color: "#c8b0b0", fontSize: 15, fontFamily: font, lineHeight: 1.8, maxWidth: 520, margin: "0 auto" }}>The doors open soon — and you're early. Tell us where you're headed and we'll meet you there.</p>
+          </div>
+          <WaitlistForm />
         </div>
-        <WaitlistForm />
       </div>
 
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>

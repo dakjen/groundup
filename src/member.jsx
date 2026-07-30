@@ -654,7 +654,7 @@ export function WaitlistForm() {
   const sel = { ...inp, appearance: "auto", cursor: "pointer" };
 
   return (
-    <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "36px 36px 32px", width: "100%", maxWidth: 520, margin: "0 auto" }}>
+    <div style={{ background: "linear-gradient(180deg, #1f1114 0%, #150a0c 100%)", border: "1px solid #e0c4c435", boxShadow: "0 0 90px rgba(224,196,196,0.07)", borderRadius: 22, padding: "42px clamp(28px,5vw,52px) 38px", width: "100%", maxWidth: 720, margin: "0 auto" }}>
         {done ? (
           <div style={{ textAlign: "center", padding: "20px 0" }}>
             <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 12 }}>You're an insider.</h2>
