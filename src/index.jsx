@@ -1594,7 +1594,8 @@ function LaunchPage({ launchAt, onWaitlist, onAdmin }) {
       <div style={{ padding: "70px clamp(20px,5vw,80px)", maxWidth: 1100, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>What's Inside</div>
-          <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4vw,44px)", color: "#f5e8e8" }}>Four courses. One community.<br />Direct access to Dr. Merritt.</h2>
+          <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4vw,44px)", color: "#f5e8e8" }}>Four courses to start.<br />A community and direct access to Dr. Merritt.</h2>
+          <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font, marginTop: 14 }}>New courses are added as the curriculum grows — members get every one of them.</p>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18, marginBottom: 22 }}>
           {miniCourses.map((course, i) => (
