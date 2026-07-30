@@ -63,6 +63,17 @@ CREATE TABLE IF NOT EXISTS messages (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Team-posted polls live on messages; members vote once each (can change)
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS poll JSONB;
+CREATE TABLE IF NOT EXISTS poll_votes (
+  id SERIAL PRIMARY KEY,
+  message_id INTEGER NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  option_idx INTEGER NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(message_id, user_id)
+);
+
 -- Lunch & Learn: 25%-off-first-month window after attending (2 months)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS lnl_discount_until TIMESTAMP;
 

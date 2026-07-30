@@ -31,6 +31,11 @@ const STATEMENTS = [
     parent_id INTEGER REFERENCES messages(id) ON DELETE CASCADE,
     body TEXT NOT NULL, is_admin BOOLEAN DEFAULT FALSE, deleted BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW())`,
+  `ALTER TABLE messages ADD COLUMN IF NOT EXISTS poll JSONB`,
+  `CREATE TABLE IF NOT EXISTS poll_votes (
+    id SERIAL PRIMARY KEY, message_id INTEGER NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    option_idx INTEGER NOT NULL, created_at TIMESTAMP DEFAULT NOW(), UNIQUE(message_id, user_id))`,
   `CREATE TABLE IF NOT EXISTS coupons (
     id SERIAL PRIMARY KEY, code TEXT UNIQUE NOT NULL, kind TEXT DEFAULT 'lnl_comp',
     max_uses INTEGER DEFAULT 1, used_count INTEGER DEFAULT 0, expires_at TIMESTAMP,
