@@ -557,11 +557,11 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
   return (
     <div style={{ background: "#f5f5f5", paddingTop: 64, display: "flex", height: "100vh", boxSizing: "border-box", overflow: "hidden", position: "fixed", inset: 0 }}>
       {/* Channel sidebar */}
-      <div className="community-sidebar" style={{ width: 240, flexShrink: 0, borderRight: "1px solid #2c2214", background: "#ececec", padding: "24px 12px", overflowY: "auto", display: sidebarOpen ? "block" : undefined }}>
-        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "0 12px", marginBottom: 14 }}>Channels</div>
+      <div className="community-sidebar" style={{ width: 240, flexShrink: 0, borderRight: "1px solid #3f0707", background: "#4a0b0b", padding: "24px 12px", overflowY: "auto", display: sidebarOpen ? "block" : undefined }}>
+        <div style={{ fontSize: 10, color: "#e8b4b4", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "0 12px", marginBottom: 14 }}>Channels</div>
         {channels.map(c => (
           <button key={c.id} onClick={() => { setActive(c); setDmOpen(false); setSidebarOpen(false); }}
-            style={{ display: "block", width: "100%", textAlign: "left", background: !dmOpen && active?.id === c.id ? "#b8010118" : "transparent", border: "none", borderRadius: 8, padding: "9px 12px", cursor: "pointer", marginBottom: 2 }}>
+            style={{ display: "block", width: "100%", textAlign: "left", background: !dmOpen && active?.id === c.id ? "#b80101" : "transparent", border: "none", borderRadius: 6, padding: "9px 12px", cursor: "pointer", marginBottom: 2 }}>
             <span style={{ color: !dmOpen && active?.id === c.id ? "#222222" : "#666666", fontWeight: 700, fontSize: 13.5, fontFamily: font }}>
               {c.admin_only_post ? <Megaphone size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 2 }} /> : "#"} {c.name}
             </span>
@@ -571,7 +571,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
         {isAdmin && (
           <div style={{ margin: "8px 0 4px" }}>
             {!newChanOpen ? (
-              <button onClick={() => setNewChanOpen(true)} style={{ width: "100%", background: "transparent", border: "1px dashed #cccccc", borderRadius: 8, padding: "9px 12px", color: "#8a8a8a", fontSize: 12.5, fontFamily: font, fontWeight: 700, cursor: "pointer", textAlign: "left" }}>+ New channel</button>
+              <button onClick={() => setNewChanOpen(true)} style={{ width: "100%", background: "transparent", border: "1px dashed #8a4040", borderRadius: 6, padding: "9px 12px", color: "#e3c4c4", fontSize: 12.5, fontFamily: font, fontWeight: 700, cursor: "pointer", textAlign: "left" }}>+ New channel</button>
             ) : (
               <div style={{ background: "#f0f0f0", border: "1px solid #e0e0e0", borderRadius: 10, padding: 12 }}>
                 <input style={{ ...inp, background: "#ffffff", border: "1px solid #dcdcdc", color: "#161616", marginBottom: 8, fontSize: 13, padding: "9px 11px" }} value={newChan.name} onChange={e => setNewChan({ ...newChan, name: e.target.value })} placeholder="Channel name" maxLength={40} />
@@ -595,17 +595,17 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
         )}
         {canDm && (
           <>
-            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "0 12px", margin: "20px 0 10px" }}>Direct Messages</div>
+            <div style={{ fontSize: 10, color: "#e8b4b4", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "0 12px", margin: "20px 0 10px" }}>Direct Messages</div>
             {!isAdmin && (
               <button onClick={() => { setDmOpen(true); setSidebarOpen(false); }}
-                style={{ display: "block", width: "100%", textAlign: "left", background: dmOpen ? "#b8010118" : "transparent", border: "none", borderRadius: 8, padding: "9px 12px", cursor: "pointer" }}>
+                style={{ display: "block", width: "100%", textAlign: "left", background: dmOpen ? "#b80101" : "transparent", border: "none", borderRadius: 6, padding: "9px 12px", cursor: "pointer" }}>
                 <span style={{ color: dmOpen ? "#222222" : "#666666", fontWeight: 700, fontSize: 13.5, fontFamily: font }}><Mail size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> Dr. Merritt & Team</span>
               </button>
             )}
-            {isAdmin && dmThreads.length === 0 && <div style={{ color: "#9a9a9a", fontSize: 12, fontFamily: font, padding: "0 12px" }}>No member DMs yet.</div>}
+            {isAdmin && dmThreads.length === 0 && <div style={{ color: "#c89a9a", fontSize: 12, fontFamily: font, padding: "0 12px" }}>No member DMs yet.</div>}
             {isAdmin && dmThreads.map(t => (
               <button key={t.id} onClick={() => { setDmTarget(t); setDmOpen(true); setSidebarOpen(false); }}
-                style={{ display: "block", width: "100%", textAlign: "left", background: dmOpen && dmTarget?.id === t.id ? "#b8010118" : "transparent", border: "none", borderRadius: 8, padding: "9px 12px", cursor: "pointer", marginBottom: 2 }}>
+                style={{ display: "block", width: "100%", textAlign: "left", background: dmOpen && dmTarget?.id === t.id ? "#b80101" : "transparent", border: "none", borderRadius: 6, padding: "9px 12px", cursor: "pointer", marginBottom: 2 }}>
                 <span style={{ color: dmOpen && dmTarget?.id === t.id ? "#222222" : "#666666", fontWeight: 700, fontSize: 13.5, fontFamily: font }}><Mail size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> {t.name}</span>
                 <span style={{ marginLeft: 6, fontSize: 9, color: TIER_COLORS[t.tier], fontFamily: font, fontWeight: 800 }}>{(TIER_LABELS[t.tier] || t.tier).toUpperCase()}</span>
               </button>
@@ -613,7 +613,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
           </>
         )}
         {isAdmin && (
-          <div style={{ margin: "16px 12px 0", padding: "8px 12px", background: "#fdf1f1", border: "1px solid #b8010130", borderRadius: 8, color: "#b80101", fontSize: 11, fontFamily: font, fontWeight: 700 }}>You're posting as the GroundUp team.</div>
+          <div style={{ margin: "16px 12px 0", padding: "8px 12px", background: "#ffffff14", border: "1px solid #ffffff22", borderRadius: 6, color: "#e8b4b4", fontSize: 11, fontFamily: font, fontWeight: 700 }}>You're posting as the GroundUp team.</div>
         )}
       </div>
 
