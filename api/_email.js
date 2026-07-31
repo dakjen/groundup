@@ -10,7 +10,7 @@ const BREVO = 'https://api.brevo.com/v3';
 
 function sender() {
   return {
-    email: process.env.BREVO_SENDER_EMAIL || 'info@nreuv.com',
+    email: process.env.BREVO_SENDER_EMAIL || 'groundup@drginamerritt.net',
     name: process.env.BREVO_SENDER_NAME || 'GroundUp',
   };
 }
