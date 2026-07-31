@@ -45,7 +45,8 @@ async function ensureLnlCoupon(stripe) {
   }
 }
 
-// Revenue split: 75% of net (after Stripe fees) transfers to NREUV's connected account
+// Revenue split — NREUV's share is a % of GROSS (the sticker price). The platform
+// absorbs Stripe's processing fee out of its own share.
 async function splitCharge(stripe, chargeId, item) {
   const dest = process.env.NREUV_CONNECT_ACCOUNT;
   if (!dest || !chargeId) return;
@@ -54,13 +55,15 @@ async function splitCharge(stripe, chargeId, item) {
     const charge = await stripe.charges.retrieve(chargeId, { expand: ['balance_transaction'] });
     const bt = charge.balance_transaction;
     if (!bt || charge.currency !== 'usd') return;
-    const net = bt.net; // cents, after Stripe fees
-    const share = Math.floor(net * rate);
+    const gross = charge.amount;      // what the customer paid
+    const net = bt.net;               // what actually landed after Stripe's fee
+    // Never transfer more than settled, so the platform can't go negative on a charge
+    const share = Math.min(Math.floor(gross * rate), net);
     if (share > 0) {
       await stripe.transfers.create({
         amount: share, currency: 'usd', destination: dest,
         source_transaction: chargeId,
-        description: `NREUV ${Math.round(rate * 100)}% split — ${item || 'purchase'} (net ${net}¢)`,
+        description: `NREUV ${Math.round(rate * 100)}% of gross — ${item || 'purchase'} (gross ${gross}¢, fee ${gross - net}¢)`,
       });
     }
   } catch (e) { console.error('split failed', chargeId, e.message); }
