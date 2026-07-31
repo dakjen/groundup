@@ -1297,6 +1297,33 @@ function PricingPage({ onSignUp }) {
           ))}
         </div>
 
+        {/* North star: Senior Advisor retainer */}
+        <div style={{ marginTop: 56, background: "linear-gradient(135deg, #12060a 0%, #0d0404 100%)", border: "1px solid #b8010150", borderRadius: 20, padding: "clamp(28px,5vw,48px)", position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: -120, right: -120, width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, #b8010118 0%, transparent 65%)", pointerEvents: "none" }} />
+          <div style={{ display: "flex", gap: 40, alignItems: "center", flexWrap: "wrap", position: "relative" }}>
+            <div style={{ flex: 1, minWidth: 300 }}>
+              <div style={{ fontSize: 10, color: "#e0c4c4", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>The Highest Level</div>
+              <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(26px,3.5vw,38px)", color: "#f5e8e8", lineHeight: 1.2, marginBottom: 14 }}>Dr. Merritt as your<br />Senior Advisor.</h2>
+              <p style={{ color: "#a89080", fontSize: 14, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif", maxWidth: 480, marginBottom: 18 }}>
+                For developers with active deals and organizations building a pipeline: a monthly retainer with Dr. Merritt in your corner — deal review, capital strategy, negotiation prep, and the calls that move your project forward. Limited seats; by application.
+              </p>
+              <button onClick={() => { window.location.href = "mailto:info@nreuv.com?subject=" + encodeURIComponent("GroundUp — Senior Advisor Retainer application"); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "14px 30px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Apply for a Seat →</button>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, flexShrink: 0, width: "min(420px, 100%)" }}>
+              {[
+                { hrs: "10", price: "$5,000", per: "/month" },
+                { hrs: "15", price: "$7,500", per: "/month" },
+              ].map((t, i) => (
+                <div key={i} style={{ background: "#0a0505", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 22px", textAlign: "center" }}>
+                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 44, color: "#e0c4c4", lineHeight: 1 }}>{t.hrs}</div>
+                  <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 6, marginBottom: 14 }}>hours / month</div>
+                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#f5e8e8", lineHeight: 1 }}>{t.price}<span style={{ fontSize: 13, color: "#8a7070", fontFamily: "'DM Sans', sans-serif", fontWeight: 400 }}>{t.per}</span></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <div style={{ marginTop: 56, borderRadius: 16, overflow: "hidden", position: "relative", border: "1px solid #2a0000" }}>
           <img src="/IMG_8087.jpeg" alt="Dr. Merritt speaking at the National DCRE Conference" style={{ width: "100%", height: 340, objectFit: "cover", objectPosition: "center 30%", display: "block" }} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.85) 100%)" }} />
@@ -1825,6 +1852,7 @@ function LaunchPage({ launchAt, onAdmin }) {
             { name: "Member", price: "$59.99", period: "/mo", desc: "Constant access + support — every course, every new course, and the community." },
             { name: "Premium", price: "$165.99", period: "/mo", desc: "Engage the community, deal tools, the Opportunity Board, a free work session.", popular: true },
             { name: "Elite", price: "$599.99", period: "/mo", desc: "Direct line to Dr. Merritt — advisory calls, DMs, and the partner network." },
+            { name: "Senior Advisor", price: "$5,000", period: "/mo", desc: "Dr. Merritt on retainer — 10 or 15 hours a month for developers with active deals. By application." },
           ].map((p, i) => (
             <div key={i} style={{ background: p.popular ? "#0d0404" : "#080404", border: "1px solid " + (p.popular ? "#b8010140" : "#150000"), borderRadius: 16, padding: "26px 24px", textAlign: "center", position: "relative" }}>
               {p.popular && <div style={{ position: "absolute", top: 12, right: 12, background: "#b8010115", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "2px 8px", fontSize: 8, fontFamily: font, fontWeight: 800, letterSpacing: "1.5px" }}>POPULAR</div>}
