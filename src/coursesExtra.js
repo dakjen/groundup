@@ -4,7 +4,7 @@ const NEW_COURSES = [
     "id": "mc5",
     "title": "Why Affordable Housing Doesn't Pencil: Land, the Gap, and the Case for Subsidy",
     "stage": "Stage 4 of 7",
-    "stageColor": "#6a6b69",
+    "stageColor": "#b8564a",
     "duration": "~50 min",
     "description": "Why does the identical building pencil at market rate and collapse as affordable housing? This course walks the economics from the ground up — land value, the per-unit gap, and the case for subsidy — so you can argue the numbers in a room full of skeptics.",
     "lessons": [
@@ -162,7 +162,7 @@ const NEW_COURSES = [
     "id": "mc6",
     "title": "Zoning, Entitlements & What You're Allowed to Build",
     "stage": "Stage 5 of 7",
-    "stageColor": "#b80101",
+    "stageColor": "#e0c4c4",
     "duration": "~45 min",
     "description": "What you're allowed to build decides what the deal is worth. Zoning, rezonings, entitlements, and the community process — how to read the rules, change them when you have to, and come out with a project the neighborhood backs.",
     "lessons": [
@@ -263,7 +263,7 @@ const NEW_COURSES = [
     "id": "mc7",
     "title": "After Opening Day: Mixed-Use, Compliance & the Fifteen Years Nobody Warns You About",
     "stage": "Stage 7 of 7",
-    "stageColor": "#570404",
+    "stageColor": "#8a8a8a",
     "duration": "~55 min",
     "description": "The building opened — now the real test starts. Mixed-use structures, LIHTC compliance, and running the asset so it stays funded, occupied, and yours for the long haul.",
     "lessons": [

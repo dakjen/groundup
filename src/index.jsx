@@ -27,7 +27,7 @@ const miniCourses = [
     id: "mc1",
     title: "Predevelopment: How to Find, Evaluate & Control a Deal",
     stage: "Stage 1 of 7",
-    stageColor: "#b80101",
+    stageColor: "#d98e4a",
     description: "Everything that happens before you spend real money — and how to avoid spending it on the wrong deal. This course covers Dr. Merritt's full predevelopment process: how she reads a market, evaluates a site, values land, navigates due diligence, and manages sellers who want to close before you're ready.",
     duration: "~60 min",
     lessons: [
@@ -104,7 +104,7 @@ const miniCourses = [
     id: "mc2",
     title: "Building Your Team: JVs, Partners & Keeping the Lights On",
     stage: "Stage 2 of 7",
-    stageColor: "#6a6b69",
+    stageColor: "#e06767",
     description: "You can't do this alone. Every deal in Dr. Merritt's $600M pipeline except one is a joint venture. This course covers what value you actually bring to a partnership as an emerging developer, how to structure JVs that protect you, what goes wrong and how to prevent it, and how to keep your business solvent between closings.",
     duration: "~65 min",
     lessons: [
@@ -246,7 +246,7 @@ const miniCourses = [
     id: "mc4",
     title: "Design, Construction & Getting to Opening Day",
     stage: "Stage 6 of 7",
-    stageColor: "#570404",
+    stageColor: "#cf7a5a",
     description: "You've got the site, the team, and the financing. Now you have to build something worth building. This course covers how to select and manage your architect, make design decisions that serve your residents and your budget, navigate community engagement as a core part of the development process, and get to opening day without a crisis.",
     duration: "~55 min",
     lessons: [
