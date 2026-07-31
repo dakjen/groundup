@@ -187,7 +187,7 @@ function SessionCreditsCard({ member }) {
   };
 
   return (
-    <div style={{ background: "#fafafa", border: "1px solid #1e0000", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
+    <div style={{ background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
         <div>
           <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>Your 1-on-1 Sessions</div>
@@ -230,7 +230,7 @@ function ChangePasswordCard() {
   };
 
   return (
-    <div style={{ background: "#fafafa", border: "1px solid #1e0000", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
+    <div style={{ background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
       <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 16 }}>Change password</div>
       <form onSubmit={submit} style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end" }}>
         <div style={{ flex: 1, minWidth: 180 }}>
@@ -252,7 +252,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
   // Team accounts have no tier or plan — just a clean account view
   if (member && member.role === "admin") {
     return (
-      <div style={{ background: "#f5f5f5", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
+      <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
         <div style={{ maxWidth: 700, margin: "0 auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16, marginBottom: 36 }}>
             <div>
@@ -273,7 +273,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
   }
   if (!member) {
     return (
-      <div style={{ background: "#f5f5f5", minHeight: "100vh", padding: "140px 20px", textAlign: "center" }}>
+      <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "140px 20px", textAlign: "center" }}>
         <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "var(--gu-text)", marginBottom: 14 }}>Membership</h1>
         <p style={{ color: "var(--gu-muted)", fontFamily: font, fontSize: 15, marginBottom: 28 }}>Sign in or create an account to see your membership.</p>
         <button style={btnRed} onClick={onSignIn}>Sign In / Join →</button>
@@ -282,7 +282,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
   }
   const rank = TIER_RANK[member.tier] ?? 0;
   return (
-    <div style={{ background: "#f5f5f5", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
+    <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16, marginBottom: 40 }}>
           <div>
@@ -319,7 +319,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
           </div>
         </div>
 
-        <div style={{ background: "#fafafa", border: "1px solid #1e0000", borderRadius: 16, padding: "28px 32px", marginBottom: 28 }}>
+        <div style={{ background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 16, padding: "28px 32px", marginBottom: 28 }}>
           <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 16 }}>What your {member.tier} plan includes</div>
           <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
             {(BENEFITS[member.tier] || []).map((b, i) => (
@@ -334,7 +334,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
         <ChangePasswordCard />
 
         {rank < 1 && member.lnl_discount_until && new Date(member.lnl_discount_until) > new Date() && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, background: "#fafafa", border: "1px solid #e0c4c440", borderRadius: 14, padding: "20px 26px", marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, background: "var(--gu-card2)", border: "1px solid #e0c4c440", borderRadius: 14, padding: "20px 26px", marginBottom: 16 }}>
             <div>
               <div style={{ color: "#b80101", fontWeight: 800, fontSize: 15, fontFamily: font, marginBottom: 4 }}>Your Lunch & Learn perk: 25% off your first month</div>
               <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>Become a member by {new Date(member.lnl_discount_until).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })} and mention it when you sign up.</div>
@@ -344,7 +344,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
         )}
 
         {rank < 3 && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, background: "#fafafa", border: "1px solid #2a2000", borderRadius: 14, padding: "20px 26px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, background: "var(--gu-card2)", border: "1px solid #2a2000", borderRadius: 14, padding: "20px 26px" }}>
             <div style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, fontWeight: 600 }}>Want more access? Compare plans and upgrade anytime.</div>
             <button style={btnRed} onClick={() => setActivePage("pricing")}>View Plans →</button>
           </div>
@@ -557,7 +557,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
 
   if (!hasAccess) {
     return (
-      <div style={{ background: "#f5f5f5", minHeight: "100vh", padding: "140px 20px", textAlign: "center" }}>
+      <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "140px 20px", textAlign: "center" }}>
         <div style={{ marginBottom: 16 }}><MessagesSquare size={36} color="#b80101" style={{ display: "inline-block" }} /></div>
         <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "var(--gu-text)", marginBottom: 14 }}>The GroundUp Community</h1>
         <p style={{ color: "var(--gu-muted)", fontFamily: font, fontSize: 15, maxWidth: 480, margin: "0 auto 28px", lineHeight: 1.8 }}>
@@ -571,7 +571,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
   const canPost = canEngage && active && (!active.admin_only_post || isAdmin);
 
   return (
-    <div style={{ background: "#f5f5f5", paddingTop: 64, display: "flex", height: "100vh", boxSizing: "border-box", overflow: "hidden", position: "fixed", inset: 0 }}>
+    <div style={{ background: "var(--gu-bg)", paddingTop: 64, display: "flex", height: "100vh", boxSizing: "border-box", overflow: "hidden", position: "fixed", inset: 0 }}>
       {/* Channel sidebar */}
       <div className="community-sidebar" style={{ width: 240, flexShrink: 0, borderRight: "1px solid #3f0707", background: "#4a0b0b", padding: "24px 12px", overflowY: "auto", display: sidebarOpen ? "block" : undefined }}>
         <div style={{ fontSize: 10, color: "#e8b4b4", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "0 12px", marginBottom: 14 }}>Channels</div>
@@ -923,7 +923,7 @@ export function ResourcesPage({ member, onUpgrade }) {
 
   if (!member || (rank < 2 && member.role !== "admin")) {
     return (
-      <div style={{ background: "#f5f5f5", minHeight: "100vh", padding: "140px 20px", textAlign: "center" }}>
+      <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "140px 20px", textAlign: "center" }}>
         <div style={{ marginBottom: 16 }}><Lock size={36} color="#b80101" style={{ display: "inline-block" }} /></div>
         <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "var(--gu-text)", marginBottom: 14 }}>Resources & Templates</h1>
         <p style={{ color: "var(--gu-muted)", fontFamily: font, fontSize: 15, maxWidth: 480, margin: "0 auto 28px", lineHeight: 1.8 }}>
@@ -941,7 +941,7 @@ export function ResourcesPage({ member, onUpgrade }) {
   ];
 
   return (
-    <div style={{ background: "#f5f5f5", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
+    <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Member Library</div>
         <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "var(--gu-text)", marginBottom: 40 }}>Resources & Templates</h1>
@@ -957,13 +957,13 @@ export function ResourcesPage({ member, onUpgrade }) {
               </div>
               <p style={{ color: "var(--gu-muted2)", fontSize: 13, fontFamily: font, marginBottom: 18 }}>{g.desc}</p>
               {locked ? (
-                <div style={{ background: "#fafafa", border: "1px solid #1e0000", borderRadius: 14, padding: "26px 30px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+                <div style={{ background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 14, padding: "26px 30px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
                   <Lock size={18} color="var(--gu-muted)" />
                   <span style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, flex: 1 }}>The partner network — marketing, tech, design and more, with member-only referral discounts — is an Elite benefit.</span>
                   <button style={btnRed} onClick={onUpgrade}>Go Elite →</button>
                 </div>
               ) : items.length === 0 ? (
-                <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font, background: "#fafafa", border: "1px solid #1e0000", borderRadius: 12, padding: "20px 24px" }}>Nothing here yet — check back soon.</div>
+                <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font, background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 12, padding: "20px 24px" }}>Nothing here yet — check back soon.</div>
               ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
                   {items.map(r => (
@@ -981,7 +981,7 @@ export function ResourcesPage({ member, onUpgrade }) {
                         </div>
                       )}
                       {r.code && (
-                        <div style={{ background: "#fafafa", border: "1px dashed #e0c4c440", borderRadius: 8, padding: "8px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ background: "var(--gu-card2)", border: "1px dashed #e0c4c440", borderRadius: 8, padding: "8px 12px", display: "flex", alignItems: "center", gap: 10 }}>
                           <span style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", fontFamily: font }}>CODE</span>
                           <code style={{ color: "var(--gu-text2)", fontSize: 13, letterSpacing: "1px" }}>{r.code}</code>
                           <button onClick={() => navigator.clipboard && navigator.clipboard.writeText(r.code)} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 11, fontFamily: font, fontWeight: 700 }}>Copy</button>
@@ -990,7 +990,7 @@ export function ResourcesPage({ member, onUpgrade }) {
                       {r.url && (() => {
                         const yt = r.url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{6,})/);
                         if (yt) return (
-                          <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, borderRadius: 10, overflow: "hidden", background: "#f5f5f5" }}>
+                          <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, borderRadius: 10, overflow: "hidden", background: "var(--gu-bg)" }}>
                             <iframe src={`https://www.youtube.com/embed/${yt[1]}`} title={r.title} allowFullScreen allow="accelerometer; encrypted-media; picture-in-picture" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }} />
                           </div>
                         );

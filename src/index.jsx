@@ -1728,6 +1728,7 @@ function LaunchPage({ launchAt, onAdmin }) {
     <div style={{ background: "#000", minHeight: "100vh" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=DM+Sans:wght@400;500;600;700;800&display=swap');
+        :root { --gu-bg: #000000; --gu-panel: #070303; --gu-card: #0d0404; --gu-card2: #0a0808; --gu-card3: #140808; --gu-red-tint: #12060a; --gu-border: #2a0000; --gu-border2: #1a0000; --gu-text: #f5e8e8; --gu-text2: #f0d8d8; --gu-body: #c8a8a8; --gu-muted: #8a7070; --gu-muted2: #7a5050; --gu-faint: #5a4040; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #000; color: #f5e8e8; font-family: 'DM Sans', sans-serif; }
         @keyframes guFadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
@@ -3985,6 +3986,7 @@ export default function App() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=DM+Sans:wght@400;500;600;700;800&display=swap');
+        :root { --gu-bg: #000000; --gu-panel: #070303; --gu-card: #0d0404; --gu-card2: #0a0808; --gu-card3: #140808; --gu-red-tint: #12060a; --gu-border: #2a0000; --gu-border2: #1a0000; --gu-text: #f5e8e8; --gu-text2: #f0d8d8; --gu-body: #c8a8a8; --gu-muted: #8a7070; --gu-muted2: #7a5050; --gu-faint: #5a4040; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #000; color: #f5e8e8; font-family: 'DM Sans', sans-serif; }
         ::-webkit-scrollbar { width: 5px; }
