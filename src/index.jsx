@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { FileText, Send, Hourglass, FolderOpen, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2 } from "lucide-react";
+import NEW_COURSES from "./coursesExtra.js";
 import { AuthModal, ResetPasswordModal, WaitlistForm, ResourcesPage, MemberPage, CommunityPage, TierBadge, TIER_RANK, TIER_LABELS, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
@@ -302,6 +303,8 @@ const miniCourses = [
 
 // ─── MINI COURSE PAGE ───────────────────────────────────────────────────────
 
+miniCourses.push(...NEW_COURSES);
+
 function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
   const pageBg = member ? "#17120c" : "#000";
   // Paid members (Basic+) get every lesson. Free members get ONE lesson total across
@@ -363,8 +366,43 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
           <div style={{ fontSize: 10, color: course.stageColor, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>{course.stage} · Lesson {activeLesson + 1} of {course.lessons.length}</div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(28px,4vw,44px)", color: "#f5e8e8", marginBottom: 32, lineHeight: 1.2 }}>{lesson.title}</h1>
           <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 16, padding: "28px 32px", marginBottom: 32 }}>
-            <p style={{ color: "#a89080", fontSize: 15, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif" }}>{lesson.summary}</p>
+            {String(lesson.summary).split("\n\n").map((para, pi) => (
+              <p key={pi} style={{ color: "#a89080", fontSize: 15, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{para}</p>
+            ))}
           </div>
+          {lesson.stats && lesson.stats.length > 0 && (
+            <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(lesson.stats.length, 4)}, 1fr)`, gap: 12, marginBottom: 32 }}>
+              {lesson.stats.map((st, si) => (
+                <div key={si} style={{ background: "#0a0808", border: "1px solid #2a0000", borderRadius: 14, padding: "20px 16px", textAlign: "center" }}>
+                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(22px,3vw,34px)", color: course.stageColor, lineHeight: 1.1 }}>{st.value}</div>
+                  <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 8, lineHeight: 1.5 }}>{st.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {lesson.table && (
+            <div style={{ marginBottom: 32, overflowX: "auto" }}>
+              {lesson.table.title && <div style={{ fontSize: 9, color: course.stageColor, fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>{lesson.table.title}</div>}
+              <table style={{ width: "100%", borderCollapse: "collapse", background: "#0a0808", borderRadius: 14, overflow: "hidden" }}>
+                <thead>
+                  <tr>
+                    {lesson.table.headers.map((hd, hi) => (
+                      <th key={hi} style={{ textAlign: hi === 0 ? "left" : "right", padding: "12px 16px", background: "#140a0a", color: "#f0d8d8", fontSize: 12, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.5px", borderBottom: "1px solid #2a0000" }}>{hd}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {lesson.table.rows.map((row, ri) => (
+                    <tr key={ri}>
+                      {row.map((cell, ci) => (
+                        <td key={ci} style={{ textAlign: ci === 0 ? "left" : "right", padding: "11px 16px", color: ci === 0 ? "#c8a8a8" : "#f0d8d8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: ci === 0 ? 600 : 700, borderBottom: ri < lesson.table.rows.length - 1 ? "1px solid #1a0000" : "none" }}>{cell}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
           <div style={{ background: "#0a0808", border: "1px solid #1e0000", borderRadius: 14, padding: "24px 28px", marginBottom: 32 }}>
             <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Key Takeaways</div>
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
@@ -949,7 +987,7 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate }) {
         <div style={{ marginBottom: 56 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Learn at your pace</div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 52, color: "#f5e8e8", marginBottom: 14 }}>Mini Courses</h1>
-          <p style={{ color: "#8a7070", fontSize: 15, maxWidth: 580, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif" }}>Four courses built from Dr. Gina Merritt's actual deal experience, organized by deal stage.</p>
+          <p style={{ color: "#8a7070", fontSize: 15, maxWidth: 580, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif" }}>Seven courses built from Dr. Gina Merritt's actual deal experience — from first principles to what happens after opening day.</p>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           {miniCourses.map((course, i) => (
@@ -1065,11 +1103,11 @@ const passPlans = [
     name: "Single Course Pass",
     price: "$100",
     period: "one-time",
-    description: "30 days of access to one course of your choice — every lesson, case study, and worksheet in it.",
+    description: "30 days of access to any one course — every lesson, case study, and worksheet in it.",
     accent: "#b80101",
     cta: "Get a Course Pass",
     features: [
-      "Any 1 of the 4 courses",
+      "Any 1 course of your choice",
       "30 days of full access",
       "All lessons, case studies & worksheets in that course",
     ],
@@ -1079,11 +1117,11 @@ const passPlans = [
     name: "All-Access Pass",
     price: "$250",
     period: "one-time",
-    description: "30 days of access to the entire GroundUp curriculum — all four courses at once.",
+    description: "30 days of access to the entire GroundUp curriculum — every course at once.",
     accent: "#b80101",
     cta: "Get All-Access",
     features: [
-      "All 4 courses",
+      "Every course in the library",
       "30 days of full access",
       "Every lesson, case study & worksheet",
     ],
@@ -1104,7 +1142,7 @@ const plans = [
     popular: false,
     cta: "Become a Member",
     features: [
-      "All 4 courses + every new course we add",
+      "Every course — seven today — plus each new one we add",
       "All written lessons, case studies & worksheets",
       "Resource lists & reading guides",
       "Community access — read every channel",
