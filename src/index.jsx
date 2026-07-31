@@ -3960,7 +3960,7 @@ export default function App() {
 
   const protectedPages = ["courses", "lunchlearn"];
   const navigateTo = (page) => {
-    if (protectedPages.includes(page) && !contentAgreed) {
+    if (protectedPages.includes(page) && !contentAgreed && member?.role !== "admin") {
       setPendingPage(page);
       setShowAgreement(true);
       return;
