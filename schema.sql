@@ -156,6 +156,27 @@ CREATE TABLE IF NOT EXISTS lnl_rsvps (
   UNIQUE(user_id, event_key)
 );
 
+-- Senior Advisor retainer clients + monthly hour log
+CREATE TABLE IF NOT EXISTS retainers (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  hours_per_month NUMERIC NOT NULL DEFAULT 10,
+  monthly_amount NUMERIC NOT NULL DEFAULT 5000,
+  status TEXT DEFAULT 'active',       -- active | paused | ended
+  notes TEXT,
+  started_at TIMESTAMP DEFAULT NOW(),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS retainer_hours (
+  id SERIAL PRIMARY KEY,
+  retainer_id INTEGER NOT NULL REFERENCES retainers(id) ON DELETE CASCADE,
+  hours NUMERIC NOT NULL,
+  note TEXT,
+  logged_on DATE DEFAULT CURRENT_DATE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Simple key/value settings (e.g. the live Lunch & Learn session link)
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,

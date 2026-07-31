@@ -21,6 +21,11 @@ export default async function handler(req, res) {
       const allowance = user.tier === 'Elite' ? 3 : user.tier === 'Premium' ? 1 : 0;
       const [{ used }] = await sql`SELECT COUNT(*)::int AS used FROM session_requests WHERE user_id = ${user.id} AND status != 'declined'`;
       user.sessions = { total: allowance, used, remaining: Math.max(0, allowance - used) };
+      // Suspended accounts keep the login but lose entitlements until payment clears
+      if (user.membership_status !== 'active') {
+        user.suspended = true;
+        user.entitlements = [];
+      }
       return res.json({ user });
     }
 

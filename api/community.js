@@ -15,7 +15,7 @@ async function resolveUser(req, sql) {
   }
   if (!session.uid) return null;
   const [u] = await sql`SELECT id, name, tier, role, membership_status FROM users WHERE id = ${session.uid}`;
-  if (!u || u.membership_status !== 'active') return null;
+  if (!u || u.membership_status !== 'active') return null;  // past_due/suspended = no access
   return { ...u, rank: TIER_RANK[u.tier] ?? 0 };
 }
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { FileText, Send, Hourglass, FolderOpen, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2 } from "lucide-react";
 import NEW_COURSES from "./coursesExtra.js";
-import { AuthModal, ResetPasswordModal, WaitlistForm, ResourcesPage, MemberPage, CommunityPage, TierBadge, TIER_RANK, TIER_LABELS, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
+import { AuthModal, ResetPasswordModal, WaitlistForm, ResourcesPage, RetainerPage, MemberPage, CommunityPage, TierBadge, TIER_RANK, TIER_LABELS, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -307,6 +307,7 @@ miniCourses.push(...NEW_COURSES);
 
 // Start a Stripe Checkout for any purchasable item; falls back to email if payments are off
 async function startCheckout(item, extra = {}) {
+  // exposed on window so member-side pages can trigger checkout
   try {
     const res = await fetch("/api/stripe", {
       method: "POST",
@@ -323,6 +324,7 @@ async function startCheckout(item, extra = {}) {
     return false;
   }
 }
+if (typeof window !== "undefined") window.startCheckout = (item, extra) => startCheckout(item, extra);
 const COURSE_ORDER = ["mc1", "mc2", "mc3", "mc5", "mc6", "mc4", "mc7"];
 miniCourses.sort((a, b) => COURSE_ORDER.indexOf(a.id) - COURSE_ORDER.indexOf(b.id));
 
@@ -412,7 +414,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
   const pageBg = "#000";
   // Paid members (Basic+) get every lesson. Free members get ONE lesson total across
   // all courses: the first they open is claimed server-side and everything else locks.
-  const memberRank = member ? (TIER_RANK[member.tier] ?? 0) : 0;
+  const memberRank = member && !member.suspended ? (TIER_RANK[member.tier] ?? 0) : 0;
   // A subscription (Basic+) or an active one-time pass ('all' or this course) unlocks everything here
   const hasPass = (member?.entitlements || []).some(e => e.course_id === "all" || e.course_id === course.id);
   const fullAccess = memberRank >= 1 || hasPass;
@@ -769,16 +771,16 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
   const pages = isTeam
     ? ["community", "resources", "lunchlearn"]
     : member
-    ? ["courses", "community", "resources", "lunchlearn", "contact"]
+    ? ["courses", "community", "resources", "advisory", "lunchlearn", "contact"]
     : ["home", "courses", "about", "pricing", "lunchlearn", "contact"];
   const ADMIN_TOOLS = [
     ["admin-users", "Users"], ["admin-referrals", "Referrals"], ["admin-waitlist", "Waitlist"],
-    ["admin-email", "Email"], ["admin-courses", "Courses"], ["admin-revenue", "Revenue"],
+    ["admin-email", "Email"], ["admin-courses", "Courses"], ["admin-retainers", "Retainers"], ["admin-revenue", "Revenue"],
   ];
   const [adminOpen, setAdminOpen] = useState(false);
   const lightNav = member?.role === "admin";
   const navInactive = lightNav ? "#5a5a5a" : "#6a6b69";
-  const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", contact: "Contact", community: "Community", membership: "Membership", resources: "Resources" };
+  const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", contact: "Contact", community: "Community", membership: "Membership", resources: "Resources", advisory: "Advisory" };
   return (
     <>
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: lightNav ? "rgba(255,255,255,0.97)" : "rgba(0,0,0,0.97)", backdropFilter: "blur(16px)", borderBottom: lightNav ? "1px solid #d8ccb6" : "1px solid #1a0000", padding: "0 clamp(16px,4vw,48px)", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
@@ -1301,14 +1303,14 @@ const plans = [
   {
     name: "Senior Advisor",
     tier: "Advisor",
-    price: "From $2,500",
+    price: "From $3,025",
     period: "/mo",
     description: "Dr. Merritt embedded on your project — for developers with active deals who need her in their corner every month.",
     accent: "#e0c4c4",
     popular: false,
     cta: "Engage Us on Your Project",
     features: [
-      "Monthly hour blocks with Dr. Merritt (5, 10, or 15 hours)",
+      "5 hrs/mo — $3,025 · 10 hrs/mo — $5,500 · 15 hrs/mo — $7,700",
       "Deal & site review as you go",
       "Capital stack strategy & lender prep",
       "Negotiation prep before your key meetings",
@@ -1458,7 +1460,7 @@ function ContactPage({ setActivePage }) {
     { id: "capital", title: "Capital Stack Review", desc: "Deep dive into your financing structure — tax credit sizing, subsidy sequencing, gap analysis, and how to close the deal.", price: "$550", duration: "45 min", Icon: BarChart3, stripe: "https://buy.stripe.com/placeholder_capital" },
     { id: "community", title: "Community Development", desc: "Community engagement strategy, political capital, government relationships, and neighborhood support for your project.", price: "$375", duration: "45 min", Icon: Handshake, stripe: "https://buy.stripe.com/placeholder_community" },
     { id: "bipoc", title: "BIPOC Developer Session", desc: "A dedicated session for BIPOC developers — navigating the industry, building capital relationships, and growing as an underrepresented developer. Reserved for BIPOC clients.", price: "$275", duration: "45 min", Icon: UsersIcon, stripe: "https://buy.stripe.com/placeholder_bipoc" },
-    { id: "advisor", title: "Senior Advisor Retainer", desc: "Dr. Merritt embedded on your project month over month — deal review, capital strategy, negotiation prep, and the calls that move it forward. Monthly hour blocks, limited seats. Starts with a 30-minute engagement call.", price: "From $2,500", duration: "/month", Icon: Handshake, advisor: true },
+    { id: "advisor", title: "Senior Advisor Retainer", desc: "Dr. Merritt embedded on your project month over month — deal review, capital strategy, negotiation prep, and the calls that move it forward. Monthly hour blocks, limited seats. Starts with a 30-minute engagement call.", price: "From $3,025", duration: "/month", Icon: Handshake, advisor: true },
   ];
 
   const [selected, setSelected] = useState(null);
@@ -1602,7 +1604,7 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
   const [topic, setTopic] = useState("");
   const [topicMsg, setTopicMsg] = useState(null);
 
-  const memberRank = member ? (TIER_RANK[member.tier] ?? 0) : 0;
+  const memberRank = member && !member.suspended ? (TIER_RANK[member.tier] ?? 0) : 0;
 
   const loadStatus = () => {
     if (!member) return Promise.resolve();
@@ -3667,6 +3669,129 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
   );
 }
 
+function RetainerTab({ btnRed, btnGhost, inp, lbl }) {
+  const [data, setData] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [form, setForm] = useState({ user_id: "", hours_per_month: 10, monthly_amount: 5500, notes: "", status: "offered" });
+  const [logForm, setLogForm] = useState({});
+  const [msg, setMsg] = useState(null);
+
+  const hdrs = () => ({ "Content-Type": "application/json", Authorization: "Bearer " + sessionStorage.getItem("adminToken") });
+  const call = async (method, body) => {
+    const res = await fetch("/api/retainers" + (method === "GET" ? "?admin=1" : ""), { method, headers: hdrs(), ...(body ? { body: JSON.stringify(body) } : {}) });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(d.error || "Request failed");
+    return d;
+  };
+  const load = () => call("GET").then(setData).catch(e => setMsg({ ok: false, text: e.message }));
+  useEffect(() => {
+    load();
+    fetch("/api/users", { headers: hdrs() }).then(r => r.json()).then(u => setUsers(Array.isArray(u) ? u : [])).catch(() => {});
+  }, []);
+  const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 5000); };
+
+  const create = async () => {
+    if (!form.user_id) { flash(false, "Pick a member first."); return; }
+    try { await call("POST", { action: "create", ...form }); flash(true, form.status === "offered" ? "Invitation sent — they choose hours and pay." : "Retainer added."); setForm({ ...form, user_id: "", notes: "" }); await load(); }
+    catch (e) { flash(false, e.message); }
+  };
+  const logHours = async (rid) => {
+    const f = logForm[rid] || {};
+    if (!f.hours) { flash(false, "Enter hours."); return; }
+    try { await call("POST", { action: "log_hours", retainer_id: rid, hours: f.hours, note: f.note }); setLogForm({ ...logForm, [rid]: {} }); await load(); flash(true, "Hours logged."); }
+    catch (e) { flash(false, e.message); }
+  };
+  const setStatus = async (id, status) => { try { await call("POST", { action: "update", id, status }); await load(); } catch (e) { flash(false, e.message); } };
+
+  const section = { background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 14, padding: "28px 32px", marginBottom: 20 };
+  if (!data) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading…</div>;
+  const active = data.retainers.filter(r => r.status === "active");
+
+  return (
+    <div style={{ maxWidth: 860 }}>
+      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#161616", marginBottom: 8 }}>Retainer Clients</h2>
+      <p style={{ color: "#666666", fontSize: 13, marginBottom: 24, fontFamily: "'DM Sans', sans-serif" }}>Senior Advisor clients, their promised hours, and what they pay. After an engagement call, invite them here — they pick their hours and pay, and their workspace opens automatically.</p>
+      {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#1a7a3a" : "#b80101", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 20 }}>
+        {[["Active clients", active.length], ["Retainer MRR", "$" + Number(data.mrr || 0).toLocaleString()], ["Hours promised / mo", active.reduce((a, r) => a + Number(r.hours_per_month), 0)]].map(([l, v]) => (
+          <div key={l} style={{ background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 12, padding: "20px 18px", textAlign: "center" }}>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 30, color: "#161616" }}>{v}</div>
+            <div style={{ fontSize: 10, color: "#8a8a8a", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 6 }}>{l}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={section}>
+        <div style={{ fontSize: 10, color: "#8a8a8a", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>Add / Invite a Client</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", columnGap: 20, rowGap: 18 }}>
+          <div><label style={lbl}>Member</label>
+            <select value={form.user_id} onChange={e => setForm({ ...form, user_id: e.target.value })} style={{ ...inp, maxWidth: "none", marginBottom: 0, cursor: "pointer" }}>
+              <option value="">Choose…</option>
+              {users.filter(u => u.role !== "admin").map(u => <option key={u.id} value={u.id}>{u.name} — {u.email}</option>)}
+            </select>
+          </div>
+          <div><label style={lbl}>Hours / month</label><input type="number" value={form.hours_per_month} onChange={e => setForm({ ...form, hours_per_month: e.target.value })} style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div><label style={lbl}>Monthly amount ($)</label><input type="number" value={form.monthly_amount} onChange={e => setForm({ ...form, monthly_amount: e.target.value })} style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div><label style={lbl}>How to add</label>
+            <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} style={{ ...inp, maxWidth: "none", marginBottom: 0, cursor: "pointer" }}>
+              <option value="offered">Invite to choose & pay</option>
+              <option value="active">Activate now (paid elsewhere)</option>
+            </select>
+          </div>
+        </div>
+        <div style={{ marginTop: 18 }}>
+          <label style={lbl}>Note for the client (optional)</label>
+          <input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Great talking today — here's what we discussed…" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} />
+        </div>
+        <button onClick={create} style={{ ...btnRed, marginTop: 22, padding: "12px 28px" }}>{form.status === "offered" ? "Send Invitation" : "Add Client"}</button>
+      </div>
+
+      {data.retainers.length === 0 ? (
+        <div style={{ background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 14, padding: 40, textAlign: "center", color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No retainer clients yet.</div>
+      ) : data.retainers.map(r => {
+        const used = Number(r.used_this_month || 0);
+        const pct = Math.min(100, Math.round((used / Number(r.hours_per_month)) * 100));
+        const color = r.status === "active" ? "#1a7a3a" : r.status === "offered" ? "#b8860b" : "#8a8a8a";
+        return (
+          <div key={r.id} style={{ ...section, marginBottom: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
+              <div>
+                <div style={{ color: "#161616", fontSize: 16, fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}>{r.name}</div>
+                <div style={{ color: "#8a8a8a", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif" }}>{r.email}</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ color: "#161616", fontSize: 15, fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}>{r.hours_per_month} hrs · ${Number(r.monthly_amount).toLocaleString()}/mo</div>
+                <span style={{ color, fontSize: 10, fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{r.status}</span>
+              </div>
+            </div>
+            {r.status === "active" && (
+              <>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#666666", fontFamily: "'DM Sans', sans-serif", marginBottom: 5 }}>
+                  <span>{used} of {r.hours_per_month} hours used this month</span><span>{pct}%</span>
+                </div>
+                <div style={{ height: 8, background: "#f0f0f0", borderRadius: 99, overflow: "hidden", marginBottom: 16 }}>
+                  <div style={{ width: `${pct}%`, height: "100%", background: pct > 90 ? "#b80101" : "#1a7a3a", borderRadius: 99 }} />
+                </div>
+                <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+                  <input type="number" step="0.25" placeholder="Hours" value={(logForm[r.id] || {}).hours || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), hours: e.target.value } })} style={{ ...inp, maxWidth: 110, marginBottom: 0 }} />
+                  <input placeholder="What you worked on" value={(logForm[r.id] || {}).note || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), note: e.target.value } })} style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1, minWidth: 180 }} />
+                  <button onClick={() => logHours(r.id)} style={btnRed}>Log Hours</button>
+                </div>
+              </>
+            )}
+            <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
+              {r.status !== "active" && <button onClick={() => setStatus(r.id, "active")} style={{ ...btnGhost, fontSize: 11, padding: "6px 14px" }}>Mark active</button>}
+              {r.status === "active" && <button onClick={() => setStatus(r.id, "paused")} style={{ ...btnGhost, fontSize: 11, padding: "6px 14px" }}>Pause</button>}
+              <button onClick={() => setStatus(r.id, "ended")} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "6px 14px" }}>End</button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function EmailTab({ btnRed, btnGhost, inp, lbl }) {
   const AUDIENCES = [
     { id: "all", label: "Everyone" },
@@ -3925,7 +4050,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-revenue"];
+  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "advisory"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
     return PAGES.includes(p) ? p : (sessionStorage.getItem("activePage") || "home");
@@ -4147,6 +4272,13 @@ export default function App() {
           <button onClick={() => setEventInviteBanner(null)} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12, cursor: "pointer", flexShrink: 0 }}>Got it</button>
         </div>
       )}
+      {member?.suspended && (
+        <div style={{ position: "fixed", top: 64, left: 0, right: 0, zIndex: 97, background: "#2a0808", color: "#ffb4b4", padding: "10px clamp(16px,4vw,48px)", display: "flex", alignItems: "center", gap: 14, borderBottom: "1px solid #b8010140" }}>
+          <Lock size={15} />
+          <div style={{ flex: 1, fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 700 }}>Your payment didn't go through — access is paused until it's updated.</div>
+          <button onClick={() => navigateTo("membership")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 6, padding: "6px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12, cursor: "pointer" }}>Fix Payment</button>
+        </div>
+      )}
       {checkoutMsg && (
         <div style={{ position: "fixed", top: 64, left: 0, right: 0, zIndex: 96, background: checkoutMsg === "success" ? "#0d2a14" : "#2a1408", color: checkoutMsg === "success" ? "#4ade80" : "#e0c4c4", padding: "10px clamp(16px,4vw,48px)", display: "flex", alignItems: "center", gap: 14, borderBottom: "1px solid #ffffff15" }}>
           <div style={{ flex: 1, fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 700 }}>
@@ -4168,6 +4300,7 @@ export default function App() {
       <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => openSignup("Free")} member={member} unread={(notif?.unread || 0) + (notif?.dm_unread || 0)} />
       {activePage === "home" && <HomePage setActivePage={navigateTo} onSignUp={openSignup} currentUser={currentUser} eventInvited={eventInvited} />}
       {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} /></div>}
+      {activePage === "advisory" && <RetainerPage member={member} setActivePage={navigateTo} />}
       {activePage === "resources" && (member?.role === "admin" ? <TeamPage><ResourcesTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage> : <ResourcesPage member={member} onUpgrade={() => navigateTo("pricing")} />)}
       {activePage === "membership" && <MemberPage member={member} setActivePage={navigateTo} onSignIn={() => openSignup("Free")} onSignOut={() => { clearMember(); setMember(null); sessionStorage.removeItem("currentUser"); setCurrentUser(null); navigateTo("home"); }} />}
       {activePage === "community" && <CommunityPage member={member} isAdmin={member?.role === "admin"} onSignIn={() => member ? navigateTo("pricing") : openSignup("Basic")} />}
@@ -4181,6 +4314,7 @@ export default function App() {
       {member?.role === "admin" && activePage === "admin-waitlist" && <TeamPage><WaitlistTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-email" && <TeamPage><EmailTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-courses" && <TeamPage><CourseAttachmentsAdmin btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
+      {member?.role === "admin" && activePage === "admin-retainers" && <TeamPage><RetainerTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-revenue" && <TeamPage><RevenueTab /></TeamPage>}
       {activePage === "contact" && <ContactPage setActivePage={navigateTo} />}
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>

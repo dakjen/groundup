@@ -438,7 +438,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
   const [pollForm, setPollForm] = useState({ question: "", options: ["", ""] });
   const [newChan, setNewChan] = useState({ name: "", min_tier: "Basic", admin_only_post: false });
   const feedRef = useRef(null);
-  const rank = member ? (TIER_RANK[member.tier] ?? 0) : 0;
+  const rank = member && !member.suspended ? (TIER_RANK[member.tier] ?? 0) : 0;
   const hasAccess = isAdmin || rank >= 1;
   const canEngage = isAdmin || rank >= 2;               // Basic (Member) is read-only
   const canDm = isAdmin || rank >= 3;                   // DMs are an Elite benefit
@@ -914,7 +914,7 @@ export function WaitlistForm() {
 export function ResourcesPage({ member, onUpgrade }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
-  const rank = member ? (TIER_RANK[member.tier] ?? 0) : 0;
+  const rank = member && !member.suspended ? (TIER_RANK[member.tier] ?? 0) : 0;
 
   useEffect(() => {
     if (rank < 2 && member?.role !== "admin") return;
@@ -1010,4 +1010,204 @@ export function ResourcesPage({ member, onUpgrade }) {
       </div>
     </div>
   );
+}
+
+
+// ─── ADVISORY WORKSPACE (Senior Advisor retainer clients) ───────────────────
+
+export function RetainerPage({ member, setActivePage }) {
+  const [data, setData] = useState(undefined);
+  const [draft, setDraft] = useState("");
+  const [file, setFile] = useState({ title: "", url: "" });
+  const [msg, setMsg] = useState(null);
+  const feedRef = useRef(null);
+
+  const load = () => api("/api/retainers").then(d => setData(d.retainer)).catch(() => setData(null));
+  useEffect(() => { load(); const t = setInterval(load, 15000); return () => clearInterval(t); }, [member?.id]);
+  useEffect(() => { if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight; }, [data?.messages?.length]);
+
+  const send = async (e) => {
+    e.preventDefault();
+    const body = draft.trim();
+    if (!body) return;
+    setDraft("");
+    try { await api("/api/retainers", { method: "POST", body: JSON.stringify({ action: "message", body }) }); await load(); }
+    catch (err) { setMsg(err.message); }
+  };
+  const addFile = async (e) => {
+    e.preventDefault();
+    if (!file.title) return;
+    try {
+      await api("/api/retainers", { method: "POST", body: JSON.stringify({ action: "add_file", ...file }) });
+      setFile({ title: "", url: "" }); await load();
+    } catch (err) { setMsg(err.message); }
+  };
+  const requestTime = async () => {
+    try { await api("/api/retainers", { method: "POST", body: JSON.stringify({ action: "request_time", note: "" }) }); setMsg("Request sent — the team will reach out to schedule."); }
+    catch (err) { setMsg(err.message); }
+  };
+
+  if (data === undefined) return <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "140px 20px", textAlign: "center", color: "var(--gu-muted)", fontFamily: font }}>Loading your workspace…</div>;
+
+  // Post-call: the team enabled the retainer — client picks hours and pays
+  if (data && data.status === "offered") {
+    const PLANS = [
+      { item: "retainer_5", hrs: 5, price: "$3,025" },
+      { item: "retainer_10", hrs: 10, price: "$5,500", popular: true },
+      { item: "retainer_15", hrs: 15, price: "$7,700" },
+    ];
+    return (
+      <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "120px clamp(20px,5vw,60px) 80px" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Senior Advisor Retainer</div>
+          <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4.5vw,42px)", color: "var(--gu-text)", marginBottom: 12 }}>Choose your hours.</h1>
+          <p style={{ color: "var(--gu-muted)", fontSize: 15, fontFamily: font, lineHeight: 1.8, maxWidth: 520, margin: "0 auto 34px" }}>
+            {data.notes || "Following your call with Dr. Merritt — pick the monthly block that fits your project. Billed monthly, cancel anytime. Your workspace opens the moment you're set."}
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
+            {PLANS.map(p => (
+              <div key={p.item} style={{ background: "var(--gu-card)", border: p.popular ? "1px solid #b8010150" : "1px solid var(--gu-border)", borderRadius: 16, padding: "30px 24px" }}>
+                <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 46, color: "var(--gu-text)", lineHeight: 1 }}>{p.hrs}</div>
+                <div style={{ fontSize: 10, color: "var(--gu-muted)", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginTop: 6, marginBottom: 16 }}>hours / month</div>
+                <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 26, color: "var(--gu-text2)", marginBottom: 18 }}>{p.price}<span style={{ fontSize: 13, color: "var(--gu-muted)", fontFamily: font, fontWeight: 400 }}>/mo</span></div>
+                <button onClick={() => window.startCheckout && window.startCheckout(p.item)} style={{ ...btnRed, width: "100%" }}>Start →</button>
+              </div>
+            ))}
+          </div>
+          <p style={{ color: "var(--gu-faint)", fontSize: 12, fontFamily: font, marginTop: 22, marginBottom: 40 }}>Charged monthly. Change or cancel anytime — just tell the team.</p>
+
+          {/* Locked preview of what opens on payment */}
+          <div style={{ position: "relative", textAlign: "left" }}>
+            <div style={{ filter: "blur(4px)", opacity: 0.4, pointerEvents: "none", userSelect: "none" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 18 }}>
+                <div>
+                  <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "26px 28px", marginBottom: 16 }}>
+                    <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Hours this month</div>
+                    <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 44, color: "var(--gu-text)" }}>10.0</div>
+                    <div style={{ height: 10, background: "var(--gu-card2)", borderRadius: 99, marginTop: 12 }}><div style={{ width: "35%", height: "100%", background: "#b80101", borderRadius: 99 }} /></div>
+                  </div>
+                  <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "26px 28px" }}>
+                    <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Project Documents</div>
+                    <div style={{ color: "var(--gu-body)", fontSize: 13, fontFamily: font, lineHeight: 2 }}>Site feasibility model.xlsx<br />Capital stack draft.pdf<br />LOI — 9410 Hough</div>
+                  </div>
+                </div>
+                <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "22px", minHeight: 260 }}>
+                  <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15, fontFamily: font, marginBottom: 14 }}>Direct line</div>
+                  <div style={{ color: "var(--gu-body)", fontSize: 13, fontFamily: font, lineHeight: 1.9 }}>Dr. Merritt: Looked at your capital stack — call me before you respond to the lender.</div>
+                </div>
+              </div>
+            </div>
+            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
+              <Lock size={22} color="#b80101" />
+              <div style={{ color: "var(--gu-text2)", fontSize: 13.5, fontFamily: font, fontWeight: 800 }}>Your workspace unlocks the moment payment clears</div>
+              <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font }}>Hours tracking · project documents · direct line to Dr. Merritt</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (!data) {
+    return (
+      <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "140px 20px", textAlign: "center" }}>
+        <div style={{ marginBottom: 16 }}><Handshake size={36} color="#b80101" style={{ display: "inline-block" }} /></div>
+        <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "var(--gu-text)", marginBottom: 14 }}>Advisory Workspace</h1>
+        <p style={{ color: "var(--gu-muted)", fontFamily: font, fontSize: 15, maxWidth: 460, margin: "0 auto 28px", lineHeight: 1.8 }}>
+          This is where Senior Advisor retainer clients work with Dr. Merritt month to month — hours, documents, and a direct line. Available with an active retainer.
+        </p>
+        <button style={btnRed} onClick={() => setActivePage("pricing")}>See the Retainer →</button>
+      </div>
+    );
+  }
+
+  const used = Number(data.used_this_month || 0);
+  const total = Number(data.hours_per_month);
+  const pct = Math.min(100, Math.round((used / total) * 100));
+
+  return (
+    <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(20px,5vw,60px) 70px" }}>
+      <div style={{ maxWidth: 1080, margin: "0 auto" }}>
+        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Senior Advisor Retainer</div>
+        <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4.5vw,42px)", color: "var(--gu-text)", marginBottom: 28 }}>Your Advisory Workspace</h1>
+        {msg && <div style={{ color: "#22c55e", fontSize: 13, fontFamily: font, marginBottom: 16 }}>{msg}</div>}
+
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(280px,340px)", gap: 20, alignItems: "start" }} className="ret-grid">
+          {/* Left: hours + files */}
+          <div>
+            <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "26px 28px", marginBottom: 18 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
+                <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font }}>Hours this month</div>
+                <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>${Number(data.monthly_amount).toLocaleString()}/mo · {total} hrs</div>
+              </div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 12 }}>
+                <span style={{ fontFamily: serif, fontWeight: 700, fontSize: 44, color: "var(--gu-text)", lineHeight: 1 }}>{(total - used).toFixed(1)}</span>
+                <span style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font }}>of {total} hours remaining</span>
+              </div>
+              <div style={{ height: 10, background: "var(--gu-card2)", borderRadius: 99, overflow: "hidden", marginBottom: 16 }}>
+                <div style={{ width: `${pct}%`, height: "100%", background: "#b80101", borderRadius: 99 }} />
+              </div>
+              <button onClick={requestTime} style={btnRed}>Request Time →</button>
+              {data.log?.length > 0 && (
+                <div style={{ marginTop: 20, borderTop: "1px solid var(--gu-border2)", paddingTop: 14 }}>
+                  <div style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>Recent hours</div>
+                  {data.log.map((l, i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: i < data.log.length - 1 ? "1px solid var(--gu-border2)" : "none" }}>
+                      <span style={{ color: "var(--gu-body)", fontSize: 13, fontFamily: font }}>{l.note || "Advisory time"}</span>
+                      <span style={{ color: "var(--gu-text2)", fontSize: 13, fontFamily: font, fontWeight: 700 }}>{Number(l.hours)} hrs · {new Date(l.logged_on).toLocaleDateString()}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "26px 28px" }}>
+              <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Project Documents</div>
+              <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 14 }}>Share deal docs, models, and links — anything you want Dr. Merritt to review.</p>
+              <form onSubmit={addFile} style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+                <input style={{ ...inp, marginBottom: 0, flex: 1, minWidth: 150 }} value={file.title} onChange={e => setFile({ ...file, title: e.target.value })} placeholder="Document name" />
+                <input style={{ ...inp, marginBottom: 0, flex: 1, minWidth: 180 }} value={file.url} onChange={e => setFile({ ...file, url: e.target.value })} placeholder="Link (Drive, Dropbox…)" />
+                <button type="submit" style={btnRed}>Add</button>
+              </form>
+              {data.files?.length ? data.files.map(f => (
+                <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid var(--gu-border2)" }}>
+                  <FileTextIcon />
+                  <span style={{ color: "var(--gu-text2)", fontSize: 13.5, fontFamily: font, fontWeight: 600, flex: 1 }}>{f.title}</span>
+                  {f.url && <a href={f.url} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontSize: 12.5, fontFamily: font, fontWeight: 800, textDecoration: "none" }}>Open ↗</a>}
+                </div>
+              )) : <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>Nothing shared yet.</div>}
+            </div>
+          </div>
+
+          {/* Right: direct line */}
+          <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, display: "flex", flexDirection: "column", height: "min(70vh, 620px)", position: "sticky", top: 90 }}>
+            <div style={{ padding: "18px 22px", borderBottom: "1px solid var(--gu-border2)" }}>
+              <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15, fontFamily: font }}>Direct line</div>
+              <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font }}>Dr. Merritt & the GroundUp team</div>
+            </div>
+            <div ref={feedRef} style={{ flex: 1, overflowY: "auto", padding: "16px 18px" }}>
+              {(!data.messages || data.messages.length === 0) && <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font, textAlign: "center", marginTop: 40 }}>Start the conversation — what are you working on?</div>}
+              {data.messages?.map(m => (
+                <div key={m.id} style={{ display: "flex", justifyContent: m.from_admin ? "flex-start" : "flex-end", marginBottom: 10 }}>
+                  <div style={{ maxWidth: "85%", background: m.from_admin ? "var(--gu-red-tint)" : "var(--gu-card2)", border: "1px solid " + (m.from_admin ? "#b8010130" : "var(--gu-border)"), borderRadius: 12, padding: "10px 14px" }}>
+                    {m.from_admin && <div style={{ marginBottom: 4 }}><span style={{ background: "#b80101", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, fontFamily: font, letterSpacing: "1px" }}>TEAM</span></div>}
+                    <div style={{ color: "var(--gu-body)", fontSize: 13.5, fontFamily: font, lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.body}</div>
+                    <div style={{ color: "var(--gu-faint)", fontSize: 10, fontFamily: font, marginTop: 4 }}>{timeAgo(m.created_at)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <form onSubmit={send} style={{ display: "flex", gap: 8, padding: "12px 14px 16px", borderTop: "1px solid var(--gu-border2)" }}>
+              <input style={{ ...inp, marginBottom: 0, flex: 1 }} value={draft} onChange={e => setDraft(e.target.value)} placeholder="Message the team…" maxLength={4000} />
+              <button type="submit" style={{ ...btnRed, padding: "12px 16px" }}>↑</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <style>{`@media (max-width: 860px) { .ret-grid { grid-template-columns: 1fr !important; } }`}</style>
+    </div>
+  );
+}
+
+function FileTextIcon() {
+  return <span style={{ width: 14, height: 14, display: "inline-block", border: "1.5px solid #b80101", borderRadius: 2, flexShrink: 0 }} />;
 }

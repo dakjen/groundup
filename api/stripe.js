@@ -18,13 +18,16 @@ const CATALOG = {
   session_capital:   { mode: 'payment', name: '1:1 Capital Stack Review (45 min)', amount: 55000 },
   session_community: { mode: 'payment', name: '1:1 Community Development (45 min)', amount: 37500 },
   session_bipoc:     { mode: 'payment', name: '1:1 BIPOC Developer Session (45 min)', amount: 27500 },
+  retainer_5:  { mode: 'subscription', name: 'Senior Advisor Retainer — 5 hrs/month',  amount: 302500, retainerHours: 5 },
+  retainer_10: { mode: 'subscription', name: 'Senior Advisor Retainer — 10 hrs/month', amount: 550000, retainerHours: 10 },
+  retainer_15: { mode: 'subscription', name: 'Senior Advisor Retainer — 15 hrs/month', amount: 770000, retainerHours: 15 },
 };
 
 // NREUV's share of net revenue, per product. Everything not listed uses DEFAULT.
 // 1.00 = NREUV keeps all of it; 0.75 = NREUV 75% / platform 25%.
 const SPLIT = {
   DEFAULT: 0.75,   // NREUV 75% / platform 25% — everything on the site
-  retainer: 0.90,  // Senior Advisor retainer: Dr. Merritt's own hours, 90/10
+  retainer_5: 0.90, retainer_10: 0.90, retainer_15: 0.90,  // Senior Advisor retainer: Dr. Merritt's own hours, 90/10
 };
 const splitRate = (item) => (item && SPLIT[item] !== undefined ? SPLIT[item] : SPLIT.DEFAULT);
 
@@ -69,7 +72,22 @@ async function fulfill(sql, session) {
   const item = md.item;
   if (!userId || !item) return;
 
-  if (item.startsWith('sub_')) {
+  if (item.startsWith('retainer_')) {
+    const spec = CATALOG[item];
+    const [offered] = await sql`SELECT id FROM retainers WHERE user_id = ${userId} AND status = 'offered' ORDER BY created_at DESC LIMIT 1`;
+    if (offered) {
+      await sql`UPDATE retainers SET hours_per_month = ${spec.retainerHours}, monthly_amount = ${spec.amount / 100}, status = 'active', started_at = NOW() WHERE id = ${offered.id}`;
+    } else {
+      await sql`INSERT INTO retainers (user_id, hours_per_month, monthly_amount, status, started_at, created_at)
+        VALUES (${userId}, ${spec.retainerHours}, ${spec.amount / 100}, 'active', NOW(), NOW())`;
+    }
+    await sql`UPDATE users SET stripe_customer_id = ${session.customer || null} WHERE id = ${userId}`;
+    const [c] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
+    await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
+      `NEW RETAINER CLIENT: ${c?.name} — ${spec.retainerHours} hrs/mo`,
+      `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">New Senior Advisor retainer</h2>
+       <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${c?.name}</strong> (${c?.email}) started a <strong style="color:#f0d8d8;">${spec.retainerHours} hours/month</strong> retainer at $${(spec.amount / 100).toLocaleString()}/mo. They're on the Retainer Clients roster now.</p>`);
+  } else if (item.startsWith('sub_')) {
     const tier = CATALOG[item]?.tier;
     if (tier) {
       await sql`UPDATE users SET tier = ${tier}, membership_status = 'active', stripe_customer_id = ${session.customer || null} WHERE id = ${userId}`;
@@ -135,9 +153,36 @@ export default async function handler(req, res) {
         if (uid && item && CATALOG[item]?.tier) {
           await sql`UPDATE users SET tier = ${CATALOG[item].tier}, membership_status = 'active', stripe_customer_id = ${inv.customer} WHERE id = ${uid}`;
         }
+        if (uid && item && item.startsWith('retainer_')) {
+          await sql`UPDATE retainers SET status = 'active' WHERE user_id = ${uid} AND status = 'paused'`;
+        }
+      } else if (event.type === 'invoice.payment_failed') {
+        // Payment failed: suspend access immediately and tell everyone
+        const inv = event.data.object;
+        const uid = Number(inv.subscription_details?.metadata?.user_id || inv.lines?.data?.[0]?.metadata?.user_id);
+        const failItem = inv.subscription_details?.metadata?.item || inv.lines?.data?.[0]?.metadata?.item || '';
+        if (uid) {
+          if (failItem.startsWith('retainer_')) {
+            await sql`UPDATE retainers SET status = 'paused' WHERE user_id = ${uid} AND status = 'active'`;
+          } else {
+            await sql`UPDATE users SET membership_status = 'past_due' WHERE id = ${uid}`;
+          }
+          const [u] = await sql`SELECT name, email FROM users WHERE id = ${uid}`;
+          if (u) {
+            await sendEmail(u.email, 'Action needed — your GroundUp payment didn\u2019t go through',
+              `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">We couldn\u2019t process your payment</h2>
+               <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${u.name.split(' ')[0]} — your card was declined, so your access is paused until it's sorted. Update your card and everything comes right back on.</p>
+               <a href="${siteUrl()}/membership" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Fix My Payment</a>`);
+            await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
+              `PAYMENT FAILED: ${u.name}`,
+              `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Payment failed</h2>
+               <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${u.name}</strong> (${u.email}) — ${failItem || 'subscription'} declined. Access suspended automatically.</p>`);
+          }
+        }
       } else if (event.type === 'customer.subscription.deleted') {
         const sub = event.data.object;
         await sql`UPDATE users SET tier = 'Free' WHERE stripe_customer_id = ${sub.customer}`;
+        await sql`UPDATE retainers SET status = 'ended' WHERE user_id IN (SELECT id FROM users WHERE stripe_customer_id = ${sub.customer}) AND status IN ('active','paused')`;
       }
       return res.json({ received: true });
     }
