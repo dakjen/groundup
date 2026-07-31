@@ -1052,9 +1052,9 @@ export function RetainerPage({ member, setActivePage }) {
   // Post-call: the team enabled the retainer — client picks hours and pays
   if (data && data.status === "offered") {
     const PLANS = [
-      { item: "retainer_5", hrs: 5, price: "$3,025" },
-      { item: "retainer_10", hrs: 10, price: "$5,500", popular: true },
-      { item: "retainer_15", hrs: 15, price: "$7,700" },
+      { item: "retainer_5", hrs: 5, price: "$2,778" },
+      { item: "retainer_10", hrs: 10, price: "$5,556", popular: true },
+      { item: "retainer_15", hrs: 15, price: "$8,334" },
     ];
     return (
       <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "120px clamp(20px,5vw,60px) 80px" }}>

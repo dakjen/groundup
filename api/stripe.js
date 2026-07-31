@@ -18,9 +18,9 @@ const CATALOG = {
   session_capital:   { mode: 'payment', name: '1:1 Capital Stack Review (45 min)', amount: 55000 },
   session_community: { mode: 'payment', name: '1:1 Community Development (45 min)', amount: 37500 },
   session_bipoc:     { mode: 'payment', name: '1:1 BIPOC Developer Session (45 min)', amount: 27500 },
-  retainer_5:  { mode: 'subscription', name: 'Senior Advisor Retainer — 5 hrs/month',  amount: 302500, retainerHours: 5 },
-  retainer_10: { mode: 'subscription', name: 'Senior Advisor Retainer — 10 hrs/month', amount: 550000, retainerHours: 10 },
-  retainer_15: { mode: 'subscription', name: 'Senior Advisor Retainer — 15 hrs/month', amount: 770000, retainerHours: 15 },
+  retainer_5:  { mode: 'subscription', name: 'Senior Advisor Retainer — 5 hrs/month',  amount: 277800, retainerHours: 5 },
+  retainer_10: { mode: 'subscription', name: 'Senior Advisor Retainer — 10 hrs/month', amount: 555600, retainerHours: 10 },
+  retainer_15: { mode: 'subscription', name: 'Senior Advisor Retainer — 15 hrs/month', amount: 833400, retainerHours: 15 },
 };
 
 // NREUV's share of net revenue, per product. Everything not listed uses DEFAULT.

@@ -1303,14 +1303,14 @@ const plans = [
   {
     name: "Senior Advisor",
     tier: "Advisor",
-    price: "From $3,025",
+    price: "From $2,778",
     period: "/mo",
     description: "Dr. Merritt embedded on your project — for developers with active deals who need her in their corner every month.",
     accent: "#e0c4c4",
     popular: false,
     cta: "Engage Us on Your Project",
     features: [
-      "5 hrs/mo — $3,025 · 10 hrs/mo — $5,500 · 15 hrs/mo — $7,700",
+      "5 hrs/mo — $2,778 · 10 hrs/mo — $5,556 · 15 hrs/mo — $8,334",
       "Deal & site review as you go",
       "Capital stack strategy & lender prep",
       "Negotiation prep before your key meetings",
@@ -1460,7 +1460,7 @@ function ContactPage({ setActivePage }) {
     { id: "capital", title: "Capital Stack Review", desc: "Deep dive into your financing structure — tax credit sizing, subsidy sequencing, gap analysis, and how to close the deal.", price: "$550", duration: "45 min", Icon: BarChart3, stripe: "https://buy.stripe.com/placeholder_capital" },
     { id: "community", title: "Community Development", desc: "Community engagement strategy, political capital, government relationships, and neighborhood support for your project.", price: "$375", duration: "45 min", Icon: Handshake, stripe: "https://buy.stripe.com/placeholder_community" },
     { id: "bipoc", title: "BIPOC Developer Session", desc: "A dedicated session for BIPOC developers — navigating the industry, building capital relationships, and growing as an underrepresented developer. Reserved for BIPOC clients.", price: "$275", duration: "45 min", Icon: UsersIcon, stripe: "https://buy.stripe.com/placeholder_bipoc" },
-    { id: "advisor", title: "Senior Advisor Retainer", desc: "Dr. Merritt embedded on your project month over month — deal review, capital strategy, negotiation prep, and the calls that move it forward. Monthly hour blocks, limited seats. Starts with a 30-minute engagement call.", price: "From $3,025", duration: "/month", Icon: Handshake, advisor: true },
+    { id: "advisor", title: "Senior Advisor Retainer", desc: "Dr. Merritt embedded on your project month over month — deal review, capital strategy, negotiation prep, and the calls that move it forward. Monthly hour blocks, limited seats. Starts with a 30-minute engagement call.", price: "From $2,778", duration: "/month", Icon: Handshake, advisor: true },
   ];
 
   const [selected, setSelected] = useState(null);
