@@ -723,6 +723,9 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
           {pages.map(page => (
             <button key={page} onClick={() => { setActivePage(page); setMenuOpen(false); }} style={{ background: activePage === page ? "#57040418" : "transparent", color: activePage === page ? "#b80101" : "#c8a0a0", border: activePage === page ? "1px solid #57040440" : "1px solid transparent", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>{pageLabels[page] || page}</button>
           ))}
+          {isTeam && ADMIN_TOOLS.map(([id, label]) => (
+            <button key={id} onClick={() => { setActivePage(id); setMenuOpen(false); }} style={{ background: activePage === id ? "#b8010112" : "transparent", color: activePage === id ? "#b80101" : "#8a2020", border: "1px solid transparent", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>Admin · {label}</button>
+          ))}
           {member ? (
             <button onClick={() => { setMenuOpen(false); setActivePage("membership"); }} style={{ background: "transparent", color: lightNav ? "#161616" : "#f0d8d8", border: lightNav ? "1px solid #b8a88a" : "1px solid #57040440", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 15, cursor: "pointer", marginTop: 8, textAlign: "left" }}>{member.name.split(" ")[0]} · {member.role === "admin" ? "Team" : (TIER_LABELS[member.tier] || member.tier)}</button>
           ) : (
