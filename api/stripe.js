@@ -23,15 +23,8 @@ const CATALOG = {
 // NREUV's share of net revenue, per product. Everything not listed uses DEFAULT.
 // 1.00 = NREUV keeps all of it; 0.75 = NREUV 75% / platform 25%.
 const SPLIT = {
-  DEFAULT: 0.75,
-  // Subscriptions & course products — platform manages, 75/25
-  sub_Basic: 0.75, sub_Premium: 0.75, sub_Elite: 0.75,
-  pass_single: 0.75, pass_all: 0.75, lnl: 0.75,
-  // Dr. Merritt's own time — she keeps 90%
-  session_deal: 0.90, session_strategy: 0.90, session_capital: 0.90,
-  session_community: 0.90, session_bipoc: 0.90,
-  // Senior Advisor retainer (invoiced outside checkout today; here when it moves in)
-  retainer: 0.90,
+  DEFAULT: 0.75,   // NREUV 75% / platform 25% — everything on the site
+  retainer: 0.90,  // Senior Advisor retainer: Dr. Merritt's own hours, 90/10
 };
 const splitRate = (item) => (item && SPLIT[item] !== undefined ? SPLIT[item] : SPLIT.DEFAULT);
 
