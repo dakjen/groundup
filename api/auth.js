@@ -46,6 +46,27 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    // Admin: which settings are configured on the server (presence only, never values)
+    if (action === 'config_check') {
+      const { getAdmin } = await import('./_utils.js');
+      if (!getAdmin(req)) return res.status(401).json({ error: 'Unauthorized' });
+      const has = (k) => !!(process.env[k] && String(process.env[k]).trim());
+      return res.json({
+        config: [
+          { key: 'DATABASE_URL', label: 'Database', ok: has('DATABASE_URL'), why: 'Everything depends on this' },
+          { key: 'SESSION_SECRET', label: 'Session secret', ok: has('SESSION_SECRET'), why: 'Secure logins' },
+          { key: 'SITE_URL', label: 'Site URL', ok: has('SITE_URL'), why: 'Email links & share image' },
+          { key: 'STRIPE_SECRET_KEY', label: 'Stripe key', ok: has('STRIPE_SECRET_KEY'), why: 'Taking payments' },
+          { key: 'STRIPE_WEBHOOK_SECRET', label: 'Stripe webhook', ok: has('STRIPE_WEBHOOK_SECRET'), why: 'Unlocking access after payment' },
+          { key: 'NREUV_CONNECT_ACCOUNT', label: 'NREUV split account', ok: has('NREUV_CONNECT_ACCOUNT'), why: 'Auto-paying NREUV its share' },
+          { key: 'BREVO_API_KEY', label: 'Email sending', ok: has('BREVO_API_KEY'), why: 'All outgoing email' },
+          { key: 'BREVO_SENDER_EMAIL', label: 'Verified sender', ok: has('BREVO_SENDER_EMAIL'), why: 'Email deliverability' },
+          { key: 'ADMIN_EMAIL', label: 'Team alert inbox', ok: has('ADMIN_EMAIL'), why: 'Where team alerts go' },
+          { key: 'BLOB_READ_WRITE_TOKEN', label: 'File uploads', ok: has('BLOB_READ_WRITE_TOKEN'), why: 'Lesson PDF uploads' },
+        ],
+      });
+    }
+
     // Site password gate (folded in from /api/site-auth)
     if (action === 'site_gate') {
       if (req.body.password === process.env.SITE_PASSWORD) return res.json({ success: true });

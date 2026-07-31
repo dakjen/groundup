@@ -775,7 +775,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
     : ["home", "courses", "about", "pricing", "lunchlearn", "contact"];
   const ADMIN_TOOLS = [
     ["admin-users", "Users"], ["admin-referrals", "Referrals"], ["admin-waitlist", "Waitlist"],
-    ["admin-email", "Email"], ["admin-courses", "Courses"], ["admin-retainers", "Retainers"], ["admin-revenue", "Revenue"],
+    ["admin-email", "Email"], ["admin-courses", "Courses"], ["admin-retainers", "Retainers"], ["admin-revenue", "Revenue"], ["admin-status", "System Status"],
   ];
   const [adminOpen, setAdminOpen] = useState(false);
   const lightNav = member?.role === "admin";
@@ -3676,6 +3676,39 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
   );
 }
 
+function SystemStatusTab() {
+  const [cfg, setCfg] = useState(null);
+  useEffect(() => {
+    fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + sessionStorage.getItem("adminToken") }, body: JSON.stringify({ action: "config_check" }) })
+      .then(r => r.json()).then(d => setCfg(d.config || [])).catch(() => setCfg([]));
+  }, []);
+  const F = "'DM Sans', sans-serif";
+  if (!cfg) return <div style={{ color: "#b80101", fontFamily: F }}>Checking…</div>;
+  const missing = cfg.filter(c => !c.ok);
+  return (
+    <div style={{ maxWidth: 720 }}>
+      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#161616", marginBottom: 8 }}>System Status</h2>
+      <p style={{ color: "#666666", fontSize: 13, marginBottom: 24, fontFamily: F }}>What's configured on the live server. Green means the platform can do it; red means a setting is missing in Vercel.</p>
+      <div style={{ background: missing.length ? "#fdf0f0" : "#eef7ee", border: `1px solid ${missing.length ? "#b8010140" : "#22c55e40"}`, color: missing.length ? "#b80101" : "#1a7a3a", borderRadius: 10, padding: "14px 18px", fontSize: 13.5, fontFamily: F, fontWeight: 700, marginBottom: 20 }}>
+        {missing.length ? `${missing.length} setting${missing.length > 1 ? "s" : ""} missing — ${missing.map(m => m.label).join(", ")}` : "Everything is configured. Payments, splits, and email are all live."}
+      </div>
+      <div style={{ background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 14, padding: "8px 24px" }}>
+        {cfg.map(c => (
+          <div key={c.key} style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 0", borderBottom: "1px solid #f2efe8" }}>
+            <span style={{ width: 9, height: 9, borderRadius: "50%", background: c.ok ? "#1a7a3a" : "#b80101", flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 150 }}>
+              <div style={{ color: "#161616", fontSize: 14, fontWeight: 700, fontFamily: F }}>{c.label}</div>
+              <div style={{ color: "#8a8a8a", fontSize: 12, fontFamily: F }}>{c.why}</div>
+            </div>
+            <code style={{ color: "#9a9a9a", fontSize: 11 }}>{c.key}</code>
+            <span style={{ color: c.ok ? "#1a7a3a" : "#b80101", fontSize: 11, fontWeight: 800, letterSpacing: "1px", fontFamily: F }}>{c.ok ? "SET" : "MISSING"}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function RetainerTab({ btnRed, btnGhost, inp, lbl }) {
   const [data, setData] = useState(null);
   const [users, setUsers] = useState([]);
@@ -4093,7 +4126,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "advisory"];
+  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "admin-status", "advisory"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
     return PAGES.includes(p) ? p : (sessionStorage.getItem("activePage") || "home");
@@ -4360,6 +4393,7 @@ export default function App() {
       {member?.role === "admin" && activePage === "admin-courses" && <TeamPage><CourseAttachmentsAdmin btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-retainers" && <TeamPage><RetainerTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-revenue" && <TeamPage><RevenueTab /></TeamPage>}
+      {member?.role === "admin" && activePage === "admin-status" && <TeamPage><SystemStatusTab /></TeamPage>}
       {activePage === "contact" && <ContactPage setActivePage={navigateTo} advisorLink={advisorLink} />}
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#3a2a2a" }}>© {new Date().getFullYear()} GroundUp · Northern Real Estate Urban Ventures</div>
