@@ -34,6 +34,26 @@ async function ensureLnlCoupon(stripe) {
   }
 }
 
+// Revenue split: 75% of net (after Stripe fees) transfers to NREUV's connected account
+async function splitCharge(stripe, chargeId) {
+  const dest = process.env.NREUV_CONNECT_ACCOUNT;
+  if (!dest || !chargeId) return;
+  try {
+    const charge = await stripe.charges.retrieve(chargeId, { expand: ['balance_transaction'] });
+    const bt = charge.balance_transaction;
+    if (!bt || charge.currency !== 'usd') return;
+    const net = bt.net; // cents, after Stripe fees
+    const share = Math.floor(net * 0.75);
+    if (share > 0) {
+      await stripe.transfers.create({
+        amount: share, currency: 'usd', destination: dest,
+        source_transaction: chargeId,
+        description: `NREUV 75% split (net ${net}¢ of charge ${chargeId})`,
+      });
+    }
+  } catch (e) { console.error('split failed', chargeId, e.message); }
+}
+
 async function fulfill(sql, session) {
   const md = session.metadata || {};
   const userId = Number(md.user_id);
@@ -90,7 +110,21 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: `Webhook signature verification failed` });
       }
       if (event.type === 'checkout.session.completed') {
-        await fulfill(sql, event.data.object);
+        const cs = event.data.object;
+        await fulfill(sql, cs);
+        if (cs.mode === 'payment' && cs.payment_intent) {
+          const pi = await stripe.paymentIntents.retrieve(cs.payment_intent);
+          await splitCharge(stripe, pi.latest_charge);
+        }
+      } else if (event.type === 'invoice.payment_succeeded') {
+        // First subscription invoice AND every monthly renewal: split + keep tier active
+        const inv = event.data.object;
+        if (inv.charge) await splitCharge(stripe, inv.charge);
+        const item = inv.subscription_details?.metadata?.item || inv.lines?.data?.[0]?.metadata?.item;
+        const uid = Number(inv.subscription_details?.metadata?.user_id || inv.lines?.data?.[0]?.metadata?.user_id);
+        if (uid && item && CATALOG[item]?.tier) {
+          await sql`UPDATE users SET tier = ${CATALOG[item].tier}, membership_status = 'active', stripe_customer_id = ${inv.customer} WHERE id = ${uid}`;
+        }
       } else if (event.type === 'customer.subscription.deleted') {
         const sub = event.data.object;
         await sql`UPDATE users SET tier = 'Free' WHERE stripe_customer_id = ${sub.customer}`;

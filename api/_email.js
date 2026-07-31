@@ -72,7 +72,7 @@ export function welcomeEmail(name, tier) {
       <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">Welcome, ${name.split(' ')[0]}.</h2>
       <p style="color:#a89080;font-size:14px;line-height:1.8;">Your GroundUp account is ready on the <strong style="color:#b80101;">${tier === 'Basic' ? 'Member' : tier}</strong> plan. Decades of affordable-housing deal experience, distilled into a curriculum built for developers like you.</p>
       <p style="color:#a89080;font-size:14px;line-height:1.8;">Sign in anytime to pick up where you left off — your courses, the community, and your membership all live in one place.</p>
-      <a href="https://groundup.nreuv.com" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Go to GroundUp</a>`,
+      <a href="https://community.drginamerritt.net" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Go to GroundUp</a>`,
   };
 }
 
@@ -88,7 +88,7 @@ export async function sendBulk(recipients, subject, innerHtml) {
 }
 
 export function siteUrl() {
-  return process.env.SITE_URL || 'https://groundup.nreuv.com';
+  return process.env.SITE_URL || 'https://community.drginamerritt.net';
 }
 
 export function resetEmail(name, link) {
@@ -221,6 +221,6 @@ export function lnlAccessEmail(name, expiresAt, hasLink) {
       <p style="color:#a89080;font-size:14px;line-height:1.8;">Your Lunch & Learn access is active${through ? ` through <strong style="color:#f0d8d8;">${through}</strong>` : ''} — every live session with Dr. Merritt for six months, plus the recordings.</p>
       <p style="color:#a89080;font-size:14px;line-height:1.8;">${hasLink ? 'The join link for the next session is waiting on your Lunch & Learn page.' : 'The join link for each session appears on your Lunch & Learn page closer to the date.'} While you're there, tell us what you want to learn about — Dr. Merritt's team reads every submission.</p>
       <p style="color:#c9a227;font-size:14px;line-height:1.8;font-weight:bold;">Your attendee perk: 25% off your first month of membership if you join within two months.</p>
-      <a href="https://groundup.nreuv.com" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Open Lunch & Learn</a>`,
+      <a href="https://community.drginamerritt.net" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Open Lunch & Learn</a>`,
   };
 }
