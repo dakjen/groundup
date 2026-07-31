@@ -27,7 +27,7 @@ const miniCourses = [
     id: "mc1",
     title: "Predevelopment: How to Find, Evaluate & Control a Deal",
     stage: "Stage 1 of 7",
-    stageColor: "#d98e4a",
+    stageColor: "#d43d3d",
     description: "Everything that happens before you spend real money — and how to avoid spending it on the wrong deal. This course covers Dr. Merritt's full predevelopment process: how she reads a market, evaluates a site, values land, navigates due diligence, and manages sellers who want to close before you're ready.",
     duration: "~60 min",
     lessons: [
@@ -104,7 +104,7 @@ const miniCourses = [
     id: "mc2",
     title: "Building Your Team: JVs, Partners & Keeping the Lights On",
     stage: "Stage 2 of 7",
-    stageColor: "#e06767",
+    stageColor: "#6a6b69",
     description: "You can't do this alone. Every deal in Dr. Merritt's $600M pipeline except one is a joint venture. This course covers what value you actually bring to a partnership as an emerging developer, how to structure JVs that protect you, what goes wrong and how to prevent it, and how to keep your business solvent between closings.",
     duration: "~65 min",
     lessons: [
@@ -246,7 +246,7 @@ const miniCourses = [
     id: "mc4",
     title: "Design, Construction & Getting to Opening Day",
     stage: "Stage 6 of 7",
-    stageColor: "#cf7a5a",
+    stageColor: "#8a2020",
     description: "You've got the site, the team, and the financing. Now you have to build something worth building. This course covers how to select and manage your architect, make design decisions that serve your residents and your budget, navigate community engagement as a core part of the development process, and get to opening day without a crisis.",
     duration: "~55 min",
     lessons: [
@@ -1403,13 +1403,15 @@ function ContactPage({ setActivePage }) {
           <p style={{ color: "#8a7070", fontSize: 15, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif" }}>
             45 minutes with Dr. Gina Merritt. Select a session type, pay to reserve, then tell her what you're working on.
           </p>
+
+        </div>
+
         <div style={{ borderRadius: 16, overflow: "hidden", position: "relative", border: "1px solid #2a0000", margin: "28px 0 8px" }}>
           <img src="/DCREC2022-still4.png" alt="Dr. Merritt on an industry panel" style={{ width: "100%", height: 260, objectFit: "cover", objectPosition: "center 20%", display: "block" }} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.8) 100%)" }} />
           <div style={{ position: "absolute", bottom: 16, left: 24 }}>
             <div style={{ color: "#f0d8d8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>45 minutes, one-on-one, with the person other developers ask for advice.</div>
           </div>
-        </div>
         </div>
 
         {/* Step 1 */}

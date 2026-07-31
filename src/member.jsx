@@ -965,15 +965,18 @@ export function ResourcesPage({ member, onUpgrade }) {
               ) : items.length === 0 ? (
                 <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font, background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 12, padding: "20px 24px" }}>Nothing here yet — check back soon.</div>
               ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {items.map(r => (
-                    <div key={r.id} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 14, padding: "22px 24px", display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div key={r.id} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 14, padding: "20px 26px", display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: "10px 28px" }}>
+                      <div style={{ flex: 1, minWidth: 260, display: "flex", flexDirection: "column", gap: 8 }}>
                       {r.url && !/youtube\.com|youtu\.be/.test(r.url) ? (
                         <a href={r.url} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontWeight: 800, fontSize: 16, fontFamily: font, textDecoration: "none" }}>{r.title} ↗</a>
                       ) : (
                         <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font }}>{r.title}</div>
                       )}
                       {r.description && <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7, flex: 1 }}>{r.description}</div>}
+                      </div>
+                      <div style={{ width: "min(340px, 100%)", display: "flex", flexDirection: "column", gap: 8 }}>
                       {r.recommendation && (
                         <div style={{ background: "var(--gu-red-tint)", border: "1px solid #b8010120", borderRadius: 8, padding: "10px 14px" }}>
                           <div style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 4 }}>Why NREUV recommends it</div>
@@ -996,6 +999,7 @@ export function ResourcesPage({ member, onUpgrade }) {
                         );
                         return <a href={r.url} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontSize: 13, fontFamily: font, fontWeight: 800, textDecoration: "none" }}>Open →</a>;
                       })()}
+                      </div>
                     </div>
                   ))}
                 </div>
