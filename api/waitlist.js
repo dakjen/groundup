@@ -27,7 +27,8 @@ export default async function handler(req, res) {
     if (req.method === 'GET' && req.query.public === '1') {
       const [launchRow] = await sql`SELECT value FROM settings WHERE key = 'launch_at'`;
       const [insiderRow] = await sql`SELECT value FROM settings WHERE key = 'launch_insider_at'`;
-      return res.json({ launch_at: launchRow?.value || null, launch_insider_at: insiderRow?.value || null });
+      const [callRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
+      return res.json({ launch_at: launchRow?.value || null, launch_insider_at: insiderRow?.value || null, advisor_call_link: callRow?.value || null });
     }
 
     // Admin: full list + launch date + revenue rollup

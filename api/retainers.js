@@ -29,7 +29,8 @@ export default async function handler(req, res) {
           r.messages = await sql`SELECT * FROM retainer_messages WHERE retainer_id = ${r.id} ORDER BY created_at ASC LIMIT 200`;
         }
         const mrr = rows.filter(r => r.status === 'active').reduce((a, r) => a + Number(r.monthly_amount), 0);
-        return res.json({ retainers: rows, mrr });
+        const [callRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
+        return res.json({ retainers: rows, mrr, call_link: callRow?.value || '' });
       }
       // Member's own retainer
       if (!session?.uid) return res.status(401).json({ error: 'Sign in required' });
@@ -109,6 +110,13 @@ export default async function handler(req, res) {
 
     // ── Team only ──
     if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+
+    if (action === 'set_call_link') {
+      const url = String(req.body.url || '').trim();
+      if (url) { try { new URL(url); } catch { return res.status(400).json({ error: 'Invalid link' }); } }
+      await sql`INSERT INTO settings (key, value) VALUES ('advisor_call_link', ${url}) ON CONFLICT (key) DO UPDATE SET value = ${url}`;
+      return res.json({ success: true });
+    }
 
     if (action === 'create') {
       const { user_id, hours_per_month, monthly_amount, notes, status } = req.body;

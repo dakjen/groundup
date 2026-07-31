@@ -1454,7 +1454,7 @@ function PricingPage({ onSignUp }) {
 
 // ─── CONTACT / BOOKING PAGE ──────────────────────────────────────────────────
 
-function ContactPage({ setActivePage }) {
+function ContactPage({ setActivePage, advisorLink }) {
   const SESSION_TYPES = [
     { id: "deal", title: "Deal Review", desc: "Dr. Merritt reviews a specific site or deal — feasibility, market read, deal structure, and whether it's worth pursuing.", price: "$500", duration: "45 min", Icon: Building2, stripe: "https://buy.stripe.com/placeholder_deal" },
     { id: "strategy", title: "Strategy Session", desc: "Big picture direction: where to focus, how to grow your pipeline, what JV structures make sense for your stage.", price: "$425", duration: "45 min", Icon: Compass, stripe: "https://buy.stripe.com/placeholder_strategy" },
@@ -1556,11 +1556,17 @@ function ContactPage({ setActivePage }) {
               <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
                 <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#b80101" }}>{selected.price}</div>
                 {selected.advisor ? (
-                  <a href={"mailto:info@nreuv.com?subject=" + encodeURIComponent("Senior Advisor — engagement call")} style={{ background: "#b80101", color: "#fff", borderRadius: 8, padding: "12px 24px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, textDecoration: "none", display: "inline-block" }}>Book an Engagement Call →</a>
+                  <a href={advisorLink || ("mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("Senior Advisor — engagement call"))} {...(advisorLink ? { target: "_blank", rel: "noreferrer" } : {})} style={{ background: "#b80101", color: "#fff", borderRadius: 8, padding: "12px 24px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, textDecoration: "none", display: "inline-block" }}>Book an Engagement Call →</a>
                 ) : <button onClick={() => startCheckout("session_" + selected.id)} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "13px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Pay & Reserve →</button>}
               </div>
             </div>
-            <div style={{ marginTop: 10, fontSize: 12, color: "#5a4040", fontFamily: "'DM Sans', sans-serif" }}>After payment, complete the form below so Dr. Merritt can prepare for your session.</div>
+            {selected.advisor ? (
+              <div style={{ marginTop: 12, background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 10, padding: "14px 18px", color: "#b8a060", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
+                The engagement call is free. If you move forward, a one-time <strong style={{ color: "#e0c4c4" }}>$1,500 onboarding fee</strong> covers Dr. Merritt's full project intake — reviewing your deal, documents, and goals — and then your monthly hour block begins.
+              </div>
+            ) : (
+              <div style={{ marginTop: 10, fontSize: 12, color: "#5a4040", fontFamily: "'DM Sans', sans-serif" }}>After payment, complete the form below so Dr. Merritt can prepare for your session.</div>
+            )}
           </div>
         )}
 
@@ -3675,6 +3681,7 @@ function RetainerTab({ btnRed, btnGhost, inp, lbl }) {
   const [users, setUsers] = useState([]);
   const [form, setForm] = useState({ user_id: "", hours_per_month: 10, monthly_amount: 5500, notes: "", status: "offered" });
   const [logForm, setLogForm] = useState({});
+  const [callLink, setCallLink] = useState("");
   const [msg, setMsg] = useState(null);
 
   const hdrs = () => ({ "Content-Type": "application/json", Authorization: "Bearer " + sessionStorage.getItem("adminToken") });
@@ -3684,7 +3691,7 @@ function RetainerTab({ btnRed, btnGhost, inp, lbl }) {
     if (!res.ok) throw new Error(d.error || "Request failed");
     return d;
   };
-  const load = () => call("GET").then(setData).catch(e => setMsg({ ok: false, text: e.message }));
+  const load = () => call("GET").then(d => { setData(d); if (d.call_link) setCallLink(d.call_link); }).catch(e => setMsg({ ok: false, text: e.message }));
   useEffect(() => {
     load();
     fetch("/api/users", { headers: hdrs() }).then(r => r.json()).then(u => setUsers(Array.isArray(u) ? u : [])).catch(() => {});
@@ -3721,6 +3728,15 @@ function RetainerTab({ btnRed, btnGhost, inp, lbl }) {
             <div style={{ fontSize: 10, color: "#8a8a8a", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 6 }}>{l}</div>
           </div>
         ))}
+      </div>
+
+      <div style={section}>
+        <div style={{ fontSize: 10, color: "#8a8a8a", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>Engagement Call Booking Link</div>
+        <p style={{ color: "#8a8a8a", fontSize: 12, marginBottom: 14, fontFamily: "'DM Sans', sans-serif" }}>Paste Dr. Merritt's Google Appointment (or Calendly) link — the "Book an Engagement Call" button on the sessions page sends people straight there.</p>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <input value={callLink} onChange={e => setCallLink(e.target.value)} placeholder="https://calendar.app.google/…" style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1, minWidth: 260 }} />
+          <button onClick={async () => { try { await call("POST", { action: "set_call_link", url: callLink }); flash(true, "Booking link saved."); } catch (e) { flash(false, e.message); } }} style={btnRed}>Save Link</button>
+        </div>
       </div>
 
       <div style={section}>
@@ -4102,12 +4118,13 @@ export default function App() {
   });
   const [launchAt, setLaunchAt] = useState(null);
   const [insiderAt, setInsiderAt] = useState(null);
+  const [advisorLink, setAdvisorLink] = useState(null);
   const [launchChecked, setLaunchChecked] = useState(false);
   const [clockTick, setClockTick] = useState(0);
 
   useEffect(() => {
     fetch("/api/waitlist?public=1").then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) { if (d.launch_at) setLaunchAt(d.launch_at); if (d.launch_insider_at) setInsiderAt(d.launch_insider_at); } })
+      .then(d => { if (d) { if (d.launch_at) setLaunchAt(d.launch_at); if (d.launch_insider_at) setInsiderAt(d.launch_insider_at); if (d.advisor_call_link) setAdvisorLink(d.advisor_call_link); } })
       .catch(() => {})
       .finally(() => setLaunchChecked(true));
   }, []);
@@ -4317,7 +4334,7 @@ export default function App() {
       {member?.role === "admin" && activePage === "admin-courses" && <TeamPage><CourseAttachmentsAdmin btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-retainers" && <TeamPage><RetainerTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-revenue" && <TeamPage><RevenueTab /></TeamPage>}
-      {activePage === "contact" && <ContactPage setActivePage={navigateTo} />}
+      {activePage === "contact" && <ContactPage setActivePage={navigateTo} advisorLink={advisorLink} />}
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#3a2a2a" }}>© {new Date().getFullYear()} GroundUp · Northern Real Estate Urban Ventures</div>
         <button onClick={() => setShowAdminLogin(true)} style={{ background: "transparent", border: "none", color: "#2a1a1a", fontFamily: "'DM Sans', sans-serif", fontSize: 11, cursor: "pointer", letterSpacing: "1px" }}>Admin</button>
