@@ -1195,6 +1195,25 @@ const plans = [
     locked: [],
   },
   {
+    name: "Senior Advisor",
+    tier: "Advisor",
+    price: "From $2,500",
+    period: "/mo",
+    description: "Dr. Merritt embedded on your project — for developers with active deals who need her in their corner every month.",
+    accent: "#e0c4c4",
+    popular: false,
+    cta: "Engage Us on Your Project",
+    features: [
+      "Monthly hour blocks with Dr. Merritt (5, 10, or 15 hours)",
+      "Deal & site review as you go",
+      "Capital stack strategy & lender prep",
+      "Negotiation prep before your key meetings",
+      "Direct line between sessions",
+      "Everything in Elite included",
+    ],
+    locked: [],
+  },
+  {
     name: "Partner",
     tier: "Partner",
     price: "Contact Us",
@@ -1292,6 +1311,7 @@ function PricingPage({ onSignUp }) {
           {plans.map((plan, i) => (
             <PlanCard key={i} plan={plan} onSelect={() => {
               if (plan.tier === "Partner") { window.location.href = "mailto:info@nreuv.com?subject=" + encodeURIComponent("GroundUp — Partner tier"); return; }
+              if (plan.tier === "Advisor") { window.location.href = "mailto:info@nreuv.com?subject=" + encodeURIComponent("Senior Advisor — engagement call"); return; }
               onSignUp && onSignUp(plan.tier);
             }} />
           ))}
@@ -1333,6 +1353,7 @@ function ContactPage({ setActivePage }) {
     { id: "capital", title: "Capital Stack Review", desc: "Deep dive into your financing structure — tax credit sizing, subsidy sequencing, gap analysis, and how to close the deal.", price: "$550", duration: "45 min", Icon: BarChart3, stripe: "https://buy.stripe.com/placeholder_capital" },
     { id: "community", title: "Community Development", desc: "Community engagement strategy, political capital, government relationships, and neighborhood support for your project.", price: "$375", duration: "45 min", Icon: Handshake, stripe: "https://buy.stripe.com/placeholder_community" },
     { id: "bipoc", title: "BIPOC Developer Session", desc: "A dedicated session for BIPOC developers — navigating the industry, building capital relationships, and growing as an underrepresented developer. Reserved for BIPOC clients.", price: "$275", duration: "45 min", Icon: UsersIcon, stripe: "https://buy.stripe.com/placeholder_bipoc" },
+    { id: "advisor", title: "Senior Advisor Retainer", desc: "Dr. Merritt embedded on your project month over month — deal review, capital strategy, negotiation prep, and the calls that move it forward. Monthly hour blocks, limited seats. Starts with a 30-minute engagement call.", price: "From $2,500", duration: "/month", Icon: Handshake, advisor: true },
   ];
 
   const [selected, setSelected] = useState(null);
@@ -1420,11 +1441,13 @@ function ContactPage({ setActivePage }) {
             <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 14, padding: "24px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
               <div>
                 <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#f0d8d8", marginBottom: 4 }}>{selected.title}</div>
-                <div style={{ fontSize: 13, color: "#7a5050", fontFamily: "'DM Sans', sans-serif" }}>45 min · Dr. Gina Merritt · Zoom</div>
+                <div style={{ fontSize: 13, color: "#7a5050", fontFamily: "'DM Sans', sans-serif" }}>{selected.advisor ? "Monthly retainer · starts with a 30-min engagement call" : "45 min · Dr. Gina Merritt · Zoom"}</div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
                 <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#b80101" }}>{selected.price}</div>
-                <a href={selected.stripe} target="_blank" rel="noreferrer" style={{ background: "#b80101", color: "#fff", borderRadius: 10, padding: "13px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, textDecoration: "none" }}>Pay with Stripe →</a>
+                {selected.advisor ? (
+                  <a href={"mailto:info@nreuv.com?subject=" + encodeURIComponent("Senior Advisor — engagement call")} style={{ background: "#b80101", color: "#fff", borderRadius: 8, padding: "12px 24px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, textDecoration: "none", display: "inline-block" }}>Book an Engagement Call →</a>
+                ) : <a href={selected.stripe} target="_blank" rel="noreferrer" style={{ background: "#b80101", color: "#fff", borderRadius: 10, padding: "13px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, textDecoration: "none" }}>Pay with Stripe →</a>}
               </div>
             </div>
             <div style={{ marginTop: 10, fontSize: 12, color: "#5a4040", fontFamily: "'DM Sans', sans-serif" }}>After payment, complete the form below so Dr. Merritt can prepare for your session.</div>
