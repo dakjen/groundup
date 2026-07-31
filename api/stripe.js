@@ -26,8 +26,12 @@ const CATALOG = {
 // NREUV's share of net revenue, per product. Everything not listed uses DEFAULT.
 // 1.00 = NREUV keeps all of it; 0.75 = NREUV 75% / platform 25%.
 const SPLIT = {
-  DEFAULT: 0.75,   // NREUV 75% / platform 25% — everything on the site
-  retainer_5: 0.90, retainer_10: 0.90, retainer_15: 0.90,  // Senior Advisor retainer: Dr. Merritt's own hours, 90/10
+  DEFAULT: 0.75,  // NREUV 75% / platform 25% — memberships and course passes
+  lnl: 1.00,      // Lunch & Learn: 100% to NREUV, platform takes no cut
+  // Dr. Merritt's own hours — 90/10
+  session_deal: 0.90, session_strategy: 0.90, session_capital: 0.90,
+  session_community: 0.90, session_bipoc: 0.90,
+  retainer_5: 0.90, retainer_10: 0.90, retainer_15: 0.90,
 };
 const splitRate = (item) => (item && SPLIT[item] !== undefined ? SPLIT[item] : SPLIT.DEFAULT);
 
