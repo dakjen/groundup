@@ -3,10 +3,10 @@ const NEW_COURSES = [
   {
     "id": "mc5",
     "title": "Why Affordable Housing Doesn't Pencil: Land, the Gap, and the Case for Subsidy",
-    "stage": "Foundations",
-    "stageColor": "#c9764a",
+    "stage": "Stage 4 of 7",
+    "stageColor": "#6a6b69",
     "duration": "~50 min",
-    "description": "Before you can raise a dollar of subsidy, you have to be able to explain — with numbers — why the subsidy exists. This course walks the economics of an affordable housing deal from the ground up: how a developer decides what land is worth, why the identical analysis produces a positive land value on a market-rate project and a negative one on an affordable project, where the per-unit funding gap comes from, and what a developer actually earns for closing it. It is built for aspiring and early-stage developers, nonprofit staff moving into real estate, and anyone who has been told affordable housing \"doesn't pencil\" without being shown the arithmetic. No prior finance background is assumed. By the end, students can run a residual land value calculation both ways, size a funding gap in their own market, and articulate the case for public financing in a room full of skeptics.",
+    "description": "Why does the identical building pencil at market rate and collapse as affordable housing? This course walks the economics from the ground up — land value, the per-unit gap, and the case for subsidy — so you can argue the numbers in a room full of skeptics.",
     "lessons": [
       {
         "id": 1,
@@ -161,10 +161,10 @@ const NEW_COURSES = [
   {
     "id": "mc6",
     "title": "Zoning, Entitlements & What You're Allowed to Build",
-    "stage": "Foundations",
-    "stageColor": "#a08c4a",
+    "stage": "Stage 5 of 7",
+    "stageColor": "#b80101",
     "duration": "~45 min",
-    "description": "Stage 1 teaches you how to find and evaluate a deal. This course teaches you what you are legally allowed to put on it — which is the constraint every other decision runs into. It covers matter of right development and why most projects never face a public hearing, how lot coverage and height limits physically shape your building, what a rezoning actually is, and what governments expect in exchange for granting one. It is written for anyone who has looked at a site and had no idea how to find out what could go there. No prior land use background is assumed. By the end, a student can read a site's zoning, calculate roughly what it will hold, and tell the difference between a project they can simply build and one that requires them to negotiate.",
+    "description": "What you're allowed to build decides what the deal is worth. Zoning, rezonings, entitlements, and the community process — how to read the rules, change them when you have to, and come out with a project the neighborhood backs.",
     "lessons": [
       {
         "id": 1,
@@ -262,10 +262,10 @@ const NEW_COURSES = [
   {
     "id": "mc7",
     "title": "After Opening Day: Mixed-Use, Compliance & the Fifteen Years Nobody Warns You About",
-    "stage": "Stage 5 of 5",
-    "stageColor": "#7a4b5e",
+    "stage": "Stage 7 of 7",
+    "stageColor": "#570404",
     "duration": "~55 min",
-    "description": "The platform currently ends at opening day. This course covers what happens next — and what a developer needed to have decided long before the ribbon was cut. It starts with mixed-use: why putting retail under affordable housing is so much harder than it looks, and the two structures developers actually use to solve it. Then it moves into the operating years: the fifteen-year compliance period, annual income recertification, and the mechanism by which a single bad tenant file can force a developer to hand tax credits back to the IRS with interest. It closes on the partnerships and services that determine whether a building becomes a community or just a property. This is the course for developers who have closed a deal, or are about to, and have not yet reckoned with owning the thing for three decades.",
+    "description": "The building opened — now the real test starts. Mixed-use structures, LIHTC compliance, and running the asset so it stays funded, occupied, and yours for the long haul.",
     "lessons": [
       {
         "id": 1,

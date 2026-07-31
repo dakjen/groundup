@@ -26,7 +26,7 @@ const miniCourses = [
   {
     id: "mc1",
     title: "Predevelopment: How to Find, Evaluate & Control a Deal",
-    stage: "Stage 1 of 4",
+    stage: "Stage 1 of 7",
     stageColor: "#b80101",
     description: "Everything that happens before you spend real money — and how to avoid spending it on the wrong deal. This course covers Dr. Merritt's full predevelopment process: how she reads a market, evaluates a site, values land, navigates due diligence, and manages sellers who want to close before you're ready.",
     duration: "~60 min",
@@ -103,7 +103,7 @@ const miniCourses = [
   {
     id: "mc2",
     title: "Building Your Team: JVs, Partners & Keeping the Lights On",
-    stage: "Stage 2 of 4",
+    stage: "Stage 2 of 7",
     stageColor: "#6a6b69",
     description: "You can't do this alone. Every deal in Dr. Merritt's $600M pipeline except one is a joint venture. This course covers what value you actually bring to a partnership as an emerging developer, how to structure JVs that protect you, what goes wrong and how to prevent it, and how to keep your business solvent between closings.",
     duration: "~65 min",
@@ -173,7 +173,7 @@ const miniCourses = [
   {
     id: "mc3",
     title: "Financing the Deal: Capital Stacks, Subsidy & Closing the Gap",
-    stage: "Stage 3 of 4",
+    stage: "Stage 3 of 7",
     stageColor: "#b80101",
     description: "This is where most deals die — not because the site was wrong, but because the developer didn't understand the financing. Dr. Merritt has built capital stacks with 14 sources, spent two years closing a $6M gap, and restructured deals mid-stream when interest rates and construction costs moved against her. This course is the real education in affordable housing finance.",
     duration: "~70 min",
@@ -245,7 +245,7 @@ const miniCourses = [
   {
     id: "mc4",
     title: "Design, Construction & Getting to Opening Day",
-    stage: "Stage 4 of 4",
+    stage: "Stage 6 of 7",
     stageColor: "#570404",
     description: "You've got the site, the team, and the financing. Now you have to build something worth building. This course covers how to select and manage your architect, make design decisions that serve your residents and your budget, navigate community engagement as a core part of the development process, and get to opening day without a crisis.",
     duration: "~55 min",
@@ -304,9 +304,11 @@ const miniCourses = [
 // ─── MINI COURSE PAGE ───────────────────────────────────────────────────────
 
 miniCourses.push(...NEW_COURSES);
+const COURSE_ORDER = ["mc1", "mc2", "mc3", "mc5", "mc6", "mc4", "mc7"];
+miniCourses.sort((a, b) => COURSE_ORDER.indexOf(a.id) - COURSE_ORDER.indexOf(b.id));
 
 function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
-  const pageBg = member ? "#17120c" : "#000";
+  const pageBg = "#000";
   // Paid members (Basic+) get every lesson. Free members get ONE lesson total across
   // all courses: the first they open is claimed server-side and everything else locks.
   const memberRank = member ? (TIER_RANK[member.tier] ?? 0) : 0;
@@ -672,7 +674,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
     ["admin-email", "Email"], ["admin-courses", "Courses"], ["admin-revenue", "Revenue"],
   ];
   const [adminOpen, setAdminOpen] = useState(false);
-  const lightNav = !!member;
+  const lightNav = member?.role === "admin";
   const navInactive = lightNav ? "#5a5a5a" : "#6a6b69";
   const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", contact: "Contact", community: "Community", membership: "Membership", resources: "Resources" };
   return (
@@ -966,7 +968,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
 
 function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate }) {
   const [activeMiniCourse, setActiveMiniCourse] = useState(null);
-  const pageBg = member ? "#17120c" : "#000";
+  const pageBg = "#000";
 
   // Course content requires an account — sign in (free) to preview, paid to unlock everything.
   if (!member) {
@@ -1485,7 +1487,7 @@ function ContactPage({ setActivePage }) {
 // ─── LUNCH & LEARN PAGE ──────────────────────────────────────────────────────
 
 function LunchLearnPage({ member, onSignIn, setActivePage }) {
-  const pageBg = member ? "#17120c" : "#000";
+  const pageBg = "#000";
   const [recordings, setRecordings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [playingId, setPlayingId] = useState(null);
@@ -3882,6 +3884,23 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(() => { try { const u = sessionStorage.getItem("currentUser"); return u ? JSON.parse(u) : null; } catch { return null; } });
   const [eventInvited, setEventInvited] = useState(() => sessionStorage.getItem("eventInvited") === "true");
   const [eventInviteBanner, setEventInviteBanner] = useState(null);
+
+  // Theme: members share the public dark theme; ONLY team gets the light one
+  useEffect(() => {
+    const light = member?.role === "admin";
+    const V = light ? {
+      "--gu-bg": "#f6f4f0", "--gu-panel": "#efece6", "--gu-card": "#ffffff", "--gu-card2": "#faf8f5",
+      "--gu-card3": "#f2efe9", "--gu-red-tint": "#fdf1f1", "--gu-border": "#dcdcdc", "--gu-border2": "#e6e6e6",
+      "--gu-text": "#161616", "--gu-text2": "#222222", "--gu-body": "#333333", "--gu-muted": "#666666",
+      "--gu-muted2": "#8a8a8a", "--gu-faint": "#9a9a9a",
+    } : {
+      "--gu-bg": "#000000", "--gu-panel": "#070303", "--gu-card": "#0d0404", "--gu-card2": "#0a0808",
+      "--gu-card3": "#140808", "--gu-red-tint": "#12060a", "--gu-border": "#2a0000", "--gu-border2": "#1a0000",
+      "--gu-text": "#f5e8e8", "--gu-text2": "#f0d8d8", "--gu-body": "#c8a8a8", "--gu-muted": "#8a7070",
+      "--gu-muted2": "#7a5050", "--gu-faint": "#5a4040",
+    };
+    for (const [k, v] of Object.entries(V)) document.documentElement.style.setProperty(k, v);
+  }, [member?.role]);
 
   // Re-validate the saved member session against the server on load
   useEffect(() => {
