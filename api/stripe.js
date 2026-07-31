@@ -18,6 +18,7 @@ const CATALOG = {
   session_capital:   { mode: 'payment', name: '1:1 Capital Stack Review (45 min)', amount: 55000 },
   session_community: { mode: 'payment', name: '1:1 Community Development (45 min)', amount: 37500 },
   session_bipoc:     { mode: 'payment', name: '1:1 BIPOC Developer Session (45 min)', amount: 27500 },
+  retainer_onboarding: { mode: 'payment', name: 'Senior Advisor — Onboarding Fee', amount: 150000 },
   retainer_5:  { mode: 'subscription', name: 'Senior Advisor Retainer — 5 hrs/month',  amount: 302500, retainerHours: 5 },
   retainer_10: { mode: 'subscription', name: 'Senior Advisor Retainer — 10 hrs/month', amount: 550000, retainerHours: 10 },
   retainer_15: { mode: 'subscription', name: 'Senior Advisor Retainer — 15 hrs/month', amount: 770000, retainerHours: 15 },
@@ -31,7 +32,7 @@ const SPLIT = {
   // Dr. Merritt's own hours — 90/10
   session_deal: 0.90, session_strategy: 0.90, session_capital: 0.90,
   session_community: 0.90, session_bipoc: 0.90,
-  retainer_5: 0.90, retainer_10: 0.90, retainer_15: 0.90,
+  retainer_onboarding: 0.90, retainer_5: 0.90, retainer_10: 0.90, retainer_15: 0.90,
 };
 const splitRate = (item) => (item && SPLIT[item] !== undefined ? SPLIT[item] : SPLIT.DEFAULT);
 

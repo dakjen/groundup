@@ -1311,6 +1311,7 @@ const plans = [
     cta: "Engage Us on Your Project",
     features: [
       "5 hrs/mo — $3,025 · 10 hrs/mo — $5,500 · 15 hrs/mo — $7,700",
+      "$1,500 one-time onboarding — full project intake with Dr. Merritt",
       "Deal & site review as you go",
       "Capital stack strategy & lender prep",
       "Negotiation prep before your key meetings",
