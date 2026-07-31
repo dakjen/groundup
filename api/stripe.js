@@ -20,6 +20,21 @@ const CATALOG = {
   session_bipoc:     { mode: 'payment', name: '1:1 BIPOC Developer Session (45 min)', amount: 27500 },
 };
 
+// NREUV's share of net revenue, per product. Everything not listed uses DEFAULT.
+// 1.00 = NREUV keeps all of it; 0.75 = NREUV 75% / platform 25%.
+const SPLIT = {
+  DEFAULT: 0.75,
+  // Subscriptions & course products — platform manages, 75/25
+  sub_Basic: 0.75, sub_Premium: 0.75, sub_Elite: 0.75,
+  pass_single: 0.75, pass_all: 0.75, lnl: 0.75,
+  // Dr. Merritt's own time — she keeps 90%
+  session_deal: 0.90, session_strategy: 0.90, session_capital: 0.90,
+  session_community: 0.90, session_bipoc: 0.90,
+  // Senior Advisor retainer (invoiced outside checkout today; here when it moves in)
+  retainer: 0.90,
+};
+const splitRate = (item) => (item && SPLIT[item] !== undefined ? SPLIT[item] : SPLIT.DEFAULT);
+
 async function readRawBody(req) {
   const chunks = [];
   for await (const c of req) chunks.push(c);
@@ -35,20 +50,21 @@ async function ensureLnlCoupon(stripe) {
 }
 
 // Revenue split: 75% of net (after Stripe fees) transfers to NREUV's connected account
-async function splitCharge(stripe, chargeId) {
+async function splitCharge(stripe, chargeId, item) {
   const dest = process.env.NREUV_CONNECT_ACCOUNT;
   if (!dest || !chargeId) return;
+  const rate = splitRate(item);
   try {
     const charge = await stripe.charges.retrieve(chargeId, { expand: ['balance_transaction'] });
     const bt = charge.balance_transaction;
     if (!bt || charge.currency !== 'usd') return;
     const net = bt.net; // cents, after Stripe fees
-    const share = Math.floor(net * 0.75);
+    const share = Math.floor(net * rate);
     if (share > 0) {
       await stripe.transfers.create({
         amount: share, currency: 'usd', destination: dest,
         source_transaction: chargeId,
-        description: `NREUV 75% split (net ${net}¢ of charge ${chargeId})`,
+        description: `NREUV ${Math.round(rate * 100)}% split — ${item || 'purchase'} (net ${net}¢)`,
       });
     }
   } catch (e) { console.error('split failed', chargeId, e.message); }
@@ -114,13 +130,14 @@ export default async function handler(req, res) {
         await fulfill(sql, cs);
         if (cs.mode === 'payment' && cs.payment_intent) {
           const pi = await stripe.paymentIntents.retrieve(cs.payment_intent);
-          await splitCharge(stripe, pi.latest_charge);
+          await splitCharge(stripe, pi.latest_charge, cs.metadata?.item);
         }
       } else if (event.type === 'invoice.payment_succeeded') {
         // First subscription invoice AND every monthly renewal: split + keep tier active
         const inv = event.data.object;
-        if (inv.charge) await splitCharge(stripe, inv.charge);
-        const item = inv.subscription_details?.metadata?.item || inv.lines?.data?.[0]?.metadata?.item;
+        const invItem = inv.subscription_details?.metadata?.item || inv.lines?.data?.[0]?.metadata?.item;
+        if (inv.charge) await splitCharge(stripe, inv.charge, invItem);
+        const item = invItem;
         const uid = Number(inv.subscription_details?.metadata?.user_id || inv.lines?.data?.[0]?.metadata?.user_id);
         if (uid && item && CATALOG[item]?.tier) {
           await sql`UPDATE users SET tier = ${CATALOG[item].tier}, membership_status = 'active', stripe_customer_id = ${inv.customer} WHERE id = ${uid}`;
