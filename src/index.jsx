@@ -326,6 +326,88 @@ async function startCheckout(item, extra = {}) {
 const COURSE_ORDER = ["mc1", "mc2", "mc3", "mc5", "mc6", "mc4", "mc7"];
 miniCourses.sort((a, b) => COURSE_ORDER.indexOf(a.id) - COURSE_ORDER.indexOf(b.id));
 
+// Lesson charts — bars, split shares, and timelines, drawn in the brand palette
+function LessonChart({ chart, color }) {
+  if (!chart) return null;
+  const font = "'DM Sans', sans-serif";
+  const serif = "'Cormorant Garamond', serif";
+  const Wrap = ({ children }) => (
+    <div style={{ background: "#0a0808", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", marginBottom: 32 }}>
+      {chart.title && <div style={{ fontSize: 9, color, fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 20 }}>{chart.title}</div>}
+      {children}
+      {chart.note && <div style={{ color: "#8a7070", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, marginTop: 18, borderTop: "1px solid #1a0000", paddingTop: 14 }}>{chart.note}</div>}
+    </div>
+  );
+
+  if (chart.type === "bar") {
+    const all = chart.series.flatMap(s => s.bars.map(b => Math.abs(b.value)));
+    const max = Math.max(...all, 1);
+    return (
+      <Wrap>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(chart.series.length, 2)}, 1fr)`, gap: 28 }}>
+          {chart.series.map((s, si) => (
+            <div key={si}>
+              {chart.series.length > 1 && <div style={{ color: "#f0d8d8", fontSize: 13, fontWeight: 800, fontFamily: font, marginBottom: 14 }}>{s.label}</div>}
+              {s.bars.map((b, bi) => (
+                <div key={bi} style={{ marginBottom: 14 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+                    <span style={{ color: "#8a7070", fontSize: 11.5, fontFamily: font, fontWeight: 600 }}>{b.name}</span>
+                    <span style={{ color: b.negative ? "#ff6b6b" : b.highlight ? color : "#c8a8a8", fontSize: 12.5, fontFamily: font, fontWeight: 800 }}>{b.display}</span>
+                  </div>
+                  <div style={{ height: 10, background: "#150808", borderRadius: 99, overflow: "hidden" }}>
+                    <div style={{ width: `${Math.max(3, (Math.abs(b.value) / max) * 100)}%`, height: "100%", borderRadius: 99, background: b.negative ? "linear-gradient(90deg,#5a1010,#ff6b6b)" : b.highlight ? color : "#3a2020" }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </Wrap>
+    );
+  }
+
+  if (chart.type === "split") {
+    return (
+      <Wrap>
+        {chart.totalLabel && <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "#f5e8e8", marginBottom: 16 }}>{chart.totalLabel}</div>}
+        <div style={{ display: "flex", height: 46, borderRadius: 10, overflow: "hidden", marginBottom: 16 }}>
+          {chart.parts.map((p, i) => (
+            <div key={i} style={{ width: `${p.pct}%`, background: p.highlight ? color : "#2a1a1a", display: "flex", alignItems: "center", justifyContent: "center", borderRight: i < chart.parts.length - 1 ? "2px solid #0a0808" : "none" }}>
+              <span style={{ color: p.highlight ? "#fff" : "#c8a8a8", fontSize: 13, fontWeight: 800, fontFamily: font }}>{p.pct}%</span>
+            </div>
+          ))}
+        </div>
+        {chart.parts.map((p, i) => (
+          <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: i < chart.parts.length - 1 ? "1px solid #1a0000" : "none" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 9, color: "#c8a8a8", fontSize: 13, fontFamily: font, fontWeight: 600 }}>
+              <span style={{ width: 10, height: 10, borderRadius: 3, background: p.highlight ? color : "#2a1a1a", display: "inline-block" }} />{p.name}
+            </span>
+            <span style={{ color: p.highlight ? color : "#f0d8d8", fontSize: 13.5, fontFamily: font, fontWeight: 800 }}>{p.display}</span>
+          </div>
+        ))}
+      </Wrap>
+    );
+  }
+
+  if (chart.type === "timeline") {
+    return (
+      <Wrap>
+        <div style={{ position: "relative", paddingLeft: 22 }}>
+          <div style={{ position: "absolute", left: 5, top: 6, bottom: 6, width: 2, background: "linear-gradient(180deg," + color + ",#2a1a1a)" }} />
+          {chart.steps.map((st, i) => (
+            <div key={i} style={{ position: "relative", marginBottom: i < chart.steps.length - 1 ? 22 : 0 }}>
+              <span style={{ position: "absolute", left: -22, top: 4, width: 12, height: 12, borderRadius: "50%", background: "#0a0808", border: `2px solid ${color}`, display: "block" }} />
+              <div style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 800, fontFamily: font, marginBottom: 4 }}>{st.label}</div>
+              <div style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{st.detail}</div>
+            </div>
+          ))}
+        </div>
+      </Wrap>
+    );
+  }
+  return null;
+}
+
 function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
   const pageBg = "#000";
   // Paid members (Basic+) get every lesson. Free members get ONE lesson total across
@@ -401,6 +483,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
               ))}
             </div>
           )}
+          <LessonChart chart={lesson.chart} color={course.stageColor} />
           {lesson.table && (
             <div style={{ marginBottom: 32, overflowX: "auto" }}>
               {lesson.table.title && <div style={{ fontSize: 9, color: course.stageColor, fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>{lesson.table.title}</div>}

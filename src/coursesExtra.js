@@ -75,7 +75,56 @@ const NEW_COURSES = [
         ],
         "quote": "This is why affordable housing is so difficult to build — because the building costs $20 million, whether or not people are paying $5,000 rent or $500 rent.",
         "quoteContext": "This is the thesis of the entire course in one sentence, and it is worth memorizing. Costs are set by the construction market. Revenue is set by what your residents can afford. Nothing in between reconciles the two. Once a student truly absorbs that, every financing tool in Stage 3 stops looking like a grab bag of programs and starts looking like what it is — a set of instruments engineered to bridge one specific, structural, unavoidable gap.",
-        "actionItem": "Take the site from Lesson 1 and run residual land value twice: once at market rents, once at 60% AMI rents. Write down the difference between the two numbers. That difference is your gap, and everything that follows is about filling it."
+        "actionItem": "Take the site from Lesson 1 and run residual land value twice: once at market rents, once at 60% AMI rents. Write down the difference between the two numbers. That difference is your gap, and everything that follows is about filling it.",
+        "chart": {
+          "type": "bar",
+          "title": "The same analysis, two outcomes",
+          "series": [
+            {
+              "label": "Market rate",
+              "bars": [
+                {
+                  "name": "Supportable value",
+                  "value": 200,
+                  "display": "$200M"
+                },
+                {
+                  "name": "Total cost",
+                  "value": 120,
+                  "display": "$120M"
+                },
+                {
+                  "name": "Residual land value",
+                  "value": 80,
+                  "display": "+$80M",
+                  "highlight": true
+                }
+              ]
+            },
+            {
+              "label": "Affordable",
+              "bars": [
+                {
+                  "name": "Supportable value",
+                  "value": 3.5,
+                  "display": "$3.5M"
+                },
+                {
+                  "name": "Total cost",
+                  "value": 20,
+                  "display": "$20M"
+                },
+                {
+                  "name": "Residual land value",
+                  "value": -16.5,
+                  "display": "−$16.5M",
+                  "negative": true
+                }
+              ]
+            }
+          ],
+          "note": "Identical math. One project can pay $80M for land; the other is $16.5M underwater before it starts."
+        }
       },
       {
         "id": 3,
@@ -129,7 +178,29 @@ const NEW_COURSES = [
         ],
         "quote": "The government sponsors financing programs to help build affordable housing — or honestly, no one would build it, because it is so hard to finance.",
         "quoteContext": "Public financing is usually argued about as a matter of generosity or ideology. Dr. Merritt reframes it as arithmetic. When 79% of a unit's cost has no revenue standing behind it, subsidy is not a handout — it is the only mechanism by which the unit comes into existence. Students who can walk a skeptic through this math are far better equipped in a funding meeting than students who can only assert that housing matters.",
-        "actionItem": "Pull the HUD income limits for your county. Calculate the maximum allowable rent for a three-bedroom at 60% AMI, estimate the debt that rent supports, and compare it against what it costs to build a three-bedroom in your market today. Write the gap down as a dollar figure per unit."
+        "actionItem": "Pull the HUD income limits for your county. Calculate the maximum allowable rent for a three-bedroom at 60% AMI, estimate the debt that rent supports, and compare it against what it costs to build a three-bedroom in your market today. Write the gap down as a dollar figure per unit.",
+        "chart": {
+          "type": "split",
+          "title": "Where the per-unit money comes from",
+          "total": 343750,
+          "totalLabel": "$343,750 total cost per unit",
+          "parts": [
+            {
+              "name": "What rents can support",
+              "value": 72514,
+              "display": "$72,514",
+              "pct": 21
+            },
+            {
+              "name": "The funding gap",
+              "value": 271236,
+              "display": "$271,236",
+              "pct": 79,
+              "highlight": true
+            }
+          ],
+          "note": "79% of every unit has to come from somewhere other than rent. That's the case for subsidy."
+        }
       },
       {
         "id": 4,
@@ -185,7 +256,29 @@ const NEW_COURSES = [
         ],
         "quote": "History shows that there is always someone or some group of people that oppose development of any kind. So if all projects had to get public input to be built, nothing would be built.",
         "quoteContext": "This is Dr. Merritt being honest about a tension the industry usually talks around. Community input genuinely matters — it is central to how she works — but a system requiring unanimous consent produces no housing. Students need to understand where the public process actually sits in the timeline so they neither dismiss community engagement nor assume it happens at the permit counter.",
-        "actionItem": "Pick a site in your target market. Find the jurisdiction's zoning map online and identify the parcel's zoning designation. Write down one sentence: is what I want to build here matter of right, or will it require a rezoning?"
+        "actionItem": "Pick a site in your target market. Find the jurisdiction's zoning map online and identify the parcel's zoning designation. Write down one sentence: is what I want to build here matter of right, or will it require a rezoning?",
+        "chart": {
+          "type": "split",
+          "title": "How most projects get approved",
+          "total": 10,
+          "totalLabel": "Out of 10 typical projects",
+          "parts": [
+            {
+              "name": "Matter of right (no hearing)",
+              "value": 9,
+              "display": "9",
+              "pct": 90,
+              "highlight": true
+            },
+            {
+              "name": "Requires rezoning/entitlement",
+              "value": 1,
+              "display": "1",
+              "pct": 10
+            }
+          ],
+          "note": "Most deals never see a public hearing — the zoning already allows them."
+        }
       },
       {
         "id": 2,
@@ -225,7 +318,35 @@ const NEW_COURSES = [
         ],
         "quote": "So with 25% lot coverage times four floors, that gets you to 100% of the building area. Again, only if zoning allows.",
         "quoteContext": "The arithmetic is simple and the caveat is the whole lesson. New developers routinely assume they can recover lost footprint by building taller. Sometimes they can. Often the height limit stops them, and the project they modeled was never possible. Dr. Merritt attaches the condition to the calculation every time she states it, and students should learn it the same way.",
-        "actionItem": "For the site from Lesson 1, find the lot coverage limit, the height limit, and the lot size. Calculate the maximum buildable square footage. Compare it against what you assumed the site would hold."
+        "actionItem": "For the site from Lesson 1, find the lot coverage limit, the height limit, and the lot size. Calculate the maximum buildable square footage. Compare it against what you assumed the site would hold.",
+        "chart": {
+          "type": "bar",
+          "title": "Same lot, three coverage rules",
+          "series": [
+            {
+              "label": "Buildable footprint",
+              "bars": [
+                {
+                  "name": "100% coverage",
+                  "value": 100,
+                  "display": "100%"
+                },
+                {
+                  "name": "50% coverage",
+                  "value": 50,
+                  "display": "50%"
+                },
+                {
+                  "name": "25% coverage",
+                  "value": 25,
+                  "display": "25%",
+                  "highlight": true
+                }
+              ]
+            }
+          ],
+          "note": "Coverage decides how much of your land you can actually build on — before height even enters the conversation."
+        }
       },
       {
         "id": 3,
@@ -356,7 +477,26 @@ const NEW_COURSES = [
         ],
         "quote": "The property manager really needs to have significant experience monitoring and reporting on the requirements for tax credit properties — they need to ensure that they lease to the appropriate person so that the owner doesn't have any financial impacts.",
         "quoteContext": "Property management is where first-time developers most often economize, because it looks like a commodity service. Dr. Merritt is warning that on a tax credit deal it is a risk control. The cheapest manager who has never handled LIHTC compliance can cost an owner the credits that financed the building — a consequence that arrives years after the hiring decision was made.",
-        "actionItem": "Write down the three questions you would ask a prospective property manager to test their tax credit compliance experience. If you cannot think of three, that is the gap this lesson was written to close."
+        "actionItem": "Write down the three questions you would ask a prospective property manager to test their tax credit compliance experience. If you cannot think of three, that is the gap this lesson was written to close.",
+        "chart": {
+          "type": "timeline",
+          "title": "The LIHTC clock",
+          "steps": [
+            {
+              "label": "Years 1–15",
+              "detail": "Compliance period — full IRS reporting, credits can be recaptured"
+            },
+            {
+              "label": "Years 16–30",
+              "detail": "Extended use — affordability restrictions continue"
+            },
+            {
+              "label": "Year 30+",
+              "detail": "Restrictions may expire — the long-term decision point"
+            }
+          ],
+          "note": "The building outlives the financing. Plan for year 16 in year 1."
+        }
       },
       {
         "id": 4,
