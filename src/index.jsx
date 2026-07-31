@@ -3958,15 +3958,8 @@ export default function App() {
 
   const openSignup = (tier = "Free") => { setSignupTier(tier); setShowSignup(true); };
 
-  const protectedPages = ["courses", "lunchlearn"];
-  const navigateTo = (page) => {
-    if (protectedPages.includes(page) && !contentAgreed && member?.role !== "admin") {
-      setPendingPage(page);
-      setShowAgreement(true);
-      return;
-    }
-    setActivePage(page);
-  };
+  // IP agreement is now collected at signup — no popup gate
+  const navigateTo = (page) => { setActivePage(page); };
   const handleAgree = () => {
     sessionStorage.setItem("contentAgreed", "true");
     setContentAgreed(true);
@@ -4043,7 +4036,6 @@ export default function App() {
           <button onClick={() => setEventInviteBanner(null)} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12, cursor: "pointer", flexShrink: 0 }}>Got it</button>
         </div>
       )}
-      {showAgreement && <ContentAgreementModal onAgree={handleAgree} onClose={() => { setShowAgreement(false); setPendingPage(null); }} />}
       {member && notif?.announcement && !bannerDismissed && (
         <div style={{ position: "fixed", top: 64, left: 0, right: 0, zIndex: 95, background: "#b80101", color: "#fff", padding: "10px clamp(16px,4vw,48px)", display: "flex", alignItems: "center", gap: 14 }}>
           <Megaphone size={16} />

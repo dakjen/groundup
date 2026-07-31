@@ -64,6 +64,7 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
   const [tier, setTier] = useState(defaultTier);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
   const [notice, setNotice] = useState("");
 
@@ -71,6 +72,11 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
     e.preventDefault();
     setError(""); setNotice(""); setBusy(true);
     try {
+      if (mode === "signup" && !agreed) {
+        setError("Please agree to the Content Use Policy to continue.");
+        setBusy(false);
+        return;
+      }
       if (mode === "forgot") {
         await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "forgot_password", email }) });
         setNotice("If that email has an account, a reset link is on its way. It works for one hour.");
@@ -128,6 +134,14 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
                 </div>
               )}
             </div>
+          )}
+          {mode === "signup" && (
+            <label style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 16, cursor: "pointer" }}>
+              <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 3 }} required />
+              <span style={{ color: "#8a7070", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>
+                I agree to the <strong style={{ color: "#c8a8a8" }}>Intellectual Property &amp; Content Use Policy</strong>: all GroundUp materials are the exclusive property of Dr. Gina Merritt, for my personal use only — no copying, sharing, or redistribution.
+              </span>
+            </label>
           )}
           {error && <div style={{ color: "#ff6b6b", fontSize: 13, fontFamily: font, marginBottom: 14 }}>{error}</div>}
           {notice && <div style={{ color: "#22c55e", fontSize: 13, fontFamily: font, marginBottom: 14 }}>{notice}</div>}
