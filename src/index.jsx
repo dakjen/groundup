@@ -304,6 +304,25 @@ const miniCourses = [
 // ─── MINI COURSE PAGE ───────────────────────────────────────────────────────
 
 miniCourses.push(...NEW_COURSES);
+
+// Start a Stripe Checkout for any purchasable item; falls back to email if payments are off
+async function startCheckout(item, extra = {}) {
+  try {
+    const res = await fetch("/api/stripe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() },
+      body: JSON.stringify({ item, ...extra }),
+    });
+    const d = await res.json();
+    if (res.status === 401) { alert("Sign in first, then purchase."); return false; }
+    if (!res.ok) throw new Error(d.error || "Checkout failed");
+    window.location.href = d.url;
+    return true;
+  } catch (e) {
+    window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("GroundUp purchase: " + item);
+    return false;
+  }
+}
 const COURSE_ORDER = ["mc1", "mc2", "mc3", "mc5", "mc6", "mc4", "mc7"];
 miniCourses.sort((a, b) => COURSE_ORDER.indexOf(a.id) - COURSE_ORDER.indexOf(b.id));
 
@@ -1300,7 +1319,7 @@ function PricingPage({ onSignUp }) {
             <p style={{ color: "#8a7070", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Pay once, learn for 30 days. No subscription, no membership.</p>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, alignItems: "start", maxWidth: 720, margin: "0 auto" }}>
-            {passPlans.map((plan, i) => <PlanCard key={i} plan={plan} onSelect={() => { window.location.href = `mailto:info@nreuv.com?subject=${encodeURIComponent("GroundUp — " + plan.name)}`; }} />)}
+            {passPlans.map((plan, i) => <PlanCard key={i} plan={plan} onSelect={() => startCheckout(plan.name.includes("Single") ? "pass_single" : "pass_all")} />)}
           </div>
         </div>
 
@@ -1312,8 +1331,9 @@ function PricingPage({ onSignUp }) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, alignItems: "start" }}>
           {plans.map((plan, i) => (
             <PlanCard key={i} plan={plan} onSelect={() => {
-              if (plan.tier === "Partner") { window.location.href = "mailto:info@nreuv.com?subject=" + encodeURIComponent("GroundUp — Partner tier"); return; }
-              if (plan.tier === "Advisor") { window.location.href = "mailto:info@nreuv.com?subject=" + encodeURIComponent("Senior Advisor — engagement call"); return; }
+              if (plan.tier === "Partner") { window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("GroundUp — Partner tier"); return; }
+              if (plan.tier === "Advisor") { window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("Senior Advisor — engagement call"); return; }
+              if (getMember()) { startCheckout("sub_" + plan.tier); return; }
               onSignUp && onSignUp(plan.tier);
             }} />
           ))}
@@ -1451,7 +1471,7 @@ function ContactPage({ setActivePage }) {
                 <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#b80101" }}>{selected.price}</div>
                 {selected.advisor ? (
                   <a href={"mailto:info@nreuv.com?subject=" + encodeURIComponent("Senior Advisor — engagement call")} style={{ background: "#b80101", color: "#fff", borderRadius: 8, padding: "12px 24px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, textDecoration: "none", display: "inline-block" }}>Book an Engagement Call →</a>
-                ) : <a href={selected.stripe} target="_blank" rel="noreferrer" style={{ background: "#b80101", color: "#fff", borderRadius: 10, padding: "13px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, textDecoration: "none" }}>Pay with Stripe →</a>}
+                ) : <button onClick={() => startCheckout("session_" + selected.id)} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "13px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Pay & Reserve →</button>}
               </div>
             </div>
             <div style={{ marginTop: 10, fontSize: 12, color: "#5a4040", fontFamily: "'DM Sans', sans-serif" }}>After payment, complete the form below so Dr. Merritt can prepare for your session.</div>
@@ -1568,7 +1588,7 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
             </p>
             {member ? (
               <>
-                <button onClick={() => { window.location.href = "mailto:info@nreuv.com?subject=" + encodeURIComponent("GroundUp — Lunch & Learn access"); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "14px 32px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Get Access — $39.99</button>
+                <button onClick={() => startCheckout("lnl")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "14px 32px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Get Access — $39.99</button>
                 <form onSubmit={redeem} style={{ marginTop: 22, display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
                   <input value={code} onChange={e => setCode(e.target.value)} placeholder="Have a code from Dr. Merritt?" style={{ background: "#0a0505", border: "1px solid #2a0000", borderRadius: 8, padding: "12px 14px", color: "#f5e8e8", fontFamily: font, fontSize: 13, outline: "none", width: 260, textTransform: "uppercase" }} />
                   <button type="submit" style={{ background: "transparent", color: "#e0c4c4", border: "1px solid #e0c4c450", borderRadius: 8, padding: "12px 20px", fontFamily: font, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Redeem</button>
@@ -1944,10 +1964,10 @@ function AdminLoginPage({ onLogin }) {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/login", {
+      const res = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ action: "admin_login", email, password }),
       });
       const data = await res.json();
       if (data.success) {
@@ -3867,6 +3887,10 @@ export default function App() {
       .then(() => loadNotif()).catch(() => {});
   };
   const [showWaitlist, setShowWaitlist] = useState(false);
+  const [checkoutMsg, setCheckoutMsg] = useState(() => {
+    const p = new URLSearchParams(window.location.search).get("checkout");
+    return p === "success" ? "success" : p === "cancelled" ? "cancelled" : null;
+  });
   const [launchAt, setLaunchAt] = useState(null);
   const [insiderAt, setInsiderAt] = useState(null);
   const [launchChecked, setLaunchChecked] = useState(false);
@@ -4038,6 +4062,14 @@ export default function App() {
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#8a7070" }}>Special invite from Dr. Merritt's team{eventInviteBanner.eventTitle ? ` for ${eventInviteBanner.eventTitle}` : ""}. You can now RSVP for the upcoming event.</div>
           </div>
           <button onClick={() => setEventInviteBanner(null)} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12, cursor: "pointer", flexShrink: 0 }}>Got it</button>
+        </div>
+      )}
+      {checkoutMsg && (
+        <div style={{ position: "fixed", top: 64, left: 0, right: 0, zIndex: 96, background: checkoutMsg === "success" ? "#0d2a14" : "#2a1408", color: checkoutMsg === "success" ? "#4ade80" : "#e0c4c4", padding: "10px clamp(16px,4vw,48px)", display: "flex", alignItems: "center", gap: 14, borderBottom: "1px solid #ffffff15" }}>
+          <div style={{ flex: 1, fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 700 }}>
+            {checkoutMsg === "success" ? "Payment received — your access is activating now. Refresh in a few seconds if you don't see it yet." : "Checkout cancelled — no charge was made."}
+          </div>
+          <button onClick={() => { setCheckoutMsg(null); window.history.replaceState({}, "", window.location.pathname); }} style={{ background: "transparent", color: "inherit", border: "none", fontSize: 16, cursor: "pointer" }}>✕</button>
         </div>
       )}
       {member && notif?.announcement && !bannerDismissed && (

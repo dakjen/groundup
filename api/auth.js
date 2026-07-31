@@ -26,6 +26,16 @@ export default async function handler(req, res) {
 
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+    // Admin env login (folded in from /api/login)
+    if (action === 'admin_login') {
+      const { email, password } = req.body;
+      if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD && email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
+        try { const { ensureSchema } = await import('./_migrate.js'); await ensureSchema(); } catch (e) { console.error('migration failed', e); }
+        return res.json({ success: true, token: signToken({ role: 'admin' }) });
+      }
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
     // Site password gate (folded in from /api/site-auth)
     if (action === 'site_gate') {
       if (req.body.password === process.env.SITE_PASSWORD) return res.json({ success: true });
