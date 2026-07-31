@@ -30,7 +30,26 @@ export default async function handler(req, res) {
         }
         const mrr = rows.filter(r => r.status === 'active').reduce((a, r) => a + Number(r.monthly_amount), 0);
         const [callRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
-        return res.json({ retainers: rows, mrr, call_link: callRow?.value || '' });
+        const bookings = await sql`
+          SELECT b.*, u.name, u.email FROM bookings b JOIN users u ON u.id = b.user_id
+          ORDER BY (b.status = 'awaiting_booking') DESC, b.created_at DESC LIMIT 100`;
+        // Auto-nudge: anyone who paid 48h+ ago, never booked, max 2 nudges, 72h apart
+        const link = callRow?.value || '';
+        if (link) {
+          const stale = await sql`
+            SELECT b.*, u.name, u.email FROM bookings b JOIN users u ON u.id = b.user_id
+            WHERE b.status = 'awaiting_booking' AND b.created_at < NOW() - interval '48 hours'
+              AND COALESCE(b.nudges, 0) < 2
+              AND (b.last_nudge_at IS NULL OR b.last_nudge_at < NOW() - interval '72 hours')`;
+          for (const b of stale) {
+            await sendEmail(b.email, `Reminder: book your ${b.label}`,
+              `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">You haven't picked a time yet</h2>
+               <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${b.name.split(' ')[0]} — your <strong style="color:#f0d8d8;">${b.label}</strong> is paid and waiting. Grab a slot on Dr. Merritt's calendar so she can prepare for you.</p>
+               <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Book Your Time →</a>`);
+            await sql`UPDATE bookings SET nudges = COALESCE(nudges,0) + 1, last_nudge_at = NOW() WHERE id = ${b.id}`;
+          }
+        }
+        return res.json({ retainers: rows, mrr, call_link: callRow?.value || '', bookings });
       }
       // Member's own retainer
       if (!session?.uid) return res.status(401).json({ error: 'Sign in required' });
@@ -110,6 +129,25 @@ export default async function handler(req, res) {
 
     // ── Team only ──
     if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+
+    if (action === 'booking_status') {
+      const { id, status } = req.body;
+      if (!['booked', 'cancelled', 'awaiting_booking'].includes(status)) return res.status(400).json({ error: 'Bad status' });
+      await sql`UPDATE bookings SET status = ${status}, booked_at = ${status === 'booked' ? new Date().toISOString() : null} WHERE id = ${Number(id)}`;
+      return res.json({ success: true });
+    }
+
+    if (action === 'nudge_booking') {
+      const [b] = await sql`SELECT b.*, u.name, u.email FROM bookings b JOIN users u ON u.id = b.user_id WHERE b.id = ${Number(req.body.id)}`;
+      if (!b) return res.status(404).json({ error: 'Not found' });
+      const [linkRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
+      await sendEmail(b.email, `Reminder: book your ${b.label}`,
+        `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">You haven't picked a time yet</h2>
+         <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${b.name.split(' ')[0]} — your <strong style="color:#f0d8d8;">${b.label}</strong> is paid and waiting. Grab a slot so Dr. Merritt can prepare for you.</p>
+         ${linkRow?.value ? `<a href="${linkRow.value}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Book Your Time →</a>` : ''}`);
+      await sql`UPDATE bookings SET nudges = COALESCE(nudges,0) + 1, last_nudge_at = NOW() WHERE id = ${b.id}`;
+      return res.json({ success: true });
+    }
 
     if (action === 'set_call_link') {
       const url = String(req.body.url || '').trim();

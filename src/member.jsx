@@ -167,6 +167,35 @@ const BENEFITS = {
   Partner: ["Custom organizational access", "Contact info@nreuv.com for your cohort setup"],
 };
 
+function BookingsCard({ member }) {
+  const [bookings, setBookings] = useState(member.bookings || []);
+  const link = member.booking_link;
+  if (!bookings.length) return null;
+  const mark = async (id) => {
+    try { await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "mark_booked", id }) }); setBookings(bookings.map(b => b.id === id ? { ...b, status: "booked" } : b)); } catch {}
+  };
+  return (
+    <div style={{ background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
+      <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 16 }}>Your Sessions</div>
+      {bookings.map(b => (
+        <div key={b.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, padding: "12px 0", borderBottom: "1px solid var(--gu-border2)" }}>
+          <div>
+            <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15, fontFamily: font }}>{b.label}</div>
+            <div style={{ color: b.status === "booked" ? "#22c55e" : "#e0c4c4", fontSize: 12.5, fontFamily: font, fontWeight: 700, marginTop: 3 }}>
+              {b.status === "booked" ? "✓ Time reserved — see your calendar invite" : "Paid — pick your time"}
+            </div>
+          </div>
+          {b.status !== "booked" && link && (
+            <div style={{ display: "flex", gap: 8 }}>
+              <a href={link} target="_blank" rel="noreferrer" onClick={() => mark(b.id)} style={{ ...btnRed, textDecoration: "none", display: "inline-block" }}>Book Your Time →</a>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function SessionCreditsCard({ member }) {
   const [note, setNote] = useState("");
   const [open, setOpen] = useState(false);
@@ -330,6 +359,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
           </ul>
         </div>
 
+        <BookingsCard member={member} />
         <SessionCreditsCard member={member} />
         <ChangePasswordCard />
 

@@ -177,6 +177,21 @@ CREATE TABLE IF NOT EXISTS retainer_hours (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Paid 1:1 sessions awaiting a calendar booking
+CREATE TABLE IF NOT EXISTS bookings (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  item TEXT NOT NULL,                    -- session_deal, session_strategy, …
+  label TEXT,
+  amount NUMERIC,
+  status TEXT DEFAULT 'awaiting_booking', -- awaiting_booking | booked | refunded | cancelled
+  booked_at TIMESTAMP,
+  nudges INTEGER DEFAULT 0,
+  last_nudge_at TIMESTAMP,
+  charge_id TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Simple key/value settings (e.g. the live Lunch & Learn session link)
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,

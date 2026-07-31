@@ -109,6 +109,9 @@ async function fulfill(sql, session) {
     await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, 'lunchlearn', 'stripe_onetime', NOW() + interval '6 months', NOW())`;
     await sql`UPDATE users SET lnl_discount_until = NOW() + interval '2 months' WHERE id = ${userId} AND (lnl_discount_until IS NULL OR lnl_discount_until < NOW() + interval '2 months')`;
   } else if (item.startsWith('session_')) {
+    const spec = CATALOG[item];
+    await sql`INSERT INTO bookings (user_id, item, label, amount, status, charge_id, created_at)
+      VALUES (${userId}, ${item}, ${spec?.name || item}, ${(spec?.amount || 0) / 100}, 'awaiting_booking', ${session.payment_intent || null}, NOW())`;
     const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
     await sendEmail(
       process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
@@ -119,11 +122,14 @@ async function fulfill(sql, session) {
   }
 
   // Receipt-ish confirmation to the member
+  const [linkRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
+  const bookingLink = linkRow?.value || '';
   const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
   if (u) {
     await sendEmail(u.email, 'GroundUp — payment received',
       `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">You're all set, ${u.name.split(' ')[0]}.</h2>
-       <p style="color:#a89080;font-size:14px;line-height:1.8;">Your payment for <strong style="color:#f0d8d8;">${CATALOG[item]?.name || 'your purchase'}</strong> went through. ${item.startsWith('session_') ? "Dr. Merritt's team will reach out to schedule." : 'Your access is live — sign in and dive in.'}</p>
+       <p style="color:#a89080;font-size:14px;line-height:1.8;">Your payment for <strong style="color:#f0d8d8;">${CATALOG[item]?.name || 'your purchase'}</strong> went through. ${item.startsWith('session_') ? "<strong style=\"color:#f0d8d8;\">One more step — pick your time on Dr. Merritt's calendar.</strong>" : 'Your access is live — sign in and dive in.'}</p>
+       ${item.startsWith('session_') && bookingLink ? `<a href="${bookingLink}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin:6px 0 14px;">Book Your Time →</a>` : ''}
        <a href="${siteUrl()}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Open GroundUp</a>`);
   }
 }
@@ -186,6 +192,18 @@ export default async function handler(req, res) {
               `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Payment failed</h2>
                <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${u.name}</strong> (${u.email}) — ${failItem || 'subscription'} declined. Access suspended automatically.</p>`);
           }
+        }
+      } else if (event.type === 'charge.refunded') {
+        const ch = event.data.object;
+        const [b] = await sql`
+          UPDATE bookings SET status = 'refunded'
+          WHERE charge_id = ${ch.payment_intent} AND status != 'refunded' RETURNING *`;
+        if (b) {
+          const [u] = await sql`SELECT name, email FROM users WHERE id = ${b.user_id}`;
+          await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
+            `REFUNDED — remove calendar booking for ${u?.name || 'client'}`,
+            `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Payment refunded — cancel their slot</h2>
+             <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${u?.name}</strong> (${u?.email}) was refunded for <strong style="color:#f0d8d8;">${b.label}</strong>. If they already booked on the calendar, remove that appointment.</p>`);
         }
       } else if (event.type === 'customer.subscription.deleted') {
         const sub = event.data.object;

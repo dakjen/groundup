@@ -21,6 +21,11 @@ export default async function handler(req, res) {
       const allowance = user.tier === 'Elite' ? 3 : user.tier === 'Premium' ? 1 : 0;
       const [{ used }] = await sql`SELECT COUNT(*)::int AS used FROM session_requests WHERE user_id = ${user.id} AND status != 'declined'`;
       user.sessions = { total: allowance, used, remaining: Math.max(0, allowance - used) };
+      // Paid sessions still needing a calendar slot
+      user.bookings = await sql`SELECT id, item, label, status, booked_at, created_at FROM bookings
+        WHERE user_id = ${user.id} AND status IN ('awaiting_booking','booked') ORDER BY created_at DESC LIMIT 10`;
+      const [bl] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
+      user.booking_link = bl?.value || null;
       // Suspended accounts keep the login but lose entitlements until payment clears
       if (user.membership_status !== 'active') {
         user.suspended = true;
@@ -136,6 +141,14 @@ export default async function handler(req, res) {
          <p style="color:#a89080;font-size:14px;line-height:1.8;">Reply to them directly or send a meeting email from the back office.</p>`
       );
       return res.status(201).json({ success: true });
+    }
+
+    // Member marks a paid session as booked
+    if (action === 'mark_booked') {
+      const session = getSession(req);
+      if (!session?.uid) return res.status(401).json({ error: 'Not signed in' });
+      await sql`UPDATE bookings SET status = 'booked', booked_at = NOW() WHERE id = ${Number(req.body.id)} AND user_id = ${session.uid}`;
+      return res.json({ success: true });
     }
 
     // Logged-in password change (members and team alike)

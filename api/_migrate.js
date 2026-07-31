@@ -83,6 +83,12 @@ const STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS retainer_messages (
     id SERIAL PRIMARY KEY, retainer_id INTEGER NOT NULL REFERENCES retainers(id) ON DELETE CASCADE,
     from_admin BOOLEAN DEFAULT FALSE, body TEXT NOT NULL, created_at TIMESTAMP DEFAULT NOW())`,
+  `CREATE TABLE IF NOT EXISTS bookings (
+    id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    item TEXT NOT NULL, label TEXT, amount NUMERIC,
+    status TEXT DEFAULT 'awaiting_booking',
+    booked_at TIMESTAMP, nudges INTEGER DEFAULT 0, last_nudge_at TIMESTAMP,
+    charge_id TEXT, created_at TIMESTAMP DEFAULT NOW())`,
   `CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)`,
   `CREATE TABLE IF NOT EXISTS dms (
     id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

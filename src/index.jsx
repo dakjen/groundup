@@ -3764,6 +3764,32 @@ function RetainerTab({ btnRed, btnGhost, inp, lbl }) {
         <button onClick={create} style={{ ...btnRed, marginTop: 22, padding: "12px 28px" }}>{form.status === "offered" ? "Send Invitation" : "Add Client"}</button>
       </div>
 
+      {data.bookings && data.bookings.length > 0 && (
+        <div style={section}>
+          <div style={{ fontSize: 10, color: "#8a8a8a", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>Paid Sessions & Bookings</div>
+          <p style={{ color: "#8a8a8a", fontSize: 12, marginBottom: 16, fontFamily: "'DM Sans', sans-serif" }}>Everyone who paid for a 1:1. Reminders go out automatically after 48 hours if they haven't booked.</p>
+          {data.bookings.map(b => {
+            const c = b.status === "booked" ? "#1a7a3a" : b.status === "refunded" ? "#b80101" : "#b8860b";
+            return (
+              <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderBottom: "1px solid #eeebe4", flexWrap: "wrap" }}>
+                <div style={{ flex: 1, minWidth: 190 }}>
+                  <div style={{ color: "#161616", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{b.name}</div>
+                  <div style={{ color: "#8a8a8a", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{b.label} · ${Number(b.amount).toLocaleString()} · {new Date(b.created_at).toLocaleDateString()}</div>
+                </div>
+                <span style={{ color: c, fontSize: 10, fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{b.status.replace("_", " ")}</span>
+                {b.nudges > 0 && <span style={{ color: "#9a9a9a", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>{b.nudges} nudge{b.nudges > 1 ? "s" : ""}</span>}
+                {b.status === "awaiting_booking" && (
+                  <>
+                    <button onClick={async () => { try { await call("POST", { action: "nudge_booking", id: b.id }); flash(true, "Reminder sent."); await load(); } catch (e) { flash(false, e.message); } }} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Nudge</button>
+                    <button onClick={async () => { try { await call("POST", { action: "booking_status", id: b.id, status: "booked" }); await load(); } catch (e) { flash(false, e.message); } }} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Mark booked</button>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {data.retainers.length === 0 ? (
         <div style={{ background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 14, padding: 40, textAlign: "center", color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No retainer clients yet.</div>
       ) : data.retainers.map(r => {
