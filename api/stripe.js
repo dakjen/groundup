@@ -36,6 +36,46 @@ const SPLIT = {
 };
 const splitRate = (item) => (item && SPLIT[item] !== undefined ? SPLIT[item] : SPLIT.DEFAULT);
 
+// Member perk: paid tiers get a standing discount on 1:1 sessions with Dr. Merritt.
+// Priced off the sticker price and applied server-side — the client never sends an amount.
+const SESSION_DISCOUNT = { Premium: 0.10, Elite: 0.30 };
+export const sessionDiscountRate = (tier) => SESSION_DISCOUNT[tier] || 0;
+
+// What a member actually pays for a session, in cents.
+// The BIPOC Developer Session is already priced as an access offering — the
+// member tier discount does not stack on top of it.
+const NO_MEMBER_DISCOUNT = new Set(['session_bipoc']);
+
+export function memberPrice(item, tier) {
+  const spec = CATALOG[item];
+  if (!spec) return null;
+  if (!item.startsWith('session_') || NO_MEMBER_DISCOUNT.has(item)) return spec.amount;
+  const rate = sessionDiscountRate(tier);
+  if (!rate) return spec.amount;
+  // Round DOWN to the nearest $5 — keeps prices clean ($380, not $382.50) and
+  // any rounding always lands in the member's favor.
+  return Math.floor((spec.amount * (1 - rate)) / 500) * 500;
+}
+
+// Elite is sold as a limited cohort. The cap is stored in `settings` so the team
+// can change it without a deploy; ELITE_CAP_DEFAULT is the fallback.
+const ELITE_CAP_DEFAULT = 20;
+
+export async function eliteSeats(sql) {
+  let cap = ELITE_CAP_DEFAULT;
+  try {
+    const [row] = await sql`SELECT value FROM settings WHERE key = 'elite_cap'`;
+    const parsed = parseInt(row?.value, 10);
+    if (Number.isFinite(parsed) && parsed > 0) cap = parsed;
+  } catch { /* settings table missing — fall back to the default */ }
+  const [row] = await sql`
+    SELECT COUNT(*)::int AS n FROM users
+    WHERE tier = 'Elite' AND membership_status = 'active' AND COALESCE(role, 'member') = 'member'`;
+  const taken = row?.n || 0;
+  const remaining = Math.max(0, cap - taken);
+  return { cap, taken, remaining, full: remaining === 0 };
+}
+
 async function readRawBody(req) {
   const chunks = [];
   for await (const c of req) chunks.push(c);
@@ -100,6 +140,18 @@ async function fulfill(sql, session) {
     if (tier) {
       await sql`UPDATE users SET tier = ${tier}, membership_status = 'active', stripe_customer_id = ${session.customer || null} WHERE id = ${userId}`;
     }
+    // The cap is checked before checkout, but two people can clear that check at
+    // the same time. They've paid, so honor the seat — and tell the team it happened.
+    if (item === 'sub_Elite') {
+      const seats = await eliteSeats(sql);
+      if (seats.taken > seats.cap) {
+        const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
+        await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
+          `ELITE OVER CAP: ${seats.taken} of ${seats.cap} seats`,
+          `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Elite went over cap</h2>
+           <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${u?.name}</strong> (${u?.email}) completed Elite checkout at the same moment as someone else, putting Elite at <strong style="color:#f0d8d8;">${seats.taken} of ${seats.cap}</strong>. Their payment went through and their access is live. Either raise the cap in Admin, or reach out to arrange a refund.</p>`);
+      }
+    }
   } else if (item === 'pass_single') {
     const courseId = /^mc\d+$/.test(md.course_id || '') ? md.course_id : 'all';
     await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, ${courseId}, 'stripe_onetime', NOW() + interval '30 days', NOW())`;
@@ -110,8 +162,11 @@ async function fulfill(sql, session) {
     await sql`UPDATE users SET lnl_discount_until = NOW() + interval '2 months' WHERE id = ${userId} AND (lnl_discount_until IS NULL OR lnl_discount_until < NOW() + interval '2 months')`;
   } else if (item.startsWith('session_')) {
     const spec = CATALOG[item];
+    // Record what they actually paid — member session discounts mean this is
+    // often below the sticker price in CATALOG.
+    const paid = (session.amount_total ?? spec?.amount ?? 0) / 100;
     await sql`INSERT INTO bookings (user_id, item, label, amount, status, charge_id, created_at)
-      VALUES (${userId}, ${item}, ${spec?.name || item}, ${(spec?.amount || 0) / 100}, 'awaiting_booking', ${session.payment_intent || null}, NOW())`;
+      VALUES (${userId}, ${item}, ${spec?.name || item}, ${paid}, 'awaiting_booking', ${session.payment_intent || null}, NOW())`;
     const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
     await sendEmail(
       process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
@@ -213,6 +268,25 @@ export default async function handler(req, res) {
       return res.json({ received: true });
     }
 
+    // ── Live pricing: Elite seats remaining + this member's session rate ──
+    // Public so the pricing page can show scarcity to signed-out visitors.
+    if (req.method === 'GET') {
+      const seats = await eliteSeats(sql);
+      const session = getSession(req);
+      let tier = 'Free';
+      if (session?.uid) {
+        const [u] = await sql`SELECT tier FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
+        if (u?.tier) tier = u.tier;
+      }
+      const rate = sessionDiscountRate(tier);
+      const sessions = {};
+      for (const k of Object.keys(CATALOG)) {
+        if (!k.startsWith('session_')) continue;
+        sessions[k] = { list: CATALOG[k].amount, price: memberPrice(k, tier) };
+      }
+      return res.json({ elite: seats, tier, session_discount: rate, sessions });
+    }
+
     // ── Create a Checkout Session ──
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     const raw = await readRawBody(req);
@@ -226,6 +300,28 @@ export default async function handler(req, res) {
     const product = CATALOG[item];
     if (!product) return res.status(400).json({ error: 'Unknown item' });
 
+    // Elite is capped. Check before taking money — an over-cap buyer would otherwise
+    // pay $599.99 for a seat we've publicly said doesn't exist.
+    if (item === 'sub_Elite' && user.tier !== 'Elite') {
+      const seats = await eliteSeats(sql);
+      if (seats.full) {
+        return res.status(409).json({
+          error: 'Elite is full',
+          elite_full: true,
+          message: `All ${seats.cap} Elite seats are taken. Join the waitlist and you'll be first to know when one opens.`,
+        });
+      }
+    }
+
+    // Member discount on 1:1 sessions — computed here from the signed-in user's tier.
+    // Label off the actual price delta, so an item excluded from the discount
+    // (see NO_MEMBER_DISCOUNT) is never labeled as discounted.
+    const unitAmount = memberPrice(item, user.tier);
+    const saved = product.amount - unitAmount;
+    const productName = saved > 0
+      ? `${product.name} — ${user.tier} member rate (${Math.round((saved / product.amount) * 100)}% off)`
+      : product.name;
+
     const base = siteUrl();
     const params = {
       mode: product.mode,
@@ -234,8 +330,8 @@ export default async function handler(req, res) {
         quantity: 1,
         price_data: {
           currency: 'usd',
-          unit_amount: product.amount,
-          product_data: { name: product.name },
+          unit_amount: unitAmount,
+          product_data: { name: productName },
           ...(product.mode === 'subscription' ? { recurring: { interval: 'month' } } : {}),
         },
       }],

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileText, Send, Hourglass, FolderOpen, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2 } from "lucide-react";
+import { FileText, Send, Hourglass, FolderOpen, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2, BadgePercent } from "lucide-react";
 import NEW_COURSES from "./coursesExtra.js";
 import { AuthModal, ResetPasswordModal, WaitlistForm, ResourcesPage, RetainerPage, MemberPage, CommunityPage, TierBadge, TIER_RANK, TIER_LABELS, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
@@ -316,6 +316,8 @@ async function startCheckout(item, extra = {}) {
     });
     const d = await res.json();
     if (res.status === 401) { alert("Sign in first, then purchase."); return false; }
+    // Elite sold out between page load and checkout — don't fall through to the mailto
+    if (res.status === 409 && d.elite_full) { alert(d.message || "Elite is full right now."); return false; }
     if (!res.ok) throw new Error(d.error || "Checkout failed");
     window.location.href = d.url;
     return true;
@@ -1274,6 +1276,7 @@ const plans = [
       "Development timeline templates",
       "Lunch & Learn recordings",
       "1 free work session (1 hr) + priority booking",
+      "10% off 1:1 sessions with Dr. Merritt",
       "The Opportunity Board — RFPs, funding windows & deals, posted by the team",
     ],
     locked: ["Advisory calls with Dr. Merritt", "Priority responses & direct messages"],
@@ -1293,12 +1296,13 @@ const plans = [
       "Direct messages to Dr. Merritt & her team",
       "Elite Lounge — private channel",
       "3 one-on-one advisory calls/yr with Dr. Merritt",
+      "30% off 1:1 sessions with Dr. Merritt",
       "Priority Q&A submissions",
       "1–2 small group advisory sessions/yr",
       "1 invite to exclusive networking event",
-      
     ],
     locked: [],
+    limited: true,
   },
   {
     name: "Senior Advisor",
@@ -1345,7 +1349,10 @@ function Chip({ text, color }) {
   );
 }
 
-function PlanCard({ plan, onSelect }) {
+function PlanCard({ plan, onSelect, seats }) {
+  // Scarcity only reads as real when it's close — stay quiet until the last few seats
+  const showSeats = seats && !seats.full && seats.remaining <= 5;
+  const cta = seats?.full ? "Join the Elite waitlist" : plan.cta;
   return (
     <div style={{ background: plan.popular ? "#0d0404" : "#080404", border: "1px solid " + (plan.popular ? "#b8010130" : "#150000"), borderRadius: 20, padding: "40px 32px", position: "relative", boxShadow: plan.popular ? "0 0 60px rgba(184,1,1,0.08)" : "none" }}>
       {plan.popular && <div style={{ position: "absolute", top: -1, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, transparent, #b80101, transparent)", borderRadius: "20px 20px 0 0" }} />}
@@ -1357,12 +1364,29 @@ function PlanCard({ plan, onSelect }) {
         <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: plan.price.length > 8 ? 34 : 56, color: "#f5e8e8", lineHeight: 1.2 }}>{plan.price}</span>
         <span style={{ color: "#8a7070", fontSize: 16, fontFamily: "'DM Sans', sans-serif" }}>{plan.period}</span>
       </div>
-      <p style={{ color: "#8a7070", fontSize: 13, marginBottom: 28, lineHeight: 1.65, fontFamily: "'DM Sans', sans-serif" }}>{plan.description}</p>
+      <p style={{ color: "#8a7070", fontSize: 13, marginBottom: seats ? 14 : 28, lineHeight: 1.65, fontFamily: "'DM Sans', sans-serif" }}>{plan.description}</p>
+
+      {showSeats && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, background: "#1a0808", border: "1px solid #b8010140", borderRadius: 8, padding: "9px 13px" }}>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#b80101", display: "inline-block", flexShrink: 0 }} />
+          <span style={{ color: "#e0c4c4", fontSize: 12, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>
+            {seats.remaining === 1 ? "1 seat left" : `${seats.remaining} seats left`} of {seats.cap}
+          </span>
+        </div>
+      )}
+      {seats?.full && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, background: "#0d0404", border: "1px solid #2a0000", borderRadius: 8, padding: "9px 13px" }}>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#6a5050", display: "inline-block", flexShrink: 0 }} />
+          <span style={{ color: "#8a7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>
+            All {seats.cap} seats are taken — join the waitlist
+          </span>
+        </div>
+      )}
 
       <button onClick={onSelect} style={{ width: "100%", padding: "13px", background: plan.popular ? "#b80101" : "transparent", color: plan.popular ? "#fff" : "#6a6b69", border: "1px solid " + (plan.popular ? "#b80101" : "#2a1a1a"), borderRadius: 10, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", marginBottom: 28, letterSpacing: "0.5px" }}
         onMouseEnter={e => { e.currentTarget.style.background = plan.popular ? "#d40101" : "#57040418"; e.currentTarget.style.color = plan.popular ? "#fff" : "#f5e8e8"; }}
         onMouseLeave={e => { e.currentTarget.style.background = plan.popular ? "#b80101" : "transparent"; e.currentTarget.style.color = plan.popular ? "#fff" : "#6a6b69"; }}
-      >{plan.cta}</button>
+      >{cta}</button>
 
       <div style={{ borderTop: "1px solid #150000", paddingTop: 24 }}>
         {plan.features.map((f, j) => (
@@ -1383,6 +1407,12 @@ function PlanCard({ plan, onSelect }) {
 }
 
 function PricingPage({ onSignUp }) {
+  // Live Elite seat count — Elite is sold as a limited cohort
+  const [elite, setElite] = useState(null);
+  useEffect(() => {
+    fetch("/api/stripe").then(r => r.ok ? r.json() : null).then(d => d?.elite && setElite(d.elite)).catch(() => {});
+  }, []);
+
   return (
     <div style={{ background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
@@ -1416,9 +1446,11 @@ function PricingPage({ onSignUp }) {
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, alignItems: "start" }}>
           {plans.map((plan, i) => (
-            <PlanCard key={i} plan={plan} onSelect={() => {
+            <PlanCard key={i} plan={plan} seats={plan.limited ? elite : null} onSelect={() => {
               if (plan.tier === "Partner") { window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("GroundUp — Partner tier"); return; }
               if (plan.tier === "Advisor") { window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("Senior Advisor — engagement call"); return; }
+              // Elite is capped — send full-cohort visitors to the waitlist, not to checkout
+              if (plan.limited && elite?.full) { window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("Elite waitlist — notify me when a seat opens"); return; }
               if (getMember()) { startCheckout("sub_" + plan.tier); return; }
               onSignUp && onSignUp(plan.tier);
             }} />
@@ -1468,6 +1500,25 @@ function ContactPage({ setActivePage, advisorLink }) {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  // Live member pricing — the server decides the rate from the signed-in tier
+  const [pricing, setPricing] = useState(null);
+
+  useEffect(() => {
+    const token = getMemberToken();
+    fetch("/api/stripe", { headers: token ? { Authorization: "Bearer " + token } : {} })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d && setPricing(d))
+      .catch(() => {});
+  }, []);
+
+  const usd = (cents) => "$" + (cents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  // Returns { list, price, discounted } for a session card, or null for the advisor card
+  const rateFor = (s) => {
+    if (s.advisor || !pricing?.sessions) return null;
+    const row = pricing.sessions["session_" + s.id];
+    if (!row) return null;
+    return { list: usd(row.list), price: usd(row.price), discounted: row.price < row.list };
+  };
 
   const handleSubmit = async () => {
     if (!form.name || !form.email || !form.message) { setError("All fields are required."); return; }
@@ -1520,6 +1571,23 @@ function ContactPage({ setActivePage, advisorLink }) {
           </div>
         </div>
 
+        {/* Member session-rate banner */}
+        {pricing && (pricing.session_discount > 0 ? (
+          <div style={{ background: "#1a0808", border: "1px solid #b80101", borderRadius: 12, padding: "16px 22px", margin: "20px 0 8px", display: "flex", alignItems: "center", gap: 12 }}>
+            <BadgePercent size={20} color="#b80101" style={{ flexShrink: 0 }} />
+            <div style={{ color: "#e0c4c4", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>
+              <strong style={{ color: "#f0d8d8" }}>Your {pricing.tier} member rate is applied</strong> — {Math.round(pricing.session_discount * 100)}% off the sessions below. Nothing to enter; it comes off at checkout. The BIPOC Developer Session is already offered at an access rate, so the member discount doesn't apply there.
+            </div>
+          </div>
+        ) : (
+          <div style={{ background: "#110606", border: "1px solid #2a0000", borderRadius: 12, padding: "16px 22px", margin: "20px 0 8px", display: "flex", alignItems: "center", gap: 12 }}>
+            <BadgePercent size={20} color="#7a5050" style={{ flexShrink: 0 }} />
+            <div style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>
+              Members save on 1:1 sessions — <strong style={{ color: "#c8a8a8" }}>Premium 10% off, Elite 30% off</strong>. Applied automatically once you're signed in. The BIPOC Developer Session is already at an access rate.
+            </div>
+          </div>
+        ))}
+
         {/* Step 1 */}
         <div style={{ marginBottom: 40 }}>
           <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>Step 1 — Choose a Session Type</div>
@@ -1533,7 +1601,16 @@ function ContactPage({ setActivePage, advisorLink }) {
                   <div style={{ flex: 1 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
                       <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 20, color: "#f0d8d8" }}>{s.title}</div>
-                      <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#b80101", marginLeft: 12 }}>{s.price}</div>
+                      {(() => {
+                        const r = rateFor(s);
+                        if (!r || !r.discounted) return <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#b80101", marginLeft: 12 }}>{r ? r.price : s.price}</div>;
+                        return (
+                          <div style={{ marginLeft: 12, textAlign: "right", whiteSpace: "nowrap" }}>
+                            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 16, color: "#6a5050", textDecoration: "line-through", marginRight: 8 }}>{r.list}</span>
+                            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#b80101" }}>{r.price}</span>
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div style={{ fontSize: 11, color: "#6a5050", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>{s.duration}</div>
                     <div style={{ fontSize: 13, color: "#8a7070", lineHeight: 1.7, fontFamily: "'DM Sans', sans-serif" }}>{s.desc}</div>
@@ -2112,6 +2189,24 @@ function TeamPage({ children }) {
   );
 }
 
+// Pull the video ID out of any shape of YouTube URL the team might paste —
+// watch links, share links, live streams, shorts, embeds, or a bare ID.
+function parseYouTubeId(input) {
+  const raw = (input || "").trim();
+  if (!raw) return null;
+  if (/^[\w-]{11}$/.test(raw)) return raw;
+  const patterns = [
+    /[?&]v=([\w-]{11})/,                          // youtube.com/watch?v=ID
+    /youtu\.be\/([\w-]{11})/,                     // youtu.be/ID
+    /youtube\.com\/(?:live|shorts|embed|v)\/([\w-]{11})/, // live / shorts / embed / v
+  ];
+  for (const re of patterns) {
+    const m = raw.match(re);
+    if (m) return m[1];
+  }
+  return null;
+}
+
 // Attach PDFs and videos to existing lessons (courses themselves ship in code)
 function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
   const [attachments, setAttachments] = useState(null);
@@ -2146,10 +2241,10 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
   };
 
   const attachVideo = async (key, title) => {
-    const yt = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{6,})/);
-    if (!yt) { flash(false, "Use a YouTube link (unlisted works great)."); return; }
+    const videoId = parseYouTubeId(videoUrl);
+    if (!videoId) { flash(false, "That doesn't look like a YouTube link. Paste the URL from the address bar or the Share button — watch, live, shorts, and unlisted links all work."); return; }
     try {
-      await save({ ...attachments, [key]: { ...(attachments[key] || {}), video: { videoId: yt[1], title } } });
+      await save({ ...attachments, [key]: { ...(attachments[key] || {}), video: { videoId, title } } });
       setVideoUrl("");
       flash(true, "Video attached — the preview below is what members see.");
     } catch (e) { flash(false, e.message); }
