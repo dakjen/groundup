@@ -76,6 +76,31 @@ export async function eliteSeats(sql) {
   return { cap, taken, remaining, full: remaining === 0 };
 }
 
+// The 15-day promise, honored: identity and community data are erased, but the
+// user row survives anonymized — deleting it would cascade into bookings and
+// destroy financial records we must keep for tax purposes.
+async function purgeCancelled(sql) {
+  try {
+    const stale = await sql`
+      SELECT id FROM users
+      WHERE cancelled_at IS NOT NULL AND cancelled_at < NOW() - interval '15 days'
+        AND COALESCE(role, 'member') = 'member'`;
+    for (const { id } of stale) {
+      await sql`DELETE FROM dms WHERE user_id = ${id}`;
+      await sql`DELETE FROM messages WHERE user_id = ${id}`;
+      await sql`DELETE FROM entitlements WHERE user_id = ${id}`;
+      await sql`DELETE FROM lnl_rsvps WHERE user_id = ${id}`;
+      await sql`DELETE FROM session_requests WHERE user_id = ${id}`;
+      await sql`UPDATE users SET
+        name = 'Former Member', email = ${'deleted-' + id + '@removed.groundup'},
+        password_hash = NULL, badge = NULL, free_lesson_key = NULL,
+        cancelled_at = NULL, membership_status = 'purged'
+        WHERE id = ${id}`;
+    }
+    return stale.length;
+  } catch (e) { console.error('purge failed', e.message); return 0; }
+}
+
 async function readRawBody(req) {
   const chunks = [];
   for await (const c of req) chunks.push(c);
@@ -138,7 +163,8 @@ async function fulfill(sql, session) {
   } else if (item.startsWith('sub_')) {
     const tier = CATALOG[item]?.tier;
     if (tier) {
-      await sql`UPDATE users SET tier = ${tier}, membership_status = 'active', stripe_customer_id = ${session.customer || null} WHERE id = ${userId}`;
+      // cancelled_at = NULL stops the 15-day deletion clock for members who rejoin
+      await sql`UPDATE users SET tier = ${tier}, membership_status = 'active', cancelled_at = NULL, stripe_customer_id = ${session.customer || null} WHERE id = ${userId}`;
     }
     // The cap is checked before checkout, but two people can clear that check at
     // the same time. They've paid, so honor the seat — and tell the team it happened.
@@ -262,9 +288,20 @@ export default async function handler(req, res) {
         }
       } else if (event.type === 'customer.subscription.deleted') {
         const sub = event.data.object;
-        await sql`UPDATE users SET tier = 'Free' WHERE stripe_customer_id = ${sub.customer}`;
+        // Stamp when the membership ended — the 15-day data-retention clock runs from here
+        await sql`UPDATE users SET tier = 'Free', cancelled_at = NOW() WHERE stripe_customer_id = ${sub.customer}`;
         await sql`UPDATE retainers SET status = 'ended' WHERE user_id IN (SELECT id FROM users WHERE stripe_customer_id = ${sub.customer}) AND status IN ('active','paused')`;
+        const [u] = await sql`SELECT name, email FROM users WHERE stripe_customer_id = ${sub.customer}`;
+        if (u) {
+          await sendEmail(u.email, 'Your GroundUp membership is cancelled',
+            `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">You're all set, ${u.name.split(' ')[0]}.</h2>
+             <p style="color:#a89080;font-size:14px;line-height:1.8;">Your membership is cancelled and you won't be charged again. <strong style="color:#f0d8d8;">Your account data — community posts, messages, and progress — will be permanently removed after 15 days.</strong> Rejoin before then and everything picks up right where you left it.</p>
+             <a href="${siteUrl()}/pricing" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Rejoin GroundUp</a>`);
+        }
       }
+      // No cron needed — Stripe events arrive steadily, so the retention
+      // sweep rides along with every webhook delivery.
+      await purgeCancelled(sql);
       return res.json({ received: true });
     }
 
@@ -295,6 +332,17 @@ export default async function handler(req, res) {
     if (!session?.uid) return res.status(401).json({ error: 'Sign in to purchase' });
     const [user] = await sql`SELECT id, name, email, tier, lnl_discount_until FROM users WHERE id = ${session.uid}`;
     if (!user) return res.status(401).json({ error: 'Account not found' });
+
+    // ── Self-service billing portal: manage payment method or cancel ──
+    // Cancelling must be as easy as joining — one click, no emailing the team.
+    if (body.action === 'portal') {
+      if (!user.stripe_customer_id) return res.status(400).json({ error: 'No billing on file for this account' });
+      const portal = await stripe.billingPortal.sessions.create({
+        customer: user.stripe_customer_id,
+        return_url: `${siteUrl()}/member`,
+      });
+      return res.json({ url: portal.url });
+    }
 
     const item = body.item;
     const product = CATALOG[item];

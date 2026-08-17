@@ -240,6 +240,45 @@ function SessionCreditsCard({ member }) {
   );
 }
 
+// Cancelling is as easy as joining — one click into Stripe's portal, no
+// emailing the team. The 15-day data note is stated up front, not buried.
+function ManageMembershipCard({ member, rank }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+  if (rank < 1) return null; // Free accounts have no billing to manage
+
+  const openPortal = async () => {
+    setBusy(true); setErr(null);
+    try {
+      const d = await api("/api/stripe", { method: "POST", body: JSON.stringify({ action: "portal" }) });
+      window.location.href = d.url;
+    } catch (e) {
+      setErr(e.message || "Couldn't open billing — email groundup@drginamerritt.net and we'll sort it.");
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div style={{ background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
+      <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Membership &amp; billing</div>
+      <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ flex: 1, minWidth: 240 }}>
+          <div style={{ color: "var(--gu-body)", fontSize: 14, fontFamily: font, lineHeight: 1.7, marginBottom: 6 }}>
+            Update your card, view invoices, or cancel — it takes one click, no questions asked.
+          </div>
+          <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font, lineHeight: 1.7 }}>
+            If you cancel, your access continues through the period you've paid for. <strong style={{ color: "var(--gu-body)" }}>15 days after your membership ends, your account data — posts, messages, and progress — is permanently deleted.</strong> Rejoin before then and nothing is lost.
+          </div>
+        </div>
+        <button onClick={openPortal} disabled={busy} style={{ ...btnGhost, opacity: busy ? 0.6 : 1, whiteSpace: "nowrap" }}>
+          {busy ? "Opening…" : "Manage or cancel"}
+        </button>
+      </div>
+      {err && <div style={{ color: "#ff6b6b", fontSize: 13, fontFamily: font, marginTop: 12 }}>{err}</div>}
+    </div>
+  );
+}
+
 function ChangePasswordCard() {
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -362,6 +401,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
         <BookingsCard member={member} />
         <SessionCreditsCard member={member} />
         <ChangePasswordCard />
+        <ManageMembershipCard member={member} rank={rank} />
 
         {rank < 1 && member.lnl_discount_until && new Date(member.lnl_discount_until) > new Date() && (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, background: "var(--gu-card2)", border: "1px solid #e0c4c440", borderRadius: 14, padding: "20px 26px", marginBottom: 16 }}>
@@ -1107,7 +1147,7 @@ export function RetainerPage({ member, setActivePage }) {
               </div>
             ))}
           </div>
-          <p style={{ color: "var(--gu-faint)", fontSize: 12, fontFamily: font, marginTop: 22, marginBottom: 40 }}>Charged monthly. Change or cancel anytime — just tell the team.</p>
+          <p style={{ color: "var(--gu-faint)", fontSize: 12, fontFamily: font, marginTop: 22, marginBottom: 40 }}>Charged monthly. Change or cancel anytime, self-service, from Membership &amp; billing on your member page.</p>
 
           {/* Locked preview of what opens on payment */}
           <div style={{ position: "relative", textAlign: "left" }}>
