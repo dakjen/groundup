@@ -251,6 +251,7 @@ function ManageMembershipCard({ member, rank }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
   if (rank < 1) return null; // Free accounts have no billing to manage
+  if (member?.comped) return null; // comped plans have no Stripe billing behind them
 
   const openPortal = async () => {
     setBusy(true); setErr(null);

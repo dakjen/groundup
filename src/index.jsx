@@ -3104,13 +3104,21 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
               {user.role === "admin" ? (
                 <span style={{ color: "#8a8a8a", fontSize: 12, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>Team — no tier</span>
               ) : (
-              <select
-                value={user.tier}
-                onChange={e => patchUser(user.id, { tier: e.target.value })}
-                style={{ background: TIER_COLORS[user.tier] + "18", color: TIER_COLORS[user.tier], border: "1px solid " + TIER_COLORS[user.tier] + "50", borderRadius: 6, padding: "6px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer", outline: "none" }}
-              >
-                {TIERS.map(t => <option key={t} value={t} style={{ background: "#ffffff", color: "#222222" }}>{TIER_DISPLAY[t]}</option>)}
-              </select>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <select
+                  value={user.tier}
+                  onChange={e => patchUser(user.id, { tier: e.target.value })}
+                  style={{ background: TIER_COLORS[user.tier] + "18", color: TIER_COLORS[user.tier], border: "1px solid " + TIER_COLORS[user.tier] + "50", borderRadius: 6, padding: "6px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer", outline: "none" }}
+                >
+                  {TIERS.map(t => <option key={t} value={t} style={{ background: "#ffffff", color: "#222222" }}>{TIER_DISPLAY[t]}</option>)}
+                </select>
+                {/* Comped = manually granted, not paying, doesn't occupy an Elite seat */}
+                <button
+                  onClick={() => patchUser(user.id, { comped: !user.comped })}
+                  title={user.comped ? "Comped — click to mark as paying" : "Mark this plan as comped (free of charge)"}
+                  style={{ background: user.comped ? "#1a7a3a15" : "transparent", color: user.comped ? "#1a7a3a" : "#9a9a9a", border: "1px solid " + (user.comped ? "#1a7a3a50" : "#d8d4cc"), borderRadius: 6, padding: "6px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 10, letterSpacing: "1px", cursor: "pointer", textTransform: "uppercase" }}
+                >{user.comped ? "Comped ✓" : "Comp"}</button>
+              </div>
               )}
               <select
                 value={user.role === "admin" ? (user.badge === "drmerritt" ? "drmerritt" : "team") : "member"}

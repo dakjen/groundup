@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const users = await sql`
-        SELECT id, name, email, tier, role, badge, membership_status, created_at
+        SELECT id, name, email, tier, role, badge, membership_status, comped, created_at
         FROM users ORDER BY created_at DESC`;
       return res.json(users);
     }
@@ -35,24 +35,27 @@ export default async function handler(req, res) {
       return res.status(201).json(user);
     }
 
-    // Update tier / role / badge, or reset a password ({ id, new_password })
+    // Update tier / role / badge / comped, or reset a password ({ id, new_password })
     if (req.method === 'PATCH') {
-      const { id, tier, role, badge, new_password } = req.body;
+      const { id, tier, role, badge, comped, new_password } = req.body;
       if (!id) return res.status(400).json({ error: 'id required' });
       if (role !== undefined && !['member', 'admin'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
       if (badge !== undefined && badge !== null && !['team', 'drmerritt'].includes(badge)) return res.status(400).json({ error: 'Invalid badge' });
+      if (comped !== undefined && typeof comped !== 'boolean') return res.status(400).json({ error: 'comped must be boolean' });
       if (new_password !== undefined && (typeof new_password !== 'string' || new_password.length < 8)) {
         return res.status(400).json({ error: 'Password must be at least 8 characters' });
       }
       const hasBadge = 'badge' in req.body;
+      const hasComped = 'comped' in req.body;
       const [user] = await sql`
         UPDATE users SET
           tier = COALESCE(${tier ?? null}, tier),
           role = COALESCE(${role ?? null}, role),
           badge = CASE WHEN ${hasBadge} THEN ${badge ?? null} ELSE badge END,
+          comped = CASE WHEN ${hasComped} THEN ${comped ?? false} ELSE comped END,
           password_hash = COALESCE(${new_password ? hashPassword(new_password) : null}, password_hash)
         WHERE id = ${id}
-        RETURNING id, name, email, tier, role, badge, membership_status, created_at
+        RETURNING id, name, email, tier, role, badge, membership_status, comped, created_at
       `;
       if (!user) return res.status(404).json({ error: 'User not found' });
       return res.json(user);

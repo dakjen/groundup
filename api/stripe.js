@@ -68,9 +68,11 @@ export async function eliteSeats(sql) {
     const parsed = parseInt(row?.value, 10);
     if (Number.isFinite(parsed) && parsed > 0) cap = parsed;
   } catch { /* settings table missing — fall back to the default */ }
+  // Comped accounts (team comps, VIPs) don't occupy paid seats
   const [row] = await sql`
     SELECT COUNT(*)::int AS n FROM users
-    WHERE tier = 'Elite' AND membership_status = 'active' AND COALESCE(role, 'member') = 'member'`;
+    WHERE tier = 'Elite' AND membership_status = 'active'
+      AND COALESCE(role, 'member') = 'member' AND NOT COALESCE(comped, FALSE)`;
   const taken = row?.n || 0;
   const remaining = Math.max(0, cap - taken);
   return { cap, taken, remaining, full: remaining === 0 };
