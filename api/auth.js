@@ -79,14 +79,17 @@ export default async function handler(req, res) {
       if (!launchRow?.value || new Date(launchRow.value).getTime() > Date.now()) {
         return res.status(403).json({ error: "We haven't launched yet — join the waitlist to be first in." });
       }
-      const { name, email, password, tier } = req.body;
+      const { name, email, password } = req.body;
       if (!name || !email || !password) return res.status(400).json({ error: 'Name, email, and password are required' });
       if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
       const cleanEmail = String(email).trim().toLowerCase();
-      const safeTier = ['Free', 'Basic', 'Premium', 'Elite'].includes(tier) ? tier : 'Free';
+      // Everyone signs up Free. A paid tier is granted in exactly two places:
+      // Stripe fulfillment after a real payment (api/stripe.js), or an admin
+      // manually via the team panel (api/users.js). Never from this request —
+      // the client used to send a tier here, which let anyone claim Elite free.
       const [user] = await sql`
         INSERT INTO users (name, email, tier, password_hash, role, created_at)
-        VALUES (${String(name).trim()}, ${cleanEmail}, ${safeTier}, ${hashPassword(password)}, 'member', NOW())
+        VALUES (${String(name).trim()}, ${cleanEmail}, 'Free', ${hashPassword(password)}, 'member', NOW())
         ON CONFLICT (email) DO NOTHING
         RETURNING id, name, email, tier, role, membership_status, free_lesson_key, created_at
       `;

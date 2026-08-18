@@ -82,11 +82,16 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
         setNotice("If that email has an account, a reset link is on its way. It works for one hour.");
         return;
       }
+      // Accounts are always created Free — a paid tier only comes from Stripe
+      // checkout (below) or an admin. The picker records intent, nothing more.
       const data = mode === "signup"
-        ? await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "signup", name, email, password, tier }) })
+        ? await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "signup", name, email, password }) })
         : await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "login", email, password }) });
       saveMember(data.user, data.token);
       onAuthed(data.user);
+      if (mode === "signup" && tier !== "Free" && window.startCheckout) {
+        window.startCheckout("sub_" + tier); // straight to secure payment for the plan they picked
+      }
     } catch (err) {
       setError(err.message);
     } finally { setBusy(false); }
@@ -130,7 +135,7 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
               </div>
               {tier !== "Free" && (
                 <div style={{ marginTop: 10, background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 8, padding: "10px 14px", color: "#b8a060", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>
-                  Online payment is coming soon — your account starts on the Free plan and our team will activate {tier} once payment is arranged. Email info@nreuv.com to get set up.
+                  After you create your account, you&rsquo;ll go straight to secure checkout for {TIER_LABELS[tier] || tier}. Your plan activates the moment payment clears.
                 </div>
               )}
             </div>
