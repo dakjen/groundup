@@ -9,6 +9,56 @@ export default async function handler(req, res) {
   const admin = getAdmin(req);
 
   try {
+    // ── Course catalog: titles and descriptions only, safe to show anyone ──
+    if (req.method === 'GET' && req.query.courses === '1') {
+      const rows = await sql`SELECT id, title, description, stage, stage_color, duration, lessons FROM courses ORDER BY position, id`;
+      // Team gets full lessons (for the admin preview); everyone else gets
+      // id + title only — enough for cards and locked lists
+      const catalog = rows.map(c => ({
+        id: c.id, title: c.title, description: c.description,
+        stage: c.stage, stageColor: c.stage_color, duration: c.duration,
+        lessons: admin ? (c.lessons || []) : (c.lessons || []).map(l => ({ id: l.id, title: l.title })),
+      }));
+      return res.json({ courses: catalog });
+    }
+
+    // ── Full course content: server-enforced entitlements ──
+    // The lesson bodies never ship in the JS bundle; they only leave the
+    // database for someone this block says is allowed to read them.
+    if (req.method === 'GET' && req.query.course) {
+      const [c] = await sql`SELECT id, title, description, stage, stage_color, duration, lessons FROM courses WHERE id = ${req.query.course}`;
+      if (!c) return res.status(404).json({ error: 'Course not found' });
+      const shape = (full) => ({
+        id: c.id, title: c.title, description: c.description,
+        stage: c.stage, stageColor: c.stage_color, duration: c.duration,
+        lessons: (c.lessons || []).map((l, i) => full(i) ? { ...l, locked: false } : { id: l.id, title: l.title, locked: true }),
+      });
+      if (admin) return res.json({ course: shape(() => true), access: 'team' });
+
+      const session = getSession(req);
+      if (!session || !session.uid) return res.status(401).json({ error: 'Sign in required' });
+      const [user] = await sql`SELECT id, tier, membership_status, free_lesson_key FROM users WHERE id = ${session.uid}`;
+      if (!user) return res.status(401).json({ error: 'Sign in required' });
+
+      const active = user.membership_status === 'active';
+      const rank = active ? (TIER_RANK[user.tier] ?? 0) : 0;
+      const passes = active ? await sql`
+        SELECT course_id FROM entitlements
+        WHERE user_id = ${user.id} AND course_id IN ('all', ${c.id})
+          AND (expires_at IS NULL OR expires_at > NOW())` : [];
+      const fullAccess = rank >= 1 || passes.length > 0;
+      if (fullAccess) return res.json({ course: shape(() => true), access: 'full' });
+
+      // Free plan: exactly one lesson total, and only after it's been claimed
+      // (claim_free_lesson in api/auth.js). Keys are `${courseId}:${index}`.
+      const freeKey = user.free_lesson_key || null;
+      return res.json({
+        course: shape(i => freeKey === `${c.id}:${i}`),
+        access: 'free',
+        free_lesson_key: freeKey,
+      });
+    }
+
     // Lesson attachments (PDFs/videos per lesson) — readable by any signed-in member
     if (req.method === 'GET' && req.query.attachments === '1') {
       const session = getSession(req);

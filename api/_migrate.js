@@ -91,6 +91,10 @@ const STATEMENTS = [
     booked_at TIMESTAMP, nudges INTEGER DEFAULT 0, last_nudge_at TIMESTAMP,
     charge_id TEXT, created_at TIMESTAMP DEFAULT NOW())`,
   `CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)`,
+  `CREATE TABLE IF NOT EXISTS courses (
+    id TEXT PRIMARY KEY, title TEXT NOT NULL, description TEXT,
+    stage TEXT, stage_color TEXT, duration TEXT, position INTEGER DEFAULT 0,
+    lessons JSONB NOT NULL DEFAULT '[]', created_at TIMESTAMP DEFAULT NOW())`,
   `CREATE TABLE IF NOT EXISTS dms (
     id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     from_admin BOOLEAN DEFAULT FALSE, body TEXT NOT NULL, created_at TIMESTAMP DEFAULT NOW())`,
