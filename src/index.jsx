@@ -4171,7 +4171,14 @@ export default function App() {
     if (next >= 5) { setShowAdminLogin(true); setLogoClicks(0); }
   };
 
-  const openSignup = (tier = "Free") => { setSignupTier(tier); setShowSignup(true); };
+  // Before launch, every "join / sign in / enroll" click routes to the general
+  // waitlist popup instead of account creation. Members/team already signed in
+  // are unaffected, and the server blocks signups pre-launch regardless.
+  const [showWaitlistPop, setShowWaitlistPop] = useState(false);
+  const openSignup = (tier = "Free") => {
+    if (prelaunch && !member && !isAdmin) { setShowWaitlistPop(true); return; }
+    setSignupTier(tier); setShowSignup(true);
+  };
 
   // IP agreement is now collected at signup — no popup gate
   const navigateTo = (page) => { setActivePage(page); };
@@ -4188,11 +4195,9 @@ export default function App() {
     // The secret shareable link — insider list, insider countdown (first access)
     return <LaunchPage launchAt={insiderAt || launchAt} list="insider" onAdmin={() => setShowAdminLogin(true)} />;
   }
-  if (prelaunch && !isAdmin && !showAdminLogin) {
-    // Anyone who finds the site organically joins the GENERAL list and sees the general launch date
-    return <LaunchPage launchAt={launchAt} list="general" onAdmin={() => setShowAdminLogin(true)} />;
-  }
-  if (!siteUnlocked && !isAdmin && !showAdminLogin) return <SiteGatePage onUnlock={() => setSiteUnlocked(true)} />;
+  // Pre-launch, the site is fully BROWSABLE — home, courses, pricing, all of it.
+  // What's gated is DOING anything: any join/sign-in/enroll click pops the
+  // general waitlist instead (see openSignup). /waitlist stays the insider page.
   if (showAdminLogin && !isAdmin) return <AdminLoginPage onLogin={(token) => { sessionStorage.setItem("isAdmin", "true"); sessionStorage.setItem("adminToken", token || ""); setIsAdmin(true); setShowAdminLogin(false); }} />;
   if (isAdmin) return <AdminPanel
     onExit={member ? () => { sessionStorage.removeItem("isAdmin"); setIsAdmin(false); setActivePage("courses"); } : undefined}
@@ -4233,6 +4238,18 @@ export default function App() {
         }
       `}</style>
       {resetToken && <ResetPasswordModal token={resetToken} onDone={() => { setResetToken(null); window.history.replaceState({}, "", window.location.pathname); setAuthMode("login"); setShowSignup(true); }} />}
+      {showWaitlistPop && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px 20px", overflowY: "auto" }} onClick={() => setShowWaitlistPop(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 720, position: "relative" }}>
+            <button onClick={() => setShowWaitlistPop(false)} style={{ position: "absolute", top: -14, right: -6, zIndex: 2, background: "#1a0808", color: "#c8a8a8", border: "1px solid #2a0000", borderRadius: "50%", width: 34, height: 34, cursor: "pointer", fontSize: 16, fontWeight: 700 }}>×</button>
+            <div style={{ textAlign: "center", marginBottom: 18 }}>
+              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#f5e8e8" }}>Doors open soon.</div>
+              <div style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>Get on the list and you'll be invited the moment we launch.</div>
+            </div>
+            <WaitlistForm list="general" />
+          </div>
+        </div>
+      )}
       {showSignup && <AuthModal startMode={authMode} onClose={() => { setShowSignup(false); setAuthMode("signup"); }} defaultTier={signupTier} onAuthed={(user) => { setMember(user); setShowSignup(false); if (user.role === "admin") sessionStorage.setItem("adminToken", localStorage.getItem("guToken") || ""); sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); }} />}
       {trialBanner && (
         <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "#0d0a04", border: "1px solid #b8010140", borderRadius: 14, padding: "18px 28px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 8px 40px rgba(184,1,1,0.2)", maxWidth: 520, width: "calc(100% - 48px)" }}>
