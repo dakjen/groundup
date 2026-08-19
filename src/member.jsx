@@ -47,6 +47,29 @@ const TIER_COLORS = { Free: "#6a6b69", Basic: "#b80101", Premium: "#e06767", Eli
 // Display names — 'Basic' is the internal value for the Member subscription tier
 export const TIER_LABELS = { Free: "Free", Basic: "Member", Premium: "Premium", Elite: "Elite", Partner: "Partner" };
 
+// Account badges — earned perks that follow a member everywhere: the admin
+// sheets, their profile, and next to their name in the community. Add new
+// badges here as they're invented; unknown keys are ignored gracefully.
+export const BADGE_DEFS = {
+  founding25: { label: "L&L Year One", icon: "✦", color: "#c9a227", title: "Founding 25 — first year of Lunch & Learns free" },
+};
+export function BadgeChips({ badges, small }) {
+  const keys = (Array.isArray(badges) ? badges : []).filter(k => BADGE_DEFS[k]);
+  if (!keys.length) return null;
+  return (
+    <>
+      {keys.map(k => {
+        const b = BADGE_DEFS[k];
+        return (
+          <span key={k} title={b.title} style={{ background: b.color + "18", color: b.color, border: `1px solid ${b.color}45`, borderRadius: 5, padding: small ? "1px 6px" : "2px 8px", fontSize: small ? 9 : 10, fontFamily: font, fontWeight: 800, letterSpacing: "0.5px", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 4 }}>
+            {b.icon} {b.label}
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
 export function TierBadge({ tier, small }) {
   const c = TIER_COLORS[tier] || "#6a6b69";
   return (
@@ -457,6 +480,7 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote }) {
             ? <span style={{ background: "linear-gradient(135deg, #c9a0a0, #7a4a4a)", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, fontFamily: font, letterSpacing: "1px" }}>DR. MERRITT</span>
             : <span style={{ background: "#b80101", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, fontFamily: font, letterSpacing: "1px" }}>TEAM</span>
         ) : m.author_tier && <TierBadge tier={m.author_tier} small />}
+        {!m.is_admin && <BadgeChips badges={m.author_badges} small />}
         <span style={{ color: "var(--gu-faint)", fontSize: 11, fontFamily: font }}>{timeAgo(m.created_at)}</span>
         {canDelete && <button onClick={() => onDelete(m)} style={{ background: "none", border: "none", color: "var(--gu-faint)", cursor: "pointer", fontSize: 11, fontFamily: font, marginLeft: "auto" }}>delete</button>}
       </div>

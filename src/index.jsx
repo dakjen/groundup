@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { FileText, Send, Hourglass, FolderOpen, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2, BadgePercent } from "lucide-react";
 import COURSE_CATALOG from "./courseCatalog.js";
-import { AuthModal, ResetPasswordModal, WaitlistForm, ResourcesPage, RetainerPage, MemberPage, CommunityPage, TierBadge, TIER_RANK, TIER_LABELS, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
+import { AuthModal, ResetPasswordModal, WaitlistForm, ResourcesPage, RetainerPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -50,6 +50,17 @@ async function startCheckout(item, extra = {}) {
   }
 }
 if (typeof window !== "undefined") window.startCheckout = (item, extra) => startCheckout(item, extra);
+// datetime-local inputs speak LOCAL wall-clock time; we store UTC ISO strings.
+// Always convert at the boundary — feeding an ISO string's first 16 chars back
+// into the input shifts the time by the UTC offset on every render.
+function toLocalInput(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d)) return "";
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
 const COURSE_ORDER = ["mc1", "mc2", "mc3", "mc5", "mc6", "mc4", "mc7"];
 miniCourses.sort((a, b) => COURSE_ORDER.indexOf(a.id) - COURSE_ORDER.indexOf(b.id));
 
@@ -1519,23 +1530,32 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
           </div>
         )}
 
-        {active && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, marginBottom: 28 }}>
-            {status?.event && new Date(status.event.date) > new Date() && (
-              <div style={{ ...card, padding: "28px 30px", border: "1px solid #b8010150" }}>
-                <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Next Session</div>
-                <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 17, fontFamily: font, marginBottom: 6 }}>{status.event.title}</div>
-                <div style={{ color: "#e0c4c4", fontSize: 13, fontFamily: font, fontWeight: 700, marginBottom: 14 }}>{new Date(status.event.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}{status.event.time ? ` · ${status.event.time}` : ""}</div>
+        {/* Full upcoming schedule — every scheduled session, RSVP per session */}
+        {active && (status?.events || []).length > 0 && (
+          <div style={{ ...card, padding: "28px 30px", marginBottom: 16, border: "1px solid #b8010150" }}>
+            <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 16 }}>Upcoming Sessions</div>
+            {(status.events || []).map((ev, i) => (
+              <div key={ev.id || ev.date} style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", padding: "14px 0", borderTop: i > 0 ? "1px solid #1a0000" : "none" }}>
+                <div style={{ flex: 1, minWidth: 220 }}>
+                  <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 15, fontFamily: font }}>{ev.title}</div>
+                  <div style={{ color: "#e0c4c4", fontSize: 13, fontFamily: font, fontWeight: 700, marginTop: 3 }}>{new Date(ev.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}{ev.time ? ` · ${ev.time}` : ""}</div>
+                  {ev.description && <div style={{ color: "#8a7070", fontSize: 12.5, fontFamily: font, lineHeight: 1.6, marginTop: 4 }}>{ev.description}</div>}
+                </div>
                 <button onClick={async () => {
                   try {
-                    await fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "rsvp", going: !status.my_rsvp }) });
+                    await fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "rsvp", going: !ev.my_rsvp, event_key: ev.date }) });
                     await loadStatus();
                   } catch {}
-                }} style={{ background: status.my_rsvp ? "transparent" : "#b80101", color: status.my_rsvp ? "#22c55e" : "#fff", border: status.my_rsvp ? "1px solid #22c55e60" : "none", borderRadius: 8, padding: "11px 22px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>
-                  {status.my_rsvp ? "✓ You're going — tap to cancel" : "RSVP — I'll be there"}
+                }} style={{ background: ev.my_rsvp ? "transparent" : "#b80101", color: ev.my_rsvp ? "#22c55e" : "#fff", border: ev.my_rsvp ? "1px solid #22c55e60" : "none", borderRadius: 8, padding: "10px 18px", fontFamily: font, fontWeight: 800, fontSize: 12.5, cursor: "pointer", whiteSpace: "nowrap" }}>
+                  {ev.my_rsvp ? "✓ Going — tap to cancel" : "RSVP — I'll be there"}
                 </button>
               </div>
-            )}
+            ))}
+          </div>
+        )}
+
+        {active && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, marginBottom: 28 }}>
             <div style={{ ...card, padding: "28px 30px" }}>
               <div style={{ fontSize: 9, color: "#22c55e", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>You're in</div>
               <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 17, fontFamily: font, marginBottom: 8 }}>Live Session Access</div>
@@ -2180,23 +2200,34 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
     <div style={{ marginBottom: 36 }}>
       {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
 
-      {/* Next session + RSVPs */}
+      {/* Schedule: add sessions + the full upcoming list with RSVPs */}
       <div style={section}>
-        <div style={heading}><Calendar size={13} color="#b80101" /> Next Session</div>
-        <p style={{ color: "#8d847a", fontSize: 12, marginBottom: 14, fontFamily: "'DM Sans', sans-serif" }}>Schedule the upcoming Lunch & Learn — members with access see it and RSVP; the reminder email goes to RSVPs only.</p>
+        <div style={heading}><Calendar size={13} color="#b80101" /> Schedule a Session</div>
+        <p style={{ color: "#8d847a", fontSize: 12, marginBottom: 14, fontFamily: "'DM Sans', sans-serif" }}>Add as many upcoming Lunch & Learns as you like — members with access see the whole schedule and RSVP per session; reminder emails go to that session's RSVPs.</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", columnGap: 20, rowGap: 18, marginBottom: 16 }}>
           <div><label style={lbl}>Title</label><input value={evForm.title} onChange={e => setEvForm({ ...evForm, title: e.target.value })} placeholder="Capital Stacks 101" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
-          <div><label style={lbl}>Date</label><input type="datetime-local" value={evForm.date ? evForm.date.slice(0, 16) : ""} onChange={e => setEvForm({ ...evForm, date: e.target.value ? new Date(e.target.value).toISOString() : "" })} style={{ ...inp, maxWidth: "none", marginBottom: 0, colorScheme: "light" }} /></div>
-          <div><label style={lbl}>Time label</label><input value={evForm.time} onChange={e => setEvForm({ ...evForm, time: e.target.value })} placeholder="12:00 PM ET" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div><label style={lbl}>Date &amp; time (your local time)</label><input type="datetime-local" value={toLocalInput(evForm.date)} onChange={e => setEvForm({ ...evForm, date: e.target.value ? new Date(e.target.value).toISOString() : "" })} style={{ ...inp, maxWidth: "none", marginBottom: 0, colorScheme: "light" }} /></div>
+          <div><label style={lbl}>Time label (shown to members)</label><input value={evForm.time} onChange={e => setEvForm({ ...evForm, time: e.target.value })} placeholder="12:00 PM ET" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
         </div>
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-          <button onClick={async () => { try { await call("POST", { action: "set_event", ...evForm }); flash(true, "Session scheduled — RSVPs are open."); await load(); } catch (e) { flash(false, e.message); } }} style={btnRed}>Save Session</button>
-          {data.event && <button onClick={async () => { try { await call("POST", { action: "set_event" }); setEvForm({ title: "", date: "", time: "", description: "" }); flash(true, "Session cleared."); await load(); } catch (e) { flash(false, e.message); } }} style={btnGhost}>Clear</button>}
-          {data.rsvps && <span style={{ color: "#6b6259", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>{data.rsvps.length} RSVP{data.rsvps.length === 1 ? "" : "s"}</span>}
-        </div>
-        {data.rsvps && data.rsvps.length > 0 && (
-          <div style={{ marginTop: 12, color: "#6b6259", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8 }}>
-            {data.rsvps.map(r => r.name).join(", ")}
+        <button onClick={async () => { try { await call("POST", { action: "add_event", ...evForm }); setEvForm({ title: "", date: "", time: "", description: "" }); flash(true, "Session added to the schedule — RSVPs are open."); await load(); } catch (e) { flash(false, e.message); } }} style={btnRed}>Add to Schedule</button>
+
+        {(data.events || []).length > 0 && (
+          <div style={{ marginTop: 22, borderTop: "1px solid #eeebe4", paddingTop: 16 }}>
+            <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>Scheduled ({(data.events || []).filter(e => new Date(e.date) > Date.now()).length} upcoming)</div>
+            {(data.events || []).map(ev => {
+              const past = new Date(ev.date) < new Date();
+              const rsvps = (data.rsvpsByEvent || {})[ev.date] || [];
+              return (
+                <div key={ev.id} style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", padding: "10px 0", borderBottom: "1px solid #f2efe8", opacity: past ? 0.5 : 1 }}>
+                  <div style={{ flex: 1, minWidth: 200 }}>
+                    <span style={{ color: "#222222", fontSize: 13.5, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{ev.title}</span>
+                    <span style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 10 }}>{new Date(ev.date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}{ev.time ? ` · ${ev.time}` : ""}{past ? " · past" : ""}</span>
+                  </div>
+                  <span title={rsvps.map(r => r.name).join(", ")} style={{ color: "#6b6259", fontSize: 12, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>{rsvps.length} RSVP{rsvps.length === 1 ? "" : "s"}</span>
+                  <button onClick={async () => { if (!window.confirm(`Remove "${ev.title}" from the schedule?`)) return; try { await call("POST", { action: "remove_event", id: ev.id }); flash(true, "Session removed."); await load(); } catch (e) { flash(false, e.message); } }} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Remove</button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -3099,6 +3130,7 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
                 </div>
                 <div style={{ color: "#777777", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>{user.email}</div>
               </div>
+              <BadgeChips badges={user.badges} small />
               <div style={{ fontSize: 10, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif" }}>
                 Joined {new Date(user.created_at).toLocaleDateString()}
               </div>
@@ -3345,7 +3377,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
                 <div style={{ color: "#9a9a9a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>No date set.</div>
               )}
               <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-                <input type="datetime-local" value={t.at ? t.at.slice(0, 16) : ""} onChange={e => t.set(e.target.value ? new Date(e.target.value).toISOString() : "")} style={{ ...inp, maxWidth: "none", marginBottom: 0, width: 210, colorScheme: "light" }} />
+                <input type="datetime-local" value={toLocalInput(t.at)} onChange={e => t.set(e.target.value ? new Date(e.target.value).toISOString() : "")} style={{ ...inp, maxWidth: "none", marginBottom: 0, width: 210, colorScheme: "light" }} />
                 <button onClick={() => saveLaunch(t.which, t.at)} style={btnRed}>Save</button>
               </div>
             </div>
@@ -3396,6 +3428,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
               <span style={{ color: "#b80101", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{PLAN_LABELS[e.plan] || e.plan}</span>
               {e.phone && <span style={{ color: "#666666", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{e.phone}</span>}
               <span style={{ color: (e.list || "insider") === "insider" ? "#b80101" : "#8a8a8a", fontSize: 9, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{(e.list || "insider") === "insider" ? "Insider" : "General"}</span>
+              {e.founding_lnl && <BadgeChips badges={["founding25"]} small />}
               {e.launched_notified && <span style={{ color: "#22c55e", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px" }}>NOTIFIED</span>}
               <span style={{ color: "#9a9a9a", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>{new Date(e.created_at).toLocaleDateString()}</span>
               <button onClick={() => removeEntry(e)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Remove</button>

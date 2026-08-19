@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { neon } from '@neondatabase/serverless';
 import { getSession } from './_utils.js';
-import { sendEmail, siteUrl } from './_email.js';
+import { sendEmail, siteUrl, addLnlContact } from './_email.js';
 
 export const config = { api: { bodyParser: false } };
 
@@ -188,6 +188,11 @@ async function fulfill(sql, session) {
   } else if (item === 'lnl') {
     await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, 'lunchlearn', 'stripe_onetime', NOW() + interval '6 months', NOW())`;
     await sql`UPDATE users SET lnl_discount_until = NOW() + interval '2 months' WHERE id = ${userId} AND (lnl_discount_until IS NULL OR lnl_discount_until < NOW() + interval '2 months')`;
+    // Buyers join the L&L email list just like code redeemers
+    try {
+      const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
+      if (u) await addLnlContact(u.email, u.name);
+    } catch (e) { console.error('lnl contact failed', e.message); }
   } else if (item.startsWith('session_')) {
     const spec = CATALOG[item];
     // Record what they actually paid — member session discounts mean this is

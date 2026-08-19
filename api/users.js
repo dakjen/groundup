@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const users = await sql`
-        SELECT id, name, email, tier, role, badge, membership_status, comped, created_at
+        SELECT id, name, email, tier, role, badge, membership_status, comped, badges, created_at
         FROM users ORDER BY created_at DESC`;
       return res.json(users);
     }
@@ -55,7 +55,7 @@ export default async function handler(req, res) {
           comped = CASE WHEN ${hasComped} THEN ${comped ?? false} ELSE comped END,
           password_hash = COALESCE(${new_password ? hashPassword(new_password) : null}, password_hash)
         WHERE id = ${id}
-        RETURNING id, name, email, tier, role, badge, membership_status, comped, created_at
+        RETURNING id, name, email, tier, role, badge, membership_status, comped, badges, created_at
       `;
       if (!user) return res.status(404).json({ error: 'User not found' });
       return res.json(user);

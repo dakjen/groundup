@@ -53,16 +53,24 @@ export async function sendEmail(to, subject, innerHtml) {
   return !!r;
 }
 
-export async function addContact(email, name, attributes = {}) {
+export async function addContact(email, name, attributes = {}, extraListIds = []) {
   const body = {
     email,
     attributes: { FIRSTNAME: (name || '').split(' ')[0], FULLNAME: name || '', ...attributes },
     updateEnabled: true,
   };
-  const listId = Number(process.env.BREVO_LIST_ID);
-  if (listId) body.listIds = [listId];
+  const listIds = [Number(process.env.BREVO_LIST_ID), ...extraListIds].filter(n => Number.isFinite(n) && n > 0);
+  if (listIds.length) body.listIds = listIds;
   const r = await brevo('/contacts', body);
   return !!r;
+}
+
+// Everyone with Lunch & Learn access lands on the L&L email list (session
+// reminders, recording drops). Works via a dedicated Brevo list when
+// BREVO_LNL_LIST_ID is set; the LNL attribute makes them segmentable either way.
+export async function addLnlContact(email, name) {
+  const lnlList = Number(process.env.BREVO_LNL_LIST_ID);
+  return addContact(email, name, { LNL: true }, lnlList ? [lnlList] : []);
 }
 
 export function welcomeEmail(name, tier) {
@@ -174,11 +182,12 @@ export function broadcastEmail(subject, message) {
   };
 }
 
-export function waitlistConfirmEmail(name, planLabel) {
+export function waitlistConfirmEmail(name, founding) {
   return {
-    subject: "You're on the GroundUp waitlist",
+    subject: founding ? "You're on the list — and you're one of the first 25" : "You're on the GroundUp waitlist",
     html: `
       <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">You're on the list, ${name.split(' ')[0]}.</h2>
+      ${founding ? `<p style="color:#c9a227;font-size:15px;line-height:1.8;font-weight:bold;">You're one of the first 25 — your first YEAR of Lunch & Learn sessions with Dr. Merritt is on us. Live sessions and every recording, free, on any plan. It unlocks automatically the moment you create your account at launch.</p>` : ''}
       <p style="color:#a89080;font-size:14px;line-height:1.8;">Your spot is saved. We read every answer you gave — what you want to learn, what's in your way — and we're building for exactly that. When GroundUp opens, you'll be the first to know, with a personal link before anyone else.</p>
       <p style="color:#a89080;font-size:14px;line-height:1.8;">Decades of affordable-housing deal experience, distilled into a curriculum and community for developers like you. It's almost time.</p>`,
   };

@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { signToken, getSession, hashPassword, verifyPassword } from './_utils.js';
-import { sendEmail, addContact, welcomeEmail, resetEmail, siteUrl } from './_email.js';
+import { sendEmail, addContact, addLnlContact, welcomeEmail, resetEmail, siteUrl } from './_email.js';
 import { verifyToken } from './_utils.js';
 
 const PUBLIC_FIELDS = 'id, name, email, tier, role, membership_status, created_at';
@@ -95,11 +95,25 @@ export default async function handler(req, res) {
       `;
       if (!user) return res.status(409).json({ error: 'An account with that email already exists' });
       const token = signToken({ uid: user.id, role: 'member' });
+      // Founding 25 (first 25 on the Elite Insider waitlist): a free first YEAR of
+      // Lunch & Learns attaches to the account the moment it's created — any plan,
+      // including Free — plus the founding25 badge that follows them everywhere.
+      let founding = false;
+      try {
+        const [wl] = await sql`SELECT id FROM waitlist WHERE email = ${cleanEmail} AND founding_lnl LIMIT 1`;
+        if (wl) {
+          founding = true;
+          await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at)
+            VALUES (${user.id}, 'lunchlearn', 'founding25', NOW() + interval '1 year', NOW())`;
+          await sql`UPDATE users SET badges = COALESCE(badges, '[]'::jsonb) || '["founding25"]'::jsonb WHERE id = ${user.id}`;
+        }
+      } catch (e) { console.error('founding25 grant failed', e.message); }
       // Welcome email + Brevo contact — never block signup on email delivery
       const mail = welcomeEmail(user.name, user.tier);
       await Promise.allSettled([
         sendEmail(user.email, mail.subject, mail.html),
         addContact(user.email, user.name, { TIER: user.tier }),
+        ...(founding ? [addLnlContact(user.email, user.name)] : []),
       ]);
       return res.status(201).json({ user, token });
     }

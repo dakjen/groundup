@@ -8,13 +8,13 @@ async function resolveUser(req, sql) {
   if (!session) return null;
   if (session.role === 'admin') {
     if (session.uid) {
-      const [u] = await sql`SELECT id, name, tier, role, badge FROM users WHERE id = ${session.uid}`;
+      const [u] = await sql`SELECT id, name, tier, role, badge, badges FROM users WHERE id = ${session.uid}`;
       if (u) return { ...u, role: 'admin', badge: u.badge || 'team', rank: TIER_RANK.Elite };
     }
     return { id: null, name: 'GroundUp Team', tier: 'Elite', role: 'admin', badge: 'team', rank: TIER_RANK.Elite };
   }
   if (!session.uid) return null;
-  const [u] = await sql`SELECT id, name, tier, role, membership_status FROM users WHERE id = ${session.uid}`;
+  const [u] = await sql`SELECT id, name, tier, role, membership_status, badge, badges FROM users WHERE id = ${session.uid}`;
   if (!u || u.membership_status !== 'active') return null;  // past_due/suspended = no access
   return { ...u, rank: TIER_RANK[u.tier] ?? 0 };
 }
@@ -86,12 +86,12 @@ export default async function handler(req, res) {
       const threadId = req.query.thread ? Number(req.query.thread) : null;
       const rows = threadId
         ? await sql`
-            SELECT m.*, u.name AS author_name, u.tier AS author_tier, u.badge AS author_badge
+            SELECT m.*, u.name AS author_name, u.tier AS author_tier, u.badge AS author_badge, u.badges AS author_badges
             FROM messages m LEFT JOIN users u ON u.id = m.user_id
             WHERE m.channel_id = ${channelId} AND m.parent_id = ${threadId} AND m.deleted = FALSE
             ORDER BY m.created_at ASC LIMIT 200`
         : await sql`
-            SELECT m.*, u.name AS author_name, u.tier AS author_tier, u.badge AS author_badge,
+            SELECT m.*, u.name AS author_name, u.tier AS author_tier, u.badge AS author_badge, u.badges AS author_badges,
               (SELECT COUNT(*) FROM messages r WHERE r.parent_id = m.id AND r.deleted = FALSE) AS reply_count
             FROM messages m LEFT JOIN users u ON u.id = m.user_id
             WHERE m.channel_id = ${channelId} AND m.parent_id IS NULL AND m.deleted = FALSE
@@ -251,7 +251,7 @@ export default async function handler(req, res) {
         INSERT INTO messages (channel_id, user_id, parent_id, body, is_admin, created_at)
         VALUES (${channel_id}, ${user.id}, ${parent_id || null}, ${text}, ${user.role === 'admin'}, NOW())
         RETURNING *`;
-      return res.status(201).json({ message: { ...msg, author_name: user.role === 'admin' ? (user.name || 'GroundUp Team') : user.name, author_tier: user.tier, author_badge: user.badge || null, reply_count: 0 } });
+      return res.status(201).json({ message: { ...msg, author_name: user.role === 'admin' ? (user.name || 'GroundUp Team') : user.name, author_tier: user.tier, author_badge: user.badge || null, author_badges: user.badges || [], reply_count: 0 } });
     }
 
     // DELETE { id } — author or admin soft-deletes a message
