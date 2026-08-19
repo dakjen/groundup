@@ -887,7 +887,10 @@ const WL_PAIN = [
 const WL_SOURCE = ["Dr. Merritt / NREUV", "A Lunch & Learn", "LinkedIn", "Instagram", "Word of mouth", "An event or conference", "Other"];
 const WL_BUDGETS = ["Under $50", "$50–$150", "$150–$500", "$500+"];
 
-export function WaitlistForm() {
+// Two lists, one form. "insider" is the secret /waitlist page (first access);
+// "general" is what the public homepage collects before the general launch.
+export function WaitlistForm({ list = "insider" }) {
+  const insider = list === "insider";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -910,7 +913,7 @@ export function WaitlistForm() {
     if (!budget) { setMsg("Pick the monthly budget that fits you."); return; }
     setBusy(true); setMsg(null);
     try {
-      await api("/api/waitlist", { method: "POST", body: JSON.stringify({ action: "join", name, email, phone, learn: learnVal, pain: painVal, budget, source: source || undefined, list: "insider" }) });
+      await api("/api/waitlist", { method: "POST", body: JSON.stringify({ action: "join", name, email, phone, learn: learnVal, pain: painVal, budget, source: source || undefined, list }) });
       setDone(true);
     } catch (err) {
       setMsg(err.message);
@@ -923,14 +926,14 @@ export function WaitlistForm() {
     <div style={{ background: "linear-gradient(180deg, #1f1114 0%, #150a0c 100%)", border: "1px solid #e0c4c435", boxShadow: "0 0 90px rgba(224,196,196,0.07)", borderRadius: 22, padding: "42px clamp(28px,5vw,52px) 38px", width: "100%", maxWidth: 720, margin: "0 auto" }}>
         {done ? (
           <div style={{ textAlign: "center", padding: "20px 0" }}>
-            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 12 }}>You're an insider.</h2>
+            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 12 }}>{insider ? "You're an insider." : "You're on the list."}</h2>
             <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font, lineHeight: 1.8 }}>Check your inbox — your spot is saved. We read every answer, and when we launch you'll get our personal recommendation for the plan that fits you best.</p>
           </div>
         ) : (
           <>
-            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>Elite Insider Waitlist</div>
-            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>Become an insider</h2>
-            <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginBottom: 22 }}>Tell us where you are and what's in your way — at launch, you'll get first access and our personal recommendation for the plan that fits.</p>
+            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>{insider ? "Elite Insider Waitlist" : "GroundUp Waitlist"}</div>
+            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>{insider ? "Become an insider" : "Get on the list"}</h2>
+            <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginBottom: 22 }}>{insider ? "Tell us where you are and what's in your way — at launch, you'll get first access and our personal recommendation for the plan that fits." : "Tell us where you are and what's in your way — the moment doors open, you'll get your invite and our personal recommendation for the plan that fits."}</p>
             <form onSubmit={submit}>
               <div style={{ marginBottom: 14 }}>
                 <label style={lbl}>Full name</label>
@@ -976,7 +979,7 @@ export function WaitlistForm() {
                 </select>
               </div>
               {msg && <div style={{ color: "#ff6b6b", fontSize: 13, fontFamily: font, marginBottom: 12 }}>{msg}</div>}
-              <button type="submit" disabled={busy} style={{ ...btnRed, width: "100%", opacity: busy ? 0.6 : 1 }}>{busy ? "Saving your spot…" : "Join the Insider Waitlist →"}</button>
+              <button type="submit" disabled={busy} style={{ ...btnRed, width: "100%", opacity: busy ? 0.6 : 1 }}>{busy ? "Saving your spot…" : insider ? "Join the Insider Waitlist →" : "Join the Waitlist →"}</button>
             </form>
           </>
         )}

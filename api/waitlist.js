@@ -71,9 +71,23 @@ export default async function handler(req, res) {
         ON CONFLICT (email) DO UPDATE SET name = ${String(name).trim()}, phone = ${cleanPhone}, learn = ${cleanLearn}, reason = ${cleanPain}, budget = ${budget}, source = ${cleanSource}
         RETURNING *`;
       const mail = waitlistConfirmEmail(entry.name, null);
+      // A resubmission updates the row but keeps created_at — use that to label the alert
+      const isNew = Date.now() - new Date(entry.created_at).getTime() < 10000;
+      const [{ n: total }] = await sql`SELECT COUNT(*)::int AS n FROM waitlist`;
       await Promise.allSettled([
         sendEmail(entry.email, mail.subject, mail.html),
         addContact(entry.email, entry.name, { WAITLIST_BUDGET: budget, SMS: cleanPhone }),
+        sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
+          `${isNew ? 'WAITLIST +1' : 'Waitlist update'}: ${entry.name} (${entry.list === 'insider' ? 'Insider' : 'General'}) — ${total} total`,
+          `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">${isNew ? 'New waitlist signup' : 'Waitlist entry updated'}</h2>
+           <p style="color:#a89080;font-size:14px;line-height:1.9;">
+             <strong style="color:#f0d8d8;">${entry.name}</strong> — ${entry.email}${entry.phone ? ' · ' + entry.phone : ''}<br/>
+             List: <strong style="color:#f0d8d8;">${entry.list === 'insider' ? 'Elite Insider' : 'General'}</strong> · Budget: <strong style="color:#f0d8d8;">${entry.budget || '—'}</strong><br/>
+             Wants to learn: ${entry.learn || '—'}<br/>
+             Pain point: ${entry.reason || '—'}<br/>
+             Heard about us: ${entry.source || '—'}
+           </p>
+           <p style="color:#a89080;font-size:13px;">That's <strong style="color:#f0d8d8;">${total}</strong> on the waitlist. Full sheet is in Admin → Waitlist.</p>`),
       ]);
       return res.status(201).json({ success: true });
     }

@@ -1641,7 +1641,8 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
 
 // ─── LAUNCH PAGE (pre-launch mode) ──────────────────────────────────────────
 
-function LaunchPage({ launchAt, onAdmin }) {
+function LaunchPage({ launchAt, onAdmin, list = "insider" }) {
+  const insider = list === "insider";
   const [now, setNow] = useState(Date.now());
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
   const ms = launchAt ? new Date(launchAt).getTime() - now : 0;
@@ -1809,10 +1810,10 @@ function LaunchPage({ launchAt, onAdmin }) {
         <div style={{ position: "relative", zIndex: 1, maxWidth: 1100, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 32 }}>
             <div style={{ fontSize: 10, color: "#e0c4c4", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Your Move</div>
-            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4.5vw,44px)", color: "#f5e8e8", marginBottom: 12 }}>Claim your insider spot.</h2>
+            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4.5vw,44px)", color: "#f5e8e8", marginBottom: 12 }}>{insider ? "Claim your insider spot." : "Claim your spot."}</h2>
             <p style={{ color: "#c8b0b0", fontSize: 15, fontFamily: font, lineHeight: 1.8, maxWidth: 520, margin: "0 auto" }}>The doors open soon — and you're early. Tell us where you're headed and we'll meet you there.</p>
           </div>
-          <WaitlistForm />
+          <WaitlistForm list={list} />
         </div>
       </div>
 
@@ -4141,10 +4142,12 @@ export default function App() {
   // Hidden, public waitlist page — shareable at /waitlist, linked from nowhere
   const isWaitlistPage = window.location.pathname.replace(/\/+$/, "") === "/waitlist" || new URLSearchParams(window.location.search).has("waitlist");
   if (isWaitlistPage && !isAdmin && !showAdminLogin) {
-    return <LaunchPage launchAt={insiderAt || launchAt} onAdmin={() => setShowAdminLogin(true)} />;
+    // The secret shareable link — insider list, insider countdown (first access)
+    return <LaunchPage launchAt={insiderAt || launchAt} list="insider" onAdmin={() => setShowAdminLogin(true)} />;
   }
   if (prelaunch && !isAdmin && !showAdminLogin) {
-    return <LaunchPage launchAt={insiderAt || launchAt} onAdmin={() => setShowAdminLogin(true)} />;
+    // Anyone who finds the site organically joins the GENERAL list and sees the general launch date
+    return <LaunchPage launchAt={launchAt} list="general" onAdmin={() => setShowAdminLogin(true)} />;
   }
   if (!siteUnlocked && !isAdmin && !showAdminLogin) return <SiteGatePage onUnlock={() => setSiteUnlocked(true)} />;
   if (showAdminLogin && !isAdmin) return <AdminLoginPage onLogin={(token) => { sessionStorage.setItem("isAdmin", "true"); sessionStorage.setItem("adminToken", token || ""); setIsAdmin(true); setShowAdminLogin(false); }} />;
