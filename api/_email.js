@@ -182,15 +182,37 @@ export function broadcastEmail(subject, message) {
   };
 }
 
-export function waitlistConfirmEmail(name, founding, first10) {
+export function waitlistConfirmEmail(name, founding, first10, list = 'insider') {
+  const first = name.split(' ')[0];
+  const perks = `
+      ${founding ? `<div style="background:#12060a;border:1px solid #b8010140;border-radius:12px;padding:16px 20px;margin:14px 0;">
+        <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">✦ Founding 25</div>
+        <p style="color:#e0c4c4;font-size:14px;line-height:1.8;margin:0;">Your first <strong style="color:#f5e8e8;">YEAR of Lunch & Learn sessions with Dr. Merritt is on us</strong> — live sessions and every recording, free, on any plan. It attaches to your account automatically the moment you create it at launch.</p>
+      </div>` : ''}
+      ${first10 ? `<div style="background:#12060a;border:1px solid #b8010140;border-radius:12px;padding:16px 20px;margin:14px 0;">
+        <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">✦ First 10</div>
+        <p style="color:#e0c4c4;font-size:14px;line-height:1.8;margin:0;">Your special treat: a <strong style="color:#f5e8e8;">14-day trial of any one course</strong>, plus your own personal referral link — friends who join through it get the same trial. Both unlock when you create your account at launch.</p>
+      </div>` : ''}`;
+  if (list === 'insider') {
+    return {
+      subject: founding ? "You're an insider — and one of the first 25" : first10 ? "You're an insider — and one of the first 10" : "You're an insider now",
+      html: `
+      <div style="font-size:10px;color:#b80101;letter-spacing:3px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Elite Insider Waitlist</div>
+      <h2 style="color:#f5e8e8;font-size:26px;margin:0 0 14px;">Welcome inside, ${first}.</h2>
+      <p style="color:#a89080;font-size:14px;line-height:1.9;">Most people will find GroundUp when the doors open. <strong style="color:#f0d8d8;">You're not most people.</strong> You're on the insider list — which means you get in before the public, you hear everything first, and when we launch, you'll get a personal recommendation built from exactly what you told us.</p>
+      ${perks}
+      <p style="color:#a89080;font-size:14px;line-height:1.9;">We read every answer — what you want to learn, what's standing in your way. Dr. Merritt built this from 30+ years and $600M+ of real deals for developers exactly like you. Keep this between us for now.</p>
+      <p style="color:#7a6060;font-size:12px;line-height:1.7;">Nothing to do yet. Watch your inbox — insiders hear from us first.</p>`,
+    };
+  }
   return {
-    subject: founding ? "You're on the list — and you're one of the first 25" : first10 ? "You're on the list — and you're one of the first 10" : "You're on the GroundUp waitlist",
+    subject: "You're on the GroundUp waitlist",
     html: `
-      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">You're on the list, ${name.split(' ')[0]}.</h2>
-      ${founding ? `<p style="color:#c9a227;font-size:15px;line-height:1.8;font-weight:bold;">You're one of the first 25 — your first YEAR of Lunch & Learn sessions with Dr. Merritt is on us. Live sessions and every recording, free, on any plan. It unlocks automatically the moment you create your account at launch.</p>` : ''}
-      ${first10 ? `<p style="color:#c9a227;font-size:15px;line-height:1.8;font-weight:bold;">And you made the first 10 — your special treat: a 14-day trial of any one course, yours the moment you create your account at launch. Plus your own referral link to share, giving friends the same 14-day trial.</p>` : ''}
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">Your spot is saved. We read every answer you gave — what you want to learn, what's in your way — and we're building for exactly that. When GroundUp opens, you'll be the first to know, with a personal link before anyone else.</p>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">Decades of affordable-housing deal experience, distilled into a curriculum and community for developers like you. It's almost time.</p>`,
+      <div style="font-size:10px;color:#b80101;letter-spacing:3px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">GroundUp Waitlist</div>
+      <h2 style="color:#f5e8e8;font-size:26px;margin:0 0 14px;">Your spot is saved, ${first}.</h2>
+      ${perks}
+      <p style="color:#a89080;font-size:14px;line-height:1.9;">We read every answer you gave — what you want to learn, what's in your way — and we're building for exactly that. When GroundUp opens, you'll get a personal recommendation for the plan that fits you, with your own link to claim it.</p>
+      <p style="color:#a89080;font-size:14px;line-height:1.9;">Decades of affordable-housing deal experience, distilled into a curriculum and community for developers like you. It's almost time.</p>`,
   };
 }
 

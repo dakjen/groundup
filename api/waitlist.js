@@ -216,7 +216,7 @@ export default async function handler(req, res) {
           RETURNING id`;
         first10 = !!row;
       }
-      const mail = waitlistConfirmEmail(entry.name, founding, first10);
+      const mail = waitlistConfirmEmail(entry.name, founding, first10, entry.list || 'insider');
       const [{ n: total }] = await sql`SELECT COUNT(*)::int AS n FROM waitlist`;
       await Promise.allSettled([
         sendEmail(entry.email, mail.subject, mail.html),
