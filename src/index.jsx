@@ -4325,7 +4325,7 @@ export default function App() {
           </div>
         </div>
       )}
-      {showSignup && <AuthModal startMode={authMode} onClose={() => { setShowSignup(false); setAuthMode("signup"); }} defaultTier={signupTier} onAuthed={(user) => { setMember(user); setShowSignup(false); if (user.role === "admin") sessionStorage.setItem("adminToken", localStorage.getItem("guToken") || ""); sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); }} />}
+      {showSignup && <AuthModal allowSignup={!prelaunch} startMode={authMode} onClose={() => { setShowSignup(false); setAuthMode("signup"); }} defaultTier={signupTier} onAuthed={(user) => { setMember(user); setShowSignup(false); if (user.role === "admin") sessionStorage.setItem("adminToken", localStorage.getItem("guToken") || ""); sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); }} />}
       {trialBanner && (
         <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "#0d0a04", border: "1px solid #b8010140", borderRadius: 14, padding: "18px 28px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 8px 40px rgba(184,1,1,0.2)", maxWidth: 520, width: "calc(100% - 48px)" }}>
           <span style={{ flexShrink: 0, display: "flex" }}><Gift size={26} color="#e0c4c4" /></span>

@@ -80,7 +80,7 @@ export function TierBadge({ tier, small }) {
 
 // ─── AUTH MODAL (login / create account) ────────────────────────────────────
 
-export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode = "signup" }) {
+export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode = "signup", allowSignup = true }) {
   const [mode, setMode] = useState(startMode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -179,7 +179,7 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
         <div style={{ marginTop: 18, textAlign: "center", fontSize: 13, fontFamily: font, color: "#8a7070" }}>
           {mode === "signup" ? <>Already a member? <button onClick={() => { setMode("login"); setError(""); }} style={{ background: "none", border: "none", color: "#b80101", cursor: "pointer", fontWeight: 700, fontFamily: font, fontSize: 13 }}>Sign in</button></>
             : mode === "forgot" ? <button onClick={() => { setMode("login"); setError(""); setNotice(""); }} style={{ background: "none", border: "none", color: "#b80101", cursor: "pointer", fontWeight: 700, fontFamily: font, fontSize: 13 }}>← Back to sign in</button>
-            : <>New here? <button onClick={() => { setMode("signup"); setError(""); }} style={{ background: "none", border: "none", color: "#b80101", cursor: "pointer", fontWeight: 700, fontFamily: font, fontSize: 13 }}>Create an account</button><span style={{ margin: "0 8px", color: "#3a2a2a" }}>·</span><button onClick={() => { setMode("forgot"); setError(""); }} style={{ background: "none", border: "none", color: "#8a7070", cursor: "pointer", fontWeight: 600, fontFamily: font, fontSize: 13 }}>Forgot password?</button></>}
+            : <>{allowSignup && <>New here? <button onClick={() => { setMode("signup"); setError(""); }} style={{ background: "none", border: "none", color: "#b80101", cursor: "pointer", fontWeight: 700, fontFamily: font, fontSize: 13 }}>Create an account</button><span style={{ margin: "0 8px", color: "#3a2a2a" }}>·</span></>}<button onClick={() => { setMode("forgot"); setError(""); }} style={{ background: "none", border: "none", color: "#8a7070", cursor: "pointer", fontWeight: 600, fontFamily: font, fontSize: 13 }}>Forgot password?</button></>}
         </div>
       </div>
     </div>
