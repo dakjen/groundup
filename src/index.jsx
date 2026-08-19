@@ -4245,6 +4245,22 @@ export default function App() {
             <div style={{ textAlign: "center", marginBottom: 18 }}>
               <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#f5e8e8" }}>Doors open soon.</div>
               <div style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>Get on the list and you'll be invited the moment we launch.</div>
+              {launchAt && new Date(launchAt) > new Date() && (() => {
+                const ms = new Date(launchAt).getTime() - Date.now();
+                const days = Math.floor(ms / 86400000);
+                const hours = Math.floor((ms % 86400000) / 3600000);
+                return (
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 10, marginTop: 14, background: "#12060a", border: "1px solid #b8010140", borderRadius: 10, padding: "10px 20px" }}>
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
+                    <span style={{ color: "#e0c4c4", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "0.5px" }}>
+                      {days > 0 ? `Launching in ${days} day${days === 1 ? "" : "s"}, ${hours} hour${hours === 1 ? "" : "s"}` : `Launching in ${hours} hour${hours === 1 ? "" : "s"}`}
+                    </span>
+                    <span style={{ color: "#7a5050", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>
+                      · {new Date(launchAt).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}
+                    </span>
+                  </div>
+                );
+              })()}
             </div>
             <WaitlistForm list="general" />
           </div>
