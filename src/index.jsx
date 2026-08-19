@@ -1768,10 +1768,11 @@ function LaunchPage({ launchAt, onAdmin, list = "insider" }) {
   const TOPICS = [
     { num: "01", title: "Finding & Controlling the Deal", teaser: "How Dr. Merritt reads a market, values land, and locks down a site — before spending real money." },
     { num: "02", title: "Teams, Partners & Joint Ventures", teaser: "What you actually bring to the table, and the structures that protect you when the deal gets real." },
-    { num: "03", locked: true },
-    { num: "04", locked: true },
-    { num: "05", ghost: true },
-    { num: "06", ghost: true },
+    { num: "03", title: "Financing the Deal", teaser: "Capital stacks, tax credits, subsidy — how deals that 'don't pencil' actually close." },
+    { num: "04", title: "Why Affordable Housing Doesn't Pencil", teaser: "The economics nobody explains — and the strategies that make the numbers work anyway." },
+    { num: "05", locked: true },
+    { num: "06", locked: true },
+    { num: "07", ghost: true },
   ];
 
   return (

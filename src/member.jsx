@@ -989,6 +989,8 @@ export function WaitlistForm({ list = "insider" }) {
   };
 
   const sel = { ...inp, appearance: "auto", cursor: "pointer" };
+  // Thought partnership needs a beat of explanation — show it on hover, not just on select
+  const [partnerHover, setPartnerHover] = useState(false);
 
   return (
     <div style={{ background: "linear-gradient(180deg, #1f1114 0%, #150a0c 100%)", border: "1px solid #e0c4c435", boxShadow: "0 0 90px rgba(224,196,196,0.07)", borderRadius: 22, padding: "42px clamp(28px,5vw,52px) 38px", width: "100%", maxWidth: 720, margin: "0 auto" }}>
@@ -1035,13 +1037,16 @@ export function WaitlistForm({ list = "insider" }) {
                 <label style={lbl}>Monthly budget for a course, community, and access to support</label>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   {WL_BUDGETS.map(b => (
-                    <button type="button" key={b} onClick={() => setBudget(b)} style={{ gridColumn: b === "$2,000+" ? "1 / -1" : undefined, background: budget === b ? "#b8010118" : "transparent", border: budget === b ? "1px solid #b80101" : b === "$2,000+" ? "1px solid #e0c4c455" : "1px solid #2a0000", borderRadius: 8, padding: "11px 12px", cursor: "pointer", color: budget === b ? "#f0d8d8" : b === "$2,000+" ? "#e0c4c4" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font }}>
+                    <button type="button" key={b} onClick={() => setBudget(b)}
+                      onMouseEnter={() => b === "$2,000+" && setPartnerHover(true)}
+                      onMouseLeave={() => b === "$2,000+" && setPartnerHover(false)}
+                      style={{ gridColumn: b === "$2,000+" ? "1 / -1" : undefined, background: budget === b ? "#b8010118" : "transparent", border: budget === b ? "1px solid #b80101" : b === "$2,000+" ? "1px solid #e0c4c455" : "1px solid #2a0000", borderRadius: 8, padding: "11px 12px", cursor: "pointer", color: budget === b ? "#f0d8d8" : b === "$2,000+" ? "#e0c4c4" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font }}>
                       {b === "$2,000+" ? "✦ $2,000+ · Thought partnership" : b}
                     </button>
                   ))}
-                  {budget === "$2,000+" && (
-                    <div style={{ gridColumn: "1 / -1", color: "#e0c4c4", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, background: "#12060a", border: "1px solid #e0c4c430", borderRadius: 8, padding: "10px 14px" }}>
-                      Put Dr. Gina Merritt on retainer for your project — use her expertise and business infrastructure to stand on a solid foundation.
+                  {(budget === "$2,000+" || partnerHover) && (
+                    <div style={{ gridColumn: "1 / -1", color: "#e0c4c4", fontSize: 12.5, fontFamily: font, lineHeight: 1.8, background: "#12060a", border: "1px solid #e0c4c430", borderRadius: 8, padding: "12px 16px" }}>
+                      <strong style={{ color: "#f0d8d8" }}>This isn't a subscription — it's a retainer.</strong> Put Dr. Gina Merritt directly on YOUR project: dedicated hours with her every month, deal review, capital strategy, negotiation prep, and a private client workspace. You're not buying content — you're buying her time, her expertise, and her business infrastructure under your foundation. That's why it's priced like the consulting engagement it is.
                     </div>
                   )}
                 </div>
