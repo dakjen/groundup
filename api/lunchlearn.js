@@ -151,6 +151,34 @@ export default async function handler(req, res) {
       return res.json({ success: true, events });
     }
 
+    // Rename / relabel a scheduled session (past or upcoming)
+    if (action === 'update_event') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const events = await getEvents(sql);
+      const ev = events.find(e => e.id === req.body.id);
+      if (!ev) return res.status(404).json({ error: 'Session not found' });
+      if (req.body.title) ev.title = String(req.body.title).slice(0, 200);
+      if (req.body.time !== undefined) ev.time = String(req.body.time || '').slice(0, 50);
+      if (req.body.description !== undefined) ev.description = String(req.body.description || '').slice(0, 500);
+      await saveEvents(sql, events);
+      return res.json({ success: true, events });
+    }
+
+    // Rename a past recording
+    if (action === 'update_recording') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const [recRow] = await sql`SELECT value FROM settings WHERE key = 'lnl_recordings'`;
+      const recs = recRow?.value ? JSON.parse(recRow.value) : [];
+      const rec = recs.find(x => x.id === req.body.id);
+      if (!rec) return res.status(404).json({ error: 'Recording not found' });
+      if (req.body.title) rec.title = String(req.body.title).slice(0, 200);
+      if (req.body.date !== undefined) rec.date = String(req.body.date || '').slice(0, 50);
+      if (req.body.description !== undefined) rec.description = String(req.body.description || '').slice(0, 500);
+      const val = JSON.stringify(recs);
+      await sql`INSERT INTO settings (key, value) VALUES ('lnl_recordings', ${val}) ON CONFLICT (key) DO UPDATE SET value = ${val}`;
+      return res.json({ success: true, recordings: recs });
+    }
+
     if (action === 'remove_event') {
       if (!admin) return res.status(401).json({ error: 'Unauthorized' });
       const events = (await getEvents(sql)).filter(e => e.id !== req.body.id);

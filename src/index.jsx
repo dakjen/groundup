@@ -2224,6 +2224,11 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
                     <span style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 10 }}>{new Date(ev.date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}{ev.time ? ` · ${ev.time}` : ""}{past ? " · past" : ""}</span>
                   </div>
                   <span title={rsvps.map(r => r.name).join(", ")} style={{ color: "#6b6259", fontSize: 12, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>{rsvps.length} RSVP{rsvps.length === 1 ? "" : "s"}</span>
+                  <button onClick={async () => {
+                    const title = window.prompt("Session name:", ev.title);
+                    if (!title || title === ev.title) return;
+                    try { await call("POST", { action: "update_event", id: ev.id, title }); flash(true, "Session renamed."); await load(); } catch (e) { flash(false, e.message); }
+                  }} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Rename</button>
                   <button onClick={async () => { if (!window.confirm(`Remove "${ev.title}" from the schedule?`)) return; try { await call("POST", { action: "remove_event", id: ev.id }); flash(true, "Session removed."); await load(); } catch (e) { flash(false, e.message); } }} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Remove</button>
                 </div>
               );
@@ -2287,6 +2292,11 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
                   <span style={{ color: "#222222", fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{r.title}</span>
                   <span style={{ color: "#777777", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 8 }}>{r.date}</span>
                 </div>
+                <button onClick={async () => {
+                  const title = window.prompt("Recording name:", r.title);
+                  if (!title || title === r.title) return;
+                  try { await call("POST", { action: "update_recording", id: r.id, title }); flash(true, "Recording renamed."); await load(); } catch (e) { flash(false, e.message); }
+                }} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Rename</button>
                 <button onClick={() => removeRecording(r)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Remove</button>
               </div>
             ))}
