@@ -193,15 +193,30 @@ export function waitlistConfirmEmail(name, founding, first10, list = 'insider') 
         <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">✦ First 10</div>
         <p style="color:#e0c4c4;font-size:14px;line-height:1.8;margin:0;">Your special treat: a <strong style="color:#f5e8e8;">14-day trial of any one course</strong>, plus your own personal referral link — friends who join through it get the same trial. Both unlock when you create your account at launch.</p>
       </div>` : ''}`;
+  // What GroundUp IS — shared by both emails: why it exists, what it teaches, the value
+  const about = `
+      <div style="border-top:1px solid #2a0000;margin-top:20px;padding-top:18px;">
+        <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:10px;">What GroundUp is</div>
+        <p style="color:#a89080;font-size:14px;line-height:1.9;">Dr. Gina Merritt went from public housing in the Bronx to <strong style="color:#f0d8d8;">$600M+ in real estate deals</strong> — and she had to fight for every piece of knowledge alone. She built GroundUp so you don't have to. It's the full development playbook, taught from deals that actually closed, plus a community of developers building alongside you and direct access to her and her team.</p>
+        <p style="color:#c8a8a8;font-size:13px;line-height:2;margin:10px 0;">
+          <span style="color:#b80101;">→</span> Predevelopment — finding, evaluating &amp; controlling a deal<br/>
+          <span style="color:#b80101;">→</span> Building your team, JV partnerships &amp; structuring<br/>
+          <span style="color:#b80101;">→</span> Financing — capital stacks, LIHTC &amp; closing the gap<br/>
+          <span style="color:#b80101;">→</span> Why affordable housing doesn't pencil (and how to close anyway)<br/>
+          <span style="color:#b80101;">→</span> Zoning, entitlements, design &amp; construction, and life after opening day<br/>
+          <span style="color:#b80101;">→</span> Live Lunch &amp; Learns, work sessions &amp; the Opportunity Board</p>
+        <p style="color:#a89080;font-size:14px;line-height:1.9;">The course library alone is a <strong style="color:#f0d8d8;">$700+ value</strong>, and top-tier members get over <strong style="color:#f0d8d8;">$3,600 a year in value</strong> — advisory hours with Dr. Merritt are worth $1,650 at her going rate before you count anything else. New expertise is added every quarter.</p>
+      </div>`;
   if (list === 'insider') {
     return {
-      subject: founding ? "You're an insider — and one of the first 25" : first10 ? "You're an insider — and one of the first 10" : "You're an insider now",
+      subject: founding ? "Dr. Merritt invited you — and you're one of the first 25" : first10 ? "Dr. Merritt invited you — and you're one of the first 10" : "Dr. Merritt invited you inside",
       html: `
       <div style="font-size:10px;color:#b80101;letter-spacing:3px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Elite Insider Waitlist</div>
       <h2 style="color:#f5e8e8;font-size:26px;margin:0 0 14px;">Welcome inside, ${first}.</h2>
-      <p style="color:#a89080;font-size:14px;line-height:1.9;">Most people will find GroundUp when the doors open. <strong style="color:#f0d8d8;">You're not most people.</strong> You're on the insider list — which means you get in before the public, you hear everything first, and when we launch, you'll get a personal recommendation built from exactly what you told us.</p>
+      <p style="color:#a89080;font-size:14px;line-height:1.9;"><strong style="color:#f0d8d8;">Dr. Gina Merritt invited you herself.</strong> This list isn't public — it's the people she wants in the room first. That means <strong style="color:#f0d8d8;">the doors open for you before they open for anyone else</strong>: you get access at the insider launch, ahead of the public, with a personal plan recommendation built from exactly what you told us.</p>
       ${perks}
-      <p style="color:#a89080;font-size:14px;line-height:1.9;">We read every answer — what you want to learn, what's standing in your way. Dr. Merritt built this from 30+ years and $600M+ of real deals for developers exactly like you. Keep this between us for now.</p>
+      ${about}
+      <p style="color:#a89080;font-size:14px;line-height:1.9;margin-top:16px;">We read every answer — what you want to learn, what's standing in your way — and we're building for exactly that. Keep this between us for now.</p>
       <p style="color:#7a6060;font-size:12px;line-height:1.7;">Nothing to do yet. Watch your inbox — insiders hear from us first.</p>`,
     };
   }
@@ -212,7 +227,8 @@ export function waitlistConfirmEmail(name, founding, first10, list = 'insider') 
       <h2 style="color:#f5e8e8;font-size:26px;margin:0 0 14px;">Your spot is saved, ${first}.</h2>
       ${perks}
       <p style="color:#a89080;font-size:14px;line-height:1.9;">We read every answer you gave — what you want to learn, what's in your way — and we're building for exactly that. When GroundUp opens, you'll get a personal recommendation for the plan that fits you, with your own link to claim it.</p>
-      <p style="color:#a89080;font-size:14px;line-height:1.9;">Decades of affordable-housing deal experience, distilled into a curriculum and community for developers like you. It's almost time.</p>`,
+      ${about}
+      <p style="color:#a89080;font-size:14px;line-height:1.9;margin-top:16px;">It's almost time.</p>`,
   };
 }
 
