@@ -471,13 +471,19 @@ function linkify(text) {
 }
 
 function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote }) {
+  // Dr. Merritt's messages carry a presence of their own — richer than TEAM,
+  // unmistakable at a glance: glowing card, serif name, crowned badge.
+  const isGina = m.is_admin && m.author_badge === "drmerritt";
   return (
-    <div style={{ padding: "12px 16px", borderRadius: 10, background: m.is_admin ? "var(--gu-red-tint)" : "transparent", border: m.is_admin ? "1px solid #b8010130" : "1px solid transparent", marginBottom: 4 }}>
+    <div style={{ padding: isGina ? "16px 20px" : "12px 16px", borderRadius: 10, background: isGina ? "linear-gradient(135deg, #1a0808 0%, #12060a 100%)" : m.is_admin ? "var(--gu-red-tint)" : "transparent", border: isGina ? "1px solid #b8010170" : m.is_admin ? "1px solid #b8010130" : "1px solid transparent", boxShadow: isGina ? "0 0 24px rgba(184,1,1,0.12)" : "none", marginBottom: 4 }}>
+      {isGina && <div style={{ height: 2, background: "linear-gradient(90deg, transparent, #b80101, transparent)", margin: "-16px -20px 12px", borderRadius: "10px 10px 0 0" }} />}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-        <span style={{ color: m.is_admin ? (m.author_badge === "drmerritt" ? "#b80101" : "#b80101") : "var(--gu-text2)", fontWeight: 800, fontSize: 13, fontFamily: font }}>{m.author_name || "Member"}</span>
+        <span style={isGina
+          ? { color: "#f5e8e8", fontWeight: 700, fontSize: 16, fontFamily: serif, letterSpacing: "0.3px" }
+          : { color: m.is_admin ? "#b80101" : "var(--gu-text2)", fontWeight: 800, fontSize: 13, fontFamily: font }}>{m.author_name || "Member"}</span>
         {m.is_admin ? (
-          m.author_badge === "drmerritt"
-            ? <span style={{ background: "linear-gradient(135deg, #c9a0a0, #7a4a4a)", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, fontFamily: font, letterSpacing: "1px" }}>DR. MERRITT</span>
+          isGina
+            ? <span style={{ background: "linear-gradient(135deg, #b80101, #570404)", color: "#fff", borderRadius: 5, padding: "2px 9px", fontSize: 9, fontWeight: 800, fontFamily: font, letterSpacing: "1.5px", boxShadow: "0 0 10px rgba(184,1,1,0.35)" }}>✦ DR. MERRITT</span>
             : <span style={{ background: "#b80101", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, fontFamily: font, letterSpacing: "1px" }}>TEAM</span>
         ) : m.author_tier && <TierBadge tier={m.author_tier} small />}
         {!m.is_admin && <BadgeChips badges={m.author_badges} small />}
