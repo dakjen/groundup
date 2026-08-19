@@ -149,7 +149,19 @@ export default async function handler(req, res) {
       const [launchRow] = await sql`SELECT value FROM settings WHERE key = 'launch_at'`;
       const [insiderRow] = await sql`SELECT value FROM settings WHERE key = 'launch_insider_at'`;
       const [callRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
-      return res.json({ launch_at: launchRow?.value || null, launch_insider_at: insiderRow?.value || null, advisor_call_link: callRow?.value || null });
+      // Live Elite scarcity: seats spoken for = paid Elite members + waitlisters
+      // headed for Elite (budget says so, or the team marked them Elite)
+      let elite = null;
+      try {
+        const [capRow] = await sql`SELECT value FROM settings WHERE key = 'elite_cap'`;
+        const cap = parseInt(capRow?.value, 10) || 15;
+        const [paid] = await sql`SELECT COUNT(*)::int AS n FROM users WHERE tier='Elite' AND membership_status='active' AND COALESCE(role,'member')='member' AND NOT COALESCE(comped,FALSE)`;
+        const [intent] = await sql`SELECT COUNT(*)::int AS n FROM waitlist
+          WHERE rec_override = 'Elite' OR (rec_override IS NULL AND budget IN ('$300+','$500+'))`;
+        const claimed = Math.min(cap, (paid?.n || 0) + (intent?.n || 0));
+        elite = { cap, claimed, left: Math.max(0, cap - claimed) };
+      } catch (e) { console.error('elite spots failed', e.message); }
+      return res.json({ launch_at: launchRow?.value || null, launch_insider_at: insiderRow?.value || null, advisor_call_link: callRow?.value || null, elite });
     }
 
     // Admin: full list + launch date + revenue rollup

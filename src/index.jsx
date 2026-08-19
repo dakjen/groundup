@@ -1750,7 +1750,7 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
 
 // ─── LAUNCH PAGE (pre-launch mode) ──────────────────────────────────────────
 
-function LaunchPage({ launchAt, onAdmin, list = "insider" }) {
+function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
   const insider = list === "insider";
   const [now, setNow] = useState(Date.now());
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
@@ -1921,6 +1921,17 @@ function LaunchPage({ launchAt, onAdmin, list = "insider" }) {
           <div style={{ textAlign: "center", marginBottom: 32 }}>
             <div style={{ fontSize: 10, color: "#e0c4c4", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Your Move</div>
             <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4.5vw,44px)", color: "#f5e8e8", marginBottom: 12 }}>{insider ? "Claim your insider spot." : "Claim your spot."}</h2>
+            {eliteSpots && eliteSpots.left > 0 && (
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#12060a", border: "1px solid #b8010150", borderRadius: 10, padding: "10px 20px", marginBottom: 14 }}>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
+                <span style={{ color: "#e0c4c4", fontSize: 13, fontFamily: font, fontWeight: 800, letterSpacing: "0.5px" }}>
+                  Only {eliteSpots.left} of {eliteSpots.cap} Elite spots still open
+                </span>
+              </div>
+            )}
+            {eliteSpots && eliteSpots.left === 0 && (
+              <div style={{ color: "#8a7070", fontSize: 13, fontFamily: font, fontWeight: 700, marginBottom: 14 }}>All {eliteSpots.cap} Elite spots are spoken for — join the list for the next opening.</div>
+            )}
             <p style={{ color: "#c8b0b0", fontSize: 15, fontFamily: font, lineHeight: 1.8, maxWidth: 520, margin: "0 auto" }}>The doors open soon — and you're early. Tell us where you're headed and we'll meet you there.</p>
           </div>
           <WaitlistForm list={list} />
@@ -4320,13 +4331,14 @@ export default function App() {
   });
   const [launchAt, setLaunchAt] = useState(null);
   const [insiderAt, setInsiderAt] = useState(null);
+  const [eliteSpots, setEliteSpots] = useState(null); // { cap, claimed, left }
   const [advisorLink, setAdvisorLink] = useState(null);
   const [launchChecked, setLaunchChecked] = useState(false);
   const [clockTick, setClockTick] = useState(0);
 
   useEffect(() => {
     fetch("/api/waitlist?public=1").then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) { if (d.launch_at) setLaunchAt(d.launch_at); if (d.launch_insider_at) setInsiderAt(d.launch_insider_at); if (d.advisor_call_link) setAdvisorLink(d.advisor_call_link); } })
+      .then(d => { if (d) { if (d.launch_at) setLaunchAt(d.launch_at); if (d.launch_insider_at) setInsiderAt(d.launch_insider_at); if (d.advisor_call_link) setAdvisorLink(d.advisor_call_link); if (d.elite) setEliteSpots(d.elite); } })
       .catch(() => {})
       .finally(() => setLaunchChecked(true));
   }, []);
@@ -4440,7 +4452,7 @@ export default function App() {
   const isWaitlistPage = window.location.pathname.replace(/\/+$/, "") === "/waitlist" || new URLSearchParams(window.location.search).has("waitlist");
   if (isWaitlistPage && !isAdmin && !showAdminLogin) {
     // The secret shareable link — insider list, insider countdown (first access)
-    return <LaunchPage launchAt={insiderAt || launchAt} list="insider" onAdmin={() => setShowAdminLogin(true)} />;
+    return <LaunchPage launchAt={insiderAt || launchAt} list="insider" eliteSpots={eliteSpots} onAdmin={() => setShowAdminLogin(true)} />;
   }
   // Pre-launch, the site is fully BROWSABLE — home, courses, pricing, all of it.
   // What's gated is DOING anything: any join/sign-in/enroll click pops the
