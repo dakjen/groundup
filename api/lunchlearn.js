@@ -29,11 +29,16 @@ async function saveEvents(sql, events) {
 }
 
 async function getAccess(sql, userId) {
+  // Two doors in: a Lunch & Learn purchase/comp (the entitlement), or a
+  // Premium/Elite membership — those tiers include L&L as a benefit.
   const [ent] = await sql`
     SELECT expires_at FROM entitlements
     WHERE user_id = ${userId} AND course_id = 'lunchlearn' AND (expires_at IS NULL OR expires_at > NOW())
     ORDER BY expires_at DESC NULLS FIRST LIMIT 1`;
-  return ent || null;
+  if (ent) return ent;
+  const [u] = await sql`SELECT tier FROM users WHERE id = ${userId} AND membership_status = 'active'`;
+  if (u && ['Premium', 'Elite'].includes(u.tier)) return { expires_at: null, via: 'membership' };
+  return null;
 }
 
 async function grantAccess(sql, userId, source) {

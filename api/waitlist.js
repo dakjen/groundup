@@ -1,6 +1,37 @@
 import { neon } from '@neondatabase/serverless';
 import { getAdmin } from './_utils.js';
-import { sendEmail, sendBulk, addContact, siteUrl, waitlistConfirmEmail, countdownEmail, launchEmail } from './_email.js';
+import { sendEmail, sendBulk, addContact, siteUrl, waitlistConfirmEmail, countdownEmail, launchEmail, recommendEmail } from './_email.js';
+
+// ── The recommendation algorithm ──
+// Two signals: what their ANSWERS say they need, and what their BUDGET says
+// they can spend. Their words set the ambition; their budget sets the ceiling;
+// we recommend where the two meet — never a plan above their stated budget.
+const PLANS = {
+  Basic: { tier: 'Basic', label: 'Member', price: '$59.99/mo', rank: 1, features: [
+    'Every course — all seven, plus new ones as they drop', 'All written lessons, case studies & worksheets',
+    'Community access — read every channel', 'Resource lists & reading guides',
+  ] },
+  Premium: { tier: 'Premium', label: 'Premium', price: '$165.99/mo', rank: 2, features: [
+    'Everything in Member', 'Post, reply & network in the community', 'The Opportunity Board — RFPs & funding windows',
+    'Lunch & Learn recordings', '1 free work session (1 hr) + priority booking', '10% off every 1:1 session',
+  ] },
+  Elite: { tier: 'Elite', label: 'Elite', price: '$599.99/mo', rank: 3, features: [
+    'Everything in Premium', 'Direct messages to Dr. Merritt & her team', '3 one-on-one advisory calls a year',
+    '30% off every 1:1 session', 'Elite Lounge — the private channel', 'Small-group advisory sessions & networking invites',
+  ] },
+};
+
+export function recommendPlan(e) {
+  const words = `${e.learn || ''} ${e.reason || ''}`.toLowerCase();
+  // What they need, read from their own words
+  let need = 1; // courses alone
+  if (/(deal|capital|financ|fund|invest|partner|jv|network|opportunit|rfp|pipeline)/.test(words)) need = 2; // active deals → community + tools
+  if (/(advis|mentor|coach|1:1|one.on.one|direct access|hands.on|guidance|support from|expert|help me close)/.test(words)) need = 3; // wants Gina herself
+  // What they can spend
+  const cap = e.budget === '$500+' ? 3 : e.budget === '$150–$500' ? 2 : 1;
+  const rank = Math.min(need, cap);
+  return rank === 3 ? PLANS.Elite : rank === 2 ? PLANS.Premium : PLANS.Basic;
+}
 
 export const PLAN_INFO = {
   Basic: { label: 'Member', monthly: 59.99 },
@@ -141,6 +172,27 @@ export default async function handler(req, res) {
       return res.json({ success: true, sent, total: entries.length });
     }
 
+    // ~14 days out: send everyone their plan recommendation (no pay link yet)
+    if (action === 'recommend') {
+      const target = ['insider', 'general'].includes(req.body.list) ? req.body.list : null;
+      const entries = target
+        ? await sql`SELECT * FROM waitlist WHERE recommended_notified = FALSE AND COALESCE(list, 'insider') = ${target}`
+        : await sql`SELECT * FROM waitlist WHERE recommended_notified = FALSE`;
+      if (entries.length === 0) return res.status(400).json({ error: 'Everyone on that list already got their recommendation' });
+      const [launchRow] = await sql`SELECT value FROM settings WHERE key = ${req.body.list === 'insider' ? 'launch_insider_at' : 'launch_at'}`;
+      let sent = 0;
+      for (let i = 0; i < entries.length; i += 10) {
+        const results = await Promise.allSettled(entries.slice(i, i + 10).map(e => {
+          const mail = recommendEmail(e.name, recommendPlan(e), launchRow?.value || null, e.reason);
+          return sendEmail(e.email, mail.subject, mail.html);
+        }));
+        sent += results.filter(x => x.status === 'fulfilled' && x.value).length;
+      }
+      if (target) await sql`UPDATE waitlist SET recommended_notified = TRUE WHERE COALESCE(list, 'insider') = ${target}`;
+      else await sql`UPDATE waitlist SET recommended_notified = TRUE`;
+      return res.json({ success: true, sent, total: entries.length });
+    }
+
     // Launch: first notice + a personal plan recommendation from budget + pain point
     if (action === 'launch') {
       const target = ['insider', 'general'].includes(req.body.list) ? req.body.list : null;
@@ -148,25 +200,11 @@ export default async function handler(req, res) {
         ? await sql`SELECT * FROM waitlist WHERE launched_notified = FALSE AND COALESCE(list, 'insider') = ${target}`
         : await sql`SELECT * FROM waitlist WHERE launched_notified = FALSE`;
       if (entries.length === 0) return res.status(400).json({ error: 'Everyone on that list has already been notified' });
-      const recommend = (e) => {
-        if (e.budget === '$500+') return { tier: 'Elite', label: 'Elite', price: '$599.99/mo', features: [
-          'Everything in Premium', 'Direct messages to Dr. Merritt & her team', '3 one-on-one advisory calls a year',
-          '30% off every 1:1 session', 'Elite Lounge — the private channel', 'Small-group advisory sessions & networking invites',
-        ] };
-        if (e.budget === '$150–$500') return { tier: 'Premium', label: 'Premium', price: '$165.99/mo', features: [
-          'Everything in Member', 'Post, reply & network in the community', 'The Opportunity Board — RFPs & funding windows',
-          'Lunch & Learn recordings', '1 free work session (1 hr) + priority booking', '10% off every 1:1 session',
-        ] };
-        return { tier: 'Basic', label: 'Member', price: '$59.99/mo', features: [
-          'Every course — all seven, plus new ones as they drop', 'All written lessons, case studies & worksheets',
-          'Community access — read every channel', 'Resource lists & reading guides',
-        ] };
-      };
       let sent = 0;
       for (let i = 0; i < entries.length; i += 10) {
         const chunk = entries.slice(i, i + 10);
         const results = await Promise.allSettled(chunk.map(e => {
-          const rec = recommend(e);
+          const rec = recommendPlan(e);
           const link = `${siteUrl()}/?join=1&plan=${rec.tier}&email=${encodeURIComponent(e.email)}`;
           const mail = launchEmail(e.name, rec, link, e.reason);
           return sendEmail(e.email, mail.subject, mail.html);

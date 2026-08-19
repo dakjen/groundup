@@ -3331,6 +3331,18 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
   const [listFilter, setListFilter] = useState("all");
   const [openEntry, setOpenEntry] = useState(null);
 
+  // Mirrors recommendPlan() in api/waitlist.js — words set the ambition,
+  // budget sets the ceiling
+  const recFor = (e) => {
+    const words = `${e.learn || ""} ${e.reason || ""}`.toLowerCase();
+    let need = 1;
+    if (/(deal|capital|financ|fund|invest|partner|jv|network|opportunit|rfp|pipeline)/.test(words)) need = 2;
+    if (/(advis|mentor|coach|1:1|one.on.one|direct access|hands.on|guidance|support from|expert|help me close)/.test(words)) need = 3;
+    const cap = e.budget === "$500+" ? 3 : e.budget === "$150–$500" ? 2 : 1;
+    const r = Math.min(need, cap);
+    return r === 3 ? "Elite — $599.99/mo" : r === 2 ? "Premium — $165.99/mo" : "Member — $59.99/mo";
+  };
+
   // Download everything as a CSV — respects the current list filter
   const exportCsv = (rows) => {
     const cols = [["Name", "name"], ["Email", "email"], ["Phone", "phone"], ["List", "list"], ["Monthly budget", "budget"], ["Wants to learn", "learn"], ["Pain point", "reason"], ["Heard about us", "source"], ["Founding 25", "founding_lnl"], ["First 10", "first10"], ["Notified", "launched_notified"], ["Joined", "created_at"]];
@@ -3373,10 +3385,16 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
     try { const d = await call("POST", { action: "countdown", stage }); flash(true, `Countdown sent to ${d.sent} of ${d.total}.`); } catch (e) { flash(false, e.message); } finally { setBusy(false); }
   };
 
-  const sendLaunch = async () => {
-    if (!window.confirm("LAUNCH: send everyone their personal claim-your-plan link? This can only happen once per person.")) return;
+  // The two-stage sequence: recommendations ~14 days out, pay links on launch day
+  const sendRecommend = async (list) => {
+    if (!window.confirm(`Send the "here's the plan we'd pick for you" email to the ${list === "insider" ? "INSIDER" : "GENERAL"} list? Each person gets it once — their personalized recommendation, no pay link yet.`)) return;
     setBusy(true);
-    try { const d = await call("POST", { action: "launch" }); flash(true, `Launch email sent to ${d.sent} of ${d.total}.`); await load(); } catch (e) { flash(false, e.message); } finally { setBusy(false); }
+    try { const d = await call("POST", { action: "recommend", list }); flash(true, `Recommendations sent to ${d.sent} of ${d.total}.`); await load(); } catch (e) { flash(false, e.message); } finally { setBusy(false); }
+  };
+  const sendLaunch = async (list) => {
+    if (!window.confirm(`LAUNCH: send the ${list === "insider" ? "INSIDER" : "GENERAL"} list their personal checkout links? This can only happen once per person.`)) return;
+    setBusy(true);
+    try { const d = await call("POST", { action: "launch", list }); flash(true, `Launch email sent to ${d.sent} of ${d.total}.`); await load(); } catch (e) { flash(false, e.message); } finally { setBusy(false); }
   };
 
   const removeEntry = async (entry) => {
@@ -3487,7 +3505,19 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
           {["2 days", "1 day", "12 hours", "5 hours"].map(stage => (
             <button key={stage} disabled={busy} onClick={() => sendStage(stage)} style={{ ...btnGhost, opacity: busy ? 0.6 : 1 }}>{stage}</button>
           ))}
-          <button disabled={busy} onClick={sendLaunch} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>We're Live — Send Launch</button>
+        </div>
+        <div style={{ borderTop: "1px solid #eeebe4", marginTop: 16, paddingTop: 16 }}>
+          <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>The launch sequence — two emails per person</div>
+          <p style={{ color: "#8d847a", fontSize: 12, marginBottom: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
+            <strong>Step 1 (~14 days out):</strong> their personalized plan recommendation — built from their budget and their answers — with everything the plan includes. No pay link yet.<br />
+            <strong>Step 2 (launch day):</strong> "We're live" with their personal checkout link for that plan.
+          </p>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <button disabled={busy} onClick={() => sendRecommend("insider")} style={{ ...btnGhost, opacity: busy ? 0.6 : 1 }}>1 · Recommendations — Insiders</button>
+            <button disabled={busy} onClick={() => sendRecommend("general")} style={{ ...btnGhost, opacity: busy ? 0.6 : 1 }}>1 · Recommendations — General</button>
+            <button disabled={busy} onClick={() => sendLaunch("insider")} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>2 · Launch + Pay Links — Insiders</button>
+            <button disabled={busy} onClick={() => sendLaunch("general")} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>2 · Launch + Pay Links — General</button>
+          </div>
         </div>
       </div>
 
@@ -3512,7 +3542,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
               <button onClick={() => removeEntry(e)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Remove</button>
               {openEntry === e.id && (
                 <div style={{ width: "100%", borderTop: "1px solid #eeebe4", paddingTop: 10, marginTop: 2, display: "grid", gap: 6 }}>
-                  {[["Wants to learn", e.learn], ["Pain point", e.reason], ["Monthly budget", e.budget], ["We'll recommend", e.budget === "$500+" ? "Elite — $599.99/mo" : e.budget === "$150–$500" ? "Premium — $165.99/mo" : "Member — $59.99/mo"], ["Heard about us", e.source], ["Phone", e.phone], ["Joined", new Date(e.created_at).toLocaleString()]].map(([k, v]) => (
+                  {[["Wants to learn", e.learn], ["Pain point", e.reason], ["Monthly budget", e.budget], ["We'll recommend", recFor(e)], ["Heard about us", e.source], ["Phone", e.phone], ["Joined", new Date(e.created_at).toLocaleString()]].map(([k, v]) => (
                     <div key={k} style={{ color: "#444444", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>
                       <strong style={{ color: "#8d847a", fontSize: 10, letterSpacing: "1px", textTransform: "uppercase" }}>{k}</strong> — {v || <span style={{ color: "#aaaaaa" }}>not answered</span>}
                     </div>

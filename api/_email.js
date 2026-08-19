@@ -206,6 +206,25 @@ export function countdownEmail(stage, launchText) {
   };
 }
 
+// ~14 days out: the personalized recommendation — builds anticipation, no pay
+// link yet. The launch-day email (below) carries the actual checkout link.
+export function recommendEmail(name, rec, launchAt, painPoint) {
+  const dateText = launchAt ? new Date(launchAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : 'soon';
+  return {
+    subject: `${name.split(' ')[0]}, here's the plan we'd pick for you`,
+    html: `
+      <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Launch is almost here</div>
+      <h2 style="color:#f5e8e8;font-size:28px;margin:0 0 16px;">We read your answers, ${name.split(' ')[0]}.</h2>
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">Doors open <strong style="color:#f0d8d8;">${dateText}</strong>. We went through what you told us${painPoint ? " — what you want to learn, and what's been standing in your way" : ""} — and based on your goals and budget, this is the plan we'd put you on:</p>
+      <div style="background:#12060a;border:1px solid #b8010130;border-radius:12px;padding:20px 24px;margin:16px 0;">
+        <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">Our recommendation for you</div>
+        <div style="color:#f5e8e8;font-size:22px;font-weight:bold;">${rec.label} <span style="color:#8a7070;font-size:14px;font-weight:normal;">· ${rec.price}</span></div>
+        ${rec.features?.length ? `<div style="margin-top:12px;">${rec.features.map(f => `<div style="color:#c8a8a8;font-size:13px;line-height:2;"><span style="color:#b80101;">→</span> ${f}</div>`).join('')}</div>` : ''}
+      </div>
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">Nothing to do yet — on launch day you'll get one more email with your personal checkout link. Keep an eye out.</p>`,
+  };
+}
+
 export function launchEmail(name, rec, link, painPoint) {
   return {
     subject: "We're live \u2014 here's the plan we recommend for you",
