@@ -3329,6 +3329,22 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
   const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [listFilter, setListFilter] = useState("all");
+  const [openEntry, setOpenEntry] = useState(null);
+
+  // Download everything as a CSV — respects the current list filter
+  const exportCsv = (rows) => {
+    const cols = [["Name", "name"], ["Email", "email"], ["Phone", "phone"], ["List", "list"], ["Monthly budget", "budget"], ["Wants to learn", "learn"], ["Pain point", "reason"], ["Heard about us", "source"], ["Founding 25", "founding_lnl"], ["First 10", "first10"], ["Notified", "launched_notified"], ["Joined", "created_at"]];
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const csv = [cols.map(c => esc(c[0])).join(",")]
+      .concat(rows.map(r => cols.map(([, k]) => esc(k === "created_at" ? new Date(r[k]).toLocaleString() : k === "list" ? (r[k] || "insider") : typeof r[k] === "boolean" ? (r[k] ? "yes" : "no") : r[k])).join(",")))
+      .join("\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `groundup-waitlist-${listFilter}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
 
   const call = async (method, body) => {
     const res = await fetch("/api/waitlist", {
@@ -3431,8 +3447,11 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
         })}
       </div>
 
-      {/* List filter */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+      {/* List filter + CSV export */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
+        {entries.length > 0 && (
+          <button onClick={() => exportCsv(entries)} style={{ ...btnGhost, fontSize: 12, padding: "7px 16px", marginLeft: "auto", order: 2 }}>Download CSV ({entries.length})</button>
+        )}
         {[["all", "All"], ["insider", "Elite Insider"], ["general", "General"]].map(([id, label]) => (
           <button key={id} onClick={() => setListFilter(id)} style={{ background: listFilter === id ? "#b80101" : "transparent", color: listFilter === id ? "#fff" : "#666666", border: listFilter === id ? "1px solid #b80101" : "1px solid #dcdcdc", borderRadius: 99, padding: "7px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
             {label} · {data.entries.filter(e => id === "all" || (e.list || "insider") === id).length}
@@ -3440,13 +3459,25 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
         ))}
       </div>
 
-      {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 20 }}>
-        {statCard("On the waitlist", entries.length)}
-        {statCard("Anticipated MRR", "$" + data.mrr.toLocaleString(undefined, { minimumFractionDigits: 2 }), "from membership picks")}
-        {statCard("One-time revenue", "$" + data.oneTime.toLocaleString(undefined, { minimumFractionDigits: 2 }), "from course passes")}
-        {statCard("First-month total", "$" + (data.mrr * 0.75 + data.oneTime).toLocaleString(undefined, { minimumFractionDigits: 2 }), "with 25% L&L discounts")}
-      </div>
+      {/* Stats — anticipated revenue from each person's stated monthly budget.
+          Conservative maps their budget to the plan it comfortably covers;
+          upside assumes each stretches one tier. */}
+      {(() => {
+        const PLAN_FIT = { "Under $50": 0, "$50–$150": 59.99, "$150–$500": 165.99, "$500+": 599.99 };
+        const STRETCH = { "Under $50": 59.99, "$50–$150": 165.99, "$150–$500": 599.99, "$500+": 599.99 };
+        const mrrFit = entries.reduce((s, e) => s + (PLAN_FIT[e.budget] || 0), 0);
+        const mrrUp = entries.reduce((s, e) => s + (STRETCH[e.budget] || 0), 0);
+        const withBudget = entries.filter(e => PLAN_FIT[e.budget] !== undefined).length;
+        const money = (n) => "$" + n.toLocaleString(undefined, { minimumFractionDigits: 2 });
+        return (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 20 }}>
+            {statCard("On the waitlist", entries.length, `${withBudget} shared a budget`)}
+            {statCard("Anticipated MRR", money(mrrFit), "each joins the plan their budget fits")}
+            {statCard("Upside MRR", money(mrrUp), "if each stretches one tier")}
+            {statCard("Anticipated ARR", money(mrrFit * 12), "conservative, annualized")}
+          </div>
+        );
+      })()}
 
       {/* Countdown emails */}
       <div style={section}>
@@ -3466,19 +3497,28 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
       ) : (
         <div>
           {entries.map(e => (
-            <div key={e.id} style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-              <div style={{ flex: 1, minWidth: 170 }}>
-                <div style={{ color: "#222222", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{e.name}</div>
+            <div key={e.id} style={{ background: "#ffffff", border: openEntry === e.id ? "1px solid #b8010150" : "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+              <div onClick={() => setOpenEntry(openEntry === e.id ? null : e.id)} style={{ flex: 1, minWidth: 170, cursor: "pointer" }} title="Click to see their full form">
+                <div style={{ color: "#222222", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{e.name} <span style={{ color: "#9a9a9a", fontSize: 11, transform: openEntry === e.id ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.15s" }}>▾</span></div>
                 <div style={{ color: "#777777", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{e.email}</div>
               </div>
-              <span style={{ color: "#b80101", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{PLAN_LABELS[e.plan] || e.plan}</span>
+              {e.budget && <span style={{ color: "#b80101", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.5px" }}>{e.budget}/mo</span>}
               {e.phone && <span style={{ color: "#666666", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{e.phone}</span>}
               <span style={{ color: (e.list || "insider") === "insider" ? "#b80101" : "#8a8a8a", fontSize: 9, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{(e.list || "insider") === "insider" ? "Insider" : "General"}</span>
               {e.founding_lnl && <BadgeChips badges={["founding25"]} small />}
+              {e.first10 && <BadgeChips badges={["first10"]} small />}
               {e.launched_notified && <span style={{ color: "#22c55e", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px" }}>NOTIFIED</span>}
               <span style={{ color: "#9a9a9a", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>{new Date(e.created_at).toLocaleDateString()}</span>
               <button onClick={() => removeEntry(e)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Remove</button>
-              {e.reason && <div style={{ width: "100%", color: "#666666", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, borderTop: "1px solid #241010", paddingTop: 8, marginTop: 2 }}>&ldquo;{e.reason}&rdquo;</div>}
+              {openEntry === e.id && (
+                <div style={{ width: "100%", borderTop: "1px solid #eeebe4", paddingTop: 10, marginTop: 2, display: "grid", gap: 6 }}>
+                  {[["Wants to learn", e.learn], ["Pain point", e.reason], ["Monthly budget", e.budget], ["We'll recommend", e.budget === "$500+" ? "Elite — $599.99/mo" : e.budget === "$150–$500" ? "Premium — $165.99/mo" : "Member — $59.99/mo"], ["Heard about us", e.source], ["Phone", e.phone], ["Joined", new Date(e.created_at).toLocaleString()]].map(([k, v]) => (
+                    <div key={k} style={{ color: "#444444", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>
+                      <strong style={{ color: "#8d847a", fontSize: 10, letterSpacing: "1px", textTransform: "uppercase" }}>{k}</strong> — {v || <span style={{ color: "#aaaaaa" }}>not answered</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>

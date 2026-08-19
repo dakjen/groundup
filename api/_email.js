@@ -216,8 +216,9 @@ export function launchEmail(name, rec, link, painPoint) {
       <div style="background:#12060a;border:1px solid #b8010130;border-radius:12px;padding:20px 24px;margin:16px 0;">
         <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">Recommended for you</div>
         <div style="color:#f5e8e8;font-size:22px;font-weight:bold;">${rec.label} <span style="color:#8a7070;font-size:14px;font-weight:normal;">\u00b7 ${rec.price}</span></div>
+        ${rec.features?.length ? `<div style="margin-top:12px;">${rec.features.map(f => `<div style="color:#c8a8a8;font-size:13px;line-height:2;"><span style="color:#b80101;">\u2192</span> ${f}</div>`).join('')}</div>` : ''}
       </div>
-      <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:14px 30px;font-weight:bold;font-size:15px;text-decoration:none;margin:6px 0;">Start with ${rec.label} \u2192</a>
+      <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:14px 30px;font-weight:bold;font-size:15px;text-decoration:none;margin:6px 0;">Join as ${rec.label} \u2014 secure checkout \u2192</a>
       <p style="color:#7a6060;font-size:12px;line-height:1.7;">Not the right fit? Every plan is on the pricing page \u2014 and you can change anytime.</p>`,
   };
 }

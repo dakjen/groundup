@@ -149,9 +149,18 @@ export default async function handler(req, res) {
         : await sql`SELECT * FROM waitlist WHERE launched_notified = FALSE`;
       if (entries.length === 0) return res.status(400).json({ error: 'Everyone on that list has already been notified' });
       const recommend = (e) => {
-        if (e.budget === '$500+') return { tier: 'Elite', label: 'Elite', price: '$599.99/mo' };
-        if (e.budget === '$150–$500') return { tier: 'Premium', label: 'Premium', price: '$165.99/mo' };
-        return { tier: 'Basic', label: 'Member', price: '$59.99/mo' };
+        if (e.budget === '$500+') return { tier: 'Elite', label: 'Elite', price: '$599.99/mo', features: [
+          'Everything in Premium', 'Direct messages to Dr. Merritt & her team', '3 one-on-one advisory calls a year',
+          '30% off every 1:1 session', 'Elite Lounge — the private channel', 'Small-group advisory sessions & networking invites',
+        ] };
+        if (e.budget === '$150–$500') return { tier: 'Premium', label: 'Premium', price: '$165.99/mo', features: [
+          'Everything in Member', 'Post, reply & network in the community', 'The Opportunity Board — RFPs & funding windows',
+          'Lunch & Learn recordings', '1 free work session (1 hr) + priority booking', '10% off every 1:1 session',
+        ] };
+        return { tier: 'Basic', label: 'Member', price: '$59.99/mo', features: [
+          'Every course — all seven, plus new ones as they drop', 'All written lessons, case studies & worksheets',
+          'Community access — read every channel', 'Resource lists & reading guides',
+        ] };
       };
       let sent = 0;
       for (let i = 0; i < entries.length; i += 10) {
