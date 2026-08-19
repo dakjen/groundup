@@ -21,13 +21,56 @@ const PLANS = {
   ] },
 };
 
+// Every campaign send leaves a permanent record — who, what, when — so the
+// team can always see exactly which emails went out.
+async function logEmails(sql, kind, list, subject, recipients) {
+  try {
+    for (const r of recipients) {
+      await sql`INSERT INTO email_log (kind, list, subject, recipient_name, recipient_email, ok, created_at)
+        VALUES (${kind}, ${list || 'all'}, ${subject}, ${r.name || ''}, ${r.email}, ${r.ok !== false}, NOW())`;
+    }
+  } catch (err) { console.error('email log failed', err.message); }
+}
+
+// What each form answer says they NEED (1 = courses cover it / 2 = needs the
+// community, tools & Opportunity Board / 3 = needs Dr. Merritt directly).
+// Principle: the more complex the topic and the more human the pain point,
+// the higher the plan. The community (Premium) is where partners, capital
+// connections, and networking live; Elite is direct access to Gina.
+const LEARN_NEED = {
+  // Learning topics — the courses and Lunch & Learns teach these → Member
+  'Real estate development basics': 1,
+  'Finding & evaluating deals': 1,
+  'LIHTC & tax credits': 1,
+  'JV partnerships & structuring': 1,
+  'Construction & design management': 1,
+  // Doing — financing and getting deals done → Premium
+  'Financing & capital stacks': 2,
+  'Getting my first deal done': 2,
+  // Operating at scale / Gina's specialty → Elite
+  'Public-private partnerships': 3,
+  'Scaling my business & pipeline': 3,
+  'Scaling my existing pipeline': 3,        // legacy option, kept for old entries
+};
+const PAIN_NEED = {
+  "I don't know where to start": 1,         // courses are the on-ramp
+  "I don't understand the numbers": 2,      // numbers → Premium tools & sessions
+  "I can't find the capital": 2,            // capital access → community + Opportunity Board
+  'I need partners or a team': 2,           // partners = the community
+  'No network in the industry': 2,          // networking = the community
+  'Navigating government & compliance': 3,  // Gina's home turf → direct access
+  "I have a deal but I'm stuck": 3,         // live deal in trouble → hands-on help
+};
+
 export function recommendPlan(e) {
-  const words = `${e.learn || ''} ${e.reason || ''}`.toLowerCase();
-  // What they need, read from their own words
-  let need = 1; // courses alone
-  if (/(deal|capital|financ|fund|invest|partner|jv|network|opportunit|rfp|pipeline)/.test(words)) need = 2; // active deals → community + tools
-  if (/(advis|mentor|coach|1:1|one.on.one|direct access|hands.on|guidance|support from|expert|help me close)/.test(words)) need = 3; // wants Gina herself
-  // What they can spend
+  // Dropdown answers map directly; free-text "Other" answers fall back to keywords
+  let need = Math.max(LEARN_NEED[e.learn] || 1, PAIN_NEED[e.reason] || 1);
+  if (need < 3) {
+    const words = `${e.learn || ''} ${e.reason || ''}`.toLowerCase();
+    if (/(advis|mentor|coach|1:1|one.on.one|direct access|hands.on|guidance|expert|help me close|stuck|compliance|zoning|entitle)/.test(words)) need = 3;
+    else if (need < 2 && /(deal|capital|financ|fund|invest|partner|jv|network|opportunit|rfp|pipeline|lihtc|tax credit|numbers)/.test(words)) need = 2;
+  }
+  // Budget is the ceiling — never recommend a plan above what they said they can spend
   const cap = e.budget === '$500+' ? 3 : e.budget === '$150–$500' ? 2 : 1;
   const rank = Math.min(need, cap);
   return rank === 3 ? PLANS.Elite : rank === 2 ? PLANS.Premium : PLANS.Basic;
@@ -169,6 +212,7 @@ export default async function handler(req, res) {
       if (entries.length === 0) return res.status(400).json({ error: 'That waitlist is empty' });
       const mail = countdownEmail(stage, launchText);
       const sent = await sendBulk(entries, mail.subject, mail.html);
+      await logEmails(sql, `countdown: ${stage}`, target, mail.subject, entries.map(e => ({ ...e, ok: true })));
       return res.json({ success: true, sent, total: entries.length });
     }
 

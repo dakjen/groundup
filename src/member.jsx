@@ -930,13 +930,15 @@ export function ResetPasswordModal({ token, onDone }) {
 // ─── WAITLIST (public join modal) ───────────────────────────────────────────
 
 const WL_LEARN = [
-  "Financing & capital stacks",
-  "LIHTC & tax credits",
+  "Real estate development basics",
   "Finding & evaluating deals",
+  "LIHTC & tax credits",
   "JV partnerships & structuring",
   "Construction & design management",
+  "Financing & capital stacks",
   "Getting my first deal done",
-  "Scaling my existing pipeline",
+  "Public-private partnerships",
+  "Scaling my business & pipeline",
   "Other",
 ];
 const WL_PAIN = [

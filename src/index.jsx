@@ -3331,13 +3331,17 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
   const [listFilter, setListFilter] = useState("all");
   const [openEntry, setOpenEntry] = useState(null);
 
-  // Mirrors recommendPlan() in api/waitlist.js — words set the ambition,
+  // Mirrors recommendPlan() in api/waitlist.js — answers set the need,
   // budget sets the ceiling
   const recFor = (e) => {
-    const words = `${e.learn || ""} ${e.reason || ""}`.toLowerCase();
-    let need = 1;
-    if (/(deal|capital|financ|fund|invest|partner|jv|network|opportunit|rfp|pipeline)/.test(words)) need = 2;
-    if (/(advis|mentor|coach|1:1|one.on.one|direct access|hands.on|guidance|support from|expert|help me close)/.test(words)) need = 3;
+    const LEARN_NEED = { "Real estate development basics": 1, "Finding & evaluating deals": 1, "LIHTC & tax credits": 1, "JV partnerships & structuring": 1, "Construction & design management": 1, "Financing & capital stacks": 2, "Getting my first deal done": 2, "Public-private partnerships": 3, "Scaling my business & pipeline": 3, "Scaling my existing pipeline": 3 };
+    const PAIN_NEED = { "I don't know where to start": 1, "I don't understand the numbers": 2, "I can't find the capital": 2, "I need partners or a team": 2, "No network in the industry": 2, "Navigating government & compliance": 3, "I have a deal but I'm stuck": 3 };
+    let need = Math.max(LEARN_NEED[e.learn] || 1, PAIN_NEED[e.reason] || 1);
+    if (need < 3) {
+      const words = `${e.learn || ""} ${e.reason || ""}`.toLowerCase();
+      if (/(advis|mentor|coach|1:1|one.on.one|direct access|hands.on|guidance|expert|help me close|stuck|compliance|zoning|entitle)/.test(words)) need = 3;
+      else if (need < 2 && /(deal|capital|financ|fund|invest|partner|jv|network|opportunit|rfp|pipeline|lihtc|tax credit|numbers)/.test(words)) need = 2;
+    }
     const cap = e.budget === "$500+" ? 3 : e.budget === "$150–$500" ? 2 : 1;
     const r = Math.min(need, cap);
     return r === 3 ? "Elite — $599.99/mo" : r === 2 ? "Premium — $165.99/mo" : "Member — $59.99/mo";
