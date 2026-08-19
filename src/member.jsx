@@ -114,7 +114,8 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
       saveMember(data.user, data.token);
       onAuthed(data.user);
       if (mode === "signup" && tier !== "Free" && window.startCheckout) {
-        window.startCheckout("sub_" + tier); // straight to secure payment for the plan they picked
+        // straight to secure payment — carrying any stretch-offer promo with them
+        window.startCheckout("sub_" + tier, { promo: localStorage.getItem("guPromo") || undefined });
       }
     } catch (err) {
       setError(err.message);
@@ -952,7 +953,7 @@ const WL_PAIN = [
   "Other",
 ];
 const WL_SOURCE = ["Dr. Merritt / NREUV", "A Lunch & Learn", "LinkedIn", "Instagram", "Word of mouth", "An event or conference", "Other"];
-const WL_BUDGETS = ["Under $50", "$50–$150", "$150–$500", "$500+"];
+const WL_BUDGETS = ["Under $25", "$25–$100", "$100–$200", "$300+", "$2,000+"];
 
 // Two lists, one form. "insider" is the secret /waitlist page (first access);
 // "general" is what the public homepage collects before the general launch.
@@ -1034,8 +1035,15 @@ export function WaitlistForm({ list = "insider" }) {
                 <label style={lbl}>Monthly budget for a course, community, and access to support</label>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   {WL_BUDGETS.map(b => (
-                    <button type="button" key={b} onClick={() => setBudget(b)} style={{ background: budget === b ? "#b8010118" : "transparent", border: budget === b ? "1px solid #b80101" : "1px solid #2a0000", borderRadius: 8, padding: "11px 12px", cursor: "pointer", color: budget === b ? "#f0d8d8" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font }}>{b}</button>
+                    <button type="button" key={b} onClick={() => setBudget(b)} style={{ background: budget === b ? (b === "$2,000+" ? "#c9a22715" : "#b8010118") : "transparent", border: budget === b ? (b === "$2,000+" ? "1px solid #c9a227" : "1px solid #b80101") : b === "$2,000+" ? "1px solid #c9a22740" : "1px solid #2a0000", borderRadius: 8, padding: "11px 12px", cursor: "pointer", color: budget === b ? "#f0d8d8" : b === "$2,000+" ? "#c9a227" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font }}>
+                      {b === "$2,000+" ? "✦ $2,000+ · Thought partnership" : b}
+                    </button>
                   ))}
+                  {budget === "$2,000+" && (
+                    <div style={{ gridColumn: "1 / -1", color: "#c9a227", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, background: "#12060a", border: "1px solid #c9a22730", borderRadius: 8, padding: "10px 14px" }}>
+                      Put Dr. Gina Merritt on retainer for your project — use her expertise and business infrastructure to stand on a solid foundation.
+                    </div>
+                  )}
                 </div>
               </div>
               <div style={{ marginBottom: 18 }}>

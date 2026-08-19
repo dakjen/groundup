@@ -1053,6 +1053,7 @@ const plans = [
       "Community access — read every channel",
     ],
     locked: ["Posting in the community", "Timeline templates & Lunch & Learn recordings", "Work sessions & advisory calls"],
+    value: "A $700+ value in course content alone",
   },
   {
     name: "Premium",
@@ -1074,6 +1075,7 @@ const plans = [
       "The Opportunity Board — RFPs, funding windows & deals, posted by the team",
     ],
     locked: ["Advisory calls with Dr. Merritt", "Priority responses & direct messages"],
+    value: "Over $1,350 in annual value — courses, Lunch & Learns & a private work session",
   },
   {
     name: "Elite",
@@ -1097,6 +1099,7 @@ const plans = [
     ],
     locked: [],
     limited: true,
+    value: "Over $3,600 in annual value — advisory hours alone are worth $1,650 at Dr. Merritt's rate",
   },
   {
     name: "Senior Advisor",
@@ -1158,7 +1161,8 @@ function PlanCard({ plan, onSelect, seats }) {
         <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: plan.price.length > 8 ? 34 : 56, color: "#f5e8e8", lineHeight: 1.2 }}>{plan.price}</span>
         <span style={{ color: "#8a7070", fontSize: 16, fontFamily: "'DM Sans', sans-serif" }}>{plan.period}</span>
       </div>
-      <p style={{ color: "#8a7070", fontSize: 13, marginBottom: seats ? 14 : 28, lineHeight: 1.65, fontFamily: "'DM Sans', sans-serif" }}>{plan.description}</p>
+      <p style={{ color: "#8a7070", fontSize: 13, marginBottom: plan.value || seats ? 14 : 28, lineHeight: 1.65, fontFamily: "'DM Sans', sans-serif" }}>{plan.description}</p>
+      {plan.value && <div style={{ color: "#7a5050", fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontStyle: "italic", marginBottom: 14 }}>{plan.value}</div>}
 
       {showSeats && (
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, background: "#1a0808", border: "1px solid #b8010140", borderRadius: 8, padding: "9px 13px" }}>
@@ -3331,21 +3335,9 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
   const [listFilter, setListFilter] = useState("all");
   const [openEntry, setOpenEntry] = useState(null);
 
-  // Mirrors recommendPlan() in api/waitlist.js — answers set the need,
-  // budget sets the ceiling
-  const recFor = (e) => {
-    const LEARN_NEED = { "Real estate development basics": 1, "Finding & evaluating deals": 1, "LIHTC & tax credits": 1, "JV partnerships & structuring": 1, "Construction & design management": 1, "Financing & capital stacks": 2, "Getting my first deal done": 2, "Public-private partnerships": 3, "Scaling my business & pipeline": 3, "Scaling my existing pipeline": 3 };
-    const PAIN_NEED = { "I don't know where to start": 1, "I don't understand the numbers": 2, "I can't find the capital": 2, "I need partners or a team": 2, "No network in the industry": 2, "Navigating government & compliance": 3, "I have a deal but I'm stuck": 3 };
-    let need = Math.max(LEARN_NEED[e.learn] || 1, PAIN_NEED[e.reason] || 1);
-    if (need < 3) {
-      const words = `${e.learn || ""} ${e.reason || ""}`.toLowerCase();
-      if (/(advis|mentor|coach|1:1|one.on.one|direct access|hands.on|guidance|expert|help me close|stuck|compliance|zoning|entitle)/.test(words)) need = 3;
-      else if (need < 2 && /(deal|capital|financ|fund|invest|partner|jv|network|opportunit|rfp|pipeline|lihtc|tax credit|numbers)/.test(words)) need = 2;
-    }
-    const cap = e.budget === "$500+" ? 3 : e.budget === "$150–$500" ? 2 : 1;
-    const r = Math.min(need, cap);
-    return r === 3 ? "Elite — $599.99/mo" : r === 2 ? "Premium — $165.99/mo" : "Member — $59.99/mo";
-  };
+  // Mirrors recommendPlan() in api/waitlist.js — budget decides:
+  // $500+ → Elite · $150–$500 → Premium · below $150 → Member
+  const recFor = (e) => e.budget === "$2,000+" ? "Senior Advisor — from $3,025/mo" : ["$300+", "$500+"].includes(e.budget) ? "Elite — $599.99/mo" : ["$100–$200", "$150–$500"].includes(e.budget) ? "Premium — $165.99/mo" : "Member — $59.99/mo";
 
   // Download everything as a CSV — respects the current list filter
   const exportCsv = (rows) => {
@@ -3389,16 +3381,21 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
     try { const d = await call("POST", { action: "countdown", stage }); flash(true, `Countdown sent to ${d.sent} of ${d.total}.`); } catch (e) { flash(false, e.message); } finally { setBusy(false); }
   };
 
-  // The two-stage sequence: recommendations ~14 days out, pay links on launch day
-  const sendRecommend = async (list) => {
-    if (!window.confirm(`Send the "here's the plan we'd pick for you" email to the ${list === "insider" ? "INSIDER" : "GENERAL"} list? Each person gets it once — their personalized recommendation, no pay link yet.`)) return;
+  // The two-stage sequence: recommendations ~14 days out, pay links on launch day.
+  // Clicking a button opens a review panel — exactly who gets it and what it says —
+  // and nothing sends until Confirm.
+  const [confirmSend, setConfirmSend] = useState(null); // { step, list }
+  const pendingFor = (step, list) => (data?.entries || []).filter(e =>
+    (e.list || "insider") === list && !(step === "recommend" ? e.recommended_notified : e.launched_notified));
+  const executeSend = async () => {
+    const { step, list } = confirmSend;
     setBusy(true);
-    try { const d = await call("POST", { action: "recommend", list }); flash(true, `Recommendations sent to ${d.sent} of ${d.total}.`); await load(); } catch (e) { flash(false, e.message); } finally { setBusy(false); }
-  };
-  const sendLaunch = async (list) => {
-    if (!window.confirm(`LAUNCH: send the ${list === "insider" ? "INSIDER" : "GENERAL"} list their personal checkout links? This can only happen once per person.`)) return;
-    setBusy(true);
-    try { const d = await call("POST", { action: "launch", list }); flash(true, `Launch email sent to ${d.sent} of ${d.total}.`); await load(); } catch (e) { flash(false, e.message); } finally { setBusy(false); }
+    try {
+      const d = await call("POST", { action: step === "recommend" ? "recommend" : "launch", list });
+      flash(true, `${step === "recommend" ? "Recommendations" : "Launch emails"} sent to ${d.sent} of ${d.total}. Full record below in Sent Emails.`);
+      setConfirmSend(null);
+      await load();
+    } catch (e) { flash(false, e.message); } finally { setBusy(false); }
   };
 
   const removeEntry = async (entry) => {
@@ -3485,8 +3482,8 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
           Conservative maps their budget to the plan it comfortably covers;
           upside assumes each stretches one tier. */}
       {(() => {
-        const PLAN_FIT = { "Under $50": 0, "$50–$150": 59.99, "$150–$500": 165.99, "$500+": 599.99 };
-        const STRETCH = { "Under $50": 59.99, "$50–$150": 165.99, "$150–$500": 599.99, "$500+": 599.99 };
+        const PLAN_FIT = { "Under $25": 0, "$25–$100": 59.99, "$100–$200": 165.99, "$300+": 599.99, "$2,000+": 3025, "Under $50": 0, "$50–$150": 59.99, "$150–$500": 165.99, "$500+": 599.99 };
+        const STRETCH = { "Under $25": 59.99, "$25–$100": 165.99, "$100–$200": 599.99, "$300+": 599.99, "$2,000+": 3025, "Under $50": 59.99, "$50–$150": 165.99, "$150–$500": 599.99, "$500+": 599.99 };
         const mrrFit = entries.reduce((s, e) => s + (PLAN_FIT[e.budget] || 0), 0);
         const mrrUp = entries.reduce((s, e) => s + (STRETCH[e.budget] || 0), 0);
         const withBudget = entries.filter(e => PLAN_FIT[e.budget] !== undefined).length;
@@ -3517,13 +3514,70 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
             <strong>Step 2 (launch day):</strong> "We're live" with their personal checkout link for that plan.
           </p>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <button disabled={busy} onClick={() => sendRecommend("insider")} style={{ ...btnGhost, opacity: busy ? 0.6 : 1 }}>1 · Recommendations — Insiders</button>
-            <button disabled={busy} onClick={() => sendRecommend("general")} style={{ ...btnGhost, opacity: busy ? 0.6 : 1 }}>1 · Recommendations — General</button>
-            <button disabled={busy} onClick={() => sendLaunch("insider")} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>2 · Launch + Pay Links — Insiders</button>
-            <button disabled={busy} onClick={() => sendLaunch("general")} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>2 · Launch + Pay Links — General</button>
+            {[["recommend", "insider", "1 · Recommendations — Insiders", btnGhost], ["recommend", "general", "1 · Recommendations — General", btnGhost],
+              ["launch", "insider", "2 · Launch + Pay Links — Insiders", btnRed], ["launch", "general", "2 · Launch + Pay Links — General", btnRed]].map(([step, list, label, style]) => {
+              const n = pendingFor(step, list).length;
+              return <button key={label} disabled={busy || n === 0} onClick={() => setConfirmSend({ step, list })} style={{ ...style, opacity: busy || n === 0 ? 0.5 : 1 }}>{label} ({n} waiting)</button>;
+            })}
           </div>
+
+          {/* Review before send — who, what, then Confirm */}
+          {confirmSend && (() => {
+            const pending = pendingFor(confirmSend.step, confirmSend.list);
+            const isRec = confirmSend.step === "recommend";
+            return (
+              <div style={{ marginTop: 16, background: "#fdf8f0", border: "1px solid #b8010140", borderRadius: 12, padding: "18px 22px" }}>
+                <div style={{ fontSize: 11, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Review before sending</div>
+                <div style={{ color: "#444444", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 10 }}>
+                  {isRec
+                    ? <>The <strong>"here's the plan we'd pick for you"</strong> email — their personalized recommendation with everything the plan includes, plus a peek at the next tier up. No payment link.</>
+                    : <>The <strong>"We're live"</strong> email — their recommendation with a personal <strong>checkout link that charges real cards</strong>, plus the next-tier option.</>}
+                  {" "}Each person receives it once, ever.
+                </div>
+                <div style={{ background: "#ffffff", border: "1px solid #eeebe4", borderRadius: 8, padding: "10px 14px", maxHeight: 180, overflowY: "auto", marginBottom: 12 }}>
+                  {pending.map(e => (
+                    <div key={e.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", padding: "4px 0", borderBottom: "1px solid #f5f2ec" }}>
+                      <span style={{ color: "#222222", fontWeight: 700 }}>{e.name} <span style={{ color: "#9a9a9a", fontWeight: 400 }}>({e.email})</span></span>
+                      <span style={{ color: "#b80101", fontWeight: 700, whiteSpace: "nowrap" }}>{recFor(e).split(" — ")[0]}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button disabled={busy} onClick={executeSend} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>{busy ? "Sending…" : `Confirm — send to ${pending.length} ${pending.length === 1 ? "person" : "people"}`}</button>
+                  <button disabled={busy} onClick={() => setConfirmSend(null)} style={btnGhost}>Cancel</button>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
+
+      {/* Sent Emails — the permanent record */}
+      {(data.email_log || []).length > 0 && (
+        <div style={section}>
+          <div style={heading}>Sent Emails — the record</div>
+          {Object.entries((data.email_log || []).reduce((g, r) => {
+            const key = `${r.kind}|${r.list}|${new Date(r.created_at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}`;
+            (g[key] ||= []).push(r); return g;
+          }, {})).map(([key, rows]) => {
+            const [kind, list, when] = key.split("|");
+            return (
+              <details key={key} style={{ borderBottom: "1px solid #eeebe4", padding: "10px 0" }}>
+                <summary style={{ cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#222222", fontWeight: 700 }}>
+                  {kind} <span style={{ color: "#b80101" }}>· {list}</span> <span style={{ color: "#9a9a9a", fontWeight: 400 }}>· {when} · {rows.length} recipient{rows.length === 1 ? "" : "s"}{rows.some(r => !r.ok) ? ` · ${rows.filter(r => !r.ok).length} failed` : ""}</span>
+                </summary>
+                <div style={{ padding: "8px 0 4px 16px" }}>
+                  {rows.map(r => (
+                    <div key={r.id} style={{ fontSize: 12, fontFamily: "'DM Sans', sans-serif", color: r.ok ? "#555555" : "#b80101", lineHeight: 1.9 }}>
+                      {r.ok ? "✓" : "✕ FAILED —"} {r.recipient_name || r.recipient_email} <span style={{ color: "#9a9a9a" }}>({r.recipient_email})</span>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            );
+          })}
+        </div>
+      )}
 
       {/* Entries */}
       {entries.length === 0 ? (
@@ -4252,6 +4306,8 @@ export default function App() {
     // Launch email links: /?join=1&plan=X — land on the right door for their plan
     if (params.get("join")) {
       const plan = params.get("plan") || "Basic";
+      if (params.get("promo")) localStorage.setItem("guPromo", params.get("promo"));
+      if (plan === "Advisor") { setActivePage("contact"); window.history.replaceState({}, "", window.location.pathname); return; }
       if (["Basic", "Premium", "Elite"].includes(plan)) { setSignupTier(plan); setShowSignup(true); }
       setActivePage("pricing");
       window.history.replaceState({}, "", window.location.pathname);

@@ -109,6 +109,17 @@ async function readRawBody(req) {
   return Buffer.concat(chunks);
 }
 
+// Stretch offer: 10% off for the first 12 months, granted by the waitlist
+// recommendation engine to people whose needs outgrow their stated budget
+async function ensureStretchCoupon(stripe, pct) {
+  const id = `STRETCH${pct}`;
+  try { return (await stripe.coupons.retrieve(id)).id; }
+  catch {
+    const c = await stripe.coupons.create({ id, percent_off: pct, duration: 'repeating', duration_in_months: 12, name: `Waitlist stretch offer — ${pct}% off first year` });
+    return c.id;
+  }
+}
+
 async function ensureLnlCoupon(stripe) {
   try { return (await stripe.coupons.retrieve('LNL25')).id; }
   catch {
@@ -396,8 +407,21 @@ export default async function handler(req, res) {
       cancel_url: `${base}/?checkout=cancelled`,
     };
 
+    // Stretch offer: 10% off first year — only if the recommendation engine
+    // actually granted it to this email for this exact tier (URL params alone
+    // can't unlock it). Takes precedence over the one-month L&L perk.
+    let discounted = false;
+    if (String(body.promo || '').startsWith('stretch') && product.mode === 'subscription' && product.tier) {
+      const [wl] = await sql`SELECT stretch_offer FROM waitlist WHERE email = ${user.email}`;
+      const [offerTier, offerPct] = String(wl?.stretch_offer || '').split('|');
+      const pct = [10, 15].includes(Number(offerPct)) ? Number(offerPct) : null;
+      if (offerTier === product.tier && pct) {
+        params.discounts = [{ coupon: await ensureStretchCoupon(stripe, pct) }];
+        discounted = true;
+      }
+    }
     // Lunch & Learn perk: 25% off the first month of any membership, automatically
-    if (product.mode === 'subscription' && user.lnl_discount_until && new Date(user.lnl_discount_until) > new Date()) {
+    if (!discounted && product.mode === 'subscription' && user.lnl_discount_until && new Date(user.lnl_discount_until) > new Date()) {
       params.discounts = [{ coupon: await ensureLnlCoupon(stripe) }];
     }
 

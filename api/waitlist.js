@@ -63,17 +63,57 @@ const PAIN_NEED = {
 };
 
 export function recommendPlan(e) {
-  // Dropdown answers map directly; free-text "Other" answers fall back to keywords
-  let need = Math.max(LEARN_NEED[e.learn] || 1, PAIN_NEED[e.reason] || 1);
-  if (need < 3) {
-    const words = `${e.learn || ''} ${e.reason || ''}`.toLowerCase();
-    if (/(advis|mentor|coach|1:1|one.on.one|direct access|hands.on|guidance|expert|help me close|stuck|compliance|zoning|entitle)/.test(words)) need = 3;
-    else if (need < 2 && /(deal|capital|financ|fund|invest|partner|jv|network|opportunit|rfp|pipeline|lihtc|tax credit|numbers)/.test(words)) need = 2;
+  // Thought partnership ($2,000+): this is retainer territory, not a membership —
+  // recommend the Senior Advisor engagement and route them to a call, not checkout
+  if (e.budget === '$2,000+') {
+    return {
+      tier: 'Advisor', label: 'Senior Advisor Retainer', price: 'from $3,025/mo',
+      ctaLabel: 'Book your engagement call →', next: null,
+      features: [
+        'Dr. Merritt embedded on YOUR project, month over month',
+        'Deal review, capital strategy & negotiation prep',
+        'A private client workspace — documents, messages, logged hours',
+        'Her expertise and business infrastructure under your foundation',
+        'Everything in Elite included',
+      ],
+    };
   }
-  // Budget is the ceiling — never recommend a plan above what they said they can spend
-  const cap = e.budget === '$500+' ? 3 : e.budget === '$150–$500' ? 2 : 1;
-  const rank = Math.min(need, cap);
-  return rank === 3 ? PLANS.Elite : rank === 2 ? PLANS.Premium : PLANS.Basic;
+  // Budget decides the base recommendation outright — never pitch above budget:
+  //   $500+      → Elite, always
+  //   $150–$500  → Premium, always
+  //   below $150 → Member (the healthy on-ramp)
+  // Budget brackets (new + legacy values both map):
+  //   $300+/$500+          → Elite
+  //   $100–$200/$150–$500  → Premium
+  //   everything below     → Member
+  const ELITE_B = ['$300+', '$500+'];
+  const PREMIUM_B = ['$100–$200', '$150–$500'];
+  const rank = ELITE_B.includes(e.budget) ? 3 : PREMIUM_B.includes(e.budget) ? 2 : 1;
+  const rec = rank === 3 ? PLANS.Elite : rank === 2 ? PLANS.Premium : PLANS.Basic;
+  // What their answers say they actually NEED (the maps above)
+  const need = Math.max(LEARN_NEED[e.learn] || 1, PAIN_NEED[e.reason] || 1);
+  // THE STRETCH OFFER: budget $50–$500 but their need sits one tier above what
+  // they can afford (no network, can't find capital, needs partners, complex
+  // learning goals) → offer the next tier at 10% off their first year.
+  const inStretchBand = ['$25–$100', '$100–$200', '$50–$150', '$150–$500'].includes(e.budget);
+  // First-10 waitlisters ALWAYS get the stretch offer, and at 15% instead of 10% —
+  // being early on the list earns the better deal.
+  const insider = (e.list || 'insider') === 'insider';
+  const qualifies = inStretchBand && rank < 3 && (insider || need > rank);
+  if (qualifies) {
+    const up = rank === 1 ? PLANS.Premium : PLANS.Elite;
+    const pct = e.first10 ? 15 : 10; // first-10 earns the deeper cut
+    return { ...rec, next: null, stretch: {
+      tier: up.tier, label: up.label, price: up.price, pct,
+      offer: `${pct}% off your first year${e.first10 ? " — you're one of our first 10" : ''}`,
+      extras: up.features.filter(f => !f.startsWith('Everything in')).slice(0, 4),
+    } };
+  }
+  // Otherwise show plain optionality: what the next tier costs and adds
+  const next = rank === 1 ? PLANS.Premium : rank === 2 ? PLANS.Elite : null;
+  if (!next) return { ...rec, next: null };
+  const delta = (parseFloat(next.price.replace(/[^0-9.]/g, '')) - parseFloat(rec.price.replace(/[^0-9.]/g, ''))).toFixed(2);
+  return { ...rec, next: { label: next.label, price: next.price, delta: `$${delta}/mo more`, extras: next.features.filter(f => !f.startsWith('Everything in')).slice(0, 4) } };
 }
 
 export const PLAN_INFO = {
@@ -86,10 +126,9 @@ export const PLAN_INFO = {
 
 // Conservative monthly estimate per budget range, for anticipated-revenue math
 export const BUDGET_EST = {
-  'Under $50': 40,
-  '$50–$150': 100,
-  '$150–$500': 325,
-  '$500+': 600,
+  'Under $25': 15, '$25–$100': 60, '$100–$200': 166, '$300+': 600, '$2,000+': 3025,
+  // legacy ranges from earlier signups
+  'Under $50': 40, '$50–$150': 100, '$150–$500': 325, '$500+': 600,
 };
 
 export default async function handler(req, res) {
@@ -109,6 +148,9 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       if (!admin) return res.status(401).json({ error: 'Unauthorized' });
       const entries = await sql`SELECT * FROM waitlist ORDER BY created_at DESC`;
+      // Complete record of every campaign email sent, newest first
+      let email_log = [];
+      try { email_log = await sql`SELECT * FROM email_log ORDER BY created_at DESC LIMIT 500`; } catch { /* table appears after first migrate */ }
       const [launchRow] = await sql`SELECT value FROM settings WHERE key = 'launch_at'`;
       const [insiderRow] = await sql`SELECT value FROM settings WHERE key = 'launch_insider_at'`;
       // Anticipated revenue from stated budgets (falls back to chosen plan for old entries)
@@ -225,12 +267,21 @@ export default async function handler(req, res) {
       if (entries.length === 0) return res.status(400).json({ error: 'Everyone on that list already got their recommendation' });
       const [launchRow] = await sql`SELECT value FROM settings WHERE key = ${req.body.list === 'insider' ? 'launch_insider_at' : 'launch_at'}`;
       let sent = 0;
+      const logRows = [];
       for (let i = 0; i < entries.length; i += 10) {
-        const results = await Promise.allSettled(entries.slice(i, i + 10).map(e => {
-          const mail = recommendEmail(e.name, recommendPlan(e), launchRow?.value || null, e.reason);
-          return sendEmail(e.email, mail.subject, mail.html);
+        const chunk = entries.slice(i, i + 10);
+        const results = await Promise.allSettled(chunk.map(e => {
+          const rec = recommendPlan(e);
+          const mail = recommendEmail(e.name, rec, launchRow?.value || null, e.reason);
+          return sendEmail(e.email, mail.subject, mail.html).then(ok => { logRows.push({ name: e.name, email: e.email, ok: !!ok, plan: rec.label }); return ok; });
         }));
         sent += results.filter(x => x.status === 'fulfilled' && x.value).length;
+      }
+      await logEmails(sql, 'plan recommendation', target, "Here's the plan we'd pick for you", logRows.map(r => ({ ...r, name: `${r.name} → ${r.plan}` })));
+      // Record who holds a stretch offer ("Tier|pct") — checkout verifies against this
+      for (const e of entries) {
+        const rec = recommendPlan(e);
+        await sql`UPDATE waitlist SET stretch_offer = ${rec.stretch ? `${rec.stretch.tier}|${rec.stretch.pct}` : null} WHERE id = ${e.id}`;
       }
       if (target) await sql`UPDATE waitlist SET recommended_notified = TRUE WHERE COALESCE(list, 'insider') = ${target}`;
       else await sql`UPDATE waitlist SET recommended_notified = TRUE`;
@@ -245,15 +296,22 @@ export default async function handler(req, res) {
         : await sql`SELECT * FROM waitlist WHERE launched_notified = FALSE`;
       if (entries.length === 0) return res.status(400).json({ error: 'Everyone on that list has already been notified' });
       let sent = 0;
+      const logRows = [];
       for (let i = 0; i < entries.length; i += 10) {
         const chunk = entries.slice(i, i + 10);
         const results = await Promise.allSettled(chunk.map(e => {
           const rec = recommendPlan(e);
           const link = `${siteUrl()}/?join=1&plan=${rec.tier}&email=${encodeURIComponent(e.email)}`;
-          const mail = launchEmail(e.name, rec, link, e.reason);
-          return sendEmail(e.email, mail.subject, mail.html);
+          const stretchLink = rec.stretch ? `${siteUrl()}/?join=1&plan=${rec.stretch.tier}&promo=stretch10&email=${encodeURIComponent(e.email)}` : null;
+          const mail = launchEmail(e.name, rec, link, e.reason, stretchLink);
+          return sendEmail(e.email, mail.subject, mail.html).then(ok => { logRows.push({ name: `${e.name} → ${rec.label}`, email: e.email, ok: !!ok }); return ok; });
         }));
         sent += results.filter(x => x.status === 'fulfilled' && x.value).length;
+      }
+      await logEmails(sql, 'launch + pay link', target, "We're live — here's the plan we recommend for you", logRows);
+      for (const e of entries) {
+        const rec = recommendPlan(e);
+        await sql`UPDATE waitlist SET stretch_offer = ${rec.stretch ? `${rec.stretch.tier}|${rec.stretch.pct}` : null} WHERE id = ${e.id}`;
       }
       if (target) await sql`UPDATE waitlist SET launched_notified = TRUE WHERE COALESCE(list, 'insider') = ${target}`;
       else await sql`UPDATE waitlist SET launched_notified = TRUE`;

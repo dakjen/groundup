@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /waitlist
+Sitemap: https://community.drginamerritt.net/sitemap.xml

@@ -221,11 +221,22 @@ export function recommendEmail(name, rec, launchAt, painPoint) {
         <div style="color:#f5e8e8;font-size:22px;font-weight:bold;">${rec.label} <span style="color:#8a7070;font-size:14px;font-weight:normal;">· ${rec.price}</span></div>
         ${rec.features?.length ? `<div style="margin-top:12px;">${rec.features.map(f => `<div style="color:#c8a8a8;font-size:13px;line-height:2;"><span style="color:#b80101;">→</span> ${f}</div>`).join('')}</div>` : ''}
       </div>
+      ${rec.stretch ? `<div style="background:#12060a;border:1px solid #c9a22745;border-radius:12px;padding:18px 22px;margin:16px 0;">
+        <div style="font-size:10px;color:#c9a227;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">✦ A special offer, just for you</div>
+        <div style="color:#a89080;font-size:13px;line-height:1.8;margin-bottom:8px;">Based on what you're working through, we think <strong style="color:#f0d8d8;">${rec.stretch.label}</strong> would serve you better — so we're offering it to you at <strong style="color:#c9a227;">${rec.stretch.offer}</strong>.</div>
+        <div style="color:#e0c4c4;font-size:15px;font-weight:bold;">${rec.stretch.label} · ${rec.stretch.price} <span style="color:#c9a227;font-size:13px;">→ ${rec.stretch.offer}</span></div>
+        <div style="margin-top:8px;">${rec.stretch.extras.map(f => `<div style="color:#a89080;font-size:12.5px;line-height:1.9;"><span style="color:#c9a227;">+</span> ${f}</div>`).join('')}</div>
+      </div>` : ''}
+      ${rec.next ? `<div style="background:#0d0a04;border:1px solid #2a200030;border-radius:12px;padding:16px 22px;margin:16px 0;">
+        <div style="font-size:10px;color:#8a7070;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">One step up, if you want it</div>
+        <div style="color:#e0c4c4;font-size:15px;font-weight:bold;">${rec.next.label} · ${rec.next.delta}</div>
+        <div style="margin-top:8px;">${rec.next.extras.map(f => `<div style="color:#a89080;font-size:12.5px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}</div>
+      </div>` : ''}
       <p style="color:#a89080;font-size:14px;line-height:1.8;">Nothing to do yet — on launch day you'll get one more email with your personal checkout link. Keep an eye out.</p>`,
   };
 }
 
-export function launchEmail(name, rec, link, painPoint) {
+export function launchEmail(name, rec, link, painPoint, stretchLink) {
   return {
     subject: "We're live \u2014 here's the plan we recommend for you",
     html: `
@@ -237,7 +248,18 @@ export function launchEmail(name, rec, link, painPoint) {
         <div style="color:#f5e8e8;font-size:22px;font-weight:bold;">${rec.label} <span style="color:#8a7070;font-size:14px;font-weight:normal;">\u00b7 ${rec.price}</span></div>
         ${rec.features?.length ? `<div style="margin-top:12px;">${rec.features.map(f => `<div style="color:#c8a8a8;font-size:13px;line-height:2;"><span style="color:#b80101;">\u2192</span> ${f}</div>`).join('')}</div>` : ''}
       </div>
-      <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:14px 30px;font-weight:bold;font-size:15px;text-decoration:none;margin:6px 0;">Join as ${rec.label} \u2014 secure checkout \u2192</a>
+      <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:14px 30px;font-weight:bold;font-size:15px;text-decoration:none;margin:6px 0;">${rec.ctaLabel || `Join as ${rec.label} \u2014 secure checkout \u2192`}</a>
+      ${rec.stretch && stretchLink ? `<div style="background:#12060a;border:1px solid #c9a22745;border-radius:12px;padding:18px 22px;margin:16px 0;">
+        <div style="font-size:10px;color:#c9a227;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">\u2726 Your special offer is live</div>
+        <div style="color:#a89080;font-size:13px;line-height:1.8;margin-bottom:8px;">Based on what you're working through, <strong style="color:#f0d8d8;">${rec.stretch.label}</strong> would serve you better \u2014 and your <strong style="color:#c9a227;">${rec.stretch.offer}</strong> is attached to this link:</div>
+        <div style="margin-bottom:10px;">${rec.stretch.extras.map(f => `<div style="color:#a89080;font-size:12.5px;line-height:1.9;"><span style="color:#c9a227;">+</span> ${f}</div>`).join('')}</div>
+        <a href="${stretchLink}" style="display:inline-block;background:transparent;color:#c9a227;border:1px solid #c9a22760;border-radius:8px;padding:12px 24px;font-weight:bold;font-size:14px;text-decoration:none;">Claim ${rec.stretch.label} at 10% off \u2192</a>
+      </div>` : ''}
+      ${rec.next ? `<div style="background:#0d0a04;border:1px solid #2a200030;border-radius:12px;padding:16px 22px;margin:16px 0;">
+        <div style="font-size:10px;color:#8a7070;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">One step up, if you want it</div>
+        <div style="color:#e0c4c4;font-size:15px;font-weight:bold;">${rec.next.label} \u00b7 ${rec.next.delta}</div>
+        <div style="margin-top:8px;">${rec.next.extras.map(f => `<div style="color:#a89080;font-size:12.5px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}</div>
+      </div>` : ''}
       <p style="color:#7a6060;font-size:12px;line-height:1.7;">Not the right fit? Every plan is on the pricing page \u2014 and you can change anytime.</p>`,
   };
 }
