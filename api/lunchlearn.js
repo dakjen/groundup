@@ -278,6 +278,23 @@ export default async function handler(req, res) {
       return res.json({ success: true, expires_at: ent.expires_at });
     }
 
+    // Personal notes on a recording — saved to the account, one note per video
+    if (action === 'save_note') {
+      const key = String(req.body.key || '').slice(0, 100);
+      const body = String(req.body.body ?? '').slice(0, 20000);
+      if (!key.startsWith('lnl:')) return res.status(400).json({ error: 'Bad note key' });
+      await sql`INSERT INTO user_notes (user_id, note_key, body, updated_at) VALUES (${session.uid}, ${key}, ${body}, NOW())
+        ON CONFLICT (user_id, note_key) DO UPDATE SET body = ${body}, updated_at = NOW()`;
+      return res.json({ success: true });
+    }
+
+    if (action === 'get_notes') {
+      const rows = await sql`SELECT note_key, body FROM user_notes WHERE user_id = ${session.uid} AND note_key LIKE 'lnl:%'`;
+      const notes = {};
+      for (const r of rows) notes[r.note_key] = r.body;
+      return res.json({ notes });
+    }
+
     if (action === 'request') {
       const body = (req.body.body || '').trim();
       if (!body) return res.status(400).json({ error: 'Tell us what you want to learn about' });

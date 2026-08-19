@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FileText, Send, Hourglass, FolderOpen, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2, BadgePercent } from "lucide-react";
 import COURSE_CATALOG from "./courseCatalog.js";
 import { AuthModal, ResetPasswordModal, WaitlistForm, ResourcesPage, RetainerPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
@@ -1499,6 +1499,72 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
   }, [member?.id]);
   useEffect(() => { if (status?.recordings) setRecordings(status.recordings); }, [status]);
 
+  // Notes: one per recording, saved to the account. Autosaves a second after typing stops.
+  const [notes, setNotes] = useState({});
+  const [noteStatus, setNoteStatus] = useState(""); // "", "typing", "saving", "saved"
+  const noteTimer = useRef(null);
+  useEffect(() => {
+    if (!member) return;
+    fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "get_notes" }) })
+      .then(r => r.ok ? r.json() : null).then(d => d?.notes && setNotes(d.notes)).catch(() => {});
+  }, [member?.id]);
+  const editNote = (key, body) => {
+    setNotes(n => ({ ...n, [key]: body }));
+    setNoteStatus("typing");
+    clearTimeout(noteTimer.current);
+    noteTimer.current = setTimeout(async () => {
+      setNoteStatus("saving");
+      try {
+        await fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "save_note", key, body }) });
+        setNoteStatus("saved");
+      } catch { setNoteStatus(""); }
+    }, 1000);
+  };
+
+  // Dedicated watch page: big embed + the notes sidebar
+  const watching = playingId ? recordings.find(r => r.id === playingId) : null;
+  if (watching) {
+    const noteKey = `lnl:${watching.id}`;
+    return (
+      <div style={{ background: "#000", minHeight: "100vh", padding: "100px clamp(20px,4vw,60px) 80px" }}>
+        <div style={{ maxWidth: 1240, margin: "0 auto" }}>
+          <button onClick={() => setPlayingId(null)} style={{ background: "transparent", color: "#8a7070", border: "1px solid #2a0000", borderRadius: 8, padding: "8px 18px", fontFamily: font, fontWeight: 600, fontSize: 13, cursor: "pointer", marginBottom: 24 }}>← All recordings</button>
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(260px, 340px)", gap: 24, alignItems: "start" }} className="lnl-watch-grid">
+            <div>
+              <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, background: "#0a0404", borderRadius: 14, overflow: "hidden", border: "1px solid #2a0000" }}>
+                <iframe
+                  src={`https://www.youtube.com/embed/${watching.videoId}?autoplay=1`}
+                  title={watching.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
+                />
+              </div>
+              <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(24px,3vw,34px)", color: "#f5e8e8", margin: "20px 0 6px" }}>{watching.title}</h1>
+              <div style={{ color: "#8a7070", fontSize: 13, fontFamily: font }}>{watching.date}</div>
+              {watching.description && <p style={{ color: "#a89090", fontSize: 14, fontFamily: font, lineHeight: 1.8, marginTop: 10 }}>{watching.description}</p>}
+            </div>
+            <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 14, padding: "20px 20px 16px", position: "sticky", top: 90 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+                <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font }}>Your notes</div>
+                <span style={{ color: noteStatus === "saved" ? "#22c55e" : "#7a5050", fontSize: 11, fontFamily: font }}>{noteStatus === "saved" ? "Saved ✓" : noteStatus === "saving" ? "Saving…" : noteStatus === "typing" ? "…" : ""}</span>
+              </div>
+              <textarea
+                value={notes[noteKey] || ""}
+                onChange={e => editNote(noteKey, e.target.value)}
+                placeholder="Take notes while you watch — they save to your account automatically."
+                rows={16}
+                style={{ width: "100%", boxSizing: "border-box", background: "#0a0505", border: "1px solid #2a0000", borderRadius: 10, padding: "14px 14px", color: "#f0d8d8", fontFamily: font, fontSize: 13.5, lineHeight: 1.8, outline: "none", resize: "vertical", minHeight: 300 }}
+              />
+              <div style={{ color: "#5a4040", fontSize: 11, fontFamily: font, marginTop: 8 }}>Notes are private to you and follow your account on any device.</div>
+            </div>
+          </div>
+          <style>{`@media (max-width: 860px) { .lnl-watch-grid { grid-template-columns: 1fr !important; } }`}</style>
+        </div>
+      </div>
+    );
+  }
+
   const redeem = async (e) => {
     e.preventDefault();
     setCodeMsg(null);
@@ -1658,39 +1724,22 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
             <div style={{ color: "#6a6b69", fontSize: 14, fontFamily: font }}>No recordings available yet. Check back after the next session!</div>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
-            {recordings.map(rec => (
-              <div key={rec.id} style={{ ...card, overflow: "hidden", transition: "all 0.2s" }}>
-                {playingId === rec.id ? (
-                  <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, background: "#000" }}>
-                    <iframe
-                      src={`https://www.youtube.com/embed/${rec.videoId}?autoplay=1`}
-                      title={rec.title}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
-                    />
-                  </div>
-                ) : (
-                  <div onClick={() => setPlayingId(rec.id)} style={{ position: "relative", cursor: "pointer" }}>
-                    <img
-                      src={`https://img.youtube.com/vi/${rec.videoId}/hqdefault.jpg`}
-                      alt={rec.title}
-                      style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }}
-                    />
-                    <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s" }}>
-                      <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(184,1,1,0.9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <Play size={22} color="#fff" style={{ marginLeft: 3 }} />
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <div style={{ padding: "18px 20px" }}>
-                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 18, color: "#f0d8d8", marginBottom: 4 }}>{rec.title}</div>
-                  <div style={{ color: "#8a7070", fontSize: 12, fontFamily: font, marginBottom: 6 }}>{rec.date}</div>
-                  {rec.description && <div style={{ color: "#6a6b69", fontSize: 13, fontFamily: font, lineHeight: 1.6 }}>{rec.description}</div>}
+          /* One long row per session — click to open the watch page */
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 820, margin: "0 auto" }}>
+            {recordings.map((rec, idx) => (
+              <button key={rec.id} onClick={() => setPlayingId(rec.id)}
+                style={{ ...card, display: "flex", alignItems: "center", gap: 18, padding: "18px 24px", cursor: "pointer", textAlign: "left", width: "100%", border: "1px solid #2a0000", transition: "all 0.15s" }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "#b8010160"; e.currentTarget.style.background = "#130606"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a0000"; e.currentTarget.style.background = ""; }}>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#b8010115", border: "1px solid #b8010140", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Play size={16} color="#b80101" style={{ marginLeft: 2 }} />
                 </div>
-              </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 19, color: "#f0d8d8" }}>{rec.title}</div>
+                  <div style={{ color: "#8a7070", fontSize: 12.5, fontFamily: font, marginTop: 2 }}>{rec.date}{rec.description ? ` — ${rec.description}` : ""}</div>
+                </div>
+                <span style={{ color: "#b80101", fontSize: 18, flexShrink: 0 }}>→</span>
+              </button>
             ))}
           </div>
         )}
@@ -3485,15 +3534,17 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
         const PLAN_FIT = { "Under $25": 0, "$25–$100": 59.99, "$100–$200": 165.99, "$300+": 599.99, "$2,000+": 3025, "Under $50": 0, "$50–$150": 59.99, "$150–$500": 165.99, "$500+": 599.99 };
         const STRETCH = { "Under $25": 59.99, "$25–$100": 165.99, "$100–$200": 599.99, "$300+": 599.99, "$2,000+": 3025, "Under $50": 59.99, "$50–$150": 165.99, "$150–$500": 599.99, "$500+": 599.99 };
         const mrrFit = entries.reduce((s, e) => s + (PLAN_FIT[e.budget] || 0), 0);
-        const mrrUp = entries.reduce((s, e) => s + (STRETCH[e.budget] || 0), 0);
-        const withBudget = entries.filter(e => PLAN_FIT[e.budget] !== undefined).length;
+        // Premium is the ideal recommendation; Elite (and Advisor) are the exceptional wins
+        const premiumRec = entries.filter(e => recFor(e).startsWith("Premium")).length;
+        const eliteRec = entries.filter(e => recFor(e).startsWith("Elite")).length;
+        const advisorRec = entries.filter(e => recFor(e).startsWith("Senior")).length;
         const money = (n) => "$" + n.toLocaleString(undefined, { minimumFractionDigits: 2 });
         return (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 20 }}>
-            {statCard("On the waitlist", entries.length, `${withBudget} shared a budget`)}
+            {statCard("On the waitlist", entries.length)}
             {statCard("Anticipated MRR", money(mrrFit), "each joins the plan their budget fits")}
-            {statCard("Upside MRR", money(mrrUp), "if each stretches one tier")}
-            {statCard("Anticipated ARR", money(mrrFit * 12), "conservative, annualized")}
+            {statCard("Anticipated ARR", money(mrrFit * 12), "that MRR, annualized")}
+            {statCard("Premium picks", premiumRec, `${eliteRec} Elite · ${advisorRec} Advisor recommended`)}
           </div>
         );
       })()}
