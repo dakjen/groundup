@@ -105,7 +105,9 @@ export function recommendPlan(e) {
   // First-10 waitlisters ALWAYS get the stretch offer, and at 15% instead of 10% —
   // being early on the list earns the better deal.
   const insider = (e.list || 'insider') === 'insider';
-  const qualifies = inStretchBand && rank < 3 && (insider || need > rank);
+  // Elite is never discounted — the stretch offer only ever lifts Member → Premium.
+  // Premium-budget people see Elite as plain optionality (full price) instead.
+  const qualifies = inStretchBand && rank === 1 && (insider || need > rank);
   if (qualifies) {
     const up = rank === 1 ? PLANS.Premium : PLANS.Elite;
     const pct = e.first10 ? 15 : 10; // first-10 earns the deeper cut
