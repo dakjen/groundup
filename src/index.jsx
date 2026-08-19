@@ -4174,6 +4174,11 @@ export default function App() {
   // Before launch, every "join / sign in / enroll" click routes to the general
   // waitlist popup instead of account creation. Members/team already signed in
   // are unaffected, and the server blocks signups pre-launch regardless.
+  // The general waitlist itself opens Sept 1 — before that, the popup just
+  // announces the date instead of showing the form. (/waitlist insider page
+  // is unaffected — insiders get in by direct link the whole time.)
+  const WAITLIST_OPENS = new Date("2026-09-01T00:00:00-04:00");
+  const waitlistOpen = Date.now() >= WAITLIST_OPENS.getTime();
   const [showWaitlistPop, setShowWaitlistPop] = useState(false);
   const openSignup = (tier = "Free") => {
     if (prelaunch && !member && !isAdmin) { setShowWaitlistPop(true); return; }
@@ -4243,8 +4248,8 @@ export default function App() {
           <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 720, position: "relative" }}>
             <button onClick={() => setShowWaitlistPop(false)} style={{ position: "absolute", top: -14, right: -6, zIndex: 2, background: "#1a0808", color: "#c8a8a8", border: "1px solid #2a0000", borderRadius: "50%", width: 34, height: 34, cursor: "pointer", fontSize: 16, fontWeight: 700 }}>×</button>
             <div style={{ textAlign: "center", marginBottom: 18 }}>
-              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#f5e8e8" }}>Doors open soon.</div>
-              <div style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>Get on the list and you'll be invited the moment we launch.</div>
+              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#f5e8e8" }}>{waitlistOpen ? "Doors open soon." : "The waitlist opens September 1."}</div>
+              <div style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>{waitlistOpen ? "Get on the list and you'll be invited the moment we launch." : "Check back then to claim your spot — we open the doors to the waitlist first, then to everyone."}</div>
               {launchAt && new Date(launchAt) > new Date() && (() => {
                 const ms = new Date(launchAt).getTime() - Date.now();
                 const days = Math.floor(ms / 86400000);
@@ -4262,7 +4267,7 @@ export default function App() {
                 );
               })()}
             </div>
-            <WaitlistForm list="general" />
+            {waitlistOpen && <WaitlistForm list="general" />}
           </div>
         </div>
       )}
