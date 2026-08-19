@@ -4250,6 +4250,7 @@ export default function App() {
             <div style={{ textAlign: "center", marginBottom: 18 }}>
               <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#f5e8e8" }}>{waitlistOpen ? "Doors open soon." : "The waitlist opens September 1."}</div>
               <div style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>{waitlistOpen ? "Get on the list and you'll be invited the moment we launch." : "Check back then to claim your spot — or reach out to Dr. Gina Merritt for early access to the insider waitlist."}</div>
+              <div style={{ color: "#c9a227", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, marginTop: 10 }}>✦ The first 10 on the waitlist get a special treat.</div>
               {launchAt && new Date(launchAt) > new Date() && (() => {
                 const ms = new Date(launchAt).getTime() - Date.now();
                 const days = Math.floor(ms / 86400000);
