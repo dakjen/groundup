@@ -1053,7 +1053,7 @@ const plans = [
       "Community access — read every channel",
     ],
     locked: ["Posting in the community", "Timeline templates & Lunch & Learn recordings", "Work sessions & advisory calls"],
-    value: "A $700+ value in course content alone",
+    value: "A $250/month value — the All-Access Pass price, every month, for $59.99",
   },
   {
     name: "Premium",
@@ -1075,7 +1075,7 @@ const plans = [
       "The Opportunity Board — RFPs, funding windows & deals, posted by the team",
     ],
     locked: ["Advisory calls with Dr. Merritt", "Priority responses & direct messages"],
-    value: "Over $1,350 in annual value — courses, Lunch & Learns & a private work session",
+    value: "Over $3,600 in annual value — all-access courses, Lunch & Learns & a private work session",
   },
   {
     name: "Elite",
@@ -1099,7 +1099,7 @@ const plans = [
     ],
     locked: [],
     limited: true,
-    value: "Over $3,600 in annual value — advisory hours alone are worth $1,650 at Dr. Merritt's rate",
+    value: "Over $5,300 in annual value — advisory hours alone are worth $1,650 at Dr. Merritt's rate",
   },
   {
     name: "Senior Advisor",
