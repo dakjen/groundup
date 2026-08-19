@@ -118,15 +118,24 @@ export default async function handler(req, res) {
         // First 10 on the waitlist: their own 14-day one-course trial (claimed on
         // the course of their choice) plus a personal referral link to share.
         if (wl?.first10) {
-          const code = 'GU-' + crypto.randomBytes(4).toString('hex').toUpperCase();
+          // Personal, name-based referral code: "dakotah-jennifer" — with a
+          // numeric suffix only if two people share the exact name
+          const slug = String(user.name).toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
+            .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || ('member-' + user.id);
+          let code = slug;
+          for (let n = 2; n < 50; n++) {
+            const [taken] = await sql`SELECT id FROM users WHERE LOWER(referral_code) = ${code} AND id != ${user.id}`;
+            if (!taken) break;
+            code = `${slug}-${n}`;
+          }
           await sql`UPDATE users SET badges = COALESCE(badges, '[]'::jsonb) || '["first10"]'::jsonb, referral_code = ${code} WHERE id = ${user.id}`;
         }
       } catch (e) { console.error('waitlist perk grant failed', e.message); }
       // Came through a member's referral link → eligible for the same 14-day trial
       try {
-        const ref = (req.body.ref || '').trim().toUpperCase();
+        const ref = (req.body.ref || '').trim().toLowerCase();
         if (ref) {
-          const [referrer] = await sql`SELECT id FROM users WHERE referral_code = ${ref}`;
+          const [referrer] = await sql`SELECT id FROM users WHERE LOWER(referral_code) = ${ref}`;
           if (referrer && referrer.id !== user.id) {
             await sql`UPDATE users SET referred_by = ${referrer.id} WHERE id = ${user.id}`;
           }

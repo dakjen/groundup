@@ -313,7 +313,7 @@ function ManageMembershipCard({ member, rank }) {
 function ReferralCard({ member }) {
   const [copied, setCopied] = useState(false);
   if (!member?.referral_code && !member?.trial_available && !member?.trial) return null;
-  const link = `${window.location.origin}/?ref=${member.referral_code}`;
+  const link = `${window.location.origin}/invite/${member.referral_code}`;
   return (
     <div style={{ background: "var(--gu-card2)", border: "1px solid #c9a22740", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
       <div style={{ fontSize: 9, color: "#c9a227", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>✦ Your First-10 perks</div>

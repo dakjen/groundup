@@ -53,6 +53,16 @@ if (typeof window !== "undefined") window.startCheckout = (item, extra) => start
 // datetime-local inputs speak LOCAL wall-clock time; we store UTC ISO strings.
 // Always convert at the boundary — feeding an ISO string's first 16 chars back
 // into the input shifts the time by the UTC offset on every render.
+// "Add to Google Calendar" — no integration needed, just Google's template URL.
+// Opens a prefilled event the person saves to their own calendar with one click.
+function gcalUrl(title, startIso, minutes = 60, details = "", location = "") {
+  const fmt = (d) => new Date(d).toISOString().replace(/[-:]|\.\d{3}/g, "");
+  const start = new Date(startIso);
+  const end = new Date(start.getTime() + minutes * 60000);
+  const q = new URLSearchParams({ action: "TEMPLATE", text: title, dates: `${fmt(start)}/${fmt(end)}`, details, location });
+  return `https://calendar.google.com/calendar/render?${q}`;
+}
+
 function toLocalInput(iso) {
   if (!iso) return "";
   const d = new Date(iso);
@@ -1573,6 +1583,8 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
                 }} style={{ background: ev.my_rsvp ? "transparent" : "#b80101", color: ev.my_rsvp ? "#22c55e" : "#fff", border: ev.my_rsvp ? "1px solid #22c55e60" : "none", borderRadius: 8, padding: "10px 18px", fontFamily: font, fontWeight: 800, fontSize: 12.5, cursor: "pointer", whiteSpace: "nowrap" }}>
                   {ev.my_rsvp ? "✓ Going — tap to cancel" : "RSVP — I'll be there"}
                 </button>
+                <a href={gcalUrl(`GroundUp Lunch & Learn: ${ev.title}`, ev.date, 60, "Live session with Dr. Gina Merritt. Your join link is on your Lunch & Learn page: " + window.location.origin, "Online")} target="_blank" rel="noreferrer"
+                  style={{ color: "#c8a8a8", border: "1px solid #2a0000", borderRadius: 8, padding: "10px 14px", fontFamily: font, fontWeight: 700, fontSize: 12, textDecoration: "none", whiteSpace: "nowrap" }}>+ Google Calendar</a>
               </div>
             ))}
           </div>
@@ -4081,8 +4093,13 @@ export default function App() {
   // Referral links (?ref=GU-XXXX) — remember the code so it credits the referrer
   // at signup, even if they browse around first
   useEffect(() => {
-    const ref = new URLSearchParams(window.location.search).get("ref");
-    if (ref) localStorage.setItem("guRef", ref.toUpperCase());
+    // Two shapes: /invite/dakotah-jennifer (the pretty one) and ?ref=code
+    const invite = window.location.pathname.match(/^\/invite\/([\w-]+)/i);
+    const ref = invite ? invite[1] : new URLSearchParams(window.location.search).get("ref");
+    if (ref) {
+      localStorage.setItem("guRef", ref.toLowerCase());
+      if (invite) window.history.replaceState({}, "", "/");
+    }
   }, []);
   const [resetToken, setResetToken] = useState(() => new URLSearchParams(window.location.search).get("reset"));
   const [notif, setNotif] = useState(null);
@@ -4297,6 +4314,12 @@ export default function App() {
                   </div>
                 );
               })()}
+              {launchAt && new Date(launchAt) > new Date() && (
+                <div style={{ marginTop: 10 }}>
+                  <a href={gcalUrl("GroundUp launches — doors open", launchAt, 60, "GroundUp by Dr. Gina Merritt opens to everyone. Grab your plan: " + window.location.origin, "Online")} target="_blank" rel="noreferrer"
+                    style={{ color: "#c8a8a8", fontSize: 12, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, textDecoration: "none", border: "1px solid #2a0000", borderRadius: 8, padding: "8px 14px", display: "inline-block" }}>Mark your calendar — add to Google Calendar</a>
+                </div>
+              )}
             </div>
             {waitlistOpen && <WaitlistForm list="general" />}
           </div>
@@ -4348,7 +4371,10 @@ export default function App() {
           <button onClick={() => { markSeen("announcement", notif.announcement.id); setBannerDismissed(true); }} style={{ background: "transparent", color: "#fff", border: "none", fontSize: 16, cursor: "pointer", flexShrink: 0 }}>✕</button>
         </div>
       )}
-      <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => openSignup("Free")} member={member} unread={(notif?.unread || 0) + (notif?.dm_unread || 0)} />
+      {/* The nav's Sign In always opens the real login — team and members sign in
+          here with their email/password, pre-launch included. Only JOIN buttons
+          route to the waitlist before launch. */}
+      <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => { setAuthMode("login"); setSignupTier("Free"); setShowSignup(true); }} member={member} unread={(notif?.unread || 0) + (notif?.dm_unread || 0)} />
       {activePage === "home" && <HomePage setActivePage={navigateTo} onSignUp={openSignup} currentUser={currentUser} eventInvited={eventInvited} />}
       {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} /></div>}
       {activePage === "advisory" && <RetainerPage member={member} setActivePage={navigateTo} />}
@@ -4371,7 +4397,6 @@ export default function App() {
       {activePage === "contact" && <ContactPage setActivePage={navigateTo} advisorLink={advisorLink} />}
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#3a2a2a" }}>© {new Date().getFullYear()} GroundUp · Northern Real Estate Urban Ventures</div>
-        <button onClick={() => setShowAdminLogin(true)} style={{ background: "transparent", border: "none", color: "#2a1a1a", fontFamily: "'DM Sans', sans-serif", fontSize: 11, cursor: "pointer", letterSpacing: "1px" }}>Admin</button>
       </footer>
     </>
   );
