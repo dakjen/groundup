@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { neon } from '@neondatabase/serverless';
 import { signToken, getSession, hashPassword, verifyPassword } from './_utils.js';
 import { sendEmail, addContact, addLnlContact, welcomeEmail, resetEmail, siteUrl } from './_email.js';
@@ -14,10 +15,17 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const session = getSession(req);
       if (!session || !session.uid) return res.status(401).json({ error: 'Not signed in' });
-      const [user] = await sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, comped, created_at FROM users WHERE id = ${session.uid}`;
+      const [user] = await sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, comped, badges, referral_code, referred_by, created_at FROM users WHERE id = ${session.uid}`;
       if (!user) return res.status(401).json({ error: 'Account not found' });
-      // Active one-time passes: course_id 'all' or 'mc1'..'mc4', unexpired
-      user.entitlements = await sql`SELECT course_id, expires_at FROM entitlements WHERE user_id = ${user.id} AND (expires_at IS NULL OR expires_at > NOW())`;
+      // Active one-time passes: course_id 'all' or 'mc1'..'mc7', unexpired
+      user.entitlements = await sql`SELECT course_id, expires_at, source FROM entitlements WHERE user_id = ${user.id} AND (expires_at IS NULL OR expires_at > NOW())`;
+      // 14-day one-course trial: earned by being first-10 on the waitlist or by
+      // arriving through a member's referral link. One per account, ever.
+      const badgeList = Array.isArray(user.badges) ? user.badges : [];
+      const trialEligible = badgeList.includes('first10') || !!user.referred_by;
+      const [usedTrial] = await sql`SELECT course_id, expires_at FROM entitlements WHERE user_id = ${user.id} AND source = 'referral_trial' LIMIT 1`;
+      user.trial = usedTrial ? { course_id: usedTrial.course_id, expires_at: usedTrial.expires_at } : null;
+      user.trial_available = trialEligible && !usedTrial && user.membership_status === 'active';
       const allowance = user.tier === 'Elite' ? 3 : user.tier === 'Premium' ? 1 : 0;
       const [{ used }] = await sql`SELECT COUNT(*)::int AS used FROM session_requests WHERE user_id = ${user.id} AND status != 'declined'`;
       user.sessions = { total: allowance, used, remaining: Math.max(0, allowance - used) };
@@ -100,14 +108,30 @@ export default async function handler(req, res) {
       // including Free — plus the founding25 badge that follows them everywhere.
       let founding = false;
       try {
-        const [wl] = await sql`SELECT id FROM waitlist WHERE email = ${cleanEmail} AND founding_lnl LIMIT 1`;
-        if (wl) {
+        const [wl] = await sql`SELECT id, founding_lnl, first10 FROM waitlist WHERE email = ${cleanEmail} LIMIT 1`;
+        if (wl?.founding_lnl) {
           founding = true;
           await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at)
             VALUES (${user.id}, 'lunchlearn', 'founding25', NOW() + interval '1 year', NOW())`;
           await sql`UPDATE users SET badges = COALESCE(badges, '[]'::jsonb) || '["founding25"]'::jsonb WHERE id = ${user.id}`;
         }
-      } catch (e) { console.error('founding25 grant failed', e.message); }
+        // First 10 on the waitlist: their own 14-day one-course trial (claimed on
+        // the course of their choice) plus a personal referral link to share.
+        if (wl?.first10) {
+          const code = 'GU-' + crypto.randomBytes(4).toString('hex').toUpperCase();
+          await sql`UPDATE users SET badges = COALESCE(badges, '[]'::jsonb) || '["first10"]'::jsonb, referral_code = ${code} WHERE id = ${user.id}`;
+        }
+      } catch (e) { console.error('waitlist perk grant failed', e.message); }
+      // Came through a member's referral link → eligible for the same 14-day trial
+      try {
+        const ref = (req.body.ref || '').trim().toUpperCase();
+        if (ref) {
+          const [referrer] = await sql`SELECT id FROM users WHERE referral_code = ${ref}`;
+          if (referrer && referrer.id !== user.id) {
+            await sql`UPDATE users SET referred_by = ${referrer.id} WHERE id = ${user.id}`;
+          }
+        }
+      } catch (e) { console.error('referral link failed', e.message); }
       // Welcome email + Brevo contact — never block signup on email delivery
       const mail = welcomeEmail(user.name, user.tier);
       await Promise.allSettled([
@@ -202,6 +226,24 @@ export default async function handler(req, res) {
       }
       await sql`UPDATE users SET password_hash = ${hashPassword(new_password)} WHERE id = ${user.id}`;
       return res.json({ success: true });
+    }
+
+    // 14-day one-course trial (first-10 waitlisters and referred signups).
+    // They pick ONE course; the claim is once-per-account and can't be re-aimed.
+    if (action === 'claim_trial_course') {
+      const session = getSession(req);
+      if (!session || !session.uid) return res.status(401).json({ error: 'Not signed in' });
+      const courseId = /^mc\d+$/.test(req.body.course_id || '') ? req.body.course_id : null;
+      if (!courseId) return res.status(400).json({ error: 'Pick a course' });
+      const [u] = await sql`SELECT id, badges, referred_by, membership_status FROM users WHERE id = ${session.uid}`;
+      if (!u || u.membership_status !== 'active') return res.status(401).json({ error: 'Not signed in' });
+      const eligible = (Array.isArray(u.badges) ? u.badges : []).includes('first10') || !!u.referred_by;
+      if (!eligible) return res.status(403).json({ error: 'No trial on this account' });
+      const [prior] = await sql`SELECT id FROM entitlements WHERE user_id = ${u.id} AND source = 'referral_trial' LIMIT 1`;
+      if (prior) return res.status(409).json({ error: 'Your trial has already been used' });
+      const [ent] = await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at)
+        VALUES (${u.id}, ${courseId}, 'referral_trial', NOW() + interval '14 days', NOW()) RETURNING course_id, expires_at`;
+      return res.json({ success: true, trial: ent });
     }
 
     // Free plan: claim the single free lesson. Only succeeds if none is claimed yet

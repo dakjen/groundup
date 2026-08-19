@@ -84,7 +84,17 @@ export default async function handler(req, res) {
           RETURNING id`;
         founding = !!row;
       }
-      const mail = waitlistConfirmEmail(entry.name, founding);
+      // First 10 on the waitlist: a 14-day one-course trial + a personal referral
+      // link, both delivered when they create their account (see api/auth.js).
+      let first10 = entry.first10;
+      if (isNew && !first10) {
+        const [row] = await sql`
+          UPDATE waitlist SET first10 = TRUE
+          WHERE id = ${entry.id} AND (SELECT COUNT(*) FROM waitlist WHERE first10) < 10
+          RETURNING id`;
+        first10 = !!row;
+      }
+      const mail = waitlistConfirmEmail(entry.name, founding, first10);
       const [{ n: total }] = await sql`SELECT COUNT(*)::int AS n FROM waitlist`;
       await Promise.allSettled([
         sendEmail(entry.email, mail.subject, mail.html),

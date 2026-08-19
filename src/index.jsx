@@ -174,6 +174,30 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
 
   const openLesson = async (i) => {
     if (fullAccess) return setActiveLesson(i);
+    // Unused 14-day trial (first-10 waitlister or referred signup): offer to
+    // start it on THIS course, with a plain explanation of how it works.
+    if (member?.trial_available) {
+      const ok = window.confirm(
+        `Start your 14-day trial with "${course.title}"?\n\n` +
+        `Your trial works like our Single Course Pass: every lesson in ONE course of your choice, free for 14 days. This is your one trial — once you pick, it can't be moved to another course.\n\n` +
+        `Want it all instead? A membership includes all seven courses, the community, and new courses as they drop — from $59.99/mo. A one-time pass gives 30 days of a single course ($100) or everything ($250).\n\n` +
+        `Press OK to start your trial with this course.`
+      );
+      if (!ok) return;
+      try {
+        const res = await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${getMemberToken()}` }, body: JSON.stringify({ action: "claim_trial_course", course_id: course.id }) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "trial failed");
+        // Refresh the account so the new entitlement is live everywhere
+        const me = await fetch("/api/auth", { headers: { Authorization: `Bearer ${getMemberToken()}` } }).then(r => r.json()).catch(() => null);
+        if (me?.user) { saveMember(me.user); onMemberUpdate && onMemberUpdate(me.user); }
+        await fetchContent();
+        setActiveLesson(i);
+      } catch {
+        onUpgrade && onUpgrade();
+      }
+      return;
+    }
     const key = `${course.id}:${i}`;
     if (freeKey === key) return setActiveLesson(i);
     if (!freeKey && i === 0) {
@@ -4054,6 +4078,12 @@ export default function App() {
   const [signupTier, setSignupTier] = useState("Free");
   const [authMode, setAuthMode] = useState("signup");
   const [member, setMember] = useState(() => getMember());
+  // Referral links (?ref=GU-XXXX) — remember the code so it credits the referrer
+  // at signup, even if they browse around first
+  useEffect(() => {
+    const ref = new URLSearchParams(window.location.search).get("ref");
+    if (ref) localStorage.setItem("guRef", ref.toUpperCase());
+  }, []);
   const [resetToken, setResetToken] = useState(() => new URLSearchParams(window.location.search).get("reset"));
   const [notif, setNotif] = useState(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);

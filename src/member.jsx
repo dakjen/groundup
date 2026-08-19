@@ -52,6 +52,7 @@ export const TIER_LABELS = { Free: "Free", Basic: "Member", Premium: "Premium", 
 // badges here as they're invented; unknown keys are ignored gracefully.
 export const BADGE_DEFS = {
   founding25: { label: "L&L Year One", icon: "✦", color: "#c9a227", title: "Founding 25 — first year of Lunch & Learns free" },
+  first10: { label: "First 10", icon: "✦", color: "#e0c4c4", title: "One of the first 10 on the waitlist — 14-day course trial + personal referral link" },
 };
 export function BadgeChips({ badges, small }) {
   const keys = (Array.isArray(badges) ? badges : []).filter(k => BADGE_DEFS[k]);
@@ -108,7 +109,7 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
       // Accounts are always created Free — a paid tier only comes from Stripe
       // checkout (below) or an admin. The picker records intent, nothing more.
       const data = mode === "signup"
-        ? await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "signup", name, email, password }) })
+        ? await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "signup", name, email, password, ref: localStorage.getItem("guRef") || undefined }) })
         : await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "login", email, password }) });
       saveMember(data.user, data.token);
       onAuthed(data.user);
@@ -308,6 +309,39 @@ function ManageMembershipCard({ member, rank }) {
   );
 }
 
+// First-10 perk: their personal referral link, plus the state of their own trial
+function ReferralCard({ member }) {
+  const [copied, setCopied] = useState(false);
+  if (!member?.referral_code && !member?.trial_available && !member?.trial) return null;
+  const link = `${window.location.origin}/?ref=${member.referral_code}`;
+  return (
+    <div style={{ background: "var(--gu-card2)", border: "1px solid #c9a22740", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
+      <div style={{ fontSize: 9, color: "#c9a227", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>✦ Your First-10 perks</div>
+      {member.trial_available && (
+        <div style={{ color: "var(--gu-body)", fontSize: 14, fontFamily: font, lineHeight: 1.7, marginBottom: 12 }}>
+          <strong style={{ color: "var(--gu-text2)" }}>Your 14-day course trial is waiting.</strong> Open any course and you'll be asked which one you want — every lesson in that course, free for 14 days. One trial per account, so pick the course you're most curious about.
+        </div>
+      )}
+      {member.trial && (
+        <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginBottom: 12 }}>
+          Your trial is live{member.trial.expires_at ? ` through ${new Date(member.trial.expires_at).toLocaleDateString(undefined, { month: "long", day: "numeric" })}` : ""} — enjoy the course, and upgrade any time to keep going after it ends.
+        </div>
+      )}
+      {member.referral_code && (
+        <div>
+          <div style={{ color: "var(--gu-body)", fontSize: 14, fontFamily: font, lineHeight: 1.7, marginBottom: 10 }}>
+            Share your personal link — friends who join through it get their own <strong style={{ color: "var(--gu-text2)" }}>14-day one-course trial</strong>:
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <code style={{ background: "var(--gu-panel)", border: "1px solid #2a0000", borderRadius: 8, padding: "10px 14px", color: "var(--gu-text2)", fontSize: 13, flex: 1, minWidth: 220, overflowX: "auto", whiteSpace: "nowrap" }}>{link}</code>
+            <button onClick={() => { navigator.clipboard?.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 2500); }} style={btnRed}>{copied ? "Copied ✓" : "Copy link"}</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ChangePasswordCard() {
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -429,6 +463,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
 
         <BookingsCard member={member} />
         <SessionCreditsCard member={member} />
+        <ReferralCard member={member} />
         <ChangePasswordCard />
         <ManageMembershipCard member={member} rank={rank} />
 

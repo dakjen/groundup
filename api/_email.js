@@ -182,12 +182,13 @@ export function broadcastEmail(subject, message) {
   };
 }
 
-export function waitlistConfirmEmail(name, founding) {
+export function waitlistConfirmEmail(name, founding, first10) {
   return {
-    subject: founding ? "You're on the list — and you're one of the first 25" : "You're on the GroundUp waitlist",
+    subject: founding ? "You're on the list — and you're one of the first 25" : first10 ? "You're on the list — and you're one of the first 10" : "You're on the GroundUp waitlist",
     html: `
       <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">You're on the list, ${name.split(' ')[0]}.</h2>
       ${founding ? `<p style="color:#c9a227;font-size:15px;line-height:1.8;font-weight:bold;">You're one of the first 25 — your first YEAR of Lunch & Learn sessions with Dr. Merritt is on us. Live sessions and every recording, free, on any plan. It unlocks automatically the moment you create your account at launch.</p>` : ''}
+      ${first10 ? `<p style="color:#c9a227;font-size:15px;line-height:1.8;font-weight:bold;">And you made the first 10 — your special treat: a 14-day trial of any one course, yours the moment you create your account at launch. Plus your own referral link to share, giving friends the same 14-day trial.</p>` : ''}
       <p style="color:#a89080;font-size:14px;line-height:1.8;">Your spot is saved. We read every answer you gave — what you want to learn, what's in your way — and we're building for exactly that. When GroundUp opens, you'll be the first to know, with a personal link before anyone else.</p>
       <p style="color:#a89080;font-size:14px;line-height:1.8;">Decades of affordable-housing deal experience, distilled into a curriculum and community for developers like you. It's almost time.</p>`,
   };
