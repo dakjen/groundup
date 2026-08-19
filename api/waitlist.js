@@ -63,6 +63,12 @@ const PAIN_NEED = {
 };
 
 export function recommendPlan(e) {
+  // A team override always wins — set from the admin waitlist sheet
+  if (e.rec_override && (PLANS[e.rec_override] || e.rec_override === 'Advisor')) {
+    if (e.rec_override !== 'Advisor') return { ...PLANS[e.rec_override], next: null };
+    // fall through to the Advisor block below
+    e = { ...e, budget: '$2,000+' };
+  }
   // Thought partnership ($2,000+): this is retainer territory, not a membership —
   // recommend the Senior Advisor engagement and route them to a call, not checkout
   if (e.budget === '$2,000+') {
@@ -316,6 +322,13 @@ export default async function handler(req, res) {
       if (target) await sql`UPDATE waitlist SET launched_notified = TRUE WHERE COALESCE(list, 'insider') = ${target}`;
       else await sql`UPDATE waitlist SET launched_notified = TRUE`;
       return res.json({ success: true, sent, total: entries.length });
+    }
+
+    // Team override of a person's plan recommendation ('' clears back to the algorithm)
+    if (action === 'set_override') {
+      const val = ['Basic', 'Premium', 'Elite', 'Advisor'].includes(req.body.tier) ? req.body.tier : null;
+      await sql`UPDATE waitlist SET rec_override = ${val} WHERE id = ${Number(req.body.id)}`;
+      return res.json({ success: true, rec_override: val });
     }
 
     if (action === 'remove') {

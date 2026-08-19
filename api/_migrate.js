@@ -65,6 +65,12 @@ const STATEMENTS = [
   `ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS founding_lnl BOOLEAN DEFAULT FALSE`,
   `ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS first10 BOOLEAN DEFAULT FALSE`,
   `ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS recommended_notified BOOLEAN DEFAULT FALSE`,
+  `ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS rec_override TEXT`,
+  `ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS stretch_offer TEXT`,
+  `CREATE TABLE IF NOT EXISTS user_notes (
+    id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    note_key TEXT NOT NULL, body TEXT DEFAULT '', updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(user_id, note_key))`,
   `CREATE TABLE IF NOT EXISTS email_log (
     id SERIAL PRIMARY KEY, kind TEXT NOT NULL, list TEXT, subject TEXT,
     recipient_name TEXT, recipient_email TEXT NOT NULL, ok BOOLEAN DEFAULT TRUE,

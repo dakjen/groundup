@@ -3651,11 +3651,24 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
               <button onClick={() => removeEntry(e)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Remove</button>
               {openEntry === e.id && (
                 <div style={{ width: "100%", borderTop: "1px solid #eeebe4", paddingTop: 10, marginTop: 2, display: "grid", gap: 6 }}>
-                  {[["Wants to learn", e.learn], ["Pain point", e.reason], ["Monthly budget", e.budget], ["We'll recommend", recFor(e)], ["Heard about us", e.source], ["Phone", e.phone], ["Joined", new Date(e.created_at).toLocaleString()]].map(([k, v]) => (
+                  {[["Wants to learn", e.learn], ["Pain point", e.reason], ["Monthly budget", e.budget], ["Heard about us", e.source], ["Phone", e.phone], ["Joined", new Date(e.created_at).toLocaleString()]].map(([k, v]) => (
                     <div key={k} style={{ color: "#444444", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>
                       <strong style={{ color: "#8d847a", fontSize: 10, letterSpacing: "1px", textTransform: "uppercase" }}>{k}</strong> — {v || <span style={{ color: "#aaaaaa" }}>not answered</span>}
                     </div>
                   ))}
+                  {/* The team can overrule the algorithm's pick, per person */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 2 }}>
+                    <strong style={{ color: "#8d847a", fontSize: 10, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{e.rec_override ? "Recommendation (your override)" : "We'll recommend"}</strong>
+                    <select value={e.rec_override || ""} onChange={async ev => {
+                      try { await call("POST", { action: "set_override", id: e.id, tier: ev.target.value || null }); flash(true, ev.target.value ? "Override saved — their emails will pitch " + ev.target.value + "." : "Back to the algorithm's pick."); await load(); } catch (er) { flash(false, er.message); }
+                    }} style={{ background: e.rec_override ? "#b8010112" : "#f5f2ec", color: e.rec_override ? "#b80101" : "#444444", border: "1px solid " + (e.rec_override ? "#b8010150" : "#dcd8d0"), borderRadius: 6, padding: "5px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
+                      <option value="">Auto — {recFor(e).split(" — ")[0]} (algorithm)</option>
+                      <option value="Basic">Member — $59.99/mo</option>
+                      <option value="Premium">Premium — $165.99/mo</option>
+                      <option value="Elite">Elite — $599.99/mo</option>
+                      <option value="Advisor">Senior Advisor — retainer</option>
+                    </select>
+                  </div>
                 </div>
               )}
             </div>
@@ -4478,7 +4491,7 @@ export default function App() {
             <div style={{ textAlign: "center", marginBottom: 18 }}>
               <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#f5e8e8" }}>{waitlistOpen ? "Doors open soon." : "The waitlist opens September 1."}</div>
               <div style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>{waitlistOpen ? "Get on the list and you'll be invited the moment we launch." : "Check back then to claim your spot — or reach out to Dr. Gina Merritt for early access to the insider waitlist."}</div>
-              <div style={{ color: "#c9a227", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, marginTop: 10 }}>✦ The first 10 on the waitlist get a special treat.</div>
+              <div style={{ color: "#e0c4c4", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, marginTop: 10 }}>✦ The first 10 on the waitlist get a special treat.</div>
               {launchAt && new Date(launchAt) > new Date() && (() => {
                 const ms = new Date(launchAt).getTime() - Date.now();
                 const days = Math.floor(ms / 86400000);

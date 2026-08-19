@@ -51,7 +51,7 @@ export const TIER_LABELS = { Free: "Free", Basic: "Member", Premium: "Premium", 
 // sheets, their profile, and next to their name in the community. Add new
 // badges here as they're invented; unknown keys are ignored gracefully.
 export const BADGE_DEFS = {
-  founding25: { label: "L&L Year One", icon: "✦", color: "#c9a227", title: "Founding 25 — first year of Lunch & Learns free" },
+  founding25: { label: "L&L Year One", icon: "✦", color: "#e0c4c4", title: "Founding 25 — first year of Lunch & Learns free" },
   first10: { label: "First 10", icon: "✦", color: "#e0c4c4", title: "One of the first 10 on the waitlist — 14-day course trial + personal referral link" },
 };
 export function BadgeChips({ badges, small }) {
@@ -316,8 +316,8 @@ function ReferralCard({ member }) {
   if (!member?.referral_code && !member?.trial_available && !member?.trial) return null;
   const link = `${window.location.origin}/invite/${member.referral_code}`;
   return (
-    <div style={{ background: "var(--gu-card2)", border: "1px solid #c9a22740", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
-      <div style={{ fontSize: 9, color: "#c9a227", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>✦ Your First-10 perks</div>
+    <div style={{ background: "var(--gu-card2)", border: "1px solid #e0c4c440", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
+      <div style={{ fontSize: 9, color: "#e0c4c4", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>✦ Your First-10 perks</div>
       {member.trial_available && (
         <div style={{ color: "var(--gu-body)", fontSize: 14, fontFamily: font, lineHeight: 1.7, marginBottom: 12 }}>
           <strong style={{ color: "var(--gu-text2)" }}>Your 14-day course trial is waiting.</strong> Open any course and you'll be asked which one you want — every lesson in that course, free for 14 days. One trial per account, so pick the course you're most curious about.
@@ -1035,12 +1035,12 @@ export function WaitlistForm({ list = "insider" }) {
                 <label style={lbl}>Monthly budget for a course, community, and access to support</label>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   {WL_BUDGETS.map(b => (
-                    <button type="button" key={b} onClick={() => setBudget(b)} style={{ background: budget === b ? (b === "$2,000+" ? "#c9a22715" : "#b8010118") : "transparent", border: budget === b ? (b === "$2,000+" ? "1px solid #c9a227" : "1px solid #b80101") : b === "$2,000+" ? "1px solid #c9a22740" : "1px solid #2a0000", borderRadius: 8, padding: "11px 12px", cursor: "pointer", color: budget === b ? "#f0d8d8" : b === "$2,000+" ? "#c9a227" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font }}>
+                    <button type="button" key={b} onClick={() => setBudget(b)} style={{ gridColumn: b === "$2,000+" ? "1 / -1" : undefined, background: budget === b ? "#b8010118" : "transparent", border: budget === b ? "1px solid #b80101" : b === "$2,000+" ? "1px solid #e0c4c455" : "1px solid #2a0000", borderRadius: 8, padding: "11px 12px", cursor: "pointer", color: budget === b ? "#f0d8d8" : b === "$2,000+" ? "#e0c4c4" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font }}>
                       {b === "$2,000+" ? "✦ $2,000+ · Thought partnership" : b}
                     </button>
                   ))}
                   {budget === "$2,000+" && (
-                    <div style={{ gridColumn: "1 / -1", color: "#c9a227", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, background: "#12060a", border: "1px solid #c9a22730", borderRadius: 8, padding: "10px 14px" }}>
+                    <div style={{ gridColumn: "1 / -1", color: "#e0c4c4", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, background: "#12060a", border: "1px solid #e0c4c430", borderRadius: 8, padding: "10px 14px" }}>
                       Put Dr. Gina Merritt on retainer for your project — use her expertise and business infrastructure to stand on a solid foundation.
                     </div>
                   )}
