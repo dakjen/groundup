@@ -44,13 +44,33 @@ export default async function handler(req, res) {
 
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+    // ── Rate limiting (DB-backed — survives serverless cold starts) ──
+    // Failed attempts are recorded per key; too many inside the window → 429.
+    const clientIp = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+    const tooMany = async (key, max, windowMin) => {
+      try {
+        const [row] = await sql`SELECT COUNT(*)::int AS n FROM auth_attempts WHERE key = ${key} AND created_at > NOW() - (${windowMin} * interval '1 minute')`;
+        return (row?.n || 0) >= max;
+      } catch { return false; } // never lock everyone out if the table is missing
+    };
+    const recordFail = async (key) => {
+      try {
+        await sql`INSERT INTO auth_attempts (key, created_at) VALUES (${key}, NOW())`;
+        if (Math.floor(Date.now() / 1000) % 20 === 0) await sql`DELETE FROM auth_attempts WHERE created_at < NOW() - interval '1 day'`;
+      } catch { /* best effort */ }
+    };
+    const clearFails = async (key) => { try { await sql`DELETE FROM auth_attempts WHERE key = ${key}`; } catch { /* best effort */ } };
+    const LIMITED = (mins) => res.status(429).json({ error: `Too many attempts — please wait ${mins} minutes and try again.` });
+
     // Admin env login (folded in from /api/login)
     if (action === 'admin_login') {
+      if (await tooMany(`admin:${clientIp}`, 5, 15)) return LIMITED(15);
       const { email, password } = req.body;
       if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD && email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
         try { const { ensureSchema } = await import('./_migrate.js'); await ensureSchema(); } catch (e) { console.error('migration failed', e); }
         return res.json({ success: true, token: signToken({ role: 'admin' }) });
       }
+      await recordFail(`admin:${clientIp}`);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -77,7 +97,9 @@ export default async function handler(req, res) {
 
     // Site password gate (folded in from /api/site-auth)
     if (action === 'site_gate') {
+      if (await tooMany(`gate:${clientIp}`, 10, 15)) return LIMITED(15);
       if (req.body.password === process.env.SITE_PASSWORD) return res.json({ success: true });
+      await recordFail(`gate:${clientIp}`);
       return res.status(401).json({ error: 'Wrong password' });
     }
 
@@ -155,10 +177,16 @@ export default async function handler(req, res) {
       const { email, password } = req.body;
       if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
       const cleanEmail = String(email).trim().toLowerCase();
+      // 5 failed tries per account / 15 min; 20 per IP catches spray attacks
+      if (await tooMany(`login:${cleanEmail}`, 5, 15)) return LIMITED(15);
+      if (await tooMany(`loginip:${clientIp}`, 20, 15)) return LIMITED(15);
       const [user] = await sql`SELECT * FROM users WHERE email = ${cleanEmail}`;
       if (!user || !user.password_hash || !verifyPassword(password, user.password_hash)) {
+        await recordFail(`login:${cleanEmail}`);
+        await recordFail(`loginip:${clientIp}`);
         return res.status(401).json({ error: 'Invalid email or password' });
       }
+      await clearFails(`login:${cleanEmail}`); // a good login resets the account's counter
       const token = signToken({ uid: user.id, role: user.role === 'admin' ? 'admin' : 'member' });
       const { password_hash, ...safe } = user;
       safe.entitlements = await sql`SELECT course_id, expires_at FROM entitlements WHERE user_id = ${user.id} AND (expires_at IS NULL OR expires_at > NOW())`;
@@ -170,6 +198,11 @@ export default async function handler(req, res) {
       const { email } = req.body;
       if (!email) return res.status(400).json({ error: 'Email required' });
       const cleanEmail = String(email).trim().toLowerCase();
+      // Every request counts here (prevents reset-email spam): 3/hr per address, 10/hr per IP
+      if (await tooMany(`forgot:${cleanEmail}`, 3, 60)) return LIMITED(60);
+      if (await tooMany(`forgotip:${clientIp}`, 10, 60)) return LIMITED(60);
+      await recordFail(`forgot:${cleanEmail}`);
+      await recordFail(`forgotip:${clientIp}`);
       const [user] = await sql`SELECT id, name, email FROM users WHERE email = ${cleanEmail}`;
       if (user) {
         const token = signToken({ uid: user.id, purpose: 'reset' }, 1000 * 60 * 60);
@@ -181,10 +214,12 @@ export default async function handler(req, res) {
 
     // Complete a reset from the emailed link
     if (action === 'reset_password') {
+      if (await tooMany(`reset:${clientIp}`, 10, 60)) return LIMITED(60);
       const { token, new_password } = req.body;
       if (!new_password || new_password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
       const payload = verifyToken(token);
       if (!payload || payload.purpose !== 'reset' || !payload.uid) {
+        await recordFail(`reset:${clientIp}`);
         return res.status(400).json({ error: 'That reset link is invalid or expired — request a new one' });
       }
       await sql`UPDATE users SET password_hash = ${hashPassword(new_password)} WHERE id = ${payload.uid}`;
