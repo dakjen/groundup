@@ -571,7 +571,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
     : ["home", "courses", "about", "pricing", "lunchlearn", "contact"];
   const ADMIN_TOOLS = [
     ["admin-users", "Users"], ["admin-referrals", "Referrals"], ["admin-waitlist", "Waitlist"],
-    ["admin-email", "Email"], ["admin-courses", "Courses"], ["admin-shop", "Shop"], ["admin-retainers", "Retainers"], ["admin-revenue", "Revenue"], ["admin-status", "System Status"],
+    ["admin-email", "Email"], ["admin-courses", "Courses"], ["admin-shop", "Shop"], ["admin-contacts", "Contacts"], ["admin-retainers", "Retainers"], ["admin-revenue", "Revenue"], ["admin-status", "System Status"],
   ];
   const [adminOpen, setAdminOpen] = useState(false);
   const lightNav = member?.role === "admin";
@@ -3497,6 +3497,61 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
 
 // ─── REFERRAL TAB ─────────────────────────────────────────────────────────────
 
+// The master email list — every human who ever touched GroundUp, from every
+// source, deduped and dated. Compiled live; nothing to maintain.
+function ContactsTab({ btnRed, btnGhost, inp, lbl }) {
+  const [data, setData] = useState(null);
+  const [q, setQ] = useState("");
+  useEffect(() => {
+    fetch("/api/users?contacts=1", { headers: { Authorization: "Bearer " + sessionStorage.getItem("adminToken") } })
+      .then(r => r.json()).then(setData).catch(() => setData({ contacts: [], total: 0 }));
+  }, []);
+  if (!data) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
+  const rows = (data.contacts || []).filter(c => {
+    const t = q.trim().toLowerCase();
+    if (!t) return true;
+    return [c.name, c.email, c.phone, c.why, ...(c.sources || [])].filter(Boolean).some(v => String(v).toLowerCase().includes(t));
+  });
+  const exportCsv = () => {
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const csv = ["Name,Email,Phone,Sources,Why they joined,First seen"]
+      .concat(rows.map(c => [c.name, c.email, c.phone, (c.sources || []).join(" + "), c.why, c.joined ? new Date(c.joined).toLocaleDateString() : ""].map(esc).join(",")))
+      .join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
+    a.download = `groundup-contacts-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+  const chipColor = (s) => s.includes("Insider") ? "#b80101" : s.includes("Member") ? "#1a7a3a" : s.includes("Team") ? "#555555" : s.includes("Gift") ? "#7a4a9a" : s.includes("Lunch") ? "#a06010" : "#888888";
+  return (
+    <div style={{ maxWidth: 820 }}>
+      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#161616", marginBottom: 8 }}>Contacts</h2>
+      <p style={{ color: "#666666", fontSize: 13, marginBottom: 24 }}>Everyone who has ever raised a hand — waitlist, accounts, gifts, invites, Lunch & Learns — one master list, deduped by email, newest first.</p>
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center", marginBottom: 18 }}>
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search name, email, source, why…" style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1, minWidth: 220 }} />
+        <span style={{ color: "#666666", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>{rows.length} contact{rows.length === 1 ? "" : "s"}</span>
+        <button onClick={exportCsv} style={btnRed}>Download CSV</button>
+      </div>
+      {rows.map(c => (
+        <div key={c.email} style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 12, padding: "13px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ color: "#222222", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{c.name || c.email}</div>
+            <div style={{ color: "#777777", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{c.email}{c.phone ? ` · ${c.phone}` : ""}</div>
+          </div>
+          {(c.sources || []).map(s => (
+            <span key={s} style={{ background: chipColor(s) + "14", color: chipColor(s), border: `1px solid ${chipColor(s)}40`, borderRadius: 5, padding: "2px 9px", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.5px", whiteSpace: "nowrap" }}>{s}</span>
+          ))}
+          {c.tier && c.tier !== "Free" && <span style={{ color: "#b80101", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{c.tier}</span>}
+          <span style={{ color: "#9a9a9a", fontSize: 11, fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap" }}>{c.joined ? new Date(c.joined).toLocaleDateString() : ""}</span>
+          {c.why && <div style={{ width: "100%", color: "#666666", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, borderTop: "1px solid #f2efe8", paddingTop: 6, marginTop: 2 }}>{c.why}</div>}
+        </div>
+      ))}
+      {rows.length === 0 && <div style={{ color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif", padding: 30, textAlign: "center" }}>No contacts match.</div>}
+    </div>
+  );
+}
+
 function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
   const [invites, setInvites] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -4571,7 +4626,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "admin-status", "admin-shop", "advisory", "shop"];
+  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "advisory", "shop"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
     return PAGES.includes(p) ? p : (sessionStorage.getItem("activePage") || "home");
@@ -4904,6 +4959,7 @@ export default function App() {
       {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} /></div>}
       {activePage === "advisory" && <RetainerPage member={member} setActivePage={navigateTo} />}
       {activePage === "shop" && <ShopPage member={member} onSignIn={() => openSignup("Free")} />}
+      {member?.role === "admin" && activePage === "admin-contacts" && <TeamPage><ContactsTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-shop" && <TeamPage><h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#171106", marginBottom: 8 }}>Shop</h2><p style={{ color: "#6a5c40", fontSize: 13, marginBottom: 24, fontFamily: "'DM Sans', sans-serif" }}>Digital products — upload PDFs, set prices and value framing, control visibility.</p><ShopAdmin btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {activePage === "resources" && (member?.role === "admin" ? <TeamPage><ResourcesTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage> : <ResourcesPage member={member} onUpgrade={() => navigateTo("pricing")} />)}
       {activePage === "membership" && <MemberPage member={member} setActivePage={navigateTo} onSignIn={() => openSignup("Free")} onSignOut={() => { clearMember(); setMember(null); sessionStorage.removeItem("currentUser"); setCurrentUser(null); navigateTo("home"); }} />}
