@@ -1099,7 +1099,7 @@ const plans = [
     ],
     locked: [],
     limited: true,
-    value: "Over $9,000 in annual value",
+    value: "Over $9,000 in annual value — incl. advisory calls, small-group advisory sessions & direct access to Dr. Merritt",
   },
   {
     name: "Senior Advisor",
