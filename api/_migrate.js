@@ -67,6 +67,10 @@ const STATEMENTS = [
   `ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS recommended_notified BOOLEAN DEFAULT FALSE`,
   `ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS rec_override TEXT`,
   `ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS stretch_offer TEXT`,
+  `CREATE TABLE IF NOT EXISTS products (
+    id SERIAL PRIMARY KEY, title TEXT NOT NULL, description TEXT,
+    price_cents INTEGER NOT NULL, delivery_url TEXT, cover_url TEXT, value_cents INTEGER,
+    position INTEGER DEFAULT 0, active BOOLEAN DEFAULT TRUE, created_at TIMESTAMP DEFAULT NOW())`,
   `CREATE TABLE IF NOT EXISTS auth_attempts (
     id SERIAL PRIMARY KEY, key TEXT NOT NULL, created_at TIMESTAMP DEFAULT NOW())`,
   `CREATE INDEX IF NOT EXISTS idx_auth_attempts_key ON auth_attempts(key, created_at)`,

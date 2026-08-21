@@ -191,6 +191,23 @@ async function fulfill(sql, session) {
            <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${u?.name}</strong> (${u?.email}) completed Elite checkout at the same moment as someone else, putting Elite at <strong style="color:#f0d8d8;">${seats.taken} of ${seats.cap}</strong>. Their payment went through and their access is live. Either raise the cap in Admin, or reach out to arrange a refund.</p>`);
       }
     }
+  } else if (item === 'product') {
+    const pid = Number(md.product_id);
+    if (pid) {
+      // Ownership lives in entitlements ('prod:<id>', never expires) — the shop
+      // and their account page both read it to show the download
+      await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at)
+        VALUES (${userId}, ${'prod:' + pid}, 'stripe_product', NULL, NOW())`;
+      try {
+        const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
+        const [p] = await sql`SELECT title FROM products WHERE id = ${pid}`;
+        if (u) await sendEmail(u.email, `Your download is ready: ${p?.title || 'your purchase'}`,
+          `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">It's yours, ${u.name.split(' ')[0]}.</h2>
+           <p style="color:#a89080;font-size:14px;line-height:1.8;">Your purchase of <strong style="color:#f0d8d8;">${p?.title || 'your document'}</strong> is complete. It now lives in your account permanently — download it any time from the shop or your member page.</p>
+           <p style="color:#a89080;font-size:13px;line-height:1.7;">Reminder: this document is for your personal use — reselling or replicating it isn't permitted.</p>
+           <a href="${siteUrl()}/shop" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Open Your Downloads</a>`);
+      } catch (e) { console.error('product email failed', e.message); }
+    }
   } else if (item === 'pass_single') {
     const courseId = /^mc\d+$/.test(md.course_id || '') ? md.course_id : 'all';
     await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, ${courseId}, 'stripe_onetime', NOW() + interval '30 days', NOW())`;
@@ -360,6 +377,24 @@ export default async function handler(req, res) {
         return_url: `${siteUrl()}/member`,
       });
       return res.json({ url: portal.url });
+    }
+
+    // ── Digital product purchase (priced from the DB, never the client) ──
+    if (body.item === 'product') {
+      if (!body.agreed_ip) return res.status(400).json({ error: 'Please agree to the content use terms first' });
+      const [p] = await sql`SELECT id, title, price_cents FROM products WHERE id = ${Number(body.product_id)} AND active`;
+      if (!p) return res.status(404).json({ error: 'Product not found' });
+      const [already] = await sql`SELECT id FROM entitlements WHERE user_id = ${user.id} AND course_id = ${'prod:' + p.id} LIMIT 1`;
+      if (already) return res.status(409).json({ error: 'You already own this — it\'s in your account' });
+      const checkout = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        customer_email: user.email,
+        line_items: [{ quantity: 1, price_data: { currency: 'usd', unit_amount: p.price_cents, product_data: { name: p.title } } }],
+        metadata: { user_id: String(user.id), item: 'product', product_id: String(p.id) },
+        success_url: `${siteUrl()}/shop?purchased=1`,
+        cancel_url: `${siteUrl()}/shop`,
+      });
+      return res.json({ url: checkout.url });
     }
 
     const item = body.item;

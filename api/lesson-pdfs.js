@@ -23,13 +23,23 @@ export default async function handler(req, res) {
       const filePart = parts.find(p => p.filename);
       if (!filePart) return res.status(400).json({ error: 'No file uploaded' });
 
-      if (!filePart.filename.toLowerCase().endsWith('.pdf')) {
-        return res.status(400).json({ error: 'Only PDF files are allowed' });
+      // kind=file (shop deliverable PDF), kind=cover (shop image), default: lesson PDF
+      const kind = req.query.kind === 'cover' ? 'cover' : req.query.kind === 'file' ? 'file' : 'lesson';
+      const lower = filePart.filename.toLowerCase();
+      const IMG = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp' };
+      const imgExt = Object.keys(IMG).find(e => lower.endsWith(e));
+      let folder, contentType;
+      if (kind === 'cover') {
+        if (!imgExt) return res.status(400).json({ error: 'Covers must be PNG, JPG, or WEBP' });
+        folder = 'shop-covers'; contentType = IMG[imgExt];
+      } else {
+        if (!lower.endsWith('.pdf')) return res.status(400).json({ error: 'Only PDF files are allowed' });
+        folder = kind === 'file' ? 'shop-files' : 'lesson-pdfs'; contentType = 'application/pdf';
       }
 
-      const blob = await put(`lesson-pdfs/${Date.now()}-${filePart.filename}`, filePart.data, {
+      const blob = await put(`${folder}/${Date.now()}-${filePart.filename}`, filePart.data, {
         access: 'public',
-        contentType: 'application/pdf',
+        contentType,
       });
 
       return res.status(200).json({ url: blob.url, filename: filePart.filename });
@@ -47,7 +57,8 @@ export default async function handler(req, res) {
       if (!url) return res.status(400).json({ error: 'URL required' });
       let parsed;
       try { parsed = new URL(url); } catch { return res.status(400).json({ error: 'Invalid URL' }); }
-      if (!parsed.hostname.endsWith('.blob.vercel-storage.com') || !parsed.pathname.startsWith('/lesson-pdfs/')) {
+      const allowed = ['/lesson-pdfs/', '/shop-files/', '/shop-covers/'];
+      if (!parsed.hostname.endsWith('.blob.vercel-storage.com') || !allowed.some(p => parsed.pathname.startsWith(p))) {
         return res.status(400).json({ error: 'URL not allowed' });
       }
 

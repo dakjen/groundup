@@ -571,7 +571,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
     : ["home", "courses", "about", "pricing", "lunchlearn", "contact"];
   const ADMIN_TOOLS = [
     ["admin-users", "Users"], ["admin-referrals", "Referrals"], ["admin-waitlist", "Waitlist"],
-    ["admin-email", "Email"], ["admin-courses", "Courses"], ["admin-retainers", "Retainers"], ["admin-revenue", "Revenue"], ["admin-status", "System Status"],
+    ["admin-email", "Email"], ["admin-courses", "Courses"], ["admin-shop", "Shop"], ["admin-retainers", "Retainers"], ["admin-revenue", "Revenue"], ["admin-status", "System Status"],
   ];
   const [adminOpen, setAdminOpen] = useState(false);
   const lightNav = member?.role === "admin";
@@ -1743,6 +1743,214 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ─── DIGITAL PRODUCTS SHOP ──────────────────────────────────────────────────
+// Marketplace at /shop — deliberately absent from the nav. Members see it only
+// once the team flips it live in Admin → Shop; the team always sees it.
+
+function ShopPage({ member, onSignIn }) {
+  const font = "'DM Sans', sans-serif";
+  const serif = "'Cormorant Garamond', serif";
+  const [data, setData] = useState(null);
+  const [confirmBuy, setConfirmBuy] = useState(null); // product being purchased
+  const [agreed, setAgreed] = useState(false);
+  const isTeam = member?.role === "admin";
+
+  const load = () => {
+    const token = getMemberToken();
+    fetch("/api/resources?products=1", { headers: token ? { Authorization: "Bearer " + token } : {} })
+      .then(r => r.ok ? r.json() : null).then(d => d && setData(d)).catch(() => {});
+  };
+  useEffect(() => { load(); }, [member?.id]);
+
+  const usd = (c) => "$" + (c / 100).toLocaleString(undefined, { minimumFractionDigits: c % 100 ? 2 : 0 });
+
+  const buy = async () => {
+    if (!member) { onSignIn && onSignIn(); return; }
+    try {
+      const res = await fetch("/api/stripe", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ item: "product", product_id: confirmBuy.id, agreed_ip: agreed }) });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Checkout failed");
+      window.location.href = d.url;
+    } catch (e) { alert(e.message); }
+  };
+
+  if (!data) return <div style={{ background: "#000", minHeight: "100vh", padding: "160px 20px", textAlign: "center", color: "#8a7070", fontFamily: font }}>Loading…</div>;
+
+  if (!data.live && !isTeam) {
+    return (
+      <div style={{ background: "#000", minHeight: "100vh", padding: "160px 20px", textAlign: "center" }}>
+        <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: 38, color: "#f5e8e8", marginBottom: 12 }}>The shop opens soon.</h1>
+        <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font }}>Templates, guides, and tools from Dr. Merritt's playbook — coming to your account.</p>
+      </div>
+    );
+  }
+
+  const products = (data.products || []).filter(p => isTeam ? true : p.active !== false);
+  return (
+    <div style={{ background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        {isTeam && !data.live && (
+          <div style={{ background: "#12060a", border: "1px solid #b8010150", borderRadius: 10, padding: "12px 20px", marginBottom: 24, color: "#e0c4c4", fontSize: 13, fontFamily: font, fontWeight: 700 }}>
+            Hidden from members — you're seeing this because you're team. Flip it live in GroundUp Admin → Shop.
+          </div>
+        )}
+        <div style={{ textAlign: "center", marginBottom: 48 }}>
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Digital Products</div>
+          <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(34px,5vw,52px)", color: "#f5e8e8", marginBottom: 12 }}>Tools from the playbook.</h1>
+          <p style={{ color: "#8a7070", fontSize: 15, fontFamily: font, maxWidth: 520, margin: "0 auto", lineHeight: 1.8 }}>Templates, guides, and working documents from Dr. Merritt's own deals. Buy once — it lives in your account forever.</p>
+        </div>
+        {products.length === 0 ? (
+          <div style={{ textAlign: "center", color: "#6a6b69", fontFamily: font, padding: 60 }}>Nothing on the shelves yet.</div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
+            {products.map(p => (
+              <div key={p.id} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: "column", opacity: isTeam && p.active === false ? 0.5 : 1 }}>
+                {p.cover_url ? (
+                  <img src={p.cover_url} alt={p.title} style={{ width: "100%", aspectRatio: "16/10", objectFit: "cover", display: "block" }} />
+                ) : (
+                  <div style={{ aspectRatio: "16/10", background: "#12060a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <FileText size={36} color="#b8010160" />
+                  </div>
+                )}
+                <div style={{ padding: "20px 22px", flex: 1, display: "flex", flexDirection: "column" }}>
+                  <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 20, color: "#f0d8d8", marginBottom: 6 }}>{p.title}{isTeam && p.active === false ? " (hidden)" : ""}</div>
+                  {p.description && <div style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginBottom: 14, flex: 1 }}>{p.description}</div>}
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 14 }}>
+                    {p.value_cents > p.price_cents && <span style={{ color: "#6a5050", fontSize: 14, fontFamily: serif, fontWeight: 700, textDecoration: "line-through" }}>{usd(p.value_cents)} value</span>}
+                    <span style={{ color: "#b80101", fontSize: 24, fontFamily: serif, fontWeight: 700 }}>{usd(p.price_cents)}</span>
+                  </div>
+                  {p.owned ? (
+                    <a href={p.delivery_url} target="_blank" rel="noreferrer" style={{ display: "block", textAlign: "center", background: "transparent", color: "#22c55e", border: "1px solid #22c55e60", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, textDecoration: "none" }}>✓ Yours — download</a>
+                  ) : (
+                    <button onClick={() => { setConfirmBuy(p); setAgreed(false); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Buy — {usd(p.price_cents)}</button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Purchase disclaimer — must agree before checkout */}
+        {confirmBuy && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setConfirmBuy(null)}>
+            <div onClick={e => e.stopPropagation()} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 18, padding: "32px 34px", maxWidth: 460, width: "100%" }}>
+              <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "#f5e8e8", marginBottom: 8 }}>{confirmBuy.title}</div>
+              <div style={{ color: "#b80101", fontFamily: serif, fontWeight: 700, fontSize: 22, marginBottom: 16 }}>{usd(confirmBuy.price_cents)}</div>
+              <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", marginBottom: 18 }}>
+                <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 3 }} />
+                <span style={{ color: "#c8a8a8", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>
+                  I agree this document is the exclusive intellectual property of Dr. Gina Merritt, licensed for my personal use only — I will not sell, share, replicate, or redistribute it in any form.
+                </span>
+              </label>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button disabled={!agreed} onClick={buy} style={{ flex: 1, background: agreed ? "#b80101" : "#2a1010", color: agreed ? "#fff" : "#6a5050", border: "none", borderRadius: 10, padding: "13px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: agreed ? "pointer" : "not-allowed" }}>Agree &amp; continue to payment</button>
+                <button onClick={() => setConfirmBuy(null)} style={{ background: "transparent", color: "#8a7070", border: "1px solid #2a0000", borderRadius: 10, padding: "13px 18px", fontFamily: font, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Admin: create and manage shop products — uploads, prices, value framing, visibility
+function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
+  const [data, setData] = useState(null);
+  const [form, setForm] = useState({ title: "", description: "", price: "", value: "", delivery_url: "", cover_url: "" });
+  const [msg, setMsg] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const authHeaders = () => ({ Authorization: "Bearer " + sessionStorage.getItem("adminToken") });
+  const load = () => fetch("/api/resources?products=1", { headers: authHeaders() }).then(r => r.json()).then(setData).catch(() => {});
+  useEffect(() => { load(); }, []);
+  const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 5000); };
+  const api2 = async (body) => {
+    const res = await fetch("/api/resources", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify(body) });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.error || "Failed");
+    return d;
+  };
+  const upload = async (file, kind, set) => {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`/api/lesson-pdfs?kind=${kind}`, { method: "POST", headers: authHeaders(), body: fd });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Upload failed");
+      set(d.url);
+      flash(true, kind === "cover" ? "Cover uploaded." : "PDF uploaded — attach it by saving the product.");
+    } catch (e) { flash(false, e.message); } finally { setBusy(false); }
+  };
+  const save = async () => {
+    try {
+      await api2({ action: "product_save", title: form.title, description: form.description, price_cents: Math.round(parseFloat(form.price || "0") * 100), value_cents: form.value ? Math.round(parseFloat(form.value) * 100) : null, delivery_url: form.delivery_url, cover_url: form.cover_url });
+      setForm({ title: "", description: "", price: "", value: "", delivery_url: "", cover_url: "" });
+      flash(true, "Product added to the shop.");
+      await load();
+    } catch (e) { flash(false, e.message); }
+  };
+  if (!data) return <div style={{ color: "#666666", fontFamily: "'DM Sans', sans-serif" }}>Loading…</div>;
+  const section = { background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 20 };
+  return (
+    <div>
+      {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
+
+      <div style={section}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 6 }}>
+          <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>Shop visibility</div>
+          <button onClick={async () => { try { const d = await api2({ action: "shop_live", live: !data.live }); flash(true, d.live ? "The shop is LIVE — members can see and buy." : "Shop hidden — members see 'coming soon.'"); await load(); } catch (e) { flash(false, e.message); } }}
+            style={{ ...(data.live ? btnGhost : btnRed) }}>{data.live ? "Shop is LIVE — click to hide" : "Shop is HIDDEN — click to go live"}</button>
+        </div>
+        <p style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", margin: 0 }}>The marketplace lives at /shop (not in the site nav). While hidden, members see a "coming soon" page; you see everything.</p>
+      </div>
+
+      <div style={section}>
+        <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Add a product</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", columnGap: 20, rowGap: 16, marginBottom: 14 }}>
+          <div><label style={lbl}>Title</label><input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Development Budget Template" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div><label style={lbl}>Price ($)</label><input type="number" min="1" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} placeholder="49.99" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div><label style={lbl}>Value ($, shown struck through)</label><input type="number" min="0" step="0.01" value={form.value} onChange={e => setForm({ ...form, value: e.target.value })} placeholder="250" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+        </div>
+        <div style={{ marginBottom: 14 }}><label style={lbl}>Description</label><textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3} placeholder="What it is, what deal it came from, why it's worth it" style={{ ...inp, maxWidth: "none", marginBottom: 0, resize: "vertical", width: "100%", boxSizing: "border-box" }} /></div>
+        <div style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 16 }}>
+          <div>
+            <label style={lbl}>The document (PDF) {form.delivery_url && <span style={{ color: "#1a7a3a" }}>✓ uploaded</span>}</label>
+            <input type="file" accept=".pdf" disabled={busy} onChange={e => upload(e.target.files[0], "file", (u) => setForm(f => ({ ...f, delivery_url: u })))} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12 }} />
+          </div>
+          <div>
+            <label style={lbl}>Cover image {form.cover_url && <span style={{ color: "#1a7a3a" }}>✓ uploaded</span>}</label>
+            <input type="file" accept=".png,.jpg,.jpeg,.webp" disabled={busy} onChange={e => upload(e.target.files[0], "cover", (u) => setForm(f => ({ ...f, cover_url: u })))} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12 }} />
+          </div>
+        </div>
+        <button onClick={save} disabled={busy || !form.title || !form.price || !form.delivery_url} style={{ ...btnRed, opacity: busy || !form.title || !form.price || !form.delivery_url ? 0.5 : 1 }}>Add to Shop</button>
+        {!form.delivery_url && <span style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 12 }}>Upload the PDF first — that's what buyers receive.</span>}
+      </div>
+
+      <div style={section}>
+        <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Products ({(data.products || []).length})</div>
+        {(data.products || []).map(p => (
+          <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", padding: "12px 0", borderBottom: "1px solid #f2efe8" }}>
+            {p.cover_url && <img src={p.cover_url} alt="" style={{ width: 52, height: 34, objectFit: "cover", borderRadius: 6 }} />}
+            <div style={{ flex: 1, minWidth: 180 }}>
+              <span style={{ color: "#222222", fontSize: 13.5, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{p.title}</span>
+              <span style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 10 }}>
+                ${(p.price_cents / 100).toFixed(2)}{p.value_cents ? ` (value $${(p.value_cents / 100).toFixed(0)})` : ""}{p.delivery_url ? "" : " · NO FILE"}
+              </span>
+            </div>
+            <button onClick={async () => { try { await api2({ action: "product_save", ...p, active: !(p.active !== false) }); flash(true, p.active !== false ? "Hidden from the shop." : "Visible in the shop."); await load(); } catch (e) { flash(false, e.message); } }}
+              style={{ ...btnGhost, fontSize: 11, padding: "5px 12px", color: p.active !== false ? "#1a7a3a" : "#9a9a9a" }}>{p.active !== false ? "Visible ✓" : "Hidden"}</button>
+            <button onClick={async () => { if (!window.confirm(`Delete "${p.title}"? Buyers keep their copies.`)) return; try { await api2({ action: "product_delete", id: p.id }); flash(true, "Deleted."); await load(); } catch (e) { flash(false, e.message); } }}
+              style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Delete</button>
+          </div>
+        ))}
+        {(data.products || []).length === 0 && <div style={{ color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No products yet — add your first one above.</div>}
       </div>
     </div>
   );
@@ -4269,7 +4477,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "admin-status", "advisory"];
+  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "admin-status", "admin-shop", "advisory", "shop"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
     return PAGES.includes(p) ? p : (sessionStorage.getItem("activePage") || "home");
@@ -4298,6 +4506,7 @@ export default function App() {
   // at signup, even if they browse around first
   useEffect(() => {
     // Two shapes: /invite/dakotah-jennifer (the pretty one) and ?ref=code
+    if (/^\/shop\/?$/i.test(window.location.pathname)) { setActivePage("shop"); window.history.replaceState({}, "", "/"); }
     const invite = window.location.pathname.match(/^\/invite\/([\w-]+)/i);
     const ref = invite ? invite[1] : new URLSearchParams(window.location.search).get("ref");
     if (ref) {
@@ -4585,6 +4794,8 @@ export default function App() {
       {activePage === "home" && <HomePage setActivePage={navigateTo} onSignUp={openSignup} currentUser={currentUser} eventInvited={eventInvited} />}
       {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} /></div>}
       {activePage === "advisory" && <RetainerPage member={member} setActivePage={navigateTo} />}
+      {activePage === "shop" && <ShopPage member={member} onSignIn={() => openSignup("Free")} />}
+      {member?.role === "admin" && activePage === "admin-shop" && <TeamPage><h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#171106", marginBottom: 8 }}>Shop</h2><p style={{ color: "#6a5c40", fontSize: 13, marginBottom: 24, fontFamily: "'DM Sans', sans-serif" }}>Digital products — upload PDFs, set prices and value framing, control visibility.</p><ShopAdmin btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {activePage === "resources" && (member?.role === "admin" ? <TeamPage><ResourcesTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage> : <ResourcesPage member={member} onUpgrade={() => navigateTo("pricing")} />)}
       {activePage === "membership" && <MemberPage member={member} setActivePage={navigateTo} onSignIn={() => openSignup("Free")} onSignOut={() => { clearMember(); setMember(null); sessionStorage.removeItem("currentUser"); setCurrentUser(null); navigateTo("home"); }} />}
       {activePage === "community" && <CommunityPage member={member} isAdmin={member?.role === "admin"} onSignIn={() => member ? navigateTo("pricing") : openSignup("Basic")} />}

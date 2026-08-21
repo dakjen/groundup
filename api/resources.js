@@ -9,6 +9,69 @@ export default async function handler(req, res) {
   const admin = getAdmin(req);
 
   try {
+    // ── Digital products shop ──
+    // Hidden until settings.shop_live = '1'. Admin always sees everything;
+    // members see active products, plus download links ONLY for what they own.
+    if (req.method === 'GET' && req.query.products === '1') {
+      const [liveRow] = await sql`SELECT value FROM settings WHERE key = 'shop_live'`;
+      const live = liveRow?.value === '1';
+      if (admin) {
+        const rows = await sql`SELECT * FROM products ORDER BY position, id`;
+        return res.json({ live, admin: true, products: rows });
+      }
+      if (!live) return res.json({ live: false, products: [] });
+      const session = getSession(req);
+      let owned = [];
+      if (session?.uid) {
+        const ents = await sql`SELECT course_id FROM entitlements WHERE user_id = ${session.uid} AND course_id LIKE 'prod:%'`;
+        owned = ents.map(e => Number(e.course_id.slice(5)));
+      }
+      const rows = await sql`SELECT id, title, description, price_cents, value_cents, cover_url, delivery_url FROM products WHERE active ORDER BY position, id`;
+      // delivery_url never leaves the server unless this buyer owns the product
+      const products = rows.map(p => ({
+        id: p.id, title: p.title, description: p.description,
+        price_cents: p.price_cents, value_cents: p.value_cents, cover_url: p.cover_url,
+        owned: owned.includes(p.id),
+        delivery_url: owned.includes(p.id) ? p.delivery_url : undefined,
+      }));
+      return res.json({ live: true, products });
+    }
+
+    if (req.method === 'POST' && req.body && req.body.action === 'product_save') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const { id, title, description, price_cents, value_cents, cover_url, delivery_url, active, position } = req.body;
+      if (!title || !Number.isFinite(Number(price_cents)) || Number(price_cents) < 100) {
+        return res.status(400).json({ error: 'Title and a price of at least $1 required' });
+      }
+      const price = Math.round(Number(price_cents));
+      const value = Number.isFinite(Number(value_cents)) && Number(value_cents) > 0 ? Math.round(Number(value_cents)) : null;
+      if (id) {
+        const [row] = await sql`UPDATE products SET
+          title = ${String(title).slice(0, 200)}, description = ${description || null},
+          price_cents = ${price}, value_cents = ${value},
+          cover_url = ${cover_url || null}, delivery_url = ${delivery_url || null},
+          active = ${active !== false}, position = ${Number(position) || 0}
+          WHERE id = ${Number(id)} RETURNING *`;
+        return res.json({ product: row });
+      }
+      const [row] = await sql`INSERT INTO products (title, description, price_cents, value_cents, cover_url, delivery_url, active, position, created_at)
+        VALUES (${String(title).slice(0, 200)}, ${description || null}, ${price}, ${value}, ${cover_url || null}, ${delivery_url || null}, ${active !== false}, ${Number(position) || 0}, NOW()) RETURNING *`;
+      return res.status(201).json({ product: row });
+    }
+
+    if (req.method === 'POST' && req.body && req.body.action === 'product_delete') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      await sql`DELETE FROM products WHERE id = ${Number(req.body.id)}`;
+      return res.json({ success: true });
+    }
+
+    if (req.method === 'POST' && req.body && req.body.action === 'shop_live') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const val = req.body.live ? '1' : '0';
+      await sql`INSERT INTO settings (key, value) VALUES ('shop_live', ${val}) ON CONFLICT (key) DO UPDATE SET value = ${val}`;
+      return res.json({ success: true, live: val === '1' });
+    }
+
     // ── Course catalog: titles and descriptions only, safe to show anyone ──
     if (req.method === 'GET' && req.query.courses === '1') {
       const rows = await sql`SELECT id, title, description, stage, stage_color, duration, lessons FROM courses ORDER BY position, id`;
