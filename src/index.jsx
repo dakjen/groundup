@@ -1099,7 +1099,7 @@ const plans = [
     ],
     locked: [],
     limited: true,
-    value: "Over $5,300 in annual value — advisory hours alone are worth $1,650 at Dr. Merritt's rate",
+    value: "This isn't about the math — it's a direct line to Dr. Merritt, and one of only 15 seats",
   },
   {
     name: "Senior Advisor",
