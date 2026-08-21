@@ -4660,6 +4660,19 @@ export default function App() {
   // Hidden, public waitlist page — shareable at /waitlist, linked from nowhere
   const isWaitlistPage = window.location.pathname.replace(/\/+$/, "") === "/waitlist" || new URLSearchParams(window.location.search).has("waitlist");
   if (isWaitlistPage && !isAdmin && !showAdminLogin) {
+    // Once insiders have access, the insider waitlist is CLOSED — the page says so
+    if (insiderAt && new Date(insiderAt).getTime() <= Date.now()) {
+      return (
+        <div style={{ background: "#000", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, textAlign: "center" }}>
+          <div>
+            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Elite Insider Waitlist</div>
+            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "#f5e8e8", marginBottom: 14 }}>The insider list is closed.</h1>
+            <p style={{ color: "#8a7070", fontSize: 15, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8, maxWidth: 440, margin: "0 auto 28px" }}>The doors are open for insiders. If you're on the list, check your email for your personal invitation — or sign in to get started.</p>
+            <button onClick={() => { window.history.replaceState({}, "", "/"); window.location.reload(); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "14px 30px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Go to GroundUp →</button>
+          </div>
+        </div>
+      );
+    }
     // The secret shareable link — insider list, insider countdown (first access)
     return <LaunchPage launchAt={insiderAt || launchAt} list="insider" eliteSpots={eliteSpots} onAdmin={() => setShowAdminLogin(true)} />;
   }

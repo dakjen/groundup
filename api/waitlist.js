@@ -191,6 +191,15 @@ export default async function handler(req, res) {
     if (action === 'join') {
       const { name, email, phone, learn, pain, budget, source, list } = req.body;
       const safeList = list === 'general' ? 'general' : 'insider';
+      // The insider waitlist CLOSES once insiders get access — after the insider
+      // launch passes, the door is shut (latecomers use the general list).
+      if (safeList === 'insider') {
+        const [ins] = await sql`SELECT value FROM settings WHERE key = 'launch_insider_at'`;
+        if (ins?.value && new Date(ins.value).getTime() <= Date.now()) {
+          return res.status(403).json({ error: 'The insider waitlist is closed — doors are open for insiders. Sign in or join the general list.' });
+        }
+      }
+
       if (!name || !email) return res.status(400).json({ error: 'Name and email required' });
       if (!phone || !String(phone).trim()) return res.status(400).json({ error: 'Phone number required' });
       if (!learn || !String(learn).trim()) return res.status(400).json({ error: 'Tell us what you want to learn' });
