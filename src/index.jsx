@@ -1222,7 +1222,7 @@ function PricingPage({ onSignUp }) {
           <p style={{ color: "#7a6151", fontSize: 15, maxWidth: 420, margin: "0 auto", lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif" }}>Start free. Upgrade when you're ready. Cancel anytime.</p>
           <div style={{ marginTop: 26, display: "inline-flex", alignItems: "center", gap: 10, background: "#0d0404", border: "1px solid #b8010130", borderRadius: 12, padding: "14px 22px" }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
-            <span style={{ color: "#c8a8a8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>The waitlist opens in September.</span>
+            <span style={{ color: "#c8a8a8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>The waitlist opens October 1.</span>
           </div>
         </div>
 
@@ -4640,7 +4640,7 @@ export default function App() {
   // The general waitlist itself opens Sept 1 — before that, the popup just
   // announces the date instead of showing the form. (/waitlist insider page
   // is unaffected — insiders get in by direct link the whole time.)
-  const WAITLIST_OPENS = new Date("2026-09-01T00:00:00-04:00");
+  const WAITLIST_OPENS = new Date("2026-10-01T00:00:00-04:00");
   const waitlistOpen = Date.now() >= WAITLIST_OPENS.getTime();
   const [showWaitlistPop, setShowWaitlistPop] = useState(false);
   const openSignup = (tier = "Free") => {
@@ -4724,7 +4724,7 @@ export default function App() {
           <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 720, position: "relative" }}>
             <button onClick={() => setShowWaitlistPop(false)} style={{ position: "absolute", top: -14, right: -6, zIndex: 2, background: "#1a0808", color: "#c8a8a8", border: "1px solid #2a0000", borderRadius: "50%", width: 34, height: 34, cursor: "pointer", fontSize: 16, fontWeight: 700 }}>×</button>
             <div style={{ textAlign: "center", marginBottom: 18 }}>
-              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#f5e8e8" }}>{waitlistOpen ? "Doors open soon." : "The waitlist opens September 1."}</div>
+              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#f5e8e8" }}>{waitlistOpen ? "Doors open soon." : "The waitlist opens October 1."}</div>
               <div style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>{waitlistOpen ? "Get on the list and you'll be invited the moment we launch." : "Check back then to claim your spot — or reach out to Dr. Gina Merritt for early access to the insider waitlist."}</div>
               <div style={{ color: "#e0c4c4", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, marginTop: 10 }}>✦ The first 10 on the waitlist get a special treat.</div>
               {launchAt && new Date(launchAt) > new Date() && (() => {
