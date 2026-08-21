@@ -205,7 +205,7 @@ export function waitlistConfirmEmail(name, founding, first10, list = 'insider') 
           <span style="color:#b80101;">→</span> Why affordable housing doesn't pencil (and how to close anyway)<br/>
           <span style="color:#b80101;">→</span> Zoning, entitlements, design &amp; construction, and life after opening day<br/>
           <span style="color:#b80101;">→</span> Live Lunch &amp; Learns, work sessions &amp; the Opportunity Board</p>
-        <p style="color:#a89080;font-size:14px;line-height:1.9;">All-access to the course library is a <strong style="color:#f0d8d8;">$250/month value on its own</strong> — included in every membership. And at the top, Elite isn't about the math at all: it's a <strong style="color:#f0d8d8;">direct line to Dr. Merritt herself</strong> — and one of only 15 seats. New expertise is added every quarter.</p>
+        <p style="color:#a89080;font-size:14px;line-height:1.9;">Every membership includes all-access to the course library — a <strong style="color:#f0d8d8;">$3,000+ annual value on its own</strong> — and top-tier members get over <strong style="color:#f0d8d8;">$9,000 a year in value</strong>, including a direct line to Dr. Merritt herself and one of only 15 seats. New expertise is added every quarter.</p>
       </div>`;
   if (list === 'insider') {
     return {
