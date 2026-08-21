@@ -179,6 +179,9 @@ async function fulfill(sql, session) {
       // cancelled_at = NULL stops the 15-day deletion clock for members who rejoin
       await sql`UPDATE users SET tier = ${tier}, membership_status = 'active', cancelled_at = NULL, stripe_customer_id = ${session.customer || null} WHERE id = ${userId}`;
     }
+    if (md.gift) {
+      await sql`UPDATE referrals SET used = TRUE, used_at = NOW(), status = 'used' WHERE code = ${md.gift} AND kind = 'month_free'`;
+    }
     // The cap is checked before checkout, but two people can clear that check at
     // the same time. They've paid, so honor the seat — and tell the team it happened.
     if (item === 'sub_Elite') {
@@ -442,11 +445,25 @@ export default async function handler(req, res) {
       cancel_url: `${base}/?checkout=cancelled`,
     };
 
+    // Month-free gift link: locked to the recipient's email, single use — a
+    // forwarded link applies to nobody else. Wins over every other discount.
+    let discounted = false;
+    if (body.gift && product.mode === 'subscription') {
+      const [gift] = await sql`SELECT id FROM referrals WHERE code = ${String(body.gift).trim().toUpperCase()}
+        AND kind = 'month_free' AND used = FALSE AND expires_at > NOW() AND email = ${user.email}`;
+      if (gift) {
+        let coupon;
+        try { coupon = (await stripe.coupons.retrieve('MONTHFREE')).id; }
+        catch { coupon = (await stripe.coupons.create({ id: 'MONTHFREE', percent_off: 100, duration: 'once', name: 'Gift — first month free' })).id; }
+        params.discounts = [{ coupon }];
+        params.metadata.gift = String(body.gift).trim().toUpperCase();
+        discounted = true;
+      }
+    }
     // Stretch offer: 10% off first year — only if the recommendation engine
     // actually granted it to this email for this exact tier (URL params alone
     // can't unlock it). Takes precedence over the one-month L&L perk.
-    let discounted = false;
-    if (String(body.promo || '').startsWith('stretch') && product.mode === 'subscription' && product.tier) {
+    if (!discounted && String(body.promo || '').startsWith('stretch') && product.mode === 'subscription' && product.tier) {
       const [wl] = await sql`SELECT stretch_offer FROM waitlist WHERE email = ${user.email}`;
       const [offerTier, offerPct] = String(wl?.stretch_offer || '').split('|');
       const pct = [10, 15].includes(Number(offerPct)) ? Number(offerPct) : null;

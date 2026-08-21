@@ -121,6 +121,24 @@ export function inviteEmail(name, link) {
   };
 }
 
+// Personal month-free gift: one link, one person, one use — locked to their email
+export function giftEmail(name, link, personalMessage) {
+  return {
+    subject: `${name.split(' ')[0]}, your first month of GroundUp is on Dr. Merritt`,
+    html: `
+      <div style="font-size:10px;color:#b80101;letter-spacing:3px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">A personal gift</div>
+      <h2 style="color:#f5e8e8;font-size:26px;margin:0 0 14px;">This one's on us, ${name.split(' ')[0]}.</h2>
+      ${personalMessage ? `<div style="background:#12060a;border-left:3px solid #b80101;padding:14px 20px;margin:0 0 16px;">
+        <p style="color:#e0c4c4;font-size:14px;line-height:1.9;margin:0;font-style:italic;">${String(personalMessage).replace(/</g, '&lt;').replace(/\n/g, '<br/>')}</p>
+        <p style="color:#8a7070;font-size:12px;margin:8px 0 0;">— Dr. Gina Merritt &amp; the GroundUp team</p>
+      </div>` : ''}
+      <p style="color:#a89080;font-size:14px;line-height:1.9;">Dr. Gina Merritt wants you inside GroundUp — her full development curriculum, the community, and everything she fought 30+ years to learn. So your <strong style="color:#f0d8d8;">first month is free</strong>, with her compliments.</p>
+      <p style="color:#a89080;font-size:14px;line-height:1.9;">This link is <strong style="color:#f0d8d8;">yours alone</strong> — it works once, only with this email address, so hold onto it.</p>
+      <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:14px 30px;font-weight:bold;font-size:15px;text-decoration:none;margin:6px 0;">Claim your free month →</a>
+      <p style="color:#7a6060;font-size:12px;line-height:1.7;">Pick any membership at checkout — the first month comes off automatically.</p>`,
+  };
+}
+
 export function dmReplyEmail(name) {
   return {
     subject: 'Dr. Merritt\\u2019s team replied to your message',

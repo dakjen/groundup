@@ -1249,7 +1249,7 @@ function PricingPage({ onSignUp }) {
               if (plan.tier === "Advisor") { window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("Senior Advisor — engagement call"); return; }
               // Elite is capped — send full-cohort visitors to the waitlist, not to checkout
               if (plan.limited && elite?.full) { window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("Elite waitlist — notify me when a seat opens"); return; }
-              if (getMember()) { startCheckout("sub_" + plan.tier); return; }
+              if (getMember()) { startCheckout("sub_" + plan.tier, { gift: localStorage.getItem("guGift") || undefined, promo: localStorage.getItem("guPromo") || undefined }); return; }
               onSignUp && onSignUp(plan.tier);
             }} />
           ))}
@@ -3544,6 +3544,54 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
     return { label: `${days}d left`, color: "#b80101" };
   };
 
+  // ── Month-free gifts: personal single-use links, solo or by CSV ──
+  const [giftForm, setGiftForm] = useState({ name: "", email: "" });
+  const [csvPeople, setCsvPeople] = useState(null); // parsed [{name,email}]
+  const [giftMsgText, setGiftMsgText] = useState("");
+  const [sending, setSending] = useState(false);
+  const gifts = invites.filter(i => i.kind === "month_free");
+  const regularInvites = invites.filter(i => (i.kind || "invite") !== "month_free");
+
+  const createGift = async () => {
+    if (!giftForm.name || !giftForm.email) { flash(false, "Name and email required."); return; }
+    try {
+      const g = await call("POST", { ...giftForm, kind: "month_free" });
+      navigator.clipboard && navigator.clipboard.writeText(g.link);
+      flash(true, `Gift link created for ${g.email} — copied to your clipboard. Only that email can redeem it, once.`);
+      setGiftForm({ name: "", email: "" });
+      await load();
+    } catch (e) { flash(false, e.message); }
+  };
+
+  const parseCsv = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const lines = String(reader.result).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      const people = [];
+      for (const line of lines) {
+        const cells = line.split(",").map(c => c.trim().replace(/^"|"$/g, ""));
+        const email = cells.find(c => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c));
+        if (!email || /^email$/i.test(email)) continue;
+        const name = cells.filter(c => c !== email && c && !/^(name|email)$/i.test(c)).join(" ").trim();
+        people.push({ name: name || email.split("@")[0], email: email.toLowerCase() });
+      }
+      if (!people.length) { flash(false, "No emails found in that file — expected columns like name,email."); return; }
+      setCsvPeople(people);
+    };
+    reader.readAsText(file);
+  };
+
+  const sendBulkGifts = async () => {
+    setSending(true);
+    try {
+      const d = await call("POST", { kind: "month_free_bulk", people: csvPeople, message: giftMsgText });
+      flash(true, `Gift emails sent to ${d.sent} of ${d.total}${d.skipped ? ` (${d.skipped} skipped — invalid or already gifted)` : ""}. Each person got their own single-use link.`);
+      setCsvPeople(null); setGiftMsgText("");
+      await load();
+    } catch (e) { flash(false, e.message); } finally { setSending(false); }
+  };
+
   if (loading) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
 
   return (
@@ -3552,6 +3600,52 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
       <p style={{ color: "#666666", fontSize: 13, marginBottom: 32 }}>Send a personal invite — they get a branded email explaining GroundUp with a 7-day trial link.</p>
 
       {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
+
+      {/* Month-free gifts */}
+      <div style={{ background: "#ffffff", border: "1px solid #b8010140", borderRadius: 14, padding: 28, marginBottom: 28 }}>
+        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Month-Free Gifts</div>
+        <p style={{ color: "#666666", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 18 }}>
+          Each person gets their own link, good for <strong>one use only</strong> and locked to <strong>their email address</strong> — forwarding it does nothing for anyone else. At checkout their first month comes off automatically, on any plan.
+        </p>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 20 }}>
+          <div style={{ flex: 1, minWidth: 160 }}><label style={lbl}>Name</label><input value={giftForm.name} onChange={e => setGiftForm({ ...giftForm, name: e.target.value })} placeholder="Their name" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div style={{ flex: 1, minWidth: 200 }}><label style={lbl}>Email (the link only works for this address)</label><input value={giftForm.email} onChange={e => setGiftForm({ ...giftForm, email: e.target.value })} placeholder="them@email.com" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <button onClick={createGift} style={btnRed}>Create &amp; copy link</button>
+        </div>
+
+        <div style={{ borderTop: "1px solid #f2efe8", paddingTop: 18 }}>
+          <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Or invite a whole list (CSV)</div>
+          <p style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 10 }}>Upload a CSV with name and email columns. You'll see who's in it before anything sends — then each person gets the gift email with their own personal link.</p>
+          <input type="file" accept=".csv,.txt" onChange={e => { parseCsv(e.target.files[0]); e.target.value = ""; }} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, marginBottom: 12 }} />
+          {csvPeople && (
+            <div style={{ background: "#faf8f4", border: "1px solid #eeebe4", borderRadius: 10, padding: "14px 18px" }}>
+              <div style={{ color: "#222222", fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>{csvPeople.length} people ready</div>
+              <div style={{ maxHeight: 140, overflowY: "auto", marginBottom: 12 }}>
+                {csvPeople.map((p, i) => <div key={i} style={{ fontSize: 12, color: "#555555", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.9 }}>{p.name} — {p.email}</div>)}
+              </div>
+              <label style={lbl}>Personal message (appears in the email, from Dr. Merritt &amp; the team)</label>
+              <textarea value={giftMsgText} onChange={e => setGiftMsgText(e.target.value)} rows={3} maxLength={2000} placeholder="You've been part of this journey from the beginning — we want you inside first…" style={{ ...inp, maxWidth: "none", width: "100%", boxSizing: "border-box", resize: "vertical", marginBottom: 12 }} />
+              <div style={{ display: "flex", gap: 10 }}>
+                <button disabled={sending} onClick={sendBulkGifts} style={{ ...btnRed, opacity: sending ? 0.6 : 1 }}>{sending ? "Sending…" : `Confirm — email ${csvPeople.length} personal gift links`}</button>
+                <button disabled={sending} onClick={() => { setCsvPeople(null); setGiftMsgText(""); }} style={btnGhost}>Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {gifts.length > 0 && (
+          <div style={{ borderTop: "1px solid #f2efe8", paddingTop: 14, marginTop: 18 }}>
+            <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Gifts sent ({gifts.length}) · {gifts.filter(g => g.used).length} redeemed</div>
+            {gifts.map(g => (
+              <div key={g.id} style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", padding: "7px 0", borderBottom: "1px solid #f7f4ee" }}>
+                <div style={{ flex: 1, minWidth: 180, fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", color: "#222222", fontWeight: 700 }}>{g.name} <span style={{ color: "#9a9a9a", fontWeight: 400 }}>({g.email})</span></div>
+                <span style={{ fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", color: g.used ? "#22c55e" : new Date(g.expires_at) < new Date() ? "#9a9a9a" : "#b80101" }}>{g.used ? "Redeemed ✓" : new Date(g.expires_at) < new Date() ? "Expired" : "Waiting"}</span>
+                {!g.used && <button onClick={() => { navigator.clipboard && navigator.clipboard.writeText(`${window.location.origin}/gift/${g.code}`); flash(true, "Gift link copied."); }} style={{ ...btnGhost, fontSize: 11, padding: "4px 10px" }}>Copy link</button>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 28 }}>
         <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Send an Invite</div>
@@ -3568,11 +3662,11 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
         </div>
       </div>
 
-      {invites.length === 0 ? (
+      {regularInvites.length === 0 ? (
         <div style={{ background: "#ececec", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No invites yet.</div>
       ) : (
         <div>
-          {invites.map(inv => {
+          {regularInvites.map(inv => {
             const st = statusOf(inv);
             return (
               <div key={inv.id} style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
@@ -4507,6 +4601,8 @@ export default function App() {
   useEffect(() => {
     // Two shapes: /invite/dakotah-jennifer (the pretty one) and ?ref=code
     if (/^\/shop\/?$/i.test(window.location.pathname)) { setActivePage("shop"); window.history.replaceState({}, "", "/"); }
+    const gift = window.location.pathname.match(/^\/gift\/([\w-]+)/i);
+    if (gift) { localStorage.setItem("guGift", gift[1].toUpperCase()); window.history.replaceState({}, "", "/"); }
     const invite = window.location.pathname.match(/^\/invite\/([\w-]+)/i);
     const ref = invite ? invite[1] : new URLSearchParams(window.location.search).get("ref");
     if (ref) {

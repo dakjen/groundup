@@ -23,6 +23,7 @@ const STATEMENTS = [
     id SERIAL PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, code TEXT UNIQUE NOT NULL,
     status TEXT DEFAULT 'pending', used BOOLEAN DEFAULT FALSE, used_at TIMESTAMP,
     expires_at TIMESTAMP NOT NULL, created_at TIMESTAMP DEFAULT NOW())`,
+  `ALTER TABLE referrals ADD COLUMN IF NOT EXISTS kind TEXT DEFAULT 'invite'`,
   `CREATE TABLE IF NOT EXISTS entitlements (
     id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     course_id TEXT NOT NULL, source TEXT DEFAULT 'manual', expires_at TIMESTAMP,

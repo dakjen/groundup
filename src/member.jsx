@@ -115,7 +115,7 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
       onAuthed(data.user);
       if (mode === "signup" && tier !== "Free" && window.startCheckout) {
         // straight to secure payment — carrying any stretch-offer promo with them
-        window.startCheckout("sub_" + tier, { promo: localStorage.getItem("guPromo") || undefined });
+        window.startCheckout("sub_" + tier, { promo: localStorage.getItem("guPromo") || undefined, gift: localStorage.getItem("guGift") || undefined });
       }
     } catch (err) {
       setError(err.message);
@@ -158,6 +158,11 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
                   </button>
                 ))}
               </div>
+              {localStorage.getItem("guGift") && mode === "signup" && (
+                <div style={{ background: "#22c55e12", border: "1px solid #22c55e50", borderRadius: 8, padding: "10px 14px", marginBottom: 14, color: "#22c55e", fontSize: 13, fontFamily: font, fontWeight: 700 }}>
+                  A gift is attached to your invitation — your first month is free. It works with the email your link was sent to.
+                </div>
+              )}
               {tier !== "Free" && (
                 <div style={{ marginTop: 10, background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 8, padding: "10px 14px", color: "#b8a060", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>
                   After you create your account, you&rsquo;ll go straight to secure checkout for {TIER_LABELS[tier] || tier}. Your plan activates the moment payment clears.
