@@ -1,5 +1,5 @@
 import { neon } from '@neondatabase/serverless';
-import { getSession, getAdmin } from './_utils.js';
+import { getSession, getAdmin, TIER_RANK, benefitGate } from './_utils.js';
 import { sendEmail, lnlAccessEmail, addLnlContact } from './_email.js';
 
 // Lunch & Learn onboarding: $69.99 buys 6 months of access (entitlement
@@ -122,13 +122,38 @@ export default async function handler(req, res) {
         recordings = recRow?.value ? JSON.parse(recRow.value) : [];
       }
       const allEvents = await getEvents(sql);
-      const upcomingEvents = allEvents.filter(e => new Date(e.date) > new Date());
+      // Lunch & Learns and Office Hours share the schedule store but are
+      // separate experiences — L&L keeps its page, office hours get their own
+      const upcomingAll = allEvents.filter(e => new Date(e.date) > new Date());
+      const upcomingEvents = upcomingAll.filter(e => (e.kind || 'lnl') !== 'office');
+      const officeEvents = upcomingAll.filter(e => (e.kind || 'lnl') === 'office');
       const event = upcomingEvents[0] || null;
       const myRsvpRows = session.uid ? await sql`SELECT event_key FROM lnl_rsvps WHERE user_id = ${session.uid}` : [];
       const myRsvpKeys = myRsvpRows.map(r => r.event_key);
       const my_rsvp = !!(event && myRsvpKeys.includes(event.date));
+      // Office hours: Premium+ benefit with a yearly RSVP allowance per tier
+      let office_hours = null;
+      {
+        const [me] = await sql`SELECT tier, role, comped, tier_since FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
+        const rank = admin ? 3 : (TIER_RANK[me?.tier] ?? 0);
+        const gate = admin || !me ? { active: false } : await benefitGate(sql, me);
+        if (rank >= 2) {
+          const [pRow] = await sql`SELECT value FROM settings WHERE key = ${rank >= 3 ? 'office_allow_elite' : 'office_allow_premium'}`;
+          const limit = parseInt(pRow?.value, 10) || (rank >= 3 ? 6 : 2);
+          const officeKeys = allEvents.filter(e => (e.kind || 'lnl') === 'office').map(e => e.date);
+          const usedRows = officeKeys.length ? await sql`SELECT COUNT(*)::int AS n FROM lnl_rsvps
+            WHERE user_id = ${session.uid} AND event_key = ANY(${officeKeys}) AND created_at > NOW() - interval '365 days'` : [{ n: 0 }];
+          office_hours = {
+            eligible: true, gate,
+            allowance: { limit, used: usedRows[0]?.n || 0, remaining: Math.max(0, limit - (usedRows[0]?.n || 0)) },
+            events: officeEvents.map(e => ({ ...e, my_rsvp: myRsvpKeys.includes(e.date) })),
+          };
+        } else {
+          office_hours = { eligible: false, events: [] };
+        }
+      }
       return res.json({
-        event, my_rsvp,
+        event, my_rsvp, office_hours,
         // The full upcoming schedule, with this member's RSVP state per session
         events: upcomingEvents.map(e => ({ ...e, my_rsvp: myRsvpKeys.includes(e.date) })),
         active: !!access || !!admin,
@@ -144,14 +169,15 @@ export default async function handler(req, res) {
     const action = req.body?.action;
 
     // ── Admin actions ──
-    // Add a session to the schedule (set_event kept as an alias for old clients)
+    // Add a session to the schedule (set_event kept as an alias for old clients).
+    // kind 'lnl' (default) = Lunch & Learn; kind 'office' = tier-gated office hours.
     if (action === 'set_event' || action === 'add_event') {
       if (!admin) return res.status(401).json({ error: 'Unauthorized' });
-      const { title, date, time, description } = req.body;
+      const { title, date, time, description, kind } = req.body;
       if (!title || !date) return res.status(400).json({ error: 'Title and date required' });
       if (isNaN(Date.parse(date))) return res.status(400).json({ error: 'Invalid date' });
       const events = await getEvents(sql);
-      events.push({ id: String(Date.now()), title: String(title).slice(0, 200), date, time: (time || '').slice(0, 50), description: (description || '').slice(0, 500) });
+      events.push({ id: String(Date.now()), kind: kind === 'office' ? 'office' : 'lnl', title: String(title).slice(0, 200), date, time: (time || '').slice(0, 50), description: (description || '').slice(0, 500) });
       await saveEvents(sql, events);
       return res.json({ success: true, events });
     }
@@ -247,14 +273,32 @@ export default async function handler(req, res) {
     if (!session || !session.uid) return res.status(401).json({ error: 'Sign in required' });
 
     if (action === 'rsvp') {
-      const access = admin ? { ok: true } : await getAccess(sql, session.uid);
-      if (!access) return res.status(403).json({ error: 'Lunch & Learn access required to RSVP' });
       const events = await getEvents(sql);
-      // event_key targets a specific session; default to the next upcoming one
+      // event_key targets a specific session; default to the next upcoming L&L
       const target = req.body.event_key
         ? events.find(e => e.date === req.body.event_key)
-        : events.find(e => new Date(e.date) > new Date());
+        : events.find(e => new Date(e.date) > new Date() && (e.kind || 'lnl') !== 'office');
       if (!target) return res.status(400).json({ error: 'No upcoming session scheduled' });
+      if ((target.kind || 'lnl') === 'office') {
+        // Office hours: Premium+ only, behind the new-member gate, within the yearly allowance
+        if (!admin) {
+          const [me] = await sql`SELECT tier, role, comped, tier_since FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
+          const rank = TIER_RANK[me?.tier] ?? 0;
+          if (rank < 2) return res.status(403).json({ error: 'Office hours are a Premium and Elite benefit' });
+          const gate = await benefitGate(sql, me);
+          if (gate.active) return res.status(403).json({ error: 'Office hours unlock after your first two months — yours open on ' + new Date(gate.until).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) + '.' });
+          if (req.body.going) {
+            const [pRow] = await sql`SELECT value FROM settings WHERE key = ${rank >= 3 ? 'office_allow_elite' : 'office_allow_premium'}`;
+            const limit = parseInt(pRow?.value, 10) || (rank >= 3 ? 6 : 2);
+            const officeKeys = events.filter(e => (e.kind || 'lnl') === 'office').map(e => e.date);
+            const [used] = await sql`SELECT COUNT(*)::int AS n FROM lnl_rsvps WHERE user_id = ${session.uid} AND event_key = ANY(${officeKeys}) AND created_at > NOW() - interval '365 days'`;
+            if ((used?.n || 0) >= limit) return res.status(403).json({ error: `You've used all ${limit} office-hours spots your plan includes this year.` });
+          }
+        }
+      } else {
+        const access = admin ? { ok: true } : await getAccess(sql, session.uid);
+        if (!access) return res.status(403).json({ error: 'Lunch & Learn access required to RSVP' });
+      }
       if (req.body.going) {
         await sql`INSERT INTO lnl_rsvps (user_id, event_key, created_at) VALUES (${session.uid}, ${target.date}, NOW()) ON CONFLICT (user_id, event_key) DO NOTHING`;
       } else {

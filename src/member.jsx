@@ -154,7 +154,7 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
                 {["Free", "Basic", "Premium", "Elite"].map(t => (
                   <button type="button" key={t} onClick={() => setTier(t)} style={{ background: tier === t ? "#b8010118" : "transparent", border: tier === t ? "1px solid #b80101" : "1px solid #2a0000", borderRadius: 8, padding: "10px 12px", cursor: "pointer", textAlign: "left" }}>
                     <div style={{ color: tier === t ? "#f0d8d8" : "#8a7070", fontWeight: 800, fontSize: 13, fontFamily: font }}>{TIER_LABELS[t]}</div>
-                    <div style={{ color: "#7a5050", fontSize: 11, fontFamily: font }}>{{ Free: "$0", Basic: "$59.99/mo", Premium: "$165.99/mo", Elite: "$549.99/mo" }[t]}</div>
+                    <div style={{ color: "#7a5050", fontSize: 11, fontFamily: font }}>{{ Free: "$0", Basic: "$49.99/mo", Premium: "$159.99/mo", Elite: "$549.99/mo" }[t]}</div>
                   </button>
                 ))}
               </div>

@@ -7,11 +7,11 @@ import { sendEmail, sendBulk, addContact, siteUrl, waitlistConfirmEmail, countdo
 // they can spend. Their words set the ambition; their budget sets the ceiling;
 // we recommend where the two meet — never a plan above their stated budget.
 const PLANS = {
-  Basic: { tier: 'Basic', label: 'Member', price: '$59.99/mo', rank: 1, features: [
+  Basic: { tier: 'Basic', label: 'Member', price: '$49.99/mo', rank: 1, features: [
     'Every course — all seven, plus new ones as they drop', 'All written lessons, case studies & worksheets',
     'Community access — read every channel', 'Resource lists & reading guides',
   ] },
-  Premium: { tier: 'Premium', label: 'Premium', price: '$165.99/mo', rank: 2, features: [
+  Premium: { tier: 'Premium', label: 'Premium', price: '$159.99/mo', rank: 2, features: [
     'Everything in Member', 'Post, reply & network in the community', 'The Opportunity Board — RFPs & funding windows',
     'Lunch & Learn recordings', '1 free work session (1 hr) + priority booking', '10% off every 1:1 session',
   ] },
@@ -125,8 +125,8 @@ export function recommendPlan(e) {
 }
 
 export const PLAN_INFO = {
-  Basic: { label: 'Member', monthly: 59.99 },
-  Premium: { label: 'Premium', monthly: 165.99 },
+  Basic: { label: 'Member', monthly: 49.99 },
+  Premium: { label: 'Premium', monthly: 159.99 },
   Elite: { label: 'Elite', monthly: 549.99 },
   pass_single: { label: 'Single Course Pass', once: 100 },
   pass_all: { label: 'All-Access Pass', once: 250 },

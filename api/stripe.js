@@ -7,8 +7,8 @@ export const config = { api: { bodyParser: false } };
 
 // Everything purchasable, priced in one place (cents)
 const CATALOG = {
-  sub_Basic:   { mode: 'subscription', name: 'GroundUp Member',            amount: 5999,  tier: 'Basic' },
-  sub_Premium: { mode: 'subscription', name: 'GroundUp Premium',           amount: 16599, tier: 'Premium' },
+  sub_Basic:   { mode: 'subscription', name: 'GroundUp Member',            amount: 4999,  tier: 'Basic' },
+  sub_Premium: { mode: 'subscription', name: 'GroundUp Premium',           amount: 15999, tier: 'Premium' },
   sub_Elite:   { mode: 'subscription', name: 'GroundUp Elite',             amount: 54999, tier: 'Elite' },
   pass_single: { mode: 'payment',      name: 'Single Course Pass (30 days)', amount: 10000 },
   pass_all:    { mode: 'payment',      name: 'All-Access Pass (30 days)',  amount: 25000 },

@@ -190,7 +190,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
       const ok = window.confirm(
         `Start your 14-day trial with "${course.title}"?\n\n` +
         `Your trial works like our Single Course Pass: every lesson in ONE course of your choice, free for 14 days. This is your one trial — once you pick, it can't be moved to another course.\n\n` +
-        `Want it all instead? A membership includes all seven courses, the community, and new courses as they drop — from $59.99/mo. A one-time pass gives 30 days of a single course ($100) or everything ($250).\n\n` +
+        `Want it all instead? A membership includes all seven courses, the community, and new courses as they drop — from $49.99/mo. A one-time pass gives 30 days of a single course ($100) or everything ($250).\n\n` +
         `Press OK to start your trial with this course.`
       );
       if (!ok) return;
@@ -567,16 +567,16 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
   const pages = isTeam
     ? ["community", "resources", "lunchlearn"]
     : member
-    ? ["courses", "community", "resources", "advisory", "lunchlearn", "contact"]
+    ? ["courses", "community", "resources", "advisory", "lunchlearn", "officehours", "contact"]
     : ["home", "courses", "about", "pricing", "lunchlearn", "contact"];
   const ADMIN_TOOLS = [
     ["admin-users", "Users"], ["admin-referrals", "Referrals"], ["admin-waitlist", "Waitlist"],
-    ["admin-email", "Email"], ["admin-courses", "Courses"], ["admin-shop", "Shop"], ["admin-contacts", "Contacts"], ["admin-retainers", "Retainers"], ["admin-revenue", "Revenue"], ["admin-status", "System Status"],
+    ["admin-email", "Email"], ["admin-courses", "Courses"], ["admin-shop", "Shop"], ["admin-contacts", "Contacts"], ["admin-office", "Office Hours"], ["admin-retainers", "Retainers"], ["admin-revenue", "Revenue"], ["admin-status", "System Status"],
   ];
   const [adminOpen, setAdminOpen] = useState(false);
   const lightNav = member?.role === "admin";
   const navInactive = lightNav ? "#5a5a5a" : "#6a6b69";
-  const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", contact: "Contact", community: "Community", membership: "Membership", resources: "Resources", advisory: "Advisory" };
+  const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", officehours: "Office Hours", contact: "Contact", community: "Community", membership: "Membership", resources: "Resources", advisory: "Advisory" };
   return (
     <>
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: lightNav ? "rgba(255,255,255,0.97)" : "rgba(0,0,0,0.97)", backdropFilter: "blur(16px)", borderBottom: lightNav ? "1px solid #d8ccb6" : "1px solid #1a0000", padding: "0 clamp(16px,4vw,48px)", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
@@ -1040,7 +1040,7 @@ const plans = [
   {
     name: "Member",
     tier: "Basic",
-    price: "$59.99",
+    price: "$49.99",
     period: "/mo",
     description: "Constant access to every course — including new ones as we add them — plus a seat in the community.",
     accent: "#b80101",
@@ -1058,7 +1058,7 @@ const plans = [
   {
     name: "Premium",
     tier: "Premium",
-    price: "$165.99",
+    price: "$159.99",
     period: "/mo",
     description: "Everything in Member — plus full community engagement, deal tools, and a free advisory hour.",
     accent: "#b80101",
@@ -1985,6 +1985,170 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
   );
 }
 
+// ─── OFFICE HOURS ───────────────────────────────────────────────────────────
+// Group time with Dr. Merritt, dropped in batches. Premium+ benefit with a
+// yearly RSVP allowance per tier; each session gets a live countdown.
+
+function OfficeHoursPage({ member, onSignIn, setActivePage }) {
+  const font = "'DM Sans', sans-serif";
+  const serif = "'Cormorant Garamond', serif";
+  const [status, setStatus] = useState(null);
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
+  const load = () => {
+    if (!member) return;
+    fetch("/api/lunchlearn", { headers: { Authorization: "Bearer " + getMemberToken() } })
+      .then(r => r.ok ? r.json() : null).then(d => d && setStatus(d)).catch(() => {});
+  };
+  useEffect(() => { load(); }, [member?.id]);
+
+  const cd = (date) => {
+    const ms = new Date(date).getTime() - now;
+    if (ms <= 0) return "Happening now";
+    const d = Math.floor(ms / 86400000), h = Math.floor((ms % 86400000) / 3600000), m = Math.floor((ms % 3600000) / 60000), s = Math.floor((ms % 60000) / 1000);
+    return d > 0 ? `${d}d ${h}h ${m}m` : `${h}h ${m}m ${s}s`;
+  };
+
+  if (!member) {
+    return (
+      <div style={{ background: "#000", minHeight: "100vh", padding: "160px 20px", textAlign: "center" }}>
+        <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "#f5e8e8", marginBottom: 14 }}>Office Hours</h1>
+        <p style={{ color: "#8a7070", fontFamily: font, fontSize: 15, marginBottom: 28 }}>Small-group time with Dr. Merritt — sign in to see the schedule.</p>
+        <button onClick={onSignIn} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "13px 28px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Sign In</button>
+      </div>
+    );
+  }
+
+  const oh = status?.office_hours;
+  const rsvp = async (ev, going) => {
+    try {
+      const res = await fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "rsvp", going, event_key: ev.date }) });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "RSVP failed");
+      await load();
+    } catch (e) { alert(e.message); }
+  };
+
+  return (
+    <div style={{ background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px" }}>
+      <div style={{ maxWidth: 860, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Small Group · Real Time</div>
+          <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(34px,5vw,52px)", color: "#f5e8e8", marginBottom: 12 }}>Office Hours with Dr. Merritt</h1>
+          <p style={{ color: "#8a7070", fontSize: 15, fontFamily: font, maxWidth: 540, margin: "0 auto", lineHeight: 1.8 }}>Dropped in batches, a few times a year. Bring your questions, hear everyone else's — one to two hours of working time with her.</p>
+        </div>
+
+        {!oh ? (
+          <div style={{ textAlign: "center", color: "#8a7070", fontFamily: font, padding: 40 }}>Loading…</div>
+        ) : !oh.eligible ? (
+          <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: 48, textAlign: "center" }}>
+            <div style={{ color: "#c8a8a8", fontSize: 15, fontFamily: font, lineHeight: 1.8, maxWidth: 460, margin: "0 auto 20px" }}>Office hours are a <strong style={{ color: "#f0d8d8" }}>Premium and Elite benefit</strong> — Premium members can book {2} a year, Elite members {6}.</div>
+            <button onClick={() => setActivePage("pricing")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "13px 28px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>See Plans →</button>
+          </div>
+        ) : (
+          <>
+            {oh.gate?.active && (
+              <div style={{ background: "#12060a", border: "1px solid #b8010140", borderRadius: 12, padding: "14px 22px", marginBottom: 20, color: "#c8a8a8", fontSize: 13.5, fontFamily: font, lineHeight: 1.7 }}>
+                Office hours unlock after your first two months of membership — yours open on <strong style={{ color: "#f0d8d8" }}>{new Date(oh.gate.until).toLocaleDateString(undefined, { month: "long", day: "numeric" })}</strong>. You can see the schedule now and book once they unlock.
+              </div>
+            )}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 26 }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
+              <span style={{ color: "#e0c4c4", fontSize: 13.5, fontFamily: font, fontWeight: 800 }}>
+                {oh.allowance.remaining} of {oh.allowance.limit} office-hours spots left on your plan this year
+              </span>
+            </div>
+            {(oh.events || []).length === 0 ? (
+              <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: 48, textAlign: "center", color: "#8a7070", fontFamily: font, fontSize: 14 }}>
+                The next drop of office hours hasn't landed yet — watch your email. When times drop, they're first come, first served.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {oh.events.map(ev => (
+                  <div key={ev.id || ev.date} style={{ background: "#0d0404", border: ev.my_rsvp ? "1px solid #22c55e50" : "1px solid #b8010140", borderRadius: 16, padding: "24px 28px", display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
+                    <div style={{ flex: 1, minWidth: 240 }}>
+                      <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 21, color: "#f0d8d8", marginBottom: 4 }}>{ev.title}</div>
+                      <div style={{ color: "#e0c4c4", fontSize: 13.5, fontFamily: font, fontWeight: 700 }}>{new Date(ev.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}{ev.time ? ` · ${ev.time}` : ""}</div>
+                      {ev.description && <div style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginTop: 6 }}>{ev.description}</div>}
+                    </div>
+                    <div style={{ textAlign: "center", minWidth: 130 }}>
+                      <div style={{ fontSize: 9, color: "#7a5050", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 4 }}>Starts in</div>
+                      <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 22, color: "#b80101" }}>{cd(ev.date)}</div>
+                    </div>
+                    <button
+                      disabled={oh.gate?.active || (!ev.my_rsvp && oh.allowance.remaining <= 0)}
+                      onClick={() => rsvp(ev, !ev.my_rsvp)}
+                      style={{ background: ev.my_rsvp ? "transparent" : "#b80101", color: ev.my_rsvp ? "#22c55e" : "#fff", border: ev.my_rsvp ? "1px solid #22c55e60" : "none", borderRadius: 10, padding: "12px 20px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer", opacity: oh.gate?.active || (!ev.my_rsvp && oh.allowance.remaining <= 0) ? 0.5 : 1, whiteSpace: "nowrap" }}>
+                      {ev.my_rsvp ? "✓ You're in — tap to release" : oh.allowance.remaining <= 0 ? "No spots left on your plan" : "RSVP — save my seat"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Admin: drop office-hours batches, watch the RSVP lists
+function OfficeHoursAdmin({ btnRed, btnGhost, inp, lbl }) {
+  const [data, setData] = useState(null);
+  const [form, setForm] = useState({ title: "", date: "", time: "", description: "" });
+  const [msg, setMsg] = useState(null);
+  const authHeaders = () => ({ Authorization: "Bearer " + sessionStorage.getItem("adminToken") });
+  const call = async (method, body) => {
+    const res = await fetch("/api/lunchlearn" + (method === "GET" ? "?admin=1" : ""), { method, headers: { "Content-Type": "application/json", ...authHeaders() }, ...(body ? { body: JSON.stringify(body) } : {}) });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(d.error || "Request failed");
+    return d;
+  };
+  const load = () => call("GET").then(setData).catch(() => {});
+  useEffect(() => { load(); }, []);
+  const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 5000); };
+  if (!data) return <div style={{ color: "#666666", fontFamily: "'DM Sans', sans-serif" }}>Loading…</div>;
+  const officeEvents = (data.events || []).filter(e => (e.kind || "lnl") === "office");
+  const section = { background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 20 };
+  return (
+    <div>
+      {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
+      <div style={section}>
+        <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>Drop office hours</div>
+        <p style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 14 }}>Add each session in the batch (e.g. the next six months at once). Premium members can book 2 a year, Elite 6 — enforced automatically, RSVP lists below tell you who's coming.</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", columnGap: 20, rowGap: 16, marginBottom: 14 }}>
+          <div><label style={lbl}>Title</label><input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Office Hours — Q1" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div><label style={lbl}>Date &amp; time (your local time)</label><input type="datetime-local" value={toLocalInput(form.date)} onChange={e => setForm({ ...form, date: e.target.value ? new Date(e.target.value).toISOString() : "" })} style={{ ...inp, maxWidth: "none", marginBottom: 0, colorScheme: "light" }} /></div>
+          <div><label style={lbl}>Time label (e.g. 12–2 PM ET)</label><input value={form.time} onChange={e => setForm({ ...form, time: e.target.value })} placeholder="12–2 PM ET" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+        </div>
+        <button onClick={async () => { try { await call("POST", { action: "add_event", kind: "office", ...form }); setForm({ title: "", date: "", time: "", description: "" }); flash(true, "Office hours added to the drop."); await load(); } catch (e) { flash(false, e.message); } }} style={btnRed}>Add to Drop</button>
+      </div>
+      <div style={section}>
+        <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Scheduled ({officeEvents.filter(e => new Date(e.date) > Date.now()).length} upcoming)</div>
+        {officeEvents.length === 0 && <div style={{ color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No office hours dropped yet.</div>}
+        {officeEvents.map(ev => {
+          const rsvps = (data.rsvpsByEvent || {})[ev.date] || [];
+          const past = new Date(ev.date) < new Date();
+          return (
+            <div key={ev.id} style={{ padding: "12px 0", borderBottom: "1px solid #f2efe8", opacity: past ? 0.5 : 1 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+                <div style={{ flex: 1, minWidth: 220 }}>
+                  <span style={{ color: "#222222", fontSize: 13.5, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{ev.title}</span>
+                  <span style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 10 }}>{new Date(ev.date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}{ev.time ? ` · ${ev.time}` : ""}{past ? " · past" : ""}</span>
+                </div>
+                <span style={{ color: "#6b6259", fontSize: 12, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>{rsvps.length} RSVP{rsvps.length === 1 ? "" : "s"}</span>
+                <button onClick={async () => { const t = window.prompt("Session name:", ev.title); if (!t || t === ev.title) return; try { await call("POST", { action: "update_event", id: ev.id, title: t }); flash(true, "Renamed."); await load(); } catch (e) { flash(false, e.message); } }} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Rename</button>
+                <button onClick={async () => { if (!window.confirm(`Remove "${ev.title}"?`)) return; try { await call("POST", { action: "remove_event", id: ev.id }); flash(true, "Removed."); await load(); } catch (e) { flash(false, e.message); } }} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Remove</button>
+              </div>
+              {rsvps.length > 0 && <div style={{ color: "#6b6259", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginTop: 6, lineHeight: 1.7 }}>Coming: {rsvps.map(r => r.name).join(", ")}</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── LAUNCH PAGE (pre-launch mode) ──────────────────────────────────────────
 
 function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
@@ -2136,8 +2300,8 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
           {[
             { name: "One Course", price: "$100", period: "one-time", desc: "30 days inside one course of your choice." },
             { name: "All-Access Pass", price: "$250", period: "one-time", desc: "30 days of the entire curriculum." },
-            { name: "Member", price: "$59.99", period: "/mo", desc: "Constant access + support — every course, every new course, and the community." },
-            { name: "Premium", price: "$165.99", period: "/mo", desc: "Engage the community, deal tools, the Opportunity Board, a free work session.", popular: true },
+            { name: "Member", price: "$49.99", period: "/mo", desc: "Constant access + support — every course, every new course, and the community." },
+            { name: "Premium", price: "$159.99", period: "/mo", desc: "Engage the community, deal tools, the Opportunity Board, a free work session.", popular: true },
             { name: "Elite", price: "$549.99", period: "/mo", desc: "Direct line to Dr. Merritt — advisory calls, DMs, and the partner network." },
           ].map((p, i) => (
             <div key={i} style={{ background: p.popular ? "#0d0404" : "#080404", border: "1px solid " + (p.popular ? "#b8010140" : "#150000"), borderRadius: 16, padding: "26px 24px", textAlign: "center", position: "relative" }}>
@@ -3185,7 +3349,7 @@ function AdminPanel({ onLogout, onExit }) {
 
 // ─── REVENUE TAB ──────────────────────────────────────────────────────────────
 
-const TIER_PRICES = { Free: 0, Basic: 59.99, Premium: 165.99, Elite: 549.99 };
+const TIER_PRICES = { Free: 0, Basic: 49.99, Premium: 159.99, Elite: 549.99 };
 
 function RevenueTab() {
   const [users, setUsers] = useState([]);
@@ -3784,7 +3948,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
 
   // Mirrors recommendPlan() in api/waitlist.js — budget decides:
   // $500+ → Elite · $150–$500 → Premium · below $150 → Member
-  const recFor = (e) => e.budget === "$2,000+" ? "Senior Advisor — from $3,025/mo" : ["$300+", "$500+"].includes(e.budget) ? "Elite — $549.99/mo" : ["$100–$200", "$150–$500"].includes(e.budget) ? "Premium — $165.99/mo" : "Member — $59.99/mo";
+  const recFor = (e) => e.budget === "$2,000+" ? "Senior Advisor — from $3,025/mo" : ["$300+", "$500+"].includes(e.budget) ? "Elite — $549.99/mo" : ["$100–$200", "$150–$500"].includes(e.budget) ? "Premium — $159.99/mo" : "Member — $49.99/mo";
 
   // Download everything as a CSV — respects the current list filter
   const exportCsv = (rows) => {
@@ -3929,8 +4093,8 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
           Conservative maps their budget to the plan it comfortably covers;
           upside assumes each stretches one tier. */}
       {(() => {
-        const PLAN_FIT = { "Under $25": 0, "$25–$100": 59.99, "$100–$200": 165.99, "$300+": 549.99, "$2,000+": 3025, "Under $50": 0, "$50–$150": 59.99, "$150–$500": 165.99, "$500+": 549.99 };
-        const STRETCH = { "Under $25": 59.99, "$25–$100": 165.99, "$100–$200": 549.99, "$300+": 549.99, "$2,000+": 3025, "Under $50": 59.99, "$50–$150": 165.99, "$150–$500": 549.99, "$500+": 549.99 };
+        const PLAN_FIT = { "Under $25": 0, "$25–$100": 49.99, "$100–$200": 159.99, "$300+": 549.99, "$2,000+": 3025, "Under $50": 0, "$50–$150": 49.99, "$150–$500": 159.99, "$500+": 549.99 };
+        const STRETCH = { "Under $25": 49.99, "$25–$100": 159.99, "$100–$200": 549.99, "$300+": 549.99, "$2,000+": 3025, "Under $50": 49.99, "$50–$150": 159.99, "$150–$500": 549.99, "$500+": 549.99 };
         const mrrFit = entries.reduce((s, e) => s + (PLAN_FIT[e.budget] || 0), 0);
         // Premium is the ideal recommendation; Elite (and Advisor) are the exceptional wins
         const premiumRec = entries.filter(e => recFor(e).startsWith("Premium")).length;
@@ -4061,8 +4225,8 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
                       try { await call("POST", { action: "set_override", id: e.id, tier: ev.target.value || null }); flash(true, ev.target.value ? "Override saved — their emails will pitch " + ev.target.value + "." : "Back to the algorithm's pick."); await load(); } catch (er) { flash(false, er.message); }
                     }} style={{ background: e.rec_override ? "#b8010112" : "#f5f2ec", color: e.rec_override ? "#b80101" : "#444444", border: "1px solid " + (e.rec_override ? "#b8010150" : "#dcd8d0"), borderRadius: 6, padding: "5px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
                       <option value="">Auto — {recFor(e).split(" — ")[0]} (algorithm)</option>
-                      <option value="Basic">Member — $59.99/mo</option>
-                      <option value="Premium">Premium — $165.99/mo</option>
+                      <option value="Basic">Member — $49.99/mo</option>
+                      <option value="Premium">Premium — $159.99/mo</option>
                       <option value="Elite">Elite — $549.99/mo</option>
                       <option value="Advisor">Senior Advisor — retainer</option>
                     </select>
@@ -4596,7 +4760,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
     } catch(e) { setError("Something went wrong. Please try again."); }
   };
 
-  const planPrices = { Free: "$0", Basic: "$59.99/mo", Premium: "$165.99/mo", Elite: "$549.99/mo" };
+  const planPrices = { Free: "$0", Basic: "$49.99/mo", Premium: "$159.99/mo", Elite: "$549.99/mo" };
   const planColors = { Free: "#6a6b69", Basic: "#b80101", Premium: "#b80101", Elite: "#570404" };
 
   return (
@@ -4655,7 +4819,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "advisory", "shop"];
+  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "advisory", "shop", "officehours"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
     return PAGES.includes(p) ? p : (sessionStorage.getItem("activePage") || "home");
@@ -4988,6 +5152,10 @@ export default function App() {
       {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} /></div>}
       {activePage === "advisory" && <RetainerPage member={member} setActivePage={navigateTo} />}
       {activePage === "shop" && <ShopPage member={member} onSignIn={() => openSignup("Free")} />}
+      {activePage === "officehours" && (member?.role === "admin"
+        ? <TeamPage><h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#171106", marginBottom: 8 }}>Office Hours</h2><OfficeHoursAdmin btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>
+        : <OfficeHoursPage member={member} onSignIn={() => openSignup("Free")} setActivePage={navigateTo} />)}
+      {member?.role === "admin" && activePage === "admin-office" && <TeamPage><h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#171106", marginBottom: 8 }}>Office Hours</h2><p style={{ color: "#6a5c40", fontSize: 13, marginBottom: 24, fontFamily: "'DM Sans', sans-serif" }}>Drop the next batch of sessions, watch the RSVP lists.</p><OfficeHoursAdmin btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-contacts" && <TeamPage><ContactsTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-shop" && <TeamPage><h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#171106", marginBottom: 8 }}>Shop</h2><p style={{ color: "#6a5c40", fontSize: 13, marginBottom: 24, fontFamily: "'DM Sans', sans-serif" }}>Digital products — upload PDFs, set prices and value framing, control visibility.</p><ShopAdmin btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {activePage === "resources" && (member?.role === "admin" ? <TeamPage><ResourcesTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage> : <ResourcesPage member={member} onUpgrade={() => navigateTo("pricing")} />)}
