@@ -22,19 +22,29 @@ export default async function handler(req, res) {
       if (!live) return res.json({ live: false, products: [] });
       const session = getSession(req);
       let owned = [];
+      let tierRank = 0;
       if (session?.uid) {
         const ents = await sql`SELECT course_id FROM entitlements WHERE user_id = ${session.uid} AND course_id LIKE 'prod:%'`;
         owned = ents.map(e => Number(e.course_id.slice(5)));
+        const [u] = await sql`SELECT tier FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
+        tierRank = TIER_RANK[u?.tier] ?? 0;
       }
       const rows = await sql`SELECT id, title, description, price_cents, value_cents, cover_url, delivery_url FROM products WHERE active ORDER BY position, id`;
-      // delivery_url never leaves the server unless this buyer owns the product
-      const products = rows.map(p => ({
-        id: p.id, title: p.title, description: p.description,
-        price_cents: p.price_cents, value_cents: p.value_cents, cover_url: p.cover_url,
-        owned: owned.includes(p.id),
-        delivery_url: owned.includes(p.id) ? p.delivery_url : undefined,
-      }));
-      return res.json({ live: true, products });
+      // Membership perks on the whole shelf: Elite (rank 3) downloads everything;
+      // Premium (rank 2) can view everything in the reader but not download.
+      // The file URL never leaves the server for anyone below that without a purchase.
+      const products = rows.map(p => {
+        const bought = owned.includes(p.id);
+        const access = bought || tierRank >= 3 ? 'download' : tierRank === 2 ? 'view' : 'buy';
+        return {
+          id: p.id, title: p.title, description: p.description,
+          price_cents: p.price_cents, value_cents: p.value_cents, cover_url: p.cover_url,
+          owned: bought, access,
+          via: bought ? 'purchase' : tierRank >= 3 ? 'elite' : tierRank === 2 ? 'premium' : null,
+          delivery_url: access !== 'buy' ? p.delivery_url : undefined,
+        };
+      });
+      return res.json({ live: true, tier_rank: tierRank, products });
     }
 
     if (req.method === 'POST' && req.body && req.body.action === 'product_save') {

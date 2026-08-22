@@ -1758,6 +1758,7 @@ function ShopPage({ member, onSignIn }) {
   const [data, setData] = useState(null);
   const [confirmBuy, setConfirmBuy] = useState(null); // product being purchased
   const [agreed, setAgreed] = useState(false);
+  const [viewing, setViewing] = useState(null); // Premium view-only reader
   const isTeam = member?.role === "admin";
 
   const load = () => {
@@ -1824,14 +1825,37 @@ function ShopPage({ member, onSignIn }) {
                     {p.value_cents > p.price_cents && <span style={{ color: "#6a5050", fontSize: 14, fontFamily: serif, fontWeight: 700, textDecoration: "line-through" }}>{usd(p.value_cents)} value</span>}
                     <span style={{ color: "#b80101", fontSize: 24, fontFamily: serif, fontWeight: 700 }}>{usd(p.price_cents)}</span>
                   </div>
-                  {p.owned ? (
-                    <a href={p.delivery_url} target="_blank" rel="noreferrer" style={{ display: "block", textAlign: "center", background: "transparent", color: "#22c55e", border: "1px solid #22c55e60", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, textDecoration: "none" }}>✓ Yours — download</a>
+                  {p.access === "download" ? (
+                    <a href={p.delivery_url} target="_blank" rel="noreferrer" style={{ display: "block", textAlign: "center", background: "transparent", color: "#22c55e", border: "1px solid #22c55e60", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, textDecoration: "none" }}>
+                      ✓ {p.via === "elite" ? "Included with Elite — download" : "Yours — download"}
+                    </a>
+                  ) : p.access === "view" ? (
+                    <div>
+                      <button onClick={() => setViewing(p)} style={{ width: "100%", background: "transparent", color: "#e0c4c4", border: "1px solid #e0c4c455", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>View — included with Premium</button>
+                      <div style={{ color: "#6a5050", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 6 }}>Elite members can download · or buy it to own it</div>
+                    </div>
                   ) : (
                     <button onClick={() => { setConfirmBuy(p); setAgreed(false); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Buy — {usd(p.price_cents)}</button>
                   )}
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Premium view-only reader — read in place, no download controls */}
+        {viewing && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.92)", display: "flex", flexDirection: "column", padding: "20px" }} onContextMenu={e => e.preventDefault()}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, maxWidth: 900, width: "100%", margin: "0 auto 12px" }}>
+              <div>
+                <div style={{ color: "#f0d8d8", fontFamily: serif, fontWeight: 700, fontSize: 20 }}>{viewing.title}</div>
+                <div style={{ color: "#8a7070", fontSize: 12, fontFamily: font }}>View-only with Premium — Dr. Merritt's IP, please don't copy or share. Elite members and buyers can download.</div>
+              </div>
+              <button onClick={() => setViewing(null)} style={{ background: "#1a0808", color: "#c8a8a8", border: "1px solid #2a0000", borderRadius: 8, padding: "10px 18px", fontFamily: font, fontWeight: 700, fontSize: 13, cursor: "pointer", flexShrink: 0 }}>Close ×</button>
+            </div>
+            <div style={{ flex: 1, maxWidth: 900, width: "100%", margin: "0 auto", background: "#0d0404", border: "1px solid #2a0000", borderRadius: 12, overflow: "hidden" }}>
+              <iframe src={`${viewing.delivery_url}#toolbar=0&navpanes=0`} title={viewing.title} style={{ width: "100%", height: "100%", border: "none" }} />
+            </div>
           </div>
         )}
 
