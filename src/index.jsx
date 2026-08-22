@@ -1070,7 +1070,7 @@ const plans = [
       "JV & Partnerships channel",
       "Development timeline templates",
       "Lunch & Learn recordings",
-      "1 free work session (1 hr) + priority booking",
+      "1 free work session (1 hr) + priority booking — unlocks after 2 months",
       "10% off 1:1 sessions with Dr. Merritt",
       "The Opportunity Board — RFPs, funding windows & deals, posted by the team",
     ],
@@ -1091,11 +1091,11 @@ const plans = [
       "Priority responses in the community",
       "Direct messages to Dr. Merritt & her team",
       "Elite Lounge — private channel",
-      "3 one-on-one advisory calls/yr with Dr. Merritt",
+      "3 one-on-one advisory calls/yr with Dr. Merritt — unlock after 2 months",
       "30% off 1:1 sessions with Dr. Merritt",
       "Priority Q&A submissions",
-      "1–2 small group advisory sessions/yr",
-      "1 invite to exclusive networking event",
+      "1–2 small group advisory sessions/yr — unlock after 2 months",
+      "1 invite to exclusive networking event — after 2 months",
     ],
     locked: [],
     limited: true,
@@ -1795,6 +1795,11 @@ function ShopPage({ member, onSignIn }) {
   return (
     <div style={{ background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        {data.gate?.active && (
+          <div style={{ background: "#12060a", border: "1px solid #b8010140", borderRadius: 10, padding: "12px 20px", marginBottom: 24, color: "#c8a8a8", fontSize: 13, fontFamily: font, lineHeight: 1.6 }}>
+            Your membership's shelf-wide perks (view or download every product) unlock after your first two months — on {new Date(data.gate.until).toLocaleDateString(undefined, { month: "long", day: "numeric" })}. Anything you buy is yours immediately.
+          </div>
+        )}
         {isTeam && !data.live && (
           <div style={{ background: "#12060a", border: "1px solid #b8010150", borderRadius: 10, padding: "12px 20px", marginBottom: 24, color: "#e0c4c4", fontSize: 13, fontFamily: font, fontWeight: 700 }}>
             Hidden from members — you're seeing this because you're team. Flip it live in GroundUp Admin → Shop.

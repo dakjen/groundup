@@ -78,6 +78,7 @@ export default async function handler(req, res) {
       const hasComped = 'comped' in req.body;
       const [user] = await sql`
         UPDATE users SET
+          tier_since = CASE WHEN ${tier ?? null}::text IS NOT NULL AND tier IS DISTINCT FROM ${tier ?? null} THEN NOW() ELSE tier_since END,
           tier = COALESCE(${tier ?? null}, tier),
           role = COALESCE(${role ?? null}, role),
           badge = CASE WHEN ${hasBadge} THEN ${badge ?? null} ELSE badge END,

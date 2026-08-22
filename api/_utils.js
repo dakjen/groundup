@@ -54,6 +54,25 @@ export function requireAdmin(req, res) {
   return false;
 }
 
+// New-member benefit gate: Premium/Elite big-ticket perks (Gina's time, product
+// downloads) unlock after N days of membership — so nobody joins, strips the
+// value, and cancels. Comped accounts and team bypass it.
+export async function benefitGate(sql, user) {
+  if (!user || user.role === 'admin' || user.comped) return { active: false, until: null };
+  if (!['Premium', 'Elite'].includes(user.tier)) return { active: false, until: null };
+  let days = 60;
+  try {
+    const [row] = await sql`SELECT value FROM settings WHERE key = 'benefit_gate_days'`;
+    const parsed = parseInt(row?.value, 10);
+    if (Number.isFinite(parsed) && parsed >= 0) days = parsed;
+  } catch { /* default */ }
+  if (!days) return { active: false, until: null };
+  const since = user.tier_since ? new Date(user.tier_since) : null;
+  if (!since) return { active: false, until: null };
+  const until = new Date(since.getTime() + days * 86400000);
+  return { active: until > new Date(), until: until.toISOString() };
+}
+
 // Password hashing with scrypt (no external deps)
 export function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex');

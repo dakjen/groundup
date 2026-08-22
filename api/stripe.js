@@ -177,7 +177,7 @@ async function fulfill(sql, session) {
     const tier = CATALOG[item]?.tier;
     if (tier) {
       // cancelled_at = NULL stops the 15-day deletion clock for members who rejoin
-      await sql`UPDATE users SET tier = ${tier}, membership_status = 'active', cancelled_at = NULL, stripe_customer_id = ${session.customer || null} WHERE id = ${userId}`;
+      await sql`UPDATE users SET tier_since = CASE WHEN tier IS DISTINCT FROM ${tier} THEN NOW() ELSE tier_since END, tier = ${tier}, membership_status = 'active', cancelled_at = NULL, stripe_customer_id = ${session.customer || null} WHERE id = ${userId}`;
     }
     if (md.gift) {
       await sql`UPDATE referrals SET used = TRUE, used_at = NOW(), status = 'used' WHERE code = ${md.gift} AND kind = 'month_free'`;

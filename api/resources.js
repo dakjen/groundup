@@ -1,5 +1,5 @@
 import { neon } from '@neondatabase/serverless';
-import { getSession, getAdmin, TIER_RANK } from './_utils.js';
+import { getSession, getAdmin, TIER_RANK, benefitGate } from './_utils.js';
 
 // Resources & Templates: Premium unlocks resources/templates, Elite adds the
 // NREUV partner network (links + referral codes). Admin-editable.
@@ -26,8 +26,11 @@ export default async function handler(req, res) {
       if (session?.uid) {
         const ents = await sql`SELECT course_id FROM entitlements WHERE user_id = ${session.uid} AND course_id LIKE 'prod:%'`;
         owned = ents.map(e => Number(e.course_id.slice(5)));
-        const [u] = await sql`SELECT tier FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
+        const [u] = await sql`SELECT tier, role, comped, tier_since FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
         tierRank = TIER_RANK[u?.tier] ?? 0;
+        // New paid members wait out the benefit gate before shelf-wide perks kick in
+        var gate = u ? await benefitGate(sql, u) : { active: false };
+        if (gate.active) tierRank = Math.min(tierRank, 1);
       }
       const rows = await sql`SELECT id, title, description, price_cents, value_cents, cover_url, delivery_url FROM products WHERE active ORDER BY position, id`;
       // Membership perks on the whole shelf: Elite (rank 3) downloads everything;
@@ -44,7 +47,7 @@ export default async function handler(req, res) {
           delivery_url: access !== 'buy' ? p.delivery_url : undefined,
         };
       });
-      return res.json({ live: true, tier_rank: tierRank, products });
+      return res.json({ live: true, tier_rank: tierRank, gate: typeof gate !== "undefined" ? gate : { active: false }, products });
     }
 
     if (req.method === 'POST' && req.body && req.body.action === 'product_save') {

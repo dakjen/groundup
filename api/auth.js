@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { neon } from '@neondatabase/serverless';
-import { signToken, getSession, hashPassword, verifyPassword } from './_utils.js';
+import { signToken, getSession, hashPassword, verifyPassword, benefitGate } from './_utils.js';
 import { sendEmail, addContact, addLnlContact, welcomeEmail, resetEmail, siteUrl } from './_email.js';
 import { verifyToken } from './_utils.js';
 
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const session = getSession(req);
       if (!session || !session.uid) return res.status(401).json({ error: 'Not signed in' });
-      const [user] = await sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, comped, badges, referral_code, referred_by, created_at FROM users WHERE id = ${session.uid}`;
+      const [user] = await sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, comped, badges, referral_code, referred_by, tier_since, created_at FROM users WHERE id = ${session.uid}`;
       if (!user) return res.status(401).json({ error: 'Account not found' });
       // Active one-time passes: course_id 'all' or 'mc1'..'mc7', unexpired
       user.entitlements = await sql`SELECT course_id, expires_at, source FROM entitlements WHERE user_id = ${user.id} AND (expires_at IS NULL OR expires_at > NOW())`;
@@ -25,6 +25,7 @@ export default async function handler(req, res) {
       const trialEligible = badgeList.includes('first10') || !!user.referred_by;
       const [usedTrial] = await sql`SELECT course_id, expires_at FROM entitlements WHERE user_id = ${user.id} AND source = 'referral_trial' LIMIT 1`;
       user.trial = usedTrial ? { course_id: usedTrial.course_id, expires_at: usedTrial.expires_at } : null;
+      user.benefit_gate = await benefitGate(sql, user);
       user.trial_available = trialEligible && !usedTrial && user.membership_status === 'active';
       const allowance = user.tier === 'Elite' ? 3 : user.tier === 'Premium' ? 1 : 0;
       const [{ used }] = await sql`SELECT COUNT(*)::int AS used FROM session_requests WHERE user_id = ${user.id} AND status != 'declined'`;
@@ -230,8 +231,10 @@ export default async function handler(req, res) {
     if (action === 'request_session') {
       const session = getSession(req);
       if (!session || !session.uid) return res.status(401).json({ error: 'Not signed in' });
-      const [u] = await sql`SELECT id, name, email, tier FROM users WHERE id = ${session.uid}`;
+      const [u] = await sql`SELECT id, name, email, tier, role, comped, tier_since FROM users WHERE id = ${session.uid}`;
       if (!u) return res.status(401).json({ error: 'Account not found' });
+      const gate = await benefitGate(sql, u);
+      if (gate.active) return res.status(403).json({ error: 'Advisory sessions unlock after your first two months of membership — yours open on ' + new Date(gate.until).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) + '.' });
       const allowance = u.tier === 'Elite' ? 3 : u.tier === 'Premium' ? 1 : 0;
       const [{ used }] = await sql`SELECT COUNT(*)::int AS used FROM session_requests WHERE user_id = ${u.id} AND status != 'declined'`;
       if (used >= allowance) return res.status(400).json({ error: 'No sessions remaining on your plan' });

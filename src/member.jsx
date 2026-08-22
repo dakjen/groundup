@@ -277,6 +277,15 @@ function SessionCreditsCard({ member }) {
 
 // Cancelling is as easy as joining — one click into Stripe's portal, no
 // emailing the team. The 15-day data note is stated up front, not buried.
+function BenefitGateNotice({ member }) {
+  if (!member?.benefit_gate?.active) return null;
+  return (
+    <div style={{ background: "var(--gu-card2)", border: "1px solid #b8010140", borderRadius: 14, padding: "16px 24px", marginBottom: 28, color: "var(--gu-body)", fontSize: 13.5, fontFamily: font, lineHeight: 1.7 }}>
+      <strong style={{ color: "var(--gu-text2)" }}>Your full benefits are on the way.</strong> Advisory sessions and shelf-wide product access unlock after your first two months of membership — yours open on <strong style={{ color: "#b80101" }}>{new Date(member.benefit_gate.until).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}</strong>. Courses, the community, and Lunch & Learns are all live for you right now.
+    </div>
+  );
+}
+
 function ManageMembershipCard({ member, rank }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
@@ -467,6 +476,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
           </ul>
         </div>
 
+        <BenefitGateNotice member={member} />
         <BookingsCard member={member} />
         <SessionCreditsCard member={member} />
         <ReferralCard member={member} />
