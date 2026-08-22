@@ -2715,8 +2715,8 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
 
         {(data.events || []).length > 0 && (
           <div style={{ marginTop: 22, borderTop: "1px solid #eeebe4", paddingTop: 16 }}>
-            <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>Scheduled ({(data.events || []).filter(e => new Date(e.date) > Date.now()).length} upcoming)</div>
-            {(data.events || []).map(ev => {
+            <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>Scheduled ({(data.events || []).filter(e => (e.kind || "lnl") !== "office" && new Date(e.date) > Date.now()).length} upcoming)</div>
+            {(data.events || []).filter(e => (e.kind || "lnl") !== "office").map(ev => {
               const past = new Date(ev.date) < new Date();
               const rsvps = (data.rsvpsByEvent || {})[ev.date] || [];
               return (
