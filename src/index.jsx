@@ -1080,7 +1080,7 @@ const plans = [
   {
     name: "Elite",
     tier: "Elite",
-    price: "$599.99",
+    price: "$549.99",
     period: "/mo",
     description: "Direct access to Dr. Gina Merritt. For serious developers ready to move at the highest level.",
     accent: "#570404",
@@ -1089,7 +1089,7 @@ const plans = [
     features: [
       "Everything in Premium",
       "Priority responses in the community",
-      "Direct messages to Dr. Merritt & her team",
+      "Direct messages to Dr. Merritt & her team — replies within 2 business days",
       "Elite Lounge — private channel",
       "3 one-on-one advisory calls/yr with Dr. Merritt — unlock after 2 months",
       "30% off 1:1 sessions with Dr. Merritt",
@@ -2138,7 +2138,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
             { name: "All-Access Pass", price: "$250", period: "one-time", desc: "30 days of the entire curriculum." },
             { name: "Member", price: "$59.99", period: "/mo", desc: "Constant access + support — every course, every new course, and the community." },
             { name: "Premium", price: "$165.99", period: "/mo", desc: "Engage the community, deal tools, the Opportunity Board, a free work session.", popular: true },
-            { name: "Elite", price: "$599.99", period: "/mo", desc: "Direct line to Dr. Merritt — advisory calls, DMs, and the partner network." },
+            { name: "Elite", price: "$549.99", period: "/mo", desc: "Direct line to Dr. Merritt — advisory calls, DMs, and the partner network." },
           ].map((p, i) => (
             <div key={i} style={{ background: p.popular ? "#0d0404" : "#080404", border: "1px solid " + (p.popular ? "#b8010140" : "#150000"), borderRadius: 16, padding: "26px 24px", textAlign: "center", position: "relative" }}>
               {p.popular && <div style={{ position: "absolute", top: 12, right: 12, background: "#b8010115", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "2px 8px", fontSize: 8, fontFamily: font, fontWeight: 800, letterSpacing: "1.5px" }}>POPULAR</div>}
@@ -3185,7 +3185,7 @@ function AdminPanel({ onLogout, onExit }) {
 
 // ─── REVENUE TAB ──────────────────────────────────────────────────────────────
 
-const TIER_PRICES = { Free: 0, Basic: 59.99, Premium: 165.99, Elite: 599.99 };
+const TIER_PRICES = { Free: 0, Basic: 59.99, Premium: 165.99, Elite: 549.99 };
 
 function RevenueTab() {
   const [users, setUsers] = useState([]);
@@ -3784,7 +3784,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
 
   // Mirrors recommendPlan() in api/waitlist.js — budget decides:
   // $500+ → Elite · $150–$500 → Premium · below $150 → Member
-  const recFor = (e) => e.budget === "$2,000+" ? "Senior Advisor — from $3,025/mo" : ["$300+", "$500+"].includes(e.budget) ? "Elite — $599.99/mo" : ["$100–$200", "$150–$500"].includes(e.budget) ? "Premium — $165.99/mo" : "Member — $59.99/mo";
+  const recFor = (e) => e.budget === "$2,000+" ? "Senior Advisor — from $3,025/mo" : ["$300+", "$500+"].includes(e.budget) ? "Elite — $549.99/mo" : ["$100–$200", "$150–$500"].includes(e.budget) ? "Premium — $165.99/mo" : "Member — $59.99/mo";
 
   // Download everything as a CSV — respects the current list filter
   const exportCsv = (rows) => {
@@ -3929,8 +3929,8 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
           Conservative maps their budget to the plan it comfortably covers;
           upside assumes each stretches one tier. */}
       {(() => {
-        const PLAN_FIT = { "Under $25": 0, "$25–$100": 59.99, "$100–$200": 165.99, "$300+": 599.99, "$2,000+": 3025, "Under $50": 0, "$50–$150": 59.99, "$150–$500": 165.99, "$500+": 599.99 };
-        const STRETCH = { "Under $25": 59.99, "$25–$100": 165.99, "$100–$200": 599.99, "$300+": 599.99, "$2,000+": 3025, "Under $50": 59.99, "$50–$150": 165.99, "$150–$500": 599.99, "$500+": 599.99 };
+        const PLAN_FIT = { "Under $25": 0, "$25–$100": 59.99, "$100–$200": 165.99, "$300+": 549.99, "$2,000+": 3025, "Under $50": 0, "$50–$150": 59.99, "$150–$500": 165.99, "$500+": 549.99 };
+        const STRETCH = { "Under $25": 59.99, "$25–$100": 165.99, "$100–$200": 549.99, "$300+": 549.99, "$2,000+": 3025, "Under $50": 59.99, "$50–$150": 165.99, "$150–$500": 549.99, "$500+": 549.99 };
         const mrrFit = entries.reduce((s, e) => s + (PLAN_FIT[e.budget] || 0), 0);
         // Premium is the ideal recommendation; Elite (and Advisor) are the exceptional wins
         const premiumRec = entries.filter(e => recFor(e).startsWith("Premium")).length;
@@ -4063,7 +4063,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
                       <option value="">Auto — {recFor(e).split(" — ")[0]} (algorithm)</option>
                       <option value="Basic">Member — $59.99/mo</option>
                       <option value="Premium">Premium — $165.99/mo</option>
-                      <option value="Elite">Elite — $599.99/mo</option>
+                      <option value="Elite">Elite — $549.99/mo</option>
                       <option value="Advisor">Senior Advisor — retainer</option>
                     </select>
                   </div>
@@ -4596,7 +4596,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
     } catch(e) { setError("Something went wrong. Please try again."); }
   };
 
-  const planPrices = { Free: "$0", Basic: "$59.99/mo", Premium: "$165.99/mo", Elite: "$599.99/mo" };
+  const planPrices = { Free: "$0", Basic: "$59.99/mo", Premium: "$165.99/mo", Elite: "$549.99/mo" };
   const planColors = { Free: "#6a6b69", Basic: "#b80101", Premium: "#b80101", Elite: "#570404" };
 
   return (

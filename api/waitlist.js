@@ -15,8 +15,8 @@ const PLANS = {
     'Everything in Member', 'Post, reply & network in the community', 'The Opportunity Board — RFPs & funding windows',
     'Lunch & Learn recordings', '1 free work session (1 hr) + priority booking', '10% off every 1:1 session',
   ] },
-  Elite: { tier: 'Elite', label: 'Elite', price: '$599.99/mo', rank: 3, features: [
-    'Everything in Premium', 'Direct messages to Dr. Merritt & her team', '3 one-on-one advisory calls a year',
+  Elite: { tier: 'Elite', label: 'Elite', price: '$549.99/mo', rank: 3, features: [
+    'Everything in Premium', 'Direct messages to Dr. Merritt & her team (replies within 2 business days)', '3 one-on-one advisory calls a year',
     '30% off every 1:1 session', 'Elite Lounge — the private channel', 'Small-group advisory sessions & networking invites',
   ] },
 };
@@ -127,7 +127,7 @@ export function recommendPlan(e) {
 export const PLAN_INFO = {
   Basic: { label: 'Member', monthly: 59.99 },
   Premium: { label: 'Premium', monthly: 165.99 },
-  Elite: { label: 'Elite', monthly: 599.99 },
+  Elite: { label: 'Elite', monthly: 549.99 },
   pass_single: { label: 'Single Course Pass', once: 100 },
   pass_all: { label: 'All-Access Pass', once: 250 },
 };

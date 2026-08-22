@@ -154,7 +154,7 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
                 {["Free", "Basic", "Premium", "Elite"].map(t => (
                   <button type="button" key={t} onClick={() => setTier(t)} style={{ background: tier === t ? "#b8010118" : "transparent", border: tier === t ? "1px solid #b80101" : "1px solid #2a0000", borderRadius: 8, padding: "10px 12px", cursor: "pointer", textAlign: "left" }}>
                     <div style={{ color: tier === t ? "#f0d8d8" : "#8a7070", fontWeight: 800, fontSize: 13, fontFamily: font }}>{TIER_LABELS[t]}</div>
-                    <div style={{ color: "#7a5050", fontSize: 11, fontFamily: font }}>{{ Free: "$0", Basic: "$59.99/mo", Premium: "$165.99/mo", Elite: "$599.99/mo" }[t]}</div>
+                    <div style={{ color: "#7a5050", fontSize: 11, fontFamily: font }}>{{ Free: "$0", Basic: "$59.99/mo", Premium: "$165.99/mo", Elite: "$549.99/mo" }[t]}</div>
                   </button>
                 ))}
               </div>
@@ -198,7 +198,7 @@ const BENEFITS = {
   Free: ["One lesson of your choice — the first you open", "1 curated case study", "Glossary & resource sheet"],
   Basic: ["All 4 courses + every new course we add", "Case studies, worksheets & reading guides", "Community access — read every channel"],
   Premium: ["Everything in Member", "Engage in the community — post, reply & network", "JV & Partnerships channel", "Development timeline templates", "Lunch & Learn recordings", "1 free work session (1 hr) + priority booking", "The Opportunity Board — RFPs, funding windows & deals"],
-  Elite: ["Everything in Premium", "Priority responses in the community", "Direct messages to Dr. Merritt & her team", "Elite Lounge — private channel", "3 one-on-one advisory calls/yr with Dr. Merritt", "Priority Q&A submissions"],
+  Elite: ["Everything in Premium", "Priority responses in the community", "Direct messages to Dr. Merritt & her team — replies within 2 business days", "Elite Lounge — private channel", "3 one-on-one advisory calls/yr with Dr. Merritt", "Priority Q&A submissions"],
   Partner: ["Custom organizational access", "Contact info@nreuv.com for your cohort setup"],
 };
 
@@ -798,11 +798,11 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
               <button className="community-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", background: "transparent", border: "1px solid #2a0000", borderRadius: 6, color: "var(--gu-muted)", padding: "6px 10px", cursor: "pointer", fontFamily: font }}><Menu size={15} /></button>
               <div>
                 <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font }}><Mail size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }} /> {isAdmin ? (dmTarget?.name || "Direct Messages") : "Dr. Merritt & Team"}</div>
-                <div style={{ color: "var(--gu-muted2)", fontSize: 12, fontFamily: font }}>{isAdmin ? "Private thread with this member." : "Private line to Dr. Merritt and the GroundUp team — an Elite benefit."}</div>
+                <div style={{ color: "var(--gu-muted2)", fontSize: 12, fontFamily: font }}>{isAdmin ? "Private thread with this member." : "For quick questions — replies within 2 business days. Substantive deal review belongs in a booked session or your advisory calls."}</div>
               </div>
             </div>
             <div style={{ flex: 1, overflowY: "auto", padding: "20px 20px 12px" }}>
-              {dmMsgs.length === 0 && <div style={{ color: "var(--gu-faint)", fontFamily: font, fontSize: 14, textAlign: "center", marginTop: 60 }}>{isAdmin ? "No messages in this thread yet." : "Start the conversation — Dr. Merritt's team will respond here."}</div>}
+              {dmMsgs.length === 0 && <div style={{ color: "var(--gu-faint)", fontFamily: font, fontSize: 14, textAlign: "center", marginTop: 60 }}>{isAdmin ? "No messages in this thread yet." : "Start the conversation — the team replies within 2 business days. For deep deal review, book a session so you get real time on it."}</div>}
               {dmMsgs.map(m => (
                 <div key={m.id} style={{ display: "flex", justifyContent: m.from_admin === !isAdmin ? "flex-start" : "flex-end", marginBottom: 10 }}>
                   <div style={{ maxWidth: "78%", background: m.from_admin ? "var(--gu-red-tint)" : "#ffffff", border: m.from_admin ? "1px solid #b8010130" : "1px solid #1a0000", borderRadius: 12, padding: "10px 14px" }}>
