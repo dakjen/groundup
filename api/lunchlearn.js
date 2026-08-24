@@ -97,10 +97,10 @@ export default async function handler(req, res) {
       const upcoming = events.filter(e => new Date(e.date) > new Date());
       const event = upcoming[0] || null;
       const allRsvps = events.length ? await sql`
-        SELECT r.event_key, u.name, u.email FROM lnl_rsvps r JOIN users u ON u.id = r.user_id
+        SELECT r.event_key, r.question, u.name, u.email FROM lnl_rsvps r JOIN users u ON u.id = r.user_id
         ORDER BY r.created_at ASC` : [];
       const rsvpsByEvent = {};
-      for (const r of allRsvps) (rsvpsByEvent[r.event_key] ||= []).push({ name: r.name, email: r.email });
+      for (const r of allRsvps) (rsvpsByEvent[r.event_key] ||= []).push({ name: r.name, email: r.email, question: r.question || null });
       const rsvps = event ? (rsvpsByEvent[event.date] || []) : [];
       return res.json({ event, events, rsvps, rsvpsByEvent, link: linkRow?.value || '', recordings: recRow?.value ? JSON.parse(recRow.value) : [], coupons, requests, attendees });
     }
@@ -117,9 +117,15 @@ export default async function handler(req, res) {
       }
       const [reqRow] = session.uid ? await sql`SELECT id FROM lnl_requests WHERE user_id = ${session.uid} LIMIT 1` : [];
       let recordings = [];
-      if (access || admin) {
-        const [recRow] = await sql`SELECT value FROM settings WHERE key = 'lnl_recordings'`;
-        recordings = recRow?.value ? JSON.parse(recRow.value) : [];
+      {
+        // Recordings open at Builder and above (or any L&L access); the live
+        // session link stays with L&L access holders (Developer+/purchase/comp)
+        const [rt] = await sql`SELECT tier FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
+        const recRank = TIER_RANK[rt?.tier] ?? 0;
+        if (access || admin || recRank >= 2) {
+          const [recRow] = await sql`SELECT value FROM settings WHERE key = 'lnl_recordings'`;
+          recordings = recRow?.value ? JSON.parse(recRow.value) : [];
+        }
       }
       const allEvents = await getEvents(sql);
       // Lunch & Learns and Office Hours share the schedule store but are
@@ -135,11 +141,11 @@ export default async function handler(req, res) {
       let office_hours = null;
       {
         const [me] = await sql`SELECT tier, role, comped, tier_since FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
-        const rank = admin ? 3 : (TIER_RANK[me?.tier] ?? 0);
-        const gate = admin || !me ? { active: false } : await benefitGate(sql, me);
-        if (rank >= 2) {
-          const [pRow] = await sql`SELECT value FROM settings WHERE key = ${rank >= 3 ? 'office_allow_elite' : 'office_allow_premium'}`;
-          const limit = parseInt(pRow?.value, 10) || (rank >= 3 ? 6 : 2);
+        const rank = admin ? 4 : (TIER_RANK[me?.tier] ?? 0);
+        const gate = { active: false }; // office hours are not gated — only advisory calls & networking are
+        if (rank >= 3) {
+          const [pRow] = await sql`SELECT value FROM settings WHERE key = ${rank >= 4 ? 'office_allow_elite' : 'office_allow_premium'}`;
+          const limit = parseInt(pRow?.value, 10) || (rank >= 4 ? 6 : 3);
           const officeKeys = allEvents.filter(e => (e.kind || 'lnl') === 'office').map(e => e.date);
           const usedRows = officeKeys.length ? await sql`SELECT COUNT(*)::int AS n FROM lnl_rsvps
             WHERE user_id = ${session.uid} AND event_key = ANY(${officeKeys}) AND created_at > NOW() - interval '365 days'` : [{ n: 0 }];
@@ -284,12 +290,10 @@ export default async function handler(req, res) {
         if (!admin) {
           const [me] = await sql`SELECT tier, role, comped, tier_since FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
           const rank = TIER_RANK[me?.tier] ?? 0;
-          if (rank < 2) return res.status(403).json({ error: 'Office hours are a Premium and Elite benefit' });
-          const gate = await benefitGate(sql, me);
-          if (gate.active) return res.status(403).json({ error: 'Office hours unlock after your first two months — yours open on ' + new Date(gate.until).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) + '.' });
+          if (rank < 3) return res.status(403).json({ error: 'Office hours are a Developer and Owner benefit' });
           if (req.body.going) {
-            const [pRow] = await sql`SELECT value FROM settings WHERE key = ${rank >= 3 ? 'office_allow_elite' : 'office_allow_premium'}`;
-            const limit = parseInt(pRow?.value, 10) || (rank >= 3 ? 6 : 2);
+            const [pRow] = await sql`SELECT value FROM settings WHERE key = ${rank >= 4 ? 'office_allow_elite' : 'office_allow_premium'}`;
+            const limit = parseInt(pRow?.value, 10) || (rank >= 4 ? 6 : 3);
             const officeKeys = events.filter(e => (e.kind || 'lnl') === 'office').map(e => e.date);
             const [used] = await sql`SELECT COUNT(*)::int AS n FROM lnl_rsvps WHERE user_id = ${session.uid} AND event_key = ANY(${officeKeys}) AND created_at > NOW() - interval '365 days'`;
             if ((used?.n || 0) >= limit) return res.status(403).json({ error: `You've used all ${limit} office-hours spots your plan includes this year.` });
@@ -300,7 +304,8 @@ export default async function handler(req, res) {
         if (!access) return res.status(403).json({ error: 'Lunch & Learn access required to RSVP' });
       }
       if (req.body.going) {
-        await sql`INSERT INTO lnl_rsvps (user_id, event_key, created_at) VALUES (${session.uid}, ${target.date}, NOW()) ON CONFLICT (user_id, event_key) DO NOTHING`;
+        const q = String(req.body.question || '').slice(0, 500) || null;
+        await sql`INSERT INTO lnl_rsvps (user_id, event_key, question, created_at) VALUES (${session.uid}, ${target.date}, ${q}, NOW()) ON CONFLICT (user_id, event_key) DO UPDATE SET question = COALESCE(${q}, lnl_rsvps.question)`;
       } else {
         await sql`DELETE FROM lnl_rsvps WHERE user_id = ${session.uid} AND event_key = ${target.date}`;
       }

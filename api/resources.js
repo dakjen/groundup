@@ -28,31 +28,50 @@ export default async function handler(req, res) {
         owned = ents.map(e => Number(e.course_id.slice(5)));
         const [u] = await sql`SELECT tier, role, comped, tier_since FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
         tierRank = TIER_RANK[u?.tier] ?? 0;
-        // New paid members wait out the benefit gate before shelf-wide perks kick in
-        var gate = u ? await benefitGate(sql, u) : { active: false };
-        if (gate.active) tierRank = Math.min(tierRank, 1);
+        var gate = { active: false }; // shop perks are metered by the monthly cap, not the time gate
       }
-      const rows = await sql`SELECT id, title, description, price_cents, value_cents, cover_url, delivery_url FROM products WHERE active ORDER BY position, id`;
-      // Membership perks on the whole shelf: Elite (rank 3) downloads everything;
-      // Premium (rank 2) can view everything in the reader but not download.
-      // The file URL never leaves the server for anyone below that without a purchase.
+      const rows = await sql`SELECT id, title, description, price_cents, value_cents, cover_url, delivery_url, is_playbook FROM products WHERE active ORDER BY position, id`;
+      // The shelf rules:
+      //   Elite (4)  → unlimited downloads, Playbook included
+      //   Premium (3)→ 3 downloads per billing month (guides & templates);
+      //                the Developer's Playbook stays view-only
+      //   Builder (2)→ view-only across everything
+      //   below      → buy (a purchase is always a full, permanent download)
+      let dl = null;
+      if (tierRank === 3 && session?.uid) {
+        const [me2] = await sql`SELECT tier_since FROM users WHERE id = ${session.uid}`;
+        const anchor = me2?.tier_since ? new Date(me2.tier_since) : new Date();
+        // current billing period start = latest monthly anniversary of tier_since
+        const now = new Date();
+        const periodStart = new Date(anchor);
+        periodStart.setFullYear(now.getFullYear(), now.getMonth(), anchor.getDate());
+        if (periodStart > now) periodStart.setMonth(periodStart.getMonth() - 1);
+        const [used] = await sql`SELECT COUNT(*)::int AS n FROM download_log WHERE user_id = ${session.uid} AND created_at >= ${periodStart.toISOString()}`;
+        const resetAt = new Date(periodStart); resetAt.setMonth(resetAt.getMonth() + 1);
+        dl = { limit: 3, used: used?.n || 0, remaining: Math.max(0, 3 - (used?.n || 0)), resets_at: resetAt.toISOString() };
+      }
       const products = rows.map(p => {
         const bought = owned.includes(p.id);
-        const access = bought || tierRank >= 3 ? 'download' : tierRank === 2 ? 'view' : 'buy';
+        let access = 'buy';
+        if (bought || tierRank >= 4) access = 'download';
+        else if (tierRank === 3) access = p.is_playbook ? 'view' : 'metered';
+        else if (tierRank === 2) access = 'view';
         return {
           id: p.id, title: p.title, description: p.description,
           price_cents: p.price_cents, value_cents: p.value_cents, cover_url: p.cover_url,
+          is_playbook: !!p.is_playbook,
           owned: bought, access,
-          via: bought ? 'purchase' : tierRank >= 3 ? 'elite' : tierRank === 2 ? 'premium' : null,
-          delivery_url: access !== 'buy' ? p.delivery_url : undefined,
+          via: bought ? 'purchase' : tierRank >= 4 ? 'elite' : tierRank >= 2 ? 'premium' : null,
+          // metered downloads go through the product_download action, never a bare URL
+          delivery_url: access === 'download' || access === 'view' ? p.delivery_url : undefined,
         };
       });
-      return res.json({ live: true, tier_rank: tierRank, gate: typeof gate !== "undefined" ? gate : { active: false }, products });
+      return res.json({ live: true, tier_rank: tierRank, dl, gate: typeof gate !== "undefined" ? gate : { active: false }, products });
     }
 
     if (req.method === 'POST' && req.body && req.body.action === 'product_save') {
       if (!admin) return res.status(401).json({ error: 'Unauthorized' });
-      const { id, title, description, price_cents, value_cents, cover_url, delivery_url, active, position } = req.body;
+      const { id, title, description, price_cents, value_cents, cover_url, delivery_url, active, position, is_playbook } = req.body;
       if (!title || !Number.isFinite(Number(price_cents)) || Number(price_cents) < 100) {
         return res.status(400).json({ error: 'Title and a price of at least $1 required' });
       }
@@ -62,14 +81,40 @@ export default async function handler(req, res) {
         const [row] = await sql`UPDATE products SET
           title = ${String(title).slice(0, 200)}, description = ${description || null},
           price_cents = ${price}, value_cents = ${value},
-          cover_url = ${cover_url || null}, delivery_url = ${delivery_url || null},
+          cover_url = ${cover_url || null}, delivery_url = ${delivery_url || null}, is_playbook = ${!!is_playbook},
           active = ${active !== false}, position = ${Number(position) || 0}
           WHERE id = ${Number(id)} RETURNING *`;
         return res.json({ product: row });
       }
-      const [row] = await sql`INSERT INTO products (title, description, price_cents, value_cents, cover_url, delivery_url, active, position, created_at)
-        VALUES (${String(title).slice(0, 200)}, ${description || null}, ${price}, ${value}, ${cover_url || null}, ${delivery_url || null}, ${active !== false}, ${Number(position) || 0}, NOW()) RETURNING *`;
+      const [row] = await sql`INSERT INTO products (title, description, price_cents, value_cents, cover_url, delivery_url, is_playbook, active, position, created_at)
+        VALUES (${String(title).slice(0, 200)}, ${description || null}, ${price}, ${value}, ${cover_url || null}, ${delivery_url || null}, ${!!is_playbook}, ${active !== false}, ${Number(position) || 0}, NOW()) RETURNING *`;
       return res.status(201).json({ product: row });
+    }
+
+    // Premium's metered download: burns one of the 3 monthly slots, returns the file
+    if (req.method === 'POST' && req.body && req.body.action === 'product_download') {
+      const session = getSession(req);
+      if (!session?.uid) return res.status(401).json({ error: 'Sign in required' });
+      const [u] = await sql`SELECT tier, tier_since FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
+      const rank = TIER_RANK[u?.tier] ?? 0;
+      const [p] = await sql`SELECT id, delivery_url, is_playbook FROM products WHERE id = ${Number(req.body.id)} AND active`;
+      if (!p || !p.delivery_url) return res.status(404).json({ error: 'Product not found' });
+      const [bought] = await sql`SELECT id FROM entitlements WHERE user_id = ${session.uid} AND course_id = ${'prod:' + p.id} LIMIT 1`;
+      if (bought || rank >= 4) return res.json({ url: p.delivery_url }); // owners & Elite: unlimited
+      if (rank !== 3) return res.status(403).json({ error: 'Downloads are a Premium and Elite benefit' });
+      if (p.is_playbook) return res.status(403).json({ error: "The Developer's Playbook is view-only on Premium — Elite members can download it" });
+      const anchor = u?.tier_since ? new Date(u.tier_since) : new Date();
+      const now = new Date();
+      const periodStart = new Date(anchor);
+      periodStart.setFullYear(now.getFullYear(), now.getMonth(), anchor.getDate());
+      if (periodStart > now) periodStart.setMonth(periodStart.getMonth() - 1);
+      const [used] = await sql`SELECT COUNT(*)::int AS n FROM download_log WHERE user_id = ${session.uid} AND created_at >= ${periodStart.toISOString()}`;
+      if ((used?.n || 0) >= 3) {
+        const resetAt = new Date(periodStart); resetAt.setMonth(resetAt.getMonth() + 1);
+        return res.status(403).json({ error: `You've used your 3 downloads this month — they reset on ${resetAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}.` });
+      }
+      await sql`INSERT INTO download_log (user_id, product_id, created_at) VALUES (${session.uid}, ${p.id}, NOW())`;
+      return res.json({ url: p.delivery_url });
     }
 
     if (req.method === 'POST' && req.body && req.body.action === 'product_delete') {

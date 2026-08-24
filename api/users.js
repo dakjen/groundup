@@ -53,7 +53,7 @@ export default async function handler(req, res) {
       if (role !== undefined && !['member', 'admin'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
       if (badge !== undefined && badge !== null && !['team', 'drmerritt'].includes(badge)) return res.status(400).json({ error: 'Invalid badge' });
       const cleanEmail = String(email).trim().toLowerCase();
-      const safeTier = ['Free', 'Basic', 'Premium', 'Elite', 'Partner'].includes(tier) ? tier : 'Free';
+      const safeTier = ['Free', 'Basic', 'Builder', 'Premium', 'Elite', 'Partner'].includes(tier) ? tier : 'Free';
       const [user] = await sql`
         INSERT INTO users (name, email, tier, password_hash, role, badge, created_at)
         VALUES (${String(name).trim()}, ${cleanEmail}, ${safeTier}, ${password ? hashPassword(password) : null}, ${role || 'member'}, ${badge || null}, NOW())

@@ -8,8 +8,9 @@ export const config = { api: { bodyParser: false } };
 // Everything purchasable, priced in one place (cents)
 const CATALOG = {
   sub_Basic:   { mode: 'subscription', name: 'GroundUp Member',            amount: 4999,  tier: 'Basic' },
-  sub_Premium: { mode: 'subscription', name: 'GroundUp Premium',           amount: 15999, tier: 'Premium' },
-  sub_Elite:   { mode: 'subscription', name: 'GroundUp Elite',             amount: 54999, tier: 'Elite' },
+  sub_Builder: { mode: 'subscription', name: 'GroundUp Builder',           amount: 9999,  tier: 'Builder' },
+  sub_Premium: { mode: 'subscription', name: 'GroundUp Premium',          amount: 14999, tier: 'Premium' },
+  sub_Elite:   { mode: 'subscription', name: 'GroundUp Elite',             amount: 49999, tier: 'Elite' },
   pass_single: { mode: 'payment',      name: 'Single Course Pass (30 days)', amount: 10000 },
   pass_all:    { mode: 'payment',      name: 'All-Access Pass (30 days)',  amount: 25000 },
   lnl:         { mode: 'payment',      name: 'Lunch & Learn — 6 months',   amount: 3999 },
@@ -405,7 +406,7 @@ export default async function handler(req, res) {
     if (!product) return res.status(400).json({ error: 'Unknown item' });
 
     // Elite is capped. Check before taking money — an over-cap buyer would otherwise
-    // pay $549.99 for a seat we've publicly said doesn't exist.
+    // pay $499.99 for a seat we've publicly said doesn't exist.
     if (item === 'sub_Elite' && user.tier !== 'Elite') {
       const seats = await eliteSeats(sql);
       if (seats.full) {

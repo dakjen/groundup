@@ -228,8 +228,8 @@ export default async function handler(req, res) {
     // Posting requires Premium+; Basic is read-only. Admins always post.
     if (req.method === 'POST') {
       const { channel_id, body, parent_id } = req.body;
-      if (!isAdminReq && user.rank < TIER_RANK.Premium) {
-        return res.status(403).json({ error: 'Posting requires a Premium or Elite membership — Basic includes read access' });
+      if (!isAdminReq && user.rank < TIER_RANK.Builder) {
+        return res.status(403).json({ error: 'Posting opens with the Builder plan and above — Member includes read access' });
       }
       const text = (body || '').trim();
       if (!channel_id || !text) return res.status(400).json({ error: 'channel_id and body required' });

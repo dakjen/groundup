@@ -73,6 +73,11 @@ const STATEMENTS = [
     id SERIAL PRIMARY KEY, title TEXT NOT NULL, description TEXT,
     price_cents INTEGER NOT NULL, delivery_url TEXT, cover_url TEXT, value_cents INTEGER,
     position INTEGER DEFAULT 0, active BOOLEAN DEFAULT TRUE, created_at TIMESTAMP DEFAULT NOW())`,
+  `ALTER TABLE products ADD COLUMN IF NOT EXISTS is_playbook BOOLEAN DEFAULT FALSE`,
+  `CREATE TABLE IF NOT EXISTS download_log (
+    id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    product_id INTEGER NOT NULL, created_at TIMESTAMP DEFAULT NOW())`,
+  `ALTER TABLE lnl_rsvps ADD COLUMN IF NOT EXISTS question TEXT`,
   `CREATE TABLE IF NOT EXISTS auth_attempts (
     id SERIAL PRIMARY KEY, key TEXT NOT NULL, created_at TIMESTAMP DEFAULT NOW())`,
   `CREATE INDEX IF NOT EXISTS idx_auth_attempts_key ON auth_attempts(key, created_at)`,

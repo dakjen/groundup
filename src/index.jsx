@@ -1053,53 +1053,67 @@ const plans = [
       "Community access — read every channel",
     ],
     locked: ["Posting in the community", "Timeline templates & Lunch & Learn recordings", "Work sessions & advisory calls"],
-    value: "Over $3,000 in annual value",
+  },
+  {
+    name: "Builder",
+    tier: "Builder",
+    price: "$99.99",
+    period: "/mo",
+    description: "Everything in Member — plus a voice in the community, Lunch & Learn recordings, and the digital product shelf to browse.",
+    accent: "#b80101",
+    popular: false,
+    cta: "Become a Builder",
+    features: [
+      "Everything in Member",
+      "Post, reply & network in the community",
+      "View-only: every guide, template & the Developer's Playbook",
+    ],
+    locked: ["Product downloads (Premium gets 3/mo)", "The Opportunity Board & office hours", "Advisory calls & DMs"],
   },
   {
     name: "Premium",
     tier: "Premium",
-    price: "$159.99",
+    price: "$149.99",
     period: "/mo",
     description: "Everything in Member — plus full community engagement, deal tools, and a free advisory hour.",
     accent: "#b80101",
     popular: true,
     cta: "Go Premium",
     features: [
-      "Everything in Member",
-      "Engage in the community — post, reply & network",
+      "Everything in Builder",
+      "Download 3 guides or templates every month",
+      "The Opportunity Board — RFPs, funding windows & deals",
       "JV & Partnerships channel",
-      "Development timeline templates",
       "Lunch & Learn recordings",
-      "1 free work session (1 hr) + priority booking — unlocks after 2 months",
+      "Development timeline templates",
+      "Group office hours with Dr. Merritt + priority booking",
       "10% off 1:1 sessions with Dr. Merritt",
-      "The Opportunity Board — RFPs, funding windows & deals, posted by the team",
     ],
-    locked: ["Advisory calls with Dr. Merritt", "Priority responses & direct messages"],
-    value: "Over $4,000 in annual value",
+    locked: ["The Developer's Playbook download (view-only until Elite)", "Advisory calls & direct messages"],
   },
   {
-    name: "Elite",
+    name: "Owner",
     tier: "Elite",
-    price: "$549.99",
+    price: "$499.99",
     period: "/mo",
     description: "Direct access to Dr. Gina Merritt. For serious developers ready to move at the highest level.",
     accent: "#570404",
     popular: false,
     cta: "Join Elite",
     features: [
-      "Everything in Premium",
+      "Everything in Developer",
       "Priority responses in the community",
-      "Direct messages to Dr. Merritt & her team — replies within 2 business days",
+      "Direct messages to Dr. Merritt & her team — replies within 2 business days, Mon–Fri",
       "Elite Lounge — private channel",
-      "3 one-on-one advisory calls/yr with Dr. Merritt — unlock after 2 months",
+      "3 one-on-one advisory calls/yr with Dr. Merritt — unlock after 4 months",
       "30% off 1:1 sessions with Dr. Merritt",
+      "Unlimited downloads — including the Developer's Playbook",
       "Priority Q&A submissions",
-      "1–2 small group advisory sessions/yr — unlock after 2 months",
-      "1 invite to exclusive networking event — after 2 months",
+      "1–2 small group advisory sessions/yr",
+      "1 invite to exclusive networking event — after 4 months",
     ],
     locked: [],
     limited: true,
-    value: "Over $9,000 in annual value — incl. advisory calls, small-group advisory sessions & direct access to Dr. Merritt",
   },
   {
     name: "Senior Advisor",
@@ -1770,6 +1784,17 @@ function ShopPage({ member, onSignIn }) {
 
   const usd = (c) => "$" + (c / 100).toLocaleString(undefined, { minimumFractionDigits: c % 100 ? 2 : 0 });
 
+  const meteredDownload = async (p) => {
+    if (!window.confirm(`Use one of your monthly downloads on "${p.title}"?\n\nPremium includes 3 downloads per month (${data.dl ? data.dl.remaining : 3} left this month). Downloads are final — no refunds once a product has been viewed or downloaded.`)) return;
+    try {
+      const res = await fetch("/api/resources", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "product_download", id: p.id }) });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Download failed");
+      window.open(d.url, "_blank");
+      load();
+    } catch (e) { alert(e.message); }
+  };
+
   const buy = async () => {
     if (!member) { onSignIn && onSignIn(); return; }
     try {
@@ -1795,11 +1820,6 @@ function ShopPage({ member, onSignIn }) {
   return (
     <div style={{ background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        {data.gate?.active && (
-          <div style={{ background: "#12060a", border: "1px solid #b8010140", borderRadius: 10, padding: "12px 20px", marginBottom: 24, color: "#c8a8a8", fontSize: 13, fontFamily: font, lineHeight: 1.6 }}>
-            Your membership's shelf-wide perks (view or download every product) unlock after your first two months — on {new Date(data.gate.until).toLocaleDateString(undefined, { month: "long", day: "numeric" })}. Anything you buy is yours immediately.
-          </div>
-        )}
         {isTeam && !data.live && (
           <div style={{ background: "#12060a", border: "1px solid #b8010150", borderRadius: 10, padding: "12px 20px", marginBottom: 24, color: "#e0c4c4", fontSize: 13, fontFamily: font, fontWeight: 700 }}>
             Hidden from members — you're seeing this because you're team. Flip it live in GroundUp Admin → Shop.
@@ -1834,10 +1854,17 @@ function ShopPage({ member, onSignIn }) {
                     <a href={p.delivery_url} target="_blank" rel="noreferrer" style={{ display: "block", textAlign: "center", background: "transparent", color: "#22c55e", border: "1px solid #22c55e60", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, textDecoration: "none" }}>
                       ✓ {p.via === "elite" ? "Included with Elite — download" : "Yours — download"}
                     </a>
+                  ) : p.access === "metered" ? (
+                    <div>
+                      <button onClick={() => meteredDownload(p)} disabled={data.dl && data.dl.remaining <= 0} style={{ width: "100%", background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer", opacity: data.dl && data.dl.remaining <= 0 ? 0.5 : 1 }}>
+                        {data.dl && data.dl.remaining <= 0 ? "Monthly downloads used" : `Download — ${data.dl ? data.dl.remaining : 3} of 3 left this month`}
+                      </button>
+                      <div style={{ color: "#6a5050", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 6 }}>Included with Premium · Elite gets unlimited</div>
+                    </div>
                   ) : p.access === "view" ? (
                     <div>
-                      <button onClick={() => setViewing(p)} style={{ width: "100%", background: "transparent", color: "#e0c4c4", border: "1px solid #e0c4c455", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>View — included with Premium</button>
-                      <div style={{ color: "#6a5050", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 6 }}>Elite members can download · or buy it to own it</div>
+                      <button onClick={() => setViewing(p)} style={{ width: "100%", background: "transparent", color: "#e0c4c4", border: "1px solid #e0c4c455", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>{p.is_playbook ? "View the Playbook — download is Elite-only" : "View — included with your plan"}</button>
+                      <div style={{ color: "#6a5050", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 6 }}>Elite includes unlimited downloads · or buy it to own it</div>
                     </div>
                   ) : (
                     <button onClick={() => { setConfirmBuy(p); setAgreed(false); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Buy — {usd(p.price_cents)}</button>
@@ -1873,7 +1900,7 @@ function ShopPage({ member, onSignIn }) {
               <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", marginBottom: 18 }}>
                 <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 3 }} />
                 <span style={{ color: "#c8a8a8", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>
-                  I agree this document is the exclusive intellectual property of Dr. Gina Merritt, licensed for my personal use only — I will not sell, share, replicate, or redistribute it in any form.
+                  I agree this document is the exclusive intellectual property of Dr. Gina Merritt, licensed for my personal use only — I will not sell, share, replicate, or redistribute it in any form. I understand all sales are final once a product has been viewed or downloaded.
                 </span>
               </label>
               <div style={{ display: "flex", gap: 10 }}>
@@ -1891,7 +1918,7 @@ function ShopPage({ member, onSignIn }) {
 // Admin: create and manage shop products — uploads, prices, value framing, visibility
 function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
   const [data, setData] = useState(null);
-  const [form, setForm] = useState({ title: "", description: "", price: "", value: "", delivery_url: "", cover_url: "" });
+  const [form, setForm] = useState({ title: "", description: "", price: "", value: "", delivery_url: "", cover_url: "", is_playbook: false });
   const [msg, setMsg] = useState(null);
   const [busy, setBusy] = useState(false);
   const authHeaders = () => ({ Authorization: "Bearer " + sessionStorage.getItem("adminToken") });
@@ -1919,8 +1946,8 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
   };
   const save = async () => {
     try {
-      await api2({ action: "product_save", title: form.title, description: form.description, price_cents: Math.round(parseFloat(form.price || "0") * 100), value_cents: form.value ? Math.round(parseFloat(form.value) * 100) : null, delivery_url: form.delivery_url, cover_url: form.cover_url });
-      setForm({ title: "", description: "", price: "", value: "", delivery_url: "", cover_url: "" });
+      await api2({ action: "product_save", title: form.title, description: form.description, price_cents: Math.round(parseFloat(form.price || "0") * 100), value_cents: form.value ? Math.round(parseFloat(form.value) * 100) : null, delivery_url: form.delivery_url, cover_url: form.cover_url, is_playbook: form.is_playbook });
+      setForm({ title: "", description: "", price: "", value: "", delivery_url: "", cover_url: "", is_playbook: false });
       flash(true, "Product added to the shop.");
       await load();
     } catch (e) { flash(false, e.message); }
@@ -1958,6 +1985,10 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
             <input type="file" accept=".png,.jpg,.jpeg,.webp" disabled={busy} onChange={e => upload(e.target.files[0], "cover", (u) => setForm(f => ({ ...f, cover_url: u })))} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12 }} />
           </div>
         </div>
+        <label style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 14, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#444444", cursor: "pointer" }}>
+          <input type="checkbox" checked={!!form.is_playbook} onChange={e => setForm({ ...form, is_playbook: e.target.checked })} />
+          This is the Developer's Playbook — view-only for everyone below Elite
+        </label>
         <button onClick={save} disabled={busy || !form.title || !form.price || !form.delivery_url} style={{ ...btnRed, opacity: busy || !form.title || !form.price || !form.delivery_url ? 0.5 : 1 }}>Add to Shop</button>
         {!form.delivery_url && <span style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 12 }}>Upload the PDF first — that's what buyers receive.</span>}
       </div>
@@ -2022,7 +2053,11 @@ function OfficeHoursPage({ member, onSignIn, setActivePage }) {
   const oh = status?.office_hours;
   const rsvp = async (ev, going) => {
     try {
-      const res = await fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "rsvp", going, event_key: ev.date }) });
+      let question;
+      if (going) {
+        question = window.prompt("One question you'd like Dr. Merritt to be ready for (optional — helps her prep):") || "";
+      }
+      const res = await fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "rsvp", going, event_key: ev.date, question }) });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "RSVP failed");
       await load();
@@ -2042,16 +2077,11 @@ function OfficeHoursPage({ member, onSignIn, setActivePage }) {
           <div style={{ textAlign: "center", color: "#8a7070", fontFamily: font, padding: 40 }}>Loading…</div>
         ) : !oh.eligible ? (
           <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: 48, textAlign: "center" }}>
-            <div style={{ color: "#c8a8a8", fontSize: 15, fontFamily: font, lineHeight: 1.8, maxWidth: 460, margin: "0 auto 20px" }}>Office hours are a <strong style={{ color: "#f0d8d8" }}>Premium and Elite benefit</strong> — Premium members can book {2} a year, Elite members {6}.</div>
+            <div style={{ color: "#c8a8a8", fontSize: 15, fontFamily: font, lineHeight: 1.8, maxWidth: 460, margin: "0 auto 20px" }}>Office hours are a <strong style={{ color: "#f0d8d8" }}>Premium and Elite benefit</strong> — live group time with Dr. Merritt, a few times a year.</div>
             <button onClick={() => setActivePage("pricing")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "13px 28px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>See Plans →</button>
           </div>
         ) : (
           <>
-            {oh.gate?.active && (
-              <div style={{ background: "#12060a", border: "1px solid #b8010140", borderRadius: 12, padding: "14px 22px", marginBottom: 20, color: "#c8a8a8", fontSize: 13.5, fontFamily: font, lineHeight: 1.7 }}>
-                Office hours unlock after your first two months of membership — yours open on <strong style={{ color: "#f0d8d8" }}>{new Date(oh.gate.until).toLocaleDateString(undefined, { month: "long", day: "numeric" })}</strong>. You can see the schedule now and book once they unlock.
-              </div>
-            )}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 26 }}>
               <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
               <span style={{ color: "#e0c4c4", fontSize: 13.5, fontFamily: font, fontWeight: 800 }}>
@@ -2140,7 +2170,7 @@ function OfficeHoursAdmin({ btnRed, btnGhost, inp, lbl }) {
                 <button onClick={async () => { const t = window.prompt("Session name:", ev.title); if (!t || t === ev.title) return; try { await call("POST", { action: "update_event", id: ev.id, title: t }); flash(true, "Renamed."); await load(); } catch (e) { flash(false, e.message); } }} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Rename</button>
                 <button onClick={async () => { if (!window.confirm(`Remove "${ev.title}"?`)) return; try { await call("POST", { action: "remove_event", id: ev.id }); flash(true, "Removed."); await load(); } catch (e) { flash(false, e.message); } }} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Remove</button>
               </div>
-              {rsvps.length > 0 && <div style={{ color: "#6b6259", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginTop: 6, lineHeight: 1.7 }}>Coming: {rsvps.map(r => r.name).join(", ")}</div>}
+              {rsvps.length > 0 && <div style={{ color: "#6b6259", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginTop: 6, lineHeight: 1.7 }}>{rsvps.map(r => r.question ? `${r.name} — “${r.question}”` : r.name).join(" · ")}</div>}
             </div>
           );
         })}
@@ -2301,8 +2331,8 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
             { name: "One Course", price: "$100", period: "one-time", desc: "30 days inside one course of your choice." },
             { name: "All-Access Pass", price: "$250", period: "one-time", desc: "30 days of the entire curriculum." },
             { name: "Member", price: "$49.99", period: "/mo", desc: "Constant access + support — every course, every new course, and the community." },
-            { name: "Premium", price: "$159.99", period: "/mo", desc: "Engage the community, deal tools, the Opportunity Board, a free work session.", popular: true },
-            { name: "Elite", price: "$549.99", period: "/mo", desc: "Direct line to Dr. Merritt — advisory calls, DMs, and the partner network." },
+            { name: "Premium", price: "$149.99", period: "/mo", desc: "Engage the community, deal tools, the Opportunity Board, a free work session.", popular: true },
+            { name: "Elite", price: "$499.99", period: "/mo", desc: "Direct line to Dr. Merritt — advisory calls, DMs, and the partner network." },
           ].map((p, i) => (
             <div key={i} style={{ background: p.popular ? "#0d0404" : "#080404", border: "1px solid " + (p.popular ? "#b8010140" : "#150000"), borderRadius: 16, padding: "26px 24px", textAlign: "center", position: "relative" }}>
               {p.popular && <div style={{ position: "absolute", top: 12, right: 12, background: "#b8010115", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "2px 8px", fontSize: 8, fontFamily: font, fontWeight: 800, letterSpacing: "1.5px" }}>POPULAR</div>}
@@ -3349,7 +3379,7 @@ function AdminPanel({ onLogout, onExit }) {
 
 // ─── REVENUE TAB ──────────────────────────────────────────────────────────────
 
-const TIER_PRICES = { Free: 0, Basic: 49.99, Premium: 159.99, Elite: 549.99 };
+const TIER_PRICES = { Free: 0, Basic: 49.99, Builder: 99.99, Premium: 149.99, Elite: 499.99 };
 
 function RevenueTab() {
   const [users, setUsers] = useState([]);
@@ -3477,8 +3507,8 @@ function RevenueTab() {
 
 // ─── USERS TAB ────────────────────────────────────────────────────────────────
 
-const TIERS = ["Free", "Basic", "Premium", "Elite"];
-const TIER_COLORS = { Free: "#8a8a8a", Basic: "#b80101", Premium: "#b80101", Elite: "#570404" };
+const TIERS = ["Free", "Basic", "Builder", "Premium", "Elite"];
+const TIER_COLORS = { Free: "#8a8a8a", Basic: "#b80101", Builder: "#a03030", Premium: "#b80101", Elite: "#570404" };
 
 function UsersTab({ btnRed, btnGhost, inp, lbl }) {
   const [users, setUsers] = useState([]);
@@ -3547,7 +3577,7 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
   });
 
   const tierCounts = TIERS.reduce((acc, t) => ({ ...acc, [t]: users.filter(u => u.tier === t && u.role !== "admin").length }), {});
-  const TIER_DISPLAY = { Free: "Free", Basic: "Member", Premium: "Premium", Elite: "Elite" };
+  const TIER_DISPLAY = { Free: "Free", Basic: "Member", Builder: "Builder", Premium: "Premium", Elite: "Elite" };
 
   if (loading) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
 
@@ -3948,7 +3978,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
 
   // Mirrors recommendPlan() in api/waitlist.js — budget decides:
   // $500+ → Elite · $150–$500 → Premium · below $150 → Member
-  const recFor = (e) => e.budget === "$2,000+" ? "Senior Advisor — from $3,025/mo" : ["$300+", "$500+"].includes(e.budget) ? "Elite — $549.99/mo" : ["$100–$200", "$150–$500"].includes(e.budget) ? "Premium — $159.99/mo" : "Member — $49.99/mo";
+  const recFor = (e) => e.budget === "$2,000+" ? "Senior Advisor — from $3,025/mo" : ["$300+", "$500+"].includes(e.budget) ? "Elite — $499.99/mo" : ["$100–$200", "$150–$500"].includes(e.budget) ? "Premium — $149.99/mo" : "Member — $49.99/mo";
 
   // Download everything as a CSV — respects the current list filter
   const exportCsv = (rows) => {
@@ -4093,8 +4123,8 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
           Conservative maps their budget to the plan it comfortably covers;
           upside assumes each stretches one tier. */}
       {(() => {
-        const PLAN_FIT = { "Under $25": 0, "$25–$100": 49.99, "$100–$200": 159.99, "$300+": 549.99, "$2,000+": 3025, "Under $50": 0, "$50–$150": 49.99, "$150–$500": 159.99, "$500+": 549.99 };
-        const STRETCH = { "Under $25": 49.99, "$25–$100": 159.99, "$100–$200": 549.99, "$300+": 549.99, "$2,000+": 3025, "Under $50": 49.99, "$50–$150": 159.99, "$150–$500": 549.99, "$500+": 549.99 };
+        const PLAN_FIT = { "Under $25": 0, "$25–$100": 49.99, "$100–$200": 149.99, "$300+": 499.99, "$2,000+": 3025, "Under $50": 0, "$50–$150": 49.99, "$150–$500": 149.99, "$500+": 499.99 };
+        const STRETCH = { "Under $25": 49.99, "$25–$100": 99.99, "$100–$200": 499.99, "$300+": 499.99, "$2,000+": 3025, "Under $50": 49.99, "$50–$150": 99.99, "$150–$500": 499.99, "$500+": 499.99 };
         const mrrFit = entries.reduce((s, e) => s + (PLAN_FIT[e.budget] || 0), 0);
         // Premium is the ideal recommendation; Elite (and Advisor) are the exceptional wins
         const premiumRec = entries.filter(e => recFor(e).startsWith("Premium")).length;
@@ -4226,8 +4256,8 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
                     }} style={{ background: e.rec_override ? "#b8010112" : "#f5f2ec", color: e.rec_override ? "#b80101" : "#444444", border: "1px solid " + (e.rec_override ? "#b8010150" : "#dcd8d0"), borderRadius: 6, padding: "5px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
                       <option value="">Auto — {recFor(e).split(" — ")[0]} (algorithm)</option>
                       <option value="Basic">Member — $49.99/mo</option>
-                      <option value="Premium">Premium — $159.99/mo</option>
-                      <option value="Elite">Elite — $549.99/mo</option>
+                      <option value="Premium">Premium — $149.99/mo</option>
+                      <option value="Elite">Elite — $499.99/mo</option>
                       <option value="Advisor">Senior Advisor — retainer</option>
                     </select>
                   </div>
@@ -4760,7 +4790,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
     } catch(e) { setError("Something went wrong. Please try again."); }
   };
 
-  const planPrices = { Free: "$0", Basic: "$49.99/mo", Premium: "$159.99/mo", Elite: "$549.99/mo" };
+  const planPrices = { Free: "$0", Basic: "$49.99/mo", Premium: "$149.99/mo", Elite: "$499.99/mo" };
   const planColors = { Free: "#6a6b69", Basic: "#b80101", Premium: "#b80101", Elite: "#570404" };
 
   return (

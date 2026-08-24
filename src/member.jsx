@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 
 // ─── MEMBER SESSION HELPERS ─────────────────────────────────────────────────
 
-export const TIER_RANK = { Free: 0, Basic: 1, Premium: 2, Elite: 3 };
+export const TIER_RANK = { Free: 0, Basic: 1, Builder: 2, Premium: 3, Elite: 4 };
 
 export function getMember() {
   try { const m = localStorage.getItem("guMember"); return m ? JSON.parse(m) : null; } catch { return null; }
@@ -43,9 +43,9 @@ const lbl = { display: "block", fontSize: 10, color: "#8a7070", fontWeight: 700,
 const btnRed = { background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "12px 22px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" };
 const btnGhost = { background: "transparent", color: "#8a7070", border: "1px solid #2a0000", borderRadius: 8, padding: "12px 22px", fontFamily: font, fontWeight: 600, fontSize: 13, cursor: "pointer" };
 
-const TIER_COLORS = { Free: "#6a6b69", Basic: "#b80101", Premium: "#e06767", Elite: "#e0c4c4", Partner: "#e0c4c4" };
+const TIER_COLORS = { Free: "#6a6b69", Basic: "#b80101", Builder: "#c85050", Premium: "#e06767", Elite: "#e0c4c4", Partner: "#e0c4c4" };
 // Display names — 'Basic' is the internal value for the Member subscription tier
-export const TIER_LABELS = { Free: "Free", Basic: "Member", Premium: "Premium", Elite: "Elite", Partner: "Partner" };
+export const TIER_LABELS = { Free: "Free", Basic: "Member", Builder: "Builder", Premium: "Premium", Elite: "Elite", Partner: "Partner" };
 
 // Account badges — earned perks that follow a member everywhere: the admin
 // sheets, their profile, and next to their name in the community. Add new
@@ -151,10 +151,10 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
             <div style={{ marginBottom: 20 }}>
               <label style={lbl}>Plan</label>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                {["Free", "Basic", "Premium", "Elite"].map(t => (
+                {["Free", "Basic", "Builder", "Premium", "Elite"].map(t => (
                   <button type="button" key={t} onClick={() => setTier(t)} style={{ background: tier === t ? "#b8010118" : "transparent", border: tier === t ? "1px solid #b80101" : "1px solid #2a0000", borderRadius: 8, padding: "10px 12px", cursor: "pointer", textAlign: "left" }}>
                     <div style={{ color: tier === t ? "#f0d8d8" : "#8a7070", fontWeight: 800, fontSize: 13, fontFamily: font }}>{TIER_LABELS[t]}</div>
-                    <div style={{ color: "#7a5050", fontSize: 11, fontFamily: font }}>{{ Free: "$0", Basic: "$49.99/mo", Premium: "$159.99/mo", Elite: "$549.99/mo" }[t]}</div>
+                    <div style={{ color: "#7a5050", fontSize: 11, fontFamily: font }}>{{ Free: "$0", Basic: "$49.99/mo", Premium: "$149.99/mo", Elite: "$499.99/mo" }[t]}</div>
                   </button>
                 ))}
               </div>
@@ -198,6 +198,7 @@ const BENEFITS = {
   Free: ["One lesson of your choice — the first you open", "1 curated case study", "Glossary & resource sheet"],
   Basic: ["All 4 courses + every new course we add", "Case studies, worksheets & reading guides", "Community access — read every channel"],
   Premium: ["Everything in Member", "Engage in the community — post, reply & network", "JV & Partnerships channel", "Development timeline templates", "Lunch & Learn recordings", "1 free work session (1 hr) + priority booking", "The Opportunity Board — RFPs, funding windows & deals"],
+  Builder: ["Everything in Member", "Post, reply & network in the community", "View-only access to every digital product"],
   Elite: ["Everything in Premium", "Priority responses in the community", "Direct messages to Dr. Merritt & her team — replies within 2 business days", "Elite Lounge — private channel", "3 one-on-one advisory calls/yr with Dr. Merritt", "Priority Q&A submissions"],
   Partner: ["Custom organizational access", "Contact info@nreuv.com for your cohort setup"],
 };
@@ -281,7 +282,7 @@ function BenefitGateNotice({ member }) {
   if (!member?.benefit_gate?.active) return null;
   return (
     <div style={{ background: "var(--gu-card2)", border: "1px solid #b8010140", borderRadius: 14, padding: "16px 24px", marginBottom: 28, color: "var(--gu-body)", fontSize: 13.5, fontFamily: font, lineHeight: 1.7 }}>
-      <strong style={{ color: "var(--gu-text2)" }}>Your full benefits are on the way.</strong> Advisory sessions and shelf-wide product access unlock after your first two months of membership — yours open on <strong style={{ color: "#b80101" }}>{new Date(member.benefit_gate.until).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}</strong>. Courses, the community, and Lunch & Learns are all live for you right now.
+      <strong style={{ color: "var(--gu-text2)" }}>Your full benefits are on the way.</strong> Advisory calls and networking events unlock after four months of continuous membership — yours open on <strong style={{ color: "#b80101" }}>{new Date(member.benefit_gate.until).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}</strong>. Courses, the community, and Lunch & Learns are all live for you right now.
     </div>
   );
 }
@@ -451,7 +452,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
           <div onClick={() => rank >= 1 && setActivePage("community")} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: rank >= 1 ? "pointer" : "default", opacity: rank >= 1 ? 1 : 0.55 }}>
             <div style={{ marginBottom: 12 }}><MessagesSquare size={24} color="#b80101" /></div>
             <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Community {rank < 1 && <Lock size={13} style={{ display: "inline", verticalAlign: "middle" }} />}</div>
-            <p style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 2 ? "Post, reply, and network with fellow developers." : rank >= 1 ? "Read every channel. Upgrade to Premium to post and reply." : "Members-only. Upgrade to a membership to join the conversation."}</p>
+            <p style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 2 ? "Post, reply, and network with fellow developers." : rank >= 1 ? "Read every channel. Upgrade to Builder to post and reply." : "Members-only. Upgrade to a membership to join the conversation."}</p>
           </div>
           <div onClick={() => setActivePage("lunchlearn")} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: "pointer", opacity: rank >= 2 ? 1 : 0.55 }}>
             <div style={{ marginBottom: 12 }}><Video size={24} color="#b80101" /></div>
@@ -798,7 +799,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
               <button className="community-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", background: "transparent", border: "1px solid #2a0000", borderRadius: 6, color: "var(--gu-muted)", padding: "6px 10px", cursor: "pointer", fontFamily: font }}><Menu size={15} /></button>
               <div>
                 <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font }}><Mail size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }} /> {isAdmin ? (dmTarget?.name || "Direct Messages") : "Dr. Merritt & Team"}</div>
-                <div style={{ color: "var(--gu-muted2)", fontSize: 12, fontFamily: font }}>{isAdmin ? "Private thread with this member." : "For quick questions — replies within 2 business days. Substantive deal review belongs in a booked session or your advisory calls."}</div>
+                <div style={{ color: "var(--gu-muted2)", fontSize: 12, fontFamily: font }}>{isAdmin ? "Private thread with this member." : "For quick questions — replies within 2 business days (Mon–Fri). Substantive deal review belongs in a booked session or your advisory calls."}</div>
               </div>
             </div>
             <div style={{ flex: 1, overflowY: "auto", padding: "20px 20px 12px" }}>

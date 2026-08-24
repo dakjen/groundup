@@ -11,12 +11,17 @@ const PLANS = {
     'Every course — all seven, plus new ones as they drop', 'All written lessons, case studies & worksheets',
     'Community access — read every channel', 'Resource lists & reading guides',
   ] },
-  Premium: { tier: 'Premium', label: 'Premium', price: '$159.99/mo', rank: 2, features: [
-    'Everything in Member', 'Post, reply & network in the community', 'The Opportunity Board — RFPs & funding windows',
-    'Lunch & Learn recordings', '1 free work session (1 hr) + priority booking', '10% off every 1:1 session',
+  Builder: { tier: 'Builder', label: 'Builder', price: '$99.99/mo', rank: 2, features: [
+    'Everything in Member', 'Post, reply & network in the community',
+    'View-only access to every guide, template & the Developer\'s Playbook',
   ] },
-  Elite: { tier: 'Elite', label: 'Elite', price: '$549.99/mo', rank: 3, features: [
-    'Everything in Premium', 'Direct messages to Dr. Merritt & her team (replies within 2 business days)', '3 one-on-one advisory calls a year',
+  Premium: { tier: 'Premium', label: 'Premium', price: '$149.99/mo', rank: 3, features: [
+    'Everything in Builder', 'Download 3 guides or templates every month', 'The Opportunity Board — RFPs & funding windows',
+    'JV & Partnerships channel', 'Lunch & Learn recordings', 'Group office hours with Dr. Merritt + priority booking', '10% off every 1:1 session',
+  ] },
+  Elite: { tier: 'Elite', label: 'Elite', price: '$499.99/mo', rank: 4, features: [
+    'Everything in Premium', 'Direct messages to Dr. Merritt & her team (replies within 2 business days, Mon–Fri)',
+    '3 one-on-one advisory calls a year', "Unlimited downloads — including the Developer's Playbook",
     '30% off every 1:1 session', 'Elite Lounge — the private channel', 'Small-group advisory sessions & networking invites',
   ] },
 };
@@ -109,7 +114,7 @@ export function recommendPlan(e) {
   // Premium-budget people see Elite as plain optionality (full price) instead.
   const qualifies = inStretchBand && rank === 1 && (insider || need > rank);
   if (qualifies) {
-    const up = rank === 1 ? PLANS.Premium : PLANS.Elite;
+    const up = PLANS.Builder; // Member-budget stretch goes one step up, never further
     const pct = e.first10 ? 15 : 10; // first-10 earns the deeper cut
     return { ...rec, next: null, stretch: {
       tier: up.tier, label: up.label, price: up.price, pct,
@@ -118,7 +123,7 @@ export function recommendPlan(e) {
     } };
   }
   // Otherwise show plain optionality: what the next tier costs and adds
-  const next = rank === 1 ? PLANS.Premium : rank === 2 ? PLANS.Elite : null;
+  const next = rank === 1 ? PLANS.Builder : rank === 2 ? PLANS.Elite : null;
   if (!next) return { ...rec, next: null };
   const delta = (parseFloat(next.price.replace(/[^0-9.]/g, '')) - parseFloat(rec.price.replace(/[^0-9.]/g, ''))).toFixed(2);
   return { ...rec, next: { label: next.label, price: next.price, delta: `$${delta}/mo more`, extras: next.features.filter(f => !f.startsWith('Everything in')).slice(0, 4) } };
@@ -126,8 +131,8 @@ export function recommendPlan(e) {
 
 export const PLAN_INFO = {
   Basic: { label: 'Member', monthly: 49.99 },
-  Premium: { label: 'Premium', monthly: 159.99 },
-  Elite: { label: 'Elite', monthly: 549.99 },
+  Premium: { label: 'Premium', monthly: 149.99 },
+  Elite: { label: 'Elite', monthly: 499.99 },
   pass_single: { label: 'Single Course Pass', once: 100 },
   pass_all: { label: 'All-Access Pass', once: 250 },
 };

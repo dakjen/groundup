@@ -13,14 +13,16 @@ export default async function handler(req, res) {
           COUNT(*) as total,
           COUNT(*) FILTER (WHERE tier = 'Free') as free_count,
           COUNT(*) FILTER (WHERE tier = 'Basic') as basic_count,
+          COUNT(*) FILTER (WHERE tier = 'Builder') as builder_count,
           COUNT(*) FILTER (WHERE tier = 'Premium') as premium_count,
           COUNT(*) FILTER (WHERE tier = 'Elite') as elite_count,
           COUNT(*) FILTER (WHERE COALESCE(comped, FALSE)) as comped_count,
           -- MRR counts only paying members: not comped, not team accounts
           ROUND(
             COUNT(*) FILTER (WHERE tier = 'Basic' AND NOT COALESCE(comped, FALSE) AND COALESCE(role,'member') = 'member') * 49.99 +
-            COUNT(*) FILTER (WHERE tier = 'Premium' AND NOT COALESCE(comped, FALSE) AND COALESCE(role,'member') = 'member') * 159.99 +
-            COUNT(*) FILTER (WHERE tier = 'Elite' AND NOT COALESCE(comped, FALSE) AND COALESCE(role,'member') = 'member') * 549.99,
+            COUNT(*) FILTER (WHERE tier = 'Builder' AND NOT COALESCE(comped, FALSE) AND COALESCE(role,'member') = 'member') * 99.99 +
+            COUNT(*) FILTER (WHERE tier = 'Premium' AND NOT COALESCE(comped, FALSE) AND COALESCE(role,'member') = 'member') * 149.99 +
+            COUNT(*) FILTER (WHERE tier = 'Elite' AND NOT COALESCE(comped, FALSE) AND COALESCE(role,'member') = 'member') * 499.99,
             2
           ) as mrr
         FROM users

@@ -59,8 +59,8 @@ export function requireAdmin(req, res) {
 // value, and cancels. Comped accounts and team bypass it.
 export async function benefitGate(sql, user) {
   if (!user || user.role === 'admin' || user.comped) return { active: false, until: null };
-  if (!['Premium', 'Elite'].includes(user.tier)) return { active: false, until: null };
-  let days = 60;
+  if (user.tier !== 'Elite') return { active: false, until: null }; // the gate covers advisory calls & networking — Elite perks
+  let days = 120;
   try {
     const [row] = await sql`SELECT value FROM settings WHERE key = 'benefit_gate_days'`;
     const parsed = parseInt(row?.value, 10);
@@ -88,4 +88,4 @@ export function verifyPassword(password, stored) {
   return candidate.length === expected.length && crypto.timingSafeEqual(candidate, expected);
 }
 
-export const TIER_RANK = { Free: 0, Basic: 1, Premium: 2, Elite: 3 };
+export const TIER_RANK = { Free: 0, Basic: 1, Builder: 2, Premium: 3, Elite: 4 };
