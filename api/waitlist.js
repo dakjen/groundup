@@ -90,32 +90,38 @@ export function recommendPlan(e) {
       ],
     };
   }
-  // Budget decides the base recommendation outright — never pitch above budget:
-  //   $500+      → Elite, always
-  //   $150–$500  → Premium, always
-  //   below $150 → Member (the healthy on-ramp)
-  // Budget brackets (new + legacy values both map):
-  //   $300+/$500+          → Elite
-  //   $100–$200/$150–$500  → Premium
-  //   everything below     → Member
+  // Budget decides the ceiling; inside the $25–$100 band their ANSWERS decide:
+  //   $300+ / $500+           → Elite ($499.99)
+  //   $100–$200 / $150–$500   → Premium ($149.99)
+  //   $25–$100 / $50–$150     → Builder ($99.99) when their answers point at the
+  //                             community (networking, partners, active deals,
+  //                             "all of the above") — otherwise Member ($49.99)
+  //   below                   → Member
+  const need = Math.max(LEARN_NEED[e.learn] || 1, PAIN_NEED[e.reason] || 1);
   const ELITE_B = ['$300+', '$500+'];
   const PREMIUM_B = ['$100–$200', '$150–$500'];
-  const rank = ELITE_B.includes(e.budget) ? 3 : PREMIUM_B.includes(e.budget) ? 2 : 1;
-  const rec = rank === 3 ? PLANS.Elite : rank === 2 ? PLANS.Premium : PLANS.Basic;
-  // What their answers say they actually NEED (the maps above)
-  const need = Math.max(LEARN_NEED[e.learn] || 1, PAIN_NEED[e.reason] || 1);
+  const MID_B = ['$25–$100', '$50–$150'];
+  const rank = ELITE_B.includes(e.budget) ? 4
+    : PREMIUM_B.includes(e.budget) ? 3
+    : MID_B.includes(e.budget) && need >= 2 ? 2
+    : 1;
+  const LADDER = { 1: PLANS.Basic, 2: PLANS.Builder, 3: PLANS.Premium, 4: PLANS.Elite };
+  const rec = LADDER[rank];
   // THE STRETCH OFFER: budget $50–$500 but their need sits one tier above what
   // they can afford (no network, can't find capital, needs partners, complex
   // learning goals) → offer the next tier at 10% off their first year.
-  const inStretchBand = ['$25–$100', '$100–$200', '$50–$150', '$150–$500'].includes(e.budget);
+  const inStretchBand = ['$25–$100', '$50–$150'].includes(e.budget);
   // First-10 waitlisters ALWAYS get the stretch offer, and at 15% instead of 10% —
   // being early on the list earns the better deal.
   const insider = (e.list || 'insider') === 'insider';
   // Elite is never discounted — the stretch offer only ever lifts Member → Premium.
   // Premium-budget people see Elite as plain optionality (full price) instead.
-  const qualifies = inStretchBand && rank === 1 && (insider || need > rank);
+  // Stretch: Member recs in the mid band get Builder at a discount (insiders
+  // always; the need>rank case is covered because those folks are ALREADY
+  // recommended Builder now). Elite is never discounted.
+  const qualifies = inStretchBand && rank === 1 && insider;
   if (qualifies) {
-    const up = PLANS.Builder; // Member-budget stretch goes one step up, never further
+    const up = PLANS.Builder;
     const pct = e.first10 ? 15 : 10; // first-10 earns the deeper cut
     return { ...rec, next: null, stretch: {
       tier: up.tier, label: up.label, price: up.price, pct,
@@ -124,7 +130,7 @@ export function recommendPlan(e) {
     } };
   }
   // Otherwise show plain optionality: what the next tier costs and adds
-  const next = rank === 1 ? PLANS.Builder : rank === 2 ? PLANS.Elite : null;
+  const next = rank < 4 ? LADDER[rank + 1] : null;
   if (!next) return { ...rec, next: null };
   const delta = (parseFloat(next.price.replace(/[^0-9.]/g, '')) - parseFloat(rec.price.replace(/[^0-9.]/g, ''))).toFixed(2);
   return { ...rec, next: { label: next.label, price: next.price, delta: `$${delta}/mo more`, extras: next.features.filter(f => !f.startsWith('Everything in')).slice(0, 4) } };
