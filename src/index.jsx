@@ -4257,6 +4257,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
                     }} style={{ background: e.rec_override ? "#b8010112" : "#f5f2ec", color: e.rec_override ? "#b80101" : "#444444", border: "1px solid " + (e.rec_override ? "#b8010150" : "#dcd8d0"), borderRadius: 6, padding: "5px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
                       <option value="">Auto — {recFor(e).split(" — ")[0]} (algorithm)</option>
                       <option value="Basic">Member — $49.99/mo</option>
+                      <option value="Builder">Builder — $99.99/mo</option>
                       <option value="Premium">Premium — $149.99/mo</option>
                       <option value="Elite">Elite — $499.99/mo</option>
                       <option value="Advisor">Senior Advisor — retainer</option>
