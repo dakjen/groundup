@@ -2101,6 +2101,46 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
   );
 }
 
+// ─── MANDATORY IP AGREEMENT GATE ────────────────────────────────────────────
+// Cannot be dismissed. Every member must agree once; the timestamp is the record.
+function IpAgreementGate({ member, onAgreed, onSignOut }) {
+  const font = "'DM Sans', sans-serif";
+  const serif = "'Cormorant Garamond', serif";
+  const [checked, setChecked] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const agree = async () => {
+    setBusy(true);
+    try {
+      await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "agree_ip" }) });
+      const me = await fetch("/api/auth", { headers: { Authorization: "Bearer " + getMemberToken() } }).then(r => r.json()).catch(() => null);
+      if (me?.user) { saveMember(me.user); onAgreed(me.user); }
+      else onAgreed({ ...member, ip_agreed_at: new Date().toISOString() });
+    } catch { setBusy(false); }
+  };
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 500, background: "rgba(0,0,0,0.94)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ background: "#0d0404", border: "1px solid #b8010150", borderRadius: 20, padding: "38px 38px 32px", maxWidth: 520, width: "100%" }}>
+        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Before you continue</div>
+        <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 26, color: "#f5e8e8", marginBottom: 14 }}>Intellectual Property &amp; Content Use Agreement</h2>
+        <p style={{ color: "#a89090", fontSize: 14, fontFamily: font, lineHeight: 1.8, marginBottom: 18 }}>
+          Everything on GroundUp — courses, lessons, recordings, guides, templates, and the Developer's Playbook — is the exclusive intellectual property of Dr. Gina Merritt, built from 30+ years of her work. Membership licenses it for your personal use only.
+        </p>
+        <label style={{ display: "flex", gap: 12, alignItems: "flex-start", cursor: "pointer", background: "#12060a", border: "1px solid #2a0000", borderRadius: 10, padding: "14px 16px", marginBottom: 18 }}>
+          <input type="checkbox" checked={checked} onChange={e => setChecked(e.target.checked)} style={{ marginTop: 3 }} />
+          <span style={{ color: "#c8a8a8", fontSize: 13.5, fontFamily: font, lineHeight: 1.8 }}>
+            I agree that I will not sell, distribute, copy, share, reproduce, or misappropriate any GroundUp content, in any form. I understand all sales are final once content has been viewed or downloaded, and that violating this agreement ends my access.
+          </span>
+        </label>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <button disabled={!checked || busy} onClick={agree} style={{ flex: 1, background: checked ? "#b80101" : "#2a1010", color: checked ? "#fff" : "#6a5050", border: "none", borderRadius: 10, padding: "14px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: checked && !busy ? "pointer" : "not-allowed", opacity: busy ? 0.6 : 1 }}>{busy ? "Saving…" : "I agree — enter GroundUp"}</button>
+          <button onClick={onSignOut} style={{ background: "transparent", color: "#6a5050", border: "1px solid #2a0000", borderRadius: 10, padding: "14px 18px", fontFamily: font, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Sign out</button>
+        </div>
+        <div style={{ color: "#5a4040", fontSize: 11.5, fontFamily: font, marginTop: 12, textAlign: "center" }}>Agreement is required to use GroundUp — it's recorded on your account with a timestamp.</div>
+      </div>
+    </div>
+  );
+}
+
 // ─── OFFICE HOURS ───────────────────────────────────────────────────────────
 // Group time with Dr. Merritt, dropped in batches. Premium+ benefit with a
 // yearly RSVP allowance per tier; each session gets a live countdown.
@@ -5209,6 +5249,12 @@ export default function App() {
         }
       `}</style>
       {resetToken && <ResetPasswordModal token={resetToken} onDone={() => { setResetToken(null); window.history.replaceState({}, "", window.location.pathname); setAuthMode("login"); setShowSignup(true); }} />}
+      {/* MANDATORY IP agreement — blocks the whole site for any signed-in member
+          without one on record. No close button, no outside-click, no escape:
+          agree, or sign out. Covers admin-created accounts and comps too. */}
+      {member && member.role !== "admin" && !member.ip_agreed_at && (
+        <IpAgreementGate member={member} onAgreed={(u) => setMember(u)} onSignOut={() => { clearMember(); setMember(null); sessionStorage.removeItem("currentUser"); setCurrentUser(null); navigateTo("home"); }} />
+      )}
       {showWaitlistPop && (
         <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px 20px", overflowY: "auto" }} onClick={() => setShowWaitlistPop(false)}>
           <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 720, position: "relative" }}>
