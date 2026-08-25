@@ -4027,7 +4027,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
   // and nothing sends until Confirm.
   const [confirmSend, setConfirmSend] = useState(null); // { step, list }
   const pendingFor = (step, list) => (data?.entries || []).filter(e =>
-    (e.list || "insider") === list && !(step === "recommend" ? e.recommended_notified : e.launched_notified));
+    (e.list || "insider") === list && !e.comped && !(step === "recommend" ? e.recommended_notified : e.launched_notified));
   const executeSend = async () => {
     const { step, list } = confirmSend;
     setBusy(true);
@@ -4125,7 +4125,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
       {(() => {
         const PLAN_FIT = { "Under $25": 0, "$25–$100": 49.99, "$100–$200": 149.99, "$300+": 499.99, "$2,000+": 3025, "Under $50": 0, "$50–$150": 49.99, "$150–$500": 149.99, "$500+": 499.99 };
         const STRETCH = { "Under $25": 49.99, "$25–$100": 99.99, "$100–$200": 499.99, "$300+": 499.99, "$2,000+": 3025, "Under $50": 49.99, "$50–$150": 99.99, "$150–$500": 499.99, "$500+": 499.99 };
-        const mrrFit = entries.reduce((s, e) => s + (PLAN_FIT[e.budget] || 0), 0);
+        const mrrFit = entries.reduce((s, e) => s + (e.comped ? 0 : (PLAN_FIT[e.budget] || 0)), 0);
         // Premium is the ideal recommendation; Elite (and Advisor) are the exceptional wins
         const premiumRec = entries.filter(e => recFor(e).startsWith("Premium")).length;
         const eliteRec = entries.filter(e => recFor(e).startsWith("Elite")).length;
@@ -4238,6 +4238,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
               <span style={{ color: (e.list || "insider") === "insider" ? "#b80101" : "#8a8a8a", fontSize: 9, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{(e.list || "insider") === "insider" ? "Insider" : "General"}</span>
               {e.founding_lnl && <BadgeChips badges={["founding25"]} small />}
               {e.first10 && <BadgeChips badges={["first10"]} small />}
+              {e.comped && <span style={{ background: "#1a7a3a14", color: "#1a7a3a", border: "1px solid #1a7a3a40", borderRadius: 5, padding: "2px 9px", fontSize: 9, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>Comp planned</span>}
               {e.launched_notified && <span style={{ color: "#22c55e", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px" }}>NOTIFIED</span>}
               <span style={{ color: "#9a9a9a", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>{new Date(e.created_at).toLocaleDateString()}</span>
               <button onClick={() => removeEntry(e)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Remove</button>
@@ -4260,6 +4261,9 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
                       <option value="Elite">Elite — $499.99/mo</option>
                       <option value="Advisor">Senior Advisor — retainer</option>
                     </select>
+                    <button onClick={async () => {
+                      try { await call("POST", { action: "set_comped", id: e.id, comped: !e.comped }); flash(true, e.comped ? "Comp unmarked — they're back in revenue and launch emails." : "Marked as a planned comp — excluded from anticipated MRR and from the launch pay-link emails. Create their comped account in Users when you're ready to give access."); await load(); } catch (er) { flash(false, er.message); }
+                    }} style={{ background: e.comped ? "#1a7a3a15" : "transparent", color: e.comped ? "#1a7a3a" : "#9a9a9a", border: "1px solid " + (e.comped ? "#1a7a3a50" : "#d8d4cc"), borderRadius: 6, padding: "5px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 10, letterSpacing: "1px", cursor: "pointer", textTransform: "uppercase" }}>{e.comped ? "Comp planned ✓" : "Plan a comp"}</button>
                   </div>
                 </div>
               )}

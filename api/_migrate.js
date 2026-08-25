@@ -69,6 +69,7 @@ const STATEMENTS = [
   `ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS recommended_notified BOOLEAN DEFAULT FALSE`,
   `ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS rec_override TEXT`,
   `ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS stretch_offer TEXT`,
+  `ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS comped BOOLEAN DEFAULT FALSE`,
   `CREATE TABLE IF NOT EXISTS products (
     id SERIAL PRIMARY KEY, title TEXT NOT NULL, description TEXT,
     price_cents INTEGER NOT NULL, delivery_url TEXT, cover_url TEXT, value_cents INTEGER,

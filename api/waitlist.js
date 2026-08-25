@@ -56,6 +56,7 @@ const LEARN_NEED = {
   'Public-private partnerships': 3,
   'Scaling my business & pipeline': 3,
   'Scaling my existing pipeline': 3,        // legacy option, kept for old entries
+  'All of the above': 2,                    // broad hunger — community-level need
 };
 const PAIN_NEED = {
   "I don't know where to start": 1,         // courses are the on-ramp
@@ -296,8 +297,8 @@ export default async function handler(req, res) {
     if (action === 'recommend') {
       const target = ['insider', 'general'].includes(req.body.list) ? req.body.list : null;
       const entries = target
-        ? await sql`SELECT * FROM waitlist WHERE recommended_notified = FALSE AND COALESCE(list, 'insider') = ${target}`
-        : await sql`SELECT * FROM waitlist WHERE recommended_notified = FALSE`;
+        ? await sql`SELECT * FROM waitlist WHERE recommended_notified = FALSE AND NOT COALESCE(comped, FALSE) AND COALESCE(list, 'insider') = ${target}`
+        : await sql`SELECT * FROM waitlist WHERE recommended_notified = FALSE AND NOT COALESCE(comped, FALSE)`;
       if (entries.length === 0) return res.status(400).json({ error: 'Everyone on that list already got their recommendation' });
       const [launchRow] = await sql`SELECT value FROM settings WHERE key = ${req.body.list === 'insider' ? 'launch_insider_at' : 'launch_at'}`;
       let sent = 0;
@@ -326,8 +327,8 @@ export default async function handler(req, res) {
     if (action === 'launch') {
       const target = ['insider', 'general'].includes(req.body.list) ? req.body.list : null;
       const entries = target
-        ? await sql`SELECT * FROM waitlist WHERE launched_notified = FALSE AND COALESCE(list, 'insider') = ${target}`
-        : await sql`SELECT * FROM waitlist WHERE launched_notified = FALSE`;
+        ? await sql`SELECT * FROM waitlist WHERE launched_notified = FALSE AND NOT COALESCE(comped, FALSE) AND COALESCE(list, 'insider') = ${target}`
+        : await sql`SELECT * FROM waitlist WHERE launched_notified = FALSE AND NOT COALESCE(comped, FALSE)`;
       if (entries.length === 0) return res.status(400).json({ error: 'Everyone on that list has already been notified' });
       let sent = 0;
       const logRows = [];
@@ -350,6 +351,13 @@ export default async function handler(req, res) {
       if (target) await sql`UPDATE waitlist SET launched_notified = TRUE WHERE COALESCE(list, 'insider') = ${target}`;
       else await sql`UPDATE waitlist SET launched_notified = TRUE`;
       return res.json({ success: true, sent, total: entries.length });
+    }
+
+    // Mark a waitlist entry as a planned comp — kept out of anticipated revenue
+    // and out of the pay-link emails; the team creates their comped account by hand
+    if (action === 'set_comped') {
+      await sql`UPDATE waitlist SET comped = ${!!req.body.comped} WHERE id = ${Number(req.body.id)}`;
+      return res.json({ success: true });
     }
 
     // Team override of a person's plan recommendation ('' clears back to the algorithm)
