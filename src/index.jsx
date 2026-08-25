@@ -266,6 +266,12 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
           <button onClick={() => { setActiveLesson(null); setPlayingVideo(false); }} style={{ background: "transparent", color: "#6a6b69", border: "1px solid #1a0000", borderRadius: 8, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", marginBottom: 40 }}>← Back to lessons</button>
           <div style={{ fontSize: 10, color: course.stageColor, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>{course.stage} · Lesson {activeLesson + 1} of {course.lessons.length}</div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(28px,4vw,44px)", color: "#f5e8e8", marginBottom: 32, lineHeight: 1.2 }}>{lesson.title}</h1>
+          {lesson.photo && (
+            <figure style={{ margin: "0 0 32px", borderRadius: 14, overflow: "hidden", border: "1px solid #2a0000" }}>
+              <img src={lesson.photo.src} alt={lesson.photo.caption || lesson.title} style={{ width: "100%", maxHeight: 380, objectFit: "cover", display: "block" }} />
+              {lesson.photo.caption && <figcaption style={{ background: "#0d0404", color: "#8a7070", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, padding: "10px 16px" }}>{lesson.photo.caption}</figcaption>}
+            </figure>
+          )}
           <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 16, padding: "28px 32px", marginBottom: 32 }}>
             {String(lesson.summary).split("\n\n").map((para, pi) => (
               <p key={pi} style={{ color: "#a89080", fontSize: 15, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{para}</p>
@@ -932,6 +938,42 @@ function AboutPage({ setActivePage }) {
           <img src="/LIIF-Stills4.png" alt="Dr. Gina Merritt" style={{ width: "100%", height: 240, objectFit: "cover", display: "block", borderRadius: 12 }} />
           <img src="/SISAwards-Award.jpg" alt="Dr. Merritt accepting award on stage" style={{ width: "100%", height: 240, objectFit: "cover", display: "block", borderRadius: 12 }} />
         </div>
+        {/* Case studies — her buildings, her stories, told the way the courses tell them */}
+        <div style={{ marginBottom: 64 }}>
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>The Work — Case Studies</div>
+          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(30px,4vw,44px)", color: "#f5e8e8", marginBottom: 10, lineHeight: 1.15 }}>These aren't theories.<br />They're addresses.</h2>
+          <p style={{ color: "#8a7070", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8, maxWidth: 620, marginBottom: 28 }}>Every framework in the curriculum was forged on a real project — and the projects show up inside the lessons, deal by deal.</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18 }}>
+            {[
+              {
+                img: "/Cleveland19-still.png", name: "9410 Hough", where: "Cleveland, OH",
+                story: "No investment had come to the Hough neighborhood in decades. Dr. Merritt's read: two blocks away sat $5,000 rents and a university — build the catalyst, and investment follows. The deal survived a mid-stream blow-up, took two extra years of problem-solving, and closed anyway. Others started developing in Hough shortly after.",
+                taught: "Taught in: Predevelopment · Financing the Deal",
+              },
+              {
+                img: "/maryshouse-still1.png", name: "Mary's House for Older Adults", where: "Washington, DC",
+                story: "LGBTQ+ affirming housing for adults 62+ — a groundbreaking with the community, the city, and the Mayor in the same frame. Proof that community engagement isn't a checkbox at the end of a deal; it's development work from day one.",
+                taught: "Taught in: Design & Community Engagement",
+              },
+              {
+                img: "/kerconway_017.webp", name: "John & Jill Ker Conway Residence", where: "Washington, DC",
+                story: "A landmark residence in the heart of the District — design-forward architecture in service of the people who live inside it. The standard the curriculum holds every project to: build something the neighborhood is proud to look at.",
+                taught: "Taught in: Design for the People You're Serving",
+              },
+            ].map(p => (
+              <div key={p.name} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, overflow: "hidden" }}>
+                <img src={p.img} alt={`${p.name}, ${p.where}`} style={{ width: "100%", height: 190, objectFit: "cover", display: "block" }} />
+                <div style={{ padding: "20px 22px" }}>
+                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 21, color: "#f0d8d8" }}>{p.name}</div>
+                  <div style={{ color: "#b80101", fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", margin: "4px 0 10px" }}>{p.where}</div>
+                  <p style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.75, marginBottom: 10 }}>{p.story}</p>
+                  <div style={{ color: "#5a4040", fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontStyle: "italic" }}>{p.taught}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div style={{ marginBottom: 64 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>The Instructor</div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(38px,5vw,58px)", color: "#f5e8e8", marginBottom: 24, lineHeight: 1.1 }}>Dr. Gina Merritt</h1>
