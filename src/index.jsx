@@ -183,6 +183,8 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
   const lessonAt = (i) => content?.lessons?.[i] && !content.lessons[i].locked ? content.lessons[i] : null;
 
   const openLesson = async (i) => {
+    // Content is Dr. Merritt's IP — the agreement comes before the first lesson
+    if (window.guNeedsIp && window.guNeedsIp()) { window.guRequireIp(() => openLesson(i)); return; }
     if (fullAccess) return setActiveLesson(i);
     // Unused 14-day trial (first-10 waitlister or referred signup): offer to
     // start it on THIS course, with a plain explanation of how it works.
@@ -1783,7 +1785,7 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
           /* One long row per session — click to open the watch page */
           <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 820, margin: "0 auto" }}>
             {recordings.map((rec, idx) => (
-              <button key={rec.id} onClick={() => setPlayingId(rec.id)}
+              <button key={rec.id} onClick={() => (window.guNeedsIp && window.guNeedsIp()) ? window.guRequireIp(() => setPlayingId(rec.id)) : setPlayingId(rec.id)}
                 style={{ ...card, display: "flex", alignItems: "center", gap: 18, padding: "18px 24px", cursor: "pointer", textAlign: "left", width: "100%", border: "1px solid #2a0000", transition: "all 0.15s" }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = "#b8010160"; e.currentTarget.style.background = "#130606"; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a0000"; e.currentTarget.style.background = ""; }}>
@@ -2103,7 +2105,7 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
 
 // ─── MANDATORY IP AGREEMENT GATE ────────────────────────────────────────────
 // Cannot be dismissed. Every member must agree once; the timestamp is the record.
-function IpAgreementGate({ member, onAgreed, onSignOut }) {
+function IpAgreementGate({ member, onAgreed, onSignOut, onDismiss }) {
   const font = "'DM Sans', sans-serif";
   const serif = "'Cormorant Garamond', serif";
   const [checked, setChecked] = useState(false);
@@ -2118,8 +2120,9 @@ function IpAgreementGate({ member, onAgreed, onSignOut }) {
     } catch { setBusy(false); }
   };
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 500, background: "rgba(0,0,0,0.94)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div style={{ background: "#0d0404", border: "1px solid #b8010150", borderRadius: 20, padding: "38px 38px 32px", maxWidth: 520, width: "100%" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 500, background: "rgba(0,0,0,0.94)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => onDismiss && onDismiss()}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "#0d0404", border: "1px solid #b8010150", borderRadius: 20, padding: "38px 38px 32px", maxWidth: 520, width: "100%", position: "relative" }}>
+        {onDismiss && <button onClick={onDismiss} style={{ position: "absolute", top: 14, right: 16, background: "transparent", border: "none", color: "#6a5050", fontSize: 20, cursor: "pointer" }}>×</button>}
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Before you continue</div>
         <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 26, color: "#f5e8e8", marginBottom: 14 }}>Intellectual Property &amp; Content Use Agreement</h2>
         <p style={{ color: "#a89090", fontSize: 14, fontFamily: font, lineHeight: 1.8, marginBottom: 18 }}>
@@ -2133,9 +2136,9 @@ function IpAgreementGate({ member, onAgreed, onSignOut }) {
         </label>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <button disabled={!checked || busy} onClick={agree} style={{ flex: 1, background: checked ? "#b80101" : "#2a1010", color: checked ? "#fff" : "#6a5050", border: "none", borderRadius: 10, padding: "14px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: checked && !busy ? "pointer" : "not-allowed", opacity: busy ? 0.6 : 1 }}>{busy ? "Saving…" : "I agree — enter GroundUp"}</button>
-          <button onClick={onSignOut} style={{ background: "transparent", color: "#6a5050", border: "1px solid #2a0000", borderRadius: 10, padding: "14px 18px", fontFamily: font, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Sign out</button>
+          <button onClick={onDismiss || onSignOut} style={{ background: "transparent", color: "#6a5050", border: "1px solid #2a0000", borderRadius: 10, padding: "14px 18px", fontFamily: font, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>{onDismiss ? "Not now" : "Sign out"}</button>
         </div>
-        <div style={{ color: "#5a4040", fontSize: 11.5, fontFamily: font, marginTop: 12, textAlign: "center" }}>Agreement is required to use GroundUp — it's recorded on your account with a timestamp.</div>
+        <div style={{ color: "#5a4040", fontSize: 11.5, fontFamily: font, marginTop: 12, textAlign: "center" }}>You can browse without agreeing — but courses, recordings, and downloads stay locked until you do. Recorded on your account with a timestamp.</div>
       </div>
     </div>
   );
@@ -5030,6 +5033,15 @@ export default function App() {
   const [signupTier, setSignupTier] = useState("Free");
   const [authMode, setAuthMode] = useState("signup");
   const [member, setMember] = useState(() => getMember());
+  // IP agreement gate plumbing — protected content summons it via window.guRequireIp
+  const [showIpGate, setShowIpGate] = useState(false);
+  const ipPendingRef = useRef(null);
+  window.guNeedsIp = () => !!(member && member.role !== "admin" && !member.ip_agreed_at);
+  window.guRequireIp = (fn) => {
+    if (!window.guNeedsIp()) { fn(); return; }
+    ipPendingRef.current = fn;
+    setShowIpGate(true);
+  };
   // Referral links (?ref=GU-XXXX) — remember the code so it credits the referrer
   // at signup, even if they browse around first
   useEffect(() => {
@@ -5249,11 +5261,16 @@ export default function App() {
         }
       `}</style>
       {resetToken && <ResetPasswordModal token={resetToken} onDone={() => { setResetToken(null); window.history.replaceState({}, "", window.location.pathname); setAuthMode("login"); setShowSignup(true); }} />}
-      {/* MANDATORY IP agreement — blocks the whole site for any signed-in member
-          without one on record. No close button, no outside-click, no escape:
-          agree, or sign out. Covers admin-created accounts and comps too. */}
-      {member && member.role !== "admin" && !member.ip_agreed_at && (
-        <IpAgreementGate member={member} onAgreed={(u) => setMember(u)} onSignOut={() => { clearMember(); setMember(null); sessionStorage.removeItem("currentUser"); setCurrentUser(null); navigateTo("home"); }} />
+      {/* IP agreement gate: browsing the site is fine without it, but course
+          lessons, recordings, and shop content stay locked until they agree.
+          Protected actions call window.guRequireIp to summon this. */}
+      {showIpGate && member && member.role !== "admin" && !member.ip_agreed_at && (
+        <IpAgreementGate
+          member={member}
+          onDismiss={() => setShowIpGate(false)}
+          onAgreed={(u) => { setMember(u); setShowIpGate(false); const fn = ipPendingRef.current; ipPendingRef.current = null; if (fn) setTimeout(fn, 0); }}
+          onSignOut={() => { clearMember(); setMember(null); setShowIpGate(false); sessionStorage.removeItem("currentUser"); setCurrentUser(null); navigateTo("home"); }}
+        />
       )}
       {showWaitlistPop && (
         <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px 20px", overflowY: "auto" }} onClick={() => setShowWaitlistPop(false)}>
