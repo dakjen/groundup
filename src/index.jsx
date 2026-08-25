@@ -4866,6 +4866,21 @@ export default function App() {
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
+  // SEO: each public page carries its own title + description
+  useEffect(() => {
+    const SEO = {
+      home: ["GroundUp by Dr. Gina Merritt — Affordable Housing Development Courses & Community", "Learn affordable housing development from Dr. Gina Merritt — 30+ years and $600M+ of real deals. Courses, community, and direct access for underrepresented developers."],
+      courses: ["The Curriculum — GroundUp", "Seven courses across the full development lifecycle: predevelopment, teams & JVs, financing & LIHTC, zoning, design & construction, and after opening day — taught from deals that closed."],
+      pricing: ["Plans & Pricing — GroundUp", "Member $49.99, Builder $99.99, Premium $149.99, Elite $499.99 — plus one-time course passes and Lunch & Learn access. Every plan includes the full course library."],
+      about: ["About Dr. Gina Merritt — GroundUp", "From public housing in the Bronx to $600M+ in real estate development. The story behind GroundUp and Northern Real Estate Urban Ventures."],
+      lunchlearn: ["Lunch & Learns — GroundUp", "Live monthly sessions with Dr. Gina Merritt — real deals, real numbers, live Q&A, plus a recording library."],
+      contact: ["Book a 1:1 Session — GroundUp", "Work directly with Dr. Gina Merritt: deal review, strategy, capital stack review, community development, and BIPOC developer sessions."],
+    };
+    const [title, desc] = SEO[activePage] || SEO.home;
+    document.title = title;
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute("content", desc);
+  }, [activePage]);
   const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem("isAdmin") === "true");
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [logoClicks, setLogoClicks] = useState(0);

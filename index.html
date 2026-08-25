@@ -23,12 +23,45 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "GroundUp",
-      "url": "https://community.drginamerritt.net/",
-      "description": "Affordable housing development education and community by Dr. Gina Merritt / Northern Real Estate Urban Ventures.",
-      "founder": { "@type": "Person", "name": "Dr. Gina Merritt" },
-      "parentOrganization": { "@type": "Organization", "name": "Northern Real Estate Urban Ventures" }
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://community.drginamerritt.net/#org",
+          "name": "GroundUp",
+          "url": "https://community.drginamerritt.net/",
+          "description": "Affordable housing development education and community by Dr. Gina Merritt / Northern Real Estate Urban Ventures.",
+          "founder": { "@id": "https://community.drginamerritt.net/#gina" },
+          "parentOrganization": { "@type": "Organization", "name": "Northern Real Estate Urban Ventures", "address": { "@type": "PostalAddress", "addressLocality": "Washington", "addressRegion": "DC", "addressCountry": "US" } }
+        },
+        {
+          "@type": "Person",
+          "@id": "https://community.drginamerritt.net/#gina",
+          "name": "Dr. Gina Merritt",
+          "jobTitle": "Founder & Principal",
+          "worksFor": { "@type": "Organization", "name": "Northern Real Estate Urban Ventures" },
+          "description": "Real estate developer with 30+ years and $600M+ in closed deals, specializing in affordable and workforce housing.",
+          "knowsAbout": ["affordable housing development", "LIHTC", "capital stacks", "real estate finance", "community development", "public-private partnerships"]
+        },
+        {
+          "@type": "WebSite",
+          "url": "https://community.drginamerritt.net/",
+          "name": "GroundUp",
+          "publisher": { "@id": "https://community.drginamerritt.net/#org" }
+        },
+        {
+          "@type": "ItemList",
+          "name": "GroundUp Curriculum",
+          "itemListElement": [
+            { "@type": "Course", "position": 1, "name": "Predevelopment: How to Find, Evaluate & Control a Deal", "provider": { "@id": "https://community.drginamerritt.net/#org" }, "url": "https://community.drginamerritt.net/courses" },
+            { "@type": "Course", "position": 2, "name": "Building Your Team: JVs, Partners & Keeping the Lights On", "provider": { "@id": "https://community.drginamerritt.net/#org" }, "url": "https://community.drginamerritt.net/courses" },
+            { "@type": "Course", "position": 3, "name": "Financing the Deal: Capital Stacks, Subsidy & Closing the Gap", "provider": { "@id": "https://community.drginamerritt.net/#org" }, "url": "https://community.drginamerritt.net/courses" },
+            { "@type": "Course", "position": 4, "name": "Why Affordable Housing Doesn't Pencil", "provider": { "@id": "https://community.drginamerritt.net/#org" }, "url": "https://community.drginamerritt.net/courses" },
+            { "@type": "Course", "position": 5, "name": "Zoning, Entitlements & What You're Allowed to Build", "provider": { "@id": "https://community.drginamerritt.net/#org" }, "url": "https://community.drginamerritt.net/courses" },
+            { "@type": "Course", "position": 6, "name": "Design & Construction Management", "provider": { "@id": "https://community.drginamerritt.net/#org" }, "url": "https://community.drginamerritt.net/courses" },
+            { "@type": "Course", "position": 7, "name": "After Opening Day", "provider": { "@id": "https://community.drginamerritt.net/#org" }, "url": "https://community.drginamerritt.net/courses" }
+          ]
+        }
+      ]
     }
     </script>
   </head>
