@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const session = getSession(req);
       if (!session || !session.uid) return res.status(401).json({ error: 'Not signed in' });
-      const [user] = await sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, comped, badges, referral_code, referred_by, tier_since, created_at FROM users WHERE id = ${session.uid}`;
+      const [user] = await sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, comped, badges, referral_code, referred_by, tier_since, ip_agreed_at, created_at FROM users WHERE id = ${session.uid}`;
       if (!user) return res.status(401).json({ error: 'Account not found' });
       // Active one-time passes: course_id 'all' or 'mc1'..'mc7', unexpired
       user.entitlements = await sql`SELECT course_id, expires_at, source FROM entitlements WHERE user_id = ${user.id} AND (expires_at IS NULL OR expires_at > NOW())`;
@@ -119,8 +119,8 @@ export default async function handler(req, res) {
       // manually via the team panel (api/users.js). Never from this request —
       // the client used to send a tier here, which let anyone claim Elite free.
       const [user] = await sql`
-        INSERT INTO users (name, email, tier, password_hash, role, created_at)
-        VALUES (${String(name).trim()}, ${cleanEmail}, 'Free', ${hashPassword(password)}, 'member', NOW())
+        INSERT INTO users (name, email, tier, password_hash, role, ip_agreed_at, created_at)
+        VALUES (${String(name).trim()}, ${cleanEmail}, 'Free', ${hashPassword(password)}, 'member', NOW(), NOW())
         ON CONFLICT (email) DO NOTHING
         RETURNING id, name, email, tier, role, membership_status, free_lesson_key, created_at
       `;
@@ -257,6 +257,14 @@ export default async function handler(req, res) {
       const session = getSession(req);
       if (!session?.uid) return res.status(401).json({ error: 'Not signed in' });
       await sql`UPDATE bookings SET status = 'booked', booked_at = NOW() WHERE id = ${Number(req.body.id)} AND user_id = ${session.uid}`;
+      return res.json({ success: true });
+    }
+
+    // One-time IP agreement (recorded with a timestamp — this is the assent record)
+    if (action === 'agree_ip') {
+      const session = getSession(req);
+      if (!session || !session.uid) return res.status(401).json({ error: 'Not signed in' });
+      await sql`UPDATE users SET ip_agreed_at = COALESCE(ip_agreed_at, NOW()) WHERE id = ${session.uid}`;
       return res.json({ success: true });
     }
 

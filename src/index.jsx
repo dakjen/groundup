@@ -1815,6 +1815,26 @@ function ShopPage({ member, onSignIn }) {
   const [confirmBuy, setConfirmBuy] = useState(null); // product being purchased
   const [agreed, setAgreed] = useState(false);
   const [viewing, setViewing] = useState(null); // Premium view-only reader
+  // One-time IP agreement before any viewing or downloading — recorded on the account
+  const [needAgree, setNeedAgree] = useState(null); // { then } — action to run after agreeing
+  const [ipChecked, setIpChecked] = useState(false);
+  const hasAgreed = () => !!(member && (member.ip_agreed_at || member.role === "admin"));
+  const requireAgreement = (fn) => {
+    if (hasAgreed()) return fn();
+    setIpChecked(false);
+    setNeedAgree({ then: fn });
+  };
+  const confirmAgreement = async () => {
+    try {
+      await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "agree_ip" }) });
+      const me = await fetch("/api/auth", { headers: { Authorization: "Bearer " + getMemberToken() } }).then(r => r.json()).catch(() => null);
+      if (me?.user) { saveMember(me.user); }
+      if (member) member.ip_agreed_at = new Date().toISOString();
+      const fn = needAgree?.then;
+      setNeedAgree(null);
+      if (fn) fn();
+    } catch { setNeedAgree(null); }
+  };
   const isTeam = member?.role === "admin";
 
   const load = () => {
@@ -1840,6 +1860,7 @@ function ShopPage({ member, onSignIn }) {
   const buy = async () => {
     if (!member) { onSignIn && onSignIn(); return; }
     try {
+      fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "agree_ip" }) }).catch(() => {});
       const res = await fetch("/api/stripe", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ item: "product", product_id: confirmBuy.id, agreed_ip: agreed }) });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Checkout failed");
@@ -1893,19 +1914,21 @@ function ShopPage({ member, onSignIn }) {
                     <span style={{ color: "#b80101", fontSize: 24, fontFamily: serif, fontWeight: 700 }}>{usd(p.price_cents)}</span>
                   </div>
                   {p.access === "download" ? (
-                    <a href={p.delivery_url} target="_blank" rel="noreferrer" style={{ display: "block", textAlign: "center", background: "transparent", color: "#22c55e", border: "1px solid #22c55e60", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, textDecoration: "none" }}>
+                    <a href={p.delivery_url} target="_blank" rel="noreferrer"
+                      onClick={e => { if (!hasAgreed() && p.via === "elite") { e.preventDefault(); requireAgreement(() => window.open(p.delivery_url, "_blank")); } }}
+                      style={{ display: "block", textAlign: "center", background: "transparent", color: "#22c55e", border: "1px solid #22c55e60", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, textDecoration: "none" }}>
                       ✓ {p.via === "elite" ? "Included with Elite — download" : "Yours — download"}
                     </a>
                   ) : p.access === "metered" ? (
                     <div>
-                      <button onClick={() => meteredDownload(p)} disabled={data.dl && data.dl.remaining <= 0} style={{ width: "100%", background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer", opacity: data.dl && data.dl.remaining <= 0 ? 0.5 : 1 }}>
+                      <button onClick={() => requireAgreement(() => meteredDownload(p))} disabled={data.dl && data.dl.remaining <= 0} style={{ width: "100%", background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer", opacity: data.dl && data.dl.remaining <= 0 ? 0.5 : 1 }}>
                         {data.dl && data.dl.remaining <= 0 ? "Monthly downloads used" : `Download — ${data.dl ? data.dl.remaining : 3} of 3 left this month`}
                       </button>
                       <div style={{ color: "#6a5050", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 6 }}>Included with Premium · Elite gets unlimited</div>
                     </div>
                   ) : p.access === "view" ? (
                     <div>
-                      <button onClick={() => setViewing(p)} style={{ width: "100%", background: "transparent", color: "#e0c4c4", border: "1px solid #e0c4c455", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>{p.is_playbook ? "View the Playbook — download is Elite-only" : "View — included with your plan"}</button>
+                      <button onClick={() => requireAgreement(() => setViewing(p))} style={{ width: "100%", background: "transparent", color: "#e0c4c4", border: "1px solid #e0c4c455", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>{p.is_playbook ? "View the Playbook — download is Elite-only" : "View — included with your plan"}</button>
                       <div style={{ color: "#6a5050", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 6 }}>Elite includes unlimited downloads · or buy it to own it</div>
                     </div>
                   ) : (
@@ -1929,6 +1952,26 @@ function ShopPage({ member, onSignIn }) {
             </div>
             <div style={{ flex: 1, maxWidth: 900, width: "100%", margin: "0 auto", background: "#0d0404", border: "1px solid #2a0000", borderRadius: 12, overflow: "hidden" }}>
               <iframe src={`${viewing.delivery_url}#toolbar=0&navpanes=0`} title={viewing.title} style={{ width: "100%", height: "100%", border: "none" }} />
+            </div>
+          </div>
+        )}
+
+        {/* One-time IP agreement before first view/download */}
+        {needAgree && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setNeedAgree(null)}>
+            <div onClick={e => e.stopPropagation()} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 18, padding: "32px 34px", maxWidth: 480, width: "100%" }}>
+              <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "#f5e8e8", marginBottom: 12 }}>Before you open this</div>
+              <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", marginBottom: 18 }}>
+                <input type="checkbox" checked={ipChecked} onChange={e => setIpChecked(e.target.checked)} style={{ marginTop: 3 }} />
+                <span style={{ color: "#c8a8a8", fontSize: 13, fontFamily: font, lineHeight: 1.8 }}>
+                  I agree that every document, guide, and template on GroundUp is the exclusive intellectual property of Dr. Gina Merritt, licensed for my personal use only. I will not sell, distribute, copy, share, or reproduce any of it, in any form. I understand all sales are final once a product has been viewed or downloaded.
+                </span>
+              </label>
+              <div style={{ color: "#5a4040", fontSize: 11.5, fontFamily: font, marginBottom: 16 }}>You'll only be asked this once — your agreement is recorded on your account.</div>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button disabled={!ipChecked} onClick={confirmAgreement} style={{ flex: 1, background: ipChecked ? "#b80101" : "#2a1010", color: ipChecked ? "#fff" : "#6a5050", border: "none", borderRadius: 10, padding: "13px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: ipChecked ? "pointer" : "not-allowed" }}>I agree — continue</button>
+                <button onClick={() => setNeedAgree(null)} style={{ background: "transparent", color: "#8a7070", border: "1px solid #2a0000", borderRadius: 10, padding: "13px 18px", fontFamily: font, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Cancel</button>
+              </div>
             </div>
           </div>
         )}
