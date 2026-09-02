@@ -327,14 +327,28 @@ export default async function handler(req, res) {
         }
       } else if (event.type === 'customer.subscription.deleted') {
         const sub = event.data.object;
+        // Refund rule: cancel before the 5th of the month → that month's payment
+        // is refunded. Refunds are processed by the team (the NREUV split transfer
+        // must be reversed alongside), so alert rather than auto-refund.
+        const refundEligible = new Date().getDate() < 5;
+        if (refundEligible) {
+          try {
+            const [ru] = await sql`SELECT name, email, tier FROM users WHERE stripe_customer_id = ${sub.customer}`;
+            if (ru) await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
+              `REFUND DUE: ${ru.name} cancelled before the 5th`,
+              `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Refund to process</h2>
+               <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${ru.name}</strong> (${ru.email}, ${ru.tier}) cancelled before the 5th of the month, so this month's payment is refundable per the Terms. In Stripe: refund their latest subscription invoice payment AND <strong style="color:#f0d8d8;">reverse the matching NREUV transfer</strong> so the split doesn't come out of the platform's pocket.</p>`);
+          } catch (e) { console.error('refund alert failed', e.message); }
+        }
         // Stamp when the membership ended — the 15-day data-retention clock runs from here
         await sql`UPDATE users SET tier = 'Free', cancelled_at = NOW() WHERE stripe_customer_id = ${sub.customer}`;
         await sql`UPDATE retainers SET status = 'ended' WHERE user_id IN (SELECT id FROM users WHERE stripe_customer_id = ${sub.customer}) AND status IN ('active','paused')`;
         const [u] = await sql`SELECT name, email FROM users WHERE stripe_customer_id = ${sub.customer}`;
         if (u) {
+          const refundNote = new Date().getDate() < 5 ? ' Because you cancelled before the 5th, this month's payment will be refunded to your card.' : ' Cancellations on or after the 5th aren't refunded for the current month, so your access continues through the period you paid for.';
           await sendEmail(u.email, 'Your GroundUp membership is cancelled',
             `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">You're all set, ${u.name.split(' ')[0]}.</h2>
-             <p style="color:#a89080;font-size:14px;line-height:1.8;">Your membership is cancelled and you won't be charged again. <strong style="color:#f0d8d8;">Your account data — community posts, messages, and progress — will be permanently removed after 15 days.</strong> Rejoin before then and everything picks up right where you left it.</p>
+             <p style="color:#a89080;font-size:14px;line-height:1.8;">Your membership is cancelled and you won't be charged again.${refundNote} <strong style="color:#f0d8d8;">Your account data — community posts, messages, and progress — will be permanently removed after 15 days.</strong> Rejoin before then and everything picks up right where you left it.</p>
              <a href="${siteUrl()}/pricing" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Rejoin GroundUp</a>`);
         }
       }

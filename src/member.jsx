@@ -313,7 +313,7 @@ function ManageMembershipCard({ member, rank }) {
             Update your card, view invoices, or cancel — it takes one click, no questions asked.
           </div>
           <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font, lineHeight: 1.7 }}>
-            If you cancel, your access continues through the period you've paid for. <strong style={{ color: "var(--gu-body)" }}>15 days after your membership ends, your account data — posts, messages, and progress — is permanently deleted.</strong> Rejoin before then and nothing is lost.
+            Cancel before the 5th of the month and this month's payment is refunded; on or after the 5th, no refund for the current month — your access continues through the period you've paid for. <strong style={{ color: "var(--gu-body)" }}>15 days after your membership ends, your account data — posts, messages, and progress — is permanently deleted.</strong> Rejoin before then and nothing is lost.
           </div>
         </div>
         <button onClick={openPortal} disabled={busy} style={{ ...btnGhost, opacity: busy ? 0.6 : 1, whiteSpace: "nowrap" }}>

@@ -2137,7 +2137,7 @@ function TermsPage() {
       <p style={S.p}>Some benefits unlock with tenure: advisory calls and networking events open after 4 months of continuous membership. Premium includes 3 product downloads per billing month (unused downloads don't roll over); the Developer's Playbook is view-only below Elite. Elite seats are limited and offered while available.</p>
 
       <h2 style={S.h2}>4. Refunds</h2>
-      <p style={S.p}><strong style={S.strong}>All sales are final once content has been viewed or downloaded.</strong> Subscription payments already made are not refunded upon cancellation; you keep access through the paid period. Where a statutory cooling-off or refund right applies in your jurisdiction, that right is honored to the extent required by law.</p>
+      <p style={S.p}><strong style={S.strong}>All sales are final once content has been viewed or downloaded.</strong> For subscriptions: if you cancel <strong style={S.strong}>before the 5th day of the month</strong>, your payment for that month is refunded; cancellations on or after the 5th are not refunded for the current month, and your access continues through the period you paid for. Where a statutory cooling-off or refund right applies in your jurisdiction, that right is honored to the extent required by law.</p>
 
       <h2 style={S.h2}>5. Community & conduct</h2>
       <p style={S.p}>Be professional. No harassment, hate, spam, solicitation of members for competing offerings, or posting content you don't have rights to. Deal information other members share in the community or group sessions is <strong style={S.strong}>confidential to this community</strong> — don't use or disclose it outside GroundUp. We may remove content or suspend accounts that break these rules.</p>
