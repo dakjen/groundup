@@ -799,7 +799,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
               <button className="community-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", background: "transparent", border: "1px solid #2a0000", borderRadius: 6, color: "var(--gu-muted)", padding: "6px 10px", cursor: "pointer", fontFamily: font }}><Menu size={15} /></button>
               <div>
                 <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font }}><Mail size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }} /> {isAdmin ? (dmTarget?.name || "Direct Messages") : "Dr. Merritt & Team"}</div>
-                <div style={{ color: "var(--gu-muted2)", fontSize: 12, fontFamily: font }}>{isAdmin ? "Private thread with this member." : "Quick questions welcome — replies within 2 business days (Mon–Fri). Deal-specific work (your numbers, your gap, your structure) belongs in your advisory calls, a 1:1 Deal Review, or the Senior Advisor retainer for whole-deal involvement."}</div>
+                <div style={{ color: "var(--gu-muted2)", fontSize: 12, fontFamily: font }}>{isAdmin ? "Private thread with this member." : (<span>Quick questions welcome — replies within 2 business days (Mon–Fri). Deal-specific work (your numbers, your gap, your structure) belongs in your advisory calls or with Dr. Merritt on the whole deal — <a href="/contact" onClick={() => { try { const t = localStorage.getItem("guToken"); if (t) fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + t }, body: JSON.stringify({ action: "deal_lead", source: "dm_redirect" }) }); } catch {} }} style={{ color: "#b80101", fontWeight: 700 }}>send it to us here →</a></span>)}</div>
               </div>
             </div>
             <div style={{ flex: 1, overflowY: "auto", padding: "20px 20px 12px" }}>
@@ -957,6 +957,7 @@ const WL_LEARN = [
   "Public-private partnerships",
   "Scaling my business & pipeline",
   "All of the above",
+  "I need deal-specific support on a live project",
   "Other",
 ];
 const WL_PAIN = [
@@ -1041,6 +1042,7 @@ export function WaitlistForm({ list = "insider" }) {
                   {WL_LEARN.map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
                 {learn === "Other" && <input style={{ ...inp, marginTop: 8 }} value={learnOther} onChange={e => setLearnOther(e.target.value)} placeholder="Tell us in your own words" required />}
+                {learn === "I need deal-specific support on a live project" && <div style={{ marginTop: 8, background: "#12060a", border: "1px solid #b8010140", borderRadius: 8, padding: "10px 12px", color: "#c8a8a8", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>Good to know: deal-specific support — your numbers, your gap, your structure — comes only with the <strong style={{ color: "#f0d8d8" }}>Elite plan</strong> or the Senior Advisor retainer. We'll point you there.</div>}
               </div>
               <div style={{ marginBottom: 14 }}>
                 <label style={lbl}>What's your main pain point?</label>
@@ -1052,6 +1054,7 @@ export function WaitlistForm({ list = "insider" }) {
               </div>
               <div style={{ marginBottom: 14 }}>
                 <label style={lbl}>Monthly budget for a course, community, and access to support</label>
+                <div style={{ color: "#7a5050", fontSize: 11.5, fontFamily: font, lineHeight: 1.6, margin: "2px 0 8px" }}>The lower tiers build your foundation — the courses, the community, the knowledge. The higher tiers add deal-specific support with Dr. Merritt.</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   {WL_BUDGETS.map(b => (
                     <button type="button" key={b} onClick={() => setBudget(b)}

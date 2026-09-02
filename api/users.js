@@ -33,6 +33,8 @@ export default async function handler(req, res) {
       for (const r of refs) touch(r.email, { name: r.name, source: r.kind === 'month_free' ? (r.used ? 'Gift (redeemed)' : 'Gift (sent)') : 'Personal invite', joined: r.created_at });
       const lnl = await sql`SELECT u.name, u.email, e.created_at FROM entitlements e JOIN users u ON u.id = e.user_id WHERE e.course_id = 'lunchlearn'`;
       for (const l of lnl) touch(l.email, { name: l.name, source: 'Lunch & Learn', joined: l.created_at });
+      const leads = await sql`SELECT u.name, u.email, d.source AS lead_src, d.created_at FROM deal_leads d JOIN users u ON u.id = d.user_id`;
+      for (const l of leads) touch(l.email, { name: l.name, source: 'DEAL LEAD', joined: l.created_at, why: 'Asked for deal-specific help (' + l.lead_src + ')' });
       const list = [...contacts.values()].sort((a, b) => new Date(b.joined || 0) - new Date(a.joined || 0));
       return res.json({ contacts: list, total: list.length });
     }

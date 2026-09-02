@@ -260,6 +260,16 @@ export default async function handler(req, res) {
       return res.json({ success: true });
     }
 
+    // A deal-specific ask is a qualified lead — log who raised their hand, where
+    if (action === 'deal_lead') {
+      const session = getSession(req);
+      if (!session || !session.uid) return res.json({ success: true }); // signed-out clicks aren't leads yet
+      const src = String(req.body.source || 'unknown').slice(0, 100);
+      const [recent] = await sql`SELECT id FROM deal_leads WHERE user_id = ${session.uid} AND source = ${src} AND created_at > NOW() - interval '1 day'`;
+      if (!recent) await sql`INSERT INTO deal_leads (user_id, source, created_at) VALUES (${session.uid}, ${src}, NOW())`;
+      return res.json({ success: true });
+    }
+
     // One-time IP agreement (recorded with a timestamp — this is the assent record)
     if (action === 'agree_ip') {
       const session = getSession(req);

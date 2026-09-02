@@ -76,6 +76,9 @@ const STATEMENTS = [
     price_cents INTEGER NOT NULL, delivery_url TEXT, cover_url TEXT, value_cents INTEGER,
     position INTEGER DEFAULT 0, active BOOLEAN DEFAULT TRUE, created_at TIMESTAMP DEFAULT NOW())`,
   `ALTER TABLE products ADD COLUMN IF NOT EXISTS is_playbook BOOLEAN DEFAULT FALSE`,
+  `CREATE TABLE IF NOT EXISTS deal_leads (
+    id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    source TEXT NOT NULL, created_at TIMESTAMP DEFAULT NOW())`,
   `CREATE TABLE IF NOT EXISTS download_log (
     id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     product_id INTEGER NOT NULL, created_at TIMESTAMP DEFAULT NOW())`,

@@ -57,6 +57,7 @@ const LEARN_NEED = {
   'Scaling my business & pipeline': 3,
   'Scaling my existing pipeline': 3,        // legacy option, kept for old entries
   'All of the above': 2,                    // broad hunger — community-level need
+  'I need deal-specific support on a live project': 3,   // only Elite (or the retainer) includes deal support
 };
 const PAIN_NEED = {
   "I don't know where to start": 1,         // courses are the on-ramp
@@ -101,7 +102,11 @@ export function recommendPlan(e) {
   const ELITE_B = ['$300+', '$500+'];
   const PREMIUM_B = ['$100–$200', '$150–$500'];
   const MID_B = ['$25–$100', '$50–$150'];
-  const rank = ELITE_B.includes(e.budget) ? 4
+  // Deal-specific support exists ONLY at Elite and the Senior Advisor retainer —
+  // if that's what they said they need, no lower tier is an honest recommendation.
+  const wantsDealSupport = e.learn === 'I need deal-specific support on a live project';
+  const rank = wantsDealSupport ? 4
+    : ELITE_B.includes(e.budget) ? 4
     : PREMIUM_B.includes(e.budget) ? 3
     : MID_B.includes(e.budget) && need >= 2 ? 2
     : 1;

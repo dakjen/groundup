@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { neon } from '@neondatabase/serverless';
 import { getSession } from './_utils.js';
-import { sendEmail, siteUrl, addLnlContact } from './_email.js';
+import { sendEmail, siteUrl, addLnlContact, dealSupportBlock } from './_email.js';
 
 export const config = { api: { bodyParser: false } };
 
@@ -11,15 +11,15 @@ const CATALOG = {
   sub_Builder: { mode: 'subscription', name: 'GroundUp Builder',           amount: 9999,  tier: 'Builder' },
   sub_Premium: { mode: 'subscription', name: 'GroundUp Premium',          amount: 14999, tier: 'Premium' },
   sub_Elite:   { mode: 'subscription', name: 'GroundUp Elite',             amount: 49999, tier: 'Elite' },
-  pass_single: { mode: 'payment',      name: 'Single Course Pass (30 days)', amount: 10000 },
-  pass_all:    { mode: 'payment',      name: 'All-Access Pass (30 days)',  amount: 25000 },
+  pass_single: { mode: 'payment',      name: 'Single Course Pass (60 days)', amount: 10000 },
+  pass_all:    { mode: 'payment',      name: 'All-Access Pass (60 days)',  amount: 25000 },
   lnl:         { mode: 'payment',      name: 'Lunch & Learn — 6 months',   amount: 3999 },
   session_deal:      { mode: 'payment', name: '1:1 Deal Review (45 min)',        amount: 50000 },
   session_strategy:  { mode: 'payment', name: '1:1 Strategy Session (45 min)',   amount: 42500 },
   session_capital:   { mode: 'payment', name: '1:1 Capital Stack Review (45 min)', amount: 55000 },
   session_community: { mode: 'payment', name: '1:1 Community Development (45 min)', amount: 37500 },
   session_bipoc:     { mode: 'payment', name: '1:1 BIPOC Developer Session (45 min)', amount: 27500 },
-  retainer_onboarding: { mode: 'payment', name: 'Senior Advisor — Onboarding Fee', amount: 150000 },
+  retainer_onboarding: { mode: 'payment', name: 'Full Project Intake with Dr. Merritt', amount: 150000 },
   retainer_5:  { mode: 'subscription', name: 'Senior Advisor Retainer — 5 hrs/month',  amount: 302500, retainerHours: 5 },
   retainer_10: { mode: 'subscription', name: 'Senior Advisor Retainer — 10 hrs/month', amount: 550000, retainerHours: 10 },
   retainer_15: { mode: 'subscription', name: 'Senior Advisor Retainer — 15 hrs/month', amount: 770000, retainerHours: 15 },
@@ -159,7 +159,26 @@ async function fulfill(sql, session) {
   const item = md.item;
   if (!userId || !item) return;
 
-  if (item.startsWith('retainer_')) {
+  if (item === 'retainer_onboarding') {
+    // The intake stands alone: she takes the WHOLE deal in, finds the thing they
+    // missed, and the $1,500 credits against the first retainer month if they continue.
+    await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at)
+      VALUES (${userId}, 'intake', 'intake_paid', NULL, NOW())`;
+    try {
+      const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
+      if (u) {
+        await sendEmail(u.email, 'Your Full Project Intake is booked in',
+          `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Send it all, ${u.name.split(' ')[0]}.</h2>
+           <p style="color:#a89080;font-size:14px;line-height:1.8;">Your Full Project Intake with Dr. Merritt is paid. Next step: book your intake call on her calendar (link below), and come ready to share the whole deal — pro forma, capital stack, site, timeline. This is the session where the thing you missed gets found.</p>
+           <p style="color:#a89080;font-size:14px;line-height:1.8;">And if you continue into the Senior Advisor retainer, <strong style="color:#f0d8d8;">your \$1,500 is credited against your first month</strong> — the intake is never wasted money.</p>
+           <a href="${siteUrl()}/advisory" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Book your intake call</a>`);
+        await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
+          `INTAKE PAID: ${u.name} — \$1,500 Full Project Intake`,
+          `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">New project intake</h2>
+           <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${u.name}</strong> (${u.email}) paid for the Full Project Intake. When they book, ask for the full deal package up front. If they continue to a retainer, their first month checkout auto-credits the \$1,500.</p>`);
+      }
+    } catch (e) { console.error('intake email failed', e.message); }
+  } else if (item.startsWith('retainer_')) {
     const spec = CATALOG[item];
     const [offered] = await sql`SELECT id FROM retainers WHERE user_id = ${userId} AND status = 'offered' ORDER BY created_at DESC LIMIT 1`;
     if (offered) {
@@ -167,6 +186,9 @@ async function fulfill(sql, session) {
     } else {
       await sql`INSERT INTO retainers (user_id, hours_per_month, monthly_amount, status, started_at, created_at)
         VALUES (${userId}, ${spec.retainerHours}, ${spec.amount / 100}, 'active', NOW(), NOW())`;
+    }
+    if (md.intake_credit === '1') {
+      await sql`UPDATE entitlements SET source = 'intake_credited' WHERE user_id = ${userId} AND course_id = 'intake' AND source = 'intake_paid'`;
     }
     await sql`UPDATE users SET stripe_customer_id = ${session.customer || null} WHERE id = ${userId}`;
     const [c] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
@@ -209,14 +231,14 @@ async function fulfill(sql, session) {
           `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">It's yours, ${u.name.split(' ')[0]}.</h2>
            <p style="color:#a89080;font-size:14px;line-height:1.8;">Your purchase of <strong style="color:#f0d8d8;">${p?.title || 'your document'}</strong> is complete. It now lives in your account permanently — download it any time from the shop or your member page.</p>
            <p style="color:#a89080;font-size:13px;line-height:1.7;">Reminder: this document is for your personal use — reselling or replicating it isn't permitted.</p>
-           <a href="${siteUrl()}/shop" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Open Your Downloads</a>`);
+           <a href="${siteUrl()}/shop" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Open Your Downloads</a>${dealSupportBlock()}`);
       } catch (e) { console.error('product email failed', e.message); }
     }
   } else if (item === 'pass_single') {
     const courseId = /^mc\d+$/.test(md.course_id || '') ? md.course_id : 'all';
-    await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, ${courseId}, 'stripe_onetime', NOW() + interval '30 days', NOW())`;
+    await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, ${courseId}, 'stripe_onetime', NOW() + interval '60 days', NOW())`;
   } else if (item === 'pass_all') {
-    await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, 'all', 'stripe_onetime', NOW() + interval '30 days', NOW())`;
+    await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, 'all', 'stripe_onetime', NOW() + interval '60 days', NOW())`;
   } else if (item === 'lnl') {
     await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, 'lunchlearn', 'stripe_onetime', NOW() + interval '6 months', NOW())`;
     await sql`UPDATE users SET lnl_discount_until = NOW() + interval '2 months' WHERE id = ${userId} AND (lnl_discount_until IS NULL OR lnl_discount_until < NOW() + interval '2 months')`;
@@ -472,6 +494,18 @@ export default async function handler(req, res) {
         catch { coupon = (await stripe.coupons.create({ id: 'MONTHFREE', percent_off: 100, duration: 'once', name: 'Gift — first month free' })).id; }
         params.discounts = [{ coupon }];
         params.metadata.gift = String(body.gift).trim().toUpperCase();
+        discounted = true;
+      }
+    }
+    // Paid intake credits against the first retainer month — automatically
+    if (!discounted && item.startsWith('retainer_') && product.mode === 'subscription') {
+      const [intake] = await sql`SELECT id FROM entitlements WHERE user_id = ${user.id} AND course_id = 'intake' AND source = 'intake_paid' LIMIT 1`;
+      if (intake) {
+        let coupon;
+        try { coupon = (await stripe.coupons.retrieve('INTAKE1500')).id; }
+        catch { coupon = (await stripe.coupons.create({ id: 'INTAKE1500', amount_off: 150000, currency: 'usd', duration: 'once', name: 'Full Project Intake — credited to first month' })).id; }
+        params.discounts = [{ coupon }];
+        params.metadata.intake_credit = '1';
         discounted = true;
       }
     }

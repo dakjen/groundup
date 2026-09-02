@@ -192,7 +192,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
       const ok = window.confirm(
         `Start your 14-day trial with "${course.title}"?\n\n` +
         `Your trial works like our Single Course Pass: every lesson in ONE course of your choice, free for 14 days. This is your one trial — once you pick, it can't be moved to another course.\n\n` +
-        `Want it all instead? A membership includes all seven courses, the community, and new courses as they drop — from $49.99/mo. A one-time pass gives 30 days of a single course ($100) or everything ($250).\n\n` +
+        `Want it all instead? A membership includes all seven courses, the community, and new courses as they drop — from $49.99/mo. A one-time pass gives 60 days of a single course ($100) or everything ($250).\n\n` +
         `Press OK to start your trial with this course.`
       );
       if (!ok) return;
@@ -331,6 +331,16 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
                 <p style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 22, color: "#e0c4c4", lineHeight: 1.65, marginBottom: 12 }}>"{lesson.quote}"</p>
                 {lesson.quoteContext && <p style={{ color: "#7a5050", fontSize: 13, lineHeight: 1.75, fontFamily: "'DM Sans', sans-serif" }}>{lesson.quoteContext}</p>}
               </div>
+            </div>
+          )}
+          {lesson.handoff && (
+            <div style={{ background: "#12060a", border: "1px solid #b8010140", borderRadius: 14, padding: "22px 26px", margin: "28px 0", display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: 240, color: "#c8a8a8", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8 }}>{lesson.handoff}</div>
+              <button onClick={() => {
+                const token = getMemberToken();
+                if (token) fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ action: "deal_lead", source: "lesson:" + course.id }) }).catch(() => {});
+                window.location.href = "/contact";
+              }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px 22px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>Send her your deal →</button>
             </div>
           )}
           {lesson.actionItem && (
@@ -937,7 +947,7 @@ function AboutPage({ setActivePage }) {
     <div style={{ background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 40, borderRadius: 16, overflow: "hidden" }}>
-          <img src="/LIIF-Stills4.png" alt="Dr. Gina Merritt" style={{ width: "100%", height: 240, objectFit: "cover", display: "block", borderRadius: 12 }} />
+          <img src="/DCRE 2026 Conference - Photographed by Solwazi Afi Olusola-348.jpg" alt="Dr. Gina Merritt at the 2026 DCRE Conference" style={{ width: "100%", height: 240, objectFit: "cover", objectPosition: "center 25%", display: "block", borderRadius: 12 }} />
           <img src="/SISAwards-Award.jpg" alt="Dr. Merritt accepting award on stage" style={{ width: "100%", height: 240, objectFit: "cover", display: "block", borderRadius: 12 }} />
         </div>
         {/* Case studies — her buildings, her stories, told the way the courses tell them */}
@@ -979,8 +989,14 @@ function AboutPage({ setActivePage }) {
         <div style={{ marginBottom: 64 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>The Instructor</div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(38px,5vw,58px)", color: "#f5e8e8", marginBottom: 24, lineHeight: 1.1 }}>Dr. Gina Merritt</h1>
+          <p style={{ color: "#9a8080", fontSize: 16, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", maxWidth: 700, marginBottom: 16 }}>
+            Dr. Gina Merritt grew up in affordable housing in the Bronx. She knows what it means to live inside the units this industry builds — and what it costs a neighborhood when nobody builds them well. That fact shapes every deal she touches: the design standards, the community engagement, the insistence that residents get buildings they're proud of.
+          </p>
+          <p style={{ color: "#9a8080", fontSize: 16, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", maxWidth: 700, marginBottom: 16 }}>
+            Today she is Principal of Northern Real Estate Urban Ventures (NREUV), a woman-owned development firm working across DC, Baltimore, Cleveland, and Prince George's County, and the founder of Project Community Capital® — a social capital platform that connects returning citizens and under-networked residents to jobs on the very projects rising in their neighborhoods.
+          </p>
           <p style={{ color: "#9a8080", fontSize: 16, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", maxWidth: 700 }}>
-            Principal of Northern Real Estate Urban Ventures (NREUV) and founder of Project Community Capital®. 30+ years of hands-on development, finance, construction, and asset management experience. She grew up in affordable housing in the Bronx — a fact that shapes every deal she touches.
+            She has spent 30+ years in hands-on development, finance, construction, and asset management — first two decades running other people's deals as a development manager and advisor, then, starting in 2020, owning her own. She built her ownership pipeline from nearly zero to over $600 million. GroundUp exists to hand you the playbook that took her thirty years to write.
           </p>
         </div>
 
@@ -1046,18 +1062,18 @@ function AboutPage({ setActivePage }) {
 
 // ─── PRICING PAGE ────────────────────────────────────────────────────────────
 
-// One-time course passes: pay once, 30 days of access. No membership benefits.
+// One-time course passes: pay once, 60 days of access. No membership benefits.
 const passPlans = [
   {
     name: "Single Course Pass",
     price: "$100",
     period: "one-time",
-    description: "30 days of access to any one course — every lesson, case study, and worksheet in it.",
+    description: "60 days of access to any one course — every lesson, case study, and worksheet in it.",
     accent: "#b80101",
     cta: "Get a Course Pass",
     features: [
       "Any 1 course of your choice",
-      "30 days of full access",
+      "60 days of full access",
       "All lessons, case studies & worksheets in that course",
     ],
     locked: ["Community access", "New courses as they're added"],
@@ -1066,12 +1082,12 @@ const passPlans = [
     name: "All-Access Pass",
     price: "$250",
     period: "one-time",
-    description: "30 days of access to the entire GroundUp curriculum — every course at once.",
+    description: "60 days of access to the entire GroundUp curriculum — every course at once.",
     accent: "#b80101",
     cta: "Get All-Access",
     features: [
       "Every course in the library",
-      "30 days of full access",
+      "60 days of full access",
       "Every lesson, case study & worksheet",
     ],
     locked: ["Community access", "New courses as they're added"],
@@ -1289,7 +1305,7 @@ function PricingPage({ onSignUp }) {
         <div style={{ marginBottom: 64 }}>
           <div style={{ textAlign: "center", marginBottom: 28 }}>
             <div style={{ fontSize: 10, color: "#e0c4c4", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>One-Time Course Passes</div>
-            <p style={{ color: "#8a7070", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Pay once, learn for 30 days. No subscription, no membership.</p>
+            <p style={{ color: "#8a7070", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Pay once, learn for 60 days. No subscription, no membership.</p>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, alignItems: "start", maxWidth: 720, margin: "0 auto" }}>
             {passPlans.map((plan, i) => <PlanCard key={i} plan={plan} onSelect={() => startCheckout(plan.name.includes("Single") ? "pass_single" : "pass_all")} />)}
@@ -1299,34 +1315,40 @@ function PricingPage({ onSignUp }) {
         {/* Subscriptions */}
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Memberships</div>
-          <p style={{ color: "#8a7070", fontSize: 14, fontFamily: "'DM Sans', sans-serif", maxWidth: 520, margin: "0 auto", lineHeight: 1.7 }}>Constant access to every course — including new ones as we add them — plus community membership benefits at every level.</p>
+          <p style={{ color: "#8a7070", fontSize: 14, fontFamily: "'DM Sans', sans-serif", maxWidth: 560, margin: "0 auto", lineHeight: 1.7 }}>Every course, always — plus community benefits at every level. The lower tiers build your <strong style={{ color: "#c8a8a8" }}>foundation</strong>: the knowledge, the curriculum, the community. The higher tiers add <strong style={{ color: "#c8a8a8" }}>deal-specific support</strong> — Dr. Merritt on YOUR project.</p>
         </div>
         {/* Which level should I choose? — routes deal-havers to the top */}
         <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "28px 32px", marginBottom: 28 }}>
-          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Which level should I choose?</div>
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Where are you?</div>
           <div style={{ display: "grid", gap: 10 }}>
             {[
-              ["I want to learn development — the full curriculum, at my pace", "Member", false],
-              ["I want to be in the room — post, network, and connect with other developers", "Builder", false],
-              ["I'm building toward deals — templates, the Opportunity Board, office hours with Dr. Merritt", "Premium", false],
-              ["I have a LIVE DEAL and need Dr. Merritt on it", "Elite — or the Senior Advisor retainer for whole-deal involvement", true],
-            ].map(([want, level, hot]) => (
-              <div key={level} style={{ display: "flex", gap: 14, alignItems: "baseline", flexWrap: "wrap", padding: "10px 14px", background: hot ? "#12060a" : "transparent", border: hot ? "1px solid #b8010140" : "1px solid transparent", borderRadius: 10 }}>
+              ["I'm exploring — learning how development works", "Member or Builder", null],
+              ["I'm working toward my first deal — tools, community, office hours", "Premium", null],
+              ["I have a deal in motion — under contract, raising capital, or stuck", "Elite · or send it to Dr. Merritt", "router"],
+            ].map(([want, level, lead]) => (
+              <div key={level} style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap", padding: "12px 14px", background: lead ? "#12060a" : "transparent", border: lead ? "1px solid #b8010140" : "1px solid transparent", borderRadius: 10 }}>
                 <span style={{ color: "#a89090", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, flex: 1, minWidth: 240 }}>{want}</span>
-                <span style={{ color: "#b80101", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 800 }}>→ {level}</span>
+                {lead ? (
+                  <button onClick={() => {
+                    const token = getMemberToken();
+                    if (token) fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ action: "deal_lead", source: lead }) }).catch(() => {});
+                    window.location.href = "/contact";
+                  }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Send Dr. Merritt your deal →</button>
+                ) : (
+                  <span style={{ color: "#b80101", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 800 }}>→ {level}</span>
+                )}
               </div>
             ))}
           </div>
           <div style={{ color: "#7a5050", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginTop: 14 }}>
-            {"The honest rule: Member, Builder, and Premium are the industry essentials — the curriculum, the community, the tools. \"How do I calculate a rate of return?\" lives there. \"I can't solve the gap on MY deal\" is deal-specific work on a project that will make you money — that's an Elite benefit, and for hands-on involvement in the whole deal, that's the Senior Advisor retainer (start with a 1:1 Deal Review)."}
+            {"The honest rule: Member, Builder, and Premium are the industry essentials. \"How do I calculate a rate of return?\" lives there. \"I can't solve the gap on MY deal\" needs Dr. Merritt in the whole deal — so send it to her. The \$1,500 Full Project Intake is the front door: she takes in your entire project, finds what you missed, and if you continue into the retainer, the \$1,500 credits against your first month. Not ready for Elite? Start at Premium — you get 10% off 1:1 sessions with Dr. Merritt, and you can upgrade to Elite the moment your deal heats up."}
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, alignItems: "start" }}>
-          {plans.map((plan, i) => (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(228px, 1fr))", gap: 14, alignItems: "start" }}>
+          {plans.filter(p => p.tier !== "Partner").map((plan, i) => (
             <PlanCard key={i} plan={plan} seats={plan.limited ? elite : null} onSelect={() => {
-              if (plan.tier === "Partner") { window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("GroundUp — Partner tier"); return; }
-              if (plan.tier === "Advisor") { window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("Senior Advisor — engagement call"); return; }
+              if (plan.tier === "Advisor") { window.location.href = "/contact"; return; }
               // Elite is capped — send full-cohort visitors to the waitlist, not to checkout
               if (plan.limited && elite?.full) { window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("Elite waitlist — notify me when a seat opens"); return; }
               if (getMember()) { startCheckout("sub_" + plan.tier, { gift: localStorage.getItem("guGift") || undefined, promo: localStorage.getItem("guPromo") || undefined }); return; }
@@ -1334,6 +1356,17 @@ function PricingPage({ onSignUp }) {
             }} />
           ))}
         </div>
+
+        {/* Partner: organizations & institutions — one long button below the line */}
+        <button onClick={() => { window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("GroundUp — Partner tier"); }}
+          style={{ width: "100%", marginTop: 16, background: "#0d0404", border: "1px solid #e0c4c440", borderRadius: 14, padding: "20px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, flexWrap: "wrap", cursor: "pointer", textAlign: "left" }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = "#e0c4c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e0c4c440"; }}>
+          <div>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#e0c4c4", marginBottom: 2 }}>Partner</div>
+            <div style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>For organizations & institutions — cohort licensing, custom curriculum scope, dedicated onboarding. Built for agencies, CDFIs & nonprofit developer programs.</div>
+          </div>
+          <span style={{ color: "#e0c4c4", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, whiteSpace: "nowrap" }}>Talk to Us →</span>
+        </button>
 
         <div style={{ marginTop: 56, borderRadius: 16, overflow: "hidden", position: "relative", border: "1px solid #2a0000" }}>
           <img src="/IMG_8087.jpeg" alt="Dr. Merritt speaking at the National DCRE Conference" style={{ width: "100%", height: 340, objectFit: "cover", objectPosition: "center 30%", display: "block" }} />
@@ -1371,7 +1404,7 @@ function ContactPage({ setActivePage, advisorLink }) {
     { id: "capital", title: "Capital Stack Review", desc: "Deep dive into your financing structure — tax credit sizing, subsidy sequencing, gap analysis, and how to close the deal.", price: "$550", duration: "45 min", Icon: BarChart3, stripe: "https://buy.stripe.com/placeholder_capital" },
     { id: "community", title: "Community Development", desc: "Community engagement strategy, political capital, government relationships, and neighborhood support for your project.", price: "$375", duration: "45 min", Icon: Handshake, stripe: "https://buy.stripe.com/placeholder_community" },
     { id: "bipoc", title: "BIPOC Developer Session", desc: "A dedicated session for BIPOC developers — navigating the industry, building capital relationships, and growing as an underrepresented developer. Reserved for BIPOC clients.", price: "$275", duration: "45 min", Icon: UsersIcon, stripe: "https://buy.stripe.com/placeholder_bipoc" },
-    { id: "advisor", title: "Senior Advisor Retainer", desc: "Dr. Merritt embedded on your project month over month — deal review, capital strategy, negotiation prep, and the calls that move it forward. Monthly hour blocks, limited seats. Starts with a 30-minute engagement call.", price: "From $3,025", duration: "/month", Icon: Handshake, advisor: true },
+    { id: "advisor", title: "Senior Advisor — start with the Full Project Intake", desc: "Have a live deal? Send her the whole thing. The $1,500 intake takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. Continue into the retainer (from $3,025/mo) and the $1,500 credits against your first month.", price: "$1,500", duration: "intake · credited if you continue", Icon: Handshake, advisor: true },
   ];
 
   const [selected, setSelected] = useState(null);
@@ -1511,13 +1544,16 @@ function ContactPage({ setActivePage, advisorLink }) {
               <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
                 <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#b80101" }}>{selected.price}</div>
                 {selected.advisor ? (
-                  <a href={advisorLink || ("mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("Senior Advisor — engagement call"))} {...(advisorLink ? { target: "_blank", rel: "noreferrer" } : {})} style={{ background: "#b80101", color: "#fff", borderRadius: 8, padding: "12px 24px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, textDecoration: "none", display: "inline-block" }}>Book an Engagement Call →</a>
+                  <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+                    <button onClick={() => startCheckout("retainer_onboarding")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "13px 24px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Buy the Intake — $1,500 →</button>
+                    <a href={advisorLink || ("mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("Senior Advisor — engagement call"))} {...(advisorLink ? { target: "_blank", rel: "noreferrer" } : {})} style={{ color: "#e0c4c4", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>or book a free engagement call →</a>
+                  </div>
                 ) : <button onClick={() => startCheckout("session_" + selected.id)} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "13px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Pay & Reserve →</button>}
               </div>
             </div>
             {selected.advisor ? (
               <div style={{ marginTop: 12, background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 10, padding: "14px 18px", color: "#b8a060", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
-                The engagement call is free. If you move forward, a one-time <strong style={{ color: "#e0c4c4" }}>$1,500 onboarding fee</strong> covers Dr. Merritt's full project intake — reviewing your deal, documents, and goals — and then your monthly hour block begins.
+                The Full Project Intake stands on its own: Dr. Merritt takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. If you continue into the retainer, <strong style={{ color: "#e0c4c4" }}>the $1,500 is credited against your first month</strong> — it's never wasted money. Prefer to talk first? The engagement call is free.
               </div>
             ) : (
               <div style={{ marginTop: 10, fontSize: 12, color: "#5a4040", fontFamily: "'DM Sans', sans-serif" }}>After payment, complete the form below so Dr. Merritt can prepare for your session.</div>
@@ -2562,8 +2598,8 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
           {[
-            { name: "One Course", price: "$100", period: "one-time", desc: "30 days inside one course of your choice." },
-            { name: "All-Access Pass", price: "$250", period: "one-time", desc: "30 days of the entire curriculum." },
+            { name: "One Course", price: "$100", period: "one-time", desc: "60 days inside one course of your choice." },
+            { name: "All-Access Pass", price: "$250", period: "one-time", desc: "60 days of the entire curriculum." },
             { name: "Member", price: "$49.99", period: "/mo", desc: "Constant access + support — every course, every new course, and the community." },
             { name: "Premium", price: "$149.99", period: "/mo", desc: "Engage the community, deal tools, the Opportunity Board, a free work session.", popular: true },
             { name: "Elite", price: "$499.99", period: "/mo", desc: "Direct line to Dr. Merritt — advisory calls, DMs, and the partner network." },
@@ -3980,7 +4016,7 @@ function ContactsTab({ btnRed, btnGhost, inp, lbl }) {
     a.click();
     URL.revokeObjectURL(a.href);
   };
-  const chipColor = (s) => s.includes("Insider") ? "#b80101" : s.includes("Member") ? "#1a7a3a" : s.includes("Team") ? "#555555" : s.includes("Gift") ? "#7a4a9a" : s.includes("Lunch") ? "#a06010" : "#888888";
+  const chipColor = (s) => s.includes("DEAL") ? "#b80101" : s.includes("Insider") ? "#b80101" : s.includes("Member") ? "#1a7a3a" : s.includes("Team") ? "#555555" : s.includes("Gift") ? "#7a4a9a" : s.includes("Lunch") ? "#a06010" : "#888888";
   return (
     <div style={{ maxWidth: 820 }}>
       <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#161616", marginBottom: 8 }}>Contacts</h2>
@@ -4217,6 +4253,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
     if (e.budget === "$2,000+") return "Senior Advisor — from $3,025/mo";
     if (["$300+", "$500+"].includes(e.budget)) return "Elite — $499.99/mo";
     if (["$100–$200", "$150–$500"].includes(e.budget)) return "Premium — $149.99/mo";
+    if (e.learn === "I need deal-specific support on a live project") return "Elite — $499.99/mo";
     const LN = { "Financing & capital stacks": 2, "Getting my first deal done": 2, "Public-private partnerships": 3, "Scaling my business & pipeline": 3, "Scaling my existing pipeline": 3, "All of the above": 2 };
     const PN = { "I don't understand the numbers": 2, "I can't find the capital": 2, "I need partners or a team": 2, "No network in the industry": 2, "Navigating government & compliance": 3, "I have a deal but I'm stuck": 3 };
     const need = Math.max(LN[e.learn] || 1, PN[e.reason] || 1);

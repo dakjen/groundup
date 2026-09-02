@@ -320,6 +320,14 @@ export function launchEmail(name, rec, link, painPoint, stretchLink) {
   };
 }
 
+// The standing invitation — appended to member-facing emails. Every touchpoint
+// reminds people that deal-specific support has a doorway: Premium/Elite, or just ask.
+export function dealSupportBlock() {
+  return `<div style="margin-top:22px;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
+    <p style="color:#c8a8a8;font-size:13px;line-height:1.7;margin:0;">Working on a specific deal? The courses and community build your foundation — <strong style="color:#f0d8d8;">deal-specific support</strong> comes with the Premium and Elite memberships, or you can send Dr. Merritt your whole project with the <strong style="color:#f0d8d8;">\$1,500 Full Project Intake</strong> (credited to your first retainer month if you continue). <a href="https://community.drginamerritt.net/contact" style="color:#b80101;font-weight:bold;">Send it to us →</a></p>
+  </div>`;
+}
+
 export function lnlAccessEmail(name, expiresAt, hasLink) {
   const through = expiresAt ? new Date(expiresAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
   return {
@@ -329,6 +337,8 @@ export function lnlAccessEmail(name, expiresAt, hasLink) {
       <p style="color:#a89080;font-size:14px;line-height:1.8;">Your Lunch & Learn access is active${through ? ` through <strong style="color:#f0d8d8;">${through}</strong>` : ''} — every live session with Dr. Merritt for six months, plus the recordings.</p>
       <p style="color:#a89080;font-size:14px;line-height:1.8;">${hasLink ? 'The join link for the next session is waiting on your Lunch & Learn page.' : 'The join link for each session appears on your Lunch & Learn page closer to the date.'} While you're there, tell us what you want to learn about — Dr. Merritt's team reads every submission.</p>
       <p style="color:#c9a227;font-size:14px;line-height:1.8;font-weight:bold;">Your attendee perk: 25% off your first month of membership if you join within two months.</p>
-      <a href="https://community.drginamerritt.net" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Open Lunch & Learn</a>`,
+      <p style="color:#a89080;font-size:13px;line-height:1.7;">Every recording you have access to lives on your <a href="https://community.drginamerritt.net/lunchlearn" style="color:#b80101;font-weight:bold;">Lunch & Learn page</a> — catch up on any session you missed.</p>
+      <a href="https://community.drginamerritt.net" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Open Lunch & Learn</a>
+      ${dealSupportBlock()}`,
   };
 }
