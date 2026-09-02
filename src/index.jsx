@@ -4883,10 +4883,12 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
     { id: "all", label: "Everyone" },
     { id: "Free", label: "Free accounts" },
     { id: "Basic", label: "Members" },
+    { id: "Builder", label: "Builders" },
     { id: "Premium", label: "Premium" },
     { id: "Elite", label: "Elite" },
     { id: "paid", label: "All paid members" },
     { id: "lnl", label: "Lunch & Learn attendees" },
+    { id: "leads", label: "Deal leads — asked deal-specific questions" },
   ];
   const [audience, setAudience] = useState("all");
   const [count, setCount] = useState(null);
@@ -4950,6 +4952,17 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
         <label style={lbl}>Message</label>
         <textarea value={message} onChange={e => setMessage(e.target.value)} rows={6} placeholder={"Write your message. Blank lines start new paragraphs.\nEach email opens with \u201cHi <first name>,\u201d automatically."} style={{ ...inp, maxWidth: "none", resize: "vertical", marginBottom: 18 }} />
         <button disabled={busy} onClick={() => send({ kind: "broadcast", audience, subject, message }, `Send this email to ${count ?? "?"} recipient(s)?`)} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>Send Broadcast</button>
+      </div>
+
+      {/* Deal-support nudge */}
+      <div style={section}>
+        <div style={heading}>Deal-Support Nudge</div>
+        <p style={sub}>A ready-made email with the three doors to deal support: upgrade to Elite, book a free discovery call for the Senior Advisor retainer, or buy the $1,500 Full Project Intake. Goes to the audience selected above — "Deal leads" targets everyone who's asked a deal-specific question.</p>
+        <div style={{ background: "#faf5f5", border: "1px solid #e0d0d0", borderRadius: 10, padding: "14px 18px", marginBottom: 16, fontSize: 12.5, color: "#555555", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
+          <strong>Subject:</strong> When you're ready for help on YOUR deal<br/>
+          <strong>Body:</strong> Hi &lt;first name&gt; — got a deal that needs more than a course? … 1 · Upgrade to Elite ($499.99/mo) · 2 · Free discovery call for the retainer · 3 · The $1,500 Full Project Intake, credited if you continue.
+        </div>
+        <button disabled={busy} onClick={() => send({ kind: "deal_support", audience }, `Send the deal-support nudge to ${count ?? "?"} recipient(s)?`)} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>Send Deal-Support Nudge</button>
       </div>
 
       {/* Event announcement */}

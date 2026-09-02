@@ -188,6 +188,31 @@ export function meetingEmail(name, title, date, time, link) {
   };
 }
 
+// The deal-support nudge: sent manually from the Email tab to any segment —
+// three doors, each with a handle: upgrade to Elite, book the free discovery
+// call for the retainer, or buy the \$1,500 intake outright.
+export function dealSupportNudgeEmail() {
+  return {
+    subject: 'When you\'re ready for help on YOUR deal',
+    html: `
+      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">Hi {{FIRSTNAME}} — got a deal that needs more than a course?</h2>
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">The curriculum, the community, and the Lunch & Learns build your foundation. But "I can't solve the gap on MY deal" isn't a lesson — it's deal work, and there are three ways to get Dr. Merritt on it:</p>
+      <div style="margin:18px 0;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
+        <p style="color:#f0d8d8;font-size:14px;font-weight:bold;margin:0 0 6px;">1 · Upgrade to Elite — \$499.99/mo</p>
+        <p style="color:#a89080;font-size:13px;line-height:1.7;margin:0;">Bring YOUR deal to your one-on-one advisory calls with Dr. Merritt, plus direct messages, unlimited downloads, and the Elite Lounge. <a href="${siteUrl()}/pricing" style="color:#b80101;font-weight:bold;">Upgrade here →</a></p>
+      </div>
+      <div style="margin:18px 0;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
+        <p style="color:#f0d8d8;font-size:14px;font-weight:bold;margin:0 0 6px;">2 · Book a free discovery call — Senior Advisor retainer</p>
+        <p style="color:#a89080;font-size:13px;line-height:1.7;margin:0;">For whole-deal involvement, Dr. Merritt works month over month on your project — deal review, capital strategy, negotiation prep. The discovery call is free and there's no obligation. <a href="mailto:groundup@drginamerritt.net?subject=Senior%20Advisor%20%E2%80%94%20discovery%20call" style="color:#b80101;font-weight:bold;">Book your discovery call →</a></p>
+      </div>
+      <div style="margin:18px 0;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
+        <p style="color:#f0d8d8;font-size:14px;font-weight:bold;margin:0 0 6px;">3 · Start with the \$1,500 Full Project Intake</p>
+        <p style="color:#a89080;font-size:13px;line-height:1.7;margin:0;">Send her the whole thing — pro forma, capital stack, site, timeline — and she finds what you missed. If you continue into the retainer, the \$1,500 is credited against your first month. <a href="${siteUrl()}/contact" style="color:#b80101;font-weight:bold;">Buy the intake →</a></p>
+      </div>
+      <p style="color:#7a5050;font-size:13px;line-height:1.7;">Not there yet? Keep building — the courses and community aren't going anywhere. When your deal heats up, this email is the map.</p>`,
+  };
+}
+
 export function broadcastEmail(subject, message) {
   const paragraphs = message.split(/\\n{2,}/).map(p =>
     `<p style="color:#a89080;font-size:14px;line-height:1.8;">${p.replace(/\\n/g, '<br/>')}</p>`).join('');

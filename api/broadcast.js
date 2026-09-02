@@ -1,18 +1,25 @@
 import { neon } from '@neondatabase/serverless';
 import { requireAdmin } from './_utils.js';
-import { sendBulk, sendEmail, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail } from './_email.js';
+import { sendBulk, sendEmail, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail } from './_email.js';
 
 // Team email tools: send a custom email or an event announcement to a segment.
 // Audiences: all | Free | Basic | Premium | Elite | lnl (active Lunch & Learn access)
 
 async function recipients(sql, audience) {
+  // Qualified leads — anyone who's asked a deal-specific question (deal_leads table)
+  if (audience === 'leads') {
+    return sql`
+      SELECT DISTINCT u.name, u.email FROM deal_leads d
+      JOIN users u ON u.id = d.user_id
+      WHERE u.membership_status = 'active'`;
+  }
   if (audience === 'lnl') {
     return sql`
       SELECT DISTINCT u.name, u.email FROM entitlements e
       JOIN users u ON u.id = e.user_id
       WHERE e.course_id = 'lunchlearn' AND (e.expires_at IS NULL OR e.expires_at > NOW())`;
   }
-  if (['Free', 'Basic', 'Premium', 'Elite'].includes(audience)) {
+  if (['Free', 'Basic', 'Builder', 'Premium', 'Elite'].includes(audience)) {
     return sql`SELECT name, email FROM users WHERE tier = ${audience} AND membership_status = 'active'`;
   }
   if (audience === 'paid') {
@@ -65,7 +72,10 @@ export default async function handler(req, res) {
     if (rows.length === 0) return res.status(400).json({ error: 'No recipients in that audience' });
 
     let sent = 0;
-    if (kind === 'event') {
+    if (kind === 'deal_support') {
+      const mail = dealSupportNudgeEmail();
+      sent = await sendBulk(rows, mail.subject, mail.html);
+    } else if (kind === 'event') {
       if (!title || !date) return res.status(400).json({ error: 'Event title and date required' });
       const mail = eventEmail(title, date, time || '', description || '', audience === 'lnl');
       sent = await sendBulk(rows, mail.subject, mail.html);
