@@ -1711,7 +1711,7 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
                 }} style={{ background: ev.my_rsvp ? "transparent" : "#b80101", color: ev.my_rsvp ? "#22c55e" : "#fff", border: ev.my_rsvp ? "1px solid #22c55e60" : "none", borderRadius: 8, padding: "10px 18px", fontFamily: font, fontWeight: 800, fontSize: 12.5, cursor: "pointer", whiteSpace: "nowrap" }}>
                   {ev.my_rsvp ? "✓ Going — tap to cancel" : "RSVP — I'll be there"}
                 </button>
-                <a href={gcalUrl(`GroundUp Lunch & Learn: ${ev.title}`, ev.date, 60, "Live session with Dr. Gina Merritt. Your join link is on your Lunch & Learn page: " + window.location.origin, "Online")} target="_blank" rel="noreferrer"
+                <a href={gcalUrl(`GroundUp Lunch & Learn: ${ev.title}`, ev.date, 60, status?.link ? `Live session with Dr. Gina Merritt.\n\nJoin Zoom: ${status.link}\n\nYour Lunch & Learn page: ${window.location.origin}/lunchlearn` : "Live session with Dr. Gina Merritt. Your join link is on your Lunch & Learn page: " + window.location.origin, status?.link || "Online")} target="_blank" rel="noreferrer"
                   style={{ color: "#c8a8a8", border: "1px solid #2a0000", borderRadius: 8, padding: "10px 14px", fontFamily: font, fontWeight: 700, fontSize: 12, textDecoration: "none", whiteSpace: "nowrap" }}>+ Google Calendar</a>
               </div>
             ))}
@@ -1788,7 +1788,7 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
               <button key={rec.id} onClick={() => (window.guNeedsIp && window.guNeedsIp()) ? window.guRequireIp(() => setPlayingId(rec.id)) : setPlayingId(rec.id)}
                 style={{ ...card, display: "flex", alignItems: "center", gap: 18, padding: "18px 24px", cursor: "pointer", textAlign: "left", width: "100%", border: "1px solid #2a0000", transition: "all 0.15s" }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = "#b8010160"; e.currentTarget.style.background = "#130606"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a0000"; e.currentTarget.style.background = ""; }}>
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a0000"; e.currentTarget.style.background = "#0d0404"; }}>
                 <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#b8010115", border: "1px solid #b8010140", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <Play size={16} color="#b80101" style={{ marginLeft: 2 }} />
                 </div>
@@ -2103,6 +2103,88 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
   );
 }
 
+// ─── LEGAL PAGES ────────────────────────────────────────────────────────────
+// Terms of Use and Privacy Policy — written to match what the platform actually
+// does. v1.0, pending attorney review; operated by NREUV per the site footer.
+
+const LEGAL_STYLES = {
+  page: { background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px" },
+  wrap: { maxWidth: 760, margin: "0 auto" },
+  h1: { fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(32px,4.5vw,46px)", color: "#f5e8e8", marginBottom: 8 },
+  meta: { color: "#5a4040", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginBottom: 36 },
+  h2: { fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 16, color: "#e0c4c4", margin: "30px 0 10px" },
+  p: { color: "#9a8080", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.85, marginBottom: 12 },
+  strong: { color: "#c8a8a8" },
+};
+
+function TermsPage() {
+  const S = LEGAL_STYLES;
+  return (
+    <div style={S.page}><div style={S.wrap}>
+      <h1 style={S.h1}>Terms of Use</h1>
+      <div style={S.meta}>GroundUp, operated by Northern Real Estate Urban Ventures LLC (“NREUV,” “we”) · Version 1.0 · Effective {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div>
+
+      <h2 style={S.h2}>1. Agreement</h2>
+      <p style={S.p}>By creating an account, making a purchase, or using GroundUp (community.drginamerritt.net), you agree to these Terms and our Privacy Policy. Your agreement is recorded on your account with a timestamp when you accept it at signup or when prompted on the site. If you do not agree, do not use the platform.</p>
+
+      <h2 style={S.h2}>2. Intellectual property — the heart of these Terms</h2>
+      <p style={S.p}>Every course, lesson, video, recording, guide, template, worksheet, the Developer's Playbook, and all other content on GroundUp is the <strong style={S.strong}>exclusive intellectual property of Dr. Gina Merritt and NREUV</strong>, developed over 30+ years of professional practice. Your membership or purchase grants you a <strong style={S.strong}>limited, personal, non-exclusive, non-transferable, revocable license</strong> to access it for your own individual education and business use.</p>
+      <p style={S.p}>You agree that you will <strong style={S.strong}>not</strong>, in whole or in part, in any form or medium, now known or later developed: (a) sell, resell, license, or otherwise commercialize any GroundUp content; (b) distribute, publish, post, or share it with any person or platform; (c) copy, reproduce, screenshot, record, scrape, or download it except through features we provide; (d) create derivative works, courses, guides, or teaching materials based on it; (e) use it to train any artificial-intelligence system; (f) share your login credentials or let anyone else use your account; or (g) remove or alter any watermark, notice, or identifying mark. Purchased documents may be watermarked and traceable to your account.</p>
+      <p style={S.p}><strong style={S.strong}>Violation ends your access immediately</strong>, without refund, and NREUV reserves all remedies — including damages and injunctive relief, since unauthorized distribution causes harm money can't fully repair. These obligations survive cancellation of your membership.</p>
+
+      <h2 style={S.h2}>3. Memberships & billing</h2>
+      <p style={S.p}>Plans: Member $49.99/mo · Builder $99.99/mo · Premium $149.99/mo · Elite $499.99/mo (limited seats), plus one-time course passes, Lunch &amp; Learn access, digital products, 1:1 sessions, and advisory retainers. Subscriptions <strong style={S.strong}>renew automatically each month</strong> on your billing date and are charged to your card by Stripe until you cancel. You can <strong style={S.strong}>cancel anytime, self-service</strong>, from Membership &amp; Billing on your member page — access continues through the period you've paid for. Prices may change with advance notice; changes apply from your next billing cycle.</p>
+      <p style={S.p}>Some benefits unlock with tenure: advisory calls and networking events open after 4 months of continuous membership. Premium includes 3 product downloads per billing month (unused downloads don't roll over); the Developer's Playbook is view-only below Elite. Elite seats are limited and offered while available.</p>
+
+      <h2 style={S.h2}>4. Refunds</h2>
+      <p style={S.p}><strong style={S.strong}>All sales are final once content has been viewed or downloaded.</strong> Subscription payments already made are not refunded upon cancellation; you keep access through the paid period. Where a statutory cooling-off or refund right applies in your jurisdiction, that right is honored to the extent required by law.</p>
+
+      <h2 style={S.h2}>5. Community & conduct</h2>
+      <p style={S.p}>Be professional. No harassment, hate, spam, solicitation of members for competing offerings, or posting content you don't have rights to. Deal information other members share in the community or group sessions is <strong style={S.strong}>confidential to this community</strong> — don't use or disclose it outside GroundUp. We may remove content or suspend accounts that break these rules.</p>
+
+      <h2 style={S.h2}>6. Sessions, office hours & DMs</h2>
+      <p style={S.p}>Live sessions and recordings are provided for education. Direct messages (Elite) are for quick questions, answered within 2 business days, Monday–Friday; substantive review belongs in booked sessions. Nothing on GroundUp — including 1:1 sessions and advisory calls — is legal, tax, investment, accounting, or brokerage advice, and no guarantee is made that any deal, financing, or approach will succeed. Engage your own licensed professionals.</p>
+
+      <h2 style={S.h2}>7. Your account & data</h2>
+      <p style={S.p}>Keep your credentials secure; you're responsible for activity on your account. If you cancel, your account data (posts, messages, progress) is permanently deleted 15 days after your membership ends, as described in the Privacy Policy — rejoin before then and nothing is lost. Financial records are retained as required by law.</p>
+
+      <h2 style={S.h2}>8. The service</h2>
+      <p style={S.p}>GroundUp is provided “as is.” We work hard to keep it available and accurate but don't warrant uninterrupted or error-free operation, and we may add, change, or retire features. To the fullest extent permitted by law, NREUV's total liability for any claim is limited to the amounts you paid us in the 12 months before the claim; we are not liable for indirect, incidental, or consequential damages. Nothing here limits liability that cannot be limited by law.</p>
+
+      <h2 style={S.h2}>9. Changes & contact</h2>
+      <p style={S.p}>We may update these Terms; material changes will be announced on the site or by email, and continued use after the effective date is acceptance. Questions: <strong style={S.strong}>groundup@drginamerritt.net</strong> · Northern Real Estate Urban Ventures, 825 10th St NW, Suite 981, Washington, DC 20001.</p>
+    </div></div>
+  );
+}
+
+function PrivacyPage() {
+  const S = LEGAL_STYLES;
+  return (
+    <div style={S.page}><div style={S.wrap}>
+      <h1 style={S.h1}>Privacy Policy</h1>
+      <div style={S.meta}>GroundUp, operated by Northern Real Estate Urban Ventures LLC · Version 1.0 · Effective {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div>
+
+      <h2 style={S.h2}>1. What we collect</h2>
+      <p style={S.p}><strong style={S.strong}>You give us:</strong> your name, email, and password when you create an account; phone number and your answers (goals, pain points, budget) when you join the waitlist; messages, posts, notes, and topic requests you write on the platform; and documents you upload to a client workspace if you're an advisory client. <strong style={S.strong}>Automatically:</strong> purchase and subscription history, RSVP and download activity, and basic security logs (such as sign-in attempts). Payment card details go <strong style={S.strong}>directly to Stripe</strong> — we never see or store your card number.</p>
+
+      <h2 style={S.h2}>2. How we use it</h2>
+      <p style={S.p}>To run your membership and deliver what you bought; to enforce content licenses and tier access; to email you about your account, sessions, and launches; to recommend a plan based on the answers you chose to share; and to keep the platform secure. We do <strong style={S.strong}>not</strong> run advertising pixels or analytics trackers, and we do <strong style={S.strong}>not sell or share your personal information</strong> for advertising.</p>
+
+      <h2 style={S.h2}>3. Who touches your data</h2>
+      <p style={S.p}>Service providers that make GroundUp work, each receiving only what their function needs: <strong style={S.strong}>Stripe</strong> (payments), <strong style={S.strong}>Neon</strong> (database), <strong style={S.strong}>Vercel</strong> (hosting &amp; file storage), <strong style={S.strong}>Brevo</strong> (email), <strong style={S.strong}>YouTube/Google</strong> (embedded lesson and recording video — Google may set cookies when you play a video; calendar links open Google Calendar). We disclose information if the law requires it. We don't sell it to anyone.</p>
+
+      <h2 style={S.h2}>4. Retention & deletion</h2>
+      <p style={S.p}>Your data lives as long as your account does. If you cancel your membership, your posts, messages, and progress are <strong style={S.strong}>permanently deleted 15 days</strong> after it ends, and your account identity is scrubbed; rejoin within 15 days and nothing is lost. Financial and purchase records are kept as long as tax law requires (generally 7 years) even after deletion. Security logs purge within about a day.</p>
+
+      <h2 style={S.h2}>5. Your choices</h2>
+      <p style={S.p}>You can update your password on your member page, cancel self-service (which triggers the deletion timeline above), unsubscribe from marketing email via the link in any message, or email us to ask what we hold about you or to request deletion. We answer at <strong style={S.strong}>groundup@drginamerritt.net</strong>.</p>
+
+      <h2 style={S.h2}>6. Security, children & changes</h2>
+      <p style={S.p}>Passwords are stored hashed, sessions are signed, sign-ins are rate-limited, and access to content is enforced server-side. GroundUp is for adults building real estate careers — it is not directed to children under 18. We'll post any material changes to this policy here. Northern Real Estate Urban Ventures, 825 10th St NW, Suite 981, Washington, DC 20001.</p>
+    </div></div>
+  );
+}
+
 // ─── MANDATORY IP AGREEMENT GATE ────────────────────────────────────────────
 // Cannot be dismissed. Every member must agree once; the timestamp is the record.
 function IpAgreementGate({ member, onAgreed, onSignOut, onDismiss }) {
@@ -2131,7 +2213,7 @@ function IpAgreementGate({ member, onAgreed, onSignOut, onDismiss }) {
         <label style={{ display: "flex", gap: 12, alignItems: "flex-start", cursor: "pointer", background: "#12060a", border: "1px solid #2a0000", borderRadius: 10, padding: "14px 16px", marginBottom: 18 }}>
           <input type="checkbox" checked={checked} onChange={e => setChecked(e.target.checked)} style={{ marginTop: 3 }} />
           <span style={{ color: "#c8a8a8", fontSize: 13.5, fontFamily: font, lineHeight: 1.8 }}>
-            I agree that I will not sell, distribute, copy, share, reproduce, or misappropriate any GroundUp content, in any form. I understand all sales are final once content has been viewed or downloaded, and that violating this agreement ends my access.
+            I agree that I agree to the <a href="/terms" target="_blank" style={{ color: "#b80101" }}>Terms of Use</a> and <a href="/privacy" target="_blank" style={{ color: "#b80101" }}>Privacy Policy</a>, including the content license: I will not sell, distribute, copy, share, reproduce, create derivative works from, use to train AI, or otherwise misappropriate any GroundUp content, in any form. All sales are final once content is viewed or downloaded; violating this agreement ends my access without refund, and these obligations survive cancellation.
           </span>
         </label>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
@@ -2210,12 +2292,14 @@ function OfficeHoursPage({ member, onSignIn, setActivePage }) {
           </div>
         ) : (
           <>
+            {oh.allowance.limit < 90 && (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 26 }}>
               <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
               <span style={{ color: "#e0c4c4", fontSize: 13.5, fontFamily: font, fontWeight: 800 }}>
                 {oh.allowance.remaining} of {oh.allowance.limit} office-hours spots left on your plan this year
               </span>
             </div>
+            )}
             {(oh.events || []).length === 0 ? (
               <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: 48, textAlign: "center", color: "#8a7070", fontFamily: font, fontSize: 14 }}>
                 The next drop of office hours hasn't landed yet — watch your email. When times drop, they're first come, first served.
@@ -2498,7 +2582,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
       </div>
 
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>
-        <div style={{ fontFamily: font, fontSize: 12, color: "#3a2a2a" }}>© {new Date().getFullYear()} GroundUp · Northern Real Estate Urban Ventures</div>
+        <div style={{ fontFamily: font, fontSize: 12, color: "#3a2a2a" }}>© {new Date().getFullYear()} GroundUp · Northern Real Estate Urban Ventures<span style={{ margin: "0 8px" }}>·</span><a href="/terms" style={{ color: "#5a4040", fontSize: 12, textDecoration: "none" }}>Terms</a><span style={{ margin: "0 6px" }}>·</span><a href="/privacy" style={{ color: "#5a4040", fontSize: 12, textDecoration: "none" }}>Privacy</a></div>
         <button onClick={onAdmin} style={{ background: "transparent", border: "none", color: "#2a1a1a", fontFamily: font, fontSize: 11, cursor: "pointer", letterSpacing: "1px" }}>Admin</button>
       </footer>
     </div>
@@ -4993,7 +5077,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "advisory", "shop", "officehours"];
+  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "advisory", "shop", "officehours", "terms", "privacy"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
     return PAGES.includes(p) ? p : (sessionStorage.getItem("activePage") || "home");
@@ -5019,6 +5103,8 @@ export default function App() {
       about: ["About Dr. Gina Merritt — GroundUp", "From public housing in the Bronx to $600M+ in real estate development. The story behind GroundUp and Northern Real Estate Urban Ventures."],
       lunchlearn: ["Lunch & Learns — GroundUp", "Live monthly sessions with Dr. Gina Merritt — real deals, real numbers, live Q&A, plus a recording library."],
       contact: ["Book a 1:1 Session — GroundUp", "Work directly with Dr. Gina Merritt: deal review, strategy, capital stack review, community development, and BIPOC developer sessions."],
+      terms: ["Terms of Use — GroundUp", "The GroundUp Terms of Use: content license, memberships, billing, refunds, and community rules."],
+      privacy: ["Privacy Policy — GroundUp", "What GroundUp collects, how it is used, who processes it, and how deletion works."],
     };
     const [title, desc] = SEO[activePage] || SEO.home;
     document.title = title;
@@ -5361,6 +5447,8 @@ export default function App() {
       {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} /></div>}
       {activePage === "advisory" && <RetainerPage member={member} setActivePage={navigateTo} />}
       {activePage === "shop" && <ShopPage member={member} onSignIn={() => openSignup("Free")} />}
+      {activePage === "terms" && <TermsPage />}
+      {activePage === "privacy" && <PrivacyPage />}
       {activePage === "officehours" && (member?.role === "admin"
         ? <TeamPage><h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#171106", marginBottom: 8 }}>Office Hours</h2><OfficeHoursAdmin btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>
         : <OfficeHoursPage member={member} onSignIn={() => openSignup("Free")} setActivePage={navigateTo} />)}
@@ -5385,7 +5473,7 @@ export default function App() {
       {member?.role === "admin" && activePage === "admin-status" && <TeamPage><SystemStatusTab /></TeamPage>}
       {activePage === "contact" && <ContactPage setActivePage={navigateTo} advisorLink={advisorLink} />}
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>
-        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#3a2a2a" }}>© {new Date().getFullYear()} GroundUp · Northern Real Estate Urban Ventures</div>
+        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#3a2a2a" }}>© {new Date().getFullYear()} GroundUp · Northern Real Estate Urban Ventures<span style={{ margin: "0 8px" }}>·</span><button onClick={() => navigateTo("terms")} style={{ background: "none", border: "none", color: "#5a4040", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Terms</button><span style={{ margin: "0 6px" }}>·</span><button onClick={() => navigateTo("privacy")} style={{ background: "none", border: "none", color: "#5a4040", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Privacy</button></div>
       </footer>
     </>
   );

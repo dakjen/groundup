@@ -174,7 +174,7 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
             <label style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 16, cursor: "pointer" }}>
               <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 3 }} required />
               <span style={{ color: "#8a7070", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>
-                I agree to the <strong style={{ color: "#c8a8a8" }}>Intellectual Property &amp; Content Use Policy</strong>: all GroundUp materials are the exclusive property of Dr. Gina Merritt, for my personal use only — no copying, sharing, or redistribution.
+I agree to the <a href="/terms" target="_blank" style={{ color: "#b80101", fontWeight: 700 }}>Terms of Use</a> and <a href="/privacy" target="_blank" style={{ color: "#b80101", fontWeight: 700 }}>Privacy Policy</a>, including the content license: all GroundUp materials are the exclusive intellectual property of Dr. Gina Merritt, licensed for my personal use only — no selling, distributing, copying, sharing, reproducing, or creating derivative works, in any form, ever.
               </span>
             </label>
           )}
