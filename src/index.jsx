@@ -1096,7 +1096,7 @@ const plans = [
       "Resource lists & reading guides",
       "Community access — read every channel",
     ],
-    locked: ["Posting in the community", "Timeline templates & Lunch & Learn recordings", "Work sessions & advisory calls"],
+    locked: ["Posting in the community", "Timeline templates & Lunch & Learn recordings", "Deal-specific support — an Elite benefit"],
   },
   {
     name: "Builder",
@@ -1112,7 +1112,7 @@ const plans = [
       "Post, reply & network in the community",
       "View-only: every guide, template & the Developer's Playbook",
     ],
-    locked: ["Product downloads (Premium gets 3/mo)", "The Opportunity Board & office hours", "Advisory calls & DMs"],
+    locked: ["Product downloads (Premium gets 3/mo)", "The Opportunity Board & office hours", "Deal-specific support — an Elite benefit"],
   },
   {
     name: "Premium",
@@ -1133,7 +1133,7 @@ const plans = [
       "Group office hours with Dr. Merritt + priority booking",
       "10% off 1:1 sessions with Dr. Merritt",
     ],
-    locked: ["The Developer's Playbook download (view-only until Elite)", "Advisory calls & direct messages"],
+    locked: ["The Developer's Playbook download (view-only until Elite)", "Deal-specific support — an Elite benefit"],
   },
   {
     name: "Owner",
@@ -1149,6 +1149,7 @@ const plans = [
       "Priority responses in the community",
       "Direct messages to Dr. Merritt & her team — replies within 2 business days, Mon–Fri",
       "Elite Lounge — private channel",
+      "Deal support — bring YOUR deal to your advisory calls",
       "3 one-on-one advisory calls/yr with Dr. Merritt — unlock after 4 months",
       "30% off 1:1 sessions with Dr. Merritt",
       "Unlimited downloads — including the Developer's Playbook",
@@ -1300,6 +1301,27 @@ function PricingPage({ onSignUp }) {
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Memberships</div>
           <p style={{ color: "#8a7070", fontSize: 14, fontFamily: "'DM Sans', sans-serif", maxWidth: 520, margin: "0 auto", lineHeight: 1.7 }}>Constant access to every course — including new ones as we add them — plus community membership benefits at every level.</p>
         </div>
+        {/* Which level should I choose? — routes deal-havers to the top */}
+        <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "28px 32px", marginBottom: 28 }}>
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Which level should I choose?</div>
+          <div style={{ display: "grid", gap: 10 }}>
+            {[
+              ["I want to learn development — the full curriculum, at my pace", "Member", false],
+              ["I want to be in the room — post, network, and connect with other developers", "Builder", false],
+              ["I'm building toward deals — templates, the Opportunity Board, office hours with Dr. Merritt", "Premium", false],
+              ["I have a LIVE DEAL and need Dr. Merritt on it", "Elite — or the Senior Advisor retainer for whole-deal involvement", true],
+            ].map(([want, level, hot]) => (
+              <div key={level} style={{ display: "flex", gap: 14, alignItems: "baseline", flexWrap: "wrap", padding: "10px 14px", background: hot ? "#12060a" : "transparent", border: hot ? "1px solid #b8010140" : "1px solid transparent", borderRadius: 10 }}>
+                <span style={{ color: "#a89090", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, flex: 1, minWidth: 240 }}>{want}</span>
+                <span style={{ color: "#b80101", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 800 }}>→ {level}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ color: "#7a5050", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginTop: 14 }}>
+            {"The honest rule: Member, Builder, and Premium are the industry essentials — the curriculum, the community, the tools. \"How do I calculate a rate of return?\" lives there. \"I can't solve the gap on MY deal\" is deal-specific work on a project that will make you money — that's an Elite benefit, and for hands-on involvement in the whole deal, that's the Senior Advisor retainer (start with a 1:1 Deal Review)."}
+          </div>
+        </div>
+
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, alignItems: "start" }}>
           {plans.map((plan, i) => (
             <PlanCard key={i} plan={plan} seats={plan.limited ? elite : null} onSelect={() => {
@@ -2143,7 +2165,7 @@ function TermsPage() {
       <p style={S.p}>Be professional. No harassment, hate, spam, solicitation of members for competing offerings, or posting content you don't have rights to. Deal information other members share in the community or group sessions is <strong style={S.strong}>confidential to this community</strong> — don't use or disclose it outside GroundUp. We may remove content or suspend accounts that break these rules.</p>
 
       <h2 style={S.h2}>6. Sessions, office hours & DMs</h2>
-      <p style={S.p}>Live sessions and recordings are provided for education. Direct messages (Elite) are for quick questions, answered within 2 business days, Monday–Friday; substantive review belongs in booked sessions. Nothing on GroundUp — including 1:1 sessions and advisory calls — is legal, tax, investment, accounting, or brokerage advice, and no guarantee is made that any deal, financing, or approach will succeed. Engage your own licensed professionals.</p>
+      <p style={S.p}>Live sessions and recordings are provided for education. Direct messages (Elite) are for quick questions, answered within 2 business days, Monday–Friday; substantive review belongs in booked sessions. Member, Builder, and Premium cover the industry essentials — general education, community, and tools; <strong style={S.strong}>deal-specific analysis and support</strong> (your project's numbers, structure, or strategy) is an Elite benefit delivered through advisory calls, and is otherwise available through paid 1:1 sessions and Senior Advisor retainers, where Dr. Merritt can be engaged on the whole deal. The team may redirect deal-specific requests accordingly. Nothing on GroundUp — including 1:1 sessions and advisory calls — is legal, tax, investment, accounting, or brokerage advice, and no guarantee is made that any deal, financing, or approach will succeed. Engage your own licensed professionals.</p>
 
       <h2 style={S.h2}>7. Your account & data</h2>
       <p style={S.p}>Keep your credentials secure; you're responsible for activity on your account. If you cancel, your account data (posts, messages, progress) is permanently deleted 15 days after your membership ends, as described in the Privacy Policy — rejoin before then and nothing is lost. Financial records are retained as required by law.</p>

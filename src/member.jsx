@@ -799,7 +799,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
               <button className="community-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", background: "transparent", border: "1px solid #2a0000", borderRadius: 6, color: "var(--gu-muted)", padding: "6px 10px", cursor: "pointer", fontFamily: font }}><Menu size={15} /></button>
               <div>
                 <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font }}><Mail size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }} /> {isAdmin ? (dmTarget?.name || "Direct Messages") : "Dr. Merritt & Team"}</div>
-                <div style={{ color: "var(--gu-muted2)", fontSize: 12, fontFamily: font }}>{isAdmin ? "Private thread with this member." : "For quick questions — replies within 2 business days (Mon–Fri). Substantive deal review belongs in a booked session or your advisory calls."}</div>
+                <div style={{ color: "var(--gu-muted2)", fontSize: 12, fontFamily: font }}>{isAdmin ? "Private thread with this member." : "Quick questions welcome — replies within 2 business days (Mon–Fri). Deal-specific work (your numbers, your gap, your structure) belongs in your advisory calls, a 1:1 Deal Review, or the Senior Advisor retainer for whole-deal involvement."}</div>
               </div>
             </div>
             <div style={{ flex: 1, overflowY: "auto", padding: "20px 20px 12px" }}>
