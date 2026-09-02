@@ -947,7 +947,7 @@ function AboutPage({ setActivePage }) {
     <div style={{ background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 40, borderRadius: 16, overflow: "hidden" }}>
-          <img src="/DCRE 2026 Conference - Photographed by Solwazi Afi Olusola-348.jpg" alt="Dr. Gina Merritt at the 2026 DCRE Conference" style={{ width: "100%", height: 240, objectFit: "cover", objectPosition: "center 25%", display: "block", borderRadius: 12 }} />
+          <img src="/gina-dcre-2026.jpg" alt="Dr. Gina Merritt at the 2026 DCRE Conference" style={{ width: "100%", height: 240, objectFit: "cover", objectPosition: "center 25%", display: "block", borderRadius: 12 }} />
           <img src="/SISAwards-Award.jpg" alt="Dr. Merritt accepting award on stage" style={{ width: "100%", height: 240, objectFit: "cover", display: "block", borderRadius: 12 }} />
         </div>
         {/* Case studies — her buildings, her stories, told the way the courses tell them */}
