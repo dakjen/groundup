@@ -1,3 +1,4 @@
+import Stripe from 'stripe';
 import { neon } from '@neondatabase/serverless';
 import { requireAdmin } from './_utils.js';
 import { sendBulk, sendEmail, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail, passExpiryEmail } from './_email.js';
@@ -46,7 +47,28 @@ export default async function handler(req, res) {
       const ok = await sendEmail(r.email, mail.subject, mail.html);
       if (ok) { sent++; await sql`UPDATE entitlements SET source = 'stripe_onetime_nudged' WHERE id = ${r.id}`; }
     }
-    return res.json({ success: true, expired: rows.length, sent });
+
+    // Refund pot: release every slice whose refund window has closed — NREUV's
+    // rate applies to the held 20% exactly as it did to the 80% on day one.
+    let released = 0, releasedCents = 0;
+    if (process.env.STRIPE_SECRET_KEY && process.env.NREUV_CONNECT_ACCOUNT) {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+      const due = await sql`SELECT id, charge_id, item, held_cents, rate_pct FROM held_transfers
+        WHERE status = 'held' AND release_after < NOW() LIMIT 100`;
+      for (const h of due) {
+        const amount = Math.floor(h.held_cents * (h.rate_pct / 100));
+        try {
+          if (amount > 0) await stripe.transfers.create({
+            amount, currency: 'usd', destination: process.env.NREUV_CONNECT_ACCOUNT,
+            source_transaction: h.charge_id,
+            description: `NREUV ${h.rate_pct}% of refund-pot release — ${h.item || 'purchase'} (pot ${h.held_cents}¢)`,
+          });
+          await sql`UPDATE held_transfers SET status = 'released', released_at = NOW() WHERE id = ${h.id}`;
+          released++; releasedCents += amount;
+        } catch (e) { console.error('pot release failed', h.charge_id, e.message); }
+      }
+    }
+    return res.json({ success: true, expired: rows.length, sent, pot_released: released, pot_released_cents: releasedCents });
   }
 
   if (!requireAdmin(req, res)) return;

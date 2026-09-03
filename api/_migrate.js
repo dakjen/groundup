@@ -76,6 +76,18 @@ const STATEMENTS = [
     price_cents INTEGER NOT NULL, delivery_url TEXT, cover_url TEXT, value_cents INTEGER,
     position INTEGER DEFAULT 0, active BOOLEAN DEFAULT TRUE, created_at TIMESTAMP DEFAULT NOW())`,
   `ALTER TABLE products ADD COLUMN IF NOT EXISTS is_playbook BOOLEAN DEFAULT FALSE`,
+  `CREATE TABLE IF NOT EXISTS held_transfers (
+    id SERIAL PRIMARY KEY,
+    charge_id TEXT UNIQUE NOT NULL,
+    customer_id TEXT,
+    item TEXT,
+    gross_cents INTEGER NOT NULL,
+    held_cents INTEGER NOT NULL,
+    rate_pct INTEGER NOT NULL DEFAULT 75,
+    release_after TIMESTAMP NOT NULL,
+    status TEXT NOT NULL DEFAULT 'held',
+    released_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW())`,
   `CREATE TABLE IF NOT EXISTS deal_leads (
     id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
     source TEXT NOT NULL, created_at TIMESTAMP DEFAULT NOW())`,

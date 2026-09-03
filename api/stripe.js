@@ -136,7 +136,17 @@ async function ensureLnlCoupon(stripe) {
 
 // Revenue split — NREUV's share is a % of GROSS (the sticker price). The platform
 // absorbs Stripe's processing fee out of its own share.
-async function splitCharge(stripe, chargeId, item) {
+//
+// THE REFUND POT: 20% of every payment stays in the Stripe platform balance
+// until its refund window closes; only the remaining 80% is split immediately.
+// The daily cron releases each pot slice once the window passes (45 days for
+// monthly/one-time, 193 days — 6 months + the 10-day grace — for annual),
+// splitting it at the same rate. A refund-eligible cancellation consumes the
+// slice instead, so the pot funds the refund and NREUV keeps what was sent.
+const POT_PCT = 0.20;
+function potWindowDays(item) { return String(item || '').endsWith('_annual') ? 193 : 45; }
+
+async function splitCharge(stripe, chargeId, item, sql) {
   const dest = process.env.NREUV_CONNECT_ACCOUNT;
   if (!dest || !chargeId) return;
   const rate = splitRate(item);
@@ -146,14 +156,21 @@ async function splitCharge(stripe, chargeId, item) {
     if (!bt || charge.currency !== 'usd') return;
     const gross = charge.amount;      // what the customer paid
     const net = bt.net;               // what actually landed after Stripe's fee
-    // Never transfer more than settled, so the platform can't go negative on a charge
-    const share = Math.min(Math.floor(gross * rate), net);
+    const held = Math.floor(gross * POT_PCT);
+    // Split only the non-pot 80% now; never transfer more than settled
+    const share = Math.min(Math.floor((gross - held) * rate), net);
     if (share > 0) {
       await stripe.transfers.create({
         amount: share, currency: 'usd', destination: dest,
         source_transaction: chargeId,
-        description: `NREUV ${Math.round(rate * 100)}% of gross — ${item || 'purchase'} (gross ${gross}¢, fee ${gross - net}¢)`,
+        description: `NREUV ${Math.round(rate * 100)}% of gross less 20% refund pot — ${item || 'purchase'} (gross ${gross}¢, pot ${held}¢, fee ${gross - net}¢)`,
       });
+    }
+    if (sql && held > 0) {
+      const days = potWindowDays(item);
+      await sql`INSERT INTO held_transfers (charge_id, customer_id, item, gross_cents, held_cents, rate_pct, release_after, status, created_at)
+        VALUES (${chargeId}, ${charge.customer || null}, ${item || null}, ${gross}, ${held}, ${Math.round(rate * 100)}, NOW() + (${days} || ' days')::interval, 'held', NOW())
+        ON CONFLICT (charge_id) DO NOTHING`;
     }
   } catch (e) { console.error('split failed', chargeId, e.message); }
 }
@@ -302,13 +319,13 @@ export default async function handler(req, res) {
         await fulfill(sql, cs);
         if (cs.mode === 'payment' && cs.payment_intent) {
           const pi = await stripe.paymentIntents.retrieve(cs.payment_intent);
-          await splitCharge(stripe, pi.latest_charge, cs.metadata?.item);
+          await splitCharge(stripe, pi.latest_charge, cs.metadata?.item, sql);
         }
       } else if (event.type === 'invoice.payment_succeeded') {
         // First subscription invoice AND every monthly renewal: split + keep tier active
         const inv = event.data.object;
         const invItem = inv.subscription_details?.metadata?.item || inv.lines?.data?.[0]?.metadata?.item;
-        if (inv.charge) await splitCharge(stripe, inv.charge, invItem);
+        if (inv.charge) await splitCharge(stripe, inv.charge, invItem, sql);
         const item = invItem;
         const uid = Number(inv.subscription_details?.metadata?.user_id || inv.lines?.data?.[0]?.metadata?.user_id);
         if (uid && item && CATALOG[item]?.tier) {
@@ -357,18 +374,44 @@ export default async function handler(req, res) {
         // Refund rules — alert-driven (the NREUV split transfer must be reversed
         // alongside any refund, so the team processes these by hand):
         //   Monthly: cancel before the 5th of the month → that month refunded.
-        //   Annual:  cancel at or before the 6-month mark → 6 months (half the
-        //            annual payment) refunded; after 6 months, no refund.
+        //   Annual:  cancel within the first 6 months — plus a 10-day grace
+        //            period into the second half — and 6 months (half the annual
+        //            payment) is refunded; after that, the refund is forfeited.
         const isAnnual = (sub.items?.data?.[0]?.price?.recurring?.interval || sub.plan?.interval) === 'year';
-        const monthsIn = sub.start_date ? (Date.now() / 1000 - sub.start_date) / (30.44 * 86400) : 99;
-        const refundEligible = isAnnual ? monthsIn <= 6 : new Date().getDate() < 5;
+        const daysIn = sub.start_date ? (Date.now() / 1000 - sub.start_date) / 86400 : 9999;
+        const monthsIn = daysIn / 30.44;
+        // 6 months ≈ 183 days, plus the 10-day grace period into the second half
+        const refundEligible = isAnnual ? daysIn <= 193 : new Date().getDate() < 5;
         if (refundEligible) {
           try {
             const [ru] = await sql`SELECT name, email, tier FROM users WHERE stripe_customer_id = ${sub.customer}`;
+            // Find the payment being refunded and its pot slice, then do the math
+            // for the team: refund amount, what the pot covers, what to reverse.
+            let money = '';
+            try {
+              const inv = sub.latest_invoice ? await stripe.invoices.retrieve(sub.latest_invoice) : null;
+              const paid = inv?.amount_paid || 0;
+              const chargeId = inv?.charge || null;
+              const refund = isAnnual ? Math.round(paid / 2) : paid;
+              let held = 0, rate = 75;
+              if (chargeId) {
+                const [row] = await sql`UPDATE held_transfers SET status = 'consumed', released_at = NOW()
+                  WHERE charge_id = ${chargeId} AND status = 'held' RETURNING held_cents, rate_pct`;
+                if (row) { held = row.held_cents; rate = row.rate_pct; }
+              }
+              const reverse = Math.max(0, Math.round((refund - held) * (rate / 100)));
+              const d = (c) => '$' + (c / 100).toFixed(2);
+              money = `<p style="color:#a89080;font-size:14px;line-height:1.8;">The math, done for you:</p>
+               <ul style="color:#a89080;font-size:14px;line-height:1.9;">
+                 <li>They paid <strong style="color:#f0d8d8;">${d(paid)}</strong> — refund them <strong style="color:#f0d8d8;">${d(refund)}</strong>${isAnnual ? ' (half the annual payment)' : ''}.</li>
+                 <li>${held > 0 ? `The refund pot was still holding <strong style="color:#f0d8d8;">${d(held)}</strong> of this payment — it has been kept automatically (it will never transfer to NREUV) and funds that much of the refund.` : 'The pot slice for this payment had already been released, so the pot covers none of it.'}</li>
+                 <li>Reverse <strong style="color:#f0d8d8;">${d(reverse)}</strong> of the NREUV transfer on this payment (their ${rate}% share of the refund beyond what the pot covers).</li>
+               </ul>`;
+            } catch (e) { console.error('refund math failed', e.message); }
             if (ru) await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
               isAnnual ? `REFUND DUE: ${ru.name} cancelled an annual plan inside 6 months` : `REFUND DUE: ${ru.name} cancelled before the 5th`,
               `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Refund to process</h2>
-               <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${ru.name}</strong> (${ru.email}, ${ru.tier}) ${isAnnual ? `cancelled an ANNUAL membership about ${monthsIn.toFixed(1)} months in — at or before the 6-month mark, so HALF the annual payment (6 months) is refundable per the Terms.` : 'cancelled before the 5th of the month, so this month\'s payment is refundable per the Terms.'} In Stripe: process the ${isAnnual ? 'partial (50%) refund on their annual invoice payment' : 'refund on their latest subscription invoice payment'} AND <strong style="color:#f0d8d8;">reverse the matching share of the NREUV transfer</strong> so the split doesn't come out of the platform's pocket.</p>`);
+               <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${ru.name}</strong> (${ru.email}, ${ru.tier}) ${isAnnual ? `cancelled an ANNUAL membership about ${monthsIn.toFixed(1)} months in — inside the 6-month window (10-day grace included), so HALF the annual payment (6 months) is refundable per the Terms.` : 'cancelled before the 5th of the month, so this month\'s payment is refundable per the Terms.'} In Stripe: process the ${isAnnual ? 'partial (50%) refund on their annual invoice payment' : 'refund on their latest subscription invoice payment'} AND <strong style="color:#f0d8d8;">reverse the stated share of the NREUV transfer</strong> so the split doesn't come out of the platform's pocket.</p>${money}`);
           } catch (e) { console.error('refund alert failed', e.message); }
         }
         // Stamp when the membership ended — the 15-day data-retention clock runs from here
@@ -377,7 +420,7 @@ export default async function handler(req, res) {
         const [u] = await sql`SELECT name, email FROM users WHERE stripe_customer_id = ${sub.customer}`;
         if (u) {
           const refundNote = isAnnual
-            ? (refundEligible ? ' Because you cancelled at or before the 6-month mark of your annual plan, 6 months (half your annual payment) will be refunded to your card.' : ' Annual plans cancelled after the 6-month mark aren\'t refunded, so your access continues through the end of the year you paid for.')
+            ? (refundEligible ? ' Because you cancelled within the first six months of your annual plan (the 10-day grace period included), 6 months — half your annual payment — will be refunded to your card.' : ' Annual plans cancelled more than 10 days into their second half aren\'t refunded, so your access continues through the end of the year you paid for.')
             : (refundEligible ? ' Because you cancelled before the 5th, this month\'s payment will be refunded to your card.' : ' Cancellations on or after the 5th aren\'t refunded for the current month, so your access continues through the period you paid for.');
           await sendEmail(u.email, 'Your GroundUp membership is cancelled',
             `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">You're all set, ${u.name.split(' ')[0]}.</h2>

@@ -22,7 +22,7 @@ This document reflects every pricing rule currently implemented in code. Prices 
 
 - Annual versions of all four tiers exist but are **not shown on the website**. They appear only when a visitor arrives through a link carrying `?annual=1` (used in the pass-expiry email).
 - Annual price = 12 × the monthly rate, with a **10% discount (coupon ANNUAL10)** applied visibly at Stripe checkout, every year. Effective first-year totals: Member $539.89 · Builder $1,079.89 · Premium $1,619.89 · Elite $5,399.89.
-- **Annual refund rule:** cancel **at or before the 6-month mark** → half the annual payment (6 months) is refunded. Cancel after 6 months → no refund; access runs to the end of the paid year. (Stated in the Terms and the member billing card; the team gets a REFUND DUE alert with the NREUV transfer-reversal reminder.)
+- **Annual refund rule:** cancel **within the first 6 months — plus a 10-day grace period past the mark** → half the annual payment (6 months) is refunded. More than 10 days into the second half → the refund is forfeited; access runs to the end of the paid year. (Stated in the Terms and the member billing card; the team gets a REFUND DUE alert with the NREUV transfer-reversal reminder.)
 
 ## 3. One-time course passes
 
@@ -99,11 +99,13 @@ This document reflects every pricing rule currently implemented in code. Prices 
 
 - **All sales are final once content has been viewed or downloaded** (courses, passes, digital products).
 - **Monthly plans:** cancel **before the 5th of the month** → that month is refunded. On/after the 5th → no refund; access runs through the paid period.
-- **Annual plans:** cancel **at or before the 6-month mark** → 6 months (half) refunded. After → no refund; access runs to the end of the paid year.
+- **Annual plans:** cancel **within the first 6 months (10-day grace period honored)** → 6 months (half) refunded. More than 10 days into the second half → refund forfeited; access runs to the end of the paid year.
 - Refunds are processed **manually** by the team (never automated) because the NREUV split has already been transferred — every refund requires **reversing the matching NREUV transfer**. The webhook sends a REFUND DUE alert with instructions.
 - **15 days after a membership ends, account data (posts, messages, progress) is permanently deleted**; rejoining before then restores everything. Financial records are retained.
 
-## 12. Revenue splits (NREUV share of GROSS, platform absorbs Stripe fees, capped at net)
+## 12. Revenue splits & the refund pot (NREUV share of GROSS, platform absorbs Stripe fees, capped at net)
+
+**The refund pot:** 20% of every payment stays in the Stripe platform balance until its refund window closes — 45 days for monthly and one-time payments, 193 days (6 months + the 10-day grace) for annual. Only the remaining 80% is split immediately at the rates below. The daily cron releases each pot slice on schedule, split at the same rate. If a refund-eligible cancellation happens first, the slice is consumed to fund the refund instead (it never transfers to NREUV), and the REFUND DUE alert states the exact dollar amounts: what to refund, what the pot covers, and what remains to reverse.
 
 | Product | NREUV share |
 |---|---|
