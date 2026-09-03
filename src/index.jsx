@@ -192,7 +192,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
       const ok = window.confirm(
         `Start your 14-day trial with "${course.title}"?\n\n` +
         `Your trial works like our Single Course Pass: every lesson in ONE course of your choice, free for 14 days. This is your one trial — once you pick, it can't be moved to another course.\n\n` +
-        `Want it all instead? A membership includes all seven courses, the community, and new courses as they drop — from $49.99/mo. A one-time pass gives 60 days of a single course ($100) or everything ($250).\n\n` +
+        `Want it all instead? A membership includes all seven courses, the community, and new courses as they drop — from $49.99/mo. A one-time pass gives 60 days of a single course ($100) or 30 days of everything ($250).\n\n` +
         `Press OK to start your trial with this course.`
       );
       if (!ok) return;
@@ -1062,7 +1062,7 @@ function AboutPage({ setActivePage }) {
 
 // ─── PRICING PAGE ────────────────────────────────────────────────────────────
 
-// One-time course passes: pay once, 60 days of access. No membership benefits.
+// One-time course passes: single course 60 days, all-access 30 days. No membership benefits.
 const passPlans = [
   {
     name: "Single Course Pass",
@@ -1082,12 +1082,12 @@ const passPlans = [
     name: "All-Access Pass",
     price: "$250",
     period: "one-time",
-    description: "60 days of access to the entire GroundUp curriculum — every course at once.",
+    description: "30 days of access to the entire GroundUp curriculum — every course at once.",
     accent: "#b80101",
     cta: "Get All-Access",
     features: [
       "Every course in the library",
-      "60 days of full access",
+      "30 days of full access",
       "Every lesson, case study & worksheet",
     ],
     locked: ["Community access", "New courses as they're added"],
@@ -1279,9 +1279,17 @@ function PlanCard({ plan, onSelect, seats }) {
   );
 }
 
+// Annual billing exists but is deliberately NOT promoted on the site — it only
+// appears when someone arrives via a link carrying ?annual=1 (e.g. the
+// pass-expiry email, where annual + the 15% alum coupon is the offer).
+const ANNUAL_PRICES = { Basic: "$539.89", Builder: "$1,079.89", Premium: "$1,619.89", Elite: "$5,399.89" };
+
 function PricingPage({ onSignUp }) {
   // Live Elite seat count — Elite is sold as a limited cohort
   const [elite, setElite] = useState(null);
+  const [annual, setAnnual] = useState(() => { try { return new URLSearchParams(window.location.search).get("annual") === "1"; } catch { return false; } });
+  // AuthModal reads this so a signed-out annual pick checks out annually after signup
+  useEffect(() => { try { localStorage.setItem("guAnnual", annual ? "1" : "0"); } catch {} }, [annual]);
   useEffect(() => {
     fetch("/api/stripe").then(r => r.ok ? r.json() : null).then(d => d?.elite && setElite(d.elite)).catch(() => {});
   }, []);
@@ -1305,7 +1313,7 @@ function PricingPage({ onSignUp }) {
         <div style={{ marginBottom: 64 }}>
           <div style={{ textAlign: "center", marginBottom: 28 }}>
             <div style={{ fontSize: 10, color: "#e0c4c4", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>One-Time Course Passes</div>
-            <p style={{ color: "#8a7070", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Pay once, learn for 60 days. No subscription, no membership.</p>
+            <p style={{ color: "#8a7070", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Pay once — 60 days of one course, or 30 days of everything. No subscription, no membership.</p>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, alignItems: "start", maxWidth: 720, margin: "0 auto" }}>
             {passPlans.map((plan, i) => <PlanCard key={i} plan={plan} onSelect={() => startCheckout(plan.name.includes("Single") ? "pass_single" : "pass_all")} />)}
@@ -1345,16 +1353,26 @@ function PricingPage({ onSignUp }) {
           </div>
         </div>
 
+        {annual && (
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 14, marginBottom: 22, background: "#12060a", border: "1px solid #b8010140", borderRadius: 12, padding: "14px 22px", flexWrap: "wrap" }}>
+            <span style={{ color: "#c8a8a8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>Annual billing unlocked — pay for the year at about 10% off the monthly rate.</span>
+            <button onClick={() => setAnnual(false)} style={{ background: "transparent", color: "#8a7070", border: "1px solid #2a0000", borderRadius: 8, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>Switch to monthly</button>
+          </div>
+        )}
+
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(228px, 1fr))", gap: 14, alignItems: "start" }}>
-          {plans.filter(p => p.tier !== "Partner").map((plan, i) => (
+          {plans.filter(p => p.tier !== "Partner").map((raw, i) => {
+            const plan = annual && ANNUAL_PRICES[raw.tier] ? { ...raw, price: ANNUAL_PRICES[raw.tier], period: "/yr" } : raw;
+            return (
             <PlanCard key={i} plan={plan} seats={plan.limited ? elite : null} onSelect={() => {
               if (plan.tier === "Advisor") { window.location.href = "/contact"; return; }
               // Elite is capped — send full-cohort visitors to the waitlist, not to checkout
               if (plan.limited && elite?.full) { window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("Elite waitlist — notify me when a seat opens"); return; }
-              if (getMember()) { startCheckout("sub_" + plan.tier, { gift: localStorage.getItem("guGift") || undefined, promo: localStorage.getItem("guPromo") || undefined }); return; }
+              if (getMember()) { startCheckout("sub_" + plan.tier + (annual && ANNUAL_PRICES[plan.tier] ? "_annual" : ""), { gift: localStorage.getItem("guGift") || undefined, promo: localStorage.getItem("guPromo") || undefined }); return; }
               onSignUp && onSignUp(plan.tier);
             }} />
-          ))}
+            );
+          })}
         </div>
 
         {/* Partner: organizations & institutions — one long button below the line */}
@@ -2195,7 +2213,7 @@ function TermsPage() {
       <p style={S.p}>Some benefits unlock with tenure: advisory calls and networking events open after 4 months of continuous membership. Premium includes 3 product downloads per billing month (unused downloads don't roll over); the Developer's Playbook is view-only below Elite. Elite seats are limited and offered while available.</p>
 
       <h2 style={S.h2}>4. Refunds</h2>
-      <p style={S.p}><strong style={S.strong}>All sales are final once content has been viewed or downloaded.</strong> For subscriptions: if you cancel <strong style={S.strong}>before the 5th day of the month</strong>, your payment for that month is refunded; cancellations on or after the 5th are not refunded for the current month, and your access continues through the period you paid for. Where a statutory cooling-off or refund right applies in your jurisdiction, that right is honored to the extent required by law.</p>
+      <p style={S.p}><strong style={S.strong}>All sales are final once content has been viewed or downloaded.</strong> For subscriptions: if you cancel <strong style={S.strong}>before the 5th day of the month</strong>, your payment for that month is refunded; cancellations on or after the 5th are not refunded for the current month, and your access continues through the period you paid for. For <strong style={S.strong}>annual subscriptions</strong> (billed once for the year): cancel at or before the 6-month mark and half of your annual payment (6 months) is refunded; cancellations after the 6-month mark are not refunded, and your access continues through the end of the paid year. Where a statutory cooling-off or refund right applies in your jurisdiction, that right is honored to the extent required by law.</p>
 
       <h2 style={S.h2}>5. Community & conduct</h2>
       <p style={S.p}>Be professional. No harassment, hate, spam, solicitation of members for competing offerings, or posting content you don't have rights to. Deal information other members share in the community or group sessions is <strong style={S.strong}>confidential to this community</strong> — don't use or disclose it outside GroundUp. We may remove content or suspend accounts that break these rules.</p>
@@ -2599,7 +2617,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
           {[
             { name: "One Course", price: "$100", period: "one-time", desc: "60 days inside one course of your choice." },
-            { name: "All-Access Pass", price: "$250", period: "one-time", desc: "60 days of the entire curriculum." },
+            { name: "All-Access Pass", price: "$250", period: "one-time", desc: "30 days of the entire curriculum." },
             { name: "Member", price: "$49.99", period: "/mo", desc: "Constant access + support — every course, every new course, and the community." },
             { name: "Premium", price: "$149.99", period: "/mo", desc: "Engage the community, deal tools, the Opportunity Board, a free work session.", popular: true },
             { name: "Elite", price: "$499.99", period: "/mo", desc: "Direct line to Dr. Merritt — advisory calls, DMs, and the partner network." },

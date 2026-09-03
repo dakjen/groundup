@@ -11,8 +11,13 @@ const CATALOG = {
   sub_Builder: { mode: 'subscription', name: 'GroundUp Builder',           amount: 9999,  tier: 'Builder' },
   sub_Premium: { mode: 'subscription', name: 'GroundUp Premium',          amount: 14999, tier: 'Premium' },
   sub_Elite:   { mode: 'subscription', name: 'GroundUp Elite',             amount: 49999, tier: 'Elite' },
+  // Annual billing — one payment for the year at roughly 10% off the monthly rate
+  sub_Basic_annual:   { mode: 'subscription', name: 'GroundUp Member — Annual',  amount: 59988,  tier: 'Basic',   annual: true },
+  sub_Builder_annual: { mode: 'subscription', name: 'GroundUp Builder — Annual', amount: 119988, tier: 'Builder', annual: true },
+  sub_Premium_annual: { mode: 'subscription', name: 'GroundUp Premium — Annual', amount: 179988, tier: 'Premium', annual: true },
+  sub_Elite_annual:   { mode: 'subscription', name: 'GroundUp Elite — Annual',   amount: 599988, tier: 'Elite',   annual: true },
   pass_single: { mode: 'payment',      name: 'Single Course Pass (60 days)', amount: 10000 },
-  pass_all:    { mode: 'payment',      name: 'All-Access Pass (60 days)',  amount: 25000 },
+  pass_all:    { mode: 'payment',      name: 'All-Access Pass (30 days)',  amount: 25000 },
   lnl:         { mode: 'payment',      name: 'Lunch & Learn — 6 months',   amount: 3999 },
   session_deal:      { mode: 'payment', name: '1:1 Deal Review (45 min)',        amount: 50000 },
   session_strategy:  { mode: 'payment', name: '1:1 Strategy Session (45 min)',   amount: 42500 },
@@ -207,7 +212,7 @@ async function fulfill(sql, session) {
     }
     // The cap is checked before checkout, but two people can clear that check at
     // the same time. They've paid, so honor the seat — and tell the team it happened.
-    if (item === 'sub_Elite') {
+    if (item === 'sub_Elite' || item === 'sub_Elite_annual') {
       const seats = await eliteSeats(sql);
       if (seats.taken > seats.cap) {
         const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
@@ -238,7 +243,7 @@ async function fulfill(sql, session) {
     const courseId = /^mc\d+$/.test(md.course_id || '') ? md.course_id : 'all';
     await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, ${courseId}, 'stripe_onetime', NOW() + interval '60 days', NOW())`;
   } else if (item === 'pass_all') {
-    await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, 'all', 'stripe_onetime', NOW() + interval '60 days', NOW())`;
+    await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, 'all', 'stripe_onetime', NOW() + interval '30 days', NOW())`;
   } else if (item === 'lnl') {
     await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, 'lunchlearn', 'stripe_onetime', NOW() + interval '6 months', NOW())`;
     await sql`UPDATE users SET lnl_discount_until = NOW() + interval '2 months' WHERE id = ${userId} AND (lnl_discount_until IS NULL OR lnl_discount_until < NOW() + interval '2 months')`;
@@ -349,17 +354,21 @@ export default async function handler(req, res) {
         }
       } else if (event.type === 'customer.subscription.deleted') {
         const sub = event.data.object;
-        // Refund rule: cancel before the 5th of the month → that month's payment
-        // is refunded. Refunds are processed by the team (the NREUV split transfer
-        // must be reversed alongside), so alert rather than auto-refund.
-        const refundEligible = new Date().getDate() < 5;
+        // Refund rules — alert-driven (the NREUV split transfer must be reversed
+        // alongside any refund, so the team processes these by hand):
+        //   Monthly: cancel before the 5th of the month → that month refunded.
+        //   Annual:  cancel at or before the 6-month mark → 6 months (half the
+        //            annual payment) refunded; after 6 months, no refund.
+        const isAnnual = (sub.items?.data?.[0]?.price?.recurring?.interval || sub.plan?.interval) === 'year';
+        const monthsIn = sub.start_date ? (Date.now() / 1000 - sub.start_date) / (30.44 * 86400) : 99;
+        const refundEligible = isAnnual ? monthsIn <= 6 : new Date().getDate() < 5;
         if (refundEligible) {
           try {
             const [ru] = await sql`SELECT name, email, tier FROM users WHERE stripe_customer_id = ${sub.customer}`;
             if (ru) await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
-              `REFUND DUE: ${ru.name} cancelled before the 5th`,
+              isAnnual ? `REFUND DUE: ${ru.name} cancelled an annual plan inside 6 months` : `REFUND DUE: ${ru.name} cancelled before the 5th`,
               `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Refund to process</h2>
-               <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${ru.name}</strong> (${ru.email}, ${ru.tier}) cancelled before the 5th of the month, so this month's payment is refundable per the Terms. In Stripe: refund their latest subscription invoice payment AND <strong style="color:#f0d8d8;">reverse the matching NREUV transfer</strong> so the split doesn't come out of the platform's pocket.</p>`);
+               <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${ru.name}</strong> (${ru.email}, ${ru.tier}) ${isAnnual ? `cancelled an ANNUAL membership about ${monthsIn.toFixed(1)} months in — at or before the 6-month mark, so HALF the annual payment (6 months) is refundable per the Terms.` : 'cancelled before the 5th of the month, so this month\'s payment is refundable per the Terms.'} In Stripe: process the ${isAnnual ? 'partial (50%) refund on their annual invoice payment' : 'refund on their latest subscription invoice payment'} AND <strong style="color:#f0d8d8;">reverse the matching share of the NREUV transfer</strong> so the split doesn't come out of the platform's pocket.</p>`);
           } catch (e) { console.error('refund alert failed', e.message); }
         }
         // Stamp when the membership ended — the 15-day data-retention clock runs from here
@@ -367,7 +376,9 @@ export default async function handler(req, res) {
         await sql`UPDATE retainers SET status = 'ended' WHERE user_id IN (SELECT id FROM users WHERE stripe_customer_id = ${sub.customer}) AND status IN ('active','paused')`;
         const [u] = await sql`SELECT name, email FROM users WHERE stripe_customer_id = ${sub.customer}`;
         if (u) {
-          const refundNote = new Date().getDate() < 5 ? ' Because you cancelled before the 5th, this month's payment will be refunded to your card.' : ' Cancellations on or after the 5th aren't refunded for the current month, so your access continues through the period you paid for.';
+          const refundNote = isAnnual
+            ? (refundEligible ? ' Because you cancelled at or before the 6-month mark of your annual plan, 6 months (half your annual payment) will be refunded to your card.' : ' Annual plans cancelled after the 6-month mark aren\'t refunded, so your access continues through the end of the year you paid for.')
+            : (refundEligible ? ' Because you cancelled before the 5th, this month\'s payment will be refunded to your card.' : ' Cancellations on or after the 5th aren\'t refunded for the current month, so your access continues through the period you paid for.');
           await sendEmail(u.email, 'Your GroundUp membership is cancelled',
             `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">You're all set, ${u.name.split(' ')[0]}.</h2>
              <p style="color:#a89080;font-size:14px;line-height:1.8;">Your membership is cancelled and you won't be charged again.${refundNote} <strong style="color:#f0d8d8;">Your account data — community posts, messages, and progress — will be permanently removed after 15 days.</strong> Rejoin before then and everything picks up right where you left it.</p>
@@ -443,7 +454,7 @@ export default async function handler(req, res) {
 
     // Elite is capped. Check before taking money — an over-cap buyer would otherwise
     // pay $499.99 for a seat we've publicly said doesn't exist.
-    if (item === 'sub_Elite' && user.tier !== 'Elite') {
+    if ((item === 'sub_Elite' || item === 'sub_Elite_annual') && user.tier !== 'Elite') {
       const seats = await eliteSeats(sql);
       if (seats.full) {
         return res.status(409).json({
@@ -473,7 +484,7 @@ export default async function handler(req, res) {
           currency: 'usd',
           unit_amount: unitAmount,
           product_data: { name: productName },
-          ...(product.mode === 'subscription' ? { recurring: { interval: 'month' } } : {}),
+          ...(product.mode === 'subscription' ? { recurring: { interval: product.annual ? 'year' : 'month' } } : {}),
         },
       }],
       metadata: { user_id: String(user.id), item, course_id: body.course_id || '' },
@@ -520,6 +531,29 @@ export default async function handler(req, res) {
         params.discounts = [{ coupon: await ensureStretchCoupon(stripe, pct) }];
         discounted = true;
       }
+    }
+    // Pass-alum perk: a course pass that ended within the last 7 days earns 15%
+    // off when they commit to a full year of membership — applied automatically.
+    if (!discounted && product.mode === 'subscription' && product.tier && product.annual) {
+      const [pass] = await sql`SELECT id FROM entitlements WHERE user_id = ${user.id}
+        AND source IN ('stripe_onetime', 'stripe_onetime_nudged') AND course_id != 'lunchlearn'
+        AND expires_at IS NOT NULL AND expires_at < NOW() AND expires_at > NOW() - interval '7 days' LIMIT 1`;
+      if (pass) {
+        let coupon;
+        try { coupon = (await stripe.coupons.retrieve('PASSJOIN15')).id; }
+        catch { coupon = (await stripe.coupons.create({ id: 'PASSJOIN15', percent_off: 15, duration: 'once', name: 'Course pass alum — 15% off your first year' })).id; }
+        params.discounts = [{ coupon }];
+        discounted = true;
+      }
+    }
+    // Annual billing: 10% off, shown as a visible discount on the checkout page.
+    // The pass-alum 15% (above) supersedes it — they never stack.
+    if (!discounted && product.mode === 'subscription' && product.annual) {
+      let coupon;
+      try { coupon = (await stripe.coupons.retrieve('ANNUAL10')).id; }
+      catch { coupon = (await stripe.coupons.create({ id: 'ANNUAL10', percent_off: 10, duration: 'forever', name: 'Annual billing — 10% off' })).id; }
+      params.discounts = [{ coupon }];
+      discounted = true;
     }
     // Lunch & Learn perk: 25% off the first month of any membership, automatically
     if (!discounted && product.mode === 'subscription' && user.lnl_discount_until && new Date(user.lnl_discount_until) > new Date()) {

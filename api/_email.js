@@ -213,6 +213,27 @@ export function dealSupportNudgeEmail() {
   };
 }
 
+// Sent by the daily cron when a course pass runs out: 7 days to extend, and
+// 15% off if they commit to a full year of membership.
+export function passExpiryEmail(name, single) {
+  const first = (name || 'there').split(' ')[0];
+  return {
+    subject: `${first}, your course pass has ended — you have 7 days to extend`,
+    html: `
+      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">Your ${single ? 'course pass' : 'All-Access Pass'} just wrapped, ${first}.</h2>
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">We hope the material moved you forward. For the next <strong style="color:#f0d8d8;">7 days</strong>, here are your ways to keep going:</p>
+      <div style="margin:18px 0;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
+        <p style="color:#f0d8d8;font-size:14px;font-weight:bold;margin:0 0 6px;">Extend your access</p>
+        <p style="color:#a89080;font-size:13px;line-height:1.7;margin:0;">Grab another pass — 60 days of one course (\$100) or 30 days of everything (\$250). <a href="https://community.drginamerritt.net/pricing" style="color:#b80101;font-weight:bold;">Get a pass →</a></p>
+      </div>
+      <div style="margin:18px 0;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
+        <p style="color:#f0d8d8;font-size:14px;font-weight:bold;margin:0 0 6px;">Or go all in: an annual membership at 15% off</p>
+        <p style="color:#a89080;font-size:13px;line-height:1.7;margin:0;">Membership means every course, always — plus the community, from \$49.99/mo. Pay for the year within your 7-day window and <strong style="color:#f0d8d8;">15% comes off automatically at checkout</strong> — instead of the usual 10% annual discount. <a href="https://community.drginamerritt.net/pricing?annual=1" style="color:#b80101;font-weight:bold;">Become a member →</a></p>
+      </div>
+      ${dealSupportBlock()}`,
+  };
+}
+
 export function broadcastEmail(subject, message) {
   const paragraphs = message.split(/\\n{2,}/).map(p =>
     `<p style="color:#a89080;font-size:14px;line-height:1.8;">${p.replace(/\\n/g, '<br/>')}</p>`).join('');

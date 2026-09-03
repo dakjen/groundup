@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { requireAdmin } from './_utils.js';
-import { sendBulk, sendEmail, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail } from './_email.js';
+import { sendBulk, sendEmail, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail, passExpiryEmail } from './_email.js';
 
 // Team email tools: send a custom email or an event announcement to a segment.
 // Audiences: all | Free | Basic | Premium | Elite | lnl (active Lunch & Learn access)
@@ -29,6 +29,26 @@ async function recipients(sql, audience) {
 }
 
 export default async function handler(req, res) {
+  // Vercel daily cron: nudge anyone whose course pass just expired — 7 days to
+  // extend, or 15% off an annual membership. Authed by CRON_SECRET, which
+  // Vercel attaches to cron requests automatically.
+  if (req.method === 'GET' && process.env.CRON_SECRET && req.headers.authorization === `Bearer ${process.env.CRON_SECRET}`) {
+    const sql = neon(process.env.DATABASE_URL);
+    const rows = await sql`
+      SELECT e.id, e.course_id, u.name, u.email FROM entitlements e
+      JOIN users u ON u.id = e.user_id
+      WHERE e.source = 'stripe_onetime' AND e.course_id != 'lunchlearn'
+        AND e.expires_at < NOW() AND e.expires_at > NOW() - interval '3 days'
+        AND u.membership_status = 'active' AND u.tier = 'Free'`;
+    let sent = 0;
+    for (const r of rows) {
+      const mail = passExpiryEmail(r.name, r.course_id !== 'all');
+      const ok = await sendEmail(r.email, mail.subject, mail.html);
+      if (ok) { sent++; await sql`UPDATE entitlements SET source = 'stripe_onetime_nudged' WHERE id = ${r.id}`; }
+    }
+    return res.json({ success: true, expired: rows.length, sent });
+  }
+
   if (!requireAdmin(req, res)) return;
   const sql = neon(process.env.DATABASE_URL);
 
