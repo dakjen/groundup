@@ -144,6 +144,7 @@ async function ensureLnlCoupon(stripe) {
 // splitting it at the same rate. A refund-eligible cancellation consumes the
 // slice instead, so the pot funds the refund and NREUV keeps what was sent.
 const POT_PCT = 0.20;
+const POT_CAP_CENTS = 100000; // the pot never holds more than $1,000 in total
 function potWindowDays(item) { return String(item || '').endsWith('_annual') ? 193 : 45; }
 
 async function splitCharge(stripe, chargeId, item, sql) {
@@ -156,7 +157,15 @@ async function splitCharge(stripe, chargeId, item, sql) {
     if (!bt || charge.currency !== 'usd') return;
     const gross = charge.amount;      // what the customer paid
     const net = bt.net;               // what actually landed after Stripe's fee
-    const held = Math.floor(gross * POT_PCT);
+    // Hold 20% — but never past the $1,000 pot cap. When the pot is full, new
+    // payments split 100% immediately; releases/consumptions free up room again.
+    let held = Math.floor(gross * POT_PCT);
+    if (sql && held > 0) {
+      try {
+        const [pot] = await sql`SELECT COALESCE(SUM(held_cents), 0)::int AS total FROM held_transfers WHERE status = 'held'`;
+        held = Math.max(0, Math.min(held, POT_CAP_CENTS - (pot?.total || 0)));
+      } catch { held = 0; }
+    } else if (!sql) held = 0;
     // Split only the non-pot 80% now; never transfer more than settled
     const share = Math.min(Math.floor((gross - held) * rate), net);
     if (share > 0) {

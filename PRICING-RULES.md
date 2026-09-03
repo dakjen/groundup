@@ -105,7 +105,7 @@ This document reflects every pricing rule currently implemented in code. Prices 
 
 ## 12. Revenue splits & the refund pot (NREUV share of GROSS, platform absorbs Stripe fees, capped at net)
 
-**The refund pot:** 20% of every payment stays in the Stripe platform balance until its refund window closes — 45 days for monthly and one-time payments, 193 days (6 months + the 10-day grace) for annual. Only the remaining 80% is split immediately at the rates below. The daily cron releases each pot slice on schedule, split at the same rate. If a refund-eligible cancellation happens first, the slice is consumed to fund the refund instead (it never transfers to NREUV), and the REFUND DUE alert states the exact dollar amounts: what to refund, what the pot covers, and what remains to reverse.
+**The refund pot:** 20% of every payment stays in the Stripe platform balance until its refund window closes — **capped at $1,000 total**; once the pot is full, new payments split 100% immediately, and room opens as slices release or fund refunds. Windows: 45 days for monthly and one-time payments, 193 days (6 months + the 10-day grace) for annual. Only the remaining 80% is split immediately at the rates below. The daily cron releases each pot slice on schedule, split at the same rate. If a refund-eligible cancellation happens first, the slice is consumed to fund the refund instead (it never transfers to NREUV), and the REFUND DUE alert states the exact dollar amounts: what to refund, what the pot covers, and what remains to reverse.
 
 | Product | NREUV share |
 |---|---|
