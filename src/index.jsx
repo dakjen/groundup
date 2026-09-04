@@ -1162,7 +1162,7 @@ const plans = [
     popular: false,
     cta: "Join Elite",
     features: [
-      "Everything in Developer",
+      "Everything in Premium",
       "Priority responses in the community",
       "Direct messages to Dr. Merritt & her team — replies within 2 business days, Mon–Fri",
       "Elite Lounge — private channel",
@@ -1180,7 +1180,7 @@ const plans = [
   {
     name: "Senior Advisor",
     tier: "Advisor",
-    price: "From $3,025",
+    price: "$3,025+",
     period: "/mo",
     description: "Dr. Merritt embedded on your project — for developers with active deals who need her in their corner every month.",
     accent: "#e0c4c4",
