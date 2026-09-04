@@ -1376,13 +1376,14 @@ function PricingPage({ onSignUp }) {
             ].map(([want, level, lead]) => (
               <div key={level} style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap", padding: "12px 14px", background: lead ? "#12060a" : "transparent", border: lead ? "1px solid #b8010140" : "1px solid transparent", borderRadius: 10 }}>
                 <span style={{ color: "#a89090", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, flex: 1, minWidth: 240 }}>{want}</span>
-                {lead ? (
+                {lead ? (<>
+                  <span style={{ color: "#b80101", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 800 }}>→ Elite</span>
                   <button onClick={() => {
                     const token = getMemberToken();
                     if (token) fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ action: "deal_lead", source: lead }) }).catch(() => {});
                     window.location.href = "/contact";
                   }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Send Dr. Merritt your deal →</button>
-                ) : (
+                </>) : (
                   <span style={{ color: "#b80101", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 800 }}>→ {level}</span>
                 )}
               </div>
