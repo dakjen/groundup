@@ -1239,12 +1239,13 @@ const plans = [
     tier: "Partner",
     price: "Contact Us",
     period: "",
-    description: "For organizations and institutions — cohort subscriptions at group discounts, custom scope and pricing.",
+    description: "For organizations and institutions — sponsor your cohort's first year at a group discount; custom scope and pricing.",
     accent: "#e0c4c4",
     popular: false,
     cta: "Talk to Us",
     features: [
-      "Cohort subscriptions — group discounts for your whole team",
+      "Sponsor your cohort's first year at a group discount",
+      "Developers continue as individual members after the sponsored year",
       "Custom curriculum scope",
       "Dedicated onboarding",
       "Built for agencies, CDFIs & nonprofit developer programs",
@@ -1419,7 +1420,7 @@ function PricingPage({ onSignUp }) {
           onMouseEnter={e => { e.currentTarget.style.borderColor = "#e0c4c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e0c4c440"; }}>
           <div>
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#e0c4c4", marginBottom: 2 }}>Partner</div>
-            <div style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>For organizations & institutions — cohort subscriptions at group discounts, custom curriculum scope, dedicated onboarding. Built for agencies, CDFIs & nonprofit developer programs. Reach out through the contact page or groundup@drginamerritt.net.</div>
+            <div style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>For organizations & institutions — sponsor a year of GroundUp for your cohort of developers at a group discount; after the sponsored year, they continue as individual members. Custom curriculum scope, dedicated onboarding. Built for agencies, CDFIs & nonprofit developer programs.</div>
           </div>
           <span style={{ color: "#e0c4c4", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, whiteSpace: "nowrap" }}>Talk to Us →</span>
         </button>
