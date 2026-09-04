@@ -156,6 +156,41 @@ function LessonChart({ chart, color }) {
   return null;
 }
 
+// Content protection for lessons: selection/copy/right-click/print blocked,
+// and the signed-in member's email tiled faintly across the content so a
+// screenshot identifies the account it came from. (True screenshot BLOCKING
+// is not possible on the web — this is deterrence plus traceability.)
+function ProtectedContent({ email, children }) {
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.textContent = "@media print { .gu-protected { display: none !important; } body::after { content: 'GroundUp course content is not printable.'; color: #000; font-size: 18px; } }";
+    document.head.appendChild(style);
+    let reported = false;
+    const report = (kind) => {
+      if (reported) return; reported = true;
+      const token = getMemberToken();
+      if (token) fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ action: "capture_event", kind, where: window.location.pathname }) }).catch(() => {});
+    };
+    const blockKeys = (e) => {
+      const k = (e.key || "").toLowerCase();
+      if ((e.metaKey || e.ctrlKey) && ["c", "x", "s", "p"].includes(k)) { e.preventDefault(); report(k === "p" ? "print_attempt" : "copy_attempt"); }
+    };
+    const printScreen = (e) => { if (e.key === "PrintScreen") report("printscreen_key"); };
+    document.addEventListener("keydown", blockKeys);
+    document.addEventListener("keyup", printScreen);
+    return () => { document.head.removeChild(style); document.removeEventListener("keydown", blockKeys); document.removeEventListener("keyup", printScreen); };
+  }, []);
+  const marks = [];
+  if (email) for (let i = 0; i < 12; i++) marks.push(<div key={i} style={{ position: "absolute", top: `${Math.floor(i / 3) * 26 + 6}%`, left: `${(i % 3) * 34 + 2}%`, transform: "rotate(-24deg)", color: "rgba(200,160,160,0.055)", fontSize: 15, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, whiteSpace: "nowrap", pointerEvents: "none", userSelect: "none", zIndex: 3 }}>{email} · GroundUp</div>);
+  return (
+    <div className="gu-protected" onContextMenu={(e) => e.preventDefault()} onCopy={(e) => e.preventDefault()} onCut={(e) => e.preventDefault()} onDragStart={(e) => e.preventDefault()}
+      style={{ position: "relative", userSelect: "none", WebkitUserSelect: "none" }}>
+      {marks}
+      {children}
+    </div>
+  );
+}
+
 function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
   const pageBg = "#000";
   // Paid members (Basic+) get every lesson. Free members get ONE lesson total across
@@ -264,6 +299,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
     const lessonVideo = lessonVideos[pdfKey];
     return (
       <div style={{ background: pageBg, minHeight: "100vh", padding: "100px clamp(20px,5vw,60px) 80px" }}>
+        <ProtectedContent email={member?.email}>
         <div style={{ maxWidth: 760, margin: "0 auto" }}>
           <button onClick={() => { setActiveLesson(null); setPlayingVideo(false); }} style={{ background: "transparent", color: "#6a6b69", border: "1px solid #1a0000", borderRadius: 8, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", marginBottom: 40 }}>← Back to lessons</button>
           <div style={{ fontSize: 10, color: course.stageColor, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>{course.stage} · Lesson {activeLesson + 1} of {course.lessons.length}</div>
@@ -403,6 +439,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
             </div>
           )}
         </div>
+        </ProtectedContent>
       </div>
     );
   }
@@ -5293,9 +5330,10 @@ export default function App() {
   const [eventInvited, setEventInvited] = useState(() => sessionStorage.getItem("eventInvited") === "true");
   const [eventInviteBanner, setEventInviteBanner] = useState(null);
 
-  // Theme: members share the public dark theme; ONLY team gets the light one
+  // Theme: the light palette is for the ADMIN PAGES only — on member-facing
+  // pages, admins see the same dark theme members do (so previews are true).
   useEffect(() => {
-    const light = member?.role === "admin";
+    const light = member?.role === "admin" && String(activePage || "").startsWith("admin-");
     const V = light ? {
       "--gu-bg": "#f6f4f0", "--gu-panel": "#efece6", "--gu-card": "#ffffff", "--gu-card2": "#faf8f5",
       "--gu-card3": "#f2efe9", "--gu-red-tint": "#fdf1f1", "--gu-border": "#dcdcdc", "--gu-border2": "#e6e6e6",
@@ -5308,7 +5346,7 @@ export default function App() {
       "--gu-muted2": "#7a5050", "--gu-faint": "#5a4040",
     };
     for (const [k, v] of Object.entries(V)) document.documentElement.style.setProperty(k, v);
-  }, [member?.role]);
+  }, [member?.role, activePage]);
 
   // Re-validate the saved member session against the server on load
   useEffect(() => {

@@ -260,6 +260,30 @@ export default async function handler(req, res) {
       return res.json({ success: true });
     }
 
+    // Content-capture signals from lesson pages (PrintScreen key, blocked
+    // copy/print attempts). Logged per user; the team is emailed at most once
+    // per user per day. NOTE: macOS/iOS screenshots are invisible to web pages —
+    // this catches what a browser CAN see.
+    if (action === 'capture_event') {
+      const session = getSession(req);
+      if (!session || !session.uid) return res.json({ success: true });
+      const kind = String(req.body.kind || 'unknown').slice(0, 40);
+      const where = String(req.body.where || '').slice(0, 120);
+      const [recent] = await sql`SELECT id FROM capture_log WHERE user_id = ${session.uid} AND created_at > NOW() - interval '1 day' LIMIT 1`;
+      await sql`INSERT INTO capture_log (user_id, kind, place, created_at) VALUES (${session.uid}, ${kind}, ${where}, NOW())`;
+      if (!recent) {
+        try {
+          const [u] = await sql`SELECT name, email, tier FROM users WHERE id = ${session.uid}`;
+          if (u) await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
+            `CONTENT CAPTURE SIGNAL: ${u.name} (${kind})`,
+            `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Possible content capture</h2>
+             <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${u.name}</strong> (${u.email}, ${u.tier}) triggered a capture signal — <strong style="color:#f0d8d8;">${kind}</strong>${where ? ` on ${where}` : ''}. Their lesson view carries their email watermarked across the content, so any leaked screenshot traces back to this account. Further signals from them today are logged silently (capture_log table).</p>
+             <p style="color:#7a5050;font-size:12px;line-height:1.7;">Caveat: browsers can only see PrintScreen keys and blocked copy/print attempts — macOS and phone screenshots are invisible to any website, which is why the watermark is the real protection.</p>`);
+        } catch (e) { console.error('capture alert failed', e.message); }
+      }
+      return res.json({ success: true });
+    }
+
     // A deal-specific ask is a qualified lead — log who raised their hand, where
     if (action === 'deal_lead') {
       const session = getSession(req);
