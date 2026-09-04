@@ -185,12 +185,24 @@ export default async function handler(req, res) {
       });
     }
 
-    // Lesson attachments (PDFs/videos per lesson) — readable by any signed-in member
+    // Lesson attachments (PDFs/videos per lesson). Videos are part of the lesson
+    // for anyone with course access; PDF downloads (worksheets, case-study docs)
+    // are a MEMBERSHIP benefit — pass and trial holders read lessons but don't
+    // take the documents with them.
     if (req.method === 'GET' && req.query.attachments === '1') {
       const session = getSession(req);
       if (!admin && (!session || !session.uid)) return res.status(401).json({ error: 'Sign in required' });
       const [row] = await sql`SELECT value FROM settings WHERE key = 'lesson_attachments'`;
-      return res.json({ attachments: row?.value ? JSON.parse(row.value) : {} });
+      let atts = row?.value ? JSON.parse(row.value) : {};
+      if (!admin) {
+        const [u] = await sql`SELECT tier FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
+        if ((TIER_RANK[u?.tier] ?? 0) < 1) {
+          atts = Object.fromEntries(Object.entries(atts)
+            .map(([k, v]) => [k, { ...(v.video ? { video: v.video } : {}) }])
+            .filter(([, v]) => Object.keys(v).length));
+        }
+      }
+      return res.json({ attachments: atts });
     }
 
     // Publish / unpublish a course — drafts load invisible, one click ships them
