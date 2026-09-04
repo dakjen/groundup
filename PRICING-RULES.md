@@ -116,7 +116,7 @@ This document reflects every pricing rule currently implemented in code. Prices 
 
 ## 13. Partner tier (organizations)
 
-- **Partner** is a contact-us tier for agencies, CDFIs, and nonprofit developer programs: the organization **sponsors a year of GroundUp for its cohort of developers at a group discount** (the developers pay nothing in the sponsored year); after the sponsored year, the developers continue as regular individual members at standard rates. Custom curriculum scope, dedicated onboarding. No fixed price — negotiated per deal, routed through the contact page. Shown as a full-width button below the plan row.
+- **Partner** is a contact-us tier for agencies, CDFIs, and nonprofit developer programs: the organization **sponsors a year of GroundUp for its cohort of developers at a group discount** (the developers pay nothing in the sponsored year); after the sponsored year, the developers continue as regular individual members at standard rates. Dedicated onboarding included. No fixed price — negotiated per deal, routed through the contact page. Shown as a full-width button below the plan row.
 
 ## 14. Comped accounts
 
