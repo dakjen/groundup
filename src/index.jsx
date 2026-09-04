@@ -1272,9 +1272,9 @@ function PlanCard({ plan, onSelect, seats }) {
 
       <Chip text={plan.name} color={plan.accent} />
 
-      <div style={{ display: "flex", alignItems: "baseline", gap: 4, margin: "20px 0 8px" }}>
-        <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: plan.price.length > 8 ? 34 : 56, color: "#f5e8e8", lineHeight: 1.2 }}>{plan.price}</span>
-        <span style={{ color: "#8a7070", fontSize: 16, fontFamily: "'DM Sans', sans-serif" }}>{plan.period}</span>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 4, margin: "20px 0 8px", flexWrap: "wrap", minWidth: 0 }}>
+        <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: plan.price.length > 8 ? "clamp(24px,1.9vw,32px)" : "clamp(30px,2.9vw,46px)", color: "#f5e8e8", lineHeight: 1.2 }}>{plan.price}</span>
+        <span style={{ color: "#8a7070", fontSize: 15, fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap" }}>{plan.period}</span>
       </div>
       <p style={{ color: "#8a7070", fontSize: 13, marginBottom: plan.value || seats ? 14 : 28, lineHeight: 1.65, fontFamily: "'DM Sans', sans-serif" }}>{plan.description}</p>
       {plan.value && <div style={{ color: "#7a5050", fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontStyle: "italic", marginBottom: 14 }}>{plan.value}</div>}
