@@ -205,6 +205,33 @@ export default async function handler(req, res) {
     const action = req.body?.action;
 
     // Public: join the waitlist with a chosen plan
+    // Partner interest form — organizations exploring cohort sponsorship.
+    // Goes straight to the team, no account needed.
+    if (action === 'partner_interest') {
+      const org = String(req.body.org || '').trim().slice(0, 200);
+      const contact = String(req.body.contact || '').trim().slice(0, 200);
+      const email = String(req.body.email || '').trim().slice(0, 200);
+      const phone = String(req.body.phone || '').trim().slice(0, 50);
+      const size = String(req.body.size || '').trim().slice(0, 50);
+      const needs = String(req.body.needs || '').trim().slice(0, 2000);
+      if (!org || !contact || !email) return res.status(400).json({ error: 'Organization, contact name, and email are required' });
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'That email doesn\'t look right' });
+      const html = `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Partner interest — ${org}</h2>
+        <p style="color:#a89080;font-size:14px;line-height:1.9;">
+          <strong style="color:#f0d8d8;">Organization:</strong> ${org}<br/>
+          <strong style="color:#f0d8d8;">Contact:</strong> ${contact}<br/>
+          <strong style="color:#f0d8d8;">Email:</strong> ${email}<br/>
+          ${phone ? `<strong style="color:#f0d8d8;">Phone:</strong> ${phone}<br/>` : ''}
+          ${size ? `<strong style="color:#f0d8d8;">Cohort size:</strong> ${size}<br/>` : ''}
+        </p>
+        ${needs ? `<p style="color:#c8a8a8;font-size:14px;line-height:1.8;background:#12060a;border:1px solid #b8010140;border-radius:10px;padding:14px 18px;">${needs}</p>` : ''}
+        <p style="color:#7a5050;font-size:12px;line-height:1.7;">The partner model: they sponsor their cohort's first year at a group discount, developers continue as individual members after. A branded /partner page can be set up from Admin → Courses.</p>`;
+      for (const addr of ['djmj@nreuv.com', 'bhardie@nreuv.com']) {
+        await sendEmail(addr, `PARTNER INTEREST: ${org} (${contact})`, html);
+      }
+      return res.json({ success: true });
+    }
+
     if (action === 'join') {
       const { name, email, phone, learn, pain, budget, source, list } = req.body;
       const safeList = list === 'general' ? 'general' : 'insider';

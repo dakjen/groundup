@@ -1417,7 +1417,7 @@ function PricingPage({ onSignUp }) {
         </div>
 
         {/* Partner: organizations & institutions — one long button below the line */}
-        <button onClick={() => { window.location.href = "/contact"; }}
+        <button onClick={() => { window.location.href = "/partner-interest"; }}
           style={{ width: "100%", marginTop: 16, background: "#0d0404", border: "1px solid #e0c4c440", borderRadius: 14, padding: "20px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, flexWrap: "wrap", cursor: "pointer", textAlign: "left" }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = "#e0c4c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e0c4c440"; }}>
           <div>
@@ -2840,6 +2840,54 @@ function parseYouTubeId(input) {
 
 // Attach PDFs and videos to existing lessons (courses themselves ship in code)
 // ─── PARTNER PAGE: a company's branded slice of GroundUp ────────────────────
+// ─── PARTNER INTEREST FORM: organizations exploring cohort sponsorship ──────
+function PartnerInterestPage() {
+  const font = "'DM Sans', sans-serif";
+  const [form, setForm] = useState({ org: "", contact: "", email: "", phone: "", size: "", needs: "" });
+  const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+  const inp = { width: "100%", boxSizing: "border-box", background: "#0a0505", border: "1px solid #2a0000", borderRadius: 10, padding: "13px 14px", color: "#f0d8d8", fontFamily: font, fontSize: 14, outline: "none" };
+  const lbl = { display: "block", fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 7 };
+  const submit = async (e) => {
+    e.preventDefault(); setErr(null); setBusy(true);
+    try {
+      const res = await fetch("/api/waitlist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "partner_interest", ...form }) });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Something went wrong — try again");
+      setDone(true);
+    } catch (e2) { setErr(e2.message); } finally { setBusy(false); }
+  };
+  return (
+    <div style={{ background: "#000", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
+      <div style={{ maxWidth: 640, margin: "0 auto" }}>
+        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12, textAlign: "center" }}>Partner With GroundUp</div>
+        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(32px,4.5vw,46px)", color: "#f5e8e8", textAlign: "center", lineHeight: 1.15, marginBottom: 14 }}>Bring GroundUp to<br />your cohort.</h1>
+        <p style={{ color: "#8a7070", fontSize: 14.5, fontFamily: font, lineHeight: 1.8, textAlign: "center", maxWidth: 520, margin: "0 auto 36px" }}>For agencies, CDFIs, and nonprofit developer programs: sponsor your cohort's first year at a group discount with personalized access to the courses they need — plus a branded page with your logo. After the sponsored year, your developers continue as individual members. Tell us about your program and we'll get right back to you.</p>
+        {done ? (
+          <div style={{ background: "#0d0404", border: "1px solid #22c55e50", borderRadius: 18, padding: "44px 36px", textAlign: "center" }}>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#f5e8e8", marginBottom: 10 }}>We got it.</h2>
+            <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font, lineHeight: 1.8 }}>Your interest is in front of the team now — expect to hear from us shortly to talk through your cohort, the discount, and your branded page.</p>
+          </div>
+        ) : (
+          <form onSubmit={submit} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 18, padding: "36px clamp(24px,4vw,44px)" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+              <div style={{ gridColumn: "1 / -1" }}><label style={lbl}>Organization</label><input style={inp} value={form.org} onChange={e => setForm({ ...form, org: e.target.value })} required placeholder="Your agency, CDFI, or program" /></div>
+              <div><label style={lbl}>Contact name</label><input style={inp} value={form.contact} onChange={e => setForm({ ...form, contact: e.target.value })} required placeholder="Your name" /></div>
+              <div><label style={lbl}>Email</label><input style={inp} type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required placeholder="you@org.org" /></div>
+              <div><label style={lbl}>Phone (optional)</label><input style={inp} type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="(555) 555-5555" /></div>
+              <div><label style={lbl}>Cohort size</label><input style={inp} value={form.size} onChange={e => setForm({ ...form, size: e.target.value })} placeholder="e.g. 12 developers" /></div>
+              <div style={{ gridColumn: "1 / -1" }}><label style={lbl}>Tell us about your program</label><textarea style={{ ...inp, resize: "vertical" }} rows={4} value={form.needs} onChange={e => setForm({ ...form, needs: e.target.value })} placeholder="Who your developers are, what they're working toward, which topics matter most, your timeline…" /></div>
+            </div>
+            {err && <div style={{ background: "#b8010115", border: "1px solid #b8010150", borderRadius: 8, padding: "10px 14px", color: "#ff6b6b", fontSize: 13, fontFamily: font, marginBottom: 14 }}>{err}</div>}
+            <button type="submit" disabled={busy} style={{ width: "100%", background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "15px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer", opacity: busy ? 0.6 : 1 }}>{busy ? "Sending…" : "Send Partner Inquiry →"}</button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PartnerPage({ slug, onSignIn, onExplore }) {
   const [data, setData] = useState(undefined); // undefined = loading, null = not found
   useEffect(() => {
@@ -5338,7 +5386,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "advisory", "shop", "officehours", "terms", "privacy", "partner"];
+  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
     return PAGES.includes(p) ? p : (sessionStorage.getItem("activePage") || "home");
@@ -5713,6 +5761,7 @@ export default function App() {
       {activePage === "home" && <HomePage setActivePage={navigateTo} onSignUp={openSignup} currentUser={currentUser} eventInvited={eventInvited} />}
       {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} /></div>}
       {activePage === "advisory" && <RetainerPage member={member} setActivePage={navigateTo} />}
+      {activePage === "partner-interest" && <PartnerInterestPage />}
       {activePage === "partner" && <PartnerPage slug={partnerSlug} onSignIn={() => setShowAuth("login")} onExplore={() => navigateTo("courses")} />}
       {activePage === "shop" && <ShopPage member={member} onSignIn={() => openSignup("Free")} />}
       {activePage === "terms" && <TermsPage />}
