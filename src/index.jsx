@@ -5349,6 +5349,8 @@ export default function App() {
     if (window.location.pathname !== path) window.history.pushState({}, "", path);
     setActivePageRaw(page);
   };
+  // Every page change starts at the top — no inheriting the last page's scroll
+  useEffect(() => { window.scrollTo(0, 0); }, [activePage]);
   useEffect(() => {
     const onPop = () => setActivePageRaw(pathPage());
     window.addEventListener("popstate", onPop);
