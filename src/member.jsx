@@ -154,7 +154,7 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
                 {["Free", "Basic", "Builder", "Premium", "Elite"].map(t => (
                   <button type="button" key={t} onClick={() => setTier(t)} style={{ background: tier === t ? "#b8010118" : "transparent", border: tier === t ? "1px solid #b80101" : "1px solid #2a0000", borderRadius: 8, padding: "10px 12px", cursor: "pointer", textAlign: "left" }}>
                     <div style={{ color: tier === t ? "#f0d8d8" : "#8a7070", fontWeight: 800, fontSize: 13, fontFamily: font }}>{TIER_LABELS[t]}</div>
-                    <div style={{ color: "#7a5050", fontSize: 11, fontFamily: font }}>{{ Free: "$0", Basic: "$49.99/mo", Premium: "$149.99/mo", Elite: "$499.99/mo" }[t]}</div>
+                    <div style={{ color: "#7a5050", fontSize: 11, fontFamily: font }}>{{ Free: "$0", Basic: "$49.99/mo", Builder: "$149.99/mo", Premium: "$249.99/mo", Elite: "$499.99/mo" }[t]}</div>
                   </button>
                 ))}
               </div>
@@ -313,7 +313,7 @@ function ManageMembershipCard({ member, rank }) {
             Update your card, view invoices, or cancel — it takes one click, no questions asked.
           </div>
           <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font, lineHeight: 1.7 }}>
-            Cancel before the 5th of the month and this month's payment is refunded; on or after the 5th, no refund for the current month — your access continues through the period you've paid for. On an annual plan, cancel at or before the 6-month mark and half your annual payment is refunded; after that, your access simply runs to the end of your paid year. <strong style={{ color: "var(--gu-body)" }}>15 days after your membership ends, your account data — posts, messages, and progress — is permanently deleted.</strong> Rejoin before then and nothing is lost.
+            Cancel before the 5th of the month and this month's payment is refunded; on or after the 5th, no refund for the current month — your access continues through the period you've paid for. On an annual plan, cancel within the first 6 months (we honor a 10-day grace period past the mark) and half your annual payment is refunded; after that, the refund is forfeited and your access simply runs to the end of your paid year. <strong style={{ color: "var(--gu-body)" }}>15 days after your membership ends, your account data — posts, messages, and progress — is permanently deleted.</strong> Rejoin before then and nothing is lost.
           </div>
         </div>
         <button onClick={openPortal} disabled={busy} style={{ ...btnGhost, opacity: busy ? 0.6 : 1, whiteSpace: "nowrap" }}>

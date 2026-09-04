@@ -132,14 +132,17 @@ export default async function handler(req, res) {
 
     // ── Course catalog: titles and descriptions only, safe to show anyone ──
     if (req.method === 'GET' && req.query.courses === '1') {
-      const rows = await sql`SELECT id, title, description, stage, stage_color, duration, lessons FROM courses ORDER BY position, id`;
-      // Team gets full lessons (for the admin preview); everyone else gets
-      // id + title only — enough for cards and locked lists
-      const catalog = rows.map(c => ({
-        id: c.id, title: c.title, description: c.description,
-        stage: c.stage, stageColor: c.stage_color, duration: c.duration,
-        lessons: admin ? (c.lessons || []) : (c.lessons || []).map(l => ({ id: l.id, title: l.title })),
-      }));
+      const rows = await sql`SELECT id, title, description, stage, stage_color, duration, lessons, hidden FROM courses ORDER BY position, id`;
+      // Team gets full lessons (for the admin preview) INCLUDING unpublished
+      // drafts; everyone else gets published courses only, id + title per lesson
+      const catalog = rows
+        .filter(c => admin || !c.hidden)
+        .map(c => ({
+          id: c.id, title: c.title, description: c.description,
+          stage: c.stage, stageColor: c.stage_color, duration: c.duration,
+          hidden: admin ? !!c.hidden : undefined,
+          lessons: admin ? (c.lessons || []) : (c.lessons || []).map(l => ({ id: l.id, title: l.title })),
+        }));
       return res.json({ courses: catalog });
     }
 
@@ -147,8 +150,10 @@ export default async function handler(req, res) {
     // The lesson bodies never ship in the JS bundle; they only leave the
     // database for someone this block says is allowed to read them.
     if (req.method === 'GET' && req.query.course) {
-      const [c] = await sql`SELECT id, title, description, stage, stage_color, duration, lessons FROM courses WHERE id = ${req.query.course}`;
+      const [c] = await sql`SELECT id, title, description, stage, stage_color, duration, lessons, hidden FROM courses WHERE id = ${req.query.course}`;
       if (!c) return res.status(404).json({ error: 'Course not found' });
+      // Unpublished drafts exist only for the team — invisible to members
+      if (c.hidden && !admin) return res.status(404).json({ error: 'Course not found' });
       const shape = (full) => ({
         id: c.id, title: c.title, description: c.description,
         stage: c.stage, stageColor: c.stage_color, duration: c.duration,
@@ -186,6 +191,15 @@ export default async function handler(req, res) {
       if (!admin && (!session || !session.uid)) return res.status(401).json({ error: 'Sign in required' });
       const [row] = await sql`SELECT value FROM settings WHERE key = 'lesson_attachments'`;
       return res.json({ attachments: row?.value ? JSON.parse(row.value) : {} });
+    }
+
+    // Publish / unpublish a course — drafts load invisible, one click ships them
+    if (req.method === 'POST' && req.body && req.body.action === 'course_publish') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const hidden = !!req.body.hidden;
+      const [row] = await sql`UPDATE courses SET hidden = ${hidden} WHERE id = ${String(req.body.id || '')} RETURNING id, hidden`;
+      if (!row) return res.status(404).json({ error: 'Course not found' });
+      return res.json({ success: true, id: row.id, hidden: row.hidden });
     }
 
     if (req.method === 'POST' && req.body && req.body.action === 'set_attachments') {

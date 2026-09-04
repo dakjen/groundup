@@ -11,11 +11,11 @@ const PLANS = {
     'Every course — all seven, plus new ones as they drop', 'All written lessons, case studies & worksheets',
     'Community access — read every channel', 'Resource lists & reading guides',
   ] },
-  Builder: { tier: 'Builder', label: 'Builder', price: '$99.99/mo', rank: 2, features: [
+  Builder: { tier: 'Builder', label: 'Builder', price: '$149.99/mo', rank: 2, features: [
     'Everything in Member', 'Post, reply & network in the community',
     'View-only access to every guide, template & the Developer\'s Playbook',
   ] },
-  Premium: { tier: 'Premium', label: 'Premium', price: '$149.99/mo', rank: 3, features: [
+  Premium: { tier: 'Premium', label: 'Premium', price: '$249.99/mo', rank: 3, features: [
     'Everything in Builder', 'Download 3 guides or templates every month', 'The Opportunity Board — RFPs & funding windows',
     'JV & Partnerships channel', 'Lunch & Learn recordings', 'Group office hours with Dr. Merritt + priority booking', '10% off every 1:1 session',
   ] },
@@ -93,8 +93,8 @@ export function recommendPlan(e) {
   }
   // Budget decides the ceiling; inside the $25–$100 band their ANSWERS decide:
   //   $300+ / $500+           → Elite ($499.99)
-  //   $100–$200 / $150–$500   → Premium ($149.99)
-  //   $25–$100 / $50–$150     → Builder ($99.99) when their answers point at the
+  //   $100–$200 / $150–$500   → Premium ($249.99)
+  //   $25–$100 / $50–$150     → Builder ($149.99) when their answers point at the
   //                             community (networking, partners, active deals,
   //                             "all of the above") — otherwise Member ($49.99)
   //   below                   → Member
@@ -143,7 +143,7 @@ export function recommendPlan(e) {
 
 export const PLAN_INFO = {
   Basic: { label: 'Member', monthly: 49.99 },
-  Premium: { label: 'Premium', monthly: 149.99 },
+  Premium: { label: 'Premium', monthly: 249.99 },
   Elite: { label: 'Elite', monthly: 499.99 },
   pass_single: { label: 'Single Course Pass', once: 100 },
   pass_all: { label: 'All-Access Pass', once: 250 },

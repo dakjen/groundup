@@ -10,8 +10,8 @@ This document reflects every pricing rule currently implemented in code. Prices 
 | Tier (display name) | Internal tier | Price | Notes |
 |---|---|---|---|
 | Member | Basic | $49.99/mo | Every course + community read access |
-| Builder | Builder | $99.99/mo | + posting, L&L recordings, view-only templates |
-| Premium | Premium | $149.99/mo | + 3 downloads/mo, Opportunity Board, office hours, 10% off 1:1s |
+| Builder | Builder | $149.99/mo | + posting, L&L recordings, view-only templates |
+| Premium | Premium | $249.99/mo | + 3 downloads/mo, Opportunity Board, office hours, 10% off 1:1s |
 | Elite ("Owner") | Elite | $499.99/mo | + deal support in advisory calls, DMs, unlimited downloads, 30% off 1:1s |
 
 - **Elite cap:** advertised at 15 seats; internally allowed to 20 (the "quiet" seats are for insiders, admitted manually). Comped and admin accounts do not occupy seats. The public seat counter appears only when ≤5 seats remain.
@@ -21,7 +21,7 @@ This document reflects every pricing rule currently implemented in code. Prices 
 ## 2. Annual billing (deliberately unpromoted)
 
 - Annual versions of all four tiers exist but are **not shown on the website**. They appear only when a visitor arrives through a link carrying `?annual=1` (used in the pass-expiry email).
-- Annual price = 12 × the monthly rate, with a **10% discount (coupon ANNUAL10)** applied visibly at Stripe checkout, every year. Effective first-year totals: Member $539.89 · Builder $1,079.89 · Premium $1,619.89 · Elite $5,399.89.
+- Annual price = 12 × the monthly rate, with a **10% discount (coupon ANNUAL10)** applied visibly at Stripe checkout, every year. Effective first-year totals: Member $539.89 · Builder $1,619.89 · Premium $2,699.89 · Elite $5,399.89.
 - **Annual refund rule:** cancel **within the first 6 months — plus a 10-day grace period past the mark** → half the annual payment (6 months) is refunded. More than 10 days into the second half → the refund is forfeited; access runs to the end of the paid year. (Stated in the Terms and the member billing card; the team gets a REFUND DUE alert with the NREUV transfer-reversal reminder.)
 
 ## 3. One-time course passes

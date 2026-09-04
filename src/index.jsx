@@ -1117,7 +1117,7 @@ const plans = [
   {
     name: "Builder",
     tier: "Builder",
-    price: "$99.99",
+    price: "$149.99",
     period: "/mo",
     description: "Everything in Member — plus a voice in the community, Lunch & Learn recordings, and the digital product shelf to browse.",
     accent: "#b80101",
@@ -1133,7 +1133,7 @@ const plans = [
   {
     name: "Premium",
     tier: "Premium",
-    price: "$149.99",
+    price: "$249.99",
     period: "/mo",
     description: "Everything in Member — plus full community engagement, deal tools, and a free advisory hour.",
     accent: "#b80101",
@@ -1282,7 +1282,7 @@ function PlanCard({ plan, onSelect, seats }) {
 // Annual billing exists but is deliberately NOT promoted on the site — it only
 // appears when someone arrives via a link carrying ?annual=1 (e.g. the
 // pass-expiry email, where annual + the 15% alum coupon is the offer).
-const ANNUAL_PRICES = { Basic: "$539.89", Builder: "$1,079.89", Premium: "$1,619.89", Elite: "$5,399.89" };
+const ANNUAL_PRICES = { Basic: "$539.89", Builder: "$1,619.89", Premium: "$2,699.89", Elite: "$5,399.89" };
 
 function PricingPage({ onSignUp }) {
   // Live Elite seat count — Elite is sold as a limited cohort
@@ -1360,7 +1360,7 @@ function PricingPage({ onSignUp }) {
           </div>
         )}
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(228px, 1fr))", gap: 14, alignItems: "start" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(215px, 1fr))", gap: 14, alignItems: "start", overflowX: "auto", paddingBottom: 6 }}>
           {plans.filter(p => p.tier !== "Partner").map((raw, i) => {
             const plan = annual && ANNUAL_PRICES[raw.tier] ? { ...raw, price: ANNUAL_PRICES[raw.tier], period: "/yr" } : raw;
             return (
@@ -1749,7 +1749,7 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
               <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 54, color: "#f5e8e8", lineHeight: 1 }}>$39.99</span>
               <span style={{ color: "#8a7070", fontSize: 15, fontFamily: font }}>· 6 months of sessions</span>
             </div>
-            <p style={{ color: "#e0c4c4", fontSize: 13, fontFamily: font, fontWeight: 700, marginBottom: 10 }}>A $99.99 value — offered at $39.99 because Dr. Merritt believes access shouldn't be the barrier.</p>
+            <p style={{ color: "#e0c4c4", fontSize: 13, fontFamily: font, fontWeight: 700, marginBottom: 10 }}>A $149.99 value — offered at $39.99 because Dr. Merritt believes access shouldn't be the barrier.</p>
             <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font, lineHeight: 1.8, maxWidth: 520, margin: "0 auto 24px" }}>
               Every live session for six months, plus the recordings — and attending unlocks 25% off your first month if you become a member within two months.
             </p>
@@ -2209,11 +2209,11 @@ function TermsPage() {
       <p style={S.p}><strong style={S.strong}>Violation ends your access immediately</strong>, without refund, and NREUV reserves all remedies — including damages and injunctive relief, since unauthorized distribution causes harm money can't fully repair. These obligations survive cancellation of your membership.</p>
 
       <h2 style={S.h2}>3. Memberships & billing</h2>
-      <p style={S.p}>Plans: Member $49.99/mo · Builder $99.99/mo · Premium $149.99/mo · Elite $499.99/mo (limited seats), plus one-time course passes, Lunch &amp; Learn access, digital products, 1:1 sessions, and advisory retainers. Subscriptions <strong style={S.strong}>renew automatically each month</strong> on your billing date and are charged to your card by Stripe until you cancel. You can <strong style={S.strong}>cancel anytime, self-service</strong>, from Membership &amp; Billing on your member page — access continues through the period you've paid for. Prices may change with advance notice; changes apply from your next billing cycle.</p>
+      <p style={S.p}>Plans: Member $49.99/mo · Builder $149.99/mo · Premium $249.99/mo · Elite $499.99/mo (limited seats), plus one-time course passes, Lunch &amp; Learn access, digital products, 1:1 sessions, and advisory retainers. Subscriptions <strong style={S.strong}>renew automatically each month</strong> on your billing date and are charged to your card by Stripe until you cancel. You can <strong style={S.strong}>cancel anytime, self-service</strong>, from Membership &amp; Billing on your member page — access continues through the period you've paid for. Prices may change with advance notice; changes apply from your next billing cycle.</p>
       <p style={S.p}>Some benefits unlock with tenure: advisory calls and networking events open after 4 months of continuous membership. Premium includes 3 product downloads per billing month (unused downloads don't roll over); the Developer's Playbook is view-only below Elite. Elite seats are limited and offered while available.</p>
 
       <h2 style={S.h2}>4. Refunds</h2>
-      <p style={S.p}><strong style={S.strong}>All sales are final once content has been viewed or downloaded.</strong> For subscriptions: if you cancel <strong style={S.strong}>before the 5th day of the month</strong>, your payment for that month is refunded; cancellations on or after the 5th are not refunded for the current month, and your access continues through the period you paid for. For <strong style={S.strong}>annual subscriptions</strong> (billed once for the year): cancel at or before the 6-month mark and half of your annual payment (6 months) is refunded; cancellations after the 6-month mark are not refunded, and your access continues through the end of the paid year. Where a statutory cooling-off or refund right applies in your jurisdiction, that right is honored to the extent required by law.</p>
+      <p style={S.p}><strong style={S.strong}>All sales are final once content has been viewed or downloaded.</strong> For subscriptions: if you cancel <strong style={S.strong}>before the 5th day of the month</strong>, your payment for that month is refunded; cancellations on or after the 5th are not refunded for the current month, and your access continues through the period you paid for. For <strong style={S.strong}>annual subscriptions</strong> (billed once for the year): cancel within the first 6 months — a 10-day grace period past the 6-month mark is honored — and half of your annual payment (6 months) is refunded; more than 10 days into the second half, the refund is forfeited and your access continues through the end of the paid year. Where a statutory cooling-off or refund right applies in your jurisdiction, that right is honored to the extent required by law.</p>
 
       <h2 style={S.h2}>5. Community & conduct</h2>
       <p style={S.p}>Be professional. No harassment, hate, spam, solicitation of members for competing offerings, or posting content you don't have rights to. Deal information other members share in the community or group sessions is <strong style={S.strong}>confidential to this community</strong> — don't use or disclose it outside GroundUp. We may remove content or suspend accounts that break these rules.</p>
@@ -2619,7 +2619,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
             { name: "One Course", price: "$100", period: "one-time", desc: "60 days inside one course of your choice." },
             { name: "All-Access Pass", price: "$250", period: "one-time", desc: "30 days of the entire curriculum." },
             { name: "Member", price: "$49.99", period: "/mo", desc: "Constant access + support — every course, every new course, and the community." },
-            { name: "Premium", price: "$149.99", period: "/mo", desc: "Engage the community, deal tools, the Opportunity Board, a free work session.", popular: true },
+            { name: "Premium", price: "$249.99", period: "/mo", desc: "Engage the community, deal tools, the Opportunity Board, a free work session.", popular: true },
             { name: "Elite", price: "$499.99", period: "/mo", desc: "Direct line to Dr. Merritt — advisory calls, DMs, and the partner network." },
           ].map((p, i) => (
             <div key={i} style={{ background: p.popular ? "#0d0404" : "#080404", border: "1px solid " + (p.popular ? "#b8010140" : "#150000"), borderRadius: 16, padding: "26px 24px", textAlign: "center", position: "relative" }}>
@@ -2864,10 +2864,23 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
       {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#1a7a3a" : "#b80101", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16, position: "sticky", top: 70, zIndex: 5 }}>{msg.text}</div>}
 
       {courseList.map(c => (
-        <div key={c.id} style={{ background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 14, padding: "24px 28px", marginBottom: 14 }}>
+        <div key={c.id} style={{ background: "#ffffff", border: c.hidden ? "1px dashed #b80101" : "1px solid #e0dbd2", borderRadius: 14, padding: "24px 28px", marginBottom: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8, flexWrap: "wrap" }}>
             <span style={{ background: "#b8010112", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "2px 9px", fontSize: 10, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "1px" }}>{c.stage}</span>
             <span style={{ color: "#9a9a9a", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{c.lessons.length} lessons · {c.duration}</span>
+            {c.hidden && <span style={{ background: "#f5e8e8", color: "#b80101", borderRadius: 4, padding: "2px 9px", fontSize: 10, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "1px" }}>DRAFT — not on the website</span>}
+            {typeof c.hidden === "boolean" && (
+              <button onClick={async () => {
+                const publishing = c.hidden;
+                if (!window.confirm(publishing ? `Publish "${c.title}"? It will appear on the website immediately.` : `Unpublish "${c.title}"? It will disappear from the website (members keep nothing — it simply vanishes until republished).`)) return;
+                try {
+                  const res = await fetch("/api/resources", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + sessionStorage.getItem("adminToken") }, body: JSON.stringify({ action: "course_publish", id: c.id, hidden: !c.hidden }) });
+                  if (!res.ok) throw new Error((await res.json()).error || "Failed");
+                  setFullCourses(prev => (prev || []).map(x => x.id === c.id ? { ...x, hidden: !c.hidden } : x));
+                  flash(true, publishing ? `"${c.title}" is now live on the website.` : `"${c.title}" is now a hidden draft.`);
+                } catch (e) { flash(false, e.message); }
+              }} style={{ marginLeft: "auto", background: c.hidden ? "#b80101" : "transparent", color: c.hidden ? "#fff" : "#b80101", border: "1px solid #b80101", borderRadius: 8, padding: "6px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 11, cursor: "pointer" }}>{c.hidden ? "Publish" : "Unpublish"}</button>
+            )}
           </div>
           <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#161616", marginBottom: 8 }}>{c.title}</div>
           <p style={{ color: "#666666", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 14 }}>{c.description}</p>
@@ -3667,7 +3680,7 @@ function AdminPanel({ onLogout, onExit }) {
 
 // ─── REVENUE TAB ──────────────────────────────────────────────────────────────
 
-const TIER_PRICES = { Free: 0, Basic: 49.99, Builder: 99.99, Premium: 149.99, Elite: 499.99 };
+const TIER_PRICES = { Free: 0, Basic: 49.99, Builder: 149.99, Premium: 249.99, Elite: 499.99 };
 
 function RevenueTab() {
   const [users, setUsers] = useState([]);
@@ -4267,15 +4280,15 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
   // Mirrors recommendPlan() in api/waitlist.js — budget decides:
   // $500+ → Elite · $150–$500 → Premium · below $150 → Member
   const recFor = (e) => {
-    if (e.rec_override) return { Basic: "Member — $49.99/mo", Builder: "Builder — $99.99/mo", Premium: "Premium — $149.99/mo", Elite: "Elite — $499.99/mo", Advisor: "Senior Advisor — from $3,025/mo" }[e.rec_override] || "Member — $49.99/mo";
+    if (e.rec_override) return { Basic: "Member — $49.99/mo", Builder: "Builder — $149.99/mo", Premium: "Premium — $249.99/mo", Elite: "Elite — $499.99/mo", Advisor: "Senior Advisor — from $3,025/mo" }[e.rec_override] || "Member — $49.99/mo";
     if (e.budget === "$2,000+") return "Senior Advisor — from $3,025/mo";
     if (["$300+", "$500+"].includes(e.budget)) return "Elite — $499.99/mo";
-    if (["$100–$200", "$150–$500"].includes(e.budget)) return "Premium — $149.99/mo";
+    if (["$100–$200", "$150–$500"].includes(e.budget)) return "Premium — $249.99/mo";
     if (e.learn === "I need deal-specific support on a live project") return "Elite — $499.99/mo";
     const LN = { "Financing & capital stacks": 2, "Getting my first deal done": 2, "Public-private partnerships": 3, "Scaling my business & pipeline": 3, "Scaling my existing pipeline": 3, "All of the above": 2 };
     const PN = { "I don't understand the numbers": 2, "I can't find the capital": 2, "I need partners or a team": 2, "No network in the industry": 2, "Navigating government & compliance": 3, "I have a deal but I'm stuck": 3 };
     const need = Math.max(LN[e.learn] || 1, PN[e.reason] || 1);
-    if (["$25–$100", "$50–$150"].includes(e.budget) && need >= 2) return "Builder — $99.99/mo";
+    if (["$25–$100", "$50–$150"].includes(e.budget) && need >= 2) return "Builder — $149.99/mo";
     return "Member — $49.99/mo";
   };
 
@@ -4422,9 +4435,9 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
           Conservative maps their budget to the plan it comfortably covers;
           upside assumes each stretches one tier. */}
       {(() => {
-        const PLAN_FIT = { "Under $25": 0, "$25–$100": 49.99, "$100–$200": 149.99, "$300+": 499.99, "$2,000+": 3025, "Under $50": 0, "$50–$150": 49.99, "$150–$500": 149.99, "$500+": 499.99 };
-        const fitFor = (e) => { const r = recFor(e); return e.comped ? 0 : r.startsWith("Builder") ? 99.99 : r.startsWith("Premium") ? 149.99 : r.startsWith("Elite") ? 499.99 : r.startsWith("Senior") ? 3025 : (PLAN_FIT[e.budget] || 0); };
-        const STRETCH = { "Under $25": 49.99, "$25–$100": 99.99, "$100–$200": 499.99, "$300+": 499.99, "$2,000+": 3025, "Under $50": 49.99, "$50–$150": 99.99, "$150–$500": 499.99, "$500+": 499.99 };
+        const PLAN_FIT = { "Under $25": 0, "$25–$100": 49.99, "$100–$200": 249.99, "$300+": 499.99, "$2,000+": 3025, "Under $50": 0, "$50–$150": 49.99, "$150–$500": 249.99, "$500+": 499.99 };
+        const fitFor = (e) => { const r = recFor(e); return e.comped ? 0 : r.startsWith("Builder") ? 149.99 : r.startsWith("Premium") ? 249.99 : r.startsWith("Elite") ? 499.99 : r.startsWith("Senior") ? 3025 : (PLAN_FIT[e.budget] || 0); };
+        const STRETCH = { "Under $25": 49.99, "$25–$100": 149.99, "$100–$200": 499.99, "$300+": 499.99, "$2,000+": 3025, "Under $50": 49.99, "$50–$150": 149.99, "$150–$500": 499.99, "$500+": 499.99 };
         const mrrFit = entries.reduce((s, e) => s + fitFor(e), 0);
         // Premium is the ideal recommendation; Elite (and Advisor) are the exceptional wins
         const premiumRec = entries.filter(e => recFor(e).startsWith("Premium")).length;
@@ -4557,8 +4570,8 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
                     }} style={{ background: e.rec_override ? "#b8010112" : "#f5f2ec", color: e.rec_override ? "#b80101" : "#444444", border: "1px solid " + (e.rec_override ? "#b8010150" : "#dcd8d0"), borderRadius: 6, padding: "5px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
                       <option value="">Auto — {recFor(e).split(" — ")[0]} (algorithm)</option>
                       <option value="Basic">Member — $49.99/mo</option>
-                      <option value="Builder">Builder — $99.99/mo</option>
-                      <option value="Premium">Premium — $149.99/mo</option>
+                      <option value="Builder">Builder — $149.99/mo</option>
+                      <option value="Premium">Premium — $249.99/mo</option>
                       <option value="Elite">Elite — $499.99/mo</option>
                       <option value="Advisor">Senior Advisor — retainer</option>
                     </select>
@@ -5108,7 +5121,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
     } catch(e) { setError("Something went wrong. Please try again."); }
   };
 
-  const planPrices = { Free: "$0", Basic: "$49.99/mo", Premium: "$149.99/mo", Elite: "$499.99/mo" };
+  const planPrices = { Free: "$0", Basic: "$49.99/mo", Premium: "$249.99/mo", Elite: "$499.99/mo" };
   const planColors = { Free: "#6a6b69", Basic: "#b80101", Premium: "#b80101", Elite: "#570404" };
 
   return (
@@ -5189,7 +5202,7 @@ export default function App() {
     const SEO = {
       home: ["GroundUp by Dr. Gina Merritt — Affordable Housing Development Courses & Community", "Learn affordable housing development from Dr. Gina Merritt — 30+ years and $600M+ of real deals. Courses, community, and direct access for underrepresented developers."],
       courses: ["The Curriculum — GroundUp", "Seven courses across the full development lifecycle: predevelopment, teams & JVs, financing & LIHTC, zoning, design & construction, and after opening day — taught from deals that closed."],
-      pricing: ["Plans & Pricing — GroundUp", "Member $49.99, Builder $99.99, Premium $149.99, Elite $499.99 — plus one-time course passes and Lunch & Learn access. Every plan includes the full course library."],
+      pricing: ["Plans & Pricing — GroundUp", "Member $49.99, Builder $149.99, Premium $249.99, Elite $499.99 — plus one-time course passes and Lunch & Learn access. Every plan includes the full course library."],
       about: ["About Dr. Gina Merritt — GroundUp", "From public housing in the Bronx to $600M+ in real estate development. The story behind GroundUp and Northern Real Estate Urban Ventures."],
       lunchlearn: ["Lunch & Learns — GroundUp", "Live monthly sessions with Dr. Gina Merritt — real deals, real numbers, live Q&A, plus a recording library."],
       contact: ["Book a 1:1 Session — GroundUp", "Work directly with Dr. Gina Merritt: deal review, strategy, capital stack review, community development, and BIPOC developer sessions."],

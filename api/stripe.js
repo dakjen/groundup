@@ -8,13 +8,13 @@ export const config = { api: { bodyParser: false } };
 // Everything purchasable, priced in one place (cents)
 const CATALOG = {
   sub_Basic:   { mode: 'subscription', name: 'GroundUp Member',            amount: 4999,  tier: 'Basic' },
-  sub_Builder: { mode: 'subscription', name: 'GroundUp Builder',           amount: 9999,  tier: 'Builder' },
-  sub_Premium: { mode: 'subscription', name: 'GroundUp Premium',          amount: 14999, tier: 'Premium' },
+  sub_Builder: { mode: 'subscription', name: 'GroundUp Builder',           amount: 14999,  tier: 'Builder' },
+  sub_Premium: { mode: 'subscription', name: 'GroundUp Premium',          amount: 24999, tier: 'Premium' },
   sub_Elite:   { mode: 'subscription', name: 'GroundUp Elite',             amount: 49999, tier: 'Elite' },
   // Annual billing — one payment for the year at roughly 10% off the monthly rate
   sub_Basic_annual:   { mode: 'subscription', name: 'GroundUp Member — Annual',  amount: 59988,  tier: 'Basic',   annual: true },
-  sub_Builder_annual: { mode: 'subscription', name: 'GroundUp Builder — Annual', amount: 119988, tier: 'Builder', annual: true },
-  sub_Premium_annual: { mode: 'subscription', name: 'GroundUp Premium — Annual', amount: 179988, tier: 'Premium', annual: true },
+  sub_Builder_annual: { mode: 'subscription', name: 'GroundUp Builder — Annual', amount: 179988, tier: 'Builder', annual: true },
+  sub_Premium_annual: { mode: 'subscription', name: 'GroundUp Premium — Annual', amount: 299988, tier: 'Premium', annual: true },
   sub_Elite_annual:   { mode: 'subscription', name: 'GroundUp Elite — Annual',   amount: 599988, tier: 'Elite',   annual: true },
   pass_single: { mode: 'payment',      name: 'Single Course Pass (60 days)', amount: 10000 },
   pass_all:    { mode: 'payment',      name: 'All-Access Pass (30 days)',  amount: 25000 },
@@ -387,7 +387,7 @@ export default async function handler(req, res) {
         //            period into the second half — and 6 months (half the annual
         //            payment) is refunded; after that, the refund is forfeited.
         const isAnnual = (sub.items?.data?.[0]?.price?.recurring?.interval || sub.plan?.interval) === 'year';
-        const daysIn = sub.start_date ? (Date.now() / 1000 - sub.start_date) / 86400 : 9999;
+        const daysIn = sub.start_date ? (Date.now() / 1000 - sub.start_date) / 86400 : 14999;
         const monthsIn = daysIn / 30.44;
         // 6 months ≈ 183 days, plus the 10-day grace period into the second half
         const refundEligible = isAnnual ? daysIn <= 193 : new Date().getDate() < 5;

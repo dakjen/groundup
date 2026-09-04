@@ -20,8 +20,8 @@ export default async function handler(req, res) {
           -- MRR counts only paying members: not comped, not team accounts
           ROUND(
             COUNT(*) FILTER (WHERE tier = 'Basic' AND NOT COALESCE(comped, FALSE) AND COALESCE(role,'member') = 'member') * 49.99 +
-            COUNT(*) FILTER (WHERE tier = 'Builder' AND NOT COALESCE(comped, FALSE) AND COALESCE(role,'member') = 'member') * 99.99 +
-            COUNT(*) FILTER (WHERE tier = 'Premium' AND NOT COALESCE(comped, FALSE) AND COALESCE(role,'member') = 'member') * 149.99 +
+            COUNT(*) FILTER (WHERE tier = 'Builder' AND NOT COALESCE(comped, FALSE) AND COALESCE(role,'member') = 'member') * 149.99 +
+            COUNT(*) FILTER (WHERE tier = 'Premium' AND NOT COALESCE(comped, FALSE) AND COALESCE(role,'member') = 'member') * 249.99 +
             COUNT(*) FILTER (WHERE tier = 'Elite' AND NOT COALESCE(comped, FALSE) AND COALESCE(role,'member') = 'member') * 499.99,
             2
           ) as mrr
