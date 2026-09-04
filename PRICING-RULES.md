@@ -114,6 +114,10 @@ This document reflects every pricing rule currently implemented in code. Prices 
 | 1:1 sessions & retainers (incl. the intake) | 90% |
 | Lunch & Learn | 100% |
 
-## 13. Comped accounts
+## 13. Partner tier (organizations)
+
+- **Partner** is a contact-us tier for agencies, CDFIs, and nonprofit developer programs: **cohort subscriptions at group discounts** (multiple seats for a team or program), custom curriculum scope, dedicated onboarding. No fixed price — routed through the contact page. Shown as a full-width button below the plan row.
+
+## 14. Comped accounts
 
 - Set by admins (including from the waitlist pre-launch). Comped members get full tier access but are excluded from MRR/ARR stats, Elite seat counts, and billing emails; the member billing card is hidden for them.
