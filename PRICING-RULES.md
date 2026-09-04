@@ -10,7 +10,7 @@ This document reflects every pricing rule currently implemented in code. Prices 
 | Tier (display name) | Internal tier | Price | Notes |
 |---|---|---|---|
 | Member | Basic | $49.99/mo | Every course + community read access |
-| Builder | Builder | $149.99/mo | + posting, L&L recordings, view-only templates |
+| Builder | Builder | $149.99/mo | + posting, free live L&Ls + recordings, view-only templates |
 | Premium | Premium | $249.99/mo | + 3 downloads/mo, Opportunity Board, office hours, 10% off 1:1s |
 | Elite ("Owner") | Elite | $499.99/mo | + deal support in advisory calls, DMs, unlimited downloads, 30% off 1:1s |
 
@@ -38,7 +38,7 @@ This document reflects every pricing rule currently implemented in code. Prices 
 - L&L access: **$39.99 for 6 months** (all live sessions + recordings). Codes can also grant access.
 - **Attendee perk (LNL25):** 25% off the first month of any membership, valid for 2 months after purchase/redemption, applied automatically at checkout.
 - Revenue split: **100% of L&L revenue goes to NREUV** (platform takes no cut).
-- Recordings open to Builder and up; live access included with Premium and Elite.
+- Live sessions AND recordings included free for Builder, Premium, and Elite members (Builder RSVPs like everyone else); Member and Free accounts buy access or use a code.
 
 ## 5. 1:1 sessions with Dr. Merritt (45 min)
 

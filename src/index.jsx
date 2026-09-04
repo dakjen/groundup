@@ -1126,6 +1126,7 @@ const plans = [
     features: [
       "Everything in Member",
       "Post, reply & network in the community",
+      "Live Lunch & Learns with Dr. Merritt — free, plus the recordings",
       "View-only: every guide, template & the Developer's Playbook",
     ],
     locked: ["Product downloads (Premium gets 3/mo)", "The Opportunity Board & office hours", "Deal-specific support — an Elite benefit"],
