@@ -104,10 +104,14 @@ export default async function handler(req, res) {
             `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">New message in your workspace</h2>
              <p style="color:#a89080;font-size:14px;line-height:1.8;">Sign in to read it and reply.</p>`);
         } else if (r) {
-          await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
-            `Retainer message — ${r.name}`,
-            `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">${r.name} posted in their workspace</h2>
-             <p style="color:#a89080;font-size:14px;line-height:1.8;">${body.slice(0, 400)}</p>`);
+          // Dr. Merritt is on this deal — she gets the message directly, not just the team inbox
+          const [gina] = await sql`SELECT email FROM users WHERE badge = 'drmerritt' LIMIT 1`;
+          const to = [...new Set([process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net', gina?.email].filter(Boolean))];
+          for (const addr of to) await sendEmail(addr,
+            `Advisory workspace — ${r.name}`,
+            `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">${r.name} posted in their advisory workspace</h2>
+             <p style="color:#c8a8a8;font-size:14px;line-height:1.8;background:#12060a;border:1px solid #b8010140;border-radius:10px;padding:14px 18px;">${body.slice(0, 500)}</p>
+             <p style="color:#7a5050;font-size:12px;line-height:1.7;">Reply from the admin Retainers tab — the client is emailed when you do.</p>`);
         }
         return res.status(201).json(m);
       }

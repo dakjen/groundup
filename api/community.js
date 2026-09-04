@@ -166,6 +166,17 @@ export default async function handler(req, res) {
             await sendEmail(target.email, mail.subject, mail.html);
           }
         } catch (e) { console.error('dm email failed', e); }
+      } else {
+        // Member sent a DM → Dr. Merritt and the team both hear about it
+        try {
+          const [gina] = await sql`SELECT email FROM users WHERE badge = 'drmerritt' LIMIT 1`;
+          const to = [...new Set([process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net', gina?.email].filter(Boolean))];
+          const html = `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">New direct message</h2>
+             <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${user.name}</strong> (${user.email}, ${user.tier}) sent a DM:</p>
+             <p style="color:#c8a8a8;font-size:14px;line-height:1.8;background:#12060a;border:1px solid #b8010140;border-radius:10px;padding:14px 18px;">${text.slice(0, 500)}</p>
+             <p style="color:#7a5050;font-size:12px;line-height:1.7;">The promise is a reply within 2 business days (Mon–Fri). Reply from the admin Community tab.</p>`;
+          for (const addr of to) await sendEmail(addr, `DM from ${user.name} (${user.tier})`, html);
+        } catch (e) { console.error('dm notify failed', e); }
       }
       return res.status(201).json({ message: msg });
     }

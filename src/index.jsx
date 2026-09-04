@@ -1414,12 +1414,12 @@ function PricingPage({ onSignUp }) {
         </div>
 
         {/* Partner: organizations & institutions — one long button below the line */}
-        <button onClick={() => { window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("GroundUp — Partner tier"); }}
+        <button onClick={() => { window.location.href = "/contact"; }}
           style={{ width: "100%", marginTop: 16, background: "#0d0404", border: "1px solid #e0c4c440", borderRadius: 14, padding: "20px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, flexWrap: "wrap", cursor: "pointer", textAlign: "left" }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = "#e0c4c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e0c4c440"; }}>
           <div>
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#e0c4c4", marginBottom: 2 }}>Partner</div>
-            <div style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>For organizations & institutions — cohort licensing, custom curriculum scope, dedicated onboarding. Built for agencies, CDFIs & nonprofit developer programs.</div>
+            <div style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>For organizations & institutions — cohort licensing, custom curriculum scope, dedicated onboarding. Built for agencies, CDFIs & nonprofit developer programs. Reach out through the contact page or groundup@drginamerritt.net.</div>
           </div>
           <span style={{ color: "#e0c4c4", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, whiteSpace: "nowrap" }}>Talk to Us →</span>
         </button>
@@ -1649,6 +1649,7 @@ function ContactPage({ setActivePage, advisorLink }) {
 
 function LunchLearnPage({ member, onSignIn, setActivePage }) {
   const pageBg = "#000";
+  const font = "'DM Sans', sans-serif";
   const [recordings, setRecordings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [playingId, setPlayingId] = useState(null);
@@ -1767,7 +1768,6 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
   const active = status?.active;
   const canSeeRecordings = active || memberRank >= 2;
   const card = { background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16 };
-  const font = "'DM Sans', sans-serif";
 
   return (
     <div style={{ minHeight: "100vh", paddingTop: 64, background: pageBg }}>
