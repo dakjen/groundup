@@ -1245,7 +1245,8 @@ const plans = [
     cta: "Talk to Us",
     features: [
       "Sponsor your cohort's first year at a group discount",
-      "Custom access to the courses your cohort needs",
+      "Personalized course access at a partner rate",
+      "A branded page for your company — your logo, your curriculum",
       "Developers continue as individual members after the sponsored year",
       "Dedicated onboarding",
       "Built for agencies, CDFIs & nonprofit developer programs",
@@ -1420,7 +1421,7 @@ function PricingPage({ onSignUp }) {
           onMouseEnter={e => { e.currentTarget.style.borderColor = "#e0c4c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e0c4c440"; }}>
           <div>
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#e0c4c4", marginBottom: 2 }}>Partner</div>
-            <div style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>For organizations & institutions — sponsor a year of GroundUp for your cohort of developers at a group discount; after the sponsored year, they continue as individual members. Custom access to the courses your cohort needs, dedicated onboarding. Built for agencies, CDFIs & nonprofit developer programs.</div>
+            <div style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>For organizations & institutions — sponsor a year of GroundUp for your cohort of developers at a group discount; after the sponsored year, they continue as individual members. Personalized access to the courses your cohort needs — at a partner rate — with dedicated onboarding. Built for agencies, CDFIs & nonprofit developer programs.</div>
           </div>
           <span style={{ color: "#e0c4c4", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, whiteSpace: "nowrap" }}>Talk to Us →</span>
         </button>
@@ -2837,6 +2838,122 @@ function parseYouTubeId(input) {
 }
 
 // Attach PDFs and videos to existing lessons (courses themselves ship in code)
+// ─── PARTNER PAGE: a company's branded slice of GroundUp ────────────────────
+function PartnerPage({ slug, onSignIn, onExplore }) {
+  const [data, setData] = useState(undefined); // undefined = loading, null = not found
+  useEffect(() => {
+    if (!slug) { setData(null); return; }
+    fetch("/api/resources?partner=" + encodeURIComponent(slug))
+      .then(r => r.ok ? r.json() : null).then(setData).catch(() => setData(null));
+  }, [slug]);
+  const font = "'DM Sans', sans-serif";
+  if (data === undefined) return <div style={{ background: "#000", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#b80101", fontFamily: font }}>Loading…</div>;
+  if (!data?.partner) return (
+    <div style={{ background: "#000", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 14 }}>
+      <div style={{ color: "#f5e8e8", fontFamily: "'Cormorant Garamond', serif", fontSize: 30, fontWeight: 700 }}>Page not found</div>
+      <button onClick={onExplore} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px 26px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Explore GroundUp →</button>
+    </div>
+  );
+  const { partner, courses } = data;
+  return (
+    <div style={{ background: "#000", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
+      <div style={{ maxWidth: 980, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 48 }}>
+          {partner.logo_url && <img src={partner.logo_url} alt={partner.name} style={{ maxHeight: 84, maxWidth: 280, objectFit: "contain", marginBottom: 22 }} />}
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>{partner.name} × GroundUp</div>
+          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(34px,5vw,52px)", color: "#f5e8e8", lineHeight: 1.15, marginBottom: 14 }}>Your development curriculum,<br />sponsored by {partner.name}.</h1>
+          <p style={{ color: "#8a7070", fontSize: 15, maxWidth: 560, margin: "0 auto", lineHeight: 1.8, fontFamily: font }}>These courses were selected for your cohort and taught by Dr. Gina Merritt — 30+ years of real development, $600M+ active pipeline. Sign in with the account your program set up for you.</p>
+          <button onClick={onSignIn} style={{ marginTop: 24, background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "14px 32px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Sign In to Start Learning →</button>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18 }}>
+          {courses.map(c => (
+            <div key={c.id} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
+                <span style={{ background: (c.stageColor || "#b80101") + "18", color: c.stageColor || "#b80101", border: `1px solid ${c.stageColor || "#b80101"}40`, borderRadius: 4, padding: "2px 9px", fontSize: 10, fontFamily: font, fontWeight: 800, letterSpacing: "1px" }}>{c.stage}</span>
+                <span style={{ color: "#5a4040", fontSize: 12, fontFamily: font }}>{c.lessonCount} lessons · {c.duration}</span>
+              </div>
+              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#f0d8d8", marginBottom: 8, lineHeight: 1.25 }}>{c.title}</div>
+              <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{c.description}</p>
+            </div>
+          ))}
+        </div>
+        {courses.length === 0 && <p style={{ color: "#7a5050", textAlign: "center", fontFamily: font, fontSize: 14 }}>Curriculum coming soon — check back shortly.</p>}
+      </div>
+    </div>
+  );
+}
+
+// Admin: create & edit partner pages (logo, slug, course selection)
+function PartnerAdmin({ btnRed, btnGhost, inp, lbl, courseList, flash }) {
+  const [partners, setPartners] = useState([]);
+  const [form, setForm] = useState({ id: null, name: "", slug: "", logo_url: "", course_ids: [] });
+  const [busyLogo, setBusyLogo] = useState(false);
+  const authHeaders = () => ({ Authorization: "Bearer " + sessionStorage.getItem("adminToken") });
+  const load = () => fetch("/api/resources?partners=1", { headers: authHeaders() }).then(r => r.json()).then(d => setPartners(d.partners || [])).catch(() => {});
+  useEffect(() => { load(); }, []);
+  const save = async () => {
+    try {
+      const res = await fetch("/api/resources", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ action: "partner_save", ...form }) });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Save failed");
+      setForm({ id: null, name: "", slug: "", logo_url: "", course_ids: [] });
+      flash(true, `Partner page saved — live at /partner/${d.partner.slug}`);
+      load();
+    } catch (e) { flash(false, e.message); }
+  };
+  const uploadLogo = async (file) => {
+    if (!file) return;
+    setBusyLogo(true);
+    try {
+      const fd = new FormData(); fd.append("file", file);
+      const res = await fetch("/api/lesson-pdfs?kind=cover", { method: "POST", headers: authHeaders(), body: fd });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Upload failed");
+      setForm(f => ({ ...f, logo_url: d.url }));
+    } catch (e) { flash(false, e.message); } finally { setBusyLogo(false); }
+  };
+  const section = { background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginTop: 28 };
+  return (
+    <div style={section}>
+      <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>Partner Pages</div>
+      <p style={{ color: "#666666", fontSize: 12, marginBottom: 16, fontFamily: "'DM Sans', sans-serif" }}>A branded page for a sponsoring organization — their logo, only the courses their cohort needs. Lives at /partner/&lt;slug&gt;. Course content stays gated: their developers still sign in with the accounts you set up (comp or gift them from the Users tab).</p>
+      {partners.map(p => (
+        <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", padding: "10px 0", borderBottom: "1px solid #f2efe8" }}>
+          {p.logo_url && <img src={p.logo_url} alt="" style={{ height: 28, maxWidth: 90, objectFit: "contain" }} />}
+          <span style={{ fontWeight: 800, color: "#222222", fontSize: 13.5, fontFamily: "'DM Sans', sans-serif" }}>{p.name}</span>
+          <code style={{ color: "#666666", fontSize: 12 }}>/partner/{p.slug}</code>
+          <span style={{ color: "#9a9a9a", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{(Array.isArray(p.course_ids) ? p.course_ids : []).length} courses</span>
+          <span style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+            <button onClick={() => { navigator.clipboard && navigator.clipboard.writeText(window.location.origin + "/partner/" + p.slug); flash(true, "Link copied."); }} style={{ ...btnGhost, fontSize: 11, padding: "4px 10px" }}>Copy link</button>
+            <button onClick={() => setForm({ id: p.id, name: p.name, slug: p.slug, logo_url: p.logo_url || "", course_ids: Array.isArray(p.course_ids) ? p.course_ids : [] })} style={{ ...btnGhost, fontSize: 11, padding: "4px 10px" }}>Edit</button>
+            <button onClick={async () => { if (!window.confirm(`Delete the ${p.name} partner page?`)) return; await fetch("/api/resources", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ action: "partner_delete", id: p.id }) }); load(); }} style={{ ...btnGhost, fontSize: 11, padding: "4px 10px", color: "#b80101" }}>Delete</button>
+          </span>
+        </div>
+      ))}
+      <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
+        <div><label style={lbl}>Company name</label><input value={form.name} onChange={e => setForm({ ...form, name: e.target.value, slug: form.id ? form.slug : e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") })} placeholder="Acme CDFI" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+        <div><label style={lbl}>URL slug</label><input value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} placeholder="acme-cdfi" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+        <div>
+          <label style={lbl}>Logo {busyLogo ? "(uploading…)" : ""}</label>
+          <input type="file" accept="image/*" onChange={e => uploadLogo(e.target.files?.[0])} style={{ fontSize: 12, fontFamily: "'DM Sans', sans-serif" }} />
+          {form.logo_url && <img src={form.logo_url} alt="logo" style={{ height: 30, marginTop: 6, display: "block" }} />}
+        </div>
+      </div>
+      <div style={{ marginTop: 14 }}>
+        <label style={lbl}>Courses on their page</label>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
+          {courseList.map(c => {
+            const on = form.course_ids.includes(c.id);
+            return <button key={c.id} onClick={() => setForm(f => ({ ...f, course_ids: on ? f.course_ids.filter(x => x !== c.id) : [...f.course_ids, c.id] }))}
+              style={{ background: on ? "#b80101" : "transparent", color: on ? "#fff" : "#555555", border: "1px solid " + (on ? "#b80101" : "#cccccc"), borderRadius: 8, padding: "7px 12px", fontSize: 12, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, cursor: "pointer" }}>{c.title.split(":")[0]}{c.hidden ? " (draft)" : ""}</button>;
+          })}
+        </div>
+      </div>
+      <button onClick={save} disabled={!form.name || !form.slug} style={{ ...btnRed, marginTop: 16, opacity: (!form.name || !form.slug) ? 0.5 : 1 }}>{form.id ? "Save Changes" : "Create Partner Page"}</button>
+    </div>
+  );
+}
+
 function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
   const [attachments, setAttachments] = useState(null);
   const [openLesson, setOpenLesson] = useState(null); // "courseId:idx"
@@ -3008,6 +3125,7 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
           </div>
         </div>
       ))}
+      <PartnerAdmin btnRed={btnRed} btnGhost={btnGhost} inp={inp} lbl={lbl} courseList={courseList} flash={flash} />
     </div>
   );
 }
@@ -5219,7 +5337,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "advisory", "shop", "officehours", "terms", "privacy"];
+  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "advisory", "shop", "officehours", "terms", "privacy", "partner"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
     return PAGES.includes(p) ? p : (sessionStorage.getItem("activePage") || "home");
@@ -5275,6 +5393,8 @@ export default function App() {
   useEffect(() => {
     // Two shapes: /invite/dakotah-jennifer (the pretty one) and ?ref=code
     if (/^\/shop\/?$/i.test(window.location.pathname)) { setActivePage("shop"); window.history.replaceState({}, "", "/"); }
+    const partnerMatch = window.location.pathname.match(/^\/partner\/([\w-]+)/i);
+    if (partnerMatch) { setPartnerSlug(partnerMatch[1].toLowerCase()); setActivePageRaw("partner"); }
     const gift = window.location.pathname.match(/^\/gift\/([\w-]+)/i);
     if (gift) { localStorage.setItem("guGift", gift[1].toUpperCase()); window.history.replaceState({}, "", "/"); }
     const invite = window.location.pathname.match(/^\/invite\/([\w-]+)/i);
@@ -5284,6 +5404,7 @@ export default function App() {
       if (invite) window.history.replaceState({}, "", "/");
     }
   }, []);
+  const [partnerSlug, setPartnerSlug] = useState(null);
   const [resetToken, setResetToken] = useState(() => new URLSearchParams(window.location.search).get("reset"));
   const [notif, setNotif] = useState(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -5589,6 +5710,7 @@ export default function App() {
       {activePage === "home" && <HomePage setActivePage={navigateTo} onSignUp={openSignup} currentUser={currentUser} eventInvited={eventInvited} />}
       {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} /></div>}
       {activePage === "advisory" && <RetainerPage member={member} setActivePage={navigateTo} />}
+      {activePage === "partner" && <PartnerPage slug={partnerSlug} onSignIn={() => setShowAuth("login")} onExplore={() => navigateTo("courses")} />}
       {activePage === "shop" && <ShopPage member={member} onSignIn={() => openSignup("Free")} />}
       {activePage === "terms" && <TermsPage />}
       {activePage === "privacy" && <PrivacyPage />}

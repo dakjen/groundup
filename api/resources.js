@@ -205,6 +205,42 @@ export default async function handler(req, res) {
       return res.json({ attachments: atts });
     }
 
+    // ── Partner pages: a company's branded curriculum at /partner/<slug> ──
+    // Public: the partner's name + logo and ONLY the published courses on their
+    // list (titles/descriptions — lesson content stays entitlement-gated).
+    if (req.method === 'GET' && req.query.partner) {
+      const [p] = await sql`SELECT slug, name, logo_url, course_ids FROM partners WHERE slug = ${String(req.query.partner).toLowerCase()} AND active`;
+      if (!p) return res.status(404).json({ error: 'Partner not found' });
+      const ids = Array.isArray(p.course_ids) ? p.course_ids : [];
+      const rows = ids.length ? await sql`SELECT id, title, description, stage, stage_color, duration, lessons FROM courses WHERE id = ANY(${ids}) AND NOT COALESCE(hidden, FALSE) ORDER BY position` : [];
+      return res.json({ partner: { slug: p.slug, name: p.name, logo_url: p.logo_url },
+        courses: rows.map(c => ({ id: c.id, title: c.title, description: c.description, stage: c.stage, stageColor: c.stage_color, duration: c.duration, lessonCount: (c.lessons || []).length })) });
+    }
+    if (req.method === 'GET' && req.query.partners === '1') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const rows = await sql`SELECT * FROM partners ORDER BY created_at DESC`;
+      return res.json({ partners: rows });
+    }
+    if (req.method === 'POST' && req.body && req.body.action === 'partner_save') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const slug = String(req.body.slug || '').toLowerCase().trim().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+      const name = String(req.body.name || '').trim();
+      if (!slug || !name) return res.status(400).json({ error: 'Name and slug required' });
+      const courseIds = (Array.isArray(req.body.course_ids) ? req.body.course_ids : []).map(String).slice(0, 50);
+      const logo = req.body.logo_url ? String(req.body.logo_url) : null;
+      const active = req.body.active !== false;
+      const [row] = await sql`INSERT INTO partners (slug, name, logo_url, course_ids, active, created_at)
+        VALUES (${slug}, ${name}, ${logo}, ${JSON.stringify(courseIds)}, ${active}, NOW())
+        ON CONFLICT (slug) DO UPDATE SET name = ${name}, logo_url = ${logo}, course_ids = ${JSON.stringify(courseIds)}, active = ${active}
+        RETURNING *`;
+      return res.json({ success: true, partner: row });
+    }
+    if (req.method === 'POST' && req.body && req.body.action === 'partner_delete') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      await sql`DELETE FROM partners WHERE id = ${Number(req.body.id)}`;
+      return res.json({ success: true });
+    }
+
     // Publish / unpublish a course — drafts load invisible, one click ships them
     if (req.method === 'POST' && req.body && req.body.action === 'course_publish') {
       if (!admin) return res.status(401).json({ error: 'Unauthorized' });
