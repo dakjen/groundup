@@ -971,7 +971,7 @@ const WL_PAIN = [
   "Other",
 ];
 const WL_SOURCE = ["Dr. Merritt / NREUV", "A Lunch & Learn", "LinkedIn", "Instagram", "Word of mouth", "An event or conference", "Other"];
-const WL_BUDGETS = ["Under $25", "$25–$100", "$100–$200", "$300+", "$2,000+"];
+const WL_BUDGETS = ["$25–$100", "$100–$200", "$300+", "$2,000+"];
 
 // Two lists, one form. "insider" is the secret /waitlist page (first access);
 // "general" is what the public homepage collects before the general launch.

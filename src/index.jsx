@@ -1423,7 +1423,7 @@ function ContactPage({ setActivePage, advisorLink }) {
     { id: "capital", title: "Capital Stack Review", desc: "Deep dive into your financing structure — tax credit sizing, subsidy sequencing, gap analysis, and how to close the deal.", price: "$550", duration: "45 min", Icon: BarChart3, stripe: "https://buy.stripe.com/placeholder_capital" },
     { id: "community", title: "Community Development", desc: "Community engagement strategy, political capital, government relationships, and neighborhood support for your project.", price: "$375", duration: "45 min", Icon: Handshake, stripe: "https://buy.stripe.com/placeholder_community" },
     { id: "bipoc", title: "BIPOC Developer Session", desc: "A dedicated session for BIPOC developers — navigating the industry, building capital relationships, and growing as an underrepresented developer. Reserved for BIPOC clients.", price: "$275", duration: "45 min", Icon: UsersIcon, stripe: "https://buy.stripe.com/placeholder_bipoc" },
-    { id: "advisor", title: "Senior Advisor — start with the Full Project Intake", desc: "Have a live deal? Send her the whole thing. The $1,500 intake takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. Continue into the retainer (from $3,025/mo) and the $1,500 credits against your first month.", price: "$1,500", duration: "intake · credited if you continue", Icon: Handshake, advisor: true },
+    { id: "advisor", title: "Senior Advisor — start with the Full Project Intake", desc: "Have a live deal? Send her the whole thing. The $1,500 intake takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. Then the retainer puts Dr. Merritt on your project month over month: 5 hrs/mo — $3,025 · 10 hrs/mo — $5,500 · 15 hrs/mo — $7,700. Continue and the $1,500 credits against your first month.", price: "$1,500", duration: "intake · credited if you continue", Icon: Handshake, advisor: true },
   ];
 
   const [selected, setSelected] = useState(null);
@@ -1572,7 +1572,7 @@ function ContactPage({ setActivePage, advisorLink }) {
             </div>
             {selected.advisor ? (
               <div style={{ marginTop: 12, background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 10, padding: "14px 18px", color: "#b8a060", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
-                The Full Project Intake stands on its own: Dr. Merritt takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. If you continue into the retainer, <strong style={{ color: "#e0c4c4" }}>the $1,500 is credited against your first month</strong> — it's never wasted money. Prefer to talk first? The engagement call is free.
+                The Full Project Intake stands on its own: Dr. Merritt takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. Retainer pricing: <strong style={{ color: "#e0c4c4" }}>5 hrs/mo — $3,025 · 10 hrs/mo — $5,500 · 15 hrs/mo — $7,700</strong>, everything in Elite included. If you continue into the retainer, <strong style={{ color: "#e0c4c4" }}>the $1,500 is credited against your first month</strong> — it's never wasted money. Prefer to talk first? The engagement call is free.
               </div>
             ) : (
               <div style={{ marginTop: 10, fontSize: 12, color: "#5a4040", fontFamily: "'DM Sans', sans-serif" }}>After payment, complete the form below so Dr. Merritt can prepare for your session.</div>
