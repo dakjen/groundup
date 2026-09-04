@@ -520,11 +520,25 @@ export default async function handler(req, res) {
     // Member discount on 1:1 sessions — computed here from the signed-in user's tier.
     // Label off the actual price delta, so an item excluded from the discount
     // (see NO_MEMBER_DISCOUNT) is never labeled as discounted.
-    const unitAmount = memberPrice(item, user.tier);
+    // GRANDFATHERED PRICING: the first 25 on the insider waitlist (founding_lnl)
+    // keep the prices from when they joined the list — forever. The subscription
+    // is created at the old rate, so every renewal stays there too.
+    const GRANDFATHER = {
+      sub_Builder: 9999, sub_Premium: 14999,
+      sub_Builder_annual: 119988, sub_Premium_annual: 179988,
+    };
+    let unitAmount = memberPrice(item, user.tier);
+    let grandfathered = false;
+    if (GRANDFATHER[item] && GRANDFATHER[item] < unitAmount) {
+      const [wl] = await sql`SELECT id FROM waitlist WHERE LOWER(email) = LOWER(${user.email}) AND COALESCE(list, 'insider') = 'insider' AND founding_lnl = TRUE LIMIT 1`;
+      if (wl) { unitAmount = GRANDFATHER[item]; grandfathered = true; }
+    }
     const saved = product.amount - unitAmount;
-    const productName = saved > 0
-      ? `${product.name} — ${user.tier} member rate (${Math.round((saved / product.amount) * 100)}% off)`
-      : product.name;
+    const productName = grandfathered
+      ? `${product.name} — Founding 25 grandfathered rate`
+      : saved > 0
+        ? `${product.name} — ${user.tier} member rate (${Math.round((saved / product.amount) * 100)}% off)`
+        : product.name;
 
     const base = siteUrl();
     const params = {

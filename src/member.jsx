@@ -1021,7 +1021,13 @@ export function WaitlistForm({ list = "insider" }) {
           <>
             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>{insider ? "Elite Insider Waitlist" : "GroundUp Waitlist"}</div>
             <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>{insider ? "Become an insider" : "Get on the list"}</h2>
-            <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginBottom: 22 }}>{insider ? "Tell us where you are and what's in your way — at launch, you'll get first access and our personal recommendation for the plan that fits." : "Tell us where you are and what's in your way — the moment doors open, you'll get your invite and our personal recommendation for the plan that fits."}</p>
+            <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginBottom: insider ? 14 : 22 }}>{insider ? "Tell us where you are and what's in your way — at launch, you'll get first access and our personal recommendation for the plan that fits." : "Tell us where you are and what's in your way — the moment doors open, you'll get your invite and our personal recommendation for the plan that fits."}</p>
+            {insider && (
+              <div style={{ background: "#e0c4c410", border: "1px solid #e0c4c445", borderRadius: 12, padding: "14px 18px", marginBottom: 22 }}>
+                <div style={{ color: "#e0c4c4", fontSize: 11, fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>✦ Founding 25 — locked-in pricing</div>
+                <div style={{ color: "#c8a8a8", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>The first 25 people on this list keep today's founding rates <strong style={{ color: "#f0d8d8" }}>forever</strong> — <strong style={{ color: "#f0d8d8" }}>Builder at $99.99/mo</strong> (instead of $149.99) and <strong style={{ color: "#f0d8d8" }}>Premium at $149.99/mo</strong> (instead of $249.99) — plus your first year of Lunch & Learns free.</div>
+              </div>
+            )}
             <form onSubmit={submit}>
               <div style={{ marginBottom: 14 }}>
                 <label style={lbl}>Full name</label>

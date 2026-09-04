@@ -72,7 +72,7 @@ This document reflects every pricing rule currently implemented in code. Prices 
 
 ## 8. Waitlist perks & the recommendation engine
 
-- **Founding 25 (insider waitlist only):** the first 25 insiders get their **first year of Lunch & Learns free** (even on a free account) + a Founding badge.
+- **Founding 25 (insider waitlist only):** the first 25 insiders get their **first year of Lunch & Learns free** (even on a free account), a Founding badge, and **grandfathered pricing forever** — Builder at $99.99/mo and Premium at $149.99/mo (the pre-increase rates), applied automatically at checkout and locked in for every renewal. Advertised in a banner on the insider /waitlist page.
 - **First 10 (either list):** a **14-day trial of one course** claimable after signup, a **personal invite link** (`/invite/their-name`) that grants the same 14-day one-course trial to people who sign up through it, a First-10 badge — and they **always** receive the stretch offer at **15%** instead of 10%.
 - **Recommendation algorithm** (budget first, need second):
   - $2,000+ → **Senior Advisor Retainer** (from $3,025/mo, engagement-call CTA)
