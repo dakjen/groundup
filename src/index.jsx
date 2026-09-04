@@ -1770,6 +1770,13 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
   const fmt = (d) => new Date(d).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
   const active = status?.active;
   const canSeeRecordings = active || memberRank >= 2;
+  // While a signed-in member's access check is in flight, hold a quiet loading
+  // state — never flash the signed-out pitch at someone who has access.
+  if (loading && member) return (
+    <div style={{ background: pageBg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ color: "#b80101", fontFamily: font, fontSize: 13, letterSpacing: "2px", textTransform: "uppercase", fontWeight: 700 }}>Loading your sessions…</div>
+    </div>
+  );
   const card = { background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16 };
 
   return (
