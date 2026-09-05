@@ -81,6 +81,7 @@ This document reflects every pricing rule currently implemented in code. Prices 
   - $100–$200 → **Builder** if their answers point at the community (need ≥ 2), else **Member** · legacy $150–$500 → Premium
   - $25–$100 → **Member**
   - **"I need deal-specific support on a live project"** (learn answer) → **Elite, regardless of budget** — only Elite and the retainer include deal support.
+  - **"I need specific, customized deal help"** (budget answer) → **Elite** — same rule, from the budget question.
   - Admin can override any recommendation; comped waitlisters are excluded from MRR/ARR projections and receive no launch/recommend emails.
 - **Stretch offer:** insiders recommended Member in the mid-budget band are offered **Builder** at 10% off (15% for first-10) for the first year.
 

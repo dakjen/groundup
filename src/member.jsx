@@ -1001,7 +1001,7 @@ const WL_PAIN = [
   "Other",
 ];
 const WL_SOURCE = ["Dr. Merritt / NREUV", "A Lunch & Learn", "LinkedIn", "Instagram", "Word of mouth", "An event or conference", "Other"];
-const WL_BUDGETS = ["$25–$100", "$100–$200", "$300+", "$2,000+"];
+const WL_BUDGETS = ["$25–$100", "$100–$200", "$300+", "I need specific, customized deal help", "$2,000+"];
 
 // Two lists, one form. "insider" is the secret /waitlist page (first access);
 // "general" is what the public homepage collects before the general launch.
@@ -1096,10 +1096,13 @@ export function WaitlistForm({ list = "insider" }) {
                     <button type="button" key={b} onClick={() => setBudget(b)}
                       onMouseEnter={() => b === "$2,000+" && setPartnerHover(true)}
                       onMouseLeave={() => b === "$2,000+" && setPartnerHover(false)}
-                      style={{ gridColumn: b === "$2,000+" ? "1 / -1" : undefined, background: budget === b ? "#b8010118" : "transparent", border: budget === b ? "1px solid #b80101" : b === "$2,000+" ? "1px solid #e0c4c455" : "1px solid #2a0000", borderRadius: 8, padding: "11px 12px", cursor: "pointer", color: budget === b ? "#f0d8d8" : b === "$2,000+" ? "#e0c4c4" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font }}>
-                      {b === "$2,000+" ? "✦ $2,000+ · Thought partnership" : b}
+                      style={{ gridColumn: (b === "$2,000+" || b === "I need specific, customized deal help") ? "1 / -1" : undefined, background: budget === b ? "#b8010118" : "transparent", border: budget === b ? "1px solid #b80101" : b === "$2,000+" ? "1px solid #e0c4c455" : b === "I need specific, customized deal help" ? "1px solid #b8010145" : "1px solid #2a0000", borderRadius: 8, padding: "11px 12px", cursor: "pointer", color: budget === b ? "#f0d8d8" : b === "$2,000+" ? "#e0c4c4" : b === "I need specific, customized deal help" ? "#c8a8a8" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font }}>
+                      {b === "$2,000+" ? "✦ $2,000+ · Thought partnership" : b === "I need specific, customized deal help" ? "🔴 I need specific, customized deal help" : b}
                     </button>
                   ))}
+                  {budget === "I need specific, customized deal help" && (
+                    <div style={{ gridColumn: "1 / -1", background: "#12060a", border: "1px solid #b8010140", borderRadius: 8, padding: "10px 12px", color: "#c8a8a8", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>Deal-specific support — your numbers, your gap, your structure — comes with the <strong style={{ color: "#f0d8d8" }}>Elite plan</strong> ($499.99/mo) or the Senior Advisor retainer. We'll recommend Elite and point you at the fastest way to get Dr. Merritt on your deal.</div>
+                  )}
                   {(budget === "$2,000+" || partnerHover) && (
                     <div style={{ gridColumn: "1 / -1", color: "#e0c4c4", fontSize: 12.5, fontFamily: font, lineHeight: 1.8, background: "#12060a", border: "1px solid #e0c4c430", borderRadius: 8, padding: "12px 16px" }}>
                       <strong style={{ color: "#f0d8d8" }}>This isn't a subscription — it's a retainer.</strong> Put Dr. Gina Merritt directly on YOUR project: dedicated hours with her every month, deal review, capital strategy, negotiation prep, and a private client workspace. You're not buying content — you're buying her time, her expertise, and her business infrastructure under your foundation. That's why it's priced like the consulting engagement it is.
