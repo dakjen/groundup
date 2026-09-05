@@ -99,15 +99,21 @@ export function recommendPlan(e) {
   //                             "all of the above") — otherwise Member ($49.99)
   //   below                   → Member
   const need = Math.max(LEARN_NEED[e.learn] || 1, PAIN_NEED[e.reason] || 1);
-  const ELITE_B = ['$300+', '$500+'];
-  const PREMIUM_B = ['$100–$200', '$150–$500'];
-  const MID_B = ['$25–$100', '$50–$150'];
+  // Budget bands remapped for the Sept 2026 prices (Builder $149.99, Premium $249.99):
+  //   $300+     → Premium fits; Elite when their answers point at Dr. Merritt (need 3)
+  //   $100–$200 → Builder when the community is the need, else Member
+  //   $25–$100  → Member (the only tier inside the band)
+  //   Legacy band values from older forms keep their original meaning.
+  const HIGH_B = ['$300+', '$500+'];
+  const LEGACY_PREMIUM_B = ['$150–$500'];
+  const MID_B = ['$100–$200', '$50–$150'];
   // Deal-specific support exists ONLY at Elite and the Senior Advisor retainer —
   // if that's what they said they need, no lower tier is an honest recommendation.
   const wantsDealSupport = e.learn === 'I need deal-specific support on a live project';
   const rank = wantsDealSupport ? 4
-    : ELITE_B.includes(e.budget) ? 4
-    : PREMIUM_B.includes(e.budget) ? 3
+    : e.budget === '$500+' ? 4
+    : HIGH_B.includes(e.budget) ? (need >= 3 ? 4 : 3)
+    : LEGACY_PREMIUM_B.includes(e.budget) ? 3
     : MID_B.includes(e.budget) && need >= 2 ? 2
     : 1;
   const LADDER = { 1: PLANS.Basic, 2: PLANS.Builder, 3: PLANS.Premium, 4: PLANS.Elite };
@@ -115,7 +121,7 @@ export function recommendPlan(e) {
   // THE STRETCH OFFER: budget $50–$500 but their need sits one tier above what
   // they can afford (no network, can't find capital, needs partners, complex
   // learning goals) → offer the next tier at 10% off their first year.
-  const inStretchBand = ['$25–$100', '$50–$150'].includes(e.budget);
+  const inStretchBand = ['$25–$100', '$100–$200', '$50–$150'].includes(e.budget);
   // First-10 waitlisters ALWAYS get the stretch offer, and at 15% instead of 10% —
   // being early on the list earns the better deal.
   const insider = (e.list || 'insider') === 'insider';

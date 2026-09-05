@@ -77,10 +77,9 @@ This document reflects every pricing rule currently implemented in code. Prices 
 - **First 10 (either list):** a **14-day trial of one course** claimable after signup, a **personal invite link** (`/invite/their-name`) that grants the same 14-day one-course trial to people who sign up through it, a First-10 badge — and they **always** receive the stretch offer at **15%** instead of 10%.
 - **Recommendation algorithm** (budget first, need second):
   - $2,000+ → **Senior Advisor Retainer** (from $3,025/mo, engagement-call CTA)
-  - $300+/$500+ → **Elite**
-  - $100–$200 / $150–$500 → **Premium**
-  - $25–$100 / $50–$150 → **Builder** if their answers point at the community (need ≥ 2), else **Member**
-  - below → **Member**
+  - $300+ → **Elite** when their answers point at Dr. Merritt directly (need 3), else **Premium** · legacy $500+ → Elite
+  - $100–$200 → **Builder** if their answers point at the community (need ≥ 2), else **Member** · legacy $150–$500 → Premium
+  - $25–$100 → **Member**
   - **"I need deal-specific support on a live project"** (learn answer) → **Elite, regardless of budget** — only Elite and the retainer include deal support.
   - Admin can override any recommendation; comped waitlisters are excluded from MRR/ARR projections and receive no launch/recommend emails.
 - **Stretch offer:** insiders recommended Member in the mid-budget band are offered **Builder** at 10% off (15% for first-10) for the first year.

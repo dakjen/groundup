@@ -4495,13 +4495,14 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
   const recFor = (e) => {
     if (e.rec_override) return { Basic: "Member — $49.99/mo", Builder: "Builder — $149.99/mo", Premium: "Premium — $249.99/mo", Elite: "Elite — $499.99/mo", Advisor: "Senior Advisor — from $3,025/mo" }[e.rec_override] || "Member — $49.99/mo";
     if (e.budget === "$2,000+") return "Senior Advisor — from $3,025/mo";
-    if (["$300+", "$500+"].includes(e.budget)) return "Elite — $499.99/mo";
-    if (["$100–$200", "$150–$500"].includes(e.budget)) return "Premium — $249.99/mo";
     if (e.learn === "I need deal-specific support on a live project") return "Elite — $499.99/mo";
     const LN = { "Financing & capital stacks": 2, "Getting my first deal done": 2, "Public-private partnerships": 3, "Scaling my business & pipeline": 3, "Scaling my existing pipeline": 3, "All of the above": 2 };
     const PN = { "I don't understand the numbers": 2, "I can't find the capital": 2, "I need partners or a team": 2, "No network in the industry": 2, "Navigating government & compliance": 3, "I have a deal but I'm stuck": 3 };
     const need = Math.max(LN[e.learn] || 1, PN[e.reason] || 1);
-    if (["$25–$100", "$50–$150"].includes(e.budget) && need >= 2) return "Builder — $149.99/mo";
+    if (e.budget === "$500+") return "Elite — $499.99/mo";
+    if (e.budget === "$300+") return need >= 3 ? "Elite — $499.99/mo" : "Premium — $249.99/mo";
+    if (e.budget === "$150–$500") return "Premium — $249.99/mo";
+    if (["$100–$200", "$50–$150"].includes(e.budget) && need >= 2) return "Builder — $149.99/mo";
     return "Member — $49.99/mo";
   };
 
@@ -4648,9 +4649,9 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
           Conservative maps their budget to the plan it comfortably covers;
           upside assumes each stretches one tier. */}
       {(() => {
-        const PLAN_FIT = { "Under $25": 0, "$25–$100": 49.99, "$100–$200": 249.99, "$300+": 499.99, "$2,000+": 3025, "Under $50": 0, "$50–$150": 49.99, "$150–$500": 249.99, "$500+": 499.99 };
+        const PLAN_FIT = { "Under $25": 0, "$25–$100": 49.99, "$100–$200": 149.99, "$300+": 249.99, "$2,000+": 3025, "Under $50": 0, "$50–$150": 49.99, "$150–$500": 249.99, "$500+": 499.99 };
         const fitFor = (e) => { const r = recFor(e); return e.comped ? 0 : r.startsWith("Builder") ? 149.99 : r.startsWith("Premium") ? 249.99 : r.startsWith("Elite") ? 499.99 : r.startsWith("Senior") ? 3025 : (PLAN_FIT[e.budget] || 0); };
-        const STRETCH = { "Under $25": 49.99, "$25–$100": 149.99, "$100–$200": 499.99, "$300+": 499.99, "$2,000+": 3025, "Under $50": 49.99, "$50–$150": 149.99, "$150–$500": 499.99, "$500+": 499.99 };
+        const STRETCH = { "Under $25": 49.99, "$25–$100": 149.99, "$100–$200": 249.99, "$300+": 499.99, "$2,000+": 3025, "Under $50": 49.99, "$50–$150": 149.99, "$150–$500": 499.99, "$500+": 499.99 };
         const mrrFit = entries.reduce((s, e) => s + fitFor(e), 0);
         // Premium is the ideal recommendation; Elite (and Advisor) are the exceptional wins
         const premiumRec = entries.filter(e => recFor(e).startsWith("Premium")).length;
