@@ -195,12 +195,20 @@ I agree to the <a href="/terms" target="_blank" style={{ color: "#b80101", fontW
 // ─── MEMBERSHIP PAGE (dashboard) ────────────────────────────────────────────
 
 const BENEFITS = {
-  Free: ["One lesson of your choice — the first you open", "1 curated case study", "Glossary & resource sheet"],
-  Basic: ["All 4 courses + every new course we add", "Case studies, worksheets & reading guides", "Community access — read every channel"],
-  Premium: ["Everything in Member", "Engage in the community — post, reply & network", "JV & Partnerships channel", "Development timeline templates", "Lunch & Learn recordings", "1 free work session (1 hr) + priority booking", "The Opportunity Board — RFPs, funding windows & deals"],
-  Builder: ["Everything in Member", "Post, reply & network in the community", "View-only access to every digital product"],
-  Elite: ["Everything in Premium", "Priority responses in the community", "Direct messages to Dr. Merritt & her team — replies within 2 business days", "Elite Lounge — private channel", "3 one-on-one advisory calls/yr with Dr. Merritt", "Priority Q&A submissions"],
+  Free: ["One free lesson of your choice", "Course catalog & curriculum previews", "Lunch & Learn access available to purchase"],
+  Basic: ["Every course — all seven, plus each new one we add", "All written lessons, case studies & worksheets", "Resource lists & reading guides", "Community access — read every channel"],
+  Builder: ["Everything in Member", "Post, reply & network in the community", "Live Lunch & Learns with Dr. Merritt — free, plus the recordings", "View-only: every guide, template & the Developer's Playbook"],
+  Premium: ["Everything in Builder", "Download 3 guides or templates every month", "The Opportunity Board — RFPs, funding windows & deals", "JV & Partnerships channel", "Development timeline templates", "Group office hours with Dr. Merritt + priority booking", "10% off 1:1 sessions with Dr. Merritt"],
+  Elite: ["Everything in Premium", "Deal support — bring YOUR deal to your advisory calls", "3 one-on-one advisory calls/yr with Dr. Merritt", "Direct messages to Dr. Merritt & her team — replies within 2 business days", "Elite Lounge — private channel", "Unlimited downloads — including the Developer's Playbook", "30% off 1:1 sessions with Dr. Merritt", "Invite to the exclusive networking event"],
   Partner: ["Custom organizational access", "Contact info@nreuv.com for your cohort setup"],
+};
+
+// What the NEXT tier would add — the approachable upsell on the membership page
+const NEXT_TIER = {
+  Free: { tier: "Basic", price: "$49.99/mo", adds: ["The full curriculum — every course, every lesson", "Community access"] },
+  Basic: { tier: "Builder", price: "$149.99/mo", adds: ["A voice in the community — post, reply & network", "Free live Lunch & Learns + all recordings", "Every template & guide, view-only"] },
+  Builder: { tier: "Premium", price: "$249.99/mo", adds: ["3 downloads a month", "The Opportunity Board", "Office hours with Dr. Merritt", "10% off 1:1 sessions"] },
+  Premium: { tier: "Elite", price: "$499.99/mo", adds: ["Deal support — bring YOUR deal to advisory calls", "DMs to Dr. Merritt & her team", "Unlimited downloads incl. the Playbook", "30% off 1:1 sessions"] },
 };
 
 function BookingsCard({ member }) {
@@ -313,7 +321,12 @@ function ManageMembershipCard({ member, rank }) {
             Update your card, view invoices, or cancel — it takes one click, no questions asked.
           </div>
           <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font, lineHeight: 1.7 }}>
-            Cancel before the 5th of the month and this month's payment is refunded; on or after the 5th, no refund for the current month — your access continues through the period you've paid for. On an annual plan, cancel within the first 6 months (we honor a 10-day grace period past the mark) and half your annual payment is refunded; after that, the refund is forfeited and your access simply runs to the end of your paid year. <strong style={{ color: "var(--gu-body)" }}>15 days after your membership ends, your account data — posts, messages, and progress — is permanently deleted.</strong> Rejoin before then and nothing is lost.
+            <span style={{ display: "block", fontWeight: 800, color: "var(--gu-text2)", marginBottom: 8 }}>How cancelling works</span>
+            <span style={{ display: "block", marginBottom: 6 }}>1 · Click <strong style={{ color: "var(--gu-text2)" }}>Manage Billing</strong> — it opens your secure Stripe portal.</span>
+            <span style={{ display: "block", marginBottom: 6 }}>2 · Choose <strong style={{ color: "var(--gu-text2)" }}>Cancel subscription</strong>. That's it — no emails, no phone calls, no questions.</span>
+            <span style={{ display: "block", marginBottom: 12 }}>3 · Your access continues through everything you've already paid for.</span>
+            <span style={{ display: "block", fontWeight: 800, color: "var(--gu-text2)", marginBottom: 8 }}>The refund policy</span>
+            Monthly plans: cancel before the 5th of the month and this month's payment is refunded; on or after the 5th, no refund for the current month. Annual plans: cancel within the first 6 months (we honor a 10-day grace period past the mark) and half your annual payment is refunded; after that, the refund is forfeited and your access runs to the end of your paid year. <strong style={{ color: "var(--gu-body)" }}>15 days after your membership ends, your account data — posts, messages, and progress — is permanently deleted.</strong> Rejoin before then and nothing is lost.
           </div>
         </div>
         <button onClick={openPortal} disabled={busy} style={{ ...btnGhost, opacity: busy ? 0.6 : 1, whiteSpace: "nowrap" }}>
@@ -447,7 +460,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
           <div onClick={() => setActivePage("courses")} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: "pointer" }}>
             <div style={{ marginBottom: 12 }}><BookOpen size={24} color="#b80101" /></div>
             <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Your Courses</div>
-            <p style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 1 ? "Full access to all 4 courses and every lesson." : member.free_lesson_key ? "You've used your free lesson. Upgrade for the full curriculum." : "One free lesson included. Upgrade for the full curriculum."}</p>
+            <p style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 1 ? "Full access to every course and every lesson." : member.free_lesson_key ? "You've used your free lesson. Upgrade for the full curriculum." : "One free lesson included. Upgrade for the full curriculum."}</p>
           </div>
           <div onClick={() => rank >= 1 && setActivePage("community")} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: rank >= 1 ? "pointer" : "default", opacity: rank >= 1 ? 1 : 0.55 }}>
             <div style={{ marginBottom: 12 }}><MessagesSquare size={24} color="#b80101" /></div>
@@ -457,7 +470,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
           <div onClick={() => setActivePage("lunchlearn")} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: "pointer", opacity: rank >= 2 ? 1 : 0.55 }}>
             <div style={{ marginBottom: 12 }}><Video size={24} color="#b80101" /></div>
             <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Lunch & Learns {rank < 2 && <Lock size={13} style={{ display: "inline", verticalAlign: "middle" }} />}</div>
-            <p style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 2 ? "Recordings and live session access included in your plan." : "Recordings are a Premium benefit. Live sessions open to all."}</p>
+            <p style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 2 ? "Live sessions and recordings included in your plan — free." : "Live sessions and recordings come free with Builder and up."}</p>
           </div>
           <div onClick={() => setActivePage("contact")} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: "pointer", opacity: rank >= 3 ? 1 : 0.55 }}>
             <div style={{ marginBottom: 12 }}><Handshake size={24} color="#b80101" /></div>
@@ -466,15 +479,32 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
           </div>
         </div>
 
-        <div style={{ background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 16, padding: "28px 32px", marginBottom: 28 }}>
-          <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 16 }}>What your {member.tier} plan includes</div>
-          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-            {(BENEFITS[member.tier] || []).map((b, i) => (
-              <li key={i} style={{ display: "flex", gap: 12, marginBottom: 10, color: "var(--gu-body)", fontSize: 14, lineHeight: 1.7, fontFamily: font, fontWeight: 600 }}>
-                <span style={{ color: "#b80101" }}>→</span><span>{b}</span>
-              </li>
-            ))}
-          </ul>
+        <div style={{ display: "grid", gridTemplateColumns: NEXT_TIER[member.tier] ? "repeat(auto-fit, minmax(300px, 1fr))" : "1fr", gap: 16, marginBottom: 28 }}>
+          <div style={{ background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 16, padding: "28px 32px" }}>
+            <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Your {TIER_LABELS[member.tier] || member.tier} benefits</div>
+            <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 16 }}>Everything your plan opens up — use all of it.</div>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              {(BENEFITS[member.tier] || []).map((b, i) => (
+                <li key={i} style={{ display: "flex", gap: 12, marginBottom: 10, color: "var(--gu-body)", fontSize: 14, lineHeight: 1.7, fontFamily: font, fontWeight: 600 }}>
+                  <span style={{ color: "#22c55e", flexShrink: 0 }}>✓</span><span>{b}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          {NEXT_TIER[member.tier] && (
+            <div style={{ background: "var(--gu-red-tint)", border: "1px solid #b8010135", borderRadius: 16, padding: "28px 32px", display: "flex", flexDirection: "column" }}>
+              <div style={{ fontSize: 9, color: "#e0c4c4", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>One step up: {TIER_LABELS[NEXT_TIER[member.tier].tier] || NEXT_TIER[member.tier].tier} · {NEXT_TIER[member.tier].price}</div>
+              <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 16 }}>When you're ready for more, here's what it adds:</div>
+              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 18px" }}>
+                {NEXT_TIER[member.tier].adds.map((b, i) => (
+                  <li key={i} style={{ display: "flex", gap: 12, marginBottom: 10, color: "var(--gu-body)", fontSize: 14, lineHeight: 1.7, fontFamily: font, fontWeight: 600 }}>
+                    <span style={{ color: "#b80101", flexShrink: 0 }}>+</span><span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+              <button style={{ ...btnRed, marginTop: "auto", alignSelf: "flex-start" }} onClick={() => setActivePage("pricing")}>Upgrade to {TIER_LABELS[NEXT_TIER[member.tier].tier] || NEXT_TIER[member.tier].tier} →</button>
+            </div>
+          )}
         </div>
 
         <BenefitGateNotice member={member} />
