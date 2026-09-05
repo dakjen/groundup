@@ -29,8 +29,9 @@ async function saveEvents(sql, events) {
 }
 
 async function getAccess(sql, userId) {
-  // Two doors in: a Lunch & Learn purchase/comp (the entitlement), or a
-  // Builder/Premium/Elite membership — those tiers include L&L as a benefit.
+  // Doors in: a Lunch & Learn purchase/comp (the entitlement) grants everything;
+  // ANY paid membership grants the live sessions (invites + RSVP). Recordings
+  // ("the old ones") stay a Builder-and-up benefit.
   const [ent] = await sql`
     SELECT expires_at FROM entitlements
     WHERE user_id = ${userId} AND course_id = 'lunchlearn' AND (expires_at IS NULL OR expires_at > NOW())
@@ -38,6 +39,7 @@ async function getAccess(sql, userId) {
   if (ent) return ent;
   const [u] = await sql`SELECT tier FROM users WHERE id = ${userId} AND membership_status = 'active'`;
   if (u && ['Builder', 'Premium', 'Elite'].includes(u.tier)) return { expires_at: null, via: 'membership' };
+  if (u && u.tier === 'Basic') return { expires_at: null, via: 'membership_live' }; // live only — no recordings
   return null;
 }
 
@@ -122,7 +124,7 @@ export default async function handler(req, res) {
         // session link stays with L&L access holders (Developer+/purchase/comp)
         const [rt] = await sql`SELECT tier FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
         const recRank = TIER_RANK[rt?.tier] ?? 0;
-        if (access || admin || recRank >= 2) {
+        if (admin || recRank >= 2 || (access && access.via !== 'membership_live')) {
           const [recRow] = await sql`SELECT value FROM settings WHERE key = 'lnl_recordings'`;
           recordings = recRow?.value ? JSON.parse(recRow.value) : [];
         }

@@ -39,7 +39,7 @@ This document reflects every pricing rule currently implemented in code. Prices 
 - L&L access: **$39.99 for 6 months** (all live sessions + recordings). Codes can also grant access.
 - **Attendee perk (LNL25):** 25% off the first month of any membership, valid for 2 months after purchase/redemption, applied automatically at checkout.
 - Revenue split: **100% of L&L revenue goes to NREUV** (platform takes no cut).
-- Live sessions AND recordings included free for Builder, Premium, and Elite members (Builder RSVPs like everyone else); Member and Free accounts buy access or use a code.
+- **Every paid member gets free invites to live sessions** (Member and up — RSVP included). The **recording library stays Builder and up**. Free accounts buy access ($39.99/6mo) or use a code — a purchase includes recordings.
 
 ## 5. 1:1 sessions with Dr. Merritt (45 min)
 
@@ -73,7 +73,7 @@ This document reflects every pricing rule currently implemented in code. Prices 
 
 ## 8. Waitlist perks & the recommendation engine
 
-- **Founding 25 (insider waitlist only):** the first 25 insiders get their **first year of Lunch & Learns free** (even on a free account), a Founding badge, and **grandfathered pricing forever** — Builder at $99.99/mo and Premium at $149.99/mo (the pre-increase rates), applied automatically at checkout and locked in for every renewal. Advertised in a banner on the insider /waitlist page.
+- **Founding 25 (insider waitlist only):** the first 25 insiders get their **first year of Lunch & Learns free** (even on a free account), a Founding badge, and **founding pricing for their FIRST YEAR** — Builder at $99.99/mo and Premium at $149.99/mo (the launch rates), applied automatically as a 12-month coupon at checkout (FOUND25B/P; annual variants once), then standard rates. Advertised in a banner on the insider /waitlist page.
 - **First 10 (either list):** a **14-day trial of one course** claimable after signup, a **personal invite link** (`/invite/their-name`) that grants the same 14-day one-course trial to people who sign up through it, a First-10 badge — and they **always** receive the stretch offer at **15%** instead of 10%.
 - **Recommendation algorithm** (budget first, need second):
   - $2,000+ → **Senior Advisor Retainer** (from $3,025/mo, engagement-call CTA)

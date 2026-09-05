@@ -196,8 +196,8 @@ I agree to the <a href="/terms" target="_blank" style={{ color: "#b80101", fontW
 
 const BENEFITS = {
   Free: ["One free lesson of your choice", "Course catalog & curriculum previews", "Lunch & Learn access available to purchase"],
-  Basic: ["Every course — all seven, plus each new one we add", "All written lessons, case studies & worksheets", "Resource lists & reading guides", "Community access — read every channel"],
-  Builder: ["Everything in Member", "Post, reply & network in the community", "Live Lunch & Learns with Dr. Merritt — free, plus the recordings", "View-only: every guide, template & the Developer's Playbook"],
+  Basic: ["Every course — all seven, plus each new one we add", "All written lessons, case studies & worksheets", "Free invites to every live Lunch & Learn", "Resource lists & reading guides", "Community access — read every channel"],
+  Builder: ["Everything in Member", "Post, reply & network in the community", "The Lunch & Learn recording library", "View-only: every guide, template & the Developer's Playbook"],
   Premium: ["Everything in Builder", "Download 3 guides or templates every month", "The Opportunity Board — RFPs, funding windows & deals", "JV & Partnerships channel", "Development timeline templates", "Group office hours with Dr. Merritt + priority booking", "10% off 1:1 sessions with Dr. Merritt"],
   Elite: ["Everything in Premium", "Deal support — bring YOUR deal to your advisory calls", "3 one-on-one advisory calls/yr with Dr. Merritt", "Direct messages to Dr. Merritt & her team — replies within 2 business days", "Elite Lounge — private channel", "Unlimited downloads — including the Developer's Playbook", "30% off 1:1 sessions with Dr. Merritt", "Invite to the exclusive networking event"],
   Partner: ["Custom organizational access", "Contact info@nreuv.com for your cohort setup"],
@@ -470,7 +470,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
           <div onClick={() => setActivePage("lunchlearn")} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: "pointer", opacity: rank >= 2 ? 1 : 0.55 }}>
             <div style={{ marginBottom: 12 }}><Video size={24} color="#b80101" /></div>
             <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Lunch & Learns {rank < 2 && <Lock size={13} style={{ display: "inline", verticalAlign: "middle" }} />}</div>
-            <p style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 2 ? "Live sessions and recordings included in your plan — free." : "Live sessions and recordings come free with Builder and up."}</p>
+            <p style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 2 ? "Live sessions and recordings included in your plan — free." : rank >= 1 ? "Live sessions are free on your plan. Recordings unlock at Builder." : "Members get free live sessions; recordings come with Builder and up."}</p>
           </div>
           <div onClick={() => setActivePage("contact")} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: "pointer", opacity: rank >= 3 ? 1 : 0.55 }}>
             <div style={{ marginBottom: 12 }}><Handshake size={24} color="#b80101" /></div>
@@ -1055,7 +1055,7 @@ export function WaitlistForm({ list = "insider" }) {
             {insider && (
               <div style={{ background: "#e0c4c410", border: "1px solid #e0c4c445", borderRadius: 12, padding: "14px 18px", marginBottom: 22 }}>
                 <div style={{ color: "#e0c4c4", fontSize: 11, fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>✦ Founding 25 — locked-in pricing</div>
-                <div style={{ color: "#c8a8a8", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>The first 25 people on this list keep today's founding rates <strong style={{ color: "#f0d8d8" }}>forever</strong> — <strong style={{ color: "#f0d8d8" }}>Builder at $99.99/mo</strong> (instead of $149.99) and <strong style={{ color: "#f0d8d8" }}>Premium at $149.99/mo</strong> (instead of $249.99) — plus your first year of Lunch & Learns free.</div>
+                <div style={{ color: "#c8a8a8", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>The first 25 people on this list get founding rates <strong style={{ color: "#f0d8d8" }}>for their entire first year</strong> — <strong style={{ color: "#f0d8d8" }}>Builder at $99.99/mo</strong> (instead of $149.99) and <strong style={{ color: "#f0d8d8" }}>Premium at $149.99/mo</strong> (instead of $249.99) — plus a year of Lunch & Learns free.</div>
               </div>
             )}
             <form onSubmit={submit}>

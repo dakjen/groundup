@@ -520,22 +520,25 @@ export default async function handler(req, res) {
     // Member discount on 1:1 sessions — computed here from the signed-in user's tier.
     // Label off the actual price delta, so an item excluded from the discount
     // (see NO_MEMBER_DISCOUNT) is never labeled as discounted.
-    // GRANDFATHERED PRICING: the first 25 on the insider waitlist (founding_lnl)
-    // keep the prices from when they joined the list — forever. The subscription
-    // is created at the old rate, so every renewal stays there too.
-    const GRANDFATHER = {
-      sub_Builder: 9999, sub_Premium: 14999,
-      sub_Builder_annual: 119988, sub_Premium_annual: 179988,
+    // FOUNDING 25 PRICING: the first 25 insiders get launch pricing for their
+    // FIRST YEAR (Builder $99.99 / Premium $149.99), then standard rates — done
+    // as a 12-month coupon so the subscription itself carries the real price.
+    const FOUNDING = {
+      sub_Builder:        { id: 'FOUND25B',  amount_off: 5000,   duration: 'repeating', months: 12 },
+      sub_Premium:        { id: 'FOUND25P',  amount_off: 10000,  duration: 'repeating', months: 12 },
+      sub_Builder_annual: { id: 'FOUND25BA', amount_off: 60000,  duration: 'once' },
+      sub_Premium_annual: { id: 'FOUND25PA', amount_off: 120000, duration: 'once' },
     };
-    let unitAmount = memberPrice(item, user.tier);
-    let grandfathered = false;
-    if (GRANDFATHER[item] && GRANDFATHER[item] < unitAmount) {
+    let foundingSpec = null;
+    if (FOUNDING[item]) {
       const [wl] = await sql`SELECT id FROM waitlist WHERE LOWER(email) = LOWER(${user.email}) AND COALESCE(list, 'insider') = 'insider' AND founding_lnl = TRUE LIMIT 1`;
-      if (wl) { unitAmount = GRANDFATHER[item]; grandfathered = true; }
+      if (wl) foundingSpec = FOUNDING[item];
     }
+    const unitAmount = memberPrice(item, user.tier);
+    const grandfathered = !!foundingSpec;
     const saved = product.amount - unitAmount;
     const productName = grandfathered
-      ? `${product.name} — Founding 25 grandfathered rate`
+      ? `${product.name} — Founding 25 launch rate, first year`
       : saved > 0
         ? `${product.name} — ${user.tier} member rate (${Math.round((saved / product.amount) * 100)}% off)`
         : product.name;
@@ -562,6 +565,20 @@ export default async function handler(req, res) {
     // Month-free gift link: locked to the recipient's email, single use — a
     // forwarded link applies to nobody else. Wins over every other discount.
     let discounted = false;
+    // Founding 25: launch pricing for the first year, applied as a visible coupon
+    if (foundingSpec && product.mode === 'subscription') {
+      let coupon;
+      try { coupon = (await stripe.coupons.retrieve(foundingSpec.id)).id; }
+      catch {
+        coupon = (await stripe.coupons.create({
+          id: foundingSpec.id, amount_off: foundingSpec.amount_off, currency: 'usd',
+          duration: foundingSpec.duration, ...(foundingSpec.months ? { duration_in_months: foundingSpec.months } : {}),
+          name: 'Founding 25 — launch pricing, first year',
+        })).id;
+      }
+      params.discounts = [{ coupon }];
+      discounted = true;
+    }
     if (body.gift && product.mode === 'subscription') {
       const [gift] = await sql`SELECT id FROM referrals WHERE code = ${String(body.gift).trim().toUpperCase()}
         AND kind = 'month_free' AND used = FALSE AND expires_at > NOW() AND email = ${user.email}`;

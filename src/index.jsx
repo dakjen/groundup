@@ -1146,10 +1146,11 @@ const plans = [
     features: [
       "Every course — seven today — plus each new one we add",
       "All written lessons, case studies & worksheets",
+      "Free invites to every live Lunch & Learn",
       "Resource lists & reading guides",
       "Community access — read every channel",
     ],
-    locked: ["Posting in the community", "Timeline templates & Lunch & Learn recordings", "Deal-specific support — an Elite benefit"],
+    locked: ["Posting in the community", "Timeline templates & L&L recordings", "Deal-specific support — an Elite benefit"],
   },
   {
     name: "Builder",
@@ -1163,7 +1164,7 @@ const plans = [
     features: [
       "Everything in Member",
       "Post, reply & network in the community",
-      "Live Lunch & Learns with Dr. Merritt — free, plus the recordings",
+      "The Lunch & Learn recording library",
       "View-only: every guide, template & the Developer's Playbook",
     ],
     locked: ["Product downloads (Premium gets 3/mo)", "The Opportunity Board & office hours", "Deal-specific support — an Elite benefit"],
