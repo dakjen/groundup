@@ -1101,7 +1101,7 @@ const WL_PAIN = [
   "Other",
 ];
 const WL_SOURCE = ["Dr. Merritt / NREUV", "A Lunch & Learn", "LinkedIn", "Instagram", "Word of mouth", "An event or conference", "Other"];
-const WL_BUDGETS = ["$50", "$50–$150", "$150–$500", "I need specific, customized deal help", "$2,000+"];
+const WL_BUDGETS = ["$50", "$50–$150", "$150–$500", "$500+", "I need general deal support & guidance", "I need specific, customized deal help", "$2,000+"];
 
 // Two lists, one form. "insider" is the secret /waitlist page (first access);
 // "general" is what the public homepage collects before the general launch.
@@ -1196,10 +1196,13 @@ export function WaitlistForm({ list = "insider" }) {
                     <button type="button" key={b} onClick={() => setBudget(b)}
                       onMouseEnter={() => b === "$2,000+" && setPartnerHover(true)}
                       onMouseLeave={() => b === "$2,000+" && setPartnerHover(false)}
-                      style={{ gridColumn: (b === "$2,000+" || b === "I need specific, customized deal help") ? "1 / -1" : undefined, background: budget === b ? "#b8010118" : "transparent", border: budget === b ? "1px solid #b80101" : b === "$2,000+" ? "1px solid #e0c4c455" : b === "I need specific, customized deal help" ? "1px solid #b8010145" : "1px solid #2a0000", borderRadius: 8, padding: "11px 12px", cursor: "pointer", color: budget === b ? "#f0d8d8" : b === "$2,000+" ? "#e0c4c4" : b === "I need specific, customized deal help" ? "#c8a8a8" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font }}>
-                      {b === "$2,000+" ? "✦ $2,000+ · Thought partnership" : b === "I need specific, customized deal help" ? "🔴 I need specific, customized deal help" : b}
+                      style={{ gridColumn: (b === "$2,000+" || b === "I need specific, customized deal help" || b === "I need general deal support & guidance") ? "1 / -1" : undefined, background: budget === b ? "#b8010118" : "transparent", border: budget === b ? "1px solid #b80101" : b === "$2,000+" ? "1px solid #e0c4c455" : (b === "I need specific, customized deal help" || b === "I need general deal support & guidance") ? "1px solid #b8010145" : "1px solid #2a0000", borderRadius: 8, padding: "11px 12px", cursor: "pointer", color: budget === b ? "#f0d8d8" : b === "$2,000+" ? "#e0c4c4" : (b === "I need specific, customized deal help" || b === "I need general deal support & guidance") ? "#c8a8a8" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font }}>
+                      {b === "$2,000+" ? "✦ $2,000+ · Thought partnership" : b === "I need specific, customized deal help" ? "🔴 I need specific, customized deal help" : b === "I need general deal support & guidance" ? "🧭 I need general deal support & guidance" : b}
                     </button>
                   ))}
+                  {budget === "I need general deal support & guidance" && (
+                    <div style={{ gridColumn: "1 / -1", background: "#12060a", border: "1px solid #b8010140", borderRadius: 8, padding: "10px 12px", color: "#c8a8a8", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>General deal support — the tools, templates, Opportunity Board, and office hours with Dr. Merritt — lives in the <strong style={{ color: "#f0d8d8" }}>Premium plan</strong> ($249.99/mo). That's what we'll recommend.</div>
+                  )}
                   {budget === "I need specific, customized deal help" && (
                     <div style={{ gridColumn: "1 / -1", background: "#12060a", border: "1px solid #b8010140", borderRadius: 8, padding: "10px 12px", color: "#c8a8a8", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>Deal-specific support — your numbers, your gap, your structure — comes with the <strong style={{ color: "#f0d8d8" }}>Elite plan</strong> ($499.99/mo) or the Senior Advisor retainer. We'll recommend Elite and point you at the fastest way to get Dr. Merritt on your deal.</div>
                   )}

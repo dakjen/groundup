@@ -111,6 +111,7 @@ export function recommendPlan(e) {
   const wantsDealSupport = e.learn === 'I need deal-specific support on a live project';
   const rank = wantsDealSupport ? 4
     : e.budget === 'I need specific, customized deal help' ? 4
+    : e.budget === 'I need general deal support & guidance' ? 3
     : e.budget === '$500+' ? 4
     : HIGH_B.includes(e.budget) ? (need >= 3 ? 4 : 3)
     : MID_B.includes(e.budget) && need >= 2 ? 2

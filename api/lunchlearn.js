@@ -302,8 +302,19 @@ export default async function handler(req, res) {
           }
         }
       } else {
-        const access = admin ? { ok: true } : await getAccess(sql, session.uid);
-        if (!access) return res.status(403).json({ error: 'Lunch & Learn access required to RSVP' });
+        let access = admin ? { ok: true } : await getAccess(sql, session.uid);
+        // The free taste: every account gets ONE live Lunch & Learn on the house.
+        // The first RSVP grants access through that session; after that, it's a
+        // membership or a purchase.
+        if (!access && req.body.going) {
+          const [taste] = await sql`SELECT id FROM entitlements WHERE user_id = ${session.uid} AND course_id = 'lunchlearn' AND source = 'free_taste' LIMIT 1`;
+          if (!taste) {
+            const until = new Date(new Date(target.date).getTime() + 24 * 3600 * 1000).toISOString();
+            await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${session.uid}, 'lunchlearn', 'free_taste', ${until}, NOW())`;
+            access = { ok: true, via: 'free_taste' };
+          }
+        }
+        if (!access) return res.status(403).json({ error: 'That was your free session — Lunch & Learn access comes with any membership, or on its own for $39.99.' });
       }
       if (req.body.going) {
         const q = String(req.body.question || '').slice(0, 500) || null;

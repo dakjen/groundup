@@ -76,7 +76,9 @@ This document reflects every pricing rule currently implemented in code. Prices 
 - **Founding 25 (insider waitlist only):** the first 25 insiders get their **first year of Lunch & Learns free** (even on a free account), a Founding badge, and **founding pricing for their FIRST YEAR** — Builder at $99.99/mo and Premium at $149.99/mo (the launch rates), applied automatically as a 12-month coupon at checkout (FOUND25B/P; annual variants once), then standard rates. Advertised in a banner on the insider /waitlist page.
 - **First 10 (either list):** a **14-day trial of one course** claimable after signup, a **personal invite link** (`/invite/their-name`) that grants the same 14-day one-course trial to people who sign up through it, a First-10 badge — and they **always** receive the stretch offer at **15%** instead of 10%.
 - **Recommendation algorithm** (budget first, need second):
-  - Budget options: **$50 · $50–$150 · $150–$500 · "I need specific, customized deal help" · $2,000+**
+  - Budget options: **$50 · $50–$150 · $150–$500 · $500+ · "I need general deal support & guidance" · "I need specific, customized deal help" · $2,000+**
+  - $500+ → **Elite**
+  - "I need general deal support & guidance" → **Premium**
   - $2,000+ → **Senior Advisor Retainer** (from $3,025/mo, engagement-call CTA)
   - $150–$500 → **Elite** when their answers point at Dr. Merritt directly (need 3), else **Premium** · legacy $300+/$500+ keep this/Elite meaning
   - $50–$150 → **Builder** if their answers point at the community (need ≥ 2), else **Member** · legacy $25–$100/$100–$200 keep their meaning
@@ -121,7 +123,7 @@ This document reflects every pricing rule currently implemented in code. Prices 
 
 ## 14. Free accounts
 
-- A free account sees **course titles and curricula only — no lesson content** (the old one-free-lesson perk is retired; accounts that claimed one keep it). Free accounts can buy passes, L&L access, sessions, and shop items, claim earned perks (First-10 trial, gifts, LNL25), and set up their community profile.
+- A free account sees **course titles and curricula only — no lesson content**, and gets **one free live Lunch & Learn** (the first RSVP grants access through that session, once ever) (the old one-free-lesson perk is retired; accounts that claimed one keep it). Free accounts can buy passes, L&L access, sessions, and shop items, claim earned perks (First-10 trial, gifts, LNL25), and set up their community profile.
 
 ## 15. Comped accounts
 
