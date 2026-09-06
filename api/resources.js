@@ -175,8 +175,8 @@ export default async function handler(req, res) {
       const fullAccess = rank >= 1 || passes.length > 0;
       if (fullAccess) return res.json({ course: shape(() => true), access: 'full' });
 
-      // Free plan: exactly one lesson total, and only after it's been claimed
-      // (claim_free_lesson in api/auth.js). Keys are `${courseId}:${index}`.
+      // Free plan: the curriculum is the preview — every lesson title visible,
+      // zero lesson content. (Accounts that claimed the old free lesson keep it.)
       const freeKey = user.free_lesson_key || null;
       return res.json({
         course: shape(i => freeKey === `${c.id}:${i}`),

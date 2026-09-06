@@ -349,9 +349,11 @@ export default async function handler(req, res) {
       return res.json({ success: true, trial: ent });
     }
 
-    // Free plan: claim the single free lesson. Only succeeds if none is claimed yet
-    // (or the same one is re-claimed), so it can never be switched later.
+    // Free plan: the free-lesson perk is retired — free accounts see course
+    // titles only. (Accounts that already claimed one keep it.)
     if (action === 'claim_free_lesson') {
+      return res.status(403).json({ error: 'Lessons open with a membership or a course pass — free accounts can browse the full curriculum.' });
+      // retired path below
       const session = getSession(req);
       if (!session || !session.uid) return res.status(401).json({ error: 'Not signed in' });
       const { key } = req.body;

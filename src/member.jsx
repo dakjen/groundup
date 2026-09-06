@@ -195,7 +195,7 @@ I agree to the <a href="/terms" target="_blank" style={{ color: "#b80101", fontW
 // ─── MEMBERSHIP PAGE (dashboard) ────────────────────────────────────────────
 
 const BENEFITS = {
-  Free: ["One free lesson of your choice", "Course catalog & curriculum previews", "Lunch & Learn access available to purchase"],
+  Free: ["The full course catalog & every curriculum, previewed", "Buy course passes, Lunch & Learns & 1:1 sessions anytime", "Your community profile, ready for when you join"],
   Basic: ["Every course — all seven, plus each new one we add", "All written lessons, case studies & worksheets", "Free invites to every live Lunch & Learn", "Resource lists & reading guides", "Community access — read every channel"],
   Builder: ["Everything in Member", "Post, reply & network in the community", "The Lunch & Learn recording library", "View-only: every guide, template & the Developer's Playbook"],
   Premium: ["Everything in Builder", "Download 3 guides or templates every month", "The Opportunity Board — RFPs, funding windows & deals", "JV & Partnerships channel", "Development timeline templates", "Group office hours with Dr. Merritt + priority booking", "10% off 1:1 sessions with Dr. Merritt"],
@@ -523,7 +523,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
           <div onClick={() => setActivePage("courses")} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: "pointer" }}>
             <div style={{ marginBottom: 12 }}><BookOpen size={24} color="#b80101" /></div>
             <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Your Courses</div>
-            <p style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 1 ? "Full access to every course and every lesson." : member.free_lesson_key ? "You've used your free lesson. Upgrade for the full curriculum." : "One free lesson included. Upgrade for the full curriculum."}</p>
+            <p style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 1 ? "Full access to every course and every lesson." : member.free_lesson_key ? "Your claimed free lesson stays open. Upgrade for the full curriculum." : "Browse every curriculum. Lessons open with a membership or course pass."}</p>
           </div>
           <div onClick={() => rank >= 1 && setActivePage("community")} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: rank >= 1 ? "pointer" : "default", opacity: rank >= 1 ? 1 : 0.55 }}>
             <div style={{ marginBottom: 12 }}><MessagesSquare size={24} color="#b80101" /></div>
@@ -1101,7 +1101,7 @@ const WL_PAIN = [
   "Other",
 ];
 const WL_SOURCE = ["Dr. Merritt / NREUV", "A Lunch & Learn", "LinkedIn", "Instagram", "Word of mouth", "An event or conference", "Other"];
-const WL_BUDGETS = ["$25–$100", "$100–$200", "$300+", "I need specific, customized deal help", "$2,000+"];
+const WL_BUDGETS = ["$50", "$50–$150", "$150–$500", "I need specific, customized deal help", "$2,000+"];
 
 // Two lists, one form. "insider" is the secret /waitlist page (first access);
 // "general" is what the public homepage collects before the general launch.

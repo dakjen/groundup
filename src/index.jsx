@@ -200,7 +200,8 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
   const hasPass = (member?.entitlements || []).some(e => e.course_id === "all" || e.course_id === course.id);
   const fullAccess = memberRank >= 1 || hasPass;
   const freeKey = member?.free_lesson_key || null;
-  const lessonUnlocked = (i) => fullAccess || (freeKey ? freeKey === `${course.id}:${i}` : i === 0);
+  // Free accounts: titles only — a previously-claimed free lesson stays open
+  const lessonUnlocked = (i) => fullAccess || (freeKey === `${course.id}:${i}`);
 
   // Lesson CONTENT comes from the server, which re-checks entitlements itself —
   // the client-side flags above are for UX only (lock icons, upgrade prompts).
@@ -470,7 +471,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
         </div>
         {!fullAccess && (
           <div style={{ marginTop: 28, background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 14, padding: "20px 26px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
-            <div style={{ color: "#b8a060", fontSize: 14, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{freeKey ? "You've used your one free lesson. Upgrade to Basic to unlock every course." : "Your Free plan includes one lesson, total — the first one you open. Choose wisely, or go Basic for everything."}</div>
+            <div style={{ color: "#b8a060", fontSize: 14, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{freeKey ? "Your claimed free lesson stays open. Upgrade to unlock every course." : "Browse every course's full curriculum here — lessons open with a membership (from \$49.99/mo) or a course pass."}</div>
             <button onClick={onUpgrade} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>View Plans →</button>
           </div>
         )}
@@ -4502,9 +4503,8 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
     const need = Math.max(LN[e.learn] || 1, PN[e.reason] || 1);
     if (e.budget === "I need specific, customized deal help") return "Elite — $499.99/mo";
     if (e.budget === "$500+") return "Elite — $499.99/mo";
-    if (e.budget === "$300+") return need >= 3 ? "Elite — $499.99/mo" : "Premium — $249.99/mo";
-    if (e.budget === "$150–$500") return "Premium — $249.99/mo";
-    if (["$100–$200", "$50–$150"].includes(e.budget) && need >= 2) return "Builder — $149.99/mo";
+    if (["$150–$500", "$300+"].includes(e.budget)) return need >= 3 ? "Elite — $499.99/mo" : "Premium — $249.99/mo";
+    if (["$50–$150", "$100–$200"].includes(e.budget) && need >= 2) return "Builder — $149.99/mo";
     return "Member — $49.99/mo";
   };
 
@@ -4651,9 +4651,9 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
           Conservative maps their budget to the plan it comfortably covers;
           upside assumes each stretches one tier. */}
       {(() => {
-        const PLAN_FIT = { "I need specific, customized deal help": 499.99, "Under $25": 0, "$25–$100": 49.99, "$100–$200": 149.99, "$300+": 249.99, "$2,000+": 3025, "Under $50": 0, "$50–$150": 49.99, "$150–$500": 249.99, "$500+": 499.99 };
+        const PLAN_FIT = { "I need specific, customized deal help": 499.99, "$50": 49.99, "Under $25": 0, "$25–$100": 49.99, "$100–$200": 149.99, "$300+": 249.99, "$2,000+": 3025, "Under $50": 0, "$50–$150": 49.99, "$150–$500": 249.99, "$500+": 499.99 };
         const fitFor = (e) => { const r = recFor(e); return e.comped ? 0 : r.startsWith("Member") ? 49.99 : r.startsWith("Builder") ? 149.99 : r.startsWith("Premium") ? 249.99 : r.startsWith("Elite") ? 499.99 : r.startsWith("Senior") ? 3025 : (PLAN_FIT[e.budget] || 0); };
-        const STRETCH = { "I need specific, customized deal help": 499.99, "Under $25": 49.99, "$25–$100": 149.99, "$100–$200": 249.99, "$300+": 499.99, "$2,000+": 3025, "Under $50": 49.99, "$50–$150": 149.99, "$150–$500": 499.99, "$500+": 499.99 };
+        const STRETCH = { "I need specific, customized deal help": 499.99, "$50": 149.99, "Under $25": 49.99, "$25–$100": 149.99, "$100–$200": 249.99, "$300+": 499.99, "$2,000+": 3025, "Under $50": 49.99, "$50–$150": 149.99, "$150–$500": 499.99, "$500+": 499.99 };
         const mrrFit = entries.reduce((s, e) => s + fitFor(e), 0);
         // Premium is the ideal recommendation; Elite (and Advisor) are the exceptional wins
         const premiumRec = entries.filter(e => recFor(e).startsWith("Premium")).length;

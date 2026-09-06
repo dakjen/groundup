@@ -76,10 +76,11 @@ This document reflects every pricing rule currently implemented in code. Prices 
 - **Founding 25 (insider waitlist only):** the first 25 insiders get their **first year of Lunch & Learns free** (even on a free account), a Founding badge, and **founding pricing for their FIRST YEAR** — Builder at $99.99/mo and Premium at $149.99/mo (the launch rates), applied automatically as a 12-month coupon at checkout (FOUND25B/P; annual variants once), then standard rates. Advertised in a banner on the insider /waitlist page.
 - **First 10 (either list):** a **14-day trial of one course** claimable after signup, a **personal invite link** (`/invite/their-name`) that grants the same 14-day one-course trial to people who sign up through it, a First-10 badge — and they **always** receive the stretch offer at **15%** instead of 10%.
 - **Recommendation algorithm** (budget first, need second):
+  - Budget options: **$50 · $50–$150 · $150–$500 · "I need specific, customized deal help" · $2,000+**
   - $2,000+ → **Senior Advisor Retainer** (from $3,025/mo, engagement-call CTA)
-  - $300+ → **Elite** when their answers point at Dr. Merritt directly (need 3), else **Premium** · legacy $500+ → Elite
-  - $100–$200 → **Builder** if their answers point at the community (need ≥ 2), else **Member** · legacy $150–$500 → Premium
-  - $25–$100 → **Member**
+  - $150–$500 → **Elite** when their answers point at Dr. Merritt directly (need 3), else **Premium** · legacy $300+/$500+ keep this/Elite meaning
+  - $50–$150 → **Builder** if their answers point at the community (need ≥ 2), else **Member** · legacy $25–$100/$100–$200 keep their meaning
+  - $50 → **Member**
   - **"I need deal-specific support on a live project"** (learn answer) → **Elite, regardless of budget** — only Elite and the retainer include deal support.
   - **"I need specific, customized deal help"** (budget answer) → **Elite** — same rule, from the budget question.
   - Admin can override any recommendation; comped waitlisters are excluded from MRR/ARR projections and receive no launch/recommend emails.
@@ -118,6 +119,10 @@ This document reflects every pricing rule currently implemented in code. Prices 
 
 - **Partner** is a contact-us tier for agencies, CDFIs, and nonprofit developer programs: the organization **sponsors a year of GroundUp for its cohort of developers at a group discount** (the developers pay nothing in the sponsored year); after the sponsored year, the developers continue as regular individual members at standard rates. Personalized access to the courses the cohort needs at a partner rate, a branded partner page (/partner/slug — company logo, only their curriculum), dedicated onboarding. No fixed price — negotiated per deal, routed through the contact page. Shown as a full-width button below the plan row.
 
-## 14. Comped accounts
+## 14. Free accounts
+
+- A free account sees **course titles and curricula only — no lesson content** (the old one-free-lesson perk is retired; accounts that claimed one keep it). Free accounts can buy passes, L&L access, sessions, and shop items, claim earned perks (First-10 trial, gifts, LNL25), and set up their community profile.
+
+## 15. Comped accounts
 
 - Set by admins (including from the waitlist pre-launch). Comped members get full tier access but are excluded from MRR/ARR stats, Elite seat counts, and billing emails; the member billing card is hidden for them.
