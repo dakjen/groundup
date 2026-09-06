@@ -216,6 +216,9 @@ const NEXT_TIER = {
 function ProfileCard({ member }) {
   const [avatar, setAvatar] = useState(member.avatar_url || "");
   const [headline, setHeadline] = useState(member.headline || "");
+  const [company, setCompany] = useState(member.company || "");
+  const [title, setTitle] = useState(member.title || "");
+  const [location, setLocation] = useState(member.location || "");
   const [bio, setBio] = useState(member.bio || "");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -237,8 +240,8 @@ function ProfileCard({ member }) {
   const save = async () => {
     setBusy(true);
     try {
-      await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "update_profile", headline, bio }) });
-      const me = getMember(); if (me) saveMember({ ...me, headline, bio });
+      await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "update_profile", headline, bio, company, title, location }) });
+      const me = getMember(); if (me) saveMember({ ...me, headline, bio, company, title, location });
       flash(true, "Profile saved — members see it when they hover your messages.");
     } catch (e) { flash(false, e.message); } finally { setBusy(false); }
   };
@@ -256,7 +259,12 @@ function ProfileCard({ member }) {
           </label>
         </div>
         <div style={{ flex: 1, minWidth: 240 }}>
-          <input style={{ ...inp, marginBottom: 10 }} value={headline} onChange={e => setHeadline(e.target.value)} maxLength={120} placeholder="What you do — e.g. Developer · 12 units in DC" />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+            <input style={inp} value={title} onChange={e => setTitle(e.target.value)} maxLength={120} placeholder="Title — e.g. Principal, Developer" />
+            <input style={inp} value={company} onChange={e => setCompany(e.target.value)} maxLength={120} placeholder="Company (optional)" />
+          </div>
+          <input style={{ ...inp, marginBottom: 10 }} value={location} onChange={e => setLocation(e.target.value)} maxLength={120} placeholder="Where you work — e.g. DC · Baltimore" />
+          <input style={{ ...inp, marginBottom: 10 }} value={headline} onChange={e => setHeadline(e.target.value)} maxLength={120} placeholder="What you do — e.g. Affordable multifamily · 12 units" />
           <textarea style={{ ...inp, resize: "vertical", marginBottom: 10 }} rows={3} value={bio} onChange={e => setBio(e.target.value)} maxLength={500} placeholder="A few sentences about you, your projects, and what you're building toward." />
           <button style={{ ...btnRed, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={save}>Save Profile</button>
         </div>
@@ -629,9 +637,11 @@ function ProfileHover({ m }) {
           </div>
         </div>
       </div>
+      {(m.author_title || m.author_company) && <div style={{ color: "var(--gu-text2)", fontSize: 13, fontFamily: font, fontWeight: 800, marginBottom: 3 }}>{[m.author_title, m.author_company].filter(Boolean).join(" · ")}</div>}
+      {m.author_location && <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font, marginBottom: 6 }}>📍 {m.author_location}</div>}
       {m.author_headline && <div style={{ color: "var(--gu-body)", fontSize: 13, fontFamily: font, fontWeight: 700, marginBottom: 6 }}>{m.author_headline}</div>}
       {m.author_bio && <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, lineHeight: 1.65 }}>{m.author_bio}</div>}
-      {!m.author_headline && !m.author_bio && <div style={{ color: "var(--gu-faint)", fontSize: 12, fontFamily: font, fontStyle: "italic" }}>They haven't written their profile yet.</div>}
+      {!m.author_headline && !m.author_bio && !m.author_title && !m.author_company && <div style={{ color: "var(--gu-faint)", fontSize: 12, fontFamily: font, fontStyle: "italic" }}>They haven't written their profile yet.</div>}
     </div>
   );
 }

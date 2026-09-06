@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const session = getSession(req);
       if (!session || !session.uid) return res.status(401).json({ error: 'Not signed in' });
-      const [user] = await sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, comped, badges, referral_code, referred_by, tier_since, ip_agreed_at, avatar_url, headline, bio, created_at FROM users WHERE id = ${session.uid}`;
+      const [user] = await sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, comped, badges, referral_code, referred_by, tier_since, ip_agreed_at, avatar_url, headline, bio, company, title, location, created_at FROM users WHERE id = ${session.uid}`;
       if (!user) return res.status(401).json({ error: 'Account not found' });
       // Active one-time passes: course_id 'all' or 'mc1'..'mc7', unexpired
       user.entitlements = await sql`SELECT course_id, expires_at, source FROM entitlements WHERE user_id = ${user.id} AND (expires_at IS NULL OR expires_at > NOW())`;
@@ -291,8 +291,11 @@ export default async function handler(req, res) {
       if (!session || !session.uid) return res.status(401).json({ error: 'Sign in required' });
       const headline = String(req.body.headline ?? '').trim().slice(0, 120) || null;
       const bio = String(req.body.bio ?? '').trim().slice(0, 500) || null;
-      await sql`UPDATE users SET headline = ${headline}, bio = ${bio} WHERE id = ${session.uid}`;
-      return res.json({ success: true, headline, bio });
+      const company = String(req.body.company ?? '').trim().slice(0, 120) || null;
+      const title = String(req.body.title ?? '').trim().slice(0, 120) || null;
+      const location = String(req.body.location ?? '').trim().slice(0, 120) || null;
+      await sql`UPDATE users SET headline = ${headline}, bio = ${bio}, company = ${company}, title = ${title}, location = ${location} WHERE id = ${session.uid}`;
+      return res.json({ success: true, headline, bio, company, title, location });
     }
 
     // A deal-specific ask is a qualified lead — log who raised their hand, where
