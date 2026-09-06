@@ -51,7 +51,7 @@ export const TIER_LABELS = { Free: "Free", Basic: "Member", Builder: "Builder", 
 // sheets, their profile, and next to their name in the community. Add new
 // badges here as they're invented; unknown keys are ignored gracefully.
 export const BADGE_DEFS = {
-  founding25: { label: "L&L Year One", icon: "✦", color: "#e0c4c4", title: "Founding 25 — first year of Lunch & Learns free" },
+  founding25: { label: "Founding Member", icon: "✦", color: "#e0c4c4", title: "Founding Member — one of the first 25, with a year of Lunch & Learns free and founding pricing" },
   first10: { label: "First 10", icon: "✦", color: "#e0c4c4", title: "One of the first 10 on the waitlist — 14-day course trial + personal referral link" },
 };
 export function BadgeChips({ badges, small }) {
@@ -210,6 +210,60 @@ const NEXT_TIER = {
   Builder: { tier: "Premium", price: "$249.99/mo", adds: ["3 downloads a month", "The Opportunity Board", "Office hours with Dr. Merritt", "10% off 1:1 sessions"] },
   Premium: { tier: "Elite", price: "$499.99/mo", adds: ["Deal support — bring YOUR deal to advisory calls", "DMs to Dr. Merritt & her team", "Unlimited downloads incl. the Playbook", "30% off 1:1 sessions"] },
 };
+
+// Your community profile: the photo, headline and bio other members see when
+// they hover your messages.
+function ProfileCard({ member }) {
+  const [avatar, setAvatar] = useState(member.avatar_url || "");
+  const [headline, setHeadline] = useState(member.headline || "");
+  const [bio, setBio] = useState(member.bio || "");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 5000); };
+  const inp = { width: "100%", boxSizing: "border-box", background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 10, padding: "12px 14px", color: "var(--gu-text)", fontFamily: font, fontSize: 14, outline: "none" };
+  const upload = async (file) => {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const fd = new FormData(); fd.append("file", file);
+      const res = await fetch("/api/lesson-pdfs?kind=avatar", { method: "POST", headers: { Authorization: "Bearer " + (localStorage.getItem("guToken") || "") }, body: fd });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Upload failed");
+      setAvatar(d.url);
+      const me = getMember(); if (me) saveMember({ ...me, avatar_url: d.url });
+      flash(true, "Profile picture updated.");
+    } catch (e) { flash(false, e.message); } finally { setBusy(false); }
+  };
+  const save = async () => {
+    setBusy(true);
+    try {
+      await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "update_profile", headline, bio }) });
+      const me = getMember(); if (me) saveMember({ ...me, headline, bio });
+      flash(true, "Profile saved — members see it when they hover your messages.");
+    } catch (e) { flash(false, e.message); } finally { setBusy(false); }
+  };
+  return (
+    <div style={{ background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
+      <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Your Community Profile</div>
+      <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 16 }}>Your photo shows next to your messages, and members who hover see who you are and what you do.</div>
+      {msg && <div style={{ background: msg.ok ? "#22c55e12" : "#b8010115", border: `1px solid ${msg.ok ? "#22c55e50" : "#b8010150"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 8, padding: "9px 13px", fontSize: 12.5, fontFamily: font, marginBottom: 12 }}>{msg.text}</div>}
+      <div style={{ display: "flex", gap: 18, alignItems: "flex-start", flexWrap: "wrap" }}>
+        <div style={{ textAlign: "center" }}>
+          <Avatar url={avatar} name={member.name} size={72} />
+          <label style={{ display: "block", marginTop: 8, color: "#b80101", fontSize: 12, fontWeight: 700, fontFamily: font, cursor: "pointer" }}>
+            {busy ? "Working…" : avatar ? "Change photo" : "Upload photo"}
+            <input type="file" accept="image/png,image/jpeg,image/webp" style={{ display: "none" }} onChange={e => upload(e.target.files?.[0])} />
+          </label>
+        </div>
+        <div style={{ flex: 1, minWidth: 240 }}>
+          <input style={{ ...inp, marginBottom: 10 }} value={headline} onChange={e => setHeadline(e.target.value)} maxLength={120} placeholder="What you do — e.g. Developer · 12 units in DC" />
+          <textarea style={{ ...inp, resize: "vertical", marginBottom: 10 }} rows={3} value={bio} onChange={e => setBio(e.target.value)} maxLength={500} placeholder="A few sentences about you, your projects, and what you're building toward." />
+          <button style={{ ...btnRed, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={save}>Save Profile</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function BookingsCard({ member }) {
   const [bookings, setBookings] = useState(member.bookings || []);
@@ -450,6 +504,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
             <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "var(--gu-text)", lineHeight: 1.1, marginBottom: 10 }}>Welcome, {member.name.split(" ")[0]}.</h1>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <TierBadge tier={member.tier} />
+              <BadgeChips badges={member.badges} small />
               <span style={{ color: "var(--gu-muted2)", fontSize: 13, fontFamily: font }}>{member.email}</span>
             </div>
           </div>
@@ -507,6 +562,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
           )}
         </div>
 
+        <ProfileCard member={member} />
         <BenefitGateNotice member={member} />
         <BookingsCard member={member} />
         <SessionCreditsCard member={member} />
@@ -552,7 +608,36 @@ function linkify(text) {
     : p);
 }
 
+// A member's face in the community: their photo, or their initials.
+export function Avatar({ url, name, size = 34 }) {
+  if (url) return <img src={url} alt="" style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "1px solid var(--gu-border)" }} />;
+  const initials = String(name || "?").split(" ").map(w => w[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+  return <div style={{ width: size, height: size, borderRadius: "50%", background: "#b8010125", border: "1px solid #b8010145", color: "#e0c4c4", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.38, fontWeight: 800, fontFamily: font, flexShrink: 0 }}>{initials}</div>;
+}
+
+// Hover card: who this person is and what they do
+function ProfileHover({ m }) {
+  return (
+    <div style={{ position: "absolute", top: "100%", left: 0, zIndex: 30, marginTop: 6, width: 280, background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 14, padding: "18px 20px", boxShadow: "0 12px 40px rgba(0,0,0,0.55)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+        <Avatar url={m.author_avatar} name={m.author_name} size={46} />
+        <div style={{ minWidth: 0 }}>
+          <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15, fontFamily: font }}>{m.author_name || "Member"}</div>
+          <div style={{ display: "flex", gap: 6, marginTop: 3, flexWrap: "wrap" }}>
+            {m.author_tier && <TierBadge tier={m.author_tier} small />}
+            <BadgeChips badges={m.author_badges} small />
+          </div>
+        </div>
+      </div>
+      {m.author_headline && <div style={{ color: "var(--gu-body)", fontSize: 13, fontFamily: font, fontWeight: 700, marginBottom: 6 }}>{m.author_headline}</div>}
+      {m.author_bio && <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, lineHeight: 1.65 }}>{m.author_bio}</div>}
+      {!m.author_headline && !m.author_bio && <div style={{ color: "var(--gu-faint)", fontSize: 12, fontFamily: font, fontStyle: "italic" }}>They haven't written their profile yet.</div>}
+    </div>
+  );
+}
+
 function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote }) {
+  const [showProfile, setShowProfile] = useState(false);
   // Dr. Merritt's messages carry a presence of their own — richer than TEAM,
   // unmistakable at a glance: glowing card, serif name, crowned badge.
   const isGina = m.is_admin && m.author_badge === "drmerritt";
@@ -560,9 +645,14 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote }) {
     <div style={{ padding: isGina ? "16px 20px" : "12px 16px", borderRadius: 10, background: isGina ? "linear-gradient(135deg, #1a0808 0%, #12060a 100%)" : m.is_admin ? "var(--gu-red-tint)" : "transparent", border: isGina ? "1px solid #b8010170" : m.is_admin ? "1px solid #b8010130" : "1px solid transparent", boxShadow: isGina ? "0 0 24px rgba(184,1,1,0.12)" : "none", marginBottom: 4 }}>
       {isGina && <div style={{ height: 2, background: "linear-gradient(90deg, transparent, #b80101, transparent)", margin: "-16px -20px 12px", borderRadius: "10px 10px 0 0" }} />}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-        <span style={isGina
-          ? { color: "#f5e8e8", fontWeight: 700, fontSize: 16, fontFamily: serif, letterSpacing: "0.3px" }
-          : { color: m.is_admin ? "#b80101" : "var(--gu-text2)", fontWeight: 800, fontSize: 13, fontFamily: font }}>{m.author_name || "Member"}</span>
+        <span style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 8, cursor: "default" }}
+          onMouseEnter={() => !m.is_admin && setShowProfile(true)} onMouseLeave={() => setShowProfile(false)}>
+          {!m.is_admin && <Avatar url={m.author_avatar} name={m.author_name} size={26} />}
+          <span style={isGina
+            ? { color: "#f5e8e8", fontWeight: 700, fontSize: 16, fontFamily: serif, letterSpacing: "0.3px" }
+            : { color: m.is_admin ? "#b80101" : "var(--gu-text2)", fontWeight: 800, fontSize: 13, fontFamily: font }}>{m.author_name || "Member"}</span>
+          {showProfile && !m.is_admin && <ProfileHover m={m} />}
+        </span>
         {m.is_admin ? (
           isGina
             ? <span style={{ background: "linear-gradient(135deg, #b80101, #570404)", color: "#fff", borderRadius: 5, padding: "2px 9px", fontSize: 9, fontWeight: 800, fontFamily: font, letterSpacing: "1.5px", boxShadow: "0 0 10px rgba(184,1,1,0.35)" }}>✦ DR. MERRITT</span>

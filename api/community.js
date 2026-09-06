@@ -86,12 +86,12 @@ export default async function handler(req, res) {
       const threadId = req.query.thread ? Number(req.query.thread) : null;
       const rows = threadId
         ? await sql`
-            SELECT m.*, u.name AS author_name, u.tier AS author_tier, u.badge AS author_badge, u.badges AS author_badges
+            SELECT m.*, u.name AS author_name, u.tier AS author_tier, u.badge AS author_badge, u.badges AS author_badges, u.avatar_url AS author_avatar, u.headline AS author_headline, u.bio AS author_bio
             FROM messages m LEFT JOIN users u ON u.id = m.user_id
             WHERE m.channel_id = ${channelId} AND m.parent_id = ${threadId} AND m.deleted = FALSE
             ORDER BY m.created_at ASC LIMIT 200`
         : await sql`
-            SELECT m.*, u.name AS author_name, u.tier AS author_tier, u.badge AS author_badge, u.badges AS author_badges,
+            SELECT m.*, u.name AS author_name, u.tier AS author_tier, u.badge AS author_badge, u.badges AS author_badges, u.avatar_url AS author_avatar, u.headline AS author_headline, u.bio AS author_bio,
               (SELECT COUNT(*) FROM messages r WHERE r.parent_id = m.id AND r.deleted = FALSE) AS reply_count
             FROM messages m LEFT JOIN users u ON u.id = m.user_id
             WHERE m.channel_id = ${channelId} AND m.parent_id IS NULL AND m.deleted = FALSE

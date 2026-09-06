@@ -1,12 +1,16 @@
 import { put, del } from '@vercel/blob';
-import { getAdmin } from './_utils.js';
+import { getAdmin, getSession } from './_utils.js';
+import { neon } from '@neondatabase/serverless';
 
 export const config = {
   api: { bodyParser: false },
 };
 
 export default async function handler(req, res) {
-  if (!getAdmin(req)) {
+  // Members may upload exactly one thing: their own profile picture.
+  const isAvatar = req.query.kind === 'avatar';
+  const session = isAvatar ? getSession(req) : null;
+  if (!getAdmin(req) && !(isAvatar && session?.uid)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -23,13 +27,18 @@ export default async function handler(req, res) {
       const filePart = parts.find(p => p.filename);
       if (!filePart) return res.status(400).json({ error: 'No file uploaded' });
 
-      // kind=file (shop deliverable PDF), kind=cover (shop image), default: lesson PDF
-      const kind = req.query.kind === 'cover' ? 'cover' : req.query.kind === 'file' ? 'file' : 'lesson';
+      // kind=file (shop deliverable PDF), kind=cover (shop image), kind=avatar
+      // (member profile picture), default: lesson PDF
+      const kind = ['cover', 'file', 'avatar'].includes(req.query.kind) ? req.query.kind : 'lesson';
       const lower = filePart.filename.toLowerCase();
       const IMG = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp' };
       const imgExt = Object.keys(IMG).find(e => lower.endsWith(e));
       let folder, contentType;
-      if (kind === 'cover') {
+      if (kind === 'avatar') {
+        if (!imgExt) return res.status(400).json({ error: 'Profile pictures must be PNG, JPG, or WEBP' });
+        if (filePart.data.length > 4 * 1024 * 1024) return res.status(400).json({ error: 'Keep profile pictures under 4MB' });
+        folder = 'avatars'; contentType = IMG[imgExt];
+      } else if (kind === 'cover') {
         if (!imgExt) return res.status(400).json({ error: 'Covers must be PNG, JPG, or WEBP' });
         folder = 'shop-covers'; contentType = IMG[imgExt];
       } else {
@@ -41,6 +50,11 @@ export default async function handler(req, res) {
         access: 'public',
         contentType,
       });
+
+      if (kind === 'avatar' && session?.uid) {
+        const sql = neon(process.env.DATABASE_URL);
+        await sql`UPDATE users SET avatar_url = ${blob.url} WHERE id = ${session.uid}`;
+      }
 
       return res.status(200).json({ url: blob.url, filename: filePart.filename });
     } catch (err) {

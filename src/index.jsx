@@ -4652,7 +4652,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
           upside assumes each stretches one tier. */}
       {(() => {
         const PLAN_FIT = { "I need specific, customized deal help": 499.99, "Under $25": 0, "$25–$100": 49.99, "$100–$200": 149.99, "$300+": 249.99, "$2,000+": 3025, "Under $50": 0, "$50–$150": 49.99, "$150–$500": 249.99, "$500+": 499.99 };
-        const fitFor = (e) => { const r = recFor(e); return e.comped ? 0 : r.startsWith("Builder") ? 149.99 : r.startsWith("Premium") ? 249.99 : r.startsWith("Elite") ? 499.99 : r.startsWith("Senior") ? 3025 : (PLAN_FIT[e.budget] || 0); };
+        const fitFor = (e) => { const r = recFor(e); return e.comped ? 0 : r.startsWith("Member") ? 49.99 : r.startsWith("Builder") ? 149.99 : r.startsWith("Premium") ? 249.99 : r.startsWith("Elite") ? 499.99 : r.startsWith("Senior") ? 3025 : (PLAN_FIT[e.budget] || 0); };
         const STRETCH = { "I need specific, customized deal help": 499.99, "Under $25": 49.99, "$25–$100": 149.99, "$100–$200": 249.99, "$300+": 499.99, "$2,000+": 3025, "Under $50": 49.99, "$50–$150": 149.99, "$150–$500": 499.99, "$500+": 499.99 };
         const mrrFit = entries.reduce((s, e) => s + fitFor(e), 0);
         // Premium is the ideal recommendation; Elite (and Advisor) are the exceptional wins
