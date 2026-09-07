@@ -18,6 +18,7 @@ const CATALOG = {
   sub_Elite_annual:   { mode: 'subscription', name: 'GroundUp Elite — Annual',   amount: 599988, tier: 'Elite',   annual: true },
   pass_single: { mode: 'payment',      name: 'Single Course Pass (60 days)', amount: 10000 },
   pass_all:    { mode: 'payment',      name: 'All-Access Pass (30 days)',  amount: 27500 },
+  pass_lifetime: { mode: 'payment',    name: 'GroundUp Lifetime Pass',     amount: 500000 },
   lnl:         { mode: 'payment',      name: 'Lunch & Learn — one live session', amount: 3999 },
   lnl_year:    { mode: 'payment',      name: 'Lunch & Learn — one-year pass', amount: 10500 },
   lnl_life:    { mode: 'payment',      name: 'Lunch & Learn — Lifetime Pass', amount: 35000 },
@@ -296,6 +297,32 @@ async function fulfill(sql, session) {
       const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
       if (u) await addLnlContact(u.email, u.name);
     } catch (e) { console.error('lnl contact failed', e.message); }
+  } else if (item === 'pass_lifetime') {
+    // The Lifetime Pass: every course in perpetuity, one year of Builder on the
+    // house, office hours for the first FIVE years (Premium allowance), and
+    // Lunch & Learns — live + recordings — for life. The ceiling is Builder:
+    // no downloads, Opportunity Board, or anything above it.
+    await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, 'all', 'lifetime', NULL, NOW())`;
+    await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, 'builder_year', 'lifetime', NOW() + interval '1 year', NOW())`;
+    await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, 'officehours', 'lifetime', NOW() + interval '5 years', NOW())`;
+    await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, 'lunchlearn', 'lifetime', NULL, NOW())`;
+    // Grant the Builder year — never downgrade someone already at Builder or above
+    await sql`UPDATE users SET tier = 'Builder', tier_since = COALESCE(tier_since, NOW()), membership_status = 'active'
+      WHERE id = ${userId} AND (tier IS NULL OR tier IN ('Free', 'Basic'))`;
+    try {
+      const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
+      if (u) {
+        await sendEmail(u.email, 'Welcome to GroundUp, for life',
+          `<h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">You're in for good, ${u.name.split(' ')[0]}.</h2>
+           <p style="color:#a89080;font-size:14px;line-height:1.8;">Your Lifetime Pass is active: <strong style="color:#f0d8d8;">every course, forever</strong> — including each new one we add — plus <strong style="color:#f0d8d8;">a full year of Builder membership on us</strong>, <strong style="color:#f0d8d8;">office hours with Dr. Merritt through your first five years</strong>, and <strong style="color:#f0d8d8;">every Lunch & Learn — live and recorded — for life</strong>.</p>
+           <p style="color:#7a5050;font-size:12px;line-height:1.7;">When your Builder year ends, your courses and Lunch & Learns continue forever and office hours run through year five; community access continues with any membership.</p>
+           <a href="${siteUrl()}/courses" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Start Learning</a>`);
+        await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
+          `LIFETIME PASS: ${u.name} — \$5,000`,
+          `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Lifetime Pass sold</h2>
+           <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${u.name}</strong> (${u.email}) bought the \$5,000 Lifetime Pass — courses in perpetuity, Builder free for a year (auto-reverts after), office hours for 5 years at the Premium allowance, Lunch & Learns for life.</p>`);
+      }
+    } catch (e) { console.error('lifetime email failed', e.message); }
   } else if (item === 'lnl_life') {
     // The Lifetime Pass: every live session and recording, forever.
     await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, 'lunchlearn', 'stripe_onetime', NULL, NOW())`;

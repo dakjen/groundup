@@ -1396,8 +1396,22 @@ function PricingPage({ onSignUp }) {
             <div style={{ fontSize: 10, color: "#e0c4c4", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>One-Time Course Passes</div>
             <p style={{ color: "#8a7070", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Pay once — 60 days of one course, or 30 days of everything. No subscription, no membership.</p>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, alignItems: "start", maxWidth: 720, margin: "0 auto" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, alignItems: "stretch", maxWidth: 1080, margin: "0 auto" }}>
             {passPlans.map((plan, i) => <PlanCard key={i} plan={plan} onSelect={() => startCheckout(plan.name.includes("Single") ? "pass_single" : "pass_all")} />)}
+            <div style={{ background: "linear-gradient(160deg, #14100a 0%, #0d0a06 100%)", border: "1px solid #c9a22750", borderRadius: 20, padding: "30px 32px", display: "flex", flexDirection: "column" }}>
+              <div style={{ fontSize: 10, color: "#c9a227", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>✦ Lifetime Pass</div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 10 }}>
+                <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(30px,3vw,44px)", color: "#f0e6c8", lineHeight: 1.1 }}>$5,000</span>
+                <span style={{ color: "#8a8060", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>one-time</span>
+              </div>
+              <p style={{ color: "#8a8060", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 14 }}>Every course, in perpetuity — including each new one we ever add.</p>
+              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 18px" }}>
+                {["Every course forever — new ones included", "One full year of Builder membership, free", "Office hours with Dr. Merritt — your first 5 years", "Every Lunch & Learn, live & recorded — for life"].map((f, i) => (
+                  <li key={i} style={{ display: "flex", gap: 10, marginBottom: 8, color: "#c8bc9a", fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}><span style={{ color: "#c9a227" }}>✦</span><span>{f}</span></li>
+                ))}
+              </ul>
+              <button onClick={() => { if (getMember()) { startCheckout("pass_lifetime"); } else { onSignUp && onSignUp("Free"); } }} style={{ marginTop: "auto", background: "#c9a227", color: "#141008", border: "none", borderRadius: 10, padding: "13px 26px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Own It Forever →</button>
+            </div>
           </div>
         </div>
 

@@ -48,6 +48,21 @@ export default async function handler(req, res) {
       if (ok) { sent++; await sql`UPDATE entitlements SET source = 'stripe_onetime_nudged' WHERE id = ${r.id}`; }
     }
 
+    // Lifetime Pass Builder years that have run out: revert to Free — but only
+    // accounts with no Stripe billing, so a real Builder subscription is never touched.
+    const expiredBuilders = await sql`
+      SELECT DISTINCT u.id, u.name, u.email FROM users u
+      JOIN entitlements e ON e.user_id = u.id AND e.course_id = 'builder_year' AND e.source = 'lifetime' AND e.expires_at < NOW()
+      WHERE u.tier = 'Builder' AND u.stripe_customer_id IS NULL AND COALESCE(u.role, 'member') = 'member'`;
+    for (const b of expiredBuilders) {
+      await sql`UPDATE users SET tier = 'Free' WHERE id = ${b.id}`;
+      await sql`UPDATE entitlements SET source = 'lifetime_done' WHERE user_id = ${b.id} AND course_id = 'builder_year' AND source = 'lifetime'`;
+      await sendEmail(b.email, 'Your Lifetime Pass — the year of Builder has wrapped',
+        `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Your courses are yours forever, ${(b.name || 'there').split(' ')[0]}.</h2>
+         <p style="color:#a89080;font-size:14px;line-height:1.8;">The free year of Builder that came with your Lifetime Pass has ended. Nothing changes about the heart of it: <strong style="color:#f0d8d8;">every course and every Lunch & Learn stays yours in perpetuity</strong>, and office hours run through your first five years. Want the community back — posting, live Lunch & Learns, the recording library? Any membership picks it right back up.</p>
+         <a href="https://community.drginamerritt.net/pricing" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">See Memberships</a>`);
+    }
+
     // Refund pot: release every slice whose refund window has closed — NREUV's
     // rate applies to the held 20% exactly as it did to the 80% on day one.
     let released = 0, releasedCents = 0;

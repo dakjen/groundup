@@ -145,7 +145,8 @@ export default async function handler(req, res) {
         const [me] = await sql`SELECT tier, role, comped, tier_since FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
         const rank = admin ? 4 : (TIER_RANK[me?.tier] ?? 0);
         const gate = { active: false }; // office hours are not gated — only advisory calls & networking are
-        if (rank >= 3) {
+        const [lifetime] = await sql`SELECT id FROM entitlements WHERE user_id = ${session.uid} AND course_id = 'officehours' AND source = 'lifetime' AND expires_at > NOW() LIMIT 1`;
+        if (rank >= 3 || lifetime) {
           const [pRow] = await sql`SELECT value FROM settings WHERE key = ${rank >= 4 ? 'office_allow_elite' : 'office_allow_premium'}`;
           const limit = parseInt(pRow?.value, 10) || (rank >= 4 ? 6 : 3);
           const officeKeys = allEvents.filter(e => (e.kind || 'lnl') === 'office').map(e => e.date);
@@ -292,7 +293,8 @@ export default async function handler(req, res) {
         if (!admin) {
           const [me] = await sql`SELECT tier, role, comped, tier_since FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
           const rank = TIER_RANK[me?.tier] ?? 0;
-          if (rank < 3) return res.status(403).json({ error: 'Office hours are a Developer and Owner benefit' });
+          const [lifetime] = await sql`SELECT id FROM entitlements WHERE user_id = ${session.uid} AND course_id = 'officehours' AND source = 'lifetime' AND expires_at > NOW() LIMIT 1`;
+          if (rank < 3 && !lifetime) return res.status(403).json({ error: 'Office hours come with Premium and Elite — or the Lifetime Pass' });
           if (req.body.going) {
             const [pRow] = await sql`SELECT value FROM settings WHERE key = ${rank >= 4 ? 'office_allow_elite' : 'office_allow_premium'}`;
             const limit = parseInt(pRow?.value, 10) || (rank >= 4 ? 6 : 3);
