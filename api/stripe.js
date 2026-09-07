@@ -18,7 +18,7 @@ const CATALOG = {
   sub_Elite_annual:   { mode: 'subscription', name: 'GroundUp Elite — Annual',   amount: 599988, tier: 'Elite',   annual: true },
   pass_single: { mode: 'payment',      name: 'Single Course Pass (60 days)', amount: 10000 },
   pass_all:    { mode: 'payment',      name: 'All-Access Pass (30 days)',  amount: 27500 },
-  lnl:         { mode: 'payment',      name: 'Lunch & Learn — 6 months',   amount: 3999 },
+  lnl:         { mode: 'payment',      name: 'Lunch & Learn — one live session', amount: 3999 },
   session_deal:      { mode: 'payment', name: '1:1 Deal Review (45 min)',        amount: 50000 },
   session_strategy:  { mode: 'payment', name: '1:1 Strategy Session (45 min)',   amount: 42500 },
   session_capital:   { mode: 'payment', name: '1:1 Capital Stack Review (45 min)', amount: 55000 },
@@ -271,7 +271,23 @@ async function fulfill(sql, session) {
   } else if (item === 'pass_all') {
     await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, 'all', 'stripe_onetime', NOW() + interval '30 days', NOW())`;
   } else if (item === 'lnl') {
-    await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, 'lunchlearn', 'stripe_onetime', NOW() + interval '6 months', NOW())`;
+    // Per-session pricing (~one session per quarter): the purchase buys a seat
+    // at the NEXT upcoming live session — access (incl. its recording) runs
+    // through the day after it. No session scheduled yet? 120 days covers the
+    // next quarterly one.
+    let lnlUntil = null;
+    try {
+      const [evRow] = await sql`SELECT value FROM settings WHERE key = 'lnl_events'`;
+      const events = evRow?.value ? JSON.parse(evRow.value) : [];
+      const next = events.filter(e => (e.kind || 'lnl') !== 'office' && new Date(e.date) > new Date())
+        .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+      if (next) lnlUntil = new Date(new Date(next.date).getTime() + 24 * 3600 * 1000).toISOString();
+    } catch { /* fall through to the 120-day default */ }
+    if (lnlUntil) {
+      await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, 'lunchlearn', 'stripe_onetime', ${lnlUntil}, NOW())`;
+    } else {
+      await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, 'lunchlearn', 'stripe_onetime', NOW() + interval '120 days', NOW())`;
+    }
     await sql`UPDATE users SET lnl_discount_until = NOW() + interval '2 months' WHERE id = ${userId} AND (lnl_discount_until IS NULL OR lnl_discount_until < NOW() + interval '2 months')`;
     // Buyers join the L&L email list just like code redeemers
     try {

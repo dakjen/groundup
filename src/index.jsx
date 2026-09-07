@@ -1836,11 +1836,11 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
           <div style={{ ...card, padding: "36px clamp(24px,4vw,44px)", marginBottom: 28, textAlign: "center" }}>
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 10, marginBottom: 6 }}>
               <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 54, color: "#f5e8e8", lineHeight: 1 }}>$39.99</span>
-              <span style={{ color: "#8a7070", fontSize: 15, fontFamily: font }}>· 6 months of sessions</span>
+              <span style={{ color: "#8a7070", fontSize: 15, fontFamily: font }}>· per live session</span>
             </div>
-            <p style={{ color: "#e0c4c4", fontSize: 13, fontFamily: font, fontWeight: 700, marginBottom: 10 }}>A $149.99 value — offered at $39.99 because Dr. Merritt believes access shouldn't be the barrier.</p>
+            <p style={{ color: "#e0c4c4", fontSize: 13, fontFamily: font, fontWeight: 700, marginBottom: 10 }}>Priced so access isn't the barrier — a full live session with Dr. Merritt for $39.99.</p>
             <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font, lineHeight: 1.8, maxWidth: 520, margin: "0 auto 24px" }}>
-              Every live session for six months, plus the recordings — and attending unlocks 25% off your first month if you become a member within two months.
+              Your seat at the next live session, its recording included — and attending unlocks 25% off your first month if you become a member within two months.
             </p>
             {member ? (
               <>

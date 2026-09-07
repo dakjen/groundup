@@ -157,7 +157,7 @@ export function eventEmail(title, date, time, description, audienceHasAccess) {
       <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 10px;">${title}</h2>
       <p style="color:#c9a227;font-size:14px;font-weight:bold;margin:0 0 16px;">${date}${time ? ' · ' + time : ''}</p>
       ${description ? `<p style="color:#a89080;font-size:14px;line-height:1.8;">${description}</p>` : ''}
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">${audienceHasAccess ? 'Your join link is on your Lunch & Learn page — see you there.' : 'Grab Lunch & Learn access to join live — every session for six months, $39.99.'}</p>
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">${audienceHasAccess ? 'Your join link is on your Lunch & Learn page — see you there.' : 'Grab a seat to join live — $39.99 per session.'}</p>
       <a href="${siteUrl()}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">${audienceHasAccess ? 'Open Lunch & Learn' : 'Get Access'}</a>`,
   };
 }
@@ -380,7 +380,7 @@ export function lnlAccessEmail(name, expiresAt, hasLink) {
     subject: "You're in — Lunch & Learn access confirmed",
     html: `
       <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">You're in, ${name.split(' ')[0]}.</h2>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">Your Lunch & Learn access is active${through ? ` through <strong style="color:#f0d8d8;">${through}</strong>` : ''} — every live session with Dr. Merritt for six months, plus the recordings.</p>
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">Your seat is reserved${through ? ` — your access runs through <strong style="color:#f0d8d8;">${through}</strong>` : ''} for the next live session with Dr. Merritt, its recording included.</p>
       <p style="color:#a89080;font-size:14px;line-height:1.8;">${hasLink ? 'The join link for the next session is waiting on your Lunch & Learn page.' : 'The join link for each session appears on your Lunch & Learn page closer to the date.'} While you're there, tell us what you want to learn about — Dr. Merritt's team reads every submission.</p>
       <p style="color:#c9a227;font-size:14px;line-height:1.8;font-weight:bold;">Your attendee perk: 25% off your first month of membership if you join within two months.</p>
       <p style="color:#a89080;font-size:13px;line-height:1.7;">Every recording you have access to lives on your <a href="https://community.drginamerritt.net/lunchlearn" style="color:#b80101;font-weight:bold;">Lunch & Learn page</a> — catch up on any session you missed.</p>
