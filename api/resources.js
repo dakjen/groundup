@@ -132,14 +132,14 @@ export default async function handler(req, res) {
 
     // ── Course catalog: titles and descriptions only, safe to show anyone ──
     if (req.method === 'GET' && req.query.courses === '1') {
-      const rows = await sql`SELECT id, title, description, stage, stage_color, duration, lessons, hidden FROM courses ORDER BY position, id`;
+      const rows = await sql`SELECT id, title, description, stage, stage_color, duration, series, lessons, hidden FROM courses ORDER BY position, id`;
       // Team gets full lessons (for the admin preview) INCLUDING unpublished
       // drafts; everyone else gets published courses only, id + title per lesson
       const catalog = rows
         .filter(c => admin || !c.hidden)
         .map(c => ({
           id: c.id, title: c.title, description: c.description,
-          stage: c.stage, stageColor: c.stage_color, duration: c.duration,
+          stage: c.stage, stageColor: c.stage_color, duration: c.duration, series: c.series || null,
           hidden: admin ? !!c.hidden : undefined,
           lessons: admin ? (c.lessons || []) : (c.lessons || []).map(l => ({ id: l.id, title: l.title })),
         }));
@@ -150,13 +150,13 @@ export default async function handler(req, res) {
     // The lesson bodies never ship in the JS bundle; they only leave the
     // database for someone this block says is allowed to read them.
     if (req.method === 'GET' && req.query.course) {
-      const [c] = await sql`SELECT id, title, description, stage, stage_color, duration, lessons, hidden FROM courses WHERE id = ${req.query.course}`;
+      const [c] = await sql`SELECT id, title, description, stage, stage_color, duration, series, lessons, hidden FROM courses WHERE id = ${req.query.course}`;
       if (!c) return res.status(404).json({ error: 'Course not found' });
       // Unpublished drafts exist only for the team — invisible to members
       if (c.hidden && !admin) return res.status(404).json({ error: 'Course not found' });
       const shape = (full) => ({
         id: c.id, title: c.title, description: c.description,
-        stage: c.stage, stageColor: c.stage_color, duration: c.duration,
+        stage: c.stage, stageColor: c.stage_color, duration: c.duration, series: c.series || null,
         lessons: (c.lessons || []).map((l, i) => full(i) ? { ...l, locked: false } : { id: l.id, title: l.title, locked: true }),
       });
       if (admin) return res.json({ course: shape(() => true), access: 'team' });

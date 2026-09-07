@@ -82,6 +82,7 @@ const STATEMENTS = [
     price_cents INTEGER NOT NULL, delivery_url TEXT, cover_url TEXT, value_cents INTEGER,
     position INTEGER DEFAULT 0, active BOOLEAN DEFAULT TRUE, created_at TIMESTAMP DEFAULT NOW())`,
   `ALTER TABLE products ADD COLUMN IF NOT EXISTS is_playbook BOOLEAN DEFAULT FALSE`,
+  `ALTER TABLE messages ADD COLUMN IF NOT EXISTS edited_at TIMESTAMP`,
   `CREATE TABLE IF NOT EXISTS partners (
     id SERIAL PRIMARY KEY,
     slug TEXT UNIQUE NOT NULL,

@@ -181,6 +181,20 @@ export default async function handler(req, res) {
       return res.status(201).json({ message: msg });
     }
 
+    // Edit a message: the author for up to 1 HOUR after sending, the team anytime.
+    if (req.method === 'POST' && req.body && req.body.action === 'edit_message') {
+      const body = String(req.body.body || '').trim().slice(0, 4000);
+      if (!body) return res.status(400).json({ error: 'Message required' });
+      const [msg] = await sql`SELECT id, user_id, created_at FROM messages WHERE id = ${Number(req.body.message_id)} AND deleted = FALSE`;
+      if (!msg) return res.status(404).json({ error: 'Message not found' });
+      if (!isAdminReq) {
+        if (msg.user_id !== user.id) return res.status(403).json({ error: 'You can only edit your own messages' });
+        if (Date.now() - new Date(msg.created_at).getTime() > 3600 * 1000) return res.status(403).json({ error: 'Messages can be edited for 1 hour after sending' });
+      }
+      const [updated] = await sql`UPDATE messages SET body = ${body}, edited_at = NOW() WHERE id = ${msg.id} RETURNING *`;
+      return res.json({ message: updated });
+    }
+
     // Team: post a poll into a channel (e.g. event interest in Announcements / Elite Lounge)
     if (req.method === 'POST' && req.body && req.body.action === 'create_poll') {
       if (!isAdminReq) return res.status(403).json({ error: 'Team only' });

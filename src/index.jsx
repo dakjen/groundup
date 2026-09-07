@@ -925,6 +925,18 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
 function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate }) {
   const [activeMiniCourse, setActiveMiniCourse] = useState(null);
   const pageBg = "#000";
+  // The live catalog: newly published courses (and series) appear without a deploy.
+  const [catalog, setCatalog] = useState(null);
+  useEffect(() => {
+    fetch("/api/resources?courses=1", { headers: getMemberToken() ? { Authorization: "Bearer " + getMemberToken() } : {} })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.courses?.length) setCatalog(d.courses.filter(c => !c.hidden)); })
+      .catch(() => {});
+  }, []);
+  const allCourses = catalog || miniCourses;
+  const regular = allCourses.filter(c => !c.series);
+  const seriesGroups = {};
+  for (const c of allCourses) if (c.series) (seriesGroups[c.series] ||= []).push(c);
 
   // Course content requires an account — sign in (free) to preview, paid to unlock everything.
   if (!member) {
@@ -951,7 +963,7 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate }) {
           <p style={{ color: "#8a7070", fontSize: 15, maxWidth: 580, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif" }}>Seven courses built from Dr. Gina Merritt's actual deal experience — from first principles to what happens after opening day.</p>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          {miniCourses.map((course, i) => (
+          {regular.map((course, i) => (
             <div key={course.id} onClick={() => setActiveMiniCourse(course)}
               style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "32px 36px", cursor: "pointer", transition: "all 0.25s" }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = "#b8010145"; e.currentTarget.style.transform = "translateY(-3px)"; }}
@@ -973,6 +985,33 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate }) {
             </div>
           ))}
         </div>
+
+        {/* ── Series: focused deep-dives, distinct from the main curriculum ── */}
+        {Object.entries(seriesGroups).map(([name, list]) => (
+          <div key={name} style={{ marginTop: 72 }}>
+            <div style={{ borderTop: "1px solid #2c2214", paddingTop: 48 }}>
+              <div style={{ fontSize: 10, color: "#c9a227", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>✦ Deep-Dive Series</div>
+              <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(30px,4vw,42px)", color: "#f0e6c8", marginBottom: 10, lineHeight: 1.15 }}>{name}</h2>
+              <p style={{ color: "#8a8060", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8, maxWidth: 560, marginBottom: 26 }}>Taught as a set and built to go deeper than the curriculum — take the parts in order.</p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 18 }}>
+                {list.map((course, i) => (
+                  <div key={course.id} onClick={() => setActiveMiniCourse(course)}
+                    style={{ background: "linear-gradient(160deg, #14100a 0%, #0d0a06 100%)", border: "1px solid #c9a22740", borderRadius: 20, padding: "28px 30px", cursor: "pointer", transition: "all 0.25s" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#c9a22790"; e.currentTarget.style.transform = "translateY(-3px)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "#c9a22740"; e.currentTarget.style.transform = "none"; }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                      <span style={{ background: "#c9a22718", color: "#c9a227", border: "1px solid #c9a22745", borderRadius: 4, padding: "3px 10px", fontSize: 10, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "1px" }}>{course.stage}</span>
+                      <span style={{ color: "#7a7050", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{(course.lessons || []).length} modules · {course.duration}</span>
+                    </div>
+                    <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(20px,2.2vw,26px)", color: "#f0e6c8", marginBottom: 10, lineHeight: 1.2 }}>{course.title}</h3>
+                    <p style={{ fontSize: 13.5, color: "#8a8060", lineHeight: 1.75, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{course.description}</p>
+                    <button style={{ background: "#c9a227", color: "#141008", border: "none", borderRadius: 8, padding: "10px 22px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Begin →</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

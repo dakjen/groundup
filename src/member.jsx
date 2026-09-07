@@ -646,22 +646,33 @@ function ProfileHover({ m }) {
   );
 }
 
-function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote }) {
+function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdit, meId, isAdmin }) {
   const [showProfile, setShowProfile] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editDraft, setEditDraft] = useState("");
+  // Your own messages are editable for 1 hour after sending; the team, anytime.
+  const mine = meId && m.user_id === meId;
+  const withinHour = Date.now() - new Date(m.created_at).getTime() < 3600 * 1000;
+  const canEdit = onEdit && (isAdmin || (mine && withinHour));
   // Dr. Merritt's messages carry a presence of their own — richer than TEAM,
   // unmistakable at a glance: glowing card, serif name, crowned badge.
   const isGina = m.is_admin && m.author_badge === "drmerritt";
   return (
-    <div style={{ padding: isGina ? "16px 20px" : "12px 16px", borderRadius: 10, background: isGina ? "linear-gradient(135deg, #1a0808 0%, #12060a 100%)" : m.is_admin ? "var(--gu-red-tint)" : "transparent", border: isGina ? "1px solid #b8010170" : m.is_admin ? "1px solid #b8010130" : "1px solid transparent", boxShadow: isGina ? "0 0 24px rgba(184,1,1,0.12)" : "none", marginBottom: 4 }}>
+    <div style={{ padding: isGina ? "16px 20px" : "12px 16px", borderRadius: 10, background: isGina ? "linear-gradient(135deg, #1a0808 0%, #12060a 100%)" : "transparent", border: isGina ? "1px solid #b8010170" : "1px solid transparent", boxShadow: isGina ? "0 0 24px rgba(184,1,1,0.12)" : "none", marginBottom: 4 }}>
       {isGina && <div style={{ height: 2, background: "linear-gradient(90deg, transparent, #b80101, transparent)", margin: "-16px -20px 12px", borderRadius: "10px 10px 0 0" }} />}
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+      <span style={{ position: "relative", flexShrink: 0, cursor: "default", marginTop: 2 }}
+        onMouseEnter={() => !m.is_admin && setShowProfile(true)} onMouseLeave={() => setShowProfile(false)}>
+        <Avatar url={m.author_avatar} name={m.is_admin ? (isGina ? "Gina Merritt" : "GroundUp Team") : m.author_name} size={36} />
+        {showProfile && !m.is_admin && <ProfileHover m={m} />}
+      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-        <span style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 8, cursor: "default" }}
+        <span style={{ position: "relative", cursor: "default" }}
           onMouseEnter={() => !m.is_admin && setShowProfile(true)} onMouseLeave={() => setShowProfile(false)}>
-          {!m.is_admin && <Avatar url={m.author_avatar} name={m.author_name} size={26} />}
           <span style={isGina
             ? { color: "#f5e8e8", fontWeight: 700, fontSize: 16, fontFamily: serif, letterSpacing: "0.3px" }
             : { color: m.is_admin ? "#b80101" : "var(--gu-text2)", fontWeight: 800, fontSize: 13, fontFamily: font }}>{m.author_name || "Member"}</span>
-          {showProfile && !m.is_admin && <ProfileHover m={m} />}
         </span>
         {m.is_admin ? (
           isGina
@@ -670,9 +681,24 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote }) {
         ) : m.author_tier && <TierBadge tier={m.author_tier} small />}
         {!m.is_admin && <BadgeChips badges={m.author_badges} small />}
         <span style={{ color: "var(--gu-faint)", fontSize: 11, fontFamily: font }}>{timeAgo(m.created_at)}</span>
-        {canDelete && <button onClick={() => onDelete(m)} style={{ background: "none", border: "none", color: "var(--gu-faint)", cursor: "pointer", fontSize: 11, fontFamily: font, marginLeft: "auto" }}>delete</button>}
+        {m.edited_at && <span style={{ color: "var(--gu-faint)", fontSize: 10, fontFamily: font, fontStyle: "italic" }}>(edited)</span>}
+        <span style={{ marginLeft: "auto", display: "flex", gap: 10 }}>
+          {canEdit && !editing && <button onClick={() => { setEditing(true); setEditDraft(m.body); }} style={{ background: "none", border: "none", color: "var(--gu-faint)", cursor: "pointer", fontSize: 11, fontFamily: font }}>edit</button>}
+          {canDelete && <button onClick={() => { if (window.confirm("Delete this message? This can't be undone.")) onDelete(m); }} style={{ background: "none", border: "none", color: "var(--gu-faint)", cursor: "pointer", fontSize: 11, fontFamily: font }}>delete</button>}
+        </span>
       </div>
-      <div style={{ color: "var(--gu-body)", fontSize: 14, fontFamily: font, lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{linkify(m.body)}</div>
+      {editing ? (
+        <div>
+          <textarea value={editDraft} onChange={e => setEditDraft(e.target.value)} rows={3} maxLength={4000}
+            style={{ width: "100%", boxSizing: "border-box", background: "var(--gu-panel)", border: "1px solid #b8010150", borderRadius: 8, padding: "10px 12px", color: "var(--gu-text)", fontFamily: font, fontSize: 14, lineHeight: 1.6, outline: "none", resize: "vertical" }} />
+          <div style={{ display: "flex", gap: 10, marginTop: 6 }}>
+            <button onClick={async () => { if (editDraft.trim() && onEdit) { await onEdit(m, editDraft.trim()); } setEditing(false); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 6, padding: "6px 14px", fontFamily: font, fontWeight: 800, fontSize: 12, cursor: "pointer" }}>Save</button>
+            <button onClick={() => setEditing(false)} style={{ background: "none", border: "1px solid var(--gu-border)", color: "var(--gu-muted)", borderRadius: 6, padding: "6px 14px", fontFamily: font, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>Cancel</button>
+          </div>
+        </div>
+      ) : (
+        <div style={{ color: "var(--gu-body)", fontSize: 14, fontFamily: font, lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{linkify(m.body)}</div>
+      )}
       {m.poll && m.poll_results && (
         <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6, maxWidth: 420 }}>
           {(m.poll.options || []).map((opt, i) => {
@@ -701,6 +727,8 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote }) {
           {Number(m.reply_count) > 0 ? `${m.reply_count} repl${Number(m.reply_count) === 1 ? "y" : "ies"}` : "Reply in thread"}
         </button>
       )}
+      </div>
+      </div>
     </div>
   );
 }
@@ -835,6 +863,13 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
     } catch (e) { setError(e.message); }
   };
 
+  const editMsg = async (m, body) => {
+    try {
+      await api("/api/community", { method: "POST", body: JSON.stringify({ action: "edit_message", message_id: m.id, body }) });
+      await loadMessages(active.id, thread ? thread.id : undefined);
+      if (!thread) await loadMessages(active.id);
+    } catch (e) { setError(e.message); }
+  };
   const deleteMsg = async (m) => {
     try {
       await api("/api/community", { method: "DELETE", body: JSON.stringify({ id: m.id }) });
@@ -961,7 +996,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
             </div>
             <div ref={feedRef} style={{ flex: 1, overflowY: "auto", padding: "20px 20px 12px" }}>
               {messages.length === 0 && <div style={{ color: "var(--gu-faint)", fontFamily: font, fontSize: 14, textAlign: "center", marginTop: 60 }}>No messages yet. {canPost ? "Start the conversation." : ""}</div>}
-              {messages.map(m => <Message key={m.id} m={m} onOpenThread={setThread} onDelete={deleteMsg} canDelete={isAdmin || (member && m.user_id === member.id)} onVote={votePoll} />)}
+              {messages.map(m => <Message key={m.id} m={m} onOpenThread={setThread} onDelete={deleteMsg} canDelete={isAdmin || (member && m.user_id === member.id)} onVote={votePoll} onEdit={editMsg} meId={member?.id} isAdmin={isAdmin} />)}
             </div>
             {error && <div style={{ color: "#ff6b6b", fontSize: 12, fontFamily: font, padding: "0 24px 6px" }}>{error}</div>}
             <div style={{ padding: "12px 20px 20px", borderTop: "1px solid #1a0000" }}>
@@ -1006,7 +1041,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
           <div style={{ flex: 1, overflowY: "auto", padding: "16px 14px" }}>
             <Message m={thread} inThread onDelete={deleteMsg} canDelete={false} />
             <div style={{ borderTop: "1px solid #1a0000", margin: "10px 0" }} />
-            {threadMsgs.map(m => <Message key={m.id} m={m} inThread onDelete={deleteMsg} canDelete={isAdmin || (member && m.user_id === member.id)} />)}
+            {threadMsgs.map(m => <Message key={m.id} m={m} inThread onDelete={deleteMsg} canDelete={isAdmin || (member && m.user_id === member.id)} onEdit={editMsg} meId={member?.id} isAdmin={isAdmin} />)}
           </div>
           {canEngage ? (
             <form onSubmit={e => { e.preventDefault(); send(thread.id, threadDraft, () => setThreadDraft("")); }} style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 14px 16px", borderTop: "1px solid #1a0000" }}>
