@@ -20,6 +20,7 @@ const CATALOG = {
   pass_all:    { mode: 'payment',      name: 'All-Access Pass (30 days)',  amount: 27500 },
   lnl:         { mode: 'payment',      name: 'Lunch & Learn — one live session', amount: 3999 },
   lnl_year:    { mode: 'payment',      name: 'Lunch & Learn — one-year pass', amount: 10500 },
+  lnl_life:    { mode: 'payment',      name: 'Lunch & Learn — Lifetime Pass', amount: 35000 },
   session_deal:      { mode: 'payment', name: '1:1 Deal Review (45 min)',        amount: 50000 },
   session_strategy:  { mode: 'payment', name: '1:1 Strategy Session (45 min)',   amount: 42500 },
   session_capital:   { mode: 'payment', name: '1:1 Capital Stack Review (45 min)', amount: 55000 },
@@ -35,7 +36,7 @@ const CATALOG = {
 // 1.00 = NREUV keeps all of it; 0.75 = NREUV 75% / platform 25%.
 const SPLIT = {
   DEFAULT: 0.75,  // NREUV 75% / platform 25% — memberships and course passes
-  lnl: 1.00, lnl_year: 1.00, // Lunch & Learn: 100% to NREUV, platform takes no cut
+  lnl: 1.00, lnl_year: 1.00, lnl_life: 1.00, // Lunch & Learn: 100% to NREUV, platform takes no cut
   // Dr. Merritt's own hours — 90/10
   session_deal: 0.90, session_strategy: 0.90, session_capital: 0.90,
   session_community: 0.90, session_bipoc: 0.90,
@@ -291,6 +292,14 @@ async function fulfill(sql, session) {
     }
     await sql`UPDATE users SET lnl_discount_until = NOW() + interval '2 months' WHERE id = ${userId} AND (lnl_discount_until IS NULL OR lnl_discount_until < NOW() + interval '2 months')`;
     // Buyers join the L&L email list just like code redeemers
+    try {
+      const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
+      if (u) await addLnlContact(u.email, u.name);
+    } catch (e) { console.error('lnl contact failed', e.message); }
+  } else if (item === 'lnl_life') {
+    // The Lifetime Pass: every live session and recording, forever.
+    await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, 'lunchlearn', 'stripe_onetime', NULL, NOW())`;
+    await sql`UPDATE users SET lnl_discount_until = NOW() + interval '2 months' WHERE id = ${userId} AND (lnl_discount_until IS NULL OR lnl_discount_until < NOW() + interval '2 months')`;
     try {
       const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
       if (u) await addLnlContact(u.email, u.name);

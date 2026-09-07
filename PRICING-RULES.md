@@ -36,7 +36,7 @@ This document reflects every pricing rule currently implemented in code. Prices 
 
 ## 4. Lunch & Learn
 
-- L&L access: **$39.99 per live session**, or a **one-year pass for $105** (every live session + recordings for 12 months — at ~quarterly cadence, four sessions for less than the price of three; same LNL25 attendee perk) (~one session per quarter) — the purchase buys a seat at the next upcoming session, recording included, with access through the day after it (120-day fallback if none is scheduled yet). Codes can also grant access.
+- L&L access: **$39.99 per live session**, a **one-year pass for $105** (every live session + recordings for 12 months), or a **Lifetime Pass for $350** (every session and recording, forever); same LNL25 attendee perk on all three (~one session per quarter) — the purchase buys a seat at the next upcoming session, recording included, with access through the day after it (120-day fallback if none is scheduled yet). Codes can also grant access.
 - **Attendee perk (LNL25):** 25% off the first month of any membership, valid for 2 months after purchase/redemption, applied automatically at checkout.
 - Revenue split: **100% of L&L revenue goes to NREUV** (platform takes no cut).
 - **Every paid member gets free invites to live sessions** (Member and up — RSVP included). The **recording library stays Builder and up**. Free accounts buy access ($39.99/6mo) or use a code — a purchase includes recordings.
