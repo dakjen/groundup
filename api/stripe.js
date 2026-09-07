@@ -17,7 +17,7 @@ const CATALOG = {
   sub_Premium_annual: { mode: 'subscription', name: 'GroundUp Premium — Annual', amount: 299988, tier: 'Premium', annual: true },
   sub_Elite_annual:   { mode: 'subscription', name: 'GroundUp Elite — Annual',   amount: 599988, tier: 'Elite',   annual: true },
   pass_single: { mode: 'payment',      name: 'Single Course Pass (60 days)', amount: 10000 },
-  pass_all:    { mode: 'payment',      name: 'All-Access Pass (30 days)',  amount: 25000 },
+  pass_all:    { mode: 'payment',      name: 'All-Access Pass (30 days)',  amount: 27500 },
   lnl:         { mode: 'payment',      name: 'Lunch & Learn — 6 months',   amount: 3999 },
   session_deal:      { mode: 'payment', name: '1:1 Deal Review (45 min)',        amount: 50000 },
   session_strategy:  { mode: 'payment', name: '1:1 Strategy Session (45 min)',   amount: 42500 },

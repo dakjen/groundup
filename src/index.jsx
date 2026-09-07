@@ -228,7 +228,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
       const ok = window.confirm(
         `Start your 14-day trial with "${course.title}"?\n\n` +
         `Your trial works like our Single Course Pass: every lesson in ONE course of your choice, free for 14 days. This is your one trial — once you pick, it can't be moved to another course.\n\n` +
-        `Want it all instead? A membership includes all seven courses, the community, and new courses as they drop — from $49.99/mo. A one-time pass gives 60 days of a single course ($100) or 30 days of everything ($250).\n\n` +
+        `Want it all instead? A membership includes all seven courses, the community, and new courses as they drop — from $49.99/mo. A one-time pass gives 60 days of a single course ($100) or 30 days of everything ($275).\n\n` +
         `Press OK to start your trial with this course.`
       );
       if (!ok) return;
@@ -1157,7 +1157,7 @@ const passPlans = [
   },
   {
     name: "All-Access Pass",
-    price: "$250",
+    price: "$275",
     period: "one-time",
     description: "30 days of every written lesson across the entire GroundUp curriculum.",
     accent: "#b80101",
@@ -2705,7 +2705,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
           {[
             { name: "One Course", price: "$100", period: "one-time", desc: "60 days inside one course of your choice." },
-            { name: "All-Access Pass", price: "$250", period: "one-time", desc: "30 days of the entire curriculum." },
+            { name: "All-Access Pass", price: "$275", period: "one-time", desc: "30 days of the entire curriculum." },
             { name: "Member", price: "$49.99", period: "/mo", desc: "Constant access + support — every course, every new course, and the community." },
             { name: "Premium", price: "$249.99", period: "/mo", desc: "Engage the community, deal tools, the Opportunity Board, a free work session.", popular: true },
             { name: "Elite", price: "$499.99", period: "/mo", desc: "Direct line to Dr. Merritt — advisory calls, DMs, and the partner network." },

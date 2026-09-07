@@ -224,7 +224,7 @@ export function passExpiryEmail(name, single) {
       <p style="color:#a89080;font-size:14px;line-height:1.8;">We hope the material moved you forward. For the next <strong style="color:#f0d8d8;">7 days</strong>, here are your ways to keep going:</p>
       <div style="margin:18px 0;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
         <p style="color:#f0d8d8;font-size:14px;font-weight:bold;margin:0 0 6px;">Extend your access</p>
-        <p style="color:#a89080;font-size:13px;line-height:1.7;margin:0;">Grab another pass — 60 days of one course (\$100) or 30 days of everything (\$250). <a href="https://community.drginamerritt.net/pricing" style="color:#b80101;font-weight:bold;">Get a pass →</a></p>
+        <p style="color:#a89080;font-size:13px;line-height:1.7;margin:0;">Grab another pass — 60 days of one course (\$100) or 30 days of everything (\$275). <a href="https://community.drginamerritt.net/pricing" style="color:#b80101;font-weight:bold;">Get a pass →</a></p>
       </div>
       <div style="margin:18px 0;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
         <p style="color:#f0d8d8;font-size:14px;font-weight:bold;margin:0 0 6px;">Or go all in: an annual membership at 15% off</p>
