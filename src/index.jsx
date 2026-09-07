@@ -733,7 +733,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
           <div className="gu-up gu-d6" style={{ flexShrink: 0, width: "clamp(280px,40%,460px)", position: "relative" }}>
             <div className="gu-float">
             <div style={{ width: "100%", borderRadius: 20, overflow: "hidden", background: "#0d0404", border: "1px solid #2a0000" }}>
-              <img src="/opt/LIIF-Stills1.jpg" alt="Dr. Gina Merritt" style={{ width: "100%", height: 300, objectFit: "cover", objectPosition: "center top", display: "block" }} />
+              <img src="/opt/LIIF-Stills1.jpg" alt="Dr. Gina Merritt" fetchPriority="high" style={{ width: "100%", height: 300, objectFit: "cover", objectPosition: "center top", display: "block" }} />
               <div style={{ padding: "24px 28px 28px" }}>
                 <div style={{ fontSize: 11, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Dr. Gina Merritt</div>
                 <p style={{ fontSize: 13, color: "#c4a8a8", lineHeight: 1.75, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>
@@ -833,7 +833,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
             </p>
           </div>
           <div style={{ width: "clamp(260px,35%,360px)", flexShrink: 0, borderRadius: 16, overflow: "hidden", border: "1px solid #2a0000" }}>
-            <img src="/opt/LIIF-Stills3.jpg" alt="Dr. Merritt on site" style={{ width: "100%", height: 320, objectFit: "cover", display: "block" }} />
+            <img loading="lazy" src="/opt/LIIF-Stills3.jpg" alt="Dr. Merritt on site" style={{ width: "100%", height: 320, objectFit: "cover", display: "block" }} />
           </div>
         </div>
 
@@ -850,7 +850,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
             </p>
           </div>
           <div style={{ width: "clamp(260px,35%,360px)", flexShrink: 0, borderRadius: 16, overflow: "hidden", border: "1px solid #2a0000" }}>
-            <img src="/opt/sis-gm-speech.jpg" alt="Dr. Merritt speaking at Social Innovation Summit" style={{ width: "100%", height: 320, objectFit: "cover", objectPosition: "center top", display: "block" }} />
+            <img loading="lazy" src="/opt/sis-gm-speech.jpg" alt="Dr. Merritt speaking at Social Innovation Summit" style={{ width: "100%", height: 320, objectFit: "cover", objectPosition: "center top", display: "block" }} />
           </div>
         </div>
 
@@ -867,7 +867,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
             </p>
           </div>
           <div style={{ width: "clamp(260px,35%,360px)", flexShrink: 0, borderRadius: 16, overflow: "hidden", border: "1px solid #2a0000" }}>
-            <img src="/opt/LIIF-Stills5.jpg" alt="Dr. Merritt working" style={{ width: "100%", height: 320, objectFit: "cover", display: "block" }} />
+            <img loading="lazy" src="/opt/LIIF-Stills5.jpg" alt="Dr. Merritt working" style={{ width: "100%", height: 320, objectFit: "cover", display: "block" }} />
           </div>
         </div>
 
@@ -884,7 +884,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
             </p>
           </div>
           <div style={{ width: "clamp(260px,35%,360px)", flexShrink: 0, borderRadius: 16, overflow: "hidden", border: "1px solid #2a0000" }}>
-            <img src="/opt/SISAwards-acceptance.jpg" alt="Dr. Merritt accepting Social Innovation Summit award" style={{ width: "100%", height: 320, objectFit: "cover", objectPosition: "center 20%", display: "block" }} />
+            <img loading="lazy" src="/opt/SISAwards-acceptance.jpg" alt="Dr. Merritt accepting Social Innovation Summit award" style={{ width: "100%", height: 320, objectFit: "cover", objectPosition: "center 20%", display: "block" }} />
           </div>
         </div>
 
@@ -1024,8 +1024,8 @@ function AboutPage({ setActivePage }) {
     <div style={{ background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 40, borderRadius: 16, overflow: "hidden" }}>
-          <img src="/opt/gina-dcre-2026.jpg" alt="Dr. Gina Merritt at the 2026 DCRE Conference" style={{ width: "100%", height: 240, objectFit: "cover", objectPosition: "center 25%", display: "block", borderRadius: 12 }} />
-          <img src="/opt/SISAwards-Award.jpg" alt="Dr. Merritt accepting award on stage" style={{ width: "100%", height: 240, objectFit: "cover", display: "block", borderRadius: 12 }} />
+          <img loading="lazy" src="/opt/gina-dcre-2026.jpg" alt="Dr. Gina Merritt at the 2026 DCRE Conference" style={{ width: "100%", height: 240, objectFit: "cover", objectPosition: "center 25%", display: "block", borderRadius: 12 }} />
+          <img loading="lazy" src="/opt/SISAwards-Award.jpg" alt="Dr. Merritt accepting award on stage" style={{ width: "100%", height: 240, objectFit: "cover", display: "block", borderRadius: 12 }} />
         </div>
         {/* Case studies — her buildings, her stories, told the way the courses tell them */}
         <div style={{ marginBottom: 64 }}>
@@ -1469,7 +1469,7 @@ function PricingPage({ onSignUp }) {
         </button>
 
         <div style={{ marginTop: 56, borderRadius: 16, overflow: "hidden", position: "relative", border: "1px solid #2a0000" }}>
-          <img src="/opt/IMG_8087.jpg" alt="Dr. Merritt speaking at the National DCRE Conference" style={{ width: "100%", height: 340, objectFit: "cover", objectPosition: "center 30%", display: "block" }} />
+          <img loading="lazy" src="/opt/IMG_8087.jpg" alt="Dr. Merritt speaking at the National DCRE Conference" style={{ width: "100%", height: 340, objectFit: "cover", objectPosition: "center 30%", display: "block" }} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.85) 100%)" }} />
           <div style={{ position: "absolute", bottom: 22, left: 28, right: 28 }}>
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(20px,3vw,28px)", color: "#f5e8e8", marginBottom: 4 }}>Learn from someone who's actually done it.</div>
@@ -1575,7 +1575,7 @@ function ContactPage({ setActivePage, advisorLink }) {
         </div>
 
         <div style={{ borderRadius: 16, overflow: "hidden", position: "relative", border: "1px solid #2a0000", margin: "28px 0 8px" }}>
-          <img src="/opt/DCREC2022-still4.jpg" alt="Dr. Merritt on an industry panel" style={{ width: "100%", height: 260, objectFit: "cover", objectPosition: "center 20%", display: "block" }} />
+          <img loading="lazy" src="/opt/DCREC2022-still4.jpg" alt="Dr. Merritt on an industry panel" style={{ width: "100%", height: 260, objectFit: "cover", objectPosition: "center 20%", display: "block" }} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.8) 100%)" }} />
           <div style={{ position: "absolute", bottom: 16, left: 24 }}>
             <div style={{ color: "#f0d8d8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>45 minutes, one-on-one, with the person other developers ask for advice.</div>
@@ -1924,7 +1924,7 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
 
         {/* Dr. Merritt live */}
         <div style={{ borderRadius: 16, overflow: "hidden", position: "relative", border: "1px solid #2a0000", marginBottom: 36 }}>
-          <img src="/opt/IMG_8084.jpg" alt="Dr. Gina Merritt speaking live" style={{ width: "100%", height: 300, objectFit: "cover", objectPosition: "center 35%", display: "block" }} />
+          <img loading="lazy" src="/opt/IMG_8084.jpg" alt="Dr. Gina Merritt speaking live" style={{ width: "100%", height: 300, objectFit: "cover", objectPosition: "center 35%", display: "block" }} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 35%, rgba(0,0,0,0.85) 100%)" }} />
           <div style={{ position: "absolute", bottom: 20, left: 26, right: 26 }}>
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(18px,2.5vw,24px)", color: "#f5e8e8" }}>Live. Unfiltered. Real numbers from real deals.</div>
@@ -2586,7 +2586,6 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
   return (
     <div style={{ background: "#000", minHeight: "100vh" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=DM+Sans:wght@400;500;600;700;800&display=swap');
         :root { --gu-bg: #000000; --gu-panel: #070303; --gu-card: #0d0404; --gu-card2: #0a0808; --gu-card3: #140808; --gu-red-tint: #12060a; --gu-border: #2a0000; --gu-border2: #1a0000; --gu-text: #f5e8e8; --gu-text2: #f0d8d8; --gu-body: #c8a8a8; --gu-muted: #8a7070; --gu-muted2: #7a5050; --gu-faint: #5a4040; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #000; color: #f5e8e8; font-family: 'DM Sans', sans-serif; }
@@ -5680,7 +5679,6 @@ export default function App() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=DM+Sans:wght@400;500;600;700;800&display=swap');
         :root { --gu-bg: #000000; --gu-panel: #070303; --gu-card: #0d0404; --gu-card2: #0a0808; --gu-card3: #140808; --gu-red-tint: #12060a; --gu-border: #2a0000; --gu-border2: #1a0000; --gu-text: #f5e8e8; --gu-text2: #f0d8d8; --gu-body: #c8a8a8; --gu-muted: #8a7070; --gu-muted2: #7a5050; --gu-faint: #5a4040; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #000; color: #f5e8e8; font-family: 'DM Sans', sans-serif; }
