@@ -1369,6 +1369,10 @@ function PricingPage({ onSignUp }) {
   // Live Elite seat count — Elite is sold as a limited cohort
   const [elite, setElite] = useState(null);
   const [annual, setAnnual] = useState(() => { try { return new URLSearchParams(window.location.search).get("annual") === "1"; } catch { return false; } });
+  const [lifetime, setLifetime] = useState(null);
+  useEffect(() => {
+    fetch("/api/stripe").then(r => r.ok ? r.json() : null).then(d => d?.lifetime && setLifetime(d.lifetime)).catch(() => {});
+  }, []);
   // AuthModal reads this so a signed-out annual pick checks out annually after signup
   useEffect(() => { try { localStorage.setItem("guAnnual", annual ? "1" : "0"); } catch {} }, [annual]);
   useEffect(() => {
@@ -1398,8 +1402,12 @@ function PricingPage({ onSignUp }) {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, alignItems: "stretch", maxWidth: 1080, margin: "0 auto" }}>
             {passPlans.map((plan, i) => <PlanCard key={i} plan={plan} onSelect={() => startCheckout(plan.name.includes("Single") ? "pass_single" : "pass_all")} />)}
+            {lifetime?.cap > 0 && (
             <div style={{ background: "linear-gradient(160deg, #14100a 0%, #0d0a06 100%)", border: "1px solid #c9a22750", borderRadius: 20, padding: "30px 32px", display: "flex", flexDirection: "column" }}>
-              <div style={{ fontSize: 10, color: "#c9a227", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>✦ Lifetime Pass</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 10, color: "#c9a227", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>✦ Lifetime Pass</span>
+                <span style={{ fontSize: 10, color: lifetime.remaining > 0 ? "#8a8060" : "#b80101", fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", border: "1px solid " + (lifetime.remaining > 0 ? "#c9a22740" : "#b8010150"), borderRadius: 4, padding: "2px 8px" }}>{lifetime.remaining > 0 ? `${lifetime.remaining} of ${lifetime.cap} remaining` : "Sold out"}</span>
+              </div>
               <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 10 }}>
                 <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(30px,3vw,44px)", color: "#f0e6c8", lineHeight: 1.1 }}>$5,000</span>
                 <span style={{ color: "#8a8060", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>one-time</span>
@@ -1410,8 +1418,9 @@ function PricingPage({ onSignUp }) {
                   <li key={i} style={{ display: "flex", gap: 10, marginBottom: 8, color: "#c8bc9a", fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}><span style={{ color: "#c9a227" }}>✦</span><span>{f}</span></li>
                 ))}
               </ul>
-              <button onClick={() => { if (getMember()) { startCheckout("pass_lifetime"); } else { onSignUp && onSignUp("Free"); } }} style={{ marginTop: "auto", background: "#c9a227", color: "#141008", border: "none", borderRadius: 10, padding: "13px 26px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Own It Forever →</button>
+              <button disabled={lifetime.remaining === 0} onClick={() => { if (getMember()) { startCheckout("pass_lifetime"); } else { onSignUp && onSignUp("Free"); } }} style={{ marginTop: "auto", background: lifetime.remaining > 0 ? "#c9a227" : "#3a3428", color: lifetime.remaining > 0 ? "#141008" : "#8a8060", border: "none", borderRadius: 10, padding: "13px 26px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: lifetime.remaining > 0 ? "pointer" : "default" }}>{lifetime.remaining > 0 ? "Own It Forever →" : "This Run Is Sold Out"}</button>
             </div>
+            )}
           </div>
         </div>
 
@@ -4998,6 +5007,22 @@ function SystemStatusTab() {
       .then(r => r.json()).then(d => setCfg(d.config || [])).catch(() => setCfg([]));
   }, []);
   const F = "'DM Sans', sans-serif";
+  const [lt, setLt] = useState(null);
+  const [capDraft, setCapDraft] = useState("");
+  const [ltMsg, setLtMsg] = useState(null);
+  useEffect(() => {
+    fetch("/api/stripe").then(r => r.ok ? r.json() : null).then(d => { if (d?.lifetime) { setLt(d.lifetime); setCapDraft(String(d.lifetime.cap)); } }).catch(() => {});
+  }, []);
+  const saveCap = async () => {
+    try {
+      const res = await fetch("/api/resources", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + sessionStorage.getItem("adminToken") }, body: JSON.stringify({ action: "set_lifetime_cap", cap: Number(capDraft) }) });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Save failed");
+      setLt(l => ({ ...l, cap: d.cap, remaining: Math.max(0, d.cap - (l?.sold || 0)) }));
+      setLtMsg({ ok: true, text: d.cap === 0 ? "Lifetime Pass taken off sale — the card disappears from the pricing page." : `Cap saved: ${d.cap} total. ${Math.max(0, d.cap - (lt?.sold || 0))} still available.` });
+    } catch (e) { setLtMsg({ ok: false, text: e.message }); }
+    setTimeout(() => setLtMsg(null), 6000);
+  };
   if (!cfg) return <div style={{ color: "#b80101", fontFamily: F }}>Checking…</div>;
   const missing = cfg.filter(c => !c.ok);
   return (
@@ -5007,6 +5032,16 @@ function SystemStatusTab() {
       <div style={{ background: missing.length ? "#fdf0f0" : "#eef7ee", border: `1px solid ${missing.length ? "#b8010140" : "#22c55e40"}`, color: missing.length ? "#b80101" : "#1a7a3a", borderRadius: 10, padding: "14px 18px", fontSize: 13.5, fontFamily: F, fontWeight: 700, marginBottom: 20 }}>
         {missing.length ? `${missing.length} setting${missing.length > 1 ? "s" : ""} missing — ${missing.map(m => m.label).join(", ")}` : "Everything is configured. Payments, splits, and email are all live."}
       </div>
+      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: "22px 24px", marginBottom: 20 }}>
+        <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: F, marginBottom: 6 }}>Lifetime Pass — total sellable</div>
+        <p style={{ color: "#666666", fontSize: 12, fontFamily: F, marginBottom: 12 }}>The $5,000 pass is a numbered run. Set the total that may ever be sold; 0 takes it off sale (the card vanishes from the pricing page). Sold so far: <strong>{lt ? lt.sold : "…"}</strong>{lt && lt.cap > 0 ? ` · ${lt.remaining} remaining` : ""}</p>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <input type="number" min="0" value={capDraft} onChange={e => setCapDraft(e.target.value)} style={{ width: 110, background: "#faf8f5", border: "1px solid #dcd8d0", borderRadius: 8, padding: "10px 12px", fontFamily: F, fontSize: 14, fontWeight: 700 }} />
+          <button onClick={saveCap} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontFamily: F, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Save Cap</button>
+          {ltMsg && <span style={{ color: ltMsg.ok ? "#1a7a3a" : "#b80101", fontSize: 12.5, fontFamily: F, fontWeight: 700 }}>{ltMsg.text}</span>}
+        </div>
+      </div>
+
       <div style={{ background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 14, padding: "8px 24px" }}>
         {cfg.map(c => (
           <div key={c.key} style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 0", borderBottom: "1px solid #f2efe8" }}>

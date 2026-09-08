@@ -87,6 +87,21 @@ export async function eliteSeats(sql) {
   return { cap, taken, remaining, full: remaining === 0 };
 }
 
+// Lifetime Passes are a numbered run — the team sets the total sellable in
+// settings.lifetime_cap (0 or unset = not for sale). Sold = distinct buyers
+// holding the lifetime 'all' entitlement.
+export async function lifetimeSeats(sql) {
+  let cap = 0;
+  try {
+    const [row] = await sql`SELECT value FROM settings WHERE key = 'lifetime_cap'`;
+    const parsed = parseInt(row?.value, 10);
+    if (Number.isFinite(parsed) && parsed >= 0) cap = parsed;
+  } catch { /* settings missing — treat as not for sale */ }
+  const [row] = await sql`SELECT COUNT(DISTINCT user_id)::int AS n FROM entitlements WHERE course_id = 'all' AND source IN ('lifetime', 'lifetime_admin')`;
+  const sold = row?.n || 0;
+  return { cap, sold, remaining: Math.max(0, cap - sold), forSale: cap > 0 && sold < cap };
+}
+
 // The 15-day promise, honored: identity and community data are erased, but the
 // user row survives anonymized — deleting it would cascade into bookings and
 // destroy financial records we must keep for tax purposes.
@@ -521,7 +536,8 @@ export default async function handler(req, res) {
         if (!k.startsWith('session_')) continue;
         sessions[k] = { list: CATALOG[k].amount, price: memberPrice(k, tier) };
       }
-      return res.json({ elite: seats, tier, session_discount: rate, sessions });
+      const lifetime = await lifetimeSeats(sql);
+      return res.json({ elite: seats, lifetime, tier, session_discount: rate, sessions });
     }
 
     // ── Create a Checkout Session ──
@@ -565,6 +581,14 @@ export default async function handler(req, res) {
     const item = body.item;
     const product = CATALOG[item];
     if (!product) return res.status(400).json({ error: 'Unknown item' });
+
+    // Lifetime Passes are a numbered run — sold out (or cap 0) means not for sale.
+    if (item === 'pass_lifetime') {
+      const lt = await lifetimeSeats(sql);
+      if (!lt.forSale) return res.status(409).json({ error: lt.cap > 0 ? 'The Lifetime Pass run is sold out.' : 'The Lifetime Pass isn\'t on sale right now.' });
+      const [mine] = await sql`SELECT id FROM entitlements WHERE user_id = ${user.id} AND course_id = 'all' AND source = 'lifetime' LIMIT 1`;
+      if (mine) return res.status(409).json({ error: 'You already own the Lifetime Pass.' });
+    }
 
     // Elite is capped. Check before taking money — an over-cap buyer would otherwise
     // pay $499.99 for a seat we've publicly said doesn't exist.

@@ -241,6 +241,14 @@ export default async function handler(req, res) {
       return res.json({ success: true });
     }
 
+    // Team: set how many Lifetime Passes may ever be sold (0 = off sale)
+    if (req.method === 'POST' && req.body && req.body.action === 'set_lifetime_cap') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const cap = Math.max(0, Math.min(10000, parseInt(req.body.cap, 10) || 0));
+      await sql`INSERT INTO settings (key, value) VALUES ('lifetime_cap', ${String(cap)}) ON CONFLICT (key) DO UPDATE SET value = ${String(cap)}`;
+      return res.json({ success: true, cap });
+    }
+
     // Publish / unpublish a course — drafts load invisible, one click ships them
     if (req.method === 'POST' && req.body && req.body.action === 'course_publish') {
       if (!admin) return res.status(401).json({ error: 'Unauthorized' });
