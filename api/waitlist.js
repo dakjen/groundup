@@ -109,6 +109,14 @@ export function recommendPlan(e) {
   // Deal-specific support exists ONLY at Elite and the Senior Advisor retainer —
   // if that's what they said they need, no lower tier is an honest recommendation.
   const wantsDealSupport = e.learn === 'I need deal-specific support on a live project';
+  // "I already know what tier I want" — their pick IS the recommendation
+  const wanted = /^I want (Member|Builder|Premium|Elite|Senior Advisor)$/.exec(e.budget || '');
+  if (wanted) {
+    if (wanted[1] === 'Senior Advisor') return recommendPlan({ ...e, budget: '$2,000+' });
+    const map = { Member: 1, Builder: 2, Premium: 3, Elite: 4 };
+    const r = map[wanted[1]];
+    return { ...{ 1: PLANS.Basic, 2: PLANS.Builder, 3: PLANS.Premium, 4: PLANS.Elite }[r], next: r < 4 ? { 1: PLANS.Builder, 2: PLANS.Premium, 3: PLANS.Elite }[r] : null };
+  }
   const rank = wantsDealSupport ? 4
     : e.budget === 'I need specific, customized deal help' ? 4
     : e.budget === 'I need general deal support & guidance' ? 3

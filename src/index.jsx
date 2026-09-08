@@ -2815,23 +2815,31 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Pricing at Launch</div>
           <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(28px,4vw,40px)", color: "#f5e8e8" }}>Every path in. One mission.</h2>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
-          {[
+        {(() => {
+          const CARD = (p, i) => (
+            <div key={i} style={{ background: p.popular || p.best ? "#0d0404" : "#080404", border: "1px solid " + (p.popular ? "#b8010140" : p.best ? "#c9a22745" : "#150000"), borderRadius: 16, padding: "26px 24px", textAlign: "center", position: "relative" }}>
+              {p.popular && <div style={{ position: "absolute", top: 12, right: 12, background: "#b8010115", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "2px 8px", fontSize: 8, fontFamily: font, fontWeight: 800, letterSpacing: "1.5px" }}>POPULAR</div>}
+              {p.best && <div style={{ position: "absolute", top: 12, right: 12, background: "#c9a22715", color: "#c9a227", border: "1px solid #c9a22735", borderRadius: 4, padding: "2px 8px", fontSize: 8, fontFamily: font, fontWeight: 800, letterSpacing: "1.5px" }}>BEST VALUE</div>}
+              <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>{p.name}</div>
+              <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", lineHeight: 1 }}>{p.price}<span style={{ fontSize: 14, color: "#7a5050", fontFamily: font, fontWeight: 400 }}> {p.period}</span></div>
+              <p style={{ fontSize: 12.5, color: "#8a7070", lineHeight: 1.7, fontFamily: font, marginTop: 10 }}>{p.desc}</p>
+            </div>
+          );
+          const passes = [
             { name: "One Course", price: "$100", period: "one-time", desc: "60 days inside one course of your choice." },
-            { name: "All-Access Pass", price: "$275", period: "one-time", desc: "30 days of the entire curriculum." },
+            { name: "All-Access Pass", price: "$275", period: "one-time", desc: "30 days of the entire curriculum.", best: true },
+          ];
+          const tiers = [
             { name: "Member", price: "$49.99", period: "/mo", desc: "Every course — plus each new one we add — free live Lunch & Learns, and a seat in the community." },
             { name: "Builder", price: "$149.99", period: "/mo", desc: "A voice in the community — post and network — plus the Lunch & Learn recording library." },
             { name: "Premium", price: "$249.99", period: "/mo", desc: "Deal tools — downloads, the Opportunity Board, and office hours with Dr. Merritt.", popular: true },
             { name: "Elite", price: "$499.99", period: "/mo", desc: "Direct access — advisory calls, DMs, and deal support on YOUR project. 15 seats." },
-          ].map((p, i) => (
-            <div key={i} style={{ background: p.popular ? "#0d0404" : "#080404", border: "1px solid " + (p.popular ? "#b8010140" : "#150000"), borderRadius: 16, padding: "26px 24px", textAlign: "center", position: "relative" }}>
-              {p.popular && <div style={{ position: "absolute", top: 12, right: 12, background: "#b8010115", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "2px 8px", fontSize: 8, fontFamily: font, fontWeight: 800, letterSpacing: "1.5px" }}>POPULAR</div>}
-              <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>{p.name}</div>
-              <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 34, color: "#f5e8e8", lineHeight: 1 }}>{p.price}<span style={{ fontSize: 14, color: "#8a7070", fontFamily: font, fontWeight: 400 }}>{p.period}</span></div>
-              <p style={{ fontSize: 12, color: "#7a6060", lineHeight: 1.7, fontFamily: font, marginTop: 10 }}>{p.desc}</p>
-            </div>
-          ))}
-        </div>
+          ];
+          return (<>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14, maxWidth: 620, margin: "0 auto 14px" }}>{passes.map(CARD)}</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>{tiers.map(CARD)}</div>
+          </>);
+        })()}
       </div>
 
       {/* Inline waitlist form */}
@@ -4649,6 +4657,8 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
   const recFor = (e) => {
     if (e.rec_override) return { Basic: "Member — $49.99/mo", Builder: "Builder — $149.99/mo", Premium: "Premium — $249.99/mo", Elite: "Elite — $499.99/mo", Advisor: "Senior Advisor — from $3,025/mo" }[e.rec_override] || "Member — $49.99/mo";
     if (e.budget === "$2,000+") return "Senior Advisor — from $3,025/mo";
+    const wanted = /^I want (Member|Builder|Premium|Elite|Senior Advisor)$/.exec(e.budget || "");
+    if (wanted) return { Member: "Member — $49.99/mo", Builder: "Builder — $149.99/mo", Premium: "Premium — $249.99/mo", Elite: "Elite — $499.99/mo", "Senior Advisor": "Senior Advisor — from $3,025/mo" }[wanted[1]];
     if (e.learn === "I need deal-specific support on a live project") return "Elite — $499.99/mo";
     const LN = { "Financing & capital stacks": 2, "Getting my first deal done": 2, "Public-private partnerships": 3, "Scaling my business & pipeline": 3, "Scaling my existing pipeline": 3, "All of the above": 2 };
     const PN = { "I don't understand the numbers": 2, "I can't find the capital": 2, "I need partners or a team": 2, "No network in the industry": 2, "Navigating government & compliance": 3, "I have a deal but I'm stuck": 3 };

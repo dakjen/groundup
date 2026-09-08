@@ -1137,7 +1137,7 @@ const WL_PAIN = [
   "Other",
 ];
 const WL_SOURCE = ["Dr. Merritt / NREUV", "A Lunch & Learn", "LinkedIn", "Instagram", "Word of mouth", "An event or conference", "Other"];
-const WL_BUDGETS = ["$50", "$50–$150", "$150–$500", "$500+", "I need general deal support & guidance", "I need specific, customized deal help", "$2,000+"];
+const WL_BUDGETS = ["$50", "$50–$150", "$150–$500", "$500+", "I already know what tier I want", "I need general deal support & guidance", "I need specific, customized deal help", "$2,000+"];
 
 // Two lists, one form. "insider" is the secret /waitlist page (first access);
 // "general" is what the public homepage collects before the general launch.
@@ -1173,9 +1173,11 @@ export function WaitlistForm({ list = "insider" }) {
     if (!learnVal) { setMsg("Tell us what you hope to learn."); return; }
     if (!painVal) { setMsg("Tell us your main pain point."); return; }
     if (!budget) { setMsg("Pick the monthly budget that fits you."); return; }
+    if (budget === "I already know what tier I want" && !wantTier) { setMsg("Pick the tier you want."); return; }
+    const budgetVal = budget === "I already know what tier I want" ? `I want ${wantTier}` : budget;
     setBusy(true); setMsg(null);
     try {
-      await api("/api/waitlist", { method: "POST", body: JSON.stringify({ action: "join", name, email, phone, learn: learnVal, pain: painVal, budget, source: source || undefined, list }) });
+      await api("/api/waitlist", { method: "POST", body: JSON.stringify({ action: "join", name, email, phone, learn: learnVal, pain: painVal, budget: budgetVal, source: source || undefined, list }) });
       setDone(true);
     } catch (err) {
       setMsg(err.message);
@@ -1185,6 +1187,7 @@ export function WaitlistForm({ list = "insider" }) {
   const sel = { ...inp, appearance: "auto", cursor: "pointer" };
   // Thought partnership needs a beat of explanation — show it on hover, not just on select
   const [partnerHover, setPartnerHover] = useState(false);
+  const [wantTier, setWantTier] = useState("");
 
   return (
     <div style={{ background: "linear-gradient(180deg, #1f1114 0%, #150a0c 100%)", border: "1px solid #e0c4c435", boxShadow: "0 0 90px rgba(224,196,196,0.07)", borderRadius: 22, padding: "42px clamp(28px,5vw,52px) 38px", width: "100%", maxWidth: 720, margin: "0 auto" }}>
@@ -1200,8 +1203,8 @@ export function WaitlistForm({ list = "insider" }) {
             <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginBottom: insider ? 14 : 22 }}>{insider ? "Tell us where you are and what's in your way — at launch, you'll get first access and our personal recommendation for the plan that fits." : "Tell us where you are and what's in your way — the moment doors open, you'll get your invite and our personal recommendation for the plan that fits."}</p>
             {insider && (
               <div style={{ background: "#e0c4c410", border: "1px solid #e0c4c445", borderRadius: 12, padding: "14px 18px", marginBottom: 22 }}>
-                <div style={{ color: "#e0c4c4", fontSize: 11, fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>✦ Founding 25 — locked-in pricing</div>
-                <div style={{ color: "#c8a8a8", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>The first 25 people on this list get founding rates <strong style={{ color: "#f0d8d8" }}>for their entire first year</strong> — <strong style={{ color: "#f0d8d8" }}>Builder at $99.99/mo</strong> (instead of $149.99) and <strong style={{ color: "#f0d8d8" }}>Premium at $149.99/mo</strong> (instead of $249.99) — plus a year of Lunch & Learns free.</div>
+                <div style={{ color: "#e0c4c4", fontSize: 11, fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>✦ Founding 25</div>
+                <div style={{ color: "#c8a8a8", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>The first 25 people on this list lock in <strong style={{ color: "#f0d8d8" }}>founding rates for their entire first year</strong> — plus a year of Lunch & Learns with Dr. Merritt, free. The rates reveal at launch; being early is what earns them.</div>
               </div>
             )}
             <form onSubmit={submit}>
@@ -1242,10 +1245,22 @@ export function WaitlistForm({ list = "insider" }) {
                     <button type="button" key={b} onClick={() => setBudget(b)}
                       onMouseEnter={() => b === "$2,000+" && setPartnerHover(true)}
                       onMouseLeave={() => b === "$2,000+" && setPartnerHover(false)}
-                      style={{ gridColumn: (b === "$2,000+" || b === "I need specific, customized deal help" || b === "I need general deal support & guidance") ? "1 / -1" : undefined, background: budget === b ? "#b8010118" : "transparent", border: budget === b ? "1px solid #b80101" : b === "$2,000+" ? "1px solid #e0c4c455" : (b === "I need specific, customized deal help" || b === "I need general deal support & guidance") ? "1px solid #b8010145" : "1px solid #2a0000", borderRadius: 8, padding: "11px 12px", cursor: "pointer", color: budget === b ? "#f0d8d8" : b === "$2,000+" ? "#e0c4c4" : (b === "I need specific, customized deal help" || b === "I need general deal support & guidance") ? "#c8a8a8" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font }}>
-                      {b === "$2,000+" ? "✦ $2,000+ · Thought partnership" : b === "I need specific, customized deal help" ? "🔴 I need specific, customized deal help" : b === "I need general deal support & guidance" ? "🧭 I need general deal support & guidance" : b}
+                      style={{ gridColumn: (b === "$2,000+" || b === "I need specific, customized deal help" || b === "I need general deal support & guidance" || b === "I already know what tier I want") ? "1 / -1" : undefined, background: budget === b ? "#b8010118" : "transparent", border: budget === b ? "1px solid #b80101" : b === "$2,000+" ? "1px solid #e0c4c455" : (b === "I need specific, customized deal help" || b === "I need general deal support & guidance" || b === "I already know what tier I want") ? "1px solid #b8010145" : "1px solid #2a0000", borderRadius: 8, padding: "11px 12px", cursor: "pointer", color: budget === b ? "#f0d8d8" : b === "$2,000+" ? "#e0c4c4" : (b === "I need specific, customized deal help" || b === "I need general deal support & guidance" || b === "I already know what tier I want") ? "#c8a8a8" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font }}>
+                      {b === "$2,000+" ? "✦ $2,000+ · Thought partnership" : b === "I need specific, customized deal help" ? "🔴 I need specific, customized deal help" : b === "I need general deal support & guidance" ? "🧭 I need general deal support & guidance" : b === "I already know what tier I want" ? "🎯 I already know what tier I want" : b}
                     </button>
                   ))}
+                  {budget === "I already know what tier I want" && (
+                    <div style={{ gridColumn: "1 / -1" }}>
+                      <select style={{ ...sel, width: "100%" }} value={wantTier} onChange={e => setWantTier(e.target.value)} required>
+                        <option value="" disabled>Pick your tier…</option>
+                        <option value="Member">Member — $49.99/mo</option>
+                        <option value="Builder">Builder — $149.99/mo</option>
+                        <option value="Premium">Premium — $249.99/mo</option>
+                        <option value="Elite">Elite — $499.99/mo</option>
+                        <option value="Senior Advisor">Senior Advisor Retainer — from $3,025/mo</option>
+                      </select>
+                    </div>
+                  )}
                   {budget === "I need general deal support & guidance" && (
                     <div style={{ gridColumn: "1 / -1", background: "#12060a", border: "1px solid #b8010140", borderRadius: 8, padding: "10px 12px", color: "#c8a8a8", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>General deal support — the tools, templates, Opportunity Board, and office hours with Dr. Merritt — lives in the <strong style={{ color: "#f0d8d8" }}>Premium plan</strong> ($249.99/mo). That's what we'll recommend.</div>
                   )}
