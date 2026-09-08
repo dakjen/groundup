@@ -74,10 +74,10 @@ This document reflects every pricing rule currently implemented in code. Prices 
 
 ## 8. Waitlist perks & the recommendation engine
 
-- **Founding 25 (insider waitlist only):** the first 25 insiders get their **first year of Lunch & Learns free** (even on a free account), a Founding badge, and **founding pricing for their FIRST YEAR** — Builder at $99.99/mo and Premium at $149.99/mo (the launch rates), applied automatically as a 12-month coupon at checkout (FOUND25B/P; annual variants once), then standard rates. Advertised in a banner on the insider /waitlist page.
+- **Founding 25 (insider waitlist only):** the first 25 insiders get their **first year of Lunch & Learns free** (even on a free account), a Founding badge, and **founding pricing for their FIRST YEAR** — Builder at $99.99/mo and Premium at $149.99/mo (the launch rates), applied automatically as a 12-month coupon at checkout (FOUND25B/P; annual variants once), then standard rates. Advertised in a banner on the insider /waitlist page — WITHOUT the actual rates (they reveal at launch; being early earns them).
 - **First 10 (either list):** a **14-day trial of one course** claimable after signup, a **personal invite link** (`/invite/their-name`) that grants the same 14-day one-course trial to people who sign up through it, a First-10 badge — and they **always** receive the stretch offer at **15%** instead of 10%.
 - **Recommendation algorithm** (budget first, need second):
-  - Budget options: **$50 · $50–$150 · $150–$500 · $500+ · "I need general deal support & guidance" · "I need specific, customized deal help" · $2,000+**
+  - Budget options: **$50 · $50–$150 · $150–$500 · $500+ · "I already know what tier I want" (opens a tier dropdown — the pick IS the recommendation, incl Senior Advisor) · "I need general deal support & guidance" · "I need specific, customized deal help" · $2,000+**
   - $500+ → **Elite**
   - "I need general deal support & guidance" → **Premium**
   - $2,000+ → **Senior Advisor Retainer** (from $3,025/mo, engagement-call CTA)
