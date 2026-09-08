@@ -131,7 +131,12 @@ export default async function handler(req, res) {
       // including Free — plus the founding25 badge that follows them everywhere.
       let founding = false;
       try {
-        const [wl] = await sql`SELECT id, founding_lnl, first10 FROM waitlist WHERE email = ${cleanEmail} LIMIT 1`;
+        const [wl] = await sql`SELECT id, founding_lnl, first10, source FROM waitlist WHERE email = ${cleanEmail} LIMIT 1`;
+        // Came in through the interest form on drginamerritt.net (links arrive
+        // as ?source=popup:… or site:…) → the Day One badge follows them in.
+        if (wl && /^(popup|site|gina)[:\-]/i.test(wl.source || '')) {
+          await sql`UPDATE users SET badges = COALESCE(badges, '[]'::jsonb) || '["interest"]'::jsonb WHERE id = ${user.id}`;
+        }
         if (wl?.founding_lnl) {
           founding = true;
           await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at)

@@ -52,6 +52,7 @@ export const TIER_LABELS = { Free: "Free", Basic: "Member", Builder: "Builder", 
 // badges here as they're invented; unknown keys are ignored gracefully.
 export const BADGE_DEFS = {
   founding25: { label: "Founding Member", icon: "✦", color: "#e0c4c4", title: "Founding Member — one of the first 25, with a year of Lunch & Learns free and founding pricing" },
+  interest: { label: "Day One", icon: "🌱", color: "#7fb069", title: "Signed up through the interest form on drginamerritt.net before launch" },
   first10: { label: "First 10", icon: "✦", color: "#e0c4c4", title: "One of the first 10 on the waitlist — 14-day course trial + personal referral link" },
 };
 export function BadgeChips({ badges, small }) {
@@ -1150,7 +1151,17 @@ export function WaitlistForm({ list = "insider" }) {
   const [pain, setPain] = useState("");
   const [painOther, setPainOther] = useState("");
   const [budget, setBudget] = useState("");
-  const [source, setSource] = useState("");
+  // A ?source= in the URL (e.g. links from drginamerritt.net arriving as
+  // ?source=popup:/) tags the signup's origin. Stashed so it survives the
+  // pop-up opening after navigation; the dropdown hides when a link set it.
+  const [urlSource] = useState(() => {
+    try {
+      const q = new URLSearchParams(window.location.search).get("source");
+      if (q) { localStorage.setItem("guWlSource", q); return q; }
+      return localStorage.getItem("guWlSource") || "";
+    } catch { return ""; }
+  });
+  const [source, setSource] = useState(urlSource);
   const [msg, setMsg] = useState(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
@@ -1248,6 +1259,7 @@ export function WaitlistForm({ list = "insider" }) {
                   )}
                 </div>
               </div>
+              {!urlSource && (
               <div style={{ marginBottom: 18 }}>
                 <label style={lbl}>Where did you hear about us? <span style={{ color: "#5a4040", textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
                 <select style={sel} value={source} onChange={e => setSource(e.target.value)}>
@@ -1255,6 +1267,7 @@ export function WaitlistForm({ list = "insider" }) {
                   {WL_SOURCE.map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
               </div>
+              )}
               {msg && <div style={{ color: "#ff6b6b", fontSize: 13, fontFamily: font, marginBottom: 12 }}>{msg}</div>}
               <button type="submit" disabled={busy} style={{ ...btnRed, width: "100%", opacity: busy ? 0.6 : 1 }}>{busy ? "Saving your spot…" : insider ? "Join the Insider Waitlist →" : "Join the Waitlist →"}</button>
             </form>
