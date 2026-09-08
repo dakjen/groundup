@@ -1419,6 +1419,13 @@ function PricingPage({ onSignUp }) {
         </div>
 
         {/* Two doors: recurring memberships, or pay-once passes */}
+        {tab === "plans" && (
+          <div style={{ textAlign: "center", marginBottom: 14 }}>
+            <button onClick={() => setTab("onetime")} style={{ background: "none", border: "none", color: "#8a7070", fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer", padding: 0 }}>
+              Not ready to commit? <span style={{ color: "#b80101", fontWeight: 800 }}>Buy limited course access — no subscription →</span>
+            </button>
+          </div>
+        )}
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 44 }}>
           {[["plans", "Memberships"], ["onetime", "One-Time Purchases"]].map(([id, label], i) => (
             <button key={id} onClick={() => setTab(id)} style={{ background: tab === id ? "#b80101" : "#0d0404", color: tab === id ? "#fff" : "#8a7070", border: "1px solid " + (tab === id ? "#b80101" : "#2a0000"), borderRadius: i === 0 ? "12px 0 0 12px" : "0 12px 12px 0", padding: "13px 30px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>{label}</button>
@@ -1468,12 +1475,12 @@ function PricingPage({ onSignUp }) {
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Where are you?</div>
           <div style={{ display: "grid", gap: 10 }}>
             {[
-              ["I'm exploring — learning how development works", "Member or Builder", null],
-              ["I'm working toward my first deal — tools, community, office hours", "Premium", null],
-              ["I have a deal in motion — under contract, raising capital, or stuck", "Elite · or send it to Dr. Merritt", "router"],
+              ["Exploring development", "Member · Builder", null],
+              ["Working toward my first deal", "Premium", null],
+              ["Deal in motion — or stuck", "Elite", "router"],
             ].map(([want, level, lead]) => (
               <div key={level} style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap", padding: "12px 14px", background: lead ? "#12060a" : "transparent", border: lead ? "1px solid #b8010140" : "1px solid transparent", borderRadius: 10 }}>
-                <span style={{ color: "#a89090", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, flex: 1, minWidth: 240 }}>{want}</span>
+                <span style={{ color: "#f0d8d8", fontSize: 16, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.5, flex: 1, minWidth: 200 }}>{want}</span>
                 {lead ? (<>
                   <span style={{ color: "#b80101", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 800 }}>→ Elite</span>
                   <button onClick={() => {
