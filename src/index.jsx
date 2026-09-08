@@ -1406,13 +1406,13 @@ function PricingPage({ onSignUp }) {
   return (
     <div style={{ background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 72 }}>
+        <div style={{ textAlign: "center", marginBottom: 32 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Transparent pricing</div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(40px,6vw,60px)", color: "#f5e8e8", marginBottom: 16, letterSpacing: "-1px" }}>
             Invest in yourself.<br />The returns are generational.
           </h1>
           <p style={{ color: "#7a6151", fontSize: 15, maxWidth: 420, margin: "0 auto", lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif" }}>Start free. Upgrade when you're ready. Cancel anytime.</p>
-          <div style={{ marginTop: 26, display: "inline-flex", alignItems: "center", gap: 10, background: "#0d0404", border: "1px solid #b8010130", borderRadius: 12, padding: "14px 22px" }}>
+          <div style={{ marginTop: 18, display: "inline-flex", alignItems: "center", gap: 10, background: "#0d0404", border: "1px solid #b8010130", borderRadius: 12, padding: "12px 20px" }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
             <span style={{ color: "#c8a8a8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>The waitlist opens October 1.</span>
           </div>
@@ -1426,7 +1426,7 @@ function PricingPage({ onSignUp }) {
             </button>
           </div>
         )}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 44 }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 30 }}>
           {[["plans", "Memberships"], ["onetime", "One-Time Purchases"]].map(([id, label], i) => (
             <button key={id} onClick={() => setTab(id)} style={{ background: tab === id ? "#b80101" : "#0d0404", color: tab === id ? "#fff" : "#8a7070", border: "1px solid " + (tab === id ? "#b80101" : "#2a0000"), borderRadius: i === 0 ? "12px 0 0 12px" : "0 12px 12px 0", padding: "13px 30px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>{label}</button>
           ))}
@@ -1466,7 +1466,7 @@ function PricingPage({ onSignUp }) {
 
         {/* Subscriptions */}
         {tab === "plans" && (<>
-        <div style={{ textAlign: "center", marginBottom: 28 }}>
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Memberships</div>
           <p style={{ color: "#8a7070", fontSize: 14, fontFamily: "'DM Sans', sans-serif", maxWidth: 520, margin: "0 auto", lineHeight: 1.7 }}>Lower tiers build your <strong style={{ color: "#c8a8a8" }}>foundation</strong> — higher tiers put <strong style={{ color: "#c8a8a8" }}>Dr. Merritt on YOUR project</strong>.</p>
         </div>
