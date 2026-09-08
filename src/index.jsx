@@ -1180,6 +1180,7 @@ const plans = [
     price: "$49.99",
     period: "/mo",
     description: "Constant access to every course — including new ones as we add them — plus a seat in the community.",
+    value: "Over $2,500 in annual value",
     accent: "#b80101",
     popular: false,
     cta: "Become a Member",
@@ -1198,6 +1199,7 @@ const plans = [
     price: "$149.99",
     period: "/mo",
     description: "Everything in Member — plus a voice in the community, Lunch & Learn recordings, and the digital product shelf to browse.",
+    value: "Over $4,000 in annual value",
     accent: "#b80101",
     popular: false,
     cta: "Become a Builder",
@@ -1215,6 +1217,7 @@ const plans = [
     price: "$249.99",
     period: "/mo",
     description: "Everything in Member — plus full community engagement, deal tools, and a free advisory hour.",
+    value: "Over $6,500 in annual value",
     accent: "#b80101",
     popular: true,
     cta: "Go Premium",
@@ -1236,6 +1239,7 @@ const plans = [
     price: "$499.99",
     period: "/mo",
     description: "Direct access to Dr. Gina Merritt. For serious developers ready to move at the highest level.",
+    value: "Over $12,000 in annual value — incl. advisory calls, deal support & direct access to Dr. Merritt",
     accent: "#570404",
     popular: false,
     cta: "Join Elite",
@@ -1261,6 +1265,7 @@ const plans = [
     price: "$3,025+",
     period: "/mo",
     description: "Dr. Merritt embedded on your project — for developers with active deals who need her in their corner every month.",
+    value: "5 hrs — $3,025 · 10 hrs — $5,500 · 15 hrs — $7,700 · $1,500 intake credited",
     accent: "#e0c4c4",
     popular: false,
     cta: "Engage Us on Your Project",
@@ -1302,7 +1307,7 @@ function Chip({ text, color }) {
   );
 }
 
-function PlanCard({ plan, onSelect, seats }) {
+function PlanCard({ plan, onSelect, seats, compact }) {
   // Scarcity only reads as real when it's close — stay quiet until the last few seats
   const showSeats = seats && !seats.full && seats.remaining <= 5;
   const cta = seats?.full ? "Join the Elite waitlist" : plan.cta;
@@ -1343,7 +1348,7 @@ function PlanCard({ plan, onSelect, seats }) {
       >{cta}</button>
 
       <div style={{ borderTop: "1px solid #150000", paddingTop: 24 }}>
-        {plan.features.map((f, j) => (
+        {!compact && plan.features.map((f, j) => (
           <div key={j} style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 13 }}>
             <span style={{ color: plan.accent, fontSize: 13, marginTop: 2, flexShrink: 0 }}>✓</span>
             <span style={{ color: "#a89080", fontSize: 13, lineHeight: 1.5, fontFamily: "'DM Sans', sans-serif" }}>{f}</span>
@@ -1369,6 +1374,7 @@ function PricingPage({ onSignUp }) {
   // Live Elite seat count — Elite is sold as a limited cohort
   const [elite, setElite] = useState(null);
   const [annual, setAnnual] = useState(() => { try { return new URLSearchParams(window.location.search).get("annual") === "1"; } catch { return false; } });
+  const [tab, setTab] = useState("plans");
   const [lifetime, setLifetime] = useState(null);
   useEffect(() => {
     fetch("/api/stripe").then(r => r.ok ? r.json() : null).then(d => d?.lifetime && setLifetime(d.lifetime)).catch(() => {});
@@ -1394,7 +1400,15 @@ function PricingPage({ onSignUp }) {
           </div>
         </div>
 
+        {/* Two doors: recurring memberships, or pay-once passes */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 44 }}>
+          {[["plans", "Memberships"], ["onetime", "One-Time Purchases"]].map(([id, label], i) => (
+            <button key={id} onClick={() => setTab(id)} style={{ background: tab === id ? "#b80101" : "#0d0404", color: tab === id ? "#fff" : "#8a7070", border: "1px solid " + (tab === id ? "#b80101" : "#2a0000"), borderRadius: i === 0 ? "12px 0 0 12px" : "0 12px 12px 0", padding: "13px 30px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>{label}</button>
+          ))}
+        </div>
+
         {/* One-time passes */}
+        {tab === "onetime" && (
         <div style={{ marginBottom: 64 }}>
           <div style={{ textAlign: "center", marginBottom: 28 }}>
             <div style={{ fontSize: 10, color: "#e0c4c4", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>One-Time Course Passes</div>
@@ -1423,8 +1437,10 @@ function PricingPage({ onSignUp }) {
             )}
           </div>
         </div>
+        )}
 
         {/* Subscriptions */}
+        {tab === "plans" && (<>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Memberships</div>
           <p style={{ color: "#8a7070", fontSize: 14, fontFamily: "'DM Sans', sans-serif", maxWidth: 560, margin: "0 auto", lineHeight: 1.7 }}>Every course, always — plus community benefits at every level. The lower tiers build your <strong style={{ color: "#c8a8a8" }}>foundation</strong>: the knowledge, the curriculum, the community. The higher tiers add <strong style={{ color: "#c8a8a8" }}>deal-specific support</strong> — Dr. Merritt on YOUR project.</p>
@@ -1469,7 +1485,7 @@ function PricingPage({ onSignUp }) {
           {plans.filter(p => p.tier !== "Partner").map((raw, i) => {
             const plan = annual && ANNUAL_PRICES[raw.tier] ? { ...raw, price: ANNUAL_PRICES[raw.tier], period: "/yr" } : raw;
             return (
-            <PlanCard key={i} plan={plan} seats={plan.limited ? elite : null} onSelect={() => {
+            <PlanCard key={i} plan={plan} compact seats={plan.limited ? elite : null} onSelect={() => {
               if (plan.tier === "Advisor") { window.location.href = "/contact"; return; }
               // Elite is capped — send full-cohort visitors to the waitlist, not to checkout
               if (plan.limited && elite?.full) { window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("Elite waitlist — notify me when a seat opens"); return; }
@@ -1478,6 +1494,51 @@ function PricingPage({ onSignUp }) {
             }} />
             );
           })}
+        </div>
+
+        {/* Everything in one chart — cleaner than five long cards */}
+        <div style={{ marginTop: 28, background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, overflow: "hidden" }}>
+          <div style={{ padding: "22px 28px 6px" }}>
+            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>What each plan includes</div>
+          </div>
+          <div style={{ overflowX: "auto", padding: "0 12px 18px" }}>
+            <table style={{ width: "100%", minWidth: 680, borderCollapse: "collapse", fontFamily: "'DM Sans', sans-serif" }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: "left", padding: "14px 16px", color: "#7a5050", fontSize: 11, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase" }}>Benefit</th>
+                  {["Member", "Builder", "Premium", "Elite"].map(t => (
+                    <th key={t} style={{ padding: "14px 12px", color: t === "Elite" ? "#e0c4c4" : "#c8a8a8", fontSize: 12.5, fontWeight: 800, textAlign: "center", whiteSpace: "nowrap" }}>{t}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["Every course — plus each new one we add", "✓", "✓", "✓", "✓"],
+                  ["Live Lunch & Learns with Dr. Merritt", "✓", "✓", "✓", "✓"],
+                  ["Lunch & Learn recording library", "—", "✓", "✓", "✓"],
+                  ["Community", "Read", "Post & network", "Post & network", "Priority"],
+                  ["Guides, templates & the Playbook", "—", "View only", "3 downloads/mo", "Unlimited"],
+                  ["The Opportunity Board — RFPs & funding windows", "—", "—", "✓", "✓"],
+                  ["Office hours with Dr. Merritt", "—", "—", "✓", "✓"],
+                  ["Discount on 1:1 sessions", "—", "—", "10%", "30%"],
+                  ["Direct messages to Dr. Merritt & her team", "—", "—", "—", "✓"],
+                  ["Advisory calls — 3/yr (unlock after 4 months)", "—", "—", "—", "✓"],
+                  ["Deal support — bring YOUR deal", "—", "—", "—", "✓"],
+                  ["Elite Lounge + networking event", "—", "—", "—", "✓"],
+                ].map((row, i) => (
+                  <tr key={i} style={{ borderTop: "1px solid #1a0000" }}>
+                    <td style={{ padding: "11px 16px", color: "#a89090", fontSize: 13, lineHeight: 1.5 }}>{row[0]}</td>
+                    {row.slice(1).map((cell, j) => (
+                      <td key={j} style={{ padding: "11px 12px", textAlign: "center", fontSize: cell === "✓" ? 15 : 12, fontWeight: 700, color: cell === "—" ? "#3a2828" : cell === "✓" ? "#22c55e" : "#e0c4c4", whiteSpace: "nowrap" }}>{cell}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div style={{ padding: "0 28px 20px", color: "#7a5050", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
+            Senior Advisor includes everything in Elite — plus Dr. Merritt embedded on your project, month over month.
+          </div>
         </div>
 
         {/* Partner: organizations & institutions — one long button below the line */}
@@ -1490,6 +1551,7 @@ function PricingPage({ onSignUp }) {
           </div>
           <span style={{ color: "#e0c4c4", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, whiteSpace: "nowrap" }}>Talk to Us →</span>
         </button>
+        </>)}
 
         <div style={{ marginTop: 56, borderRadius: 16, overflow: "hidden", position: "relative", border: "1px solid #2a0000" }}>
           <img loading="lazy" src="/opt/IMG_8087.jpg" alt="Dr. Merritt speaking at the National DCRE Conference" style={{ width: "100%", height: 340, objectFit: "cover", objectPosition: "center 30%", display: "block" }} />
