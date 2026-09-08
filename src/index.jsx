@@ -2819,9 +2819,10 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
           {[
             { name: "One Course", price: "$100", period: "one-time", desc: "60 days inside one course of your choice." },
             { name: "All-Access Pass", price: "$275", period: "one-time", desc: "30 days of the entire curriculum." },
-            { name: "Member", price: "$49.99", period: "/mo", desc: "Constant access + support — every course, every new course, and the community." },
-            { name: "Premium", price: "$249.99", period: "/mo", desc: "Engage the community, deal tools, the Opportunity Board, a free work session.", popular: true },
-            { name: "Elite", price: "$499.99", period: "/mo", desc: "Direct line to Dr. Merritt — advisory calls, DMs, and the partner network." },
+            { name: "Member", price: "$49.99", period: "/mo", desc: "Every course — plus each new one we add — free live Lunch & Learns, and a seat in the community." },
+            { name: "Builder", price: "$149.99", period: "/mo", desc: "A voice in the community — post and network — plus the Lunch & Learn recording library." },
+            { name: "Premium", price: "$249.99", period: "/mo", desc: "Deal tools — downloads, the Opportunity Board, and office hours with Dr. Merritt.", popular: true },
+            { name: "Elite", price: "$499.99", period: "/mo", desc: "Direct access — advisory calls, DMs, and deal support on YOUR project. 15 seats." },
           ].map((p, i) => (
             <div key={i} style={{ background: p.popular ? "#0d0404" : "#080404", border: "1px solid " + (p.popular ? "#b8010140" : "#150000"), borderRadius: 16, padding: "26px 24px", textAlign: "center", position: "relative" }}>
               {p.popular && <div style={{ position: "absolute", top: 12, right: 12, background: "#b8010115", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "2px 8px", fontSize: 8, fontFamily: font, fontWeight: 800, letterSpacing: "1.5px" }}>POPULAR</div>}
