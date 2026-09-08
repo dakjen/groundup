@@ -1370,6 +1370,24 @@ function PlanCard({ plan, onSelect, seats, compact }) {
 // pass-expiry email, where annual + the 15% alum coupon is the offer).
 const ANNUAL_PRICES = { Basic: "$539.89", Builder: "$1,619.89", Premium: "$2,699.89", Elite: "$5,399.89" };
 
+// The fine print people actually want — one line, expandable on demand
+function HonestRule() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ marginTop: 14 }}>
+      <div style={{ color: "#7a5050", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
+        Have a live deal? The $1,500 Full Project Intake is the front door — credited to your first retainer month if you continue.{" "}
+        <button onClick={() => setOpen(o => !o)} style={{ background: "none", border: "none", color: "#b80101", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12.5, cursor: "pointer", padding: 0 }}>{open ? "Less ↑" : "How this works ↓"}</button>
+      </div>
+      {open && (
+        <div style={{ color: "#7a5050", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginTop: 8 }}>
+          {"Member, Builder, and Premium are the industry essentials. \"How do I calculate a rate of return?\" lives there. \"I can't solve the gap on MY deal\" needs Dr. Merritt in the whole deal — so send it to her: she takes in your entire project and finds what you missed. Not ready for Elite? Start at Premium — 10% off 1:1 sessions, and upgrade the moment your deal heats up."}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PricingPage({ onSignUp }) {
   // Live Elite seat count — Elite is sold as a limited cohort
   const [elite, setElite] = useState(null);
@@ -1443,7 +1461,7 @@ function PricingPage({ onSignUp }) {
         {tab === "plans" && (<>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Memberships</div>
-          <p style={{ color: "#8a7070", fontSize: 14, fontFamily: "'DM Sans', sans-serif", maxWidth: 560, margin: "0 auto", lineHeight: 1.7 }}>Every course, always — plus community benefits at every level. The lower tiers build your <strong style={{ color: "#c8a8a8" }}>foundation</strong>: the knowledge, the curriculum, the community. The higher tiers add <strong style={{ color: "#c8a8a8" }}>deal-specific support</strong> — Dr. Merritt on YOUR project.</p>
+          <p style={{ color: "#8a7070", fontSize: 14, fontFamily: "'DM Sans', sans-serif", maxWidth: 520, margin: "0 auto", lineHeight: 1.7 }}>Lower tiers build your <strong style={{ color: "#c8a8a8" }}>foundation</strong> — higher tiers put <strong style={{ color: "#c8a8a8" }}>Dr. Merritt on YOUR project</strong>.</p>
         </div>
         {/* Which level should I choose? — routes deal-havers to the top */}
         <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "28px 32px", marginBottom: 28 }}>
@@ -1469,9 +1487,7 @@ function PricingPage({ onSignUp }) {
               </div>
             ))}
           </div>
-          <div style={{ color: "#7a5050", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginTop: 14 }}>
-            {"The honest rule: Member, Builder, and Premium are the industry essentials. \"How do I calculate a rate of return?\" lives there. \"I can't solve the gap on MY deal\" needs Dr. Merritt in the whole deal — so send it to her. The \$1,500 Full Project Intake is the front door: she takes in your entire project, finds what you missed, and if you continue into the retainer, the \$1,500 credits against your first month. Not ready for Elite? Start at Premium — you get 10% off 1:1 sessions with Dr. Merritt, and you can upgrade to Elite the moment your deal heats up."}
-          </div>
+          <HonestRule />
         </div>
 
         {annual && (
