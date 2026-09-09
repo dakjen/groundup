@@ -4828,7 +4828,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
             {statCard("On the waitlist", entries.length)}
             {statCard("Anticipated MRR", money(mrrFit), "each joins the plan their budget fits")}
             {statCard("Anticipated ARR", money(mrrFit * 12), "that MRR, annualized")}
-            {statCard("Premium picks", premiumRec, `${eliteRec} Elite · ${advisorRec} Advisor recommended`)}
+            {statCard("Retainer leads", advisorRec, `${eliteRec} Elite · ${premiumRec} Premium recommended`)}
           </div>
         );
       })()}
