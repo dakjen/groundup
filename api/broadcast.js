@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { neon } from '@neondatabase/serverless';
 import { requireAdmin } from './_utils.js';
-import { sendBulk, sendEmail, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail, passExpiryEmail } from './_email.js';
+import { sendBulk, sendEmail, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail, passExpiryEmail, waitlistConfirmEmail } from './_email.js';
 
 // Team email tools: send a custom email or an event announcement to a segment.
 // Audiences: all | Free | Basic | Premium | Elite | lnl (active Lunch & Learn access)
@@ -98,6 +98,24 @@ export default async function handler(req, res) {
 
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     const { kind, audience, subject, message, title, date, time, description, to_email, to_name, link } = req.body;
+
+    // Team preview: the waitlist welcome emails, sent to any address so the
+    // wording can be reviewed in a real inbox. Subjects are [PREVIEW]-prefixed.
+    if (kind === 'waitlist_preview') {
+      if (!to_email) return res.status(400).json({ error: 'Recipient email required' });
+      const first = (to_name || 'Dakotah').split(' ')[0];
+      const variants = [
+        { label: 'Insider', mail: waitlistConfirmEmail(first, false, false, 'insider') },
+        { label: 'Insider + Founding 25', mail: waitlistConfirmEmail(first, true, false, 'insider') },
+        { label: 'General (site popup)', mail: waitlistConfirmEmail(first, false, false, 'general') },
+      ];
+      let sent = 0;
+      for (const v of variants) {
+        const ok = await sendEmail(to_email, `[PREVIEW · ${v.label}] ${v.mail.subject}`, v.mail.html);
+        if (ok) sent++;
+      }
+      return sent ? res.json({ success: true, sent, total: variants.length }) : res.status(502).json({ error: 'Email failed to send — is Brevo configured?' });
+    }
 
     // One-off personal meeting email (1:1 sessions) — team drops the link, we send it
     if (kind === 'meeting') {
