@@ -28,6 +28,13 @@ export default async function handler(req, res) {
         FROM users
       `;
 
+      // Retainer / thought-partnership clients bill monthly too — their real
+      // monthly_amount joins the MRR alongside membership subscriptions.
+      const [retainerStats] = await sql`
+        SELECT COUNT(*)::int AS active_count, COALESCE(SUM(monthly_amount), 0)::numeric AS retainer_mrr
+        FROM retainers WHERE status = 'active'
+      `;
+
       const signupsByMonth = await sql`
         SELECT 
           TO_CHAR(created_at, 'Mon') as month,
@@ -47,7 +54,7 @@ export default async function handler(req, res) {
         FROM referrals
       `;
 
-      return res.json({ userStats, signupsByMonth, referralStats });
+      return res.json({ userStats, retainerStats, signupsByMonth, referralStats });
     }
 
     return res.status(405).json({ error: 'Method not allowed' });

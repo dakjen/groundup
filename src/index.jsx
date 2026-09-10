@@ -4062,27 +4062,32 @@ function RevenueTab() {
   const [referrals, setReferrals] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [retainers, setRetainers] = useState({ active_count: 0, retainer_mrr: 0 });
   useEffect(() => {
+    const hdrs = { Authorization: "Bearer " + sessionStorage.getItem("adminToken") };
     Promise.all([
-      window.storage.get("admin:users").catch(() => null),
-      window.storage.get("admin:referrals").catch(() => null),
-    ]).then(([u, r]) => {
-      if (u) setUsers(JSON.parse(u.value));
-      if (r) setReferrals(JSON.parse(r.value));
+      fetch("/api/users", { headers: hdrs }).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch("/api/referrals", { headers: hdrs }).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch("/api/revenue", { headers: hdrs }).then(r => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([u, r, rev]) => {
+      if (u?.users) setUsers(u.users.map(x => ({ ...x, joinedAt: x.created_at })));
+      if (r?.referrals) setReferrals(r.referrals);
+      if (rev?.retainerStats) setRetainers({ active_count: Number(rev.retainerStats.active_count) || 0, retainer_mrr: Number(rev.retainerStats.retainer_mrr) || 0 });
     }).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
 
-  const paying = users.filter(u => u.tier !== "Free");
-  const mrr = paying.reduce((sum, u) => sum + TIER_PRICES[u.tier], 0);
+  const paying = users.filter(u => u.tier !== "Free" && !u.comped && (u.role || "member") === "member");
+  const memberMrr = paying.reduce((sum, u) => sum + (TIER_PRICES[u.tier] || 0), 0);
+  const mrr = memberMrr + retainers.retainer_mrr;
   const arr = mrr * 12;
 
-  const tierCounts = { Free: 0, Basic: 0, Premium: 0, Elite: 0 };
+  const tierCounts = { Free: 0, Basic: 0, Builder: 0, Premium: 0, Elite: 0 };
   users.forEach(u => { tierCounts[u.tier] = (tierCounts[u.tier] || 0) + 1; });
 
-  const tierRevenue = { Basic: 0, Premium: 0, Elite: 0 };
-  paying.forEach(u => { tierRevenue[u.tier] = (tierRevenue[u.tier] || 0) + TIER_PRICES[u.tier]; });
+  const tierRevenue = { Basic: 0, Builder: 0, Premium: 0, Elite: 0 };
+  paying.forEach(u => { tierRevenue[u.tier] = (tierRevenue[u.tier] || 0) + (TIER_PRICES[u.tier] || 0); });
 
   // Month-over-month signups (last 6 months)
   const now = new Date();
@@ -4118,7 +4123,7 @@ function RevenueTab() {
 
       {/* Top stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 32 }}>
-        {statCard("MRR", `$${mrr.toFixed(2)}`, `${paying.length} paying member${paying.length !== 1 ? "s" : ""}`)}
+        {statCard("MRR", `$${mrr.toFixed(2)}`, `${paying.length} member${paying.length !== 1 ? "s" : ""} $${memberMrr.toFixed(2)} · ${retainers.active_count} retainer${retainers.active_count !== 1 ? "s" : ""} $${retainers.retainer_mrr.toFixed(2)}`)}
         {statCard("ARR", `$${arr.toFixed(2)}`, "projected annual", "#222222")}
         {statCard("Total Members", users.length, `${tierCounts.Free} on free tier`, "#8a8a8a")}
         {statCard("Trial Conversions", trialConversions, `${trialPending} invites pending`, "#a08030")}
@@ -4127,7 +4132,7 @@ function RevenueTab() {
       {/* Revenue by tier */}
       <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 20 }}>
         <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>Revenue by Tier</div>
-        {["Basic", "Premium", "Elite"].map(t => {
+        {["Basic", "Builder", "Premium", "Elite"].map(t => {
           const rev = tierRevenue[t];
           const pct = mrr > 0 ? (rev / mrr) * 100 : 0;
           const color = t === "Elite" ? "#570404" : "#b80101";
@@ -4143,7 +4148,18 @@ function RevenueTab() {
             </div>
           );
         })}
-        {mrr === 0 && <div style={{ textAlign: "center", color: "#3a2020", fontSize: 13, fontFamily: "'DM Sans', sans-serif", padding: "12px 0" }}>No paying members yet.</div>}
+        {retainers.retainer_mrr > 0 && (
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 7 }}>
+              <span style={{ fontSize: 13, color: "#333333", fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>Senior Advisor Retainers <span style={{ color: "#9a9a9a", fontWeight: 400 }}>· {retainers.active_count} client{retainers.active_count !== 1 ? "s" : ""}</span></span>
+              <span style={{ fontSize: 13, color: "#222222", fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>${retainers.retainer_mrr.toFixed(2)}/mo</span>
+            </div>
+            <div style={{ height: 8, background: "#dcdcdc", borderRadius: 99, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${mrr > 0 ? (retainers.retainer_mrr / mrr) * 100 : 0}%`, background: "linear-gradient(90deg, #c9a227, #c9a227aa)", borderRadius: 99 }} />
+            </div>
+          </div>
+        )}
+        {mrr === 0 && <div style={{ textAlign: "center", color: "#3a2020", fontSize: 13, fontFamily: "'DM Sans', sans-serif", padding: "12px 0" }}>No paying members or retainer clients yet.</div>}
       </div>
 
       {/* Signup trend */}
