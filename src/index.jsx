@@ -5350,6 +5350,8 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
   const [meeting, setMeeting] = useState({ to_name: "", to_email: "", title: "", date: "", time: "", link: "" });
   const [msg, setMsg] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [engage, setEngage] = useState(null);   // { stats, events } from Brevo
+  const [engageQ, setEngageQ] = useState("");   // per-recipient filter
 
   const call = async (method, body, qs = "") => {
     const res = await fetch("/api/broadcast" + qs, {
@@ -5363,6 +5365,8 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
   };
 
   useEffect(() => { call("GET", null, `?audience=${audience}`).then(d => setCount(d.count)).catch(() => setCount(null)); }, [audience]);
+  const loadEngagement = (email) => call("GET", null, `?engagement=1${email ? `&email=${encodeURIComponent(email)}` : ""}`).then(setEngage).catch(() => setEngage({ stats: null, events: [] }));
+  useEffect(() => { loadEngagement(); }, []);
 
   const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 6000); };
 
@@ -5404,6 +5408,40 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
         <label style={lbl}>Message</label>
         <textarea value={message} onChange={e => setMessage(e.target.value)} rows={6} placeholder={"Write your message. Blank lines start new paragraphs.\nEach email opens with \u201cHi <first name>,\u201d automatically."} style={{ ...inp, maxWidth: "none", resize: "vertical", marginBottom: 18 }} />
         <button disabled={busy} onClick={() => send({ kind: "broadcast", audience, subject, message }, `Send this email to ${count ?? "?"} recipient(s)?`)} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>Send Broadcast</button>
+      </div>
+
+      {/* Engagement — live from Brevo */}
+      <div style={section}>
+        <div style={heading}>Email Engagement — last 30 days</div>
+        <p style={sub}>Straight from Brevo: what was delivered, opened, and clicked. Search an address to see one person's history (e.g. did an insider open their welcome?). Opens undercount Apple Mail users; clicks are exact.</p>
+        {engage?.stats ? (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 10, marginBottom: 16 }}>
+            {[["Sent", engage.stats.sent, "#666666"], ["Delivered", engage.stats.delivered, "#1a7a3a"], ["Opened", engage.stats.opened, "#a08030"], ["Clicked", engage.stats.clicked, "#b80101"], ["Bounced", engage.stats.bounced, "#8a2020"]].map(([l, v, c]) => (
+              <div key={l} style={{ background: "#faf8f5", border: "1px solid #e0dbd2", borderRadius: 10, padding: "12px 14px", textAlign: "center" }}>
+                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 26, color: c, lineHeight: 1 }}>{v}</div>
+                <div style={{ fontSize: 9, color: "#8a8a8a", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 5 }}>{l}</div>
+              </div>
+            ))}
+          </div>
+        ) : engage ? <div style={{ color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>No Brevo stats yet — they appear once emails start flowing.</div> : <div style={{ color: "#b80101", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Loading…</div>}
+        <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+          <input value={engageQ} onChange={e => setEngageQ(e.target.value)} placeholder="Search a recipient — keisha@…" style={{ ...inp, maxWidth: 300, marginBottom: 0 }} />
+          <button onClick={() => loadEngagement(engageQ.trim())} style={btnGhost}>Look Up</button>
+          {engageQ && <button onClick={() => { setEngageQ(""); loadEngagement(); }} style={btnGhost}>Clear</button>}
+        </div>
+        {(engage?.events || []).length > 0 && (
+          <div style={{ maxHeight: 300, overflowY: "auto", border: "1px solid #eeebe4", borderRadius: 10 }}>
+            {engage.events.map((e, i) => (
+              <div key={i} style={{ display: "flex", gap: 12, alignItems: "baseline", padding: "9px 14px", borderBottom: "1px solid #f2efe8", flexWrap: "wrap" }}>
+                <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", color: e.event === "clicks" || e.event === "click" ? "#b80101" : e.event === "opened" || e.event === "opens" ? "#a08030" : e.event === "delivered" ? "#1a7a3a" : "#8a8a8a", minWidth: 70 }}>{e.event}</span>
+                <span style={{ fontSize: 12.5, color: "#333333", fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{e.email}</span>
+                <span style={{ fontSize: 12, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif", flex: 1, minWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.subject}</span>
+                <span style={{ fontSize: 11, color: "#b0b0b0", fontFamily: "'DM Sans', sans-serif" }}>{new Date(e.date).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
+                {e.link && <a href={e.link} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>link ↗</a>}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Waitlist welcome previews */}

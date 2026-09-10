@@ -92,6 +92,24 @@ export default async function handler(req, res) {
   try {
     // GET ?audience=... → recipient count preview
     if (req.method === 'GET') {
+      // Email engagement, straight from Brevo: 30-day aggregate + recent events
+      // (delivered / opened / clicked, per recipient). ?email= filters to one person.
+      if (req.query.engagement === '1') {
+        const key = process.env.BREVO_API_KEY;
+        if (!key) return res.status(502).json({ error: 'Brevo is not configured' });
+        const H = { 'api-key': key, accept: 'application/json' };
+        const emailFilter = req.query.email ? `&email=${encodeURIComponent(String(req.query.email).trim())}` : '';
+        const [aggRes, evRes] = await Promise.all([
+          fetch('https://api.brevo.com/v3/smtp/statistics/aggregatedReport?days=30', { headers: H }),
+          fetch(`https://api.brevo.com/v3/smtp/statistics/events?limit=80&days=30&sort=desc${emailFilter}`, { headers: H }),
+        ]);
+        const agg = aggRes.ok ? await aggRes.json() : null;
+        const ev = evRes.ok ? await evRes.json() : null;
+        return res.json({
+          stats: agg ? { sent: agg.requests || 0, delivered: agg.delivered || 0, opened: agg.uniqueOpens ?? agg.opens ?? 0, clicked: agg.uniqueClicks ?? agg.clicks ?? 0, bounced: (agg.hardBounces || 0) + (agg.softBounces || 0) } : null,
+          events: (ev?.events || []).map(e => ({ email: e.email, event: e.event, subject: e.subject || '', date: e.date, link: e.link || null })),
+        });
+      }
       const rows = await recipients(sql, req.query.audience || 'all');
       return res.json({ count: rows.length });
     }
