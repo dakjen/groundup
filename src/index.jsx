@@ -4079,7 +4079,12 @@ function RevenueTab() {
   if (loading) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
 
   const paying = users.filter(u => u.tier !== "Free" && !u.comped && (u.role || "member") === "member");
-  const memberMrr = paying.reduce((sum, u) => sum + (TIER_PRICES[u.tier] || 0), 0);
+  // Founding-25 members bill at launch rates (Builder $99.99 / Premium $149.99)
+  // through their first year — the FOUND25 coupon on their subscription
+  const FOUNDING_PRICES = { Builder: 99.99, Premium: 149.99 };
+  const isFounding = (u) => (Array.isArray(u.badges) ? u.badges : []).includes("founding25");
+  const priceFor = (u) => (isFounding(u) && FOUNDING_PRICES[u.tier]) || TIER_PRICES[u.tier] || 0;
+  const memberMrr = paying.reduce((sum, u) => sum + priceFor(u), 0);
   const mrr = memberMrr + retainers.retainer_mrr;
   const arr = mrr * 12;
 
@@ -4087,7 +4092,7 @@ function RevenueTab() {
   users.forEach(u => { tierCounts[u.tier] = (tierCounts[u.tier] || 0) + 1; });
 
   const tierRevenue = { Basic: 0, Builder: 0, Premium: 0, Elite: 0 };
-  paying.forEach(u => { tierRevenue[u.tier] = (tierRevenue[u.tier] || 0) + (TIER_PRICES[u.tier] || 0); });
+  paying.forEach(u => { tierRevenue[u.tier] = (tierRevenue[u.tier] || 0) + priceFor(u); });
 
   // Month-over-month signups (last 6 months)
   const now = new Date();
@@ -4831,7 +4836,15 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
           upside assumes each stretches one tier. */}
       {(() => {
         const PLAN_FIT = { "I need specific, customized deal help": 499.99, "I need general deal support & guidance": 249.99, "$50": 49.99, "Under $25": 0, "$25–$100": 49.99, "$100–$200": 149.99, "$300+": 249.99, "$2,000+": 3025, "Under $50": 0, "$50–$150": 49.99, "$150–$500": 249.99, "$500+": 499.99 };
-        const fitFor = (e) => { const r = recFor(e); return e.comped ? 0 : r.startsWith("Member") ? 49.99 : r.startsWith("Builder") ? 149.99 : r.startsWith("Premium") ? 249.99 : r.startsWith("Elite") ? 499.99 : r.startsWith("Senior") ? 3025 : (PLAN_FIT[e.budget] || 0); };
+        const fitFor = (e) => {
+          const r = recFor(e);
+          if (e.comped) return 0;
+          // Founding 25 pay launch rates (Builder $99.99 / Premium $149.99) for
+          // their entire first year — anticipated MRR reflects what they'd pay
+          if (r.startsWith("Builder")) return e.founding_lnl ? 99.99 : 149.99;
+          if (r.startsWith("Premium")) return e.founding_lnl ? 149.99 : 249.99;
+          return r.startsWith("Member") ? 49.99 : r.startsWith("Elite") ? 499.99 : r.startsWith("Senior") ? 3025 : (PLAN_FIT[e.budget] || 0);
+        };
         const STRETCH = { "I need specific, customized deal help": 499.99, "I need general deal support & guidance": 499.99, "$50": 149.99, "Under $25": 49.99, "$25–$100": 149.99, "$100–$200": 249.99, "$300+": 499.99, "$2,000+": 3025, "Under $50": 49.99, "$50–$150": 149.99, "$150–$500": 499.99, "$500+": 499.99 };
         const mrrFit = entries.reduce((s, e) => s + fitFor(e), 0);
         // Premium is the ideal recommendation; Elite (and Advisor) are the exceptional wins
