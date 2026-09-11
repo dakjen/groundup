@@ -4406,6 +4406,14 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
                 <option value="drmerritt" style={{ background: "#ffffff" }}>Dr. Merritt</option>
               </select>
               <button onClick={() => resetPassword(user)} style={{ ...btnGhost, fontSize: 11, padding: "6px 12px", flexShrink: 0 }}>Reset password</button>
+              <button onClick={async () => {
+                if (!window.confirm(`Email ${user.name} a password-reset link? It works for one hour.`)) return;
+                try {
+                  const res = await fetch("/api/users", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + sessionStorage.getItem("adminToken") }, body: JSON.stringify({ action: "send_reset_link", id: user.id }) });
+                  if (!res.ok) throw new Error((await res.json()).error || "Failed");
+                  alert(`Reset link emailed to ${user.email} — valid for one hour.`);
+                } catch (e) { alert(e.message); }
+              }} style={{ ...btnGhost, fontSize: 11, padding: "6px 12px", flexShrink: 0 }}>Email reset link</button>
               <button onClick={() => removeUser(user.id)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "6px 12px", flexShrink: 0 }}>Remove</button>
             </div>
           ))}

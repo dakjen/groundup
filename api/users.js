@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
-import { requireAdmin, hashPassword } from './_utils.js';
+import { requireAdmin, hashPassword, signToken } from './_utils.js';
+import { sendEmail, resetEmail, siteUrl } from './_email.js';
 
 const FIELDS = ['id', 'name', 'email', 'tier', 'role', 'badge', 'membership_status', 'created_at'];
 
@@ -90,7 +91,29 @@ export default async function handler(req, res) {
         RETURNING id, name, email, tier, role, badge, membership_status, comped, badges, created_at
       `;
       if (!user) return res.status(404).json({ error: 'User not found' });
+      // A team password reset should never be silent — the member hears about it
+      // (the email carries no password; the team conveys that directly).
+      if (new_password) {
+        try {
+          await sendEmail(user.email, 'Your GroundUp password was reset',
+            `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Your password was reset, ${user.name.split(' ')[0]}.</h2>
+             <p style="color:#a89080;font-size:14px;line-height:1.8;">The GroundUp team just reset the password on your account. They'll share your new password with you directly — then sign in and change it to something only you know from your member page.</p>
+             <p style="color:#7a5050;font-size:12px;line-height:1.7;">Didn't expect this? Reply to this email or contact the team right away.</p>
+             <a href="${siteUrl()}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Sign In</a>`);
+        } catch (e) { console.error('reset notice failed', e.message); }
+      }
       return res.json(user);
+    }
+
+    // Team: email someone a self-service reset link (1-hour token) — the clean
+    // way to hand access over without the team ever touching a password.
+    if (req.method === 'POST' && req.body && req.body.action === 'send_reset_link') {
+      const [u] = await sql`SELECT id, name, email FROM users WHERE id = ${Number(req.body.id)}`;
+      if (!u) return res.status(404).json({ error: 'User not found' });
+      const token = signToken({ uid: u.id, purpose: 'reset' }, 1000 * 60 * 60);
+      const mail = resetEmail(u.name, `${siteUrl()}/?reset=${encodeURIComponent(token)}`);
+      const ok = await sendEmail(u.email, mail.subject, mail.html);
+      return ok ? res.json({ success: true }) : res.status(502).json({ error: 'Email failed to send' });
     }
 
     if (req.method === 'DELETE') {
