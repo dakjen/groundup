@@ -165,9 +165,14 @@ export const PLAN_INFO = {
 
 // Conservative monthly estimate per budget range, for anticipated-revenue math
 export const BUDGET_EST = {
-  'Under $25': 15, '$25–$100': 60, '$100–$200': 166, '$300+': 600, '$2,000+': 3025,
+  // current form options
+  '$50': 50, '$50–$150': 100, '$150–$500': 325, '$500+': 600, '$2,000+': 3025,
+  'I already know what tier I want': 250, // never stored — the form sends "I want <Tier>"
+  'I want Member': 50, 'I want Builder': 150, 'I want Premium': 250, 'I want Elite': 500, 'I want Senior Advisor': 3025,
+  'I need general deal support & guidance': 250,
+  'I need specific, customized deal help': 500,
   // legacy ranges from earlier signups
-  'Under $50': 40, '$50–$150': 100, '$150–$500': 325, '$500+': 600,
+  'Under $25': 15, '$25–$100': 60, '$100–$200': 166, '$300+': 600, 'Under $50': 40,
 };
 
 export default async function handler(req, res) {
