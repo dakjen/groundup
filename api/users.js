@@ -49,7 +49,7 @@ export default async function handler(req, res) {
 
     // Add a user (member or team). Optional password lets them sign in immediately;
     // optional role 'admin' + badge creates a team member in one step.
-    if (req.method === 'POST') {
+    if (req.method === 'POST' && !req.body?.action) {
       const { name, email, tier, password, role, badge } = req.body;
       if (!name || !email) return res.status(400).json({ error: 'Name and email required' });
       if (password && password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
