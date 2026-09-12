@@ -4801,7 +4801,10 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
 
   return (
     <div style={{ maxWidth: 760 }}>
-      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#161616", marginBottom: 8 }}>Waitlist</h2>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 8, flexWrap: "wrap" }}>
+        <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#161616", margin: 0 }}>Waitlist</h2>
+        <a href="/waitlist" target="_blank" rel="noreferrer" style={{ background: "transparent", color: "#b80101", border: "1px solid #b8010150", borderRadius: 8, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12, textDecoration: "none" }}>See the waitlist page ↗</a>
+      </div>
       <p style={{ color: "#666666", fontSize: 13, marginBottom: 28 }}>Who's waiting, what they'll pay, and the countdown to launch.</p>
 
       {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
