@@ -4965,10 +4965,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
               </div>
               {e.budget && (e.budget.startsWith("$")
                 ? <span style={{ color: "#b80101", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.5px" }}>{e.budget}/mo</span>
-                : <span style={{ fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "0.5px" }}>
-                    <span style={{ color: "#8a8a8a" }}>{e.budget === "I need general deal support & guidance" ? "Deal support" : e.budget === "I need specific, customized deal help" ? "Personalized support" : e.budget.replace(/^I want /, "Wants ")}</span>
-                    <span style={{ color: "#b80101" }}> → {recFor(e)}</span>
-                  </span>)}
+                : <span style={{ color: "#b80101", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.5px" }}>{e.budget === "I need general deal support & guidance" ? "Deal support" : e.budget === "I need specific, customized deal help" ? "Personalized support" : e.budget.replace(/^I want /, "Wants ")}</span>)}
               {e.phone && <span style={{ color: "#666666", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{e.phone}</span>}
               <span style={{ color: (e.list || "insider") === "insider" ? "#b80101" : "#8a8a8a", fontSize: 9, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{(e.list || "insider") === "insider" ? "Insider" : "General"}</span>
               {e.founding_lnl && <BadgeChips badges={["founding25"]} small />}
