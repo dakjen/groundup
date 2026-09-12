@@ -4963,7 +4963,12 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
                 <div style={{ color: "#222222", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{e.name} <span style={{ color: "#9a9a9a", fontSize: 11, transform: openEntry === e.id ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.15s" }}>▾</span></div>
                 <div style={{ color: "#777777", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{e.email}</div>
               </div>
-              {e.budget && <span style={{ color: "#b80101", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.5px" }}>{e.budget.startsWith("$") ? `${e.budget}/mo` : e.budget}</span>}
+              {e.budget && (e.budget.startsWith("$")
+                ? <span style={{ color: "#b80101", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.5px" }}>{e.budget}/mo</span>
+                : <span style={{ fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "0.5px" }}>
+                    <span style={{ color: "#8a8a8a" }}>{e.budget}</span>
+                    <span style={{ color: "#b80101" }}> → {recFor(e)}</span>
+                  </span>)}
               {e.phone && <span style={{ color: "#666666", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{e.phone}</span>}
               <span style={{ color: (e.list || "insider") === "insider" ? "#b80101" : "#8a8a8a", fontSize: 9, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{(e.list || "insider") === "insider" ? "Insider" : "General"}</span>
               {e.founding_lnl && <BadgeChips badges={["founding25"]} small />}
