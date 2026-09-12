@@ -175,6 +175,68 @@ export const BUDGET_EST = {
   'Under $25': 15, '$25–$100': 60, '$100–$200': 166, '$300+': 600, 'Under $50': 40,
 };
 
+
+// ── Shared launch-drip sends: used by the admin buttons AND the daily cron ──
+// Both are idempotent (recommended_notified / launched_notified per row), so
+// the cron can call them every day without ever double-sending.
+export async function sendRecommendBatch(sql, target) {
+  const entries = target
+    ? await sql`SELECT * FROM waitlist WHERE recommended_notified = FALSE AND NOT COALESCE(comped, FALSE) AND COALESCE(list, 'insider') = ${target}`
+    : await sql`SELECT * FROM waitlist WHERE recommended_notified = FALSE AND NOT COALESCE(comped, FALSE)`;
+  if (entries.length === 0) return { sent: 0, total: 0 };
+  const [launchRow] = await sql`SELECT value FROM settings WHERE key = ${target === 'insider' ? 'launch_insider_at' : 'launch_at'}`;
+  let sent = 0;
+  const logRows = [];
+  for (let i = 0; i < entries.length; i += 10) {
+    const chunk = entries.slice(i, i + 10);
+    const results = await Promise.allSettled(chunk.map(e => {
+      const rec = recommendPlan(e);
+      const mail = recommendEmail(e.name, rec, launchRow?.value || null, e.reason);
+      return sendEmail(e.email, mail.subject, mail.html).then(ok => { logRows.push({ name: e.name, email: e.email, ok: !!ok, plan: rec.label }); return ok; });
+    }));
+    sent += results.filter(x => x.status === 'fulfilled' && x.value).length;
+  }
+  await logEmails(sql, 'plan recommendation', target, "Here's the plan we'd pick for you", logRows.map(r => ({ ...r, name: `${r.name} → ${r.plan}` })));
+  // Record who holds a stretch offer ("Tier|pct") — checkout verifies against this
+  for (const e of entries) {
+    const rec = recommendPlan(e);
+    await sql`UPDATE waitlist SET stretch_offer = ${rec.stretch ? `${rec.stretch.tier}|${rec.stretch.pct}` : null} WHERE id = ${e.id}`;
+  }
+  if (target) await sql`UPDATE waitlist SET recommended_notified = TRUE WHERE COALESCE(list, 'insider') = ${target}`;
+  else await sql`UPDATE waitlist SET recommended_notified = TRUE`;
+  return { sent, total: entries.length };
+}
+
+export async function sendLaunchBatch(sql, target) {
+  const entries = target
+    ? await sql`SELECT * FROM waitlist WHERE launched_notified = FALSE AND NOT COALESCE(comped, FALSE) AND COALESCE(list, 'insider') = ${target}`
+    : await sql`SELECT * FROM waitlist WHERE launched_notified = FALSE AND NOT COALESCE(comped, FALSE)`;
+  if (entries.length === 0) return { sent: 0, total: 0 };
+  const [callRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
+  let sent = 0;
+  const logRows = [];
+  for (let i = 0; i < entries.length; i += 10) {
+    const chunk = entries.slice(i, i + 10);
+    const results = await Promise.allSettled(chunk.map(e => {
+      const rec = recommendPlan(e);
+      const link = `${siteUrl()}/?join=1&plan=${rec.tier}&email=${encodeURIComponent(e.email)}`;
+      const stretchLink = rec.stretch ? `${siteUrl()}/?join=1&plan=${rec.stretch.tier}&promo=stretch10&email=${encodeURIComponent(e.email)}` : null;
+      // Retainer track: no pay link — the launch email IS the discovery-call invite
+      const mail = rec.tier === 'Advisor' ? retainerInterestEmail(e.name, callRow?.value || null) : launchEmail(e.name, rec, link, e.reason, stretchLink);
+      return sendEmail(e.email, mail.subject, mail.html).then(ok => { logRows.push({ name: `${e.name} → ${rec.label}`, email: e.email, ok: !!ok }); return ok; });
+    }));
+    sent += results.filter(x => x.status === 'fulfilled' && x.value).length;
+  }
+  await logEmails(sql, 'launch + pay link', target, "We're live — here's the plan we recommend for you", logRows);
+  for (const e of entries) {
+    const rec = recommendPlan(e);
+    await sql`UPDATE waitlist SET stretch_offer = ${rec.stretch ? `${rec.stretch.tier}|${rec.stretch.pct}` : null} WHERE id = ${e.id}`;
+  }
+  if (target) await sql`UPDATE waitlist SET launched_notified = TRUE WHERE COALESCE(list, 'insider') = ${target}`;
+  else await sql`UPDATE waitlist SET launched_notified = TRUE`;
+  return { sent, total: entries.length };
+}
+
 export default async function handler(req, res) {
   const sql = neon(process.env.DATABASE_URL);
   const admin = getAdmin(req);
@@ -364,66 +426,20 @@ export default async function handler(req, res) {
       return res.json({ success: true, sent, total: entries.length });
     }
 
-    // ~14 days out: send everyone their plan recommendation (no pay link yet)
+    // ~7 days out: send everyone their plan recommendation (no pay link yet)
     if (action === 'recommend') {
       const target = ['insider', 'general'].includes(req.body.list) ? req.body.list : null;
-      const entries = target
-        ? await sql`SELECT * FROM waitlist WHERE recommended_notified = FALSE AND NOT COALESCE(comped, FALSE) AND COALESCE(list, 'insider') = ${target}`
-        : await sql`SELECT * FROM waitlist WHERE recommended_notified = FALSE AND NOT COALESCE(comped, FALSE)`;
-      if (entries.length === 0) return res.status(400).json({ error: 'Everyone on that list already got their recommendation' });
-      const [launchRow] = await sql`SELECT value FROM settings WHERE key = ${req.body.list === 'insider' ? 'launch_insider_at' : 'launch_at'}`;
-      let sent = 0;
-      const logRows = [];
-      for (let i = 0; i < entries.length; i += 10) {
-        const chunk = entries.slice(i, i + 10);
-        const results = await Promise.allSettled(chunk.map(e => {
-          const rec = recommendPlan(e);
-          const mail = recommendEmail(e.name, rec, launchRow?.value || null, e.reason);
-          return sendEmail(e.email, mail.subject, mail.html).then(ok => { logRows.push({ name: e.name, email: e.email, ok: !!ok, plan: rec.label }); return ok; });
-        }));
-        sent += results.filter(x => x.status === 'fulfilled' && x.value).length;
-      }
-      await logEmails(sql, 'plan recommendation', target, "Here's the plan we'd pick for you", logRows.map(r => ({ ...r, name: `${r.name} → ${r.plan}` })));
-      // Record who holds a stretch offer ("Tier|pct") — checkout verifies against this
-      for (const e of entries) {
-        const rec = recommendPlan(e);
-        await sql`UPDATE waitlist SET stretch_offer = ${rec.stretch ? `${rec.stretch.tier}|${rec.stretch.pct}` : null} WHERE id = ${e.id}`;
-      }
-      if (target) await sql`UPDATE waitlist SET recommended_notified = TRUE WHERE COALESCE(list, 'insider') = ${target}`;
-      else await sql`UPDATE waitlist SET recommended_notified = TRUE`;
-      return res.json({ success: true, sent, total: entries.length });
+      const r = await sendRecommendBatch(sql, target);
+      if (r.total === 0) return res.status(400).json({ error: 'Everyone on that list already got their recommendation' });
+      return res.json({ success: true, ...r });
     }
 
     // Launch: first notice + a personal plan recommendation from budget + pain point
     if (action === 'launch') {
       const target = ['insider', 'general'].includes(req.body.list) ? req.body.list : null;
-      const entries = target
-        ? await sql`SELECT * FROM waitlist WHERE launched_notified = FALSE AND NOT COALESCE(comped, FALSE) AND COALESCE(list, 'insider') = ${target}`
-        : await sql`SELECT * FROM waitlist WHERE launched_notified = FALSE AND NOT COALESCE(comped, FALSE)`;
-      if (entries.length === 0) return res.status(400).json({ error: 'Everyone on that list has already been notified' });
-      const [callRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
-      let sent = 0;
-      const logRows = [];
-      for (let i = 0; i < entries.length; i += 10) {
-        const chunk = entries.slice(i, i + 10);
-        const results = await Promise.allSettled(chunk.map(e => {
-          const rec = recommendPlan(e);
-          const link = `${siteUrl()}/?join=1&plan=${rec.tier}&email=${encodeURIComponent(e.email)}`;
-          const stretchLink = rec.stretch ? `${siteUrl()}/?join=1&plan=${rec.stretch.tier}&promo=stretch10&email=${encodeURIComponent(e.email)}` : null;
-          // Retainer track: no pay link — the launch email IS the discovery-call invite
-          const mail = rec.tier === 'Advisor' ? retainerInterestEmail(e.name, callRow?.value || null) : launchEmail(e.name, rec, link, e.reason, stretchLink);
-          return sendEmail(e.email, mail.subject, mail.html).then(ok => { logRows.push({ name: `${e.name} → ${rec.label}`, email: e.email, ok: !!ok }); return ok; });
-        }));
-        sent += results.filter(x => x.status === 'fulfilled' && x.value).length;
-      }
-      await logEmails(sql, 'launch + pay link', target, "We're live — here's the plan we recommend for you", logRows);
-      for (const e of entries) {
-        const rec = recommendPlan(e);
-        await sql`UPDATE waitlist SET stretch_offer = ${rec.stretch ? `${rec.stretch.tier}|${rec.stretch.pct}` : null} WHERE id = ${e.id}`;
-      }
-      if (target) await sql`UPDATE waitlist SET launched_notified = TRUE WHERE COALESCE(list, 'insider') = ${target}`;
-      else await sql`UPDATE waitlist SET launched_notified = TRUE`;
-      return res.json({ success: true, sent, total: entries.length });
+      const r = await sendLaunchBatch(sql, target);
+      if (r.total === 0) return res.status(400).json({ error: 'Everyone on that list has already been notified' });
+      return res.json({ success: true, ...r });
     }
 
     // Mark a waitlist entry as a planned comp — kept out of anticipated revenue

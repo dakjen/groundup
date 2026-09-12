@@ -1,7 +1,8 @@
 import Stripe from 'stripe';
 import { neon } from '@neondatabase/serverless';
 import { requireAdmin } from './_utils.js';
-import { sendBulk, sendEmail, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail, passExpiryEmail, waitlistConfirmEmail, retainerInterestEmail } from './_email.js';
+import { sendBulk, sendEmail, siteUrl, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail, passExpiryEmail, waitlistConfirmEmail, retainerInterestEmail, countdownEmail, recommendEmail, launchEmail } from './_email.js';
+import { recommendPlan, sendRecommendBatch, sendLaunchBatch } from './waitlist.js';
 
 // Team email tools: send a custom email or an event announcement to a segment.
 // Audiences: all | Free | Basic | Premium | Elite | lnl (active Lunch & Learn access)
@@ -63,6 +64,41 @@ export default async function handler(req, res) {
          <a href="https://community.drginamerritt.net/pricing" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">See Memberships</a>`);
     }
 
+    // Launch drip, driven by the countdown dates set in the admin: 14 days out
+    // a save-the-date countdown, 7 days out each person's plan recommendation,
+    // and the launch email (pay link, or the retainer discovery-call invite)
+    // once the date arrives. Per list, idempotent — the countdown via a
+    // settings flag, the other two via each row's notified flags.
+    const drip = {};
+    for (const list of ['insider', 'general']) {
+      const key = list === 'insider' ? 'launch_insider_at' : 'launch_at';
+      const [lr] = await sql`SELECT value FROM settings WHERE key = ${key}`;
+      if (!lr?.value || isNaN(Date.parse(lr.value))) continue;
+      const msLeft = new Date(lr.value) - Date.now();
+      const DAY = 86400000;
+      try {
+        if (msLeft <= 0) {
+          const r = await sendLaunchBatch(sql, list);
+          if (r.total) drip[list + '_launch'] = r.sent;
+        } else if (msLeft <= 7 * DAY) {
+          const r = await sendRecommendBatch(sql, list);
+          if (r.total) drip[list + '_recommend'] = r.sent;
+        } else if (msLeft <= 14 * DAY) {
+          const flag = 'drip_countdown14_' + list;
+          const [done] = await sql`SELECT value FROM settings WHERE key = ${flag}`;
+          if (!done?.value) {
+            const entries = await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = ${list} AND NOT COALESCE(comped, FALSE)`;
+            if (entries.length) {
+              const launchText = new Date(lr.value).toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+              const mail = countdownEmail('2 weeks', launchText);
+              drip[list + '_countdown'] = await sendBulk(entries, mail.subject, mail.html);
+            }
+            await sql`INSERT INTO settings (key, value) VALUES (${flag}, 'sent') ON CONFLICT (key) DO UPDATE SET value = 'sent'`;
+          }
+        }
+      } catch (e) { console.error('launch drip failed for ' + list, e.message); }
+    }
+
     // Refund pot: release every slice whose refund window has closed — NREUV's
     // rate applies to the held 20% exactly as it did to the 80% on day one.
     let released = 0, releasedCents = 0;
@@ -83,7 +119,7 @@ export default async function handler(req, res) {
         } catch (e) { console.error('pot release failed', h.charge_id, e.message); }
       }
     }
-    return res.json({ success: true, expired: rows.length, sent, pot_released: released, pot_released_cents: releasedCents });
+    return res.json({ success: true, expired: rows.length, sent, drip, pot_released: released, pot_released_cents: releasedCents });
   }
 
   if (!requireAdmin(req, res)) return;
@@ -122,18 +158,27 @@ export default async function handler(req, res) {
     if (kind === 'waitlist_preview') {
       if (!to_email) return res.status(400).json({ error: 'Recipient email required' });
       const first = (to_name || 'Dakotah').split(' ')[0];
+      const sampleRec = recommendPlan({ budget: '$150–$500', learn: 'Underwriting and the capital stack', reason: 'My numbers keep coming back short' });
+      const [lr] = await sql`SELECT value FROM settings WHERE key = 'launch_insider_at'`;
+      const launchAt = lr?.value || null;
+      const launchText = launchAt ? new Date(launchAt).toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }) : 'Launch day';
+      const sampleLink = `${siteUrl()}/?join=1&plan=${sampleRec.tier}`;
       const variants = [
-        { label: 'Insider', mail: waitlistConfirmEmail(first, false, false, 'insider') },
-        { label: 'Insider + Founding 25', mail: waitlistConfirmEmail(first, true, false, 'insider') },
-        { label: 'General (site popup)', mail: waitlistConfirmEmail(first, false, false, 'general') },
-        { label: 'Senior Advisor Retainer', mail: retainerInterestEmail(first, null) },
+        { label: 'Welcome · Insider', mail: waitlistConfirmEmail(first, false, false, 'insider') },
+        { label: 'Welcome · Insider + Founding 25', mail: waitlistConfirmEmail(first, true, false, 'insider') },
+        { label: 'Welcome · General (site popup)', mail: waitlistConfirmEmail(first, false, false, 'general') },
+        { label: 'Countdown — 2 weeks', mail: countdownEmail('2 weeks', launchText) },
+        { label: 'Plan recommendation — 7 days out', mail: recommendEmail(first, sampleRec, launchAt, 'My numbers keep coming back short') },
+        { label: 'Launch + pay link', mail: launchEmail(first, sampleRec, sampleLink, 'My numbers keep coming back short', null) },
+        { label: 'Senior Advisor Retainer — discovery call', mail: retainerInterestEmail(first, null) },
       ];
+      const recips = String(to_email).split(/[,;\s]+/).map(a => a.trim()).filter(a => a.includes('@'));
       let sent = 0;
-      for (const v of variants) {
-        const ok = await sendEmail(to_email, `[PREVIEW · ${v.label}] ${v.mail.subject}`, v.mail.html);
+      for (const addr of recips) for (const v of variants) {
+        const ok = await sendEmail(addr, `[PREVIEW · ${v.label}] ${v.mail.subject}`, v.mail.html);
         if (ok) sent++;
       }
-      return sent ? res.json({ success: true, sent, total: variants.length }) : res.status(502).json({ error: 'Email failed to send — is Brevo configured?' });
+      return sent ? res.json({ success: true, sent, total: variants.length * recips.length }) : res.status(502).json({ error: 'Email failed to send — is Brevo configured?' });
     }
 
     // One-off personal meeting email (1:1 sessions) — team drops the link, we send it
