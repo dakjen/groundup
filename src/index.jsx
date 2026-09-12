@@ -4992,7 +4992,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
               </div>
               {e.budget && (e.budget.startsWith("$")
                 ? <span style={{ color: "#b80101", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.5px" }}>{e.budget}/mo</span>
-                : <span style={{ color: "#b80101", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.5px" }}>{e.budget === "I need general deal support & guidance" ? "Deal support" : e.budget === "I need specific, customized deal help" ? "Personalized support" : e.budget.replace(/^I want /, "Wants ")}</span>)}
+                : <span style={{ color: "#b80101", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.5px" }}>{e.budget === "I need general deal support & guidance" ? "Deal support" : e.budget === "I need specific, customized deal help" ? "Personalized support" : ({ "I want Member": "$49.99/mo", "I want Builder": "$149.99/mo", "I want Premium": "$249.99/mo", "I want Elite": "$499.99/mo", "I want Senior Advisor": "$3,025+/mo" }[e.budget] || e.budget)}</span>)}
               {e.phone && <span style={{ color: "#666666", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{e.phone}</span>}
               <span style={{ color: (e.list || "insider") === "insider" ? "#b80101" : "#8a8a8a", fontSize: 9, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{(e.list || "insider") === "insider" ? "Insider" : "General"}</span>
               {e.founding_lnl && <BadgeChips badges={["founding25"]} small />}
