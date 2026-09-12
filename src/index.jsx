@@ -4259,6 +4259,7 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
     try {
       await adminApi("PATCH", { id: user.id, new_password: password });
       setTempPw({ name: user.name, password });
+      window.scrollTo({ top: 0, behavior: "smooth" }); // the temp-password box lives at the top of the tab
     } catch (e) { setAddMsg(e.message); setTimeout(() => setAddMsg(""), 4000); }
   };
 
