@@ -4129,7 +4129,20 @@ function RevenueTab() {
       {/* Top stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 32 }}>
         {statCard("MRR", `$${mrr.toFixed(2)}`, `${paying.length} member${paying.length !== 1 ? "s" : ""} $${memberMrr.toFixed(2)} · ${retainers.active_count} retainer${retainers.active_count !== 1 ? "s" : ""} $${retainers.retainer_mrr.toFixed(2)}`)}
-        {statCard("ARR", `$${arr.toFixed(2)}`, "projected annual", "#222222")}
+        {(() => {
+          const GOAL = 100000; // post-launch target: $100K real ARR
+          const pct = Math.min(100, (arr / GOAL) * 100);
+          return (
+            <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: "22px 24px" }}>
+              <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>ARR</div>
+              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 36, color: "#222222", lineHeight: 1, marginBottom: 8 }}>${arr.toFixed(2)}</div>
+              <div style={{ height: 7, background: "#efe9e2", borderRadius: 99, overflow: "hidden", marginBottom: 6 }}>
+                <div style={{ height: "100%", width: `${pct}%`, background: pct >= 100 ? "#1a7a3a" : "linear-gradient(90deg, #b80101, #570404)", borderRadius: 99, transition: "width 0.6s ease" }} />
+              </div>
+              <div style={{ fontSize: 12, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif" }}>{pct >= 100 ? "🎉 Goal hit — $100K ARR" : `${pct.toFixed(1)}% of the $100K launch goal`}</div>
+            </div>
+          );
+        })()}
         {statCard("Total Members", users.length, `${tierCounts.Free} on free tier`, "#8a8a8a")}
         {statCard("Trial Conversions", trialConversions, `${trialPending} invites pending`, "#a08030")}
       </div>
