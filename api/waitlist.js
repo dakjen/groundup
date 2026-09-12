@@ -304,13 +304,18 @@ export default async function handler(req, res) {
       }
       const mail = waitlistConfirmEmail(entry.name, founding, first10, entry.list || 'insider');
       const [{ n: total }] = await sql`SELECT COUNT(*)::int AS n FROM waitlist`;
-      // Retainer-track signups get a second email with the real next step:
-      // a discovery call with Dr. Merritt. Retainers close on calls, not drips.
+      // Retainer-track signups are flagged in the admin alert. Before launch
+      // their discovery-call email waits for the launch send; once we're live,
+      // new retainer leads get it immediately at signup.
       const isRetainerLead = recommendPlan(entry).tier === 'Advisor';
       let retainerMail = null;
       if (isRetainerLead && isNew) {
-        const [cl] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
-        retainerMail = retainerInterestEmail(entry.name, cl?.value || null);
+        const launchKey = (entry.list || 'insider') === 'insider' ? 'launch_insider_at' : 'launch_at';
+        const [lr] = await sql`SELECT value FROM settings WHERE key = ${launchKey}`;
+        if (lr?.value && new Date(lr.value) <= new Date()) {
+          const [cl] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
+          retainerMail = retainerInterestEmail(entry.name, cl?.value || null);
+        }
       }
       await Promise.allSettled([
         ...(retainerMail ? [sendEmail(entry.email, retainerMail.subject, retainerMail.html)] : []),
@@ -396,6 +401,7 @@ export default async function handler(req, res) {
         ? await sql`SELECT * FROM waitlist WHERE launched_notified = FALSE AND NOT COALESCE(comped, FALSE) AND COALESCE(list, 'insider') = ${target}`
         : await sql`SELECT * FROM waitlist WHERE launched_notified = FALSE AND NOT COALESCE(comped, FALSE)`;
       if (entries.length === 0) return res.status(400).json({ error: 'Everyone on that list has already been notified' });
+      const [callRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
       let sent = 0;
       const logRows = [];
       for (let i = 0; i < entries.length; i += 10) {
@@ -404,7 +410,8 @@ export default async function handler(req, res) {
           const rec = recommendPlan(e);
           const link = `${siteUrl()}/?join=1&plan=${rec.tier}&email=${encodeURIComponent(e.email)}`;
           const stretchLink = rec.stretch ? `${siteUrl()}/?join=1&plan=${rec.stretch.tier}&promo=stretch10&email=${encodeURIComponent(e.email)}` : null;
-          const mail = launchEmail(e.name, rec, link, e.reason, stretchLink);
+          // Retainer track: no pay link — the launch email IS the discovery-call invite
+          const mail = rec.tier === 'Advisor' ? retainerInterestEmail(e.name, callRow?.value || null) : launchEmail(e.name, rec, link, e.reason, stretchLink);
           return sendEmail(e.email, mail.subject, mail.html).then(ok => { logRows.push({ name: `${e.name} → ${rec.label}`, email: e.email, ok: !!ok }); return ok; });
         }));
         sent += results.filter(x => x.status === 'fulfilled' && x.value).length;
