@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { neon } from '@neondatabase/serverless';
 import { requireAdmin } from './_utils.js';
-import { sendBulk, sendEmail, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail, passExpiryEmail, waitlistConfirmEmail } from './_email.js';
+import { sendBulk, sendEmail, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail, passExpiryEmail, waitlistConfirmEmail, retainerInterestEmail } from './_email.js';
 
 // Team email tools: send a custom email or an event announcement to a segment.
 // Audiences: all | Free | Basic | Premium | Elite | lnl (active Lunch & Learn access)
@@ -126,6 +126,7 @@ export default async function handler(req, res) {
         { label: 'Insider', mail: waitlistConfirmEmail(first, false, false, 'insider') },
         { label: 'Insider + Founding 25', mail: waitlistConfirmEmail(first, true, false, 'insider') },
         { label: 'General (site popup)', mail: waitlistConfirmEmail(first, false, false, 'general') },
+        { label: 'Senior Advisor Retainer', mail: retainerInterestEmail(first, null) },
       ];
       let sent = 0;
       for (const v of variants) {

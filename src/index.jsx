@@ -5501,10 +5501,10 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
       {/* Waitlist welcome previews */}
       <div style={section}>
         <div style={heading}>Waitlist Welcome — Preview</div>
-        <p style={sub}>Sends all three waitlist confirmation emails (Insider, Insider + Founding 25, and the General popup version) to an inbox of your choice, subjects marked [PREVIEW]. Nothing touches the waitlist.</p>
+        <p style={sub}>Sends all four waitlist confirmation emails (Insider, Insider + Founding 25, the General popup version, and the Senior Advisor Retainer discovery-call email) to an inbox of your choice, subjects marked [PREVIEW]. Nothing touches the waitlist.</p>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <input value={meeting.to_email} onChange={e => setMeeting({ ...meeting, to_email: e.target.value })} type="email" placeholder="you@dakjencreative.com" style={{ ...inp, maxWidth: 300, marginBottom: 0 }} />
-          <button disabled={busy} onClick={() => send({ kind: "waitlist_preview", to_email: meeting.to_email, to_name: "Dakotah" }, `Send the 3 waitlist welcome previews to ${meeting.to_email || "?"}?`)} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>Send Previews</button>
+          <button disabled={busy} onClick={() => send({ kind: "waitlist_preview", to_email: meeting.to_email, to_name: "Dakotah" }, `Send the 4 waitlist welcome previews to ${meeting.to_email || "?"}?`)} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>Send Previews</button>
         </div>
       </div>
 

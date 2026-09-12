@@ -234,6 +234,23 @@ export function passExpiryEmail(name, single) {
   };
 }
 
+// Retainer-track waitlisters get more than a confirmation — they get the next
+// step: a discovery call with Dr. Merritt. Calls close retainers; emails don't.
+export function retainerInterestEmail(name, callLink) {
+  const first = (name || 'there').split(' ')[0];
+  const href = callLink || 'mailto:groundup@drginamerritt.net?subject=' + encodeURIComponent('Senior Advisor — discovery call');
+  return {
+    subject: `${first} — let's talk about your project`,
+    html: `
+      <div style="font-size:10px;color:#b80101;letter-spacing:3px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Senior Advisor Retainer</div>
+      <h2 style="color:#f5e8e8;font-size:26px;margin:0 0 14px;">Thank you for your interest, ${first}.</h2>
+      <p style="color:#a89080;font-size:14px;line-height:1.9;">You told us you're looking at the <strong style="color:#f0d8d8;">Senior Advisor level</strong> — Dr. Merritt working your project with you, month over month. That conversation doesn't start with a checkout page; it starts with a call.</p>
+      <p style="color:#a89080;font-size:14px;line-height:1.9;">Set up a <strong style="color:#f0d8d8;">free discovery call with Dr. Gina Merritt</strong> to walk through your project and your needs — where the deal stands, what's in the way, and how a partnership could work. No obligation; you'll leave the call knowing your next step either way.</p>
+      <a href="${href}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:14px 30px;font-weight:bold;font-size:14px;text-decoration:none;margin:10px 0 18px;">Set Up Your Discovery Call →</a>
+      <p style="color:#7a5050;font-size:12.5px;line-height:1.8;">Have a live deal and want to go deeper right away? The <strong style="color:#c8a8a8;">$1,500 Full Project Intake</strong> is the front door: Dr. Merritt takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. If you continue into the retainer, the $1,500 credits against your first month.</p>`,
+  };
+}
+
 export function broadcastEmail(subject, message) {
   const paragraphs = message.split(/\\n{2,}/).map(p =>
     `<p style="color:#a89080;font-size:14px;line-height:1.8;">${p.replace(/\\n/g, '<br/>')}</p>`).join('');

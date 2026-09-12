@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { getAdmin } from './_utils.js';
-import { sendEmail, sendBulk, addContact, siteUrl, waitlistConfirmEmail, countdownEmail, launchEmail, recommendEmail } from './_email.js';
+import { sendEmail, sendBulk, addContact, siteUrl, waitlistConfirmEmail, countdownEmail, launchEmail, recommendEmail, retainerInterestEmail } from './_email.js';
 
 // ── The recommendation algorithm ──
 // Two signals: what their ANSWERS say they need, and what their BUDGET says
@@ -304,11 +304,20 @@ export default async function handler(req, res) {
       }
       const mail = waitlistConfirmEmail(entry.name, founding, first10, entry.list || 'insider');
       const [{ n: total }] = await sql`SELECT COUNT(*)::int AS n FROM waitlist`;
+      // Retainer-track signups get a second email with the real next step:
+      // a discovery call with Dr. Merritt. Retainers close on calls, not drips.
+      const isRetainerLead = recommendPlan(entry).tier === 'Advisor';
+      let retainerMail = null;
+      if (isRetainerLead && isNew) {
+        const [cl] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
+        retainerMail = retainerInterestEmail(entry.name, cl?.value || null);
+      }
       await Promise.allSettled([
+        ...(retainerMail ? [sendEmail(entry.email, retainerMail.subject, retainerMail.html)] : []),
         sendEmail(entry.email, mail.subject, mail.html),
         addContact(entry.email, entry.name, { WAITLIST_BUDGET: budget, SMS: cleanPhone }),
         sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
-          `${isNew ? 'WAITLIST +1' : 'Waitlist update'}: ${entry.name} (${entry.list === 'insider' ? 'Insider' : 'General'})${founding ? ' · FOUNDING 25' : ''} — ${total} total`,
+          `${isNew ? 'WAITLIST +1' : 'Waitlist update'}: ${entry.name} (${entry.list === 'insider' ? 'Insider' : 'General'})${isRetainerLead ? ' · 🔥 RETAINER LEAD' : ''}${founding ? ' · FOUNDING 25' : ''} — ${total} total`,
           `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">${isNew ? 'New waitlist signup' : 'Waitlist entry updated'}</h2>
            <p style="color:#a89080;font-size:14px;line-height:1.9;">
              <strong style="color:#f0d8d8;">${entry.name}</strong> — ${entry.email}${entry.phone ? ' · ' + entry.phone : ''}<br/>
