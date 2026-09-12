@@ -4987,7 +4987,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
                     <select value={e.rec_override || ""} onChange={async ev => {
                       try { await call("POST", { action: "set_override", id: e.id, tier: ev.target.value || null }); flash(true, ev.target.value ? "Override saved — their emails will pitch " + ev.target.value + "." : "Back to the algorithm's pick."); await load(); } catch (er) { flash(false, er.message); }
                     }} style={{ background: e.rec_override ? "#b8010112" : "#f5f2ec", color: e.rec_override ? "#b80101" : "#444444", border: "1px solid " + (e.rec_override ? "#b8010150" : "#dcd8d0"), borderRadius: 6, padding: "5px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
-                      <option value="">Auto — {recFor(e).split(" — ")[0]} (algorithm)</option>
+                      <option value="">Auto — {recFor(e)} (algorithm)</option>
                       <option value="Basic">Member — $49.99/mo</option>
                       <option value="Builder">Builder — $149.99/mo</option>
                       <option value="Premium">Premium — $249.99/mo</option>
