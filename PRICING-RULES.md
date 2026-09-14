@@ -1,6 +1,6 @@
 # GroundUp — Pricing Rules (as implemented)
 
-**Platform:** community.drginamerritt.net · **Last updated:** September 3, 2026
+**Platform:** community.drginamerritt.net · **Last updated:** September 14, 2026
 This document reflects every pricing rule currently implemented in code. Prices are in USD.
 
 ---
@@ -37,7 +37,7 @@ This document reflects every pricing rule currently implemented in code. Prices 
 
 ## 4. Lunch & Learn
 
-- L&L access: **$39.99 per live session**, a **one-year pass for $105** (every live session + recordings for 12 months), or a **Lifetime Pass for $350** (every session and recording, forever); same LNL25 attendee perk on all three (~one session per quarter) — the purchase buys a seat at the next upcoming session, recording included, with access through the day after it (120-day fallback if none is scheduled yet). Codes can also grant access.
+- L&L access: **$39.99 per live session**, a **one-year pass for $105** (every live session + recordings for 12 months), or a **Lifetime Pass for $350** (every session and recording, forever); same LNL25 attendee perk on all three (~one session per quarter, 2 hours each) — the purchase buys a seat at the next upcoming session, recording included, with access through the day after it (120-day fallback if none is scheduled yet). Codes can also grant access.
 - **Attendee perk (LNL25):** 25% off the first month of any membership, valid for 2 months after purchase/redemption, applied automatically at checkout.
 - Revenue split: **100% of L&L revenue goes to NREUV** (platform takes no cut).
 - **Every paid member gets free invites to live sessions** (Member and up — RSVP included). The **recording library stays Builder and up**. Free accounts buy access ($39.99/6mo) or use a code — a purchase includes recordings.
@@ -57,7 +57,7 @@ This document reflects every pricing rule currently implemented in code. Prices 
 
 ## 6. Senior Advisor retainer & the Full Project Intake
 
-- **Full Project Intake — $1,500, sold standalone.** The front door for anyone with a live deal: Dr. Merritt takes in the entire project (pro forma, capital stack, site, timeline). If the client continues into a retainer, the **$1,500 is automatically credited against the first retainer month** (coupon INTAKE1500) and the intake is marked credited. The free engagement/discovery call remains the no-cost path.
+- **Full Project Intake — $1,500, sold standalone.** The front door for anyone with a live deal: Dr. Merritt takes in the entire project (pro forma, capital stack, site, timeline). If the client continues into a retainer, the **$1,500 is automatically credited against the first retainer month** (coupon INTAKE1500) and the intake is marked credited. The free engagement/discovery call remains the no-cost path. **The intake fee is refundable only at the team's discretion** — it purchases Dr. Merritt's full project review, and once that review is underway or delivered it is generally non-refundable. This is stated at purchase so nobody pays it just to get in the room and then asks for the money back.
 - Retainer tiers (monthly): **5 hrs — $3,025 · 10 hrs — $5,500 · 15 hrs — $7,700.** All include everything in Elite. Split: 90% NREUV.
 - Dr. Merritt's reference rate: $550/hr.
 

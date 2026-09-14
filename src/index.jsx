@@ -556,17 +556,17 @@ function EventCard({ currentUser, eventInvited, onSignUp, setActivePage }) {
             {liveEvent ? (liveEvent.status === "confirmed" ? "✓ Confirmed" : "Upcoming") : "Upcoming"}
           </div>
           <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 26, color: "#f0d8d8", marginBottom: 6 }}>
-            {liveEvent ? liveEvent.title : "Lunch & Learn: Q2 2025"}
+            {liveEvent ? liveEvent.title : "Lunch & Learn"}
           </div>
           <div style={{ fontSize: 13, color: "#7a5050", fontFamily: "'DM Sans', sans-serif" }}>
-            {liveEvent ? liveEvent.date + (liveEvent.time ? " · " + liveEvent.time : "") : "Date TBD"} · Zoom · 60 min
+            {liveEvent ? liveEvent.date + (liveEvent.time ? " · " + liveEvent.time : "") : "Next session being scheduled"} · Zoom · 2 hours
           </div>
         </div>
       </div>
       <p style={{ color: "#8a7070", fontSize: 14, lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif", marginBottom: 24 }}>
-        {liveEvent ? liveEvent.description : "Join Dr. Merritt for a live interactive session on financing affordable housing in today's high-interest-rate environment."}
+        {liveEvent ? liveEvent.description : "Live two-hour working sessions with Dr. Merritt — financing, live deals, and open Q&A. RSVP opens as soon as the next date is set."}
       </p>
-      {renderRsvpArea()}
+      {liveEvent ? renderRsvpArea() : null}
       {liveEvent && liveEvent.status === "confirmed" && liveEvent.zoomLink && rsvpd && (
         <div style={{ marginTop: 24, background: "#0a0a0a", border: "1px solid #2a0000", borderRadius: 12, overflow: "hidden" }}>
           <div style={{ padding: "14px 20px", borderBottom: "1px solid #1a0000", display: "flex", alignItems: "center", gap: 10 }}>
@@ -1761,7 +1761,7 @@ function ContactPage({ setActivePage, advisorLink }) {
             </div>
             {selected.advisor ? (
               <div style={{ marginTop: 12, background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 10, padding: "14px 18px", color: "#b8a060", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
-                The Full Project Intake stands on its own: Dr. Merritt takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. Retainer pricing: <strong style={{ color: "#e0c4c4" }}>5 hrs/mo — $3,025 · 10 hrs/mo — $5,500 · 15 hrs/mo — $7,700</strong>, everything in Elite included. If you continue into the retainer, <strong style={{ color: "#e0c4c4" }}>the $1,500 is credited against your first month</strong> — it's never wasted money. Prefer to talk first? The engagement call is free.
+                The Full Project Intake stands on its own: Dr. Merritt takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. Retainer pricing: <strong style={{ color: "#e0c4c4" }}>5 hrs/mo — $3,025 · 10 hrs/mo — $5,500 · 15 hrs/mo — $7,700</strong>, everything in Elite included. If you continue into the retainer, <strong style={{ color: "#e0c4c4" }}>the $1,500 is credited against your first month</strong> — it's never wasted money. The intake fee is refundable only at our discretion — it buys Dr. Merritt's full review of your project, not a conversation. Prefer to talk first? The engagement call is free.
               </div>
             ) : (
               <div style={{ marginTop: 10, fontSize: 12, color: "#5a4040", fontFamily: "'DM Sans', sans-serif" }}>After payment, complete the form below so Dr. Merritt can prepare for your session.</div>
