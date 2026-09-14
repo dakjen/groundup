@@ -1278,7 +1278,7 @@ export function WaitlistForm({ list = "insider" }) {
                         <span>Deal-specific support — your numbers, your gap, your structure — comes with the <strong style={{ color: "#f0d8d8" }}>Elite plan</strong> ($499.99/mo) or the Senior Advisor retainer. We'll recommend Elite and point you at the fastest way to get Dr. Merritt on your deal.</span>
                       );
                       else bubbleBody = (
-                        <span><strong style={{ color: "#f0d8d8" }}>This isn't a subscription — it's a retainer.</strong> Dr. Gina Merritt directly on YOUR project — deal review, capital strategy, negotiation prep — starting at <strong style={{ color: "#f0d8d8" }}>$3,025/mo for 5 dedicated hours</strong>. She can even stand on your RFPs and applications as a strategic partner.</span>
+                        <span><strong style={{ color: "#f0d8d8" }}>This isn't a subscription — it's a retainer.</strong> Dr. Gina Merritt directly on YOUR project — deal review, capital strategy, negotiation prep — starting at <strong style={{ color: "#f0d8d8" }}>$3,025/mo</strong>, Dr. Gina brings her expertise, deliverable support, and standing to your project — she can even join your RFPs and applications as a strategic partner.</span>
                       );
                     }
                     const gold = b === "$3,000+";
