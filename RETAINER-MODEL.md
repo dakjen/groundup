@@ -38,6 +38,6 @@ Dr. Gina Merritt embedded on the client's project, month over month — not cont
 - **Intake credit:** an unused paid intake auto-applies $1,500 off the first retainer month (INTAKE1500).
 - **Month-to-month**, no long-term lock; the relationship continues because it's working.
 - **Scope guard:** the retainer buys advisory and review. Full document *production* (writing an application from scratch, building the pro forma) is scoped separately or up-tiered.
-- **Intake refunds are discretionary:** the $1,500 buys the full project review; once underway or delivered it is generally non-refundable, and this is stated at purchase — the fee is not a paid meet-and-greet to be refunded after.
+- **Intake refunds are discretionary — with the 1:1 backstop:** if the session happens and no genuine deal was on the table, any refund is reduced by $550 (the 1:1 session rate), so the intake can never be used as a refundable discounted meeting with her. With a real deal the $1,500 stands and credits toward the retainer. Pre-session or wrong-purchase refunds stay at our discretion.
 - **Not legal, tax, or investment advice** — strategy and development expertise; clients keep their own counsel.
 - Revenue recorded as real MRR (Revenue tab, gold Senior Advisor row); leads flagged 🔥 RETAINER LEAD from the waitlist.
