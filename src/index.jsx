@@ -740,7 +740,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
                   Raised in the Bronx. Bootstrapped from public housing to $600M+ in development deals across DC, Baltimore & Cleveland.
                 </p>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {["Howard Grad", "Darden MBA", "USC Doctorate", "$4.5B Underwritten", "7,500+ Units"].map(t => (
+                  {["Howard Grad", "Darden MBA", "USC Doctorate", "$6B Underwritten", "8,000 Units Built"].map(t => (
                     <span key={t} style={{ fontSize: 10, color: "#8a7070", border: "1px solid #2a0000", borderRadius: 20, padding: "4px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{t}</span>
                   ))}
                 </div>
@@ -755,8 +755,8 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
       <div style={{ borderTop: "1px solid #1a0000", borderBottom: "1px solid #1a0000", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", background: "#0c0404" }}>
         {[
           { val: "4", label: "Courses" },
-          { val: "$4.5B", label: "Transactions Underwritten" },
-          { val: "7,500+", label: "Units Built" },
+          { val: "$6B", label: "Transactions Underwritten" },
+          { val: "8,000", label: "Units Built" },
           { val: "30+", label: "Years of Experience" },
         ].map((s, i) => (
           <div key={i} style={{ padding: "28px 20px", textAlign: "center", borderRight: i < 3 ? "1px solid #1a0000" : "none" }}>
@@ -1087,10 +1087,12 @@ function AboutPage({ setActivePage }) {
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14, marginTop: 28 }}>
             {[
-              { val: "7,500+", label: "Units Developed" },
-              { val: "$4.5B", label: "Transactions" },
-              { val: "$600M+", label: "Active Pipeline" },
-              { val: "30+", label: "Years Experience" },
+              { val: "8,000", label: "Units Developed" },
+              { val: "$6B", label: "Underwritten" },
+              { val: "$600M+", label: "Portfolio" },
+              { val: "$310M+", label: "Raised Since 2021" },
+              { val: "800+", label: "Units in Pipeline" },
+              { val: "#730", label: "Inc. 5000" },
             ].map((s, i) => (
               <div key={i} style={{ textAlign: "center", background: "#110606", border: "1px solid #1a0000", borderRadius: 12, padding: "18px 14px" }}>
                 <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 30, color: "#b80101" }}>{s.val}</div>

@@ -26,7 +26,7 @@ Dr. Gina Merritt embedded on the client's project, month over month — not cont
 - **Capital strategy** — which sources fit this deal, in what order, and what each will demand; introductions where her relationships apply
 - **Negotiation prep** — term sheets, JV splits, GP/LP structures, public-agency asks: what to accept, what to push, what to walk from
 - **Deliverable support** — her review (and where appropriate, her hand) on the documents the deal runs on: applications, LOIs, responses to lenders and agencies
-- **Strategic partner standing** — she can appear on the client's RFPs, applications, and pursuit teams as a named strategic partner, putting her track record ($600M+, 30+ years) under their submission — *governed by the clause below; never automatic*
+- **Strategic partner standing** — she can appear on the client's RFPs, applications, and pursuit teams as a named strategic partner, putting her track record ($600M+ portfolio, $6B underwritten, 8,000 units, 30+ years) under their submission — *governed by the clause below; never automatic*
 - **The workspace** — a private client space: shared documents, direct messages, logged hours, scheduled sessions; Dr. Merritt's replies notify the client automatically
 
 **Tier differences in practice:** Advisor 5 ≈ two working sessions/mo + document review + async access. Advisor 10 ≈ weekly touchpoint + active deliverable work. Advisor 15 ≈ effectively on the team — weekly sessions, deliverables in motion, and available at deal speed when a closing heats up.
