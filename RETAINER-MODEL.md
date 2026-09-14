@@ -1,0 +1,42 @@
+# GroundUp — Senior Advisor Retainer (Internal One-Pager)
+
+**Internal document — not for distribution.** Last updated: September 14, 2026.
+Reference rate: **$550/hr**. Split: **90% NREUV / 10% platform**. All retainers include everything in Elite.
+
+## What the retainer is
+
+Dr. Gina Merritt embedded on the client's project, month over month — not content, not a community seat, but her time, expertise, and standing applied directly to their deal. Positioned and priced as a consulting engagement. The client relationship runs through a private advisory workspace on the platform (documents, messages, logged hours, booking).
+
+**The path in:** free discovery call (automated email invite to every retainer-track waitlister at/after launch) → optionally the **$1,500 Full Project Intake** (Dr. Merritt takes in the whole project — pro forma, capital stack, site, timeline; credited against the first retainer month via INTAKE1500) → retainer.
+
+## The three tiers
+
+| | **Advisor 5** | **Advisor 10** | **Advisor 15** |
+|---|---|---|---|
+| Monthly price | **$3,025** | **$5,500** | **$7,700** |
+| Dedicated hours/mo | 5 | 10 | 15 |
+| Effective rate | $605/hr | $550/hr | $513/hr |
+| Best for | One active deal that needs senior eyes at every decision point | A deal in structuring/closing, or two early-stage projects | A developer in execution across multiple deals, or one complex closing |
+
+*Hours are the internal capacity planning number — externally we sell outcomes, not hours.*
+
+## What a month looks like (all tiers, scaled to level)
+
+- **Deal review** — pro forma, capital stack, and structure reviewed with her red pen; the client leaves each session with the gap named and the fix sequenced
+- **Capital strategy** — which sources fit this deal, in what order, and what each will demand; introductions where her relationships apply
+- **Negotiation prep** — term sheets, JV splits, GP/LP structures, public-agency asks: what to accept, what to push, what to walk from
+- **Deliverable support** — her review (and where appropriate, her hand) on the documents the deal runs on: applications, LOIs, responses to lenders and agencies
+- **Strategic partner standing** — she can appear on the client's RFPs, applications, and pursuit teams as a named strategic partner, putting her track record ($600M+, 30+ years) under their submission
+- **The workspace** — a private client space: shared documents, direct messages, logged hours, scheduled sessions; Dr. Merritt's replies notify the client automatically
+
+**Tier differences in practice:** Advisor 5 ≈ two working sessions/mo + document review + async access. Advisor 10 ≈ weekly touchpoint + active deliverable work. Advisor 15 ≈ effectively on the team — weekly sessions, deliverables in motion, and available at deal speed when a closing heats up.
+
+## Rules of the engagement (internal)
+
+- **Hours** are tracked in the workspace; they are a ceiling for capacity planning, not a meter shown to the client. No rollover.
+- **Everything in Elite included** — courses, downloads, community, advisory calls, DMs, Elite Lounge.
+- **Intake credit:** an unused paid intake auto-applies $1,500 off the first retainer month (INTAKE1500).
+- **Month-to-month**, no long-term lock; the relationship continues because it's working.
+- **Scope guard:** the retainer buys advisory and review. Full document *production* (writing an application from scratch, building the pro forma) is scoped separately or up-tiered.
+- **Not legal, tax, or investment advice** — strategy and development expertise; clients keep their own counsel.
+- Revenue recorded as real MRR (Revenue tab, gold Senior Advisor row); leads flagged 🔥 RETAINER LEAD from the waitlist.

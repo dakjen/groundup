@@ -1419,18 +1419,18 @@ function PricingPage({ onSignUp }) {
         </div>
 
         {/* Two doors: recurring memberships, or pay-once passes */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+          {[["plans", "Memberships"], ["onetime", "One-Time Purchases"]].map(([id, label], i) => (
+            <button key={id} onClick={() => setTab(id)} style={{ background: tab === id ? "#b80101" : "#0d0404", color: tab === id ? "#fff" : "#8a7070", border: "1px solid " + (tab === id ? "#b80101" : "#2a0000"), borderRadius: i === 0 ? "12px 0 0 12px" : "0 12px 12px 0", padding: "13px 30px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>{label}</button>
+          ))}
+        </div>
         {tab === "plans" && (
-          <div style={{ textAlign: "center", marginBottom: 14 }}>
+          <div style={{ textAlign: "center", marginBottom: 26 }}>
             <button onClick={() => setTab("onetime")} style={{ background: "none", border: "none", color: "#8a7070", fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer", padding: 0 }}>
               Not ready to commit? <span style={{ color: "#b80101", fontWeight: 800 }}>Buy limited course access — no subscription →</span>
             </button>
           </div>
         )}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 30 }}>
-          {[["plans", "Memberships"], ["onetime", "One-Time Purchases"]].map(([id, label], i) => (
-            <button key={id} onClick={() => setTab(id)} style={{ background: tab === id ? "#b80101" : "#0d0404", color: tab === id ? "#fff" : "#8a7070", border: "1px solid " + (tab === id ? "#b80101" : "#2a0000"), borderRadius: i === 0 ? "12px 0 0 12px" : "0 12px 12px 0", padding: "13px 30px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>{label}</button>
-          ))}
-        </div>
 
         {/* One-time passes */}
         {tab === "onetime" && (
