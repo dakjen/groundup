@@ -1287,12 +1287,12 @@ export function WaitlistForm({ list = "insider" }) {
                       <div key={b} style={{ gridColumn: "1 / -1", position: "relative" }}>
                         {btn}
                         {showBubble && (wide ? (
-                          <div style={{ position: "absolute", left: "calc(100% + 16px)", top: "50%", transform: "translateY(-50%)", width: 300, zIndex: 20, background: "#12060a", border: gold ? "1px solid #e0c4c430" : "1px solid #b8010140", borderRadius: 12, padding: "12px 16px", color: gold ? "#e0c4c4" : "#c8a8a8", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, boxShadow: "0 8px 28px rgba(0,0,0,0.55)" }}>
-                            <div style={{ position: "absolute", left: -7, top: "50%", transform: "translateY(-50%) rotate(45deg)", width: 12, height: 12, background: "#12060a", borderLeft: gold ? "1px solid #e0c4c430" : "1px solid #b8010140", borderBottom: gold ? "1px solid #e0c4c430" : "1px solid #b8010140" }} />
+                          <div style={{ position: "absolute", left: "calc(100% + 16px)", top: "50%", transform: "translateY(-50%)", width: 300, zIndex: 20, background: "#1c0404", border: "1.5px solid #b80101", boxShadow: "0 8px 28px rgba(184,1,1,0.25)", borderRadius: 12, padding: "12px 16px", color: gold ? "#e0c4c4" : "#e8c8c8", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, }}>
+                            <div style={{ position: "absolute", left: -7, top: "50%", transform: "translateY(-50%) rotate(45deg)", width: 12, height: 12, background: "#1c0404", borderLeft: "1.5px solid #b80101", borderBottom: "1.5px solid #b80101" }} />
                             {bubbleBody}
                           </div>
                         ) : (
-                          <div style={{ marginTop: 8, background: "#12060a", border: gold ? "1px solid #e0c4c430" : "1px solid #b8010140", borderRadius: 8, padding: "10px 12px", color: gold ? "#e0c4c4" : "#c8a8a8", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>{bubbleBody}</div>
+                          <div style={{ marginTop: 8, background: "#1c0404", border: "1.5px solid #b80101", borderRadius: 8, padding: "10px 12px", color: gold ? "#e0c4c4" : "#e8c8c8", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>{bubbleBody}</div>
                         ))}
                       </div>
                     );
