@@ -110,6 +110,12 @@ export function recommendPlan(e) {
   // if that's what they said they need, no lower tier is an honest recommendation.
   const wantsDealSupport = e.learn === 'I need deal-specific support on a live project';
   // "I already know what tier I want" — their pick IS the recommendation
+  const PASS_PICKS = {
+    'I want Single Course Pass': { tier: 'pass_single', label: 'Single Course Pass', price: '$100 one-time', oneTime: true, ctaLabel: 'Get your pass →', next: null, features: ['60 days of one course — written lessons', 'Pick any course in the catalog', 'Your 7-day rejoin offer when it ends'] },
+    'I want All-Access Pass': { tier: 'pass_all', label: 'All-Access Pass', price: '$275 one-time', oneTime: true, ctaLabel: 'Get your pass →', next: null, features: ['30 days of EVERY course — written lessons', 'New courses included while active', 'Your 7-day rejoin offer when it ends'] },
+    'I want Lifetime Pass': { tier: 'pass_lifetime', label: 'GroundUp Lifetime Pass', price: '$5,000 one-time', oneTime: true, ctaLabel: 'Claim your Lifetime Pass →', next: null, features: ['Every course, forever — new ones included', 'One year of Builder membership free', 'Office hours for your first 5 years', 'Every Lunch & Learn — live + recordings — for life'] },
+  };
+  if (PASS_PICKS[e.budget]) return PASS_PICKS[e.budget];
   const wanted = /^I want (Member|Builder|Premium|Elite|Senior Advisor)$/.exec(e.budget || '');
   if (wanted) {
     if (wanted[1] === 'Senior Advisor') return recommendPlan({ ...e, budget: '$2,000+' });
@@ -169,11 +175,14 @@ export const BUDGET_EST = {
   '$50': 50, '$50–$150': 100, '$150–$500': 325, '$500+': 600, '$2,000+': 3025,
   'I already know what tier I want': 250, // never stored — the form sends "I want <Tier>"
   'I want Member': 50, 'I want Builder': 150, 'I want Premium': 250, 'I want Elite': 500, 'I want Senior Advisor': 3025,
+  // One-time picks: no MRR — their dollars live in BUDGET_ONETIME below
+  'I want Single Course Pass': 0, 'I want All-Access Pass': 0, 'I want Lifetime Pass': 0,
   'I need general deal support & guidance': 250,
   'I need specific, customized deal help': 500,
   // legacy ranges from earlier signups
   'Under $25': 15, '$25–$100': 60, '$100–$200': 166, '$300+': 600, 'Under $50': 40,
 };
+export const BUDGET_ONETIME = { 'I want Single Course Pass': 100, 'I want All-Access Pass': 275, 'I want Lifetime Pass': 5000 };
 
 
 // ── Shared launch-drip sends: used by the admin buttons AND the daily cron ──
@@ -219,7 +228,7 @@ export async function sendLaunchBatch(sql, target) {
     const chunk = entries.slice(i, i + 10);
     const results = await Promise.allSettled(chunk.map(e => {
       const rec = recommendPlan(e);
-      const link = `${siteUrl()}/?join=1&plan=${rec.tier}&email=${encodeURIComponent(e.email)}`;
+      const link = rec.oneTime ? `${siteUrl()}/pricing` : `${siteUrl()}/?join=1&plan=${rec.tier}&email=${encodeURIComponent(e.email)}`;
       const stretchLink = rec.stretch ? `${siteUrl()}/?join=1&plan=${rec.stretch.tier}&promo=stretch10&email=${encodeURIComponent(e.email)}` : null;
       // Retainer track: no pay link — the launch email IS the discovery-call invite
       const mail = rec.tier === 'Advisor' ? retainerInterestEmail(e.name, callRow?.value || null) : launchEmail(e.name, rec, link, e.reason, stretchLink);
@@ -274,7 +283,7 @@ export default async function handler(req, res) {
       // Anticipated revenue from stated budgets (falls back to chosen plan for old entries)
       let mrr = 0, oneTime = 0;
       for (const e of entries) {
-        if (e.budget && BUDGET_EST[e.budget]) { mrr += BUDGET_EST[e.budget]; continue; }
+        if (e.budget && BUDGET_EST[e.budget] !== undefined) { mrr += BUDGET_EST[e.budget]; oneTime += BUDGET_ONETIME[e.budget] || 0; continue; }
         const p = PLAN_INFO[e.plan];
         if (p?.monthly) mrr += p.monthly;
         if (p?.once) oneTime += p.once;
@@ -329,7 +338,7 @@ export default async function handler(req, res) {
       if (!phone || !String(phone).trim()) return res.status(400).json({ error: 'Phone number required' });
       if (!learn || !String(learn).trim()) return res.status(400).json({ error: 'Tell us what you want to learn' });
       if (!pain || !String(pain).trim()) return res.status(400).json({ error: 'Tell us your biggest pain point' });
-      if (!BUDGET_EST[budget]) return res.status(400).json({ error: 'Pick a monthly budget' });
+      if (BUDGET_EST[budget] === undefined) return res.status(400).json({ error: 'Pick a monthly budget' });
       const cleanEmail = String(email).trim().toLowerCase();
       const cleanPhone = String(phone).trim().slice(0, 30);
       const cleanLearn = String(learn).trim().slice(0, 2000);

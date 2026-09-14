@@ -1266,6 +1266,9 @@ export function WaitlistForm({ list = "insider" }) {
                           <option value="Builder">Builder — $149.99/mo</option>
                           <option value="Premium">Premium — $249.99/mo</option>
                           <option value="Elite">Elite — $499.99/mo</option>
+                          <option value="Single Course Pass">Single Course Pass — $100 one-time</option>
+                          <option value="All-Access Pass">All-Access Pass — $275 one-time</option>
+                          <option value="Lifetime Pass">GroundUp Lifetime Pass — $5,000 one-time</option>
                         </select>
                       );
                       else if (b === "I need general deal support & guidance") bubbleBody = (
