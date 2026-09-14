@@ -1266,7 +1266,6 @@ export function WaitlistForm({ list = "insider" }) {
                           <option value="Builder">Builder — $149.99/mo</option>
                           <option value="Premium">Premium — $249.99/mo</option>
                           <option value="Elite">Elite — $499.99/mo</option>
-                          <option value="Senior Advisor">Senior Advisor Retainer — from $3,025/mo</option>
                         </select>
                       );
                       else if (b === "I need general deal support & guidance") bubbleBody = (
