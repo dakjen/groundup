@@ -11,8 +11,8 @@ This document reflects every pricing rule currently implemented in code. Prices 
 |---|---|---|---|
 | Member | Basic | $49.99/mo | Every course + community read access |
 | Builder | Builder | $149.99/mo | + posting, free live L&Ls + recordings, view-only templates |
-| Premium | Premium | $249.99/mo | + 3 downloads/mo, Opportunity Board, office hours, 10% off 1:1s |
-| Elite ("Owner") | Elite | $499.99/mo | + deal support in advisory calls, DMs, unlimited downloads, 30% off 1:1s |
+| Premium | Premium | $249.99/mo | + 3 downloads/mo, Opportunity Board, office hours, 10% off 1:1s, GroundUp-only partner rates |
+| Elite ("Owner") | Elite | $499.99/mo | + deal support in advisory calls, DMs, unlimited downloads, 30% off 1:1s, GroundUp-only partner rates |
 
 - **Elite cap:** advertised at 15 seats; internally allowed to 20 (the "quiet" seats are for insiders, admitted manually). Comped and admin accounts do not occupy seats. The public seat counter appears only when ≤5 seats remain.
 - **Positioning rule:** Member/Builder/Premium are the *foundation* (industry essentials — curriculum, community, tools). Deal-specific support (YOUR numbers, YOUR gap, YOUR structure) exists **only** at Elite and the Senior Advisor retainer.
