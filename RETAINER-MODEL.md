@@ -27,6 +27,7 @@ Dr. Gina Merritt embedded on the client's project, month over month — not cont
 - **Negotiation prep** — term sheets, JV splits, GP/LP structures, public-agency asks: what to accept, what to push, what to walk from
 - **Deliverable support** — her review (and where appropriate, her hand) on the documents the deal runs on: applications, LOIs, responses to lenders and agencies
 - **Strategic partner standing** — she can appear on the client's RFPs, applications, and pursuit teams as a named strategic partner, putting her track record ($600M+ portfolio, $6B underwritten, 8,000 units, 30+ years) under their submission — *governed by the clause below; never automatic*
+- **RFP production support via DakJen Creative** — when a client's RFP or application needs design, compilation, or production quality beyond advisory review, we refer them to our partner **DakJen Creative** for RFP design and production services at a **special GroundUp rate**. This keeps the retainer's scope guard intact (advisory and review stay with Dr. Merritt; production goes to DakJen) and turns a scope problem into a partner referral instead of a no.
 - **The workspace** — a private client space: shared documents, direct messages, logged hours, scheduled sessions; Dr. Merritt's replies notify the client automatically
 
 **Tier differences in practice:** Advisor 5 ≈ two working sessions/mo + document review + async access. Advisor 10 ≈ weekly touchpoint + active deliverable work. Advisor 15 ≈ effectively on the team — weekly sessions, deliverables in motion, and available at deal speed when a closing heats up.
@@ -49,7 +50,7 @@ Lending her name and track record to a client's submission is a different exposu
 - **Everything in Elite included** — courses, downloads, community, advisory calls, DMs, Elite Lounge.
 - **Intake credit:** an unused paid intake auto-applies $1,500 off the first retainer month (INTAKE1500).
 - **Month-to-month**, no long-term lock; the relationship continues because it's working.
-- **Scope guard:** the retainer buys advisory and review. Full document *production* (writing an application from scratch, building the pro forma) is scoped separately or up-tiered.
+- **Scope guard:** the retainer buys advisory and review. Full document *production* (writing an application from scratch, building the pro forma) is scoped separately, up-tiered — or referred to DakJen Creative at the GroundUp partner rate for RFP design and compilation.
 - **Intake refunds are discretionary — with the 1:1 backstop:** if the session happens and no genuine deal was on the table, any refund is reduced by $550 (the 1:1 session rate), so the intake can never be used as a refundable discounted meeting with her. With a real deal the $1,500 stands and credits toward the retainer. Pre-session or wrong-purchase refunds stay at our discretion.
 - **Not legal, tax, or investment advice** — strategy and development expertise; clients keep their own counsel.
 - Revenue recorded as real MRR (Revenue tab, gold Senior Advisor row); leads flagged 🔥 RETAINER LEAD from the waitlist.
