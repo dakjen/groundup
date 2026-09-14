@@ -1476,7 +1476,7 @@ function PricingPage({ onSignUp }) {
           <div style={{ display: "grid", gap: 10 }}>
             {[
               ["Exploring development", "Member · Builder", null],
-              ["Working toward my first deal", "Premium", null],
+              ["Working on my first deal", "Premium", null],
               ["Deal in motion — or stuck", "Elite", "router"],
             ].map(([want, level, lead]) => (
               <div key={level} style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap", padding: "12px 14px", background: lead ? "#12060a" : "transparent", border: lead ? "1px solid #b8010140" : "1px solid transparent", borderRadius: 10 }}>
