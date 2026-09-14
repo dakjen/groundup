@@ -1238,7 +1238,7 @@ export function WaitlistForm({ list = "insider" }) {
                 {pain === "Other" && <input style={{ ...inp, marginTop: 8 }} value={painOther} onChange={e => setPainOther(e.target.value)} placeholder="Tell us in your own words" required />}
                 {pain === "I need partners or a team" && (
                   <div style={{ marginTop: 8, background: "#1c0404", border: "1.5px solid #b80101", borderRadius: 8, padding: "10px 12px", color: "#e8c8c8", fontSize: 12, fontFamily: font, lineHeight: 1.7 }}>
-                    Looking to team with Dr. Gina Merritt herself? The <strong style={{ color: "#f0d8d8" }}>✦ Thought partnership</strong> below is the better fit — she can join your project as a strategic partner. Want structured guidance without the partnership title? Choose <strong style={{ color: "#f0d8d8" }}>Elite</strong>.
+                    Looking to team with Dr. Gina Merritt herself? The <strong style={{ color: "#f0d8d8" }}>✦ Thought partnership</strong> below is the better fit — she can join your project as a strategic partner (approved per submission). Want structured guidance without the partnership title? Choose <strong style={{ color: "#f0d8d8" }}>Elite</strong>.
                   </div>
                 )}
               </div>
@@ -1283,7 +1283,7 @@ export function WaitlistForm({ list = "insider" }) {
                         <span>Deal-specific support — your numbers, your gap, your structure — comes with the <strong style={{ color: "#f0d8d8" }}>Elite plan</strong> ($499.99/mo) or the Senior Advisor retainer. We'll recommend Elite and point you at the fastest way to get Dr. Merritt on your deal.</span>
                       );
                       else bubbleBody = (
-                        <span><strong style={{ color: "#f0d8d8" }}>This isn't a subscription — it's a retainer.</strong> Dr. Gina Merritt directly on YOUR project — deal review, capital strategy, negotiation prep — starting at <strong style={{ color: "#f0d8d8" }}>$3,025/mo</strong>, Dr. Gina brings her expertise, deliverable support, and standing to your project — she can even join your RFPs and applications as a strategic partner.</span>
+                        <span><strong style={{ color: "#f0d8d8" }}>This isn't a subscription — it's a retainer.</strong> Dr. Gina Merritt directly on YOUR project — deal review, capital strategy, negotiation prep — starting at <strong style={{ color: "#f0d8d8" }}>$3,025/mo</strong>, Dr. Gina brings her expertise, deliverable support, and standing to your project — she can even join your RFPs and applications as a strategic partner, approved per submission.</span>
                       );
                     }
                     const gold = b === "$3,000+";

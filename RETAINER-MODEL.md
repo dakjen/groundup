@@ -26,10 +26,22 @@ Dr. Gina Merritt embedded on the client's project, month over month — not cont
 - **Capital strategy** — which sources fit this deal, in what order, and what each will demand; introductions where her relationships apply
 - **Negotiation prep** — term sheets, JV splits, GP/LP structures, public-agency asks: what to accept, what to push, what to walk from
 - **Deliverable support** — her review (and where appropriate, her hand) on the documents the deal runs on: applications, LOIs, responses to lenders and agencies
-- **Strategic partner standing** — she can appear on the client's RFPs, applications, and pursuit teams as a named strategic partner, putting her track record ($600M+, 30+ years) under their submission
+- **Strategic partner standing** — she can appear on the client's RFPs, applications, and pursuit teams as a named strategic partner, putting her track record ($600M+, 30+ years) under their submission — *governed by the clause below; never automatic*
 - **The workspace** — a private client space: shared documents, direct messages, logged hours, scheduled sessions; Dr. Merritt's replies notify the client automatically
 
 **Tier differences in practice:** Advisor 5 ≈ two working sessions/mo + document review + async access. Advisor 10 ≈ weekly touchpoint + active deliverable work. Advisor 15 ≈ effectively on the team — weekly sessions, deliverables in motion, and available at deal speed when a closing heats up.
+
+## Strategic partner standing — its own clause (liability)
+
+Lending her name and track record to a client's submission is a different exposure from advice: if the client wins partly on her name and then defaults, her name is on the award. Every retainer agreement must therefore include:
+
+1. **Written approval per submission.** Each RFP, application, or pursuit use of her name, likeness, résumé, or track record requires her (or NREUV's) written sign-off for that specific submission. Retainer status alone approves nothing.
+2. **No authority to bind.** The client gains no authority to bind Dr. Merritt or NREUV to any obligation, commitment, guarantee, or role — appearing as a strategic partner is a representation of advisory involvement, not a joint venture, partnership at law, or performance guarantee.
+3. **Client warrants accuracy.** The client warrants that every description of her role, involvement, and track record in their materials is accurate and pre-approved, and indemnifies her/NREUV for misrepresentation.
+4. **Immediate right to withdraw.** She may withdraw her name from any pending or submitted pursuit at any time, for any reason, effective on notice; the client must promptly notify the issuing body.
+5. **Survival.** The withdrawal right, the accuracy warranty, and the indemnity survive termination of the retainer — her name comes off future materials the day the engagement ends, and past submissions remain governed by these terms.
+
+*Until a signed retainer agreement carries this clause, no client goes to submission with her name on it.*
 
 ## Rules of the engagement (internal)
 
