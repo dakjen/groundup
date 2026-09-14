@@ -1241,37 +1241,60 @@ export function WaitlistForm({ list = "insider" }) {
                 <label style={lbl}>Monthly budget for a course, community, and access to support</label>
                 <div style={{ color: "#7a5050", fontSize: 11.5, fontFamily: font, lineHeight: 1.6, margin: "2px 0 8px" }}>The lower tiers build your foundation — the courses, the community, the knowledge. The higher tiers add deal-specific support with Dr. Merritt.</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                  {WL_BUDGETS.map(b => (
-                    <button type="button" key={b} onClick={() => setBudget(b)}
-                      onMouseEnter={() => b === "$2,000+" && setPartnerHover(true)}
-                      onMouseLeave={() => b === "$2,000+" && setPartnerHover(false)}
-                      style={{ gridColumn: (b === "$2,000+" || b === "I need specific, customized deal help" || b === "I need general deal support & guidance" || b === "I already know what tier I want") ? "1 / -1" : undefined, background: budget === b ? "#b8010118" : "transparent", border: budget === b ? "1px solid #b80101" : b === "$2,000+" ? "1px solid #e0c4c455" : (b === "I need specific, customized deal help" || b === "I need general deal support & guidance" || b === "I already know what tier I want") ? "1px solid #b8010145" : "1px solid #2a0000", borderRadius: 8, padding: "11px 12px", cursor: "pointer", color: budget === b ? "#f0d8d8" : b === "$2,000+" ? "#e0c4c4" : (b === "I need specific, customized deal help" || b === "I need general deal support & guidance" || b === "I already know what tier I want") ? "#c8a8a8" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font }}>
-                      {b === "$2,000+" ? "✦ $2,000+ · Thought partnership" : b === "I need specific, customized deal help" ? "🔴 I need specific, customized deal help" : b === "I need general deal support & guidance" ? "🧭 I need general deal support & guidance" : b === "I already know what tier I want" ? "🎯 I already know what tier I want" : b}
-                    </button>
-                  ))}
-                  {budget === "I already know what tier I want" && (
-                    <div style={{ gridColumn: "1 / -1" }}>
-                      <select style={{ ...sel, width: "100%" }} value={wantTier} onChange={e => setWantTier(e.target.value)} required>
-                        <option value="" disabled>Pick your tier…</option>
-                        <option value="Member">Member — $49.99/mo</option>
-                        <option value="Builder">Builder — $149.99/mo</option>
-                        <option value="Premium">Premium — $249.99/mo</option>
-                        <option value="Elite">Elite — $499.99/mo</option>
-                        <option value="Senior Advisor">Senior Advisor Retainer — from $3,025/mo</option>
-                      </select>
-                    </div>
-                  )}
-                  {budget === "I need general deal support & guidance" && (
-                    <div style={{ gridColumn: "1 / -1", background: "#12060a", border: "1px solid #b8010140", borderRadius: 8, padding: "10px 12px", color: "#c8a8a8", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>General deal support — the tools, templates, Opportunity Board, and office hours with Dr. Merritt — lives in the <strong style={{ color: "#f0d8d8" }}>Premium plan</strong> ($249.99/mo). That's what we'll recommend.</div>
-                  )}
-                  {budget === "I need specific, customized deal help" && (
-                    <div style={{ gridColumn: "1 / -1", background: "#12060a", border: "1px solid #b8010140", borderRadius: 8, padding: "10px 12px", color: "#c8a8a8", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>Deal-specific support — your numbers, your gap, your structure — comes with the <strong style={{ color: "#f0d8d8" }}>Elite plan</strong> ($499.99/mo) or the Senior Advisor retainer. We'll recommend Elite and point you at the fastest way to get Dr. Merritt on your deal.</div>
-                  )}
-                  {(budget === "$2,000+" || partnerHover) && (
-                    <div style={{ gridColumn: "1 / -1", color: "#e0c4c4", fontSize: 12.5, fontFamily: font, lineHeight: 1.8, background: "#12060a", border: "1px solid #e0c4c430", borderRadius: 8, padding: "12px 16px" }}>
-                      <strong style={{ color: "#f0d8d8" }}>This isn't a subscription — it's a retainer.</strong> Put Dr. Gina Merritt directly on YOUR project: dedicated hours with her every month, deal review, capital strategy, negotiation prep, and a private client workspace. You're not buying content — you're buying her time, her expertise, and her business infrastructure under your foundation. That's why it's priced like the consulting engagement it is.
-                    </div>
-                  )}
+                  {WL_BUDGETS.map(b => {
+                    const long = b === "$2,000+" || b === "I need specific, customized deal help" || b === "I need general deal support & guidance" || b === "I already know what tier I want";
+                    const btn = (
+                      <button type="button" key={b} onClick={() => setBudget(b)}
+                        onMouseEnter={() => b === "$2,000+" && setPartnerHover(true)}
+                        onMouseLeave={() => b === "$2,000+" && setPartnerHover(false)}
+                        style={{ width: long ? "100%" : undefined, gridColumn: !long ? undefined : "1 / -1", background: budget === b ? "#b8010118" : "transparent", border: budget === b ? "1px solid #b80101" : b === "$2,000+" ? "1px solid #e0c4c455" : long ? "1px solid #b8010145" : "1px solid #2a0000", borderRadius: 8, padding: "11px 12px", cursor: "pointer", color: budget === b ? "#f0d8d8" : b === "$2,000+" ? "#e0c4c4" : long ? "#c8a8a8" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font }}>
+                        {b === "$2,000+" ? "✦ $2,000+ · Thought partnership" : b === "I need specific, customized deal help" ? "🔴 I need specific, customized deal help" : b === "I need general deal support & guidance" ? "🧭 I need general deal support & guidance" : b === "I already know what tier I want" ? "🎯 I already know what tier I want" : b}
+                      </button>
+                    );
+                    if (!long) return btn;
+                    // The long buttons anchor their pop-up beside the button — a
+                    // speech bubble with a tail — instead of stacking underneath.
+                    // On narrow screens there's no room beside the form, so it
+                    // falls back to right below the button.
+                    const showBubble = budget === b || (b === "$2,000+" && partnerHover);
+                    let bubbleBody = null;
+                    if (showBubble) {
+                      if (b === "I already know what tier I want") bubbleBody = (
+                        <select style={{ ...sel, width: "100%" }} value={wantTier} onChange={e => setWantTier(e.target.value)} required>
+                          <option value="" disabled>Pick your tier…</option>
+                          <option value="Member">Member — $49.99/mo</option>
+                          <option value="Builder">Builder — $149.99/mo</option>
+                          <option value="Premium">Premium — $249.99/mo</option>
+                          <option value="Elite">Elite — $499.99/mo</option>
+                          <option value="Senior Advisor">Senior Advisor Retainer — from $3,025/mo</option>
+                        </select>
+                      );
+                      else if (b === "I need general deal support & guidance") bubbleBody = (
+                        <span>General deal support — the tools, templates, Opportunity Board, and office hours with Dr. Merritt — lives in the <strong style={{ color: "#f0d8d8" }}>Premium plan</strong> ($249.99/mo). That's what we'll recommend.</span>
+                      );
+                      else if (b === "I need specific, customized deal help") bubbleBody = (
+                        <span>Deal-specific support — your numbers, your gap, your structure — comes with the <strong style={{ color: "#f0d8d8" }}>Elite plan</strong> ($499.99/mo) or the Senior Advisor retainer. We'll recommend Elite and point you at the fastest way to get Dr. Merritt on your deal.</span>
+                      );
+                      else bubbleBody = (
+                        <span><strong style={{ color: "#f0d8d8" }}>This isn't a subscription — it's a retainer.</strong> Put Dr. Gina Merritt directly on YOUR project: dedicated hours with her every month, deal review, capital strategy, negotiation prep, and a private client workspace. You're not buying content — you're buying her time, her expertise, and her business infrastructure under your foundation. That's why it's priced like the consulting engagement it is.</span>
+                      );
+                    }
+                    const gold = b === "$2,000+";
+                    const wide = typeof window !== "undefined" && window.innerWidth >= 1024;
+                    return (
+                      <div key={b} style={{ gridColumn: "1 / -1", position: "relative" }}>
+                        {btn}
+                        {showBubble && (wide ? (
+                          <div style={{ position: "absolute", left: "calc(100% + 16px)", top: "50%", transform: "translateY(-50%)", width: 300, zIndex: 20, background: "#12060a", border: gold ? "1px solid #e0c4c430" : "1px solid #b8010140", borderRadius: 12, padding: "12px 16px", color: gold ? "#e0c4c4" : "#c8a8a8", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, boxShadow: "0 8px 28px rgba(0,0,0,0.55)" }}>
+                            <div style={{ position: "absolute", left: -7, top: "50%", transform: "translateY(-50%) rotate(45deg)", width: 12, height: 12, background: "#12060a", borderLeft: gold ? "1px solid #e0c4c430" : "1px solid #b8010140", borderBottom: gold ? "1px solid #e0c4c430" : "1px solid #b8010140" }} />
+                            {bubbleBody}
+                          </div>
+                        ) : (
+                          <div style={{ marginTop: 8, background: "#12060a", border: gold ? "1px solid #e0c4c430" : "1px solid #b8010140", borderRadius: 8, padding: "10px 12px", color: gold ? "#e0c4c4" : "#c8a8a8", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>{bubbleBody}</div>
+                        ))}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
               {!urlSource && (
