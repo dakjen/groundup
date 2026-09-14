@@ -1280,7 +1280,9 @@ export function WaitlistForm({ list = "insider" }) {
                       );
                     }
                     const gold = b === "$2,000+";
-                    const wide = typeof window !== "undefined" && window.innerWidth >= 1024;
+                    // The tier dropdown reads better right under its button; only the
+                    // explainer bubbles float to the side.
+                    const wide = b !== "I already know what tier I want" && typeof window !== "undefined" && window.innerWidth >= 1024;
                     return (
                       <div key={b} style={{ gridColumn: "1 / -1", position: "relative" }}>
                         {btn}
