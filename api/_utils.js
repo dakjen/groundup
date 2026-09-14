@@ -49,9 +49,14 @@ export function getSession(req) {
 }
 
 export function requireAdmin(req, res) {
-  if (getAdmin(req)) return true;
-  res.status(401).json({ error: 'Unauthorized' });
-  return false;
+  const admin = getAdmin(req);
+  if (!admin) { res.status(401).json({ error: 'Unauthorized' }); return false; }
+  // View-only admins (Dr. Merritt's account) can see everything but change nothing
+  if (admin.viewer && req.method !== 'GET') {
+    res.status(403).json({ error: 'Your admin access is view-only — ask Dakotah to make this change.' });
+    return false;
+  }
+  return true;
 }
 
 // New-member benefit gate: Premium/Elite big-ticket perks (Gina's time, product

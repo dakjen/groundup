@@ -4699,7 +4699,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
   // $500+ → Elite · $150–$500 → Premium · below $150 → Member
   const recFor = (e) => {
     if (e.rec_override) return { Basic: "Member — $49.99/mo", Builder: "Builder — $149.99/mo", Premium: "Premium — $249.99/mo", Elite: "Elite — $499.99/mo", Advisor: "Senior Advisor — from $3,025/mo" }[e.rec_override] || "Member — $49.99/mo";
-    if (e.budget === "$2,000+") return "Senior Advisor — from $3,025/mo";
+    if (e.budget === "$2,000+" || e.budget === "$3,000+") return "Senior Advisor — from $3,025/mo";
     const passPick = { "I want Single Course Pass": "Single Course Pass — $100 once", "I want All-Access Pass": "All-Access Pass — $275 once", "I want Lifetime Pass": "Lifetime Pass — $5,000 once" }[e.budget];
     if (passPick) return passPick;
     const wanted = /^I want (Member|Builder|Premium|Elite|Senior Advisor)$/.exec(e.budget || "");
@@ -4718,10 +4718,23 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
 
   // Download everything as a CSV — respects the current list filter
   const exportCsv = (rows) => {
-    const cols = [["Name", "name"], ["Email", "email"], ["Phone", "phone"], ["List", "list"], ["Monthly budget", "budget"], ["Wants to learn", "learn"], ["Pain point", "reason"], ["Heard about us", "source"], ["Founding 25", "founding_lnl"], ["First 10", "first10"], ["Notified", "launched_notified"], ["Joined", "created_at"]];
+    const csvValue = (e) => {
+      if (e.comped) return "$0 (comped)";
+      const r = recFor(e);
+      if (r.startsWith("Builder")) return e.founding_lnl ? "$99.99/mo" : "$149.99/mo";
+      if (r.startsWith("Premium")) return e.founding_lnl ? "$149.99/mo" : "$249.99/mo";
+      if (r.startsWith("Member")) return "$49.99/mo";
+      if (r.startsWith("Elite")) return "$499.99/mo";
+      if (r.startsWith("Senior")) return "$3,025/mo";
+      if (r.startsWith("Single Course Pass")) return "$100 once";
+      if (r.startsWith("All-Access Pass")) return "$275 once";
+      if (r.startsWith("Lifetime Pass")) return "$5,000 once";
+      return "";
+    };
+    const cols = [["Name", "name"], ["Email", "email"], ["Phone", "phone"], ["List", "list"], ["Monthly budget", "budget"], ["Recommended plan", "_rec"], ["Anticipated value", "_fit"], ["Wants to learn", "learn"], ["Pain point", "reason"], ["Heard about us", "source"], ["Founding 25", "founding_lnl"], ["First 10", "first10"], ["Notified", "launched_notified"], ["Joined", "created_at"]];
     const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const csv = [cols.map(c => esc(c[0])).join(",")]
-      .concat(rows.map(r => cols.map(([, k]) => esc(k === "created_at" ? new Date(r[k]).toLocaleString() : k === "list" ? (r[k] || "insider") : typeof r[k] === "boolean" ? (r[k] ? "yes" : "no") : r[k])).join(",")))
+      .concat(rows.map(r => cols.map(([, k]) => esc(k === "_rec" ? recFor(r) : k === "_fit" ? csvValue(r) : k === "created_at" ? new Date(r[k]).toLocaleString() : k === "list" ? (r[k] || "insider") : typeof r[k] === "boolean" ? (r[k] ? "yes" : "no") : r[k])).join(",")))
       .join("\n");
     const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a");
@@ -4862,7 +4875,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
           Conservative maps their budget to the plan it comfortably covers;
           upside assumes each stretches one tier. */}
       {(() => {
-        const PLAN_FIT = { "I need specific, customized deal help": 499.99, "I need general deal support & guidance": 249.99, "$50": 49.99, "Under $25": 0, "$25–$100": 49.99, "$100–$200": 149.99, "$300+": 249.99, "$2,000+": 3025, "Under $50": 0, "$50–$150": 49.99, "$150–$500": 249.99, "$500+": 499.99 };
+        const PLAN_FIT = { "I need specific, customized deal help": 499.99, "I need general deal support & guidance": 249.99, "$50": 49.99, "Under $25": 0, "$25–$100": 49.99, "$100–$200": 149.99, "$300+": 249.99, "$2,000+": 3025, "$3,000+": 3025, "Under $50": 0, "$50–$150": 49.99, "$150–$500": 249.99, "$500+": 499.99 };
         const fitFor = (e) => {
           const r = recFor(e);
           if (e.comped) return 0;
@@ -4873,16 +4886,17 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
           if (r.includes("Pass")) return 0; // one-time money, not MRR
           return r.startsWith("Member") ? 49.99 : r.startsWith("Elite") ? 499.99 : r.startsWith("Senior") ? 3025 : (PLAN_FIT[e.budget] || 0);
         };
-        const STRETCH = { "I need specific, customized deal help": 499.99, "I need general deal support & guidance": 499.99, "$50": 149.99, "Under $25": 49.99, "$25–$100": 149.99, "$100–$200": 249.99, "$300+": 499.99, "$2,000+": 3025, "Under $50": 49.99, "$50–$150": 149.99, "$150–$500": 499.99, "$500+": 499.99 };
-        const mrrFit = entries.reduce((s, e) => s + fitFor(e), 0);
+        const STRETCH = { "I need specific, customized deal help": 499.99, "I need general deal support & guidance": 499.99, "$50": 149.99, "Under $25": 49.99, "$25–$100": 149.99, "$100–$200": 249.99, "$300+": 499.99, "$2,000+": 3025, "$3,000+": 3025, "Under $50": 49.99, "$50–$150": 149.99, "$150–$500": 499.99, "$500+": 499.99 };
+        const allEntries = data.entries;
+        const mrrFit = allEntries.reduce((s, e) => s + fitFor(e), 0);
         // Premium is the ideal recommendation; Elite (and Advisor) are the exceptional wins
-        const premiumRec = entries.filter(e => recFor(e).startsWith("Premium")).length;
-        const eliteRec = entries.filter(e => recFor(e).startsWith("Elite")).length;
-        const advisorRec = entries.filter(e => recFor(e).startsWith("Senior")).length;
+        const premiumRec = allEntries.filter(e => recFor(e).startsWith("Premium")).length;
+        const eliteRec = allEntries.filter(e => recFor(e).startsWith("Elite")).length;
+        const advisorRec = allEntries.filter(e => recFor(e).startsWith("Senior")).length;
         const money = (n) => "$" + n.toLocaleString(undefined, { minimumFractionDigits: 2 });
         return (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 20 }}>
-            {statCard("On the waitlist", entries.length)}
+            {statCard("On the waitlist", allEntries.length, "both lists")}
             {statCard("Anticipated MRR", money(mrrFit), "each joins the plan their budget fits")}
             {(() => {
               const GOAL = 150000; // the waitlist target: $150K ARR

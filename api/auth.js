@@ -193,7 +193,7 @@ export default async function handler(req, res) {
         return res.status(401).json({ error: 'Invalid email or password' });
       }
       await clearFails(`login:${cleanEmail}`); // a good login resets the account's counter
-      const token = signToken({ uid: user.id, role: user.role === 'admin' ? 'admin' : 'member' });
+      const token = signToken({ uid: user.id, role: user.role === 'admin' ? 'admin' : 'member', viewer: user.role === 'admin' && user.badge === 'drmerritt' ? true : undefined });
       const { password_hash, ...safe } = user;
       safe.entitlements = await sql`SELECT course_id, expires_at FROM entitlements WHERE user_id = ${user.id} AND (expires_at IS NULL OR expires_at > NOW())`;
       return res.json({ user: safe, token });

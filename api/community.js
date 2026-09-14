@@ -285,7 +285,8 @@ export default async function handler(req, res) {
       if (!id) return res.status(400).json({ error: 'id required' });
       const [msg] = await sql`SELECT * FROM messages WHERE id = ${id}`;
       if (!msg) return res.status(404).json({ error: 'Not found' });
-      const isAdmin = !!getAdmin(req);
+      const _adm = getAdmin(req);
+      const isAdmin = !!_adm && !(_adm.viewer && req.method !== 'GET');
       if (!isAdmin && msg.user_id !== user.id) return res.status(403).json({ error: 'Not your message' });
       await sql`UPDATE messages SET deleted = TRUE WHERE id = ${id}`;
       return res.json({ success: true });

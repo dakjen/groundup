@@ -78,7 +78,7 @@ export function recommendPlan(e) {
   }
   // Thought partnership ($2,000+): this is retainer territory, not a membership —
   // recommend the Senior Advisor engagement and route them to a call, not checkout
-  if (e.budget === '$2,000+') {
+  if (e.budget === '$2,000+' || e.budget === '$3,000+') {
     return {
       tier: 'Advisor', label: 'Senior Advisor Retainer', price: 'from $3,025/mo',
       ctaLabel: 'Book your engagement call →', next: null,
@@ -172,7 +172,7 @@ export const PLAN_INFO = {
 // Conservative monthly estimate per budget range, for anticipated-revenue math
 export const BUDGET_EST = {
   // current form options
-  '$50': 50, '$50–$150': 100, '$150–$500': 325, '$500+': 600, '$2,000+': 3025,
+  '$50': 50, '$50–$150': 100, '$150–$500': 325, '$500+': 600, '$2,000+': 3025, '$3,000+': 3025,
   'I already know what tier I want': 250, // never stored — the form sends "I want <Tier>"
   'I want Member': 50, 'I want Builder': 150, 'I want Premium': 250, 'I want Elite': 500, 'I want Senior Advisor': 3025,
   // One-time picks: no MRR — their dollars live in BUDGET_ONETIME below
@@ -274,6 +274,7 @@ export default async function handler(req, res) {
     // Admin: full list + launch date + revenue rollup
     if (req.method === 'GET') {
       if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+    if (admin.viewer) return res.status(403).json({ error: 'Your admin access is view-only — ask Dakotah to make this change.' });
       const entries = await sql`SELECT * FROM waitlist ORDER BY created_at DESC`;
       // Complete record of every campaign email sent, newest first
       let email_log = [];

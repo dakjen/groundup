@@ -1137,7 +1137,7 @@ const WL_PAIN = [
   "Other",
 ];
 const WL_SOURCE = ["Dr. Merritt / NREUV", "A Lunch & Learn", "LinkedIn", "Instagram", "Word of mouth", "An event or conference", "Other"];
-const WL_BUDGETS = ["$50", "$50–$150", "$150–$500", "$500+", "I already know what tier I want", "I need general deal support & guidance", "I need specific, customized deal help", "$2,000+"];
+const WL_BUDGETS = ["$50", "$50–$150", "$150–$500", "$500+", "I already know what tier I want", "I need general deal support & guidance", "I need specific, customized deal help", "$3,000+"];
 
 // Two lists, one form. "insider" is the secret /waitlist page (first access);
 // "general" is what the public homepage collects before the general launch.
@@ -1242,13 +1242,13 @@ export function WaitlistForm({ list = "insider" }) {
                 <div style={{ color: "#7a5050", fontSize: 11.5, fontFamily: font, lineHeight: 1.6, margin: "2px 0 8px" }}>The lower tiers build your foundation — the courses, the community, the knowledge. The higher tiers add deal-specific support with Dr. Merritt.</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   {WL_BUDGETS.map(b => {
-                    const long = b === "$2,000+" || b === "I need specific, customized deal help" || b === "I need general deal support & guidance" || b === "I already know what tier I want";
+                    const long = b === "$3,000+" || b === "I need specific, customized deal help" || b === "I need general deal support & guidance" || b === "I already know what tier I want";
                     const btn = (
                       <button type="button" key={b} onClick={() => setBudget(b)}
-                        onMouseEnter={() => b === "$2,000+" && setPartnerHover(true)}
-                        onMouseLeave={() => b === "$2,000+" && setPartnerHover(false)}
-                        style={{ width: long ? "100%" : undefined, gridColumn: !long ? undefined : "1 / -1", background: budget === b ? "#b8010118" : "transparent", border: budget === b ? "1px solid #b80101" : b === "$2,000+" ? "1px solid #e0c4c455" : long ? "1px solid #b8010145" : "1px solid #2a0000", borderRadius: 8, padding: "11px 12px", cursor: "pointer", color: budget === b ? "#f0d8d8" : b === "$2,000+" ? "#e0c4c4" : long ? "#c8a8a8" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font }}>
-                        {b === "$2,000+" ? "✦ $2,000+ · Thought partnership" : b === "I need specific, customized deal help" ? "🔴 I need specific, customized deal help" : b === "I need general deal support & guidance" ? "🧭 I need general deal support & guidance" : b === "I already know what tier I want" ? "🎯 I already know what tier I want" : b}
+                        onMouseEnter={() => b === "$3,000+" && setPartnerHover(true)}
+                        onMouseLeave={() => b === "$3,000+" && setPartnerHover(false)}
+                        style={{ width: long ? "100%" : undefined, gridColumn: !long ? undefined : "1 / -1", background: budget === b ? "#b8010118" : "transparent", border: budget === b ? "1px solid #b80101" : b === "$3,000+" ? "1px solid #e0c4c455" : long ? "1px solid #b8010145" : "1px solid #2a0000", borderRadius: 8, padding: "11px 12px", cursor: "pointer", color: budget === b ? "#f0d8d8" : b === "$3,000+" ? "#e0c4c4" : long ? "#c8a8a8" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font }}>
+                        {b === "$3,000+" ? "✦ $3,000+ · Thought partnership" : b === "I need specific, customized deal help" ? "🔴 I need specific, customized deal help" : b === "I need general deal support & guidance" ? "🧭 I need general deal support & guidance" : b === "I already know what tier I want" ? "🎯 I already know what tier I want" : b}
                       </button>
                     );
                     if (!long) return btn;
@@ -1256,7 +1256,7 @@ export function WaitlistForm({ list = "insider" }) {
                     // speech bubble with a tail — instead of stacking underneath.
                     // On narrow screens there's no room beside the form, so it
                     // falls back to right below the button.
-                    const showBubble = budget === b || (b === "$2,000+" && partnerHover);
+                    const showBubble = budget === b || (b === "$3,000+" && partnerHover);
                     let bubbleBody = null;
                     if (showBubble) {
                       if (b === "I already know what tier I want") bubbleBody = (
@@ -1278,10 +1278,10 @@ export function WaitlistForm({ list = "insider" }) {
                         <span>Deal-specific support — your numbers, your gap, your structure — comes with the <strong style={{ color: "#f0d8d8" }}>Elite plan</strong> ($499.99/mo) or the Senior Advisor retainer. We'll recommend Elite and point you at the fastest way to get Dr. Merritt on your deal.</span>
                       );
                       else bubbleBody = (
-                        <span><strong style={{ color: "#f0d8d8" }}>This isn't a subscription — it's a retainer.</strong> Put Dr. Gina Merritt directly on YOUR project: dedicated hours with her every month, deal review, capital strategy, negotiation prep, and a private client workspace. You're not buying content — you're buying her time, her expertise, and her business infrastructure under your foundation. That's why it's priced like the consulting engagement it is.</span>
+                        <span><strong style={{ color: "#f0d8d8" }}>This isn't a subscription — it's a retainer.</strong> Dr. Gina Merritt directly on YOUR project — deal review, capital strategy, negotiation prep — starting at <strong style={{ color: "#f0d8d8" }}>$3,025/mo for 5 dedicated hours</strong>. She can even stand on your RFPs and applications as a strategic partner.</span>
                       );
                     }
-                    const gold = b === "$2,000+";
+                    const gold = b === "$3,000+";
                     // The tier dropdown reads better right under its button; only the
                     // explainer bubbles float to the side.
                     const wide = b !== "I already know what tier I want" && typeof window !== "undefined" && window.innerWidth >= 1024;

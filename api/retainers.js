@@ -6,6 +6,7 @@ import { sendEmail } from './_email.js';
 export default async function handler(req, res) {
   const sql = neon(process.env.DATABASE_URL);
   const admin = getAdmin(req);
+  if (admin?.viewer && req.method !== 'GET') return res.status(403).json({ error: 'Your admin access is view-only — ask Dakotah to make this change.' });
   const session = getSession(req);
 
   const monthUsed = async (rid) => {
