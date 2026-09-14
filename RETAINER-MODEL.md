@@ -1,7 +1,7 @@
 # GroundUp — Senior Advisor Retainer (Internal One-Pager)
 
 **Internal document — not for distribution.** Last updated: September 14, 2026.
-Reference rate: **$550/hr**. Split: **90% NREUV / 10% platform**. All retainers include everything in Elite.
+Reference rate: **$550/hr**. Split: **90% NREUV / 10% platform**. All retainers include everything in Owner (internal tier: Elite).
 
 ## What the retainer is
 
@@ -46,7 +46,7 @@ Lending her name and track record to a client's submission is a different exposu
 ## Rules of the engagement (internal)
 
 - **Hours** are tracked in the workspace; they are a ceiling for capacity planning, not a meter shown to the client. No rollover.
-- **Everything in Elite included** — courses, downloads, community, advisory calls, DMs, Elite Lounge.
+- **Everything in Owner included** — courses, downloads, community, advisory calls, DMs, Owner Lounge.
 - **Intake credit:** an unused paid intake auto-applies $1,500 off the first retainer month (INTAKE1500).
 - **Month-to-month**, no long-term lock; the relationship continues because it's working.
 - **Scope guard:** the retainer buys advisory and review. Full document *production* (writing an application from scratch, building the pro forma) is scoped separately or up-tiered.

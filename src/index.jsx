@@ -40,7 +40,7 @@ async function startCheckout(item, extra = {}) {
     const d = await res.json();
     if (res.status === 401) { alert("Sign in first, then purchase."); return false; }
     // Elite sold out between page load and checkout — don't fall through to the mailto
-    if (res.status === 409 && d.elite_full) { alert(d.message || "Elite is full right now."); return false; }
+    if (res.status === 409 && d.elite_full) { alert(d.message || "The Owner tier is full right now."); return false; }
     if (!res.ok) throw new Error(d.error || "Checkout failed");
     window.location.href = d.url;
     return true;
@@ -532,7 +532,7 @@ function EventCard({ currentUser, eventInvited, onSignUp, setActivePage }) {
           <button onClick={() => setActivePage && setActivePage("pricing")} style={{ background: "transparent", color: "#b80101", border: "1px solid #b80101", borderRadius: 10, padding: "12px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", transition: "all 0.2s" }}>
             Upgrade to RSVP
           </button>
-          <span style={{ fontSize: 12, color: "#7a5050", fontFamily: "'DM Sans', sans-serif" }}>Available for Basic, Premium & Elite members</span>
+          <span style={{ fontSize: 12, color: "#7a5050", fontFamily: "'DM Sans', sans-serif" }}>Available for Basic, Premium & Owner members</span>
         </div>
       );
     }
@@ -542,7 +542,7 @@ function EventCard({ currentUser, eventInvited, onSignUp, setActivePage }) {
           {rsvpd ? "✓ You're registered" : "RSVP Now"}
         </button>
         <span style={{ fontSize: 12, color: "#7a5050", fontFamily: "'DM Sans', sans-serif" }}>
-          {rsvpd ? "A calendar invite will be sent to your email." : "Limited spots · Basic, Premium & Elite members"}
+          {rsvpd ? "A calendar invite will be sent to your email." : "Limited spots · Basic, Premium & Owner members"}
         </span>
       </div>
     );
@@ -1193,7 +1193,7 @@ const plans = [
       "Resource lists & reading guides",
       "Community access — read every channel",
     ],
-    locked: ["Posting in the community", "Timeline templates & L&L recordings", "Deal-specific support — an Elite benefit"],
+    locked: ["Posting in the community", "Timeline templates & L&L recordings", "Deal-specific support — an Owner benefit"],
   },
   {
     name: "Builder",
@@ -1211,7 +1211,7 @@ const plans = [
       "The Lunch & Learn recording library",
       "View-only: every guide, template & the Developer's Playbook",
     ],
-    locked: ["Product downloads (Premium gets 3/mo)", "The Opportunity Board & office hours", "Deal-specific support — an Elite benefit"],
+    locked: ["Product downloads (Premium gets 3/mo)", "The Opportunity Board & office hours", "Deal-specific support — an Owner benefit"],
   },
   {
     name: "Premium",
@@ -1234,7 +1234,7 @@ const plans = [
       "10% off 1:1 sessions with Dr. Merritt",
       "GroundUp-only rates with our partners",
     ],
-    locked: ["The Developer's Playbook download (view-only until Elite)", "Deal-specific support — an Elite benefit"],
+    locked: ["The Developer's Playbook download (view-only until Owner)", "Deal-specific support — an Owner benefit"],
   },
   {
     name: "Owner",
@@ -1245,12 +1245,12 @@ const plans = [
     value: "Over $12,000 in annual value — incl. advisory calls, deal support & direct access to Dr. Merritt",
     accent: "#570404",
     popular: false,
-    cta: "Join Elite",
+    cta: "Become an Owner",
     features: [
       "Everything in Premium",
       "Priority responses in the community",
       "Direct messages to Dr. Merritt & her team — replies within 2 business days, Mon–Fri",
-      "Elite Lounge — private channel",
+      "Owner Lounge — private channel",
       "Deal support — bring YOUR deal to your advisory calls",
       "3 one-on-one advisory calls/yr with Dr. Merritt — unlock after 4 months",
       "30% off 1:1 sessions with Dr. Merritt",
@@ -1280,7 +1280,7 @@ const plans = [
       "Capital stack strategy & lender prep",
       "Negotiation prep before your key meetings",
       "Direct line between sessions",
-      "Everything in Elite included",
+      "Everything in Owner included",
     ],
     locked: [],
   },
@@ -1314,7 +1314,7 @@ function Chip({ text, color }) {
 function PlanCard({ plan, onSelect, seats, compact }) {
   // Scarcity only reads as real when it's close — stay quiet until the last few seats
   const showSeats = seats && !seats.full && seats.remaining <= 5;
-  const cta = seats?.full ? "Join the Elite waitlist" : plan.cta;
+  const cta = seats?.full ? "Join the Owner waitlist" : plan.cta;
   return (
     <div style={{ background: plan.popular ? "#0d0404" : "#080404", border: "1px solid " + (plan.popular ? "#b8010130" : "#150000"), borderRadius: 20, padding: "40px 32px", position: "relative", boxShadow: plan.popular ? "0 0 60px rgba(184,1,1,0.08)" : "none" }}>
       {plan.popular && <div style={{ position: "absolute", top: -1, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, transparent, #b80101, transparent)", borderRadius: "20px 20px 0 0" }} />}
@@ -1385,7 +1385,7 @@ function HonestRule() {
       </div>
       {open && (
         <div style={{ color: "#7a5050", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginTop: 8 }}>
-          {"Member, Builder, and Premium are the industry essentials. \"How do I calculate a rate of return?\" lives there. \"I can't solve the gap on MY deal\" needs Dr. Merritt in the whole deal — so send it to her: she takes in your entire project and finds what you missed. Not ready for Elite? Start at Premium — 10% off 1:1 sessions, and upgrade the moment your deal heats up."}
+          {"Member, Builder, and Premium are the industry essentials. \"How do I calculate a rate of return?\" lives there. \"I can't solve the gap on MY deal\" needs Dr. Merritt in the whole deal — so send it to her: she takes in your entire project and finds what you missed. Not ready for Owner? Start at Premium — 10% off 1:1 sessions, and upgrade the moment your deal heats up."}
         </div>
       )}
     </div>
@@ -1481,12 +1481,12 @@ function PricingPage({ onSignUp }) {
             {[
               ["Exploring development", "Member · Builder", null],
               ["Working on my first deal", "Premium", null],
-              ["Deal in motion — or stuck", "Elite", "router"],
+              ["Deal in motion — or stuck", "Owner", "router"],
             ].map(([want, level, lead]) => (
               <div key={level} style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap", padding: "12px 14px", background: lead ? "#12060a" : "transparent", border: lead ? "1px solid #b8010140" : "1px solid transparent", borderRadius: 10 }}>
                 <span style={{ color: "#f0d8d8", fontSize: 16, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.5, flex: 1, minWidth: 200 }}>{want}</span>
                 {lead ? (<>
-                  <span style={{ color: "#b80101", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 800 }}>→ Elite</span>
+                  <span style={{ color: "#b80101", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 800 }}>→ Owner</span>
                   <button onClick={() => {
                     const token = getMemberToken();
                     if (token) fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ action: "deal_lead", source: lead }) }).catch(() => {});
@@ -1515,7 +1515,7 @@ function PricingPage({ onSignUp }) {
             <PlanCard key={i} plan={plan} compact seats={plan.limited ? elite : null} onSelect={() => {
               if (plan.tier === "Advisor") { window.location.href = "/contact"; return; }
               // Elite is capped — send full-cohort visitors to the waitlist, not to checkout
-              if (plan.limited && elite?.full) { window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("Elite waitlist — notify me when a seat opens"); return; }
+              if (plan.limited && elite?.full) { window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("Owner waitlist — notify me when a seat opens"); return; }
               if (getMember()) { startCheckout("sub_" + plan.tier + (annual && ANNUAL_PRICES[plan.tier] ? "_annual" : ""), { gift: localStorage.getItem("guGift") || undefined, promo: localStorage.getItem("guPromo") || undefined }); return; }
               onSignUp && onSignUp(plan.tier);
             }} />
@@ -1534,7 +1534,7 @@ function PricingPage({ onSignUp }) {
                 <tr>
                   <th style={{ textAlign: "left", padding: "14px 16px", color: "#7a5050", fontSize: 11, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase" }}>Benefit</th>
                   {["Member", "Builder", "Premium", "Elite"].map(t => (
-                    <th key={t} style={{ padding: "14px 12px", color: t === "Elite" ? "#e0c4c4" : "#c8a8a8", fontSize: 12.5, fontWeight: 800, textAlign: "center", whiteSpace: "nowrap" }}>{t}</th>
+                    <th key={t} style={{ padding: "14px 12px", color: t === "Elite" ? "#e0c4c4" : "#c8a8a8", fontSize: 12.5, fontWeight: 800, textAlign: "center", whiteSpace: "nowrap" }}>{t === "Elite" ? "Owner" : t}</th>
                   ))}
                 </tr>
               </thead>
@@ -1552,7 +1552,7 @@ function PricingPage({ onSignUp }) {
                   ["Direct messages to Dr. Merritt & her team", "—", "—", "—", "✓"],
                   ["Advisory calls — 3/yr (unlock after 4 months)", "—", "—", "—", "✓"],
                   ["Deal support — bring YOUR deal", "—", "—", "—", "✓"],
-                  ["Elite Lounge + networking event", "—", "—", "—", "✓"],
+                  ["Owner Lounge + networking event", "—", "—", "—", "✓"],
                 ].map((row, i) => (
                   <tr key={i} style={{ borderTop: "1px solid #1a0000" }}>
                     <td style={{ padding: "11px 16px", color: "#a89090", fontSize: 13, lineHeight: 1.5 }}>{row[0]}</td>
@@ -1565,7 +1565,7 @@ function PricingPage({ onSignUp }) {
             </table>
           </div>
           <div style={{ padding: "0 28px 20px", color: "#7a5050", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
-            Senior Advisor includes everything in Elite — plus Dr. Merritt embedded on your project, month over month.
+            Senior Advisor includes everything in Owner — plus Dr. Merritt embedded on your project, month over month.
           </div>
         </div>
 
@@ -1707,7 +1707,7 @@ function ContactPage({ setActivePage, advisorLink }) {
           <div style={{ background: "#110606", border: "1px solid #2a0000", borderRadius: 12, padding: "16px 22px", margin: "20px 0 8px", display: "flex", alignItems: "center", gap: 12 }}>
             <BadgePercent size={20} color="#7a5050" style={{ flexShrink: 0 }} />
             <div style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>
-              Members save on 1:1 sessions — <strong style={{ color: "#c8a8a8" }}>Premium 10% off, Elite 30% off</strong>. Applied automatically once you're signed in. The BIPOC Developer Session is already at an access rate.
+              Members save on 1:1 sessions — <strong style={{ color: "#c8a8a8" }}>Premium 10% off, Owner 30% off</strong>. Applied automatically once you're signed in. The BIPOC Developer Session is already at an access rate.
             </div>
           </div>
         ))}
@@ -1766,7 +1766,7 @@ function ContactPage({ setActivePage, advisorLink }) {
             </div>
             {selected.advisor ? (
               <div style={{ marginTop: 12, background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 10, padding: "14px 18px", color: "#b8a060", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
-                The Full Project Intake stands on its own: Dr. Merritt takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. Retainer pricing: <strong style={{ color: "#e0c4c4" }}>5 hrs/mo — $3,025 · 10 hrs/mo — $5,500 · 15 hrs/mo — $7,700</strong>, everything in Elite included. If you continue into the retainer, <strong style={{ color: "#e0c4c4" }}>the $1,500 is credited against your first month</strong> — it's never wasted money. The intake buys Dr. Merritt's full review of your project — not a conversation. Refunds are at our discretion, and if the call took place without a real deal on the table, <strong style={{ color: "#e0c4c4" }}>$550 — the rate of a 1:1 session with her — is deducted from any refund</strong>. Prefer to talk first? The engagement call is free.
+                The Full Project Intake stands on its own: Dr. Merritt takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. Retainer pricing: <strong style={{ color: "#e0c4c4" }}>5 hrs/mo — $3,025 · 10 hrs/mo — $5,500 · 15 hrs/mo — $7,700</strong>, everything in Owner included. If you continue into the retainer, <strong style={{ color: "#e0c4c4" }}>the $1,500 is credited against your first month</strong> — it's never wasted money. The intake buys Dr. Merritt's full review of your project — not a conversation. Refunds are at our discretion, and if the call took place without a real deal on the table, <strong style={{ color: "#e0c4c4" }}>$550 — the rate of a 1:1 session with her — is deducted from any refund</strong>. Prefer to talk first? The engagement call is free.
               </div>
             ) : (
               <div style={{ marginTop: 10, fontSize: 12, color: "#5a4040", fontFamily: "'DM Sans', sans-serif" }}>After payment, complete the form below so Dr. Merritt can prepare for your session.</div>
@@ -2058,7 +2058,7 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
           <div style={{ textAlign: "center", color: "#b80101", fontFamily: font, padding: 40 }}>Loading...</div>
         ) : !canSeeRecordings ? (
           <div style={{ ...card, padding: 48, textAlign: "center" }}>
-            <div style={{ color: "#8a7070", fontSize: 14, fontFamily: font, lineHeight: 1.8, maxWidth: 440, margin: "0 auto" }}>Recordings are included with Lunch & Learn access and with Premium and Elite memberships.</div>
+            <div style={{ color: "#8a7070", fontSize: 14, fontFamily: font, lineHeight: 1.8, maxWidth: 440, margin: "0 auto" }}>Recordings are included with Lunch & Learn access and with Premium and Owner memberships.</div>
           </div>
         ) : recordings.length === 0 ? (
           <div style={{ ...card, padding: 48, textAlign: "center" }}>
@@ -2202,19 +2202,19 @@ function ShopPage({ member, onSignIn }) {
                     <a href={p.delivery_url} target="_blank" rel="noreferrer"
                       onClick={e => { if (!hasAgreed() && p.via === "elite") { e.preventDefault(); requireAgreement(() => window.open(p.delivery_url, "_blank")); } }}
                       style={{ display: "block", textAlign: "center", background: "transparent", color: "#22c55e", border: "1px solid #22c55e60", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, textDecoration: "none" }}>
-                      ✓ {p.via === "elite" ? "Included with Elite — download" : "Yours — download"}
+                      ✓ {p.via === "elite" ? "Included with Owner — download" : "Yours — download"}
                     </a>
                   ) : p.access === "metered" ? (
                     <div>
                       <button onClick={() => requireAgreement(() => meteredDownload(p))} disabled={data.dl && data.dl.remaining <= 0} style={{ width: "100%", background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer", opacity: data.dl && data.dl.remaining <= 0 ? 0.5 : 1 }}>
                         {data.dl && data.dl.remaining <= 0 ? "Monthly downloads used" : `Download — ${data.dl ? data.dl.remaining : 3} of 3 left this month`}
                       </button>
-                      <div style={{ color: "#6a5050", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 6 }}>Included with Premium · Elite gets unlimited</div>
+                      <div style={{ color: "#6a5050", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 6 }}>Included with Premium · Owner gets unlimited</div>
                     </div>
                   ) : p.access === "view" ? (
                     <div>
-                      <button onClick={() => requireAgreement(() => setViewing(p))} style={{ width: "100%", background: "transparent", color: "#e0c4c4", border: "1px solid #e0c4c455", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>{p.is_playbook ? "View the Playbook — download is Elite-only" : "View — included with your plan"}</button>
-                      <div style={{ color: "#6a5050", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 6 }}>Elite includes unlimited downloads · or buy it to own it</div>
+                      <button onClick={() => requireAgreement(() => setViewing(p))} style={{ width: "100%", background: "transparent", color: "#e0c4c4", border: "1px solid #e0c4c455", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>{p.is_playbook ? "View the Playbook — download is Owner-only" : "View — included with your plan"}</button>
+                      <div style={{ color: "#6a5050", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 6 }}>Owner includes unlimited downloads · or buy it to own it</div>
                     </div>
                   ) : (
                     <button onClick={() => { setConfirmBuy(p); setAgreed(false); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Buy — {usd(p.price_cents)}</button>
@@ -2231,7 +2231,7 @@ function ShopPage({ member, onSignIn }) {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, maxWidth: 900, width: "100%", margin: "0 auto 12px" }}>
               <div>
                 <div style={{ color: "#f0d8d8", fontFamily: serif, fontWeight: 700, fontSize: 20 }}>{viewing.title}</div>
-                <div style={{ color: "#8a7070", fontSize: 12, fontFamily: font }}>View-only with Premium — Dr. Merritt's IP, please don't copy or share. Elite members and buyers can download.</div>
+                <div style={{ color: "#8a7070", fontSize: 12, fontFamily: font }}>View-only with Premium — Dr. Merritt's IP, please don't copy or share. Owner members and buyers can download.</div>
               </div>
               <button onClick={() => setViewing(null)} style={{ background: "#1a0808", color: "#c8a8a8", border: "1px solid #2a0000", borderRadius: 8, padding: "10px 18px", fontFamily: font, fontWeight: 700, fontSize: 13, cursor: "pointer", flexShrink: 0 }}>Close ×</button>
             </div>
@@ -2357,7 +2357,7 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
         </div>
         <label style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 14, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#444444", cursor: "pointer" }}>
           <input type="checkbox" checked={!!form.is_playbook} onChange={e => setForm({ ...form, is_playbook: e.target.checked })} />
-          This is the Developer's Playbook — view-only for everyone below Elite
+          This is the Developer's Playbook — view-only for everyone below Owner
         </label>
         <button onClick={save} disabled={busy || !form.title || !form.price || !form.delivery_url} style={{ ...btnRed, opacity: busy || !form.title || !form.price || !form.delivery_url ? 0.5 : 1 }}>Add to Shop</button>
         {!form.delivery_url && <span style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 12 }}>Upload the PDF first — that's what buyers receive.</span>}
@@ -2416,8 +2416,8 @@ function TermsPage() {
       <p style={S.p}><strong style={S.strong}>Violation ends your access immediately</strong>, without refund, and NREUV reserves all remedies — including damages and injunctive relief, since unauthorized distribution causes harm money can't fully repair. These obligations survive cancellation of your membership.</p>
 
       <h2 style={S.h2}>3. Memberships & billing</h2>
-      <p style={S.p}>Plans: Member $49.99/mo · Builder $149.99/mo · Premium $249.99/mo · Elite $499.99/mo (limited seats), plus one-time course passes, Lunch &amp; Learn access, digital products, 1:1 sessions, and advisory retainers. Subscriptions <strong style={S.strong}>renew automatically each month</strong> on your billing date and are charged to your card by Stripe until you cancel. You can <strong style={S.strong}>cancel anytime, self-service</strong>, from Membership &amp; Billing on your member page — access continues through the period you've paid for. Prices may change with advance notice; changes apply from your next billing cycle.</p>
-      <p style={S.p}>Some benefits unlock with tenure: advisory calls and networking events open after 4 months of continuous membership. Premium includes 3 product downloads per billing month (unused downloads don't roll over); the Developer's Playbook is view-only below Elite. Elite seats are limited and offered while available.</p>
+      <p style={S.p}>Plans: Member $49.99/mo · Builder $149.99/mo · Premium $249.99/mo · Owner $499.99/mo (limited seats), plus one-time course passes, Lunch &amp; Learn access, digital products, 1:1 sessions, and advisory retainers. Subscriptions <strong style={S.strong}>renew automatically each month</strong> on your billing date and are charged to your card by Stripe until you cancel. You can <strong style={S.strong}>cancel anytime, self-service</strong>, from Membership &amp; Billing on your member page — access continues through the period you've paid for. Prices may change with advance notice; changes apply from your next billing cycle.</p>
+      <p style={S.p}>Some benefits unlock with tenure: advisory calls and networking events open after 4 months of continuous membership. Premium includes 3 product downloads per billing month (unused downloads don't roll over); the Developer's Playbook is view-only below Owner. Owner seats are limited and offered while available.</p>
 
       <h2 style={S.h2}>4. Refunds</h2>
       <p style={S.p}><strong style={S.strong}>All sales are final once content has been viewed or downloaded.</strong> For subscriptions: if you cancel <strong style={S.strong}>before the 5th day of the month</strong>, your payment for that month is refunded; cancellations on or after the 5th are not refunded for the current month, and your access continues through the period you paid for. For <strong style={S.strong}>annual subscriptions</strong> (billed once for the year): cancel within the first 6 months — a 10-day grace period past the 6-month mark is honored — and half of your annual payment (6 months) is refunded; more than 10 days into the second half, the refund is forfeited and your access continues through the end of the paid year. Where a statutory cooling-off or refund right applies in your jurisdiction, that right is honored to the extent required by law.</p>
@@ -2427,7 +2427,7 @@ function TermsPage() {
       <p style={S.p}>Be professional. No harassment, hate, spam, solicitation of members for competing offerings, or posting content you don't have rights to. Deal information other members share in the community or group sessions is <strong style={S.strong}>confidential to this community</strong> — don't use or disclose it outside GroundUp. We may remove content or suspend accounts that break these rules.</p>
 
       <h2 style={S.h2}>6. Sessions, office hours & DMs</h2>
-      <p style={S.p}>Live sessions and recordings are provided for education. Direct messages (Elite) are for quick questions, answered within 2 business days, Monday–Friday; substantive review belongs in booked sessions. Member, Builder, and Premium cover the industry essentials — general education, community, and tools; <strong style={S.strong}>deal-specific analysis and support</strong> (your project's numbers, structure, or strategy) is an Elite benefit delivered through advisory calls, and is otherwise available through paid 1:1 sessions and Senior Advisor retainers, where Dr. Merritt can be engaged on the whole deal. The team may redirect deal-specific requests accordingly. Nothing on GroundUp — including 1:1 sessions and advisory calls — is legal, tax, investment, accounting, or brokerage advice, and no guarantee is made that any deal, financing, or approach will succeed. Engage your own licensed professionals.</p>
+      <p style={S.p}>Live sessions and recordings are provided for education. Direct messages (Owner) are for quick questions, answered within 2 business days, Monday–Friday; substantive review belongs in booked sessions. Member, Builder, and Premium cover the industry essentials — general education, community, and tools; <strong style={S.strong}>deal-specific analysis and support</strong> (your project's numbers, structure, or strategy) is an Owner benefit delivered through advisory calls, and is otherwise available through paid 1:1 sessions and Senior Advisor retainers, where Dr. Merritt can be engaged on the whole deal. The team may redirect deal-specific requests accordingly. Nothing on GroundUp — including 1:1 sessions and advisory calls — is legal, tax, investment, accounting, or brokerage advice, and no guarantee is made that any deal, financing, or approach will succeed. Engage your own licensed professionals.</p>
 
       <h2 style={S.h2}>7. Your account & data</h2>
       <p style={S.p}>Keep your credentials secure; you're responsible for activity on your account. If you cancel, your account data (posts, messages, progress) is permanently deleted 15 days after your membership ends, as described in the Privacy Policy — rejoin before then and nothing is lost. Financial records are retained as required by law.</p>
@@ -2571,7 +2571,7 @@ function OfficeHoursPage({ member, onSignIn, setActivePage }) {
           <div style={{ textAlign: "center", color: "#8a7070", fontFamily: font, padding: 40 }}>Loading…</div>
         ) : !oh.eligible ? (
           <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: 48, textAlign: "center" }}>
-            <div style={{ color: "#c8a8a8", fontSize: 15, fontFamily: font, lineHeight: 1.8, maxWidth: 460, margin: "0 auto 20px" }}>Office hours are a <strong style={{ color: "#f0d8d8" }}>Premium and Elite benefit</strong> — live group time with Dr. Merritt, a few times a year.</div>
+            <div style={{ color: "#c8a8a8", fontSize: 15, fontFamily: font, lineHeight: 1.8, maxWidth: 460, margin: "0 auto 20px" }}>Office hours are a <strong style={{ color: "#f0d8d8" }}>Premium and Owner benefit</strong> — live group time with Dr. Merritt, a few times a year.</div>
             <button onClick={() => setActivePage("pricing")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "13px 28px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>See Plans →</button>
           </div>
         ) : (
@@ -2641,7 +2641,7 @@ function OfficeHoursAdmin({ btnRed, btnGhost, inp, lbl }) {
       {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
       <div style={section}>
         <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>Drop office hours</div>
-        <p style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 14 }}>Add each session in the batch (e.g. the next six months at once). Premium members can book 2 a year, Elite 6 — enforced automatically, RSVP lists below tell you who's coming.</p>
+        <p style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 14 }}>Add each session in the batch (e.g. the next six months at once). Premium members can book 2 a year, Owner 6 — enforced automatically, RSVP lists below tell you who's coming.</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", columnGap: 20, rowGap: 16, marginBottom: 14 }}>
           <div><label style={lbl}>Title</label><input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Office Hours — Q1" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
           <div><label style={lbl}>Date &amp; time (your local time)</label><input type="datetime-local" value={toLocalInput(form.date)} onChange={e => setForm({ ...form, date: e.target.value ? new Date(e.target.value).toISOString() : "" })} style={{ ...inp, maxWidth: "none", marginBottom: 0, colorScheme: "light" }} /></div>
@@ -2727,7 +2727,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
         <div className="gu-drift" style={{ position: "absolute", top: "0%", left: "20%", width: 700, height: 700, borderRadius: "50%", background: "radial-gradient(circle, #57040428 0%, transparent 65%)", pointerEvents: "none" }} />
         <div className="gu-up" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#0a050599", border: "1px solid #7a615140", borderRadius: 99, padding: "8px 20px", marginBottom: 36, position: "relative", zIndex: 1 }}>
           <span className="gu-pulse" style={{ width: 6, height: 6, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
-          <span style={{ color: "#7a6151", fontSize: 11, fontFamily: font, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>Elite Insider Waitlist</span>
+          <span style={{ color: "#7a6151", fontSize: 11, fontFamily: font, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>Insider Waitlist</span>
         </div>
         <div className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, marginBottom: 24 }}><GULogo size={72} /></div>
         <h1 className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, fontFamily: serif, fontWeight: 700, fontSize: "clamp(44px,8vw,84px)", color: "#f5e8e8", lineHeight: 1.05, letterSpacing: "-1px", marginBottom: 10 }}>Get access first.</h1>
@@ -2839,7 +2839,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
             { name: "Member", price: "$49.99", period: "/mo", desc: "Every course — plus each new one we add — free live Lunch & Learns, and a seat in the community." },
             { name: "Builder", price: "$149.99", period: "/mo", desc: "A voice in the community — post and network — plus the Lunch & Learn recording library." },
             { name: "Premium", price: "$249.99", period: "/mo", desc: "Deal tools — downloads, the Opportunity Board, and office hours with Dr. Merritt.", popular: true },
-            { name: "Elite", price: "$499.99", period: "/mo", desc: "Direct access — advisory calls, DMs, and deal support on YOUR project. 15 seats." },
+            { name: "Owner", price: "$499.99", period: "/mo", desc: "Direct access — advisory calls, DMs, and deal support on YOUR project. 15 seats." },
           ];
           return (<>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14, maxWidth: 620, margin: "0 auto 14px" }}>{passes.map(CARD)}</div>
@@ -2860,12 +2860,12 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
               <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#12060a", border: "1px solid #b8010150", borderRadius: 10, padding: "10px 20px", marginBottom: 14 }}>
                 <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
                 <span style={{ color: "#e0c4c4", fontSize: 13, fontFamily: font, fontWeight: 800, letterSpacing: "0.5px" }}>
-                  Only {eliteSpots.left} of {eliteSpots.cap} Elite spots still open
+                  Only {eliteSpots.left} of {eliteSpots.cap} Owner spots still open
                 </span>
               </div>
             )}
             {eliteSpots && eliteSpots.left === 0 && (
-              <div style={{ color: "#8a7070", fontSize: 13, fontFamily: font, fontWeight: 700, marginBottom: 14 }}>All {eliteSpots.cap} Elite spots are spoken for — join the list for the next opening.</div>
+              <div style={{ color: "#8a7070", fontSize: 13, fontFamily: font, fontWeight: 700, marginBottom: 14 }}>All {eliteSpots.cap} Owner spots are spoken for — join the list for the next opening.</div>
             )}
             <p style={{ color: "#c8b0b0", fontSize: 15, fontFamily: font, lineHeight: 1.8, maxWidth: 520, margin: "0 auto" }}>The doors open soon — and you're early. Tell us where you're headed and we'll meet you there.</p>
           </div>
@@ -4163,7 +4163,7 @@ function RevenueTab() {
           return (
             <div key={t} style={{ marginBottom: 18 }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 7 }}>
-                <span style={{ fontSize: 13, color: "#333333", fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{t} <span style={{ color: "#9a9a9a", fontWeight: 400 }}>· {tierCounts[t]} user{tierCounts[t] !== 1 ? "s" : ""}</span></span>
+                <span style={{ fontSize: 13, color: "#333333", fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{t === "Elite" ? "Owner" : t === "Basic" ? "Member" : t} <span style={{ color: "#9a9a9a", fontWeight: 400 }}>· {tierCounts[t]} user{tierCounts[t] !== 1 ? "s" : ""}</span></span>
                 <span style={{ fontSize: 13, color: "#222222", fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>${rev.toFixed(2)}/mo</span>
               </div>
               <div style={{ height: 8, background: "#dcdcdc", borderRadius: 99, overflow: "hidden" }}>
@@ -4294,7 +4294,7 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
   });
 
   const tierCounts = TIERS.reduce((acc, t) => ({ ...acc, [t]: users.filter(u => u.tier === t && u.role !== "admin").length }), {});
-  const TIER_DISPLAY = { Free: "Free", Basic: "Member", Builder: "Builder", Premium: "Premium", Elite: "Elite" };
+  const TIER_DISPLAY = { Free: "Free", Basic: "Member", Builder: "Builder", Premium: "Premium", Elite: "Owner" };
 
   if (loading) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
 
@@ -4704,20 +4704,20 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
   // Mirrors recommendPlan() in api/waitlist.js — budget decides:
   // $500+ → Elite · $150–$500 → Premium · below $150 → Member
   const recFor = (e) => {
-    if (e.rec_override) return { Basic: "Member — $49.99/mo", Builder: "Builder — $149.99/mo", Premium: "Premium — $249.99/mo", Elite: "Elite — $499.99/mo", Advisor: "Senior Advisor — from $3,025/mo" }[e.rec_override] || "Member — $49.99/mo";
+    if (e.rec_override) return { Basic: "Member — $49.99/mo", Builder: "Builder — $149.99/mo", Premium: "Premium — $249.99/mo", Elite: "Owner — $499.99/mo", Advisor: "Senior Advisor — from $3,025/mo" }[e.rec_override] || "Member — $49.99/mo";
     if (e.budget === "$2,000+" || e.budget === "$3,000+") return "Senior Advisor — from $3,025/mo";
     const passPick = { "I want Single Course Pass": "Single Course Pass — $100 once", "I want All-Access Pass": "All-Access Pass — $275 once", "I want Lifetime Pass": "Lifetime Pass — $5,000 once" }[e.budget];
     if (passPick) return passPick;
     const wanted = /^I want (Member|Builder|Premium|Elite|Senior Advisor)$/.exec(e.budget || "");
-    if (wanted) return { Member: "Member — $49.99/mo", Builder: "Builder — $149.99/mo", Premium: "Premium — $249.99/mo", Elite: "Elite — $499.99/mo", "Senior Advisor": "Senior Advisor — from $3,025/mo" }[wanted[1]];
-    if (e.learn === "I need deal-specific support on a live project") return "Elite — $499.99/mo";
+    if (wanted) return { Member: "Member — $49.99/mo", Builder: "Builder — $149.99/mo", Premium: "Premium — $249.99/mo", Elite: "Owner — $499.99/mo", "Senior Advisor": "Senior Advisor — from $3,025/mo" }[wanted[1]];
+    if (e.learn === "I need deal-specific support on a live project") return "Owner — $499.99/mo";
     const LN = { "Financing & capital stacks": 2, "Getting my first deal done": 2, "Public-private partnerships": 3, "Scaling my business & pipeline": 3, "Scaling my existing pipeline": 3, "All of the above": 2 };
     const PN = { "I don't understand the numbers": 2, "I can't find the capital": 2, "I need partners or a team": 2, "No network in the industry": 2, "Navigating government & compliance": 3, "I have a deal but I'm stuck": 3 };
     const need = Math.max(LN[e.learn] || 1, PN[e.reason] || 1);
-    if (e.budget === "I need specific, customized deal help") return "Elite — $499.99/mo";
+    if (e.budget === "I need specific, customized deal help") return "Owner — $499.99/mo";
     if (e.budget === "I need general deal support & guidance") return "Premium — $249.99/mo";
-    if (e.budget === "$500+") return "Elite — $499.99/mo";
-    if (["$150–$500", "$300+"].includes(e.budget)) return need >= 3 ? "Elite — $499.99/mo" : "Premium — $249.99/mo";
+    if (e.budget === "$500+") return "Owner — $499.99/mo";
+    if (["$150–$500", "$300+"].includes(e.budget)) return need >= 3 ? "Owner — $499.99/mo" : "Premium — $249.99/mo";
     if (["$50–$150", "$100–$200"].includes(e.budget) && need >= 2) return "Builder — $149.99/mo";
     return "Member — $49.99/mo";
   };
@@ -4730,7 +4730,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
       if (r.startsWith("Builder")) return e.founding_lnl ? "$99.99/mo" : "$149.99/mo";
       if (r.startsWith("Premium")) return e.founding_lnl ? "$149.99/mo" : "$249.99/mo";
       if (r.startsWith("Member")) return "$49.99/mo";
-      if (r.startsWith("Elite")) return "$499.99/mo";
+      if (r.startsWith("Owner")) return "$499.99/mo";
       if (r.startsWith("Senior")) return "$3,025/mo";
       if (r.startsWith("Single Course Pass")) return "$100 once";
       if (r.startsWith("All-Access Pass")) return "$275 once";
@@ -4833,7 +4833,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
       {/* Two launch timelines */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16, marginBottom: 20 }}>
         {[
-          { which: "insider", label: "Elite Insider Launch", sub: "Insiders get alerted and get in first", at: insiderAt, set: setInsiderAt },
+          { which: "insider", label: "Insider Launch", sub: "Insiders get alerted and get in first", at: insiderAt, set: setInsiderAt },
           { which: "general", label: "General Launch", sub: "Doors open to everyone — ends pre-launch mode", at: launchAt, set: setLaunchAt },
         ].map(t => {
           const tms = t.at ? new Date(t.at).getTime() - now : null;
@@ -4870,7 +4870,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
         {entries.length > 0 && (
           <button onClick={() => exportCsv(entries)} style={{ ...btnGhost, fontSize: 12, padding: "7px 16px", marginLeft: "auto", order: 2 }}>Download CSV ({entries.length})</button>
         )}
-        {[["all", "All"], ["insider", "Elite Insider"], ["general", "General"]].map(([id, label]) => (
+        {[["all", "All"], ["insider", "Insider"], ["general", "General"]].map(([id, label]) => (
           <button key={id} onClick={() => setListFilter(id)} style={{ background: listFilter === id ? "#b80101" : "transparent", color: listFilter === id ? "#fff" : "#666666", border: listFilter === id ? "1px solid #b80101" : "1px solid #dcdcdc", borderRadius: 99, padding: "7px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
             {label} · {data.entries.filter(e => id === "all" || (e.list || "insider") === id).length}
           </button>
@@ -4890,14 +4890,14 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
           if (r.startsWith("Builder")) return e.founding_lnl ? 99.99 : 149.99;
           if (r.startsWith("Premium")) return e.founding_lnl ? 149.99 : 249.99;
           if (r.includes("Pass")) return 0; // one-time money, not MRR
-          return r.startsWith("Member") ? 49.99 : r.startsWith("Elite") ? 499.99 : r.startsWith("Senior") ? 3025 : (PLAN_FIT[e.budget] || 0);
+          return r.startsWith("Member") ? 49.99 : r.startsWith("Owner") ? 499.99 : r.startsWith("Senior") ? 3025 : (PLAN_FIT[e.budget] || 0);
         };
         const STRETCH = { "I need specific, customized deal help": 499.99, "I need general deal support & guidance": 499.99, "$50": 149.99, "Under $25": 49.99, "$25–$100": 149.99, "$100–$200": 249.99, "$300+": 499.99, "$2,000+": 3025, "$3,000+": 3025, "Under $50": 49.99, "$50–$150": 149.99, "$150–$500": 499.99, "$500+": 499.99 };
         const allEntries = data.entries;
         const mrrFit = allEntries.reduce((s, e) => s + fitFor(e), 0);
         // Premium is the ideal recommendation; Elite (and Advisor) are the exceptional wins
         const premiumRec = allEntries.filter(e => recFor(e).startsWith("Premium")).length;
-        const eliteRec = allEntries.filter(e => recFor(e).startsWith("Elite")).length;
+        const eliteRec = allEntries.filter(e => recFor(e).startsWith("Owner")).length;
         const advisorRec = allEntries.filter(e => recFor(e).startsWith("Senior")).length;
         const money = (n) => "$" + n.toLocaleString(undefined, { minimumFractionDigits: 2 });
         return (
@@ -4919,7 +4919,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
                 </div>
               );
             })()}
-            {statCard("Retainer leads", advisorRec, `${eliteRec} Elite · ${premiumRec} Premium recommended`)}
+            {statCard("Retainer leads", advisorRec, `${eliteRec} Owner · ${premiumRec} Premium recommended`)}
           </div>
         );
       })()}
@@ -5044,7 +5044,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
                       <option value="Basic">Member — $49.99/mo</option>
                       <option value="Builder">Builder — $149.99/mo</option>
                       <option value="Premium">Premium — $249.99/mo</option>
-                      <option value="Elite">Elite — $499.99/mo</option>
+                      <option value="Elite">Owner — $499.99/mo</option>
                       <option value="Advisor">Senior Advisor — retainer</option>
                     </select>
                     <button onClick={async () => {
@@ -5118,7 +5118,7 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
   return (
     <div style={{ maxWidth: 760 }}>
       <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#161616", marginBottom: 8 }}>Resources & Templates</h2>
-      <p style={{ color: "#666666", fontSize: 13, marginBottom: 28 }}>Everything on the member Resources page is edited here — links, templates, and the Elite partner network with referral codes.</p>
+      <p style={{ color: "#666666", fontSize: 13, marginBottom: 28 }}>Everything on the member Resources page is edited here — links, templates, and the Owner partner network with referral codes.</p>
       {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
 
       <div style={{ background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 14, padding: "28px 32px", marginBottom: 28 }}>
@@ -5151,7 +5151,7 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
           <div>
             <label style={lbl}>Unlocks at</label>
             <select value={form.min_tier} onChange={e => setForm({ ...form, min_tier: e.target.value })} style={{ ...inp, maxWidth: "none", marginBottom: 0, cursor: "pointer" }}>
-              <option value="Premium">Premium</option><option value="Elite">Elite</option>
+              <option value="Premium">Premium</option><option value="Elite">Owner</option>
             </select>
           </div>
         </div>
@@ -5179,7 +5179,7 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
           </div>
           <span style={{ color: "#666666", fontSize: 10, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{CAT_LABEL[r.category]}</span>
           <select value={r.min_tier} onChange={e => patch(r.id, { min_tier: e.target.value })} style={{ background: "#ececec", color: "#b80101", border: "1px solid #2a1010", borderRadius: 6, padding: "5px 8px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 11, cursor: "pointer", outline: "none" }}>
-            <option value="Premium">Premium</option><option value="Elite">Elite</option>
+            <option value="Premium">Premium</option><option value="Elite">Owner</option>
           </select>
           <button onClick={() => startEdit(r)} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Edit</button>
           <button onClick={() => remove(r.id)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Delete</button>
@@ -5414,7 +5414,7 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
     { id: "Basic", label: "Members" },
     { id: "Builder", label: "Builders" },
     { id: "Premium", label: "Premium" },
-    { id: "Elite", label: "Elite" },
+    { id: "Elite", label: "Owner" },
     { id: "paid", label: "All paid members" },
     { id: "lnl", label: "Lunch & Learn attendees" },
     { id: "leads", label: "Deal leads — asked deal-specific questions" },
@@ -5534,10 +5534,10 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
       {/* Deal-support nudge */}
       <div style={section}>
         <div style={heading}>Deal-Support Nudge</div>
-        <p style={sub}>A ready-made email with the three doors to deal support: upgrade to Elite, book a free discovery call for the Senior Advisor retainer, or buy the $1,500 Full Project Intake. Goes to the audience selected above — "Deal leads" targets everyone who's asked a deal-specific question.</p>
+        <p style={sub}>A ready-made email with the three doors to deal support: upgrade to Owner, book a free discovery call for the Senior Advisor retainer, or buy the $1,500 Full Project Intake. Goes to the audience selected above — "Deal leads" targets everyone who's asked a deal-specific question.</p>
         <div style={{ background: "#faf5f5", border: "1px solid #e0d0d0", borderRadius: 10, padding: "14px 18px", marginBottom: 16, fontSize: 12.5, color: "#555555", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
           <strong>Subject:</strong> When you're ready for help on YOUR deal<br/>
-          <strong>Body:</strong> Hi &lt;first name&gt; — got a deal that needs more than a course? … 1 · Upgrade to Elite ($499.99/mo) · 2 · Free discovery call for the retainer · 3 · The $1,500 Full Project Intake, credited if you continue.
+          <strong>Body:</strong> Hi &lt;first name&gt; — got a deal that needs more than a course? … 1 · Upgrade to Owner ($499.99/mo) · 2 · Free discovery call for the retainer · 3 · The $1,500 Full Project Intake, credited if you continue.
         </div>
         <button disabled={busy} onClick={() => send({ kind: "deal_support", audience }, `Send the deal-support nudge to ${count ?? "?"} recipient(s)?`)} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>Send Deal-Support Nudge</button>
       </div>
@@ -5704,7 +5704,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
                 {["Free", "Basic", "Premium", "Elite"].map(t => (
                   <div key={t} onClick={() => setForm({ ...form, tier: t })} style={{ background: form.tier === t ? planColors[t] + "18" : "#0a0404", border: "1px solid " + (form.tier === t ? planColors[t] + "60" : "#1a0000"), borderRadius: 10, padding: "12px 14px", cursor: "pointer", transition: "all 0.15s" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
-                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, color: form.tier === t ? planColors[t] : "#6a5050" }}>{t}</span>
+                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, color: form.tier === t ? planColors[t] : "#6a5050" }}>{t === "Elite" ? "Owner" : t === "Basic" ? "Member" : t}</span>
                       {form.tier === t && <span style={{ color: planColors[t], fontSize: 12 }}>✓</span>}
                     </div>
                     <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 17, color: form.tier === t ? "#f0d8d8" : "#4a3030" }}>{planPrices[t]}</div>
@@ -5750,7 +5750,7 @@ export default function App() {
     const SEO = {
       home: ["GroundUp by Dr. Gina Merritt — Affordable Housing Development Courses & Community", "Learn affordable housing development from Dr. Gina Merritt — 30+ years and $600M+ of real deals. Courses, community, and direct access for underrepresented developers."],
       courses: ["The Curriculum — GroundUp", "Seven courses across the full development lifecycle: predevelopment, teams & JVs, financing & LIHTC, zoning, design & construction, and after opening day — taught from deals that closed."],
-      pricing: ["Plans & Pricing — GroundUp", "Member $49.99, Builder $149.99, Premium $249.99, Elite $499.99 — plus one-time course passes and Lunch & Learn access. Every plan includes the full course library."],
+      pricing: ["Plans & Pricing — GroundUp", "Member $49.99, Builder $149.99, Premium $249.99, Owner $499.99 — plus one-time course passes and Lunch & Learn access. Every plan includes the full course library."],
       about: ["About Dr. Gina Merritt — GroundUp", "From public housing in the Bronx to $600M+ in real estate development. The story behind GroundUp and Northern Real Estate Urban Ventures."],
       lunchlearn: ["Lunch & Learns — GroundUp", "Live monthly sessions with Dr. Gina Merritt — real deals, real numbers, live Q&A, plus a recording library."],
       contact: ["Book a 1:1 Session — GroundUp", "Work directly with Dr. Gina Merritt: deal review, strategy, capital stack review, community development, and BIPOC developer sessions."],
@@ -5948,7 +5948,7 @@ export default function App() {
       return (
         <div style={{ background: "#000", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, textAlign: "center" }}>
           <div>
-            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Elite Insider Waitlist</div>
+            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Insider Waitlist</div>
             <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "#f5e8e8", marginBottom: 14 }}>The insider list is closed.</h1>
             <p style={{ color: "#8a7070", fontSize: 15, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8, maxWidth: 440, margin: "0 auto 28px" }}>The doors are open for insiders. If you're on the list, check your email for your personal invitation — or sign in to get started.</p>
             <button onClick={() => { window.history.replaceState({}, "", "/"); window.location.reload(); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "14px 30px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Go to GroundUp →</button>

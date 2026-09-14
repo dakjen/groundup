@@ -45,7 +45,7 @@ const btnGhost = { background: "transparent", color: "#8a7070", border: "1px sol
 
 const TIER_COLORS = { Free: "#6a6b69", Basic: "#b80101", Builder: "#c85050", Premium: "#e06767", Elite: "#e0c4c4", Partner: "#e0c4c4" };
 // Display names — 'Basic' is the internal value for the Member subscription tier
-export const TIER_LABELS = { Free: "Free", Basic: "Member", Builder: "Builder", Premium: "Premium", Elite: "Elite", Partner: "Partner" };
+export const TIER_LABELS = { Free: "Free", Basic: "Member", Builder: "Builder", Premium: "Premium", Elite: "Owner", Partner: "Partner" };
 
 // Account badges — earned perks that follow a member everywhere: the admin
 // sheets, their profile, and next to their name in the community. Add new
@@ -200,7 +200,7 @@ const BENEFITS = {
   Basic: ["Every course — all seven, plus each new one we add", "All written lessons, case studies & worksheets", "Free invites to every live Lunch & Learn", "Resource lists & reading guides", "Community access — read every channel"],
   Builder: ["Everything in Member", "Post, reply & network in the community", "The Lunch & Learn recording library", "View-only: every guide, template & the Developer's Playbook"],
   Premium: ["Everything in Builder", "Download 3 guides or templates every month", "The Opportunity Board — RFPs, funding windows & deals", "JV & Partnerships channel", "Development timeline templates", "Group office hours with Dr. Merritt + priority booking", "10% off 1:1 sessions with Dr. Merritt"],
-  Elite: ["Everything in Premium", "Deal support — bring YOUR deal to your advisory calls", "3 one-on-one advisory calls/yr with Dr. Merritt", "Direct messages to Dr. Merritt & her team — replies within 2 business days", "Elite Lounge — private channel", "Unlimited downloads — including the Developer's Playbook", "30% off 1:1 sessions with Dr. Merritt", "Invite to the exclusive networking event"],
+  Elite: ["Everything in Premium", "Deal support — bring YOUR deal to your advisory calls", "3 one-on-one advisory calls/yr with Dr. Merritt", "Direct messages to Dr. Merritt & her team — replies within 2 business days", "Owner Lounge — private channel", "Unlimited downloads — including the Developer's Playbook", "30% off 1:1 sessions with Dr. Merritt", "Invite to the exclusive networking event"],
   Partner: ["Custom organizational access", "Contact info@nreuv.com for your cohort setup"],
 };
 
@@ -328,7 +328,7 @@ function SessionCreditsCard({ member }) {
         <div>
           <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>Your 1-on-1 Sessions</div>
           <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font }}>{sessions.remaining} of {sessions.total} remaining</div>
-          <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, marginTop: 4 }}>{member.tier === "Elite" ? "Advisory calls with Dr. Merritt, included in Elite." : "Your free work session, included in Premium."}</div>
+          <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, marginTop: 4 }}>{member.tier === "Elite" ? "Advisory calls with Dr. Merritt, included in Owner." : "Your free work session, included in Premium."}</div>
         </div>
         {sessions.remaining > 0 && !open && <button style={btnRed} onClick={() => setOpen(true)}>Request a Session</button>}
       </div>
@@ -539,7 +539,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
           <div onClick={() => setActivePage("contact")} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: "pointer", opacity: rank >= 3 ? 1 : 0.55 }}>
             <div style={{ marginBottom: 12 }}><Handshake size={24} color="#b80101" /></div>
             <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Advisory Access {rank < 3 && <Lock size={13} style={{ display: "inline", verticalAlign: "middle" }} />}</div>
-            <p style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 3 ? "Your Elite advisory calls and priority Q&A with Dr. Merritt." : "One-on-one time with Dr. Merritt is an Elite benefit. Book single sessions anytime."}</p>
+            <p style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 3 ? "Your Owner advisory calls and priority Q&A with Dr. Merritt." : "One-on-one time with Dr. Merritt is an Owner benefit. Book single sessions anytime."}</p>
           </div>
         </div>
 
@@ -758,7 +758,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
   const rank = member && !member.suspended ? (TIER_RANK[member.tier] ?? 0) : 0;
   const hasAccess = isAdmin || rank >= 1;
   const canEngage = isAdmin || rank >= 2;               // Basic (Member) is read-only
-  const canDm = isAdmin || rank >= 3;                   // DMs are an Elite benefit
+  const canDm = isAdmin || rank >= 3;                   // DMs are an Owner benefit
 
   const loadChannels = useCallback(async () => {
     const data = await api("/api/community?resource=channels");
@@ -918,7 +918,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
                 <select style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 8, fontSize: 13, padding: "9px 11px", cursor: "pointer" }} value={newChan.min_tier} onChange={e => setNewChan({ ...newChan, min_tier: e.target.value })}>
                   <option value="Basic">All members</option>
                   <option value="Premium">Premium+</option>
-                  <option value="Elite">Elite only</option>
+                  <option value="Elite">Owner only</option>
                   <option value="team">Team only (private)</option>
                 </select>
                 <label style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10, cursor: "pointer" }}>
@@ -1198,7 +1198,7 @@ export function WaitlistForm({ list = "insider" }) {
           </div>
         ) : (
           <>
-            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>{insider ? "Elite Insider Waitlist" : "GroundUp Waitlist"}</div>
+            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>{insider ? "Insider Waitlist" : "GroundUp Waitlist"}</div>
             <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>{insider ? "Become an insider" : "Get on the list"}</h2>
             <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginBottom: insider ? 14 : 22 }}>{insider ? "Tell us where you are and what's in your way — at launch, you'll get first access and our personal recommendation for the plan that fits." : "Tell us where you are and what's in your way — the moment doors open, you'll get your invite and our personal recommendation for the plan that fits."}</p>
             {insider && (
@@ -1227,7 +1227,7 @@ export function WaitlistForm({ list = "insider" }) {
                   {WL_LEARN.map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
                 {learn === "Other" && <input style={{ ...inp, marginTop: 8 }} value={learnOther} onChange={e => setLearnOther(e.target.value)} placeholder="Tell us in your own words" required />}
-                {learn === "I need deal-specific support on a live project" && <div style={{ marginTop: 8, background: "#12060a", border: "1px solid #b8010140", borderRadius: 8, padding: "10px 12px", color: "#c8a8a8", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>Good to know: deal-specific support — your numbers, your gap, your structure — comes only with the <strong style={{ color: "#f0d8d8" }}>Elite plan</strong> or the Senior Advisor retainer. We'll point you there.</div>}
+                {learn === "I need deal-specific support on a live project" && <div style={{ marginTop: 8, background: "#12060a", border: "1px solid #b8010140", borderRadius: 8, padding: "10px 12px", color: "#c8a8a8", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>Good to know: deal-specific support — your numbers, your gap, your structure — comes only with the <strong style={{ color: "#f0d8d8" }}>Owner plan</strong> or the Senior Advisor retainer. We'll point you there.</div>}
               </div>
               <div style={{ marginBottom: 14 }}>
                 <label style={lbl}>What's your main pain point?</label>
@@ -1238,7 +1238,7 @@ export function WaitlistForm({ list = "insider" }) {
                 {pain === "Other" && <input style={{ ...inp, marginTop: 8 }} value={painOther} onChange={e => setPainOther(e.target.value)} placeholder="Tell us in your own words" required />}
                 {pain === "I need partners or a team" && (
                   <div style={{ marginTop: 8, background: "#1c0404", border: "1.5px solid #b80101", borderRadius: 8, padding: "10px 12px", color: "#e8c8c8", fontSize: 12, fontFamily: font, lineHeight: 1.7 }}>
-                    Looking to team with Dr. Gina Merritt herself? The <strong style={{ color: "#f0d8d8" }}>✦ Thought partnership</strong> below is the better fit — she can join your project as a strategic partner (approved per submission). Want structured guidance without the partnership title? Choose <strong style={{ color: "#f0d8d8" }}>Elite</strong>.
+                    Looking to team with Dr. Gina Merritt herself? The <strong style={{ color: "#f0d8d8" }}>✦ Thought partnership</strong> below is the better fit — she can join your project as a strategic partner (approved per submission). Want structured guidance without the partnership title? Choose <strong style={{ color: "#f0d8d8" }}>Owner</strong>.
                   </div>
                 )}
               </div>
@@ -1270,7 +1270,7 @@ export function WaitlistForm({ list = "insider" }) {
                           <option value="Member">Member — $49.99/mo</option>
                           <option value="Builder">Builder — $149.99/mo</option>
                           <option value="Premium">Premium — $249.99/mo</option>
-                          <option value="Elite">Elite — $499.99/mo</option>
+                          <option value="Elite">Owner — $499.99/mo</option>
                           <option value="Single Course Pass">Single Course Pass — $100 one-time</option>
                           <option value="All-Access Pass">All-Access Pass — $275 one-time</option>
                           <option value="Lifetime Pass">GroundUp Lifetime Pass — $5,000 one-time</option>
@@ -1280,7 +1280,7 @@ export function WaitlistForm({ list = "insider" }) {
                         <span>General deal support — the tools, templates, Opportunity Board, and office hours with Dr. Merritt — lives in the <strong style={{ color: "#f0d8d8" }}>Premium plan</strong> ($249.99/mo). That's what we'll recommend.</span>
                       );
                       else if (b === "I need specific, customized deal help") bubbleBody = (
-                        <span>Deal-specific support — your numbers, your gap, your structure — comes with the <strong style={{ color: "#f0d8d8" }}>Elite plan</strong> ($499.99/mo) or the Senior Advisor retainer. We'll recommend Elite and point you at the fastest way to get Dr. Merritt on your deal.</span>
+                        <span>Deal-specific support — your numbers, your gap, your structure — comes with the <strong style={{ color: "#f0d8d8" }}>Owner plan</strong> ($499.99/mo) or the Senior Advisor retainer. We'll recommend Owner and point you at the fastest way to get Dr. Merritt on your deal.</span>
                       );
                       else bubbleBody = (
                         <span><strong style={{ color: "#f0d8d8" }}>This isn't a subscription — it's a retainer.</strong> Dr. Gina Merritt directly on YOUR project — deal review, capital strategy, negotiation prep — starting at <strong style={{ color: "#f0d8d8" }}>$3,025/mo</strong>, Dr. Gina brings her expertise, deliverable support, and standing to your project — she can even join your RFPs and applications as a strategic partner, approved per submission.</span>
@@ -1343,7 +1343,7 @@ export function ResourcesPage({ member, onUpgrade }) {
         <div style={{ marginBottom: 16 }}><Lock size={36} color="#b80101" style={{ display: "inline-block" }} /></div>
         <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "var(--gu-text)", marginBottom: 14 }}>Resources & Templates</h1>
         <p style={{ color: "var(--gu-muted)", fontFamily: font, fontSize: 15, maxWidth: 480, margin: "0 auto 28px", lineHeight: 1.8 }}>
-          Development timeline templates, worksheets, and curated tools are a Premium benefit — and Elite members unlock the NREUV partner network with member-only referral codes.
+          Development timeline templates, worksheets, and curated tools are a Premium benefit — and Owner members unlock the NREUV partner network with member-only referral codes.
         </p>
         <button style={btnRed} onClick={onUpgrade}>View Plans →</button>
       </div>
@@ -1375,8 +1375,8 @@ export function ResourcesPage({ member, onUpgrade }) {
               {locked ? (
                 <div style={{ background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 14, padding: "26px 30px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
                   <Lock size={18} color="var(--gu-muted)" />
-                  <span style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, flex: 1 }}>The partner network — marketing, tech, design and more, with member-only referral discounts — is an Elite benefit.</span>
-                  <button style={btnRed} onClick={onUpgrade}>Go Elite →</button>
+                  <span style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, flex: 1 }}>The partner network — marketing, tech, design and more, with member-only referral discounts — is an Owner benefit.</span>
+                  <button style={btnRed} onClick={onUpgrade}>Go Owner →</button>
                 </div>
               ) : items.length === 0 ? (
                 <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font, background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 12, padding: "20px 24px" }}>Nothing here yet — check back soon.</div>

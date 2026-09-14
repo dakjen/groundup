@@ -19,10 +19,10 @@ const PLANS = {
     'Everything in Builder', 'Download 3 guides or templates every month', 'The Opportunity Board — RFPs & funding windows',
     'JV & Partnerships channel', 'Lunch & Learn recordings', 'Group office hours with Dr. Merritt + priority booking', '10% off every 1:1 session',
   ] },
-  Elite: { tier: 'Elite', label: 'Elite', price: '$499.99/mo', rank: 4, features: [
+  Elite: { tier: 'Elite', label: 'Owner', price: '$499.99/mo', rank: 4, features: [
     'Everything in Premium', 'Direct messages to Dr. Merritt & her team (replies within 2 business days, Mon–Fri)',
     '3 one-on-one advisory calls a year', "Unlimited downloads — including the Developer's Playbook",
-    '30% off every 1:1 session', 'Elite Lounge — the private channel', 'Small-group advisory sessions & networking invites',
+    '30% off every 1:1 session', 'Owner Lounge — the private channel', 'Small-group advisory sessions & networking invites',
   ] },
 };
 
@@ -87,7 +87,7 @@ export function recommendPlan(e) {
         'Deal review, capital strategy & negotiation prep',
         'A private client workspace — documents, messages, logged hours',
         'Her expertise and business infrastructure under your foundation',
-        'Everything in Elite included',
+        'Everything in Owner included',
       ],
     };
   }
@@ -164,7 +164,7 @@ export function recommendPlan(e) {
 export const PLAN_INFO = {
   Basic: { label: 'Member', monthly: 49.99 },
   Premium: { label: 'Premium', monthly: 249.99 },
-  Elite: { label: 'Elite', monthly: 499.99 },
+  Elite: { label: 'Owner', monthly: 499.99 },
   pass_single: { label: 'Single Course Pass', once: 100 },
   pass_all: { label: 'All-Access Pass', once: 250 },
 };
@@ -398,7 +398,7 @@ export default async function handler(req, res) {
           `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">${isNew ? 'New waitlist signup' : 'Waitlist entry updated'}</h2>
            <p style="color:#a89080;font-size:14px;line-height:1.9;">
              <strong style="color:#f0d8d8;">${entry.name}</strong> — ${entry.email}${entry.phone ? ' · ' + entry.phone : ''}<br/>
-             List: <strong style="color:#f0d8d8;">${entry.list === 'insider' ? 'Elite Insider' : 'General'}</strong> · Budget: <strong style="color:#f0d8d8;">${entry.budget || '—'}</strong><br/>
+             List: <strong style="color:#f0d8d8;">${entry.list === 'insider' ? 'Insider' : 'General'}</strong> · Budget: <strong style="color:#f0d8d8;">${entry.budget || '—'}</strong><br/>
              Wants to learn: ${entry.learn || '—'}<br/>
              Pain point: ${entry.reason || '—'}<br/>
              Heard about us: ${entry.source || '—'}

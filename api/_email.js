@@ -189,7 +189,7 @@ export function meetingEmail(name, title, date, time, link) {
 }
 
 // The deal-support nudge: sent manually from the Email tab to any segment —
-// three doors, each with a handle: upgrade to Elite, book the free discovery
+// three doors, each with a handle: upgrade to Owner, book the free discovery
 // call for the retainer, or buy the \$1,500 intake outright.
 export function dealSupportNudgeEmail() {
   return {
@@ -198,8 +198,8 @@ export function dealSupportNudgeEmail() {
       <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">Hi {{FIRSTNAME}} — got a deal that needs more than a course?</h2>
       <p style="color:#a89080;font-size:14px;line-height:1.8;">The curriculum, the community, and the Lunch & Learns build your foundation. But "I can't solve the gap on MY deal" isn't a lesson — it's deal work, and there are three ways to get Dr. Merritt on it:</p>
       <div style="margin:18px 0;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
-        <p style="color:#f0d8d8;font-size:14px;font-weight:bold;margin:0 0 6px;">1 · Upgrade to Elite — \$499.99/mo</p>
-        <p style="color:#a89080;font-size:13px;line-height:1.7;margin:0;">Bring YOUR deal to your one-on-one advisory calls with Dr. Merritt, plus direct messages, unlimited downloads, and the Elite Lounge. <a href="${siteUrl()}/pricing" style="color:#b80101;font-weight:bold;">Upgrade here →</a></p>
+        <p style="color:#f0d8d8;font-size:14px;font-weight:bold;margin:0 0 6px;">1 · Upgrade to Owner — \$499.99/mo</p>
+        <p style="color:#a89080;font-size:13px;line-height:1.7;margin:0;">Bring YOUR deal to your one-on-one advisory calls with Dr. Merritt, plus direct messages, unlimited downloads, and the Owner Lounge. <a href="${siteUrl()}/pricing" style="color:#b80101;font-weight:bold;">Upgrade here →</a></p>
       </div>
       <div style="margin:18px 0;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
         <p style="color:#f0d8d8;font-size:14px;font-weight:bold;margin:0 0 6px;">2 · Book a free discovery call — Senior Advisor retainer</p>
@@ -286,13 +286,13 @@ export function waitlistConfirmEmail(name, founding, first10, list = 'insider') 
           <span style="color:#b80101;">→</span> Why affordable housing doesn't pencil (and how to close anyway)<br/>
           <span style="color:#b80101;">→</span> Zoning, entitlements, design &amp; construction, and life after opening day<br/>
           <span style="color:#b80101;">→</span> Live Lunch &amp; Learns, work sessions &amp; the Opportunity Board</p>
-        <p style="color:#a89080;font-size:14px;line-height:1.9;">Every membership includes all-access to the full course library — and each tier up adds more of Dr. Merritt herself: her community, her tools, and at the top, a direct line to her and one of only 15 Elite seats. New expertise is added every quarter.</p>
+        <p style="color:#a89080;font-size:14px;line-height:1.9;">Every membership includes all-access to the full course library — and each tier up adds more of Dr. Merritt herself: her community, her tools, and at the top, a direct line to her and one of only 15 Owner seats. New expertise is added every quarter.</p>
       </div>`;
   if (list === 'insider') {
     return {
       subject: founding ? "Dr. Merritt invited you — and you're one of the first 25" : first10 ? "Dr. Merritt invited you — and you're one of the first 10" : "Dr. Merritt invited you inside",
       html: `
-      <div style="font-size:10px;color:#b80101;letter-spacing:3px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Elite Insider Waitlist</div>
+      <div style="font-size:10px;color:#b80101;letter-spacing:3px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Insider Waitlist</div>
       <h2 style="color:#f5e8e8;font-size:26px;margin:0 0 14px;">Welcome inside, ${first}.</h2>
       <p style="color:#a89080;font-size:14px;line-height:1.9;"><strong style="color:#f0d8d8;">Dr. Gina Merritt invited you herself.</strong> This list isn't public — it's the people she wants in the room first. That means <strong style="color:#f0d8d8;">the doors open for you before they open for anyone else</strong>: you get access at the insider launch, ahead of the public, with a personal plan recommendation built from exactly what you told us.</p>
       ${perks}
@@ -387,7 +387,7 @@ export function launchEmail(name, rec, link, painPoint, stretchLink) {
 // reminds people that deal-specific support has a doorway: Premium/Elite, or just ask.
 export function dealSupportBlock() {
   return `<div style="margin-top:22px;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
-    <p style="color:#c8a8a8;font-size:13px;line-height:1.7;margin:0;">Working on a specific deal? The courses and community build your foundation — <strong style="color:#f0d8d8;">deal-specific support</strong> comes with the Premium and Elite memberships, or you can send Dr. Merritt your whole project with the <strong style="color:#f0d8d8;">\$1,500 Full Project Intake</strong> (credited to your first retainer month if you continue). <a href="https://community.drginamerritt.net/contact" style="color:#b80101;font-weight:bold;">Send it to us →</a></p>
+    <p style="color:#c8a8a8;font-size:13px;line-height:1.7;margin:0;">Working on a specific deal? The courses and community build your foundation — <strong style="color:#f0d8d8;">deal-specific support</strong> comes with the Premium and Owner memberships, or you can send Dr. Merritt your whole project with the <strong style="color:#f0d8d8;">\$1,500 Full Project Intake</strong> (credited to your first retainer month if you continue). <a href="https://community.drginamerritt.net/contact" style="color:#b80101;font-weight:bold;">Send it to us →</a></p>
   </div>`;
 }
 
