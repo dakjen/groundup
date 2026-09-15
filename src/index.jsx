@@ -2895,8 +2895,10 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
                     ["Group office hours with Dr. Merritt", "—", "—", "—", "✓", "✓"],
                     ["Discount on paid 1:1 sessions", "—", "—", "—", "10%", "30%"],
                     ["Included 1:1 time with Dr. Merritt", "—", "—", "—", "1 session/yr", "3 advisory calls/yr"],
+                    ["GroundUp-only rates with our partners", "—", "—", "—", "✓", "✓"],
                     ["Direct messages to Dr. Merritt & her team", "—", "—", "—", "—", "✓"],
                     ["Deal support — bring YOUR deal", "—", "—", "—", "—", "✓"],
+                    ["Owner Lounge + networking event", "—", "—", "—", "—", "✓"],
                   ].map((row, i) => (
                     <tr key={i} style={{ borderTop: "1px solid #2a0e0e" }}>
                       <td title={BENEFIT_HELP[row[0]] || undefined} style={{ padding: "11px 16px", color: "#b09090", fontSize: "clamp(11px,1.6vw,13px)", lineHeight: 1.5, cursor: BENEFIT_HELP[row[0]] ? "help" : undefined, textDecoration: BENEFIT_HELP[row[0]] ? "underline dotted #5a3030" : undefined, textUnderlineOffset: 3 }}>{row[0]}</td>
