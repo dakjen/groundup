@@ -4731,7 +4731,7 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
           <div><label style={lbl}>Owner email (optional)</label><input style={{ ...inp, marginBottom: 0 }} value={pcForm.owner_email} onChange={e => setPcForm({ ...pcForm, owner_email: e.target.value })} placeholder="jasmine@…" /></div>
           <div><label style={lbl}>Company (optional)</label><input style={{ ...inp, marginBottom: 0 }} value={pcForm.company} onChange={e => setPcForm({ ...pcForm, company: e.target.value })} placeholder="Carter Development" /></div>
           <div><label style={lbl}>Code (blank = from name)</label><input style={{ ...inp, marginBottom: 0, maxWidth: 160 }} value={pcForm.code} onChange={e => setPcForm({ ...pcForm, code: e.target.value })} placeholder="jasmine" /></div>
-          <div><label style={lbl}>Signups for their free membership</label><input type="number" min="1" style={{ ...inp, marginBottom: 0, maxWidth: 90 }} value={pcForm.goal} onChange={e => setPcForm({ ...pcForm, goal: e.target.value })} /></div>
+          <div><label style={lbl}>Referrals needed to earn their reward</label><input type="number" min="1" style={{ ...inp, marginBottom: 0, maxWidth: 90 }} value={pcForm.goal} onChange={e => setPcForm({ ...pcForm, goal: e.target.value })} /></div>
           <button onClick={createCode} style={btnRed}>Create Code</button>
         </div>
         {pcodes.length === 0 ? (
