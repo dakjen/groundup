@@ -220,6 +220,42 @@ function lessonBlocks(text) {
 
 // Interactive lesson calculators — a visual learner's playground. A lesson
 // declares { calc: "gap" } or { calc: "dscr" } and gets a live tool.
+
+// The full development lifecycle, drawn — declared by a lesson as
+// { lifecycle: "Predevelopment" } to light up where this course lives.
+function LessonLifecycle({ current, color }) {
+  const font = "'DM Sans', sans-serif";
+  const STAGES = [
+    ["Concept & Market", "Read the region, city, and neighborhood — decide the deal is worth chasing"],
+    ["Site Control", "Option, contract, or LOI — control before you spend real money"],
+    ["Predevelopment", "Zoning & entitlements, design, environmental, financing applications"],
+    ["Financing Close", "Capital stack committed — debt, equity, subsidy all signed"],
+    ["Construction", "Draws, inspections, change orders — the money in motion"],
+    ["Lease-Up & Opening", "Marketing, compliance files, first residents"],
+    ["Operations", "The fifteen years nobody warns you about — compliance, asset management"],
+  ];
+  return (
+    <div style={{ background: "#0a0808", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", marginBottom: 36, overflowX: "auto" }}>
+      <div style={{ fontSize: 10, color: color || "#b80101", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 20 }}>The Development Lifecycle — where this course lives</div>
+      <div style={{ display: "flex", gap: 0, minWidth: 700 }}>
+        {STAGES.map(([name, desc], i) => {
+          const here = current && name.toLowerCase().includes(String(current).toLowerCase());
+          return (
+            <div key={name} style={{ flex: 1, position: "relative", padding: "0 10px 0 0" }}>
+              <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
+                <div style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, background: here ? "#b80101" : "#140a0a", border: here ? "2px solid #e0c4c4" : "1px solid #3a2020", color: here ? "#fff" : "#7a5050", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, fontFamily: font, zIndex: 1, position: "relative" }}>{i + 1}</div>
+                {i < STAGES.length - 1 && <div style={{ flex: 1, height: 2, background: "#2a1010" }} />}
+              </div>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: here ? "#f0d8d8" : "#a08080", fontFamily: font, lineHeight: 1.4, marginBottom: 6 }}>{name}{here && <span style={{ display: "block", color: "#b80101", fontSize: 9, letterSpacing: "1.5px", marginTop: 3 }}>YOU ARE HERE</span>}</div>
+              <div style={{ fontSize: 10.5, color: "#6a5050", fontFamily: font, lineHeight: 1.55, paddingRight: 6 }}>{desc}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function LessonCalc({ kind, color }) {
   const font = "'DM Sans', sans-serif";
   const [v, setV] = useState(kind === "gap"
@@ -293,7 +329,7 @@ function LessonRich({ text, lead }) {
         <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 21, lineHeight: 1.6, color: "#e0c4c4", margin: 0, fontWeight: 600 }}>{bold(b.text)}</p>
       </blockquote>
     ) : (
-      <p key={i} style={{ color: "#e8e0da", fontSize: lead && i === paraIdxs[0] ? 17 : 15.5, lineHeight: 1.95, fontFamily: "'DM Sans', sans-serif", marginBottom: 20, ...(lead && i === paraIdxs[0] ? { color: "#f5efe9" } : {}) }}>{bold(b.text)}</p>
+      <p key={i} style={{ color: "#e8e0da", fontSize: lead && i === paraIdxs[0] ? 17.5 : 16, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif", marginBottom: 20, ...(lead && i === paraIdxs[0] ? { color: "#f5efe9" } : {}) }}>{bold(b.text)}</p>
     ))}
   </>);
 }
@@ -437,101 +473,91 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
               {lesson.photo.caption && <figcaption style={{ background: "#0d0404", color: "#8a7070", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, padding: "10px 16px" }}>{lesson.photo.caption}</figcaption>}
             </figure>
           )}
-          <div style={{ marginBottom: 40, maxWidth: 640 }}>
-            <LessonRich text={lesson.summary} lead />
-          </div>
-          {lesson.exercise && (() => {
-            const done = myResponses[lesson.id];
-            const yt = String(lesson.exercise.video || "").match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{6,})/);
-            return (
-              <div style={{ marginBottom: 32 }}>
-                <div style={{ background: "#140a04", border: "1px solid #c9a22745", borderRadius: 16, padding: "26px 30px", marginBottom: 18 }}>
-                  <div style={{ fontSize: 10, color: "#c9a227", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>Your turn — work the study</div>
-                  <div style={{ marginBottom: 16 }}><LessonRich text={lesson.exercise.prompt} /></div>
-                  {done ? (
-                    <div style={{ background: "#0d0404", border: "1px dashed #3a2a10", borderRadius: 12, padding: "16px 20px" }}>
-                      <div style={{ fontSize: 9, color: "#8a7050", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Your answer — submitted</div>
-                      <div style={{ color: "#c8b090", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{done.response}</div>
-                    </div>
-                  ) : (<>
-                    <textarea value={exerciseDraft} onChange={e => setExerciseDraft(e.target.value)} placeholder="Write your answer — what would you do, and why? There's no grade; the value is committing to a position before you hear hers." style={{ width: "100%", minHeight: 150, boxSizing: "border-box", background: "#0d0404", border: "1px solid #2a0000", borderRadius: 12, padding: "16px 18px", color: "#f0d8d8", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8, outline: "none", resize: "vertical", marginBottom: 14 }} />
-                    <button onClick={() => submitExercise(lesson)} disabled={exerciseBusy || !exerciseDraft.trim()} style={{ background: "#c9a227", color: "#140a04", border: "none", borderRadius: 10, padding: "13px 30px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", opacity: exerciseBusy || !exerciseDraft.trim() ? 0.5 : 1 }}>{exerciseBusy ? "Submitting…" : "Submit My Answer →"}</button>
-                    <div style={{ color: "#7a5c40", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginTop: 10 }}>Dr. Merritt's answer unlocks the moment you submit — one submission per study.</div>
-                  </>)}
-                </div>
-                {done && (
-                  <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, overflow: "hidden" }}>
-                    <div style={{ padding: "18px 26px 12px" }}>
-                      <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>Dr. Merritt's answer</div>
-                    </div>
-                    {yt ? (
-                      <div style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}>
-                        <iframe src={`https://www.youtube.com/embed/${yt[1]}`} title="Dr. Merritt's answer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }} />
-                      </div>
-                    ) : lesson.exercise.video ? (
-                      <div style={{ padding: "0 26px 20px", color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>Video coming soon.</div>
-                    ) : null}
-                    {lesson.exercise.reveal && <div style={{ padding: "16px 26px 22px" }}><LessonRich text={lesson.exercise.reveal} /></div>}
+          {(() => {
+            // ── Woven lesson layout: media breaks the text up instead of
+            //    stacking underneath it ──
+            const blocks = lessonBlocks(lesson.summary);
+            const font = "'DM Sans', sans-serif";
+            const boldify = (str) => String(str).split(/\*\*(.+?)\*\*/g).map((part, i) => i % 2 ? <strong key={i} style={{ color: "#ffffff", fontWeight: 700 }}>{part}</strong> : part);
+            const renderBlock = (b, i, isLead) => b.kind === "head" ? (
+              <div key={"b" + i} style={{ fontSize: 11, color: "#b80101", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, margin: "34px 0 16px", paddingTop: 22, borderTop: "1px solid #1a0000" }}>{b.text}</div>
+            ) : b.kind === "list" ? (
+              <ul key={"b" + i} style={{ margin: "0 0 22px", paddingLeft: 4, listStyle: "none" }}>
+                {b.items.map((it, j) => (
+                  <li key={j} style={{ color: "#e8e0da", fontSize: 16, lineHeight: 1.85, fontFamily: font, marginBottom: 10, paddingLeft: 20, position: "relative" }}>
+                    <span style={{ position: "absolute", left: 0, color: "#b80101", fontWeight: 800 }}>—</span>{boldify(it)}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p key={"b" + i} style={{ color: isLead ? "#f5efe9" : "#e8e0da", fontSize: isLead ? 17.5 : 16, lineHeight: 1.85, fontFamily: font, marginBottom: 20, textAlign: "justify", hyphens: "auto" }}>{boldify(b.text)}</p>
+            );
+
+            // The media pieces, each rendered once, dropped in at intervals
+            const media = [];
+            if (lesson.stats?.length) media.push(
+              <div key="stats" style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(lesson.stats.length, 4)}, 1fr)`, gap: 12, margin: "34px 0" }}>
+                {lesson.stats.map((st, si) => (
+                  <div key={si} style={{ background: "#0a0808", border: "1px solid #2a0000", borderRadius: 14, padding: "20px 16px", textAlign: "center" }}>
+                    <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(22px,3vw,34px)", color: course.stageColor, lineHeight: 1.1 }}>{st.value}</div>
+                    <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginTop: 8, lineHeight: 1.5 }}>{st.label}</div>
                   </div>
-                )}
+                ))}
               </div>
             );
-          })()}
-          {lesson.stats && lesson.stats.length > 0 && (
-            <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(lesson.stats.length, 4)}, 1fr)`, gap: 12, marginBottom: 32 }}>
-              {lesson.stats.map((st, si) => (
-                <div key={si} style={{ background: "#0a0808", border: "1px solid #2a0000", borderRadius: 14, padding: "20px 16px", textAlign: "center" }}>
-                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(22px,3vw,34px)", color: course.stageColor, lineHeight: 1.1 }}>{st.value}</div>
-                  <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 8, lineHeight: 1.5 }}>{st.label}</div>
-                </div>
-              ))}
-            </div>
-          )}
-          <LessonChart chart={lesson.chart} color={course.stageColor} />
-          {lesson.calc && <LessonCalc kind={lesson.calc} color={course.stageColor} />}
-          {lesson.table && (
-            <div style={{ marginBottom: 32, overflowX: "auto" }}>
-              {lesson.table.title && <div style={{ fontSize: 9, color: course.stageColor, fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>{lesson.table.title}</div>}
-              <table style={{ width: "100%", borderCollapse: "collapse", background: "#0a0808", borderRadius: 14, overflow: "hidden" }}>
-                <thead>
-                  <tr>
-                    {lesson.table.headers.map((hd, hi) => (
-                      <th key={hi} style={{ textAlign: hi === 0 ? "left" : "right", padding: "12px 16px", background: "#140a0a", color: "#f0d8d8", fontSize: 12, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.5px", borderBottom: "1px solid #2a0000" }}>{hd}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {lesson.table.rows.map((row, ri) => (
-                    <tr key={ri}>
-                      {row.map((cell, ci) => (
-                        <td key={ci} style={{ textAlign: ci === 0 ? "left" : "right", padding: "11px 16px", color: ci === 0 ? "#c8a8a8" : "#f0d8d8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: ci === 0 ? 600 : 700, borderBottom: ri < lesson.table.rows.length - 1 ? "1px solid #1a0000" : "none" }}>{cell}</td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <div style={{ background: "#0a0808", border: "1px solid #1e0000", borderRadius: 14, padding: "24px 28px", marginBottom: 32 }}>
-            <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Key Takeaways</div>
-            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              {(lesson.takeaways || []).map((t, i) => (
-                <li key={i} style={{ display: "flex", gap: 12, marginBottom: 12, color: "#c8a8a8", fontSize: 14, lineHeight: 1.7, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>
-                  <span style={{ color: "#b80101", flexShrink: 0, marginTop: 2 }}>→</span>
-                  <span>{t}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          {lesson.quote && (
-            <div style={{ marginBottom: 32 }}>
-              <div style={{ fontSize: 9, color: "#6a6b69", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Why This Matters</div>
-              <div style={{ borderLeft: "3px solid #b80101", paddingLeft: 24 }}>
-                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 22, color: "#e0c4c4", lineHeight: 1.65, marginBottom: 12 }}>"{lesson.quote}"</p>
-                {lesson.quoteContext && <p style={{ color: "#7a5050", fontSize: 13, lineHeight: 1.75, fontFamily: "'DM Sans', sans-serif" }}>{lesson.quoteContext}</p>}
+            if (lesson.quote) media.push(
+              <div key="quote" style={{ margin: "38px 0", borderLeft: "3px solid #b80101", paddingLeft: 24 }}>
+                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 23, color: "#e0c4c4", lineHeight: 1.6, marginBottom: lesson.quoteContext ? 10 : 0 }}>"{lesson.quote}"</p>
+                {lesson.quoteContext && <p style={{ color: "#8a7070", fontSize: 13, lineHeight: 1.75, fontFamily: font, margin: 0 }}>{lesson.quoteContext}</p>}
               </div>
-            </div>
-          )}
+            );
+            if (lesson.chart) media.push(<div key="chart" style={{ margin: "34px 0" }}><LessonChart chart={lesson.chart} color={course.stageColor} /></div>);
+            if (lesson.lifecycle) media.push(<div key="life" style={{ margin: "34px 0" }}><LessonLifecycle current={lesson.lifecycle} color={course.stageColor} /></div>);
+            if (lesson.table) media.push(
+              <div key="table" style={{ margin: "34px 0", overflowX: "auto" }}>
+                {lesson.table.title && <div style={{ fontSize: 9, color: course.stageColor, fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>{lesson.table.title}</div>}
+                <table style={{ width: "100%", borderCollapse: "collapse", background: "#0a0808", borderRadius: 14, overflow: "hidden" }}>
+                  <thead><tr>{lesson.table.headers.map((hd, hi) => (
+                    <th key={hi} style={{ textAlign: hi === 0 ? "left" : "right", padding: "12px 16px", background: "#140a0a", color: "#f0d8d8", fontSize: 12, fontWeight: 800, fontFamily: font, letterSpacing: "0.5px", borderBottom: "1px solid #2a0000" }}>{hd}</th>
+                  ))}</tr></thead>
+                  <tbody>{lesson.table.rows.map((row, ri) => (
+                    <tr key={ri}>{row.map((cell, ci) => (
+                      <td key={ci} style={{ textAlign: ci === 0 ? "left" : "right", padding: "11px 16px", color: ci === 0 ? "#c8a8a8" : "#f0d8d8", fontSize: 13, fontFamily: font, fontWeight: ci === 0 ? 600 : 700, borderBottom: ri < lesson.table.rows.length - 1 ? "1px solid #1a0000" : "none" }}>{cell}</td>
+                    ))}</tr>
+                  ))}</tbody>
+                </table>
+              </div>
+            );
+            if (lesson.calc) media.push(<div key="calc" style={{ margin: "34px 0" }}><LessonCalc kind={lesson.calc} color={course.stageColor} /></div>);
+
+            // Weave: split the text into (media.length + 1) even runs and drop
+            // one media piece between each run.
+            const runs = media.length + 1;
+            const per = Math.max(2, Math.ceil(blocks.length / runs));
+            const out = [];
+            let m = 0;
+            const leadIdx = blocks.findIndex(b => b.kind === "p");
+            blocks.forEach((b, i) => {
+              out.push(renderBlock(b, i, i === leadIdx));
+              if ((i + 1) % per === 0 && m < media.length && i < blocks.length - 1) out.push(media[m++]);
+            });
+            while (m < media.length) out.push(media[m++]);
+            // Takeaways: the three that matter, never a second lecture
+            const takes = (lesson.takeaways || []).slice(0, 3);
+            if (takes.length) out.push(
+              <div key="takes" style={{ background: "#0a0808", border: "1px solid #1e0000", borderRadius: 14, padding: "24px 28px", margin: "36px 0 8px" }}>
+                <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 16 }}>If you remember three things</div>
+                <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                  {takes.map((t, i) => (
+                    <li key={i} style={{ display: "flex", gap: 12, marginBottom: i < takes.length - 1 ? 12 : 0, color: "#e8e0da", fontSize: 14.5, lineHeight: 1.7, fontFamily: font, fontWeight: 600 }}>
+                      <span style={{ color: "#b80101", flexShrink: 0, marginTop: 2 }}>→</span><span>{t}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+            return <div style={{ marginBottom: 40 }}>{out}</div>;
+          })()}
           {lesson.handoff && (
             <div style={{ background: "#12060a", border: "1px solid #b8010140", borderRadius: 14, padding: "22px 26px", margin: "28px 0", display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
               <div style={{ flex: 1, minWidth: 240, color: "#c8a8a8", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8 }}>{lesson.handoff}</div>
