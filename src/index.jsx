@@ -305,7 +305,15 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
     }
     onUpgrade && onUpgrade();
   };
-  const [activeLesson, setActiveLesson] = useState(null);
+  // Survive refresh: the open lesson is written into the URL hash (#c=…&l=…)
+  const [activeLesson, setActiveLesson] = useState(() => {
+    const m = window.location.hash.match(/l=(\d+)/);
+    return m ? Number(m[1]) : null;
+  });
+  useEffect(() => {
+    const base = `#c=${encodeURIComponent(course.id)}`;
+    window.history.replaceState({}, "", window.location.pathname + window.location.search + (activeLesson !== null ? `${base}&l=${activeLesson}` : base));
+  }, [activeLesson, course.id]);
   const [myResponses, setMyResponses] = useState({});
   const [exerciseDraft, setExerciseDraft] = useState("");
   const [exerciseBusy, setExerciseBusy] = useState(false);
@@ -1011,6 +1019,8 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
 
 function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate }) {
   const [activeMiniCourse, setActiveMiniCourse] = useState(null);
+  // Survive refresh: reopen the course named in the URL hash once the catalog is in
+  const hashCourseId = (window.location.hash.match(/c=([\w-]+)/) || [])[1] || null;
   const pageBg = "#000";
   // The live catalog: newly published courses (and series) appear without a deploy.
   const [catalog, setCatalog] = useState(null);
@@ -1021,6 +1031,12 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate }) {
       .catch(() => {});
   }, []);
   const allCourses = catalog || miniCourses;
+  useEffect(() => {
+    if (hashCourseId && !activeMiniCourse) {
+      const found = allCourses.find(c => c.id === hashCourseId);
+      if (found) setActiveMiniCourse(found);
+    }
+  }, [catalog]);
   const regular = allCourses.filter(c => !c.series);
   const seriesGroups = {};
   for (const c of allCourses) if (c.series) (seriesGroups[c.series] ||= []).push(c);
@@ -1038,7 +1054,7 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate }) {
   }
 
   if (activeMiniCourse) {
-    return <MiniCoursePage course={activeMiniCourse} onBack={() => setActiveMiniCourse(null)} member={member} onUpgrade={onUpgrade} onMemberUpdate={onMemberUpdate} />;
+    return <MiniCoursePage course={activeMiniCourse} onBack={() => { setActiveMiniCourse(null); window.history.replaceState({}, "", window.location.pathname + window.location.search); }} member={member} onUpgrade={onUpgrade} onMemberUpdate={onMemberUpdate} />;
   }
 
   return (
