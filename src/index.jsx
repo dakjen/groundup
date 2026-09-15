@@ -1218,7 +1218,7 @@ const plans = [
     tier: "Premium",
     price: "$249.99",
     period: "/mo",
-    description: "Everything in Member — plus full community engagement, deal tools, and a free advisory hour.",
+    description: "Your safety net — the deal tools, the Opportunity Board, and group time with Dr. Merritt to lean on whenever you need it.",
     value: "Over $6,500 in annual value",
     accent: "#b80101",
     popular: true,

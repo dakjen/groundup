@@ -1277,7 +1277,7 @@ export function WaitlistForm({ list = "insider" }) {
                         </select>
                       );
                       else if (b === "I need general support & guidance") bubbleBody = (
-                        <span>General support — the tools, templates, Opportunity Board, and group office hours with Dr. Merritt — lives in the <strong style={{ color: "#f0d8d8" }}>Premium plan</strong> ($249.99/mo). That's what we'll recommend.</span>
+                        <span>Think of <strong style={{ color: "#f0d8d8" }}>Premium</strong> ($249.99/mo) as your safety net — the tools, templates, Opportunity Board, and group office hours with Dr. Merritt, there whenever you need to lean on them. That's what we'll recommend. (Hands-on deal work lives at Owner and the retainer.)</span>
                       );
                       else if (b === "I need specific, customized deal help") bubbleBody = (
                         <span>Deal-specific support — your numbers, your gap, your structure — comes with the <strong style={{ color: "#f0d8d8" }}>Owner plan</strong> ($499.99/mo) or the Senior Advisor retainer. We'll recommend Owner and point you at the fastest way to get Dr. Merritt on your deal.</span>
