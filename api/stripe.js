@@ -554,7 +554,7 @@ export default async function handler(req, res) {
     const body = JSON.parse(raw.toString() || '{}');
     const session = getSession(req);
     if (!session?.uid) return res.status(401).json({ error: 'Sign in to purchase' });
-    const [user] = await sql`SELECT id, name, email, tier, lnl_discount_until FROM users WHERE id = ${session.uid}`;
+    const [user] = await sql`SELECT id, name, email, tier, lnl_discount_until, referred_by FROM users WHERE id = ${session.uid}`;
     if (!user) return res.status(401).json({ error: 'Account not found' });
 
     // ── Self-service billing portal: manage payment method or cancel ──
@@ -731,6 +731,25 @@ export default async function handler(req, res) {
       catch { coupon = (await stripe.coupons.create({ id: 'ANNUAL10', percent_off: 10, duration: 'forever', name: 'Annual billing — 10% off' })).id; }
       params.discounts = [{ coupon }];
       discounted = true;
+    }
+    // Referred member: 10% off the first 12 months, capped at \$150 for the
+    // year — Member gets a clean 10%, higher tiers get \$12.50/mo off (the cap
+    // spread evenly). Server-validated against the partner_codes table; annual
+    // checkouts already carry ANNUAL10, and discounts never stack.
+    if (!discounted && product.mode === 'subscription' && product.tier && !product.annual && user.referred_by) {
+      const [pc] = await sql`SELECT code FROM partner_codes WHERE code = ${user.referred_by}`;
+      if (pc) {
+        let coupon;
+        if (item === 'sub_Basic') {
+          try { coupon = (await stripe.coupons.retrieve('REF10')).id; }
+          catch { coupon = (await stripe.coupons.create({ id: 'REF10', percent_off: 10, duration: 'repeating', duration_in_months: 12, name: 'Referred by a GroundUp partner — 10% off first year' })).id; }
+        } else {
+          try { coupon = (await stripe.coupons.retrieve('REFCAP')).id; }
+          catch { coupon = (await stripe.coupons.create({ id: 'REFCAP', amount_off: 1250, currency: 'usd', duration: 'repeating', duration_in_months: 12, name: 'Referred by a GroundUp partner — \$12.50 off/mo, first year' })).id; }
+        }
+        params.discounts = [{ coupon }];
+        discounted = true;
+      }
     }
     // Lunch & Learn perk: 25% off the first month of any membership, automatically
     if (!discounted && product.mode === 'subscription' && user.lnl_discount_until && new Date(user.lnl_discount_until) > new Date()) {

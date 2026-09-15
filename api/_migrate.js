@@ -139,6 +139,8 @@ const STATEMENTS = [
     owner_name TEXT NOT NULL, owner_email TEXT,
     goal INTEGER DEFAULT 5, rewarded BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW())`,
+  `ALTER TABLE partner_codes ADD COLUMN IF NOT EXISTS company TEXT`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS referred_by TEXT`,
   `CREATE TABLE IF NOT EXISTS resource_clicks (
     id SERIAL PRIMARY KEY, resource_id INTEGER NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
     user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,

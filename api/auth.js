@@ -132,6 +132,14 @@ export default async function handler(req, res) {
       let founding = false;
       try {
         const [wl] = await sql`SELECT id, founding_lnl, first10, source FROM waitlist WHERE email = ${cleanEmail} LIMIT 1`;
+        // Partner referral: their waitlist signup carried ?source=ref:<code> —
+        // stamp the account so their checkout earns the referred-member 10%
+        // and the partner's ladder counts them. Server-validated: the code
+        // must exist in partner_codes.
+        if (wl && /^ref:/.test(wl.source || '')) {
+          const [pc] = await sql`SELECT code FROM partner_codes WHERE code = ${wl.source.slice(4)}`;
+          if (pc) await sql`UPDATE users SET referred_by = ${pc.code} WHERE id = ${user.id}`;
+        }
         // Came in through the interest form on drginamerritt.net (links arrive
         // as ?source=popup:… or site:…) → the Day One badge follows them in.
         if (wl && /^(popup|site|gina)[:\-]/i.test(wl.source || '')) {

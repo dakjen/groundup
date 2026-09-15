@@ -12,6 +12,16 @@ function genCode() {
 }
 
 export default async function handler(req, res) {
+  // Public: who referred me? Powers the you've-been-referred banner on the
+  // waitlist page. Name and company only — nothing sensitive.
+  if (req.method === 'GET' && req.query.partner) {
+    try {
+      const sql = neon(process.env.DATABASE_URL);
+      const code = String(req.query.partner).trim().toLowerCase();
+      const [pc] = await sql`SELECT owner_name, company FROM partner_codes WHERE code = ${code}`;
+      return res.json(pc ? { name: pc.owner_name, company: pc.company || null } : { name: null });
+    } catch { return res.json({ name: null }); }
+  }
   if (!requireAdmin(req, res)) return;
   const sql = neon(process.env.DATABASE_URL);
 
@@ -36,13 +46,14 @@ export default async function handler(req, res) {
     if (req.method === 'POST' && req.body.kind === 'partner_code') {
       const owner_name = String(req.body.owner_name || '').trim();
       const owner_email = String(req.body.owner_email || '').trim().toLowerCase() || null;
+      const company = String(req.body.company || '').trim() || null;
       const goal = Math.max(1, Number(req.body.goal) || 5);
       if (!owner_name) return res.status(400).json({ error: 'Name required' });
       const code = String(req.body.code || owner_name).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
       if (!code) return res.status(400).json({ error: 'Code required' });
       const [row] = await sql`
-        INSERT INTO partner_codes (code, owner_name, owner_email, goal, created_at)
-        VALUES (${code}, ${owner_name}, ${owner_email}, ${goal}, NOW())
+        INSERT INTO partner_codes (code, owner_name, owner_email, company, goal, created_at)
+        VALUES (${code}, ${owner_name}, ${owner_email}, ${company}, ${goal}, NOW())
         ON CONFLICT (code) DO NOTHING RETURNING *`;
       if (!row) return res.status(409).json({ error: 'That code already exists' });
       return res.status(201).json(row);

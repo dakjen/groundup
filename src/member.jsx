@@ -1188,6 +1188,15 @@ export function WaitlistForm({ list = "insider" }) {
   // Thought partnership needs a beat of explanation — show it on hover, not just on select
   const [partnerHover, setPartnerHover] = useState(false);
   const [wantTier, setWantTier] = useState("");
+  // ?source=ref:<code> — a partner referral link. Look the partner up and show
+  // the you've-been-referred banner with the 10% offer.
+  const [refBy, setRefBy] = useState(null);
+  const [refDismissed, setRefDismissed] = useState(false);
+  useEffect(() => {
+    if (!/^ref:/.test(urlSource || "")) return;
+    fetch("/api/referrals?partner=" + encodeURIComponent(urlSource.slice(4)))
+      .then(r => r.json()).then(d => { if (d?.name) setRefBy(d); }).catch(() => {});
+  }, []);
 
   return (
     <div style={{ background: "linear-gradient(180deg, #1f1114 0%, #150a0c 100%)", border: "1px solid #e0c4c435", boxShadow: "0 0 90px rgba(224,196,196,0.07)", borderRadius: 22, padding: "42px clamp(28px,5vw,52px) 38px", width: "100%", maxWidth: 720, margin: "0 auto" }}>
@@ -1198,6 +1207,16 @@ export function WaitlistForm({ list = "insider" }) {
           </div>
         ) : (
           <>
+            {refBy && !refDismissed && (
+              <div style={{ background: "#1c0404", border: "1.5px solid #b80101", borderRadius: 12, padding: "14px 18px", marginBottom: 18, display: "flex", gap: 12, alignItems: "flex-start", boxShadow: "0 8px 28px rgba(184,1,1,0.25)" }}>
+                <span style={{ fontSize: 20 }}>🎁</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: "#f0d8d8", fontSize: 13.5, fontWeight: 800, fontFamily: font, marginBottom: 3 }}>You've been referred by {refBy.name}{refBy.company ? ` of ${refBy.company}` : ""}!</div>
+                  <div style={{ color: "#c8a8a8", fontSize: 12.5, fontFamily: font, lineHeight: 1.6 }}>Join the waitlist now and you'll get <strong style={{ color: "#f0d8d8" }}>10% off your first year</strong> when you become a member at launch — applied automatically at checkout.</div>
+                </div>
+                <button onClick={() => setRefDismissed(true)} style={{ background: "none", border: "none", color: "#7a5050", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 2 }}>×</button>
+              </div>
+            )}
             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>{insider ? "Insider Waitlist" : "GroundUp Waitlist"}</div>
             <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>{insider ? "Become an insider" : "Get on the list"}</h2>
             <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginBottom: insider ? 14 : 22 }}>{insider ? "Tell us where you are and what's in your way — at launch, you'll get first access and our personal recommendation for the plan that fits." : "Tell us where you are and what's in your way — the moment doors open, you'll get your invite and our personal recommendation for the plan that fits."}</p>
