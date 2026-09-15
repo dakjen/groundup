@@ -277,6 +277,35 @@ export default async function handler(req, res) {
     // copy/print attempts). Logged per user; the team is emailed at most once
     // per user per day. NOTE: macOS/iOS screenshots are invisible to web pages —
     // this catches what a browser CAN see.
+    // Public: support ticket — emailed straight to the DakJen support inbox.
+    // Rate limited per IP so the form can't be scripted into a spam cannon.
+    if (action === 'support_ticket') {
+      const name = String(req.body.name || '').trim().slice(0, 120);
+      const from = String(req.body.email || '').trim().toLowerCase().slice(0, 200);
+      const topic = String(req.body.topic || 'Support').slice(0, 80);
+      const message = String(req.body.message || '').trim().slice(0, 4000);
+      if (!name || !from || !message) return res.status(400).json({ error: 'Name, email, and a description are required' });
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(from)) return res.status(400).json({ error: "That email doesn't look right" });
+      try {
+        const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+        const [row] = await sql`SELECT COUNT(*)::int AS n FROM auth_attempts WHERE key = ${'ticket:' + ip} AND created_at > NOW() - interval '1 hour'`;
+        if ((row?.n || 0) >= 5) return res.status(429).json({ error: 'Too many tickets from this connection — try again in an hour.' });
+        await sql`INSERT INTO auth_attempts (key, created_at) VALUES (${'ticket:' + ip}, NOW())`;
+      } catch (e) { console.error('ticket rate limit failed', e.message); }
+      const [u] = await sql`SELECT id, tier, membership_status FROM users WHERE email = ${from}`;
+      const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const ok = await sendEmail('groundup@dakjencreative.com',
+        `🎫 TICKET [${topic}] — ${name}`,
+        `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Support ticket</h2>
+         <p style="color:#a89080;font-size:14px;line-height:1.9;">
+           <strong style="color:#f0d8d8;">${esc(name)}</strong> — ${esc(from)}${u ? ` · ${u.tier} member (${u.membership_status})` : ' · no account found'}<br/>
+           Topic: <strong style="color:#f0d8d8;">${esc(topic)}</strong>
+         </p>
+         <div style="background:#12060a;border:1px solid #2a0000;border-radius:10px;padding:16px 20px;color:#c8a8a8;font-size:14px;line-height:1.8;white-space:pre-wrap;">${esc(message)}</div>
+         <p style="color:#7a5050;font-size:12px;margin-top:14px;">Reply directly to this email's sender address? No — reply to ${esc(from)}.</p>`);
+      return ok ? res.json({ success: true }) : res.status(502).json({ error: 'Ticket failed to send — email the team at groundup@dakjencreative.com' });
+    }
+
     if (action === 'capture_event') {
       const session = getSession(req);
       if (!session || !session.uid) return res.json({ success: true });

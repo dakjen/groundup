@@ -623,8 +623,8 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
   const pages = isTeam
     ? ["community", "resources", "lunchlearn"]
     : member
-    ? ["courses", "community", "resources", "advisory", "lunchlearn", "officehours", "contact"]
-    : ["home", "courses", "about", "pricing", "lunchlearn", "contact"];
+    ? ["courses", "community", "resources", "advisory", "lunchlearn", "officehours", "contact", "support"]
+    : ["home", "courses", "about", "pricing", "lunchlearn", "contact", "support"];
   const ADMIN_TOOLS = [
     ["admin-users", "Users"], ["admin-referrals", "Referrals"], ["admin-waitlist", "Waitlist"],
     ["admin-email", "Email"], ["admin-courses", "Courses"], ["admin-shop", "Shop"], ["admin-contacts", "Contacts"], ["admin-office", "Office Hours"], ["admin-retainers", "Retainers"], ["admin-revenue", "Revenue"], ["admin-status", "System Status"],
@@ -632,7 +632,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
   const [adminOpen, setAdminOpen] = useState(false);
   const lightNav = member?.role === "admin";
   const navInactive = lightNav ? "#5a5a5a" : "#6a6b69";
-  const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", officehours: "Office Hours", contact: "Contact", community: "Community", membership: "Membership", resources: "Resources", advisory: "Advisory" };
+  const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", officehours: "Office Hours", contact: "Book with Dr. Gina", support: "Contact Us", community: "Community", membership: "Membership", resources: "Resources", advisory: "Advisory" };
   return (
     <>
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: lightNav ? "rgba(255,255,255,0.97)" : "rgba(0,0,0,0.97)", backdropFilter: "blur(16px)", borderBottom: lightNav ? "1px solid #d8ccb6" : "1px solid #1a0000", padding: "0 clamp(16px,4vw,48px)", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
@@ -1012,6 +1012,59 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate }) {
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── CONTACT US / TECH SUPPORT — tickets to the team ─────────────────────────
+
+function SupportPage() {
+  const font = "'DM Sans', sans-serif";
+  const [form, setForm] = useState({ name: "", email: "", topic: "Something isn't working", message: "" });
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  const [msg, setMsg] = useState("");
+  useEffect(() => { const m = getMember(); if (m) setForm(f => ({ ...f, name: m.name || "", email: m.email || "" })); }, []);
+  const inp = { width: "100%", background: "#0d0404", border: "1px solid #2a0000", borderRadius: 10, padding: "13px 16px", color: "#f0d8d8", fontSize: 14, fontFamily: font, outline: "none", boxSizing: "border-box" };
+  const lbl = { fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, display: "block", marginBottom: 8 };
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!form.name || !form.email || !form.message) { setMsg("Name, email, and a description are required."); return; }
+    setBusy(true); setMsg("");
+    try {
+      const res = await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "support_ticket", ...form }) });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || "Couldn't send — try again.");
+      setDone(true);
+    } catch (err) { setMsg(err.message); } finally { setBusy(false); }
+  };
+  return (
+    <div style={{ background: "#000", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
+      <div style={{ maxWidth: 640, margin: "0 auto" }}>
+        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Contact Us</div>
+        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(34px,5vw,48px)", color: "#f5e8e8", marginBottom: 10 }}>How can we help?</h1>
+        <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font, lineHeight: 1.8, marginBottom: 30 }}>Something broken, a billing question, or anything else — send a ticket and the team will get back to you. Looking for Dr. Merritt's time? That lives under <strong style={{ color: "#c8a8a8" }}>Book with Dr. Gina</strong>.</p>
+        {done ? (
+          <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "36px 32px", textAlign: "center" }}>
+            <div style={{ fontSize: 34, marginBottom: 10 }}>✓</div>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 26, color: "#f0d8d8", marginBottom: 8 }}>Ticket sent.</div>
+            <div style={{ color: "#8a7070", fontSize: 14, fontFamily: font, lineHeight: 1.7 }}>The team has it — you'll hear back at {form.email}.</div>
+          </div>
+        ) : (
+          <form onSubmit={submit} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "30px 32px" }}>
+            <div style={{ marginBottom: 16 }}><label style={lbl}>Your name</label><input style={inp} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required /></div>
+            <div style={{ marginBottom: 16 }}><label style={lbl}>Email</label><input style={inp} type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required /></div>
+            <div style={{ marginBottom: 16 }}><label style={lbl}>What's this about?</label>
+              <select style={{ ...inp, appearance: "auto", cursor: "pointer" }} value={form.topic} onChange={e => setForm({ ...form, topic: e.target.value })}>
+                {["Something isn't working", "Billing or membership", "Course or content issue", "Account access", "Something else"].map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+            <div style={{ marginBottom: 20 }}><label style={lbl}>Tell us what's going on</label><textarea style={{ ...inp, minHeight: 130, resize: "vertical" }} value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} required placeholder="What happened, where, and what you expected." /></div>
+            {msg && <div style={{ color: "#e05050", fontSize: 13, fontFamily: font, marginBottom: 14 }}>{msg}</div>}
+            <button type="submit" disabled={busy} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "15px 34px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer", opacity: busy ? 0.6 : 1 }}>{busy ? "Sending…" : "Send Ticket →"}</button>
+          </form>
+        )}
       </div>
     </div>
   );
@@ -5828,7 +5881,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest"];
+  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "support"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
     return PAGES.includes(p) ? p : (sessionStorage.getItem("activePage") || "home");
@@ -6232,8 +6285,9 @@ export default function App() {
       {member?.role === "admin" && activePage === "admin-revenue" && <TeamPage><RevenueTab /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-status" && <TeamPage><SystemStatusTab /></TeamPage>}
       {activePage === "contact" && <ContactPage setActivePage={navigateTo} advisorLink={advisorLink} />}
+      {activePage === "support" && <SupportPage />}
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>
-        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#3a2a2a" }}>© {new Date().getFullYear()} GroundUp · Northern Real Estate Urban Ventures<span style={{ margin: "0 8px" }}>·</span><button onClick={() => navigateTo("terms")} style={{ background: "none", border: "none", color: "#5a4040", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Terms</button><span style={{ margin: "0 6px" }}>·</span><button onClick={() => navigateTo("privacy")} style={{ background: "none", border: "none", color: "#5a4040", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Privacy</button><span style={{ margin: "0 6px" }}>·</span><a href="mailto:groundup@drginamerritt.net?subject=Tech%20support%20—%20GroundUp" style={{ color: "#5a4040", fontSize: 12, textDecoration: "none", fontFamily: "'DM Sans', sans-serif" }}>Tech Support</a></div>
+        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#3a2a2a" }}>© {new Date().getFullYear()} GroundUp · Northern Real Estate Urban Ventures<span style={{ margin: "0 8px" }}>·</span><button onClick={() => navigateTo("terms")} style={{ background: "none", border: "none", color: "#5a4040", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Terms</button><span style={{ margin: "0 6px" }}>·</span><button onClick={() => navigateTo("privacy")} style={{ background: "none", border: "none", color: "#5a4040", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Privacy</button><span style={{ margin: "0 6px" }}>·</span><button onClick={() => navigateTo("support")} style={{ background: "none", border: "none", color: "#5a4040", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Tech Support</button></div>
       </footer>
     </>
   );
