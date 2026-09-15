@@ -2869,7 +2869,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Pricing at Launch</div>
           <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(28px,4vw,40px)", color: "#f5e8e8" }}>Every path in. One mission.</h2>
         </div>
-        {!insider && (
+        {true && (
           <div style={{ marginBottom: 36, background: "#180606", border: "1px solid #3a1212", borderRadius: 16, overflow: "hidden" }}>
             <div style={{ padding: "22px 28px 6px" }}>
               <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font }}>What each plan includes</div>
