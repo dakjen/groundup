@@ -340,6 +340,15 @@ export default async function handler(req, res) {
       if (!learn || !String(learn).trim()) return res.status(400).json({ error: 'Tell us what you want to learn' });
       if (!pain || !String(pain).trim()) return res.status(400).json({ error: 'Tell us your biggest pain point' });
       if (BUDGET_EST[budget] === undefined) return res.status(400).json({ error: 'Pick a monthly budget' });
+      // Per-IP rate limit: 8 joins/hour. Keeps scripted signups from spamming
+      // the list — or inflating a referral code's count toward a comp.
+      try {
+        const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+        const key = 'wljoin:' + ip;
+        const [row] = await sql`SELECT COUNT(*)::int AS n FROM auth_attempts WHERE key = ${key} AND created_at > NOW() - interval '1 hour'`;
+        if ((row?.n || 0) >= 8) return res.status(429).json({ error: 'Too many signups from this connection — try again in an hour.' });
+        await sql`INSERT INTO auth_attempts (key, created_at) VALUES (${key}, NOW())`;
+      } catch (e) { console.error('wl rate limit failed', e.message); }
       const cleanEmail = String(email).trim().toLowerCase();
       const cleanPhone = String(phone).trim().slice(0, 30);
       const cleanLearn = String(learn).trim().slice(0, 2000);

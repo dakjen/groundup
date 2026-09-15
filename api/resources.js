@@ -74,7 +74,7 @@ export default async function handler(req, res) {
     if (req.method === 'POST' && req.body && req.body.action === 'resource_click') {
       const session = getSession(req);
       const rid = Number(req.body.id);
-      if (rid) await sql`INSERT INTO resource_clicks (resource_id, user_id, created_at) VALUES (${rid}, ${session?.uid || null}, NOW())`;
+      if (rid && session?.uid) await sql`INSERT INTO resource_clicks (resource_id, user_id, created_at) VALUES (${rid}, ${session.uid}, NOW())`;
       return res.json({ success: true });
     }
 
