@@ -270,7 +270,7 @@ function LessonCalc({ kind, color }) {
 }
 
 function LessonRich({ text, lead }) {
-  const bold = (str) => String(str).split(/\*\*(.+?)\*\*/g).map((part, i) => i % 2 ? <strong key={i} style={{ color: "#f0d8d8", fontWeight: 700 }}>{part}</strong> : part);
+  const bold = (str) => String(str).split(/\*\*(.+?)\*\*/g).map((part, i) => i % 2 ? <strong key={i} style={{ color: "#ffffff", fontWeight: 700 }}>{part}</strong> : part);
   const blocks = lessonBlocks(text);
   const paraIdxs = blocks.map((b, i) => b.kind === "p" ? i : -1).filter(i => i >= 0);
   // Rhythm: in a long read, lift one strong short paragraph out as a callout
@@ -283,7 +283,7 @@ function LessonRich({ text, lead }) {
     ) : b.kind === "list" ? (
       <ul key={i} style={{ margin: "0 0 22px", paddingLeft: 4, listStyle: "none" }}>
         {b.items.map((it, j) => (
-          <li key={j} style={{ color: "#b8a090", fontSize: 15.5, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", marginBottom: 10, paddingLeft: 20, position: "relative" }}>
+          <li key={j} style={{ color: "#e8e0da", fontSize: 15.5, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", marginBottom: 10, paddingLeft: 20, position: "relative" }}>
             <span style={{ position: "absolute", left: 0, color: "#b80101", fontWeight: 800 }}>—</span>{bold(it)}
           </li>
         ))}
@@ -293,7 +293,7 @@ function LessonRich({ text, lead }) {
         <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 21, lineHeight: 1.6, color: "#e0c4c4", margin: 0, fontWeight: 600 }}>{bold(b.text)}</p>
       </blockquote>
     ) : (
-      <p key={i} style={{ color: "#b8a090", fontSize: lead && i === paraIdxs[0] ? 17 : 15.5, lineHeight: 1.95, fontFamily: "'DM Sans', sans-serif", marginBottom: 20, ...(lead && i === paraIdxs[0] ? { color: "#d0b8a8" } : {}) }}>{bold(b.text)}</p>
+      <p key={i} style={{ color: "#e8e0da", fontSize: lead && i === paraIdxs[0] ? 17 : 15.5, lineHeight: 1.95, fontFamily: "'DM Sans', sans-serif", marginBottom: 20, ...(lead && i === paraIdxs[0] ? { color: "#f5efe9" } : {}) }}>{bold(b.text)}</p>
     ))}
   </>);
 }
