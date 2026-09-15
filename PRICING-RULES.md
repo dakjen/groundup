@@ -11,7 +11,7 @@ This document reflects every pricing rule currently implemented in code. Prices 
 |---|---|---|---|
 | Member | Basic | $49.99/mo | Every course + community read access |
 | Builder | Builder | $149.99/mo | + posting, free live L&Ls + recordings, view-only templates |
-| Premium | Premium | $249.99/mo | + 3 downloads/mo, Opportunity Board, group office hours, 10% off 1:1s, GroundUp-only partner rates |
+| Premium | Premium | $249.99/mo | + 3 downloads/mo, Opportunity Board, group office hours, 10% off 1:1s, 1 free 1:1 session/yr (after 4 months), GroundUp-only partner rates |
 | Owner | Elite | $499.99/mo | + deal support in advisory calls, DMs, unlimited downloads, 30% off 1:1s, GroundUp-only partner rates |
 
 - **Naming:** the top tier displays as **"Owner"** everywhere users see it; `Elite` remains the internal tier key (database, Stripe, API) and is never shown.
@@ -99,7 +99,7 @@ This document reflects every pricing rule currently implemented in code. Prices 
 
 ## 10. Gates
 
-- **Advisory calls + the networking-event invite unlock after 4 months (120 days) of continuous membership** (Elite). Only these two benefits are gated — everything else is immediate. Gate length is a setting (`benefit_gate_days`).
+- **Advisory calls, Premium's included yearly 1:1 session, + the networking-event invite unlock after 4 months (120 days) of continuous membership.** Only these benefits are gated — everything else is immediate. Gate length is a setting (`benefit_gate_days`).
 
 ## 11. Refunds & cancellation
 

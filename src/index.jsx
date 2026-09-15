@@ -1232,6 +1232,7 @@ const plans = [
       "Development timeline templates",
       "Group office hours with Dr. Merritt + priority booking",
       "10% off 1:1 sessions with Dr. Merritt",
+      "1 free 1:1 session with Dr. Merritt every year — unlocks after 4 months",
       "GroundUp-only rates with our partners",
     ],
     locked: ["The Developer's Playbook download (view-only until Owner)", "Deal-specific support — an Owner benefit"],
@@ -1533,26 +1534,26 @@ function PricingPage({ onSignUp }) {
               <thead>
                 <tr>
                   <th style={{ textAlign: "left", padding: "14px 16px", color: "#7a5050", fontSize: 11, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase" }}>Benefit</th>
-                  {["Member", "Builder", "Premium", "Elite"].map(t => (
+                  {["Free", "Member", "Builder", "Premium", "Elite"].map(t => (
                     <th key={t} style={{ padding: "14px 12px", color: t === "Elite" ? "#e0c4c4" : "#c8a8a8", fontSize: 12.5, fontWeight: 800, textAlign: "center", whiteSpace: "nowrap" }}>{t === "Elite" ? "Owner" : t}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {[
-                  ["Every course — plus each new one we add", "✓", "✓", "✓", "✓"],
-                  ["Live Lunch & Learns with Dr. Merritt", "✓", "✓", "✓", "✓"],
-                  ["Lunch & Learn recording library", "—", "✓", "✓", "✓"],
-                  ["Community", "Read", "Post & network", "Post & network", "Priority"],
-                  ["Guides, templates & the Playbook", "—", "View only", "3 downloads/mo", "Unlimited"],
-                  ["The Opportunity Board — RFPs & funding windows", "—", "—", "✓", "✓"],
-                  ["Group office hours with Dr. Merritt", "—", "—", "✓", "✓"],
-                  ["Discount on 1:1 sessions", "—", "—", "10%", "30%"],
-                  ["GroundUp-only rates with our partners", "—", "—", "✓", "✓"],
-                  ["Direct messages to Dr. Merritt & her team", "—", "—", "—", "✓"],
-                  ["Advisory calls — 3/yr (unlock after 4 months)", "—", "—", "—", "✓"],
-                  ["Deal support — bring YOUR deal", "—", "—", "—", "✓"],
-                  ["Owner Lounge + networking event", "—", "—", "—", "✓"],
+                  ["Every course — plus each new one we add", "Titles only", "✓", "✓", "✓", "✓"],
+                  ["Live Lunch & Learns with Dr. Merritt", "1 free, ever", "✓", "✓", "✓", "✓"],
+                  ["Lunch & Learn recording library", "—", "—", "✓", "✓", "✓"],
+                  ["Community", "—", "Read", "Post & network", "Post & network", "Priority"],
+                  ["Guides, templates & the Playbook", "—", "—", "View only", "3 downloads/mo", "Unlimited"],
+                  ["The Opportunity Board — RFPs & funding windows", "—", "—", "—", "✓", "✓"],
+                  ["Group office hours with Dr. Merritt", "—", "—", "—", "✓", "✓"],
+                  ["Discount on paid 1:1 sessions", "—", "—", "—", "10%", "30%"],
+                  ["Included 1:1 time with Dr. Merritt (after 4 months)", "—", "—", "—", "1 session/yr", "3 advisory calls/yr"],
+                  ["GroundUp-only rates with our partners", "—", "—", "—", "✓", "✓"],
+                  ["Direct messages to Dr. Merritt & her team", "—", "—", "—", "—", "✓"],
+                  ["Deal support — bring YOUR deal", "—", "—", "—", "—", "✓"],
+                  ["Owner Lounge + networking event", "—", "—", "—", "—", "✓"],
                 ].map((row, i) => (
                   <tr key={i} style={{ borderTop: "1px solid #1a0000" }}>
                     <td style={{ padding: "11px 16px", color: "#a89090", fontSize: 13, lineHeight: 1.5 }}>{row[0]}</td>
