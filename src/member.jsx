@@ -208,7 +208,7 @@ const BENEFITS = {
 const NEXT_TIER = {
   Free: { tier: "Basic", price: "$49.99/mo", adds: ["The full curriculum — every course, every lesson", "Community access"] },
   Basic: { tier: "Builder", price: "$149.99/mo", adds: ["A voice in the community — post, reply & network", "Free live Lunch & Learns + all recordings", "Every template & guide, view-only"] },
-  Builder: { tier: "Premium", price: "$249.99/mo", adds: ["3 downloads a month", "The Opportunity Board", "Office hours with Dr. Merritt", "10% off 1:1 sessions"] },
+  Builder: { tier: "Premium", price: "$249.99/mo", adds: ["3 downloads a month", "The Opportunity Board", "Group office hours with Dr. Merritt", "10% off 1:1 sessions"] },
   Premium: { tier: "Elite", price: "$499.99/mo", adds: ["Deal support — bring YOUR deal to advisory calls", "DMs to Dr. Merritt & her team", "Unlimited downloads incl. the Playbook", "30% off 1:1 sessions"] },
 };
 
@@ -1277,7 +1277,7 @@ export function WaitlistForm({ list = "insider" }) {
                         </select>
                       );
                       else if (b === "I need general deal support & guidance") bubbleBody = (
-                        <span>General deal support — the tools, templates, Opportunity Board, and office hours with Dr. Merritt — lives in the <strong style={{ color: "#f0d8d8" }}>Premium plan</strong> ($249.99/mo). That's what we'll recommend.</span>
+                        <span>General deal support — the tools, templates, Opportunity Board, and group office hours with Dr. Merritt — lives in the <strong style={{ color: "#f0d8d8" }}>Premium plan</strong> ($249.99/mo). That's what we'll recommend.</span>
                       );
                       else if (b === "I need specific, customized deal help") bubbleBody = (
                         <span>Deal-specific support — your numbers, your gap, your structure — comes with the <strong style={{ color: "#f0d8d8" }}>Owner plan</strong> ($499.99/mo) or the Senior Advisor retainer. We'll recommend Owner and point you at the fastest way to get Dr. Merritt on your deal.</span>

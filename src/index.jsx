@@ -1457,7 +1457,7 @@ function PricingPage({ onSignUp }) {
               </div>
               <p style={{ color: "#8a8060", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 14 }}>Every course, in perpetuity — including each new one we ever add.</p>
               <ul style={{ listStyle: "none", padding: 0, margin: "0 0 18px" }}>
-                {["Every course forever — new ones included", "One full year of Builder membership, free", "Office hours with Dr. Merritt — your first 5 years", "Every Lunch & Learn, live & recorded — for life"].map((f, i) => (
+                {["Every course forever — new ones included", "One full year of Builder membership, free", "Group office hours with Dr. Merritt — your first 5 years", "Every Lunch & Learn, live & recorded — for life"].map((f, i) => (
                   <li key={i} style={{ display: "flex", gap: 10, marginBottom: 8, color: "#c8bc9a", fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}><span style={{ color: "#c9a227" }}>✦</span><span>{f}</span></li>
                 ))}
               </ul>
@@ -1546,7 +1546,7 @@ function PricingPage({ onSignUp }) {
                   ["Community", "Read", "Post & network", "Post & network", "Priority"],
                   ["Guides, templates & the Playbook", "—", "View only", "3 downloads/mo", "Unlimited"],
                   ["The Opportunity Board — RFPs & funding windows", "—", "—", "✓", "✓"],
-                  ["Office hours with Dr. Merritt", "—", "—", "✓", "✓"],
+                  ["Group office hours with Dr. Merritt", "—", "—", "✓", "✓"],
                   ["Discount on 1:1 sessions", "—", "—", "10%", "30%"],
                   ["GroundUp-only rates with our partners", "—", "—", "✓", "✓"],
                   ["Direct messages to Dr. Merritt & her team", "—", "—", "—", "✓"],

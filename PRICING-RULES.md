@@ -11,7 +11,7 @@ This document reflects every pricing rule currently implemented in code. Prices 
 |---|---|---|---|
 | Member | Basic | $49.99/mo | Every course + community read access |
 | Builder | Builder | $149.99/mo | + posting, free live L&Ls + recordings, view-only templates |
-| Premium | Premium | $249.99/mo | + 3 downloads/mo, Opportunity Board, office hours, 10% off 1:1s, GroundUp-only partner rates |
+| Premium | Premium | $249.99/mo | + 3 downloads/mo, Opportunity Board, group office hours, 10% off 1:1s, GroundUp-only partner rates |
 | Owner | Elite | $499.99/mo | + deal support in advisory calls, DMs, unlimited downloads, 30% off 1:1s, GroundUp-only partner rates |
 
 - **Naming:** the top tier displays as **"Owner"** everywhere users see it; `Elite` remains the internal tier key (database, Stripe, API) and is never shown.
@@ -32,7 +32,7 @@ This document reflects every pricing rule currently implemented in code. Prices 
 | Single Course Pass | $100 | **60 days** of one course — written lessons only |
 | All-Access Pass | $275 | **30 days** of every course — written lessons only |
 
-- **GroundUp Lifetime Pass — $5,000 one-time** (`pass_lifetime`, gold card in the passes section): every course **in perpetuity** (new ones included), **one year of Builder membership free** (auto-reverts to Free after — the daily cron handles it, never touching paid subscriptions), **office hours for the first 5 years** at the Premium allowance, and **every Lunch & Learn — live + recordings — for life**. The ceiling is Builder: no downloads, no Opportunity Board, nothing above it.
+- **GroundUp Lifetime Pass — $5,000 one-time** (`pass_lifetime`, gold card in the passes section): every course **in perpetuity** (new ones included), **one year of Builder membership free** (auto-reverts to Free after — the daily cron handles it, never touching paid subscriptions), **group office hours for the first 5 years** at the Premium allowance, and **every Lunch & Learn — live + recordings — for life**. The ceiling is Builder: no downloads, no Opportunity Board, nothing above it.
 - **Passes are read-only:** pass and trial holders get the written lessons (and lesson videos) but NOT worksheet/template/case-study PDF downloads — documents are a membership benefit, enforced server-side.
 - **Pass-expiry funnel:** a daily cron emails anyone whose pass just ended (Free-tier accounts only): they have a **7-day window** to either (a) buy another pass, or (b) join as a member paying **annually at 15% off (coupon PASSJOIN15)** — the 15% *replaces* the usual 10% annual discount; they never stack. The 15% applies automatically at checkout for an annual plan bought within 7 days of pass expiry.
 
