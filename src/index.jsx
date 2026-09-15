@@ -206,12 +206,19 @@ function lessonBlocks(text) {
       continue;
     }
     if (t.length <= 450) { blocks.push({ kind: "p", text: t }); continue; }
-    const sentences = t.match(/[^.!?]+[.!?]+(?:['"\u2019\u201d])?(?:\s+|$)/g) || [t];
+    const rawSentences = t.match(/[^.!?]+[.!?]+(?:['"\u2019\u201d])?(?:\s+|$)/g) || [t];
+    // Re-join false splits at abbreviations (Dr. Merritt must never break)
+    const ABBR = /(?:\b(?:Dr|Mr|Mrs|Ms|Jr|Sr|St|vs|etc|approx|No|Ph\.D|U\.S|D\.C|e\.g|i\.e))\.\s*$/;
+    const sentences = [];
+    for (const sen of rawSentences) {
+      if (sentences.length && ABBR.test(sentences[sentences.length - 1])) sentences[sentences.length - 1] += sen;
+      else sentences.push(sen);
+    }
     let buf = "";
     let count = 0;
     for (const sen of sentences) {
       buf += sen; count++;
-      if (buf.length > 260 && count >= 2) { blocks.push({ kind: "p", text: buf.trim() }); buf = ""; count = 0; }
+      if (buf.length > 260 && count >= 2 && !ABBR.test(buf)) { blocks.push({ kind: "p", text: buf.trim() }); buf = ""; count = 0; }
     }
     if (buf.trim()) blocks.push({ kind: "p", text: buf.trim() });
   }
