@@ -491,13 +491,13 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
             ) : b.kind === "list" ? (
               <ul key={"b" + i} style={{ margin: "0 0 22px", paddingLeft: 4, listStyle: "none" }}>
                 {b.items.map((it, j) => (
-                  <li key={j} style={{ color: "#e8e0da", fontSize: 16, lineHeight: 1.85, fontFamily: font, marginBottom: 10, paddingLeft: 20, position: "relative" }}>
+                  <li key={j} style={{ color: "#e8e0da", fontSize: 14.5, lineHeight: 1.85, fontFamily: font, marginBottom: 10, paddingLeft: 20, position: "relative" }}>
                     <span style={{ position: "absolute", left: 0, color: "#b80101", fontWeight: 800 }}>—</span>{boldify(it)}
                   </li>
                 ))}
               </ul>
             ) : (
-              <p key={"b" + i} style={{ color: isLead ? "#f5efe9" : "#e8e0da", fontSize: isLead ? 17.5 : 16, lineHeight: 1.85, fontFamily: font, marginBottom: 20, textAlign: "justify", hyphens: "auto" }}>{boldify(b.text)}</p>
+              <p key={"b" + i} style={{ color: isLead ? "#f5efe9" : "#e8e0da", fontSize: isLead ? 16 : 14.5, lineHeight: 1.85, fontFamily: font, marginBottom: 18, textAlign: "justify", hyphens: "auto" }}>{boldify(b.text)}</p>
             );
 
             // The media pieces, each rendered once, dropped in at intervals
