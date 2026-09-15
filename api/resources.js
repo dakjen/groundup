@@ -230,6 +230,8 @@ export default async function handler(req, res) {
       if (!admin) {
         const [u] = await sql`SELECT tier FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
         if ((TIER_RANK[u?.tier] ?? 0) < 1) {
+          // Free accounts: videos stay (lesson content); documents — the pdf
+          // and every material — are a membership benefit.
           atts = Object.fromEntries(Object.entries(atts)
             .map(([k, v]) => [k, { ...(v.video ? { video: v.video } : {}) }])
             .filter(([, v]) => Object.keys(v).length));

@@ -42,8 +42,15 @@ export default async function handler(req, res) {
         if (!imgExt) return res.status(400).json({ error: 'Covers must be PNG, JPG, or WEBP' });
         folder = 'shop-covers'; contentType = IMG[imgExt];
       } else {
-        if (!lower.endsWith('.pdf')) return res.status(400).json({ error: 'Only PDF files are allowed' });
-        folder = kind === 'file' ? 'shop-files' : 'lesson-pdfs'; contentType = 'application/pdf';
+        const DOC_TYPES = { '.pdf': 'application/pdf', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation' };
+        const ext = Object.keys(DOC_TYPES).find(e => lower.endsWith(e));
+        if (kind === 'material') {
+          if (!ext) return res.status(400).json({ error: 'Materials can be PDF, Word, Excel, or PowerPoint files' });
+          folder = 'lesson-pdfs'; contentType = DOC_TYPES[ext];
+        } else {
+          if (!lower.endsWith('.pdf')) return res.status(400).json({ error: 'Only PDF files are allowed' });
+          folder = kind === 'file' ? 'shop-files' : 'lesson-pdfs'; contentType = 'application/pdf';
+        }
       }
 
       const blob = await put(`${folder}/${Date.now()}-${filePart.filename}`, filePart.data, {

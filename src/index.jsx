@@ -436,6 +436,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
   };
   const [lessonPdfs, setLessonPdfs] = useState({});
   const [lessonVideos, setLessonVideos] = useState({});
+  const [lessonMats, setLessonMats] = useState({});
   const [playingVideo, setPlayingVideo] = useState(false);
 
   useEffect(() => {
@@ -444,12 +445,13 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (!d?.attachments) return;
-        const pdfs = {}, vids = {};
+        const pdfs = {}, vids = {}, mats = {};
         for (const [k, v] of Object.entries(d.attachments)) {
           if (v.pdf) pdfs[k] = v.pdf;
           if (v.video) vids[k] = v.video;
+          if (v.materials?.length) mats[k] = v.materials;
         }
-        setLessonPdfs(pdfs); setLessonVideos(vids);
+        setLessonPdfs(pdfs); setLessonVideos(vids); setLessonMats(mats);
       }).catch(() => {});
   }, [member?.id]);
 
@@ -467,6 +469,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
     const pdfKey = `${course.id}:${lesson.id}`;
     const lessonPdf = lessonPdfs[pdfKey];
     const lessonVideo = lessonVideos[pdfKey];
+    const lessonMaterials = lessonMats[pdfKey] || [];
     return (
       <div style={{ background: pageBg, minHeight: "100vh", padding: "100px clamp(20px,5vw,60px) 80px" }}>
         <ProtectedContent email={member?.email}>
@@ -579,6 +582,22 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
             <div style={{ background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 14, padding: "20px 24px" }}>
               <div style={{ fontSize: 9, color: "#a08030", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Action Item</div>
               <p style={{ color: "#b8a060", fontSize: 14, lineHeight: 1.75, fontFamily: "'DM Sans', sans-serif" }}>{lesson.actionItem}</p>
+            </div>
+          )}
+          {lessonMaterials.length > 0 && (
+            <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "24px 28px", marginBottom: 32 }}>
+              <div style={{ fontSize: 10, color: course.stageColor, fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Templates & Materials</div>
+              {lessonMaterials.map((mt, mi) => {
+                const yt = String(mt.url).match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{6,})/);
+                return (
+                  <a key={mi} href={mt.url} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "#0a0808", border: "1px solid #1e0000", borderRadius: 10, marginBottom: mi < lessonMaterials.length - 1 ? 8 : 0, textDecoration: "none" }}>
+                    <span style={{ fontSize: 16 }}>{yt || mt.kind === "Video" ? "▶" : "📄"}</span>
+                    <span style={{ background: "#b8010115", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "2px 8px", fontSize: 9, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>{mt.kind}</span>
+                    <span style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 600, fontFamily: "'DM Sans', sans-serif", flex: 1 }}>{mt.title}</span>
+                    <span style={{ color: "#7a5050", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>Open ↗</span>
+                  </a>
+                );
+              })}
             </div>
           )}
           {lessonPdf && (
@@ -3630,6 +3649,7 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
                     <span style={{ color: "#222222", fontSize: 13.5, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", flex: 1 }}>{l.title}</span>
                     {att.pdf && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#1a7a3a", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}><FileText size={12} /> PDF</span>}
                     {att.video && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#1a7a3a", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}><Video size={12} /> VIDEO</span>}
+                    {att.materials?.length > 0 && <span style={{ color: "#1a7a3a", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}>📎 {att.materials.length}</span>}
                     <span style={{ color: "#9a9a9a", fontSize: 14, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>▾</span>
                   </button>
                   {open && (
@@ -3676,6 +3696,56 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
                               <button onClick={() => attachVideo(dataKey, l.title)} style={btnRed}>Attach video</button>
                             </div>
                           )}
+                        </div>
+
+                        {/* Templates, action plans & deliverables — any number per lesson */}
+                        <div style={{ marginTop: 18, borderTop: "1px dashed #e0d8c8", paddingTop: 16 }}>
+                          <div style={{ fontSize: 10, color: "#8a8a8a", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>Templates & materials</div>
+                          {(att.materials || []).map((mt, mi) => (
+                            <div key={mi} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8, flexWrap: "wrap" }}>
+                              <span style={{ background: "#b8010112", color: "#b80101", borderRadius: 4, padding: "2px 8px", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}>{mt.kind}</span>
+                              <a href={mt.url} target="_blank" rel="noreferrer" style={{ color: "#222222", fontSize: 13, fontWeight: 600, fontFamily: "'DM Sans', sans-serif", textDecoration: "none" }}>{mt.title} ↗</a>
+                              <button onClick={async () => {
+                                const next = { ...attachments, [dataKey]: { ...att, materials: att.materials.filter((_, x) => x !== mi) } };
+                                if (!next[dataKey].materials.length) delete next[dataKey].materials;
+                                try { await save(next); } catch (e) { flash(false, e.message); }
+                              }} style={{ ...btnGhost, fontSize: 10, padding: "4px 10px", color: "#b80101", borderColor: "#b8010140" }}>Remove</button>
+                            </div>
+                          ))}
+                          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 10 }}>
+                            <select id={"mat-kind-" + dataKey} style={{ ...inp, maxWidth: 150, marginBottom: 0, cursor: "pointer" }} defaultValue="Template">
+                              {["Template", "Action Plan", "Worksheet", "Deliverable", "Checklist", "Video"].map(k => <option key={k} value={k}>{k}</option>)}
+                            </select>
+                            <input id={"mat-title-" + dataKey} placeholder="Name members will see" style={{ ...inp, maxWidth: 220, marginBottom: 0 }} />
+                            <input id={"mat-url-" + dataKey} placeholder="Link or YouTube URL (or upload →)" style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1, minWidth: 200 }} />
+                            <label style={{ ...btnGhost, cursor: "pointer" }}>
+                              {uploading ? "Uploading…" : "Upload file"}
+                              <input type="file" accept=".pdf,.docx,.xlsx,.pptx" style={{ display: "none" }} onChange={async e => {
+                                const file = e.target.files?.[0]; if (!file) return;
+                                setUploading(true);
+                                try {
+                                  const form = new FormData(); form.append("file", file); form.append("kind", "material");
+                                  const res = await fetch("/api/lesson-pdfs?kind=material", { method: "POST", headers: authHeaders(), body: form });
+                                  const d = await res.json(); if (!res.ok) throw new Error(d.error || "Upload failed");
+                                  document.getElementById("mat-url-" + dataKey).value = d.url;
+                                  if (!document.getElementById("mat-title-" + dataKey).value) document.getElementById("mat-title-" + dataKey).value = d.filename.replace(/\.[a-z]+$/i, "");
+                                  flash(true, "File uploaded — now click Add to attach it.");
+                                } catch (err) { flash(false, err.message); } finally { setUploading(false); e.target.value = ""; }
+                              }} />
+                            </label>
+                            <button onClick={async () => {
+                              const kind = document.getElementById("mat-kind-" + dataKey).value;
+                              const title = document.getElementById("mat-title-" + dataKey).value.trim();
+                              const url = document.getElementById("mat-url-" + dataKey).value.trim();
+                              if (!title || !url) { flash(false, "A material needs a name and a link (or uploaded file)."); return; }
+                              try {
+                                await save({ ...attachments, [dataKey]: { ...att, materials: [...(att.materials || []), { kind, title, url }] } });
+                                document.getElementById("mat-title-" + dataKey).value = "";
+                                document.getElementById("mat-url-" + dataKey).value = "";
+                                flash(true, "Material attached.");
+                              } catch (e) { flash(false, e.message); }
+                            }} style={btnRed}>Add</button>
+                          </div>
                         </div>
 
                         {(att.pdf || att.video) && (
