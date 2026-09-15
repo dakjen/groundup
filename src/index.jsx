@@ -2728,7 +2728,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
 
       {/* Hero + countdown */}
       <div style={{ minHeight: "88vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "80px 20px 60px", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: insider ? "url(/LIIF-Stills2.png)" : "url(/general-waitlist-hero.jpg)", backgroundSize: "cover", backgroundPosition: "center 25%", opacity: insider ? 0.28 : 0.34, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", inset: 0, backgroundImage: insider ? "url(/LIIF-Stills2.png)" : "url(/DSC00699.jpg)", backgroundSize: "cover", backgroundPosition: insider ? "center 25%" : "center 30%", opacity: insider ? 0.28 : 0.42, pointerEvents: "none" }} />
         <div style={{ position: "absolute", inset: 0, background: insider ? "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.75) 55%, #000 100%)" : "linear-gradient(180deg, rgba(22,13,8,0.5) 0%, rgba(22,13,8,0.72) 55%, #160d08 100%)", pointerEvents: "none" }} />
         <div className="gu-drift" style={{ position: "absolute", top: "0%", left: "20%", width: 700, height: 700, borderRadius: "50%", background: "radial-gradient(circle, #57040428 0%, transparent 65%)", pointerEvents: "none" }} />
         <div className="gu-up" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#0a050599", border: "1px solid #7a615140", borderRadius: 99, padding: "8px 20px", marginBottom: 36, position: "relative", zIndex: 1 }}>
