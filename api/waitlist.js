@@ -273,7 +273,7 @@ export default async function handler(req, res) {
       let partners = [];
       try {
         const rows = await sql`SELECT code, owner_name, company FROM partner_codes ORDER BY owner_name`;
-        partners = rows.map(r => ({ code: r.code, label: r.owner_name + (r.company ? ` (${r.company})` : '') }));
+        partners = rows.map(r => ({ code: r.code, label: r.company || r.owner_name }));
       } catch { /* table appears after first migrate */ }
       return res.json({ launch_at: launchRow?.value || null, launch_insider_at: insiderRow?.value || null, advisor_call_link: callRow?.value || null, elite, partners });
     }
