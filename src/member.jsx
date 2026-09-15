@@ -1660,22 +1660,34 @@ export function RetainerPage({ member, setActivePage }) {
               )}
             </div>
 
-            <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "26px 28px" }}>
-              <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Project Documents</div>
-              <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 14 }}>Share deal docs, models, and links — anything you want Dr. Merritt to review.</p>
-              <form onSubmit={addFile} style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
-                <input style={{ ...inp, marginBottom: 0, flex: 1, minWidth: 150 }} value={file.title} onChange={e => setFile({ ...file, title: e.target.value })} placeholder="Document name" />
-                <input style={{ ...inp, marginBottom: 0, flex: 1, minWidth: 180 }} value={file.url} onChange={e => setFile({ ...file, url: e.target.value })} placeholder="Link (Drive, Dropbox…)" />
-                <button type="submit" style={btnRed}>Add</button>
-              </form>
-              {data.files?.length ? data.files.map(f => (
+            {(() => {
+              const engagement = (data.files || []).filter(f => f.kind === "engagement");
+              const project = (data.files || []).filter(f => f.kind !== "engagement");
+              const row = (f) => (
                 <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid var(--gu-border2)" }}>
                   <FileTextIcon />
                   <span style={{ color: "var(--gu-text2)", fontSize: 13.5, fontFamily: font, fontWeight: 600, flex: 1 }}>{f.title}</span>
                   {f.url && <a href={f.url} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontSize: 12.5, fontFamily: font, fontWeight: 800, textDecoration: "none" }}>Open ↗</a>}
                 </div>
-              )) : <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>Nothing shared yet.</div>}
-            </div>
+              );
+              return (<>
+              <div style={{ background: "linear-gradient(135deg, #171004, var(--gu-card))", border: "1px solid #4a3a1060", borderRadius: 16, padding: "26px 28px", marginBottom: 18 }}>
+                <div style={{ fontSize: 9, color: "#c9a227", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Engagement Documents</div>
+                <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: engagement.length ? 14 : 0 }}>The paperwork of the engagement itself — your agreement, scope, and anything the team formalizes. Both sides see everything here.</p>
+                {engagement.length ? engagement.map(row) : <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font, marginTop: 10 }}>No engagement documents yet — the team adds them here as they're executed.</div>}
+              </div>
+              <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "26px 28px" }}>
+                <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Project Documents</div>
+                <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 14 }}>Send document links back and forth — deal docs, models, drafts, anything you want Dr. Merritt to review, and anything she sends back.</p>
+                <form onSubmit={addFile} style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+                  <input style={{ ...inp, marginBottom: 0, flex: 1, minWidth: 150 }} value={file.title} onChange={e => setFile({ ...file, title: e.target.value })} placeholder="Document name" />
+                  <input style={{ ...inp, marginBottom: 0, flex: 1, minWidth: 180 }} value={file.url} onChange={e => setFile({ ...file, url: e.target.value })} placeholder="Link (Drive, Dropbox…)" />
+                  <button type="submit" style={btnRed}>Add</button>
+                </form>
+                {project.length ? project.map(row) : <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>Nothing shared yet.</div>}
+              </div>
+              </>);
+            })()}
           </div>
 
           {/* Right: direct line */}

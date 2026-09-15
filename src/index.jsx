@@ -1280,6 +1280,14 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate }) {
           ))}
         </div>
 
+        {/* Coming soon: the Underwriting Series teaser (remove when published) */}
+        {!seriesGroups["The Underwriting Series"] && (
+          <div style={{ marginTop: 40, background: "linear-gradient(135deg, #171004, #0d0404)", border: "1px dashed #c9a22755", borderRadius: 18, padding: "32px 36px", textAlign: "center" }}>
+            <div style={{ fontSize: 10, color: "#c9a227", fontWeight: 800, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Coming Soon</div>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(24px,3.5vw,34px)", color: "#e6c766", marginBottom: 10 }}>The Underwriting Series</div>
+            <p style={{ color: "#a89070", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8, maxWidth: 560, margin: "0 auto" }}>A two-part deep dive into the work that separates professionals: <strong style={{ color: "#e0c4a0" }}>Underwriting the Project Budget</strong> and <strong style={{ color: "#e0c4a0" }}>The Closing Draw</strong> — Dr. Merritt's own method, line by line.</p>
+          </div>
+        )}
         {/* ── Series: focused deep-dives, distinct from the main curriculum ── */}
         {Object.entries(seriesGroups).map(([name, list]) => (
           <div key={name} style={{ marginTop: 72 }}>
@@ -5787,6 +5795,17 @@ function RetainerTab({ btnRed, btnGhost, inp, lbl }) {
     catch (e) { flash(false, e.message); }
   };
   const setStatus = async (id, status) => { try { await call("POST", { action: "update", id, status }); await load(); } catch (e) { flash(false, e.message); } };
+  const addDoc = async (rid) => {
+    const title = document.getElementById("rf-title-" + rid)?.value.trim();
+    const url = document.getElementById("rf-url-" + rid)?.value.trim();
+    const kind = document.getElementById("rf-kind-" + rid)?.value || "link";
+    if (!title || !url) { flash(false, "Document name and link required."); return; }
+    try {
+      await call("POST", { action: "add_file", retainer_id: rid, title, url, kind });
+      document.getElementById("rf-title-" + rid).value = ""; document.getElementById("rf-url-" + rid).value = "";
+      await load(); flash(true, kind === "engagement" ? "Engagement document shared — the client sees it in the gold section of their workspace." : "Document shared to their workspace.");
+    } catch (e) { flash(false, e.message); }
+  };
 
   const section = { background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 14, padding: "28px 32px", marginBottom: 20 };
   if (!data) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading…</div>;
@@ -5898,6 +5917,27 @@ function RetainerTab({ btnRed, btnGhost, inp, lbl }) {
                   <input placeholder="What you worked on" value={(logForm[r.id] || {}).note || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), note: e.target.value } })} style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1, minWidth: 180 }} />
                   <button onClick={() => logHours(r.id)} style={btnRed}>Log Hours</button>
                 </div>
+                {/* Share a document into their workspace — engagement docs land in the gold section */}
+                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginTop: 14, borderTop: "1px dashed #eeebe4", paddingTop: 14 }}>
+                  <select id={"rf-kind-" + r.id} defaultValue="link" style={{ ...inp, maxWidth: 170, marginBottom: 0, cursor: "pointer" }}>
+                    <option value="link">Project document</option>
+                    <option value="engagement">Engagement document</option>
+                  </select>
+                  <input id={"rf-title-" + r.id} placeholder="Document name" style={{ ...inp, maxWidth: 200, marginBottom: 0 }} />
+                  <input id={"rf-url-" + r.id} placeholder="Link (Drive, DocuSign…)" style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1, minWidth: 160 }} />
+                  <button onClick={() => addDoc(r.id)} style={btnRed}>Share</button>
+                </div>
+                {r.files?.length > 0 && (
+                  <div style={{ marginTop: 10 }}>
+                    {r.files.map(f => (
+                      <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", padding: "4px 0" }}>
+                        {f.kind === "engagement" && <span style={{ background: "#c9a22720", color: "#8a6a10", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, letterSpacing: "1px" }}>ENGAGEMENT</span>}
+                        <span style={{ color: "#333333", fontWeight: 600 }}>{f.title}</span>
+                        {f.url && <a href={f.url} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontWeight: 800, textDecoration: "none" }}>Open ↗</a>}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </>
             )}
             <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
