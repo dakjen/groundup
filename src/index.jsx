@@ -1203,7 +1203,7 @@ const plans = [
     description: "Everything in Member — plus a voice in the community, Lunch & Learn recordings, and the digital product shelf to browse.",
     value: "Over $4,000 in annual value",
     accent: "#b80101",
-    popular: false,
+    popular: true,
     cta: "Become a Builder",
     features: [
       "Everything in Member",
@@ -1221,7 +1221,8 @@ const plans = [
     description: "Your safety net — the deal tools, the Opportunity Board, and group time with Dr. Merritt to lean on whenever you need it.",
     value: "Over $6,500 in annual value",
     accent: "#b80101",
-    popular: true,
+    popular: false,
+    best: true,
     cta: "Go Premium",
     features: [
       "Everything in Builder",
@@ -1320,6 +1321,7 @@ function PlanCard({ plan, onSelect, seats, compact }) {
     <div style={{ background: plan.popular ? "#0d0404" : "#080404", border: "1px solid " + (plan.popular ? "#b8010130" : "#150000"), borderRadius: 20, padding: "40px 32px", position: "relative", boxShadow: plan.popular ? "0 0 60px rgba(184,1,1,0.08)" : "none" }}>
       {plan.popular && <div style={{ position: "absolute", top: -1, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, transparent, #b80101, transparent)", borderRadius: "20px 20px 0 0" }} />}
       {plan.popular && <div style={{ position: "absolute", top: 16, right: 16, background: "#b8010115", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "3px 10px", fontSize: 9, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase" }}>POPULAR</div>}
+      {plan.best && <div style={{ position: "absolute", top: 16, right: 16, background: "#c9a22715", color: "#c9a227", border: "1px solid #c9a22735", borderRadius: 4, padding: "3px 10px", fontSize: 9, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase" }}>BEST VALUE</div>}
 
       <Chip text={plan.name} color={plan.accent} />
 
@@ -1373,6 +1375,24 @@ function PlanCard({ plan, onSelect, seats, compact }) {
 // Annual billing exists but is deliberately NOT promoted on the site — it only
 // appears when someone arrives via a link carrying ?annual=1 (e.g. the
 // pass-expiry email, where annual + the 15% alum coupon is the offer).
+const BENEFIT_HELP = {
+  "Every course — plus each new one we add": "The full course library — predevelopment, financing, LIHTC, zoning, construction — including every new course we release, at no extra cost.",
+  "Live Lunch & Learns with Dr. Merritt": "Live 2-hour teaching sessions with Dr. Merritt, about one per quarter — every paid member attends free.",
+  "Lunch & Learn recording library": "Watch any past Lunch & Learn session, anytime.",
+  "Community": "The member community — read at Member; post, reply, and network at Builder and up; priority responses at Owner.",
+  "Guides, templates & the Playbook": "Worksheets, development timelines, and the Developer's Playbook — view online, or download depending on your tier.",
+  "The Opportunity Board — RFPs & funding windows": "A curated board of live RFPs, funding windows, and deal opportunities, updated by the team.",
+  "Group office hours with Dr. Merritt": "Live group Q&A sessions with Dr. Merritt — bring your questions (Premium books 2 a year, Owner 6).",
+  "Discount on paid 1:1 sessions": "A standing discount on private paid sessions with Dr. Merritt — deal review, strategy, capital stack.",
+  "Discount on 1:1 sessions": "A standing discount on private paid sessions with Dr. Merritt — deal review, strategy, capital stack.",
+  "Included 1:1 time with Dr. Merritt": "Private one-on-one time included in your membership — Premium gets 1 session a year, Owner gets 3 advisory calls a year, unlocking after 4 months.",
+  "Included 1:1 time with Dr. Merritt (after 4 months)": "Private one-on-one time included in your membership — Premium gets 1 session a year, Owner gets 3 advisory calls a year, unlocking after 4 months.",
+  "GroundUp-only rates with our partners": "Member-only rates with our partner network — services and tools at prices reserved for GroundUp.",
+  "Direct messages to Dr. Merritt & her team": "Message Dr. Merritt and her team directly — quick questions answered within 2 business days.",
+  "Advisory calls — 3/yr (unlock after 4 months)": "Three private advisory calls a year with Dr. Merritt, included with Owner — where deal support happens.",
+  "Deal support — bring YOUR deal": "Bring your actual project — your numbers, your gap, your structure — to your private advisory calls.",
+  "Owner Lounge + networking event": "The private Owner channel, plus an invite to the exclusive networking event after 4 months.",
+};
 const ANNUAL_PRICES = { Basic: "$539.89", Builder: "$1,619.89", Premium: "$2,699.89", Elite: "$5,399.89" };
 
 // The fine print people actually want — one line, expandable on demand
@@ -1529,8 +1549,8 @@ function PricingPage({ onSignUp }) {
           <div style={{ padding: "22px 28px 6px" }}>
             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>What each plan includes</div>
           </div>
-          <div style={{ overflowX: "auto", padding: "0 12px 18px" }}>
-            <table style={{ width: "100%", minWidth: 680, borderCollapse: "collapse", fontFamily: "'DM Sans', sans-serif" }}>
+          <div style={{ padding: "0 12px 18px" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "'DM Sans', sans-serif" }}>
               <thead>
                 <tr>
                   <th style={{ textAlign: "left", padding: "14px 16px", color: "#7a5050", fontSize: 11, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase" }}>Benefit</th>
@@ -1556,9 +1576,9 @@ function PricingPage({ onSignUp }) {
                   ["Owner Lounge + networking event", "—", "—", "—", "—", "✓"],
                 ].map((row, i) => (
                   <tr key={i} style={{ borderTop: "1px solid #1a0000" }}>
-                    <td style={{ padding: "11px 16px", color: "#a89090", fontSize: 13, lineHeight: 1.5 }}>{row[0]}</td>
+                    <td title={BENEFIT_HELP[row[0]] || undefined} style={{ padding: "11px 16px", color: "#a89090", fontSize: "clamp(11px,1.6vw,13px)", lineHeight: 1.5, cursor: BENEFIT_HELP[row[0]] ? "help" : undefined, textDecoration: BENEFIT_HELP[row[0]] ? "underline dotted #4a3030" : undefined, textUnderlineOffset: 3 }}>{row[0]}</td>
                     {row.slice(1).map((cell, j) => (
-                      <td key={j} style={{ padding: "11px 12px", textAlign: "center", fontSize: cell === "✓" ? 15 : 12, fontWeight: 700, color: cell === "—" ? "#3a2828" : cell === "✓" ? "#22c55e" : "#e0c4c4", whiteSpace: "nowrap" }}>{cell}</td>
+                      <td key={j} style={{ padding: "11px 8px", textAlign: "center", fontSize: cell === "✓" ? 15 : "clamp(10px,1.5vw,12px)", fontWeight: 700, color: cell === "—" ? "#3a2828" : cell === "✓" ? "#22c55e" : "#e0c4c4" }}>{cell}</td>
                     ))}
                   </tr>
                 ))}
@@ -2835,8 +2855,8 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
             <div style={{ padding: "22px 28px 6px" }}>
               <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font }}>What each plan includes</div>
             </div>
-            <div style={{ overflowX: "auto", padding: "0 12px 18px" }}>
-              <table style={{ width: "100%", minWidth: 680, borderCollapse: "collapse", fontFamily: font }}>
+            <div style={{ padding: "0 12px 18px" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: font }}>
                 <thead>
                   <tr>
                     <th style={{ textAlign: "left", padding: "14px 16px", color: "#8a5a5a", fontSize: 11, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase" }}>Benefit</th>
@@ -2860,9 +2880,9 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
                     ["Deal support — bring YOUR deal", "—", "—", "—", "✓"],
                   ].map((row, i) => (
                     <tr key={i} style={{ borderTop: "1px solid #2a0e0e" }}>
-                      <td style={{ padding: "11px 16px", color: "#b09090", fontSize: 13, lineHeight: 1.5 }}>{row[0]}</td>
+                      <td title={BENEFIT_HELP[row[0]] || undefined} style={{ padding: "11px 16px", color: "#b09090", fontSize: "clamp(11px,1.6vw,13px)", lineHeight: 1.5, cursor: BENEFIT_HELP[row[0]] ? "help" : undefined, textDecoration: BENEFIT_HELP[row[0]] ? "underline dotted #5a3030" : undefined, textUnderlineOffset: 3 }}>{row[0]}</td>
                       {row.slice(1).map((cell, j) => (
-                        <td key={j} style={{ padding: "11px 12px", textAlign: "center", fontSize: cell === "✓" ? 15 : 12, fontWeight: 700, color: cell === "—" ? "#4a2828" : cell === "✓" ? "#22c55e" : "#e0c4c4", whiteSpace: "nowrap" }}>{cell}</td>
+                        <td key={j} style={{ padding: "11px 8px", textAlign: "center", fontSize: cell === "✓" ? 15 : "clamp(10px,1.5vw,12px)", fontWeight: 700, color: cell === "—" ? "#4a2828" : cell === "✓" ? "#22c55e" : "#e0c4c4" }}>{cell}</td>
                       ))}
                     </tr>
                   ))}
@@ -2887,8 +2907,8 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
           ];
           let tiers = [
             { name: "Member", price: "$49.99", period: "/mo", desc: "Every course — plus each new one we add — free live Lunch & Learns, and a seat in the community." },
-            { name: "Builder", price: "$149.99", period: "/mo", desc: "A voice in the community — post and network — plus the Lunch & Learn recording library." },
-            { name: "Premium", price: "$249.99", period: "/mo", desc: "Deal tools — downloads, the Opportunity Board, and office hours with Dr. Merritt.", popular: true },
+            { name: "Builder", price: "$149.99", period: "/mo", desc: "A voice in the community — post and network — plus the Lunch & Learn recording library.", popular: true },
+            { name: "Premium", price: "$249.99", period: "/mo", desc: "Deal tools — downloads, the Opportunity Board, and office hours with Dr. Merritt.", best: true },
             { name: "Owner", price: "$499.99", period: "/mo", desc: "Direct access — advisory calls, DMs, and deal support on YOUR project. 15 seats." },
           ];
 
