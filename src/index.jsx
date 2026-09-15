@@ -191,6 +191,47 @@ function ProtectedContent({ email, children }) {
   );
 }
 
+
+// Lesson text formatter: authors write freely; readers get breathing room.
+// Splits on blank lines, breaks any paragraph over ~450 chars into 2–3
+// sentence chunks, and supports "## " subheads, "- " bullets, and **bold**.
+function lessonBlocks(text) {
+  const blocks = [];
+  for (const raw of String(text || "").split(/\n\n+/)) {
+    const t = raw.trim();
+    if (!t) continue;
+    if (t.startsWith("## ")) { blocks.push({ kind: "head", text: t.slice(3) }); continue; }
+    if (/^- /m.test(t) && t.split("\n").every(l => !l.trim() || l.trim().startsWith("- "))) {
+      blocks.push({ kind: "list", items: t.split("\n").map(l => l.trim().replace(/^- /, "")).filter(Boolean) });
+      continue;
+    }
+    if (t.length <= 450) { blocks.push({ kind: "p", text: t }); continue; }
+    const sentences = t.match(/[^.!?]+[.!?]+(?:['"\u2019\u201d])?(?:\s+|$)/g) || [t];
+    let buf = "";
+    let count = 0;
+    for (const sen of sentences) {
+      buf += sen; count++;
+      if (buf.length > 260 && count >= 2) { blocks.push({ kind: "p", text: buf.trim() }); buf = ""; count = 0; }
+    }
+    if (buf.trim()) blocks.push({ kind: "p", text: buf.trim() });
+  }
+  return blocks;
+}
+function LessonRich({ text }) {
+  const bold = (str) => String(str).split(/\*\*(.+?)\*\*/g).map((part, i) => i % 2 ? <strong key={i} style={{ color: "#e8d0d0", fontWeight: 700 }}>{part}</strong> : part);
+  return (<>
+    {lessonBlocks(text).map((b, i) => b.kind === "head" ? (
+      <div key={i} style={{ fontSize: 11, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", margin: "26px 0 14px" }}>{b.text}</div>
+    ) : b.kind === "list" ? (
+      <ul key={i} style={{ margin: "0 0 16px", paddingLeft: 22 }}>
+        {b.items.map((it, j) => <li key={j} style={{ color: "#a89080", fontSize: 15, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>{bold(it)}</li>)}
+      </ul>
+    ) : (
+      <p key={i} style={{ color: "#a89080", fontSize: 15, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{bold(b.text)}</p>
+    ))}
+  </>);
+}
+
 function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
   const pageBg = "#000";
   // Paid members (Basic+) get every lesson. Free members get ONE lesson total across
@@ -211,7 +252,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
     if (!token) return Promise.resolve(null);
     return fetch(`/api/resources?course=${course.id}`, { headers: { Authorization: "Bearer " + token } })
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.course) setContent(d.course); return d?.course || null; })
+      .then(d => { if (d?.course) setContent(d.course); if (d?.responses) setMyResponses(d.responses); return d?.course || null; })
       .catch(() => null);
   };
   useEffect(() => { setContent(null); fetchContent(); }, [course.id, member?.id]);
@@ -265,6 +306,17 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
     onUpgrade && onUpgrade();
   };
   const [activeLesson, setActiveLesson] = useState(null);
+  const [myResponses, setMyResponses] = useState({});
+  const [exerciseDraft, setExerciseDraft] = useState("");
+  const [exerciseBusy, setExerciseBusy] = useState(false);
+  const submitExercise = async (lesson) => {
+    if (!exerciseDraft.trim()) return;
+    setExerciseBusy(true);
+    try {
+      const res = await fetch("/api/resources", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "exercise_submit", course_id: course.id, lesson_id: lesson.id, response: exerciseDraft.trim() }) });
+      if (res.ok || res.status === 409) { setMyResponses(r => ({ ...r, [lesson.id]: { response: exerciseDraft.trim(), at: new Date().toISOString() } })); setExerciseDraft(""); }
+    } catch {} finally { setExerciseBusy(false); }
+  };
   const [lessonPdfs, setLessonPdfs] = useState({});
   const [lessonVideos, setLessonVideos] = useState({});
   const [playingVideo, setPlayingVideo] = useState(false);
@@ -312,10 +364,45 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
             </figure>
           )}
           <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 16, padding: "28px 32px", marginBottom: 32 }}>
-            {String(lesson.summary).split("\n\n").map((para, pi) => (
-              <p key={pi} style={{ color: "#a89080", fontSize: 15, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{para}</p>
-            ))}
+            <LessonRich text={lesson.summary} />
           </div>
+          {lesson.exercise && (() => {
+            const done = myResponses[lesson.id];
+            const yt = String(lesson.exercise.video || "").match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{6,})/);
+            return (
+              <div style={{ marginBottom: 32 }}>
+                <div style={{ background: "#140a04", border: "1px solid #c9a22745", borderRadius: 16, padding: "26px 30px", marginBottom: 18 }}>
+                  <div style={{ fontSize: 10, color: "#c9a227", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>Your turn — work the study</div>
+                  <div style={{ marginBottom: 16 }}><LessonRich text={lesson.exercise.prompt} /></div>
+                  {done ? (
+                    <div style={{ background: "#0d0404", border: "1px dashed #3a2a10", borderRadius: 12, padding: "16px 20px" }}>
+                      <div style={{ fontSize: 9, color: "#8a7050", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Your answer — submitted</div>
+                      <div style={{ color: "#c8b090", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{done.response}</div>
+                    </div>
+                  ) : (<>
+                    <textarea value={exerciseDraft} onChange={e => setExerciseDraft(e.target.value)} placeholder="Write your answer — what would you do, and why? There's no grade; the value is committing to a position before you hear hers." style={{ width: "100%", minHeight: 150, boxSizing: "border-box", background: "#0d0404", border: "1px solid #2a0000", borderRadius: 12, padding: "16px 18px", color: "#f0d8d8", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8, outline: "none", resize: "vertical", marginBottom: 14 }} />
+                    <button onClick={() => submitExercise(lesson)} disabled={exerciseBusy || !exerciseDraft.trim()} style={{ background: "#c9a227", color: "#140a04", border: "none", borderRadius: 10, padding: "13px 30px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", opacity: exerciseBusy || !exerciseDraft.trim() ? 0.5 : 1 }}>{exerciseBusy ? "Submitting…" : "Submit My Answer →"}</button>
+                    <div style={{ color: "#7a5c40", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginTop: 10 }}>Dr. Merritt's answer unlocks the moment you submit — one submission per study.</div>
+                  </>)}
+                </div>
+                {done && (
+                  <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, overflow: "hidden" }}>
+                    <div style={{ padding: "18px 26px 12px" }}>
+                      <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>Dr. Merritt's answer</div>
+                    </div>
+                    {yt ? (
+                      <div style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}>
+                        <iframe src={`https://www.youtube.com/embed/${yt[1]}`} title="Dr. Merritt's answer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }} />
+                      </div>
+                    ) : lesson.exercise.video ? (
+                      <div style={{ padding: "0 26px 20px", color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>Video coming soon.</div>
+                    ) : null}
+                    {lesson.exercise.reveal && <div style={{ padding: "16px 26px 22px" }}><LessonRich text={lesson.exercise.reveal} /></div>}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
           {lesson.stats && lesson.stats.length > 0 && (
             <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(lesson.stats.length, 4)}, 1fr)`, gap: 12, marginBottom: 32 }}>
               {lesson.stats.map((st, si) => (
@@ -884,7 +971,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
             </p>
           </div>
           <div style={{ width: "clamp(260px,35%,360px)", flexShrink: 0, borderRadius: 16, overflow: "hidden", border: "1px solid #2a0000" }}>
-            <img loading="lazy" src="/opt/SISAwards-acceptance.jpg" alt="Dr. Merritt accepting Social Innovation Summit award" style={{ width: "100%", height: 320, objectFit: "cover", objectPosition: "center 20%", display: "block" }} />
+            <img loading="lazy" src="/opt/SIS-AWARD-GM.jpg" alt="Dr. Merritt with her Social Innovation Summit award" style={{ width: "100%", height: 320, objectFit: "cover", objectPosition: "center 25%", display: "block" }} />
           </div>
         </div>
 
@@ -1101,6 +1188,11 @@ function AboutPage({ setActivePage }) {
                 img: "/kerconway_017.webp", name: "John & Jill Ker Conway Residence", where: "Washington, DC",
                 story: "A landmark residence in the heart of the District — design-forward architecture in service of the people who live inside it. The standard the curriculum holds every project to: build something the neighborhood is proud to look at.",
                 taught: "Taught in: Design for the People You're Serving",
+              },
+              {
+                img: "/opt/beacon-center.jpg", name: "The Beacon Center", where: "Washington, DC",
+                story: "A full city block transformed — housing, community space, and services woven into one campus. The kind of mixed-use complexity the curriculum walks through piece by piece: stacking uses, stacking capital, and making it all pencil.",
+                taught: "Taught in: Mixed-Use & the Fifteen Years After Opening Day",
               },
             ].map(p => (
               <div key={p.name} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, overflow: "hidden" }}>

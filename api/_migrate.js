@@ -134,6 +134,10 @@ const STATEMENTS = [
     category TEXT DEFAULT 'resource', min_tier TEXT DEFAULT 'Premium',
     position INTEGER DEFAULT 0, created_at TIMESTAMP DEFAULT NOW())`,
   `ALTER TABLE resources ADD COLUMN IF NOT EXISTS recommendation TEXT`,
+  `CREATE TABLE IF NOT EXISTS lesson_responses (
+    id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    course_id TEXT NOT NULL, lesson_id INTEGER NOT NULL, response TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(), UNIQUE(user_id, course_id, lesson_id))`,
   `CREATE TABLE IF NOT EXISTS partner_codes (
     id SERIAL PRIMARY KEY, code TEXT UNIQUE NOT NULL,
     owner_name TEXT NOT NULL, owner_email TEXT,

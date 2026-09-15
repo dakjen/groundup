@@ -70,6 +70,23 @@ export default async function handler(req, res) {
       return res.json({ live: true, tier_rank: tierRank, dl, gate: typeof gate !== "undefined" ? gate : { active: false }, products });
     }
 
+    // Member: submit a case-study exercise answer. Write-once — the reveal
+    // only means something if the answer came first.
+    if (req.method === 'POST' && req.body && req.body.action === 'exercise_submit') {
+      const session = getSession(req);
+      if (!session?.uid) return res.status(401).json({ error: 'Sign in required' });
+      const course_id = String(req.body.course_id || '').slice(0, 40);
+      const lesson_id = Number(req.body.lesson_id);
+      const response = String(req.body.response || '').trim().slice(0, 8000);
+      if (!course_id || !Number.isFinite(lesson_id) || !response) return res.status(400).json({ error: 'Write your answer before submitting' });
+      const [row] = await sql`
+        INSERT INTO lesson_responses (user_id, course_id, lesson_id, response, created_at)
+        VALUES (${session.uid}, ${course_id}, ${lesson_id}, ${response}, NOW())
+        ON CONFLICT (user_id, course_id, lesson_id) DO NOTHING RETURNING id`;
+      if (!row) return res.status(409).json({ error: 'You already submitted your answer for this study' });
+      return res.status(201).json({ success: true });
+    }
+
     // Member: count a resource click — fire-and-forget from the Resources page
     if (req.method === 'POST' && req.body && req.body.action === 'resource_click') {
       const session = getSession(req);
@@ -182,7 +199,14 @@ export default async function handler(req, res) {
         WHERE user_id = ${user.id} AND course_id IN ('all', ${c.id})
           AND (expires_at IS NULL OR expires_at > NOW())` : [];
       const fullAccess = rank >= 1 || passes.length > 0;
-      if (fullAccess) return res.json({ course: shape(() => true), access: 'full' });
+      // Case-study exercises: hand back this member's saved answers so a
+      // submitted study stays submitted (and the reveal stays revealed).
+      let myResponses = {};
+      try {
+        const rows = await sql`SELECT lesson_id, response, created_at FROM lesson_responses WHERE user_id = ${user.id} AND course_id = ${c.id}`;
+        for (const r of rows) myResponses[r.lesson_id] = { response: r.response, at: r.created_at };
+      } catch { /* table appears after migrate */ }
+      if (fullAccess) return res.json({ course: shape(() => true), access: 'full', responses: myResponses });
 
       // Free plan: the curriculum is the preview — every lesson title visible,
       // zero lesson content. (Accounts that claimed the old free lesson keep it.)
