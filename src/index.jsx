@@ -2728,10 +2728,10 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
         <div className="gu-drift" style={{ position: "absolute", top: "0%", left: "20%", width: 700, height: 700, borderRadius: "50%", background: "radial-gradient(circle, #57040428 0%, transparent 65%)", pointerEvents: "none" }} />
         <div className="gu-up" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#0a050599", border: "1px solid #7a615140", borderRadius: 99, padding: "8px 20px", marginBottom: 36, position: "relative", zIndex: 1 }}>
           <span className="gu-pulse" style={{ width: 6, height: 6, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
-          <span style={{ color: "#7a6151", fontSize: 11, fontFamily: font, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>Insider Waitlist</span>
+          <span style={{ color: "#7a6151", fontSize: 11, fontFamily: font, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>{insider ? "Insider Waitlist" : "The Waitlist"}</span>
         </div>
         <div className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, marginBottom: 24 }}><GULogo size={72} /></div>
-        <h1 className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, fontFamily: serif, fontWeight: 700, fontSize: "clamp(44px,8vw,84px)", color: "#f5e8e8", lineHeight: 1.05, letterSpacing: "-1px", marginBottom: 10 }}>Get access first.</h1>
+        <h1 className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, fontFamily: serif, fontWeight: 700, fontSize: "clamp(44px,8vw,84px)", color: "#f5e8e8", lineHeight: 1.05, letterSpacing: "-1px", marginBottom: 10 }}>{insider ? "Get access first." : "Something is coming."}</h1>
         <p className="gu-up gu-d2" style={{ position: "relative", zIndex: 1, color: "#c8b0b0", fontSize: "clamp(14px,1.8vw,17px)", lineHeight: 1.9, maxWidth: 580, fontFamily: font, marginBottom: 40 }}>
           Our mission is simple: <span style={{ color: "#e0c4c4", fontWeight: 700 }}>help you get your deals done and build a legacy.</span> Something new is coming for underrepresented developers — built on 30+ years and $600M+ of real deals.
         </p>
@@ -2745,8 +2745,8 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
             ))}
           </div>
         )}
-        <button className="gu-up gu-d4" onClick={toForm} style={{ position: "relative", zIndex: 1, background: "#b80101", color: "#fff", border: "none", borderRadius: 12, padding: "17px 44px", fontFamily: font, fontWeight: 800, fontSize: 15, cursor: "pointer", letterSpacing: "0.5px" }}>Join the Insider Waitlist →</button>
-        <div className="gu-up gu-d5" style={{ position: "relative", zIndex: 1, color: "#8a7070", fontSize: 12, fontFamily: font, marginTop: 16 }}>Insiders get first notice, first access, and a personal recommendation at launch.</div>
+        <button className="gu-up gu-d4" onClick={toForm} style={{ position: "relative", zIndex: 1, background: "#b80101", color: "#fff", border: "none", borderRadius: 12, padding: "17px 44px", fontFamily: font, fontWeight: 800, fontSize: 15, cursor: "pointer", letterSpacing: "0.5px" }}>{insider ? "Join the Insider Waitlist →" : "Join the Waitlist →"}</button>
+        <div className="gu-up gu-d5" style={{ position: "relative", zIndex: 1, color: "#8a7070", fontSize: 12, fontFamily: font, marginTop: 16 }}>{insider ? "Insiders get first notice, first access, and a personal recommendation at launch." : "Be there when the doors open — with our personal recommendation for the plan that fits you."}</div>
       </div>
 
       {/* Dr. Merritt — the value */}
