@@ -837,7 +837,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
   const pages = isTeam
     ? ["community", "resources", "lunchlearn"]
     : member
-    ? ["courses", "community", "resources", "advisory", "lunchlearn", "officehours", "contact", "support"]
+    ? ["courses", "glossary", "community", "resources", "advisory", "lunchlearn", "officehours", "contact", "support"]
     : ["home", "courses", "about", "pricing", "lunchlearn", "contact", "support"];
   const ADMIN_TOOLS = [
     ["admin-users", "Users"], ["admin-referrals", "Referrals"], ["admin-waitlist", "Waitlist"],
@@ -846,7 +846,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
   const [adminOpen, setAdminOpen] = useState(false);
   const lightNav = member?.role === "admin";
   const navInactive = lightNav ? "#5a5a5a" : "#6a6b69";
-  const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", officehours: "Office Hours", contact: "Book with Dr. Gina", support: "Contact Us", community: "Community", membership: "Membership", resources: "Resources", advisory: "Advisory" };
+  const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", officehours: "Office Hours", contact: "Book with Dr. Gina", support: "Contact Us", glossary: "Glossary", community: "Community", membership: "Membership", resources: "Resources", advisory: "Advisory" };
   return (
     <>
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: lightNav ? "rgba(255,255,255,0.97)" : "rgba(0,0,0,0.97)", backdropFilter: "blur(16px)", borderBottom: lightNav ? "1px solid #d8ccb6" : "1px solid #1a0000", padding: "0 clamp(16px,4vw,48px)", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
@@ -1129,6 +1129,78 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
           <button onClick={() => setActivePage("courses")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "16px 44px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", letterSpacing: "1px" }}>START FOR FREE</button>
           <div style={{ marginTop: 20, color: "#7a5050", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>No credit card · Cancel anytime · Scholarship access available</div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ─── GLOSSARY — the searchable vocabulary of the whole curriculum ────────────
+
+function GlossaryPage({ member, onSignIn, setActivePage }) {
+  const font = "'DM Sans', sans-serif";
+  const [terms, setTerms] = useState(null);
+  const [q, setQ] = useState("");
+  const [openId, setOpenId] = useState(null);
+  const [courseTitles, setCourseTitles] = useState({});
+  useEffect(() => {
+    if (!member) return;
+    fetch("/api/resources?glossary=1", { headers: { Authorization: "Bearer " + getMemberToken() } })
+      .then(r => r.json()).then(d => setTerms(d.terms || [])).catch(() => setTerms([]));
+    fetch("/api/resources?courses=1", { headers: { Authorization: "Bearer " + getMemberToken() } })
+      .then(r => r.json()).then(d => {
+        const m = {};
+        for (const c of d?.courses || []) m[c.id] = { title: c.title, hidden: c.hidden, lessons: (c.lessons || []).map(l => l.title) };
+        setCourseTitles(m);
+      }).catch(() => {});
+  }, [member?.id]);
+  if (!member) return (
+    <div style={{ background: "#000", minHeight: "100vh", padding: "160px 20px", textAlign: "center" }}>
+      <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 44, color: "#f5e8e8", marginBottom: 14 }}>The Glossary</h1>
+      <p style={{ color: "#8a7070", fontFamily: font, fontSize: 15, maxWidth: 460, margin: "0 auto 28px", lineHeight: 1.8 }}>Every term the industry throws at you, in plain language — free with any account.</p>
+      <button onClick={onSignIn} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "13px 26px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Sign In / Join Free →</button>
+    </div>
+  );
+  const list = (terms || []).filter(t => !q.trim() || (t.term + " " + t.definition).toLowerCase().includes(q.trim().toLowerCase()));
+  const refLabel = (r) => {
+    const c = courseTitles[r.course_id];
+    if (!c || c.hidden) return null;
+    return { title: c.title.split(":")[0], lessonTitle: Number.isFinite(r.lesson) && c.lessons[r.lesson] ? c.lessons[r.lesson] : null, href: `/courses#c=${r.course_id}${Number.isFinite(r.lesson) ? `&l=${r.lesson}` : ""}` };
+  };
+  return (
+    <div style={{ background: "#000", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 90px" }}>
+      <div style={{ maxWidth: 820, margin: "0 auto" }}>
+        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>The Glossary</div>
+        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(34px,5vw,52px)", color: "#f5e8e8", marginBottom: 10 }}>Speak the language.</h1>
+        <p style={{ color: "#8a7070", fontSize: 14.5, fontFamily: font, lineHeight: 1.8, maxWidth: 560, marginBottom: 26 }}>Every key term across the curriculum — search it, hover a term to see which courses teach it, click through to learn it properly.</p>
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search — try 'DSCR', 'subsidy', 'draw'…"
+          style={{ width: "100%", boxSizing: "border-box", background: "#0d0404", border: "1px solid #2a0000", borderRadius: 12, padding: "16px 20px", color: "#f0d8d8", fontSize: 16, fontFamily: font, outline: "none", marginBottom: 28 }} />
+        {terms === null ? <div style={{ color: "#8a7070", fontFamily: font }}>Loading…</div> : list.length === 0 ? (
+          <div style={{ color: "#8a7070", fontFamily: font, fontSize: 14 }}>Nothing matches "{q}" — try a shorter word.</div>
+        ) : list.map(t => {
+          const refs = (t.refs || []).map(refLabel).filter(Boolean);
+          const open = openId === t.id;
+          return (
+            <div key={t.id} title={refs.length ? "Discussed in: " + refs.map(r => r.title).join(" · ") : undefined}
+              onClick={() => setOpenId(open ? null : t.id)}
+              style={{ background: "#0d0404", border: open ? "1px solid #b8010160" : "1px solid #1e0808", borderRadius: 12, padding: "16px 22px", marginBottom: 10, cursor: "pointer" }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+                <span style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 15.5, fontFamily: font }}>{t.term}</span>
+                {refs.length > 0 && <span style={{ color: "#7a5050", fontSize: 11, fontFamily: font }}>{refs.length} course{refs.length === 1 ? "" : "s"} ▾</span>}
+              </div>
+              <p style={{ color: "#c8b0a0", fontSize: 13.5, fontFamily: font, lineHeight: 1.8, margin: "8px 0 0" }}>{t.definition}</p>
+              {open && refs.length > 0 && (
+                <div style={{ marginTop: 12, borderTop: "1px dashed #2a0e0e", paddingTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+                  {refs.map((r, i) => (
+                    <a key={i} href={r.href} onClick={e => e.stopPropagation()} style={{ color: "#b80101", fontSize: 13, fontWeight: 700, fontFamily: font, textDecoration: "none" }}>
+                      → {r.title}{r.lessonTitle ? ` — ${r.lessonTitle}` : ""}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -6159,7 +6231,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "support"];
+  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "support", "glossary"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
     return PAGES.includes(p) ? p : (sessionStorage.getItem("activePage") || "home");
@@ -6564,6 +6636,7 @@ export default function App() {
       {member?.role === "admin" && activePage === "admin-status" && <TeamPage><SystemStatusTab /></TeamPage>}
       {activePage === "contact" && <ContactPage setActivePage={navigateTo} advisorLink={advisorLink} />}
       {activePage === "support" && <SupportPage />}
+      {activePage === "glossary" && <GlossaryPage member={member} onSignIn={() => setShowSignup(true)} setActivePage={navigateTo} />}
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#3a2a2a" }}>© {new Date().getFullYear()} GroundUp · Northern Real Estate Urban Ventures<span style={{ margin: "0 8px" }}>·</span><button onClick={() => navigateTo("terms")} style={{ background: "none", border: "none", color: "#5a4040", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Terms</button><span style={{ margin: "0 6px" }}>·</span><button onClick={() => navigateTo("privacy")} style={{ background: "none", border: "none", color: "#5a4040", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Privacy</button><span style={{ margin: "0 6px" }}>·</span><button onClick={() => navigateTo("support")} style={{ background: "none", border: "none", color: "#5a4040", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Tech Support</button></div>
       </footer>

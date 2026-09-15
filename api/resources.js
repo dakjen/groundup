@@ -70,6 +70,33 @@ export default async function handler(req, res) {
       return res.json({ live: true, tier_rank: tierRank, dl, gate: typeof gate !== "undefined" ? gate : { active: false }, products });
     }
 
+    // Glossary: every key term, its definition, and which courses discuss it.
+    // Any signed-in account (Free included) can read it.
+    if (req.method === 'GET' && req.query.glossary === '1') {
+      const session = getSession(req);
+      if (!admin && !session?.uid) return res.status(401).json({ error: 'Sign in required' });
+      const terms = await sql`SELECT id, term, definition, refs FROM glossary ORDER BY term`;
+      return res.json({ terms });
+    }
+
+    if (req.method === 'POST' && req.body && req.body.action === 'glossary_save') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const term = String(req.body.term || '').trim().slice(0, 120);
+      const definition = String(req.body.definition || '').trim().slice(0, 2000);
+      const refs = Array.isArray(req.body.refs) ? req.body.refs.slice(0, 10) : [];
+      if (!term || !definition) return res.status(400).json({ error: 'Term and definition required' });
+      const [row] = await sql`
+        INSERT INTO glossary (term, definition, refs, created_at) VALUES (${term}, ${definition}, ${JSON.stringify(refs)}::jsonb, NOW())
+        ON CONFLICT (term) DO UPDATE SET definition = ${definition}, refs = ${JSON.stringify(refs)}::jsonb RETURNING *`;
+      return res.json(row);
+    }
+
+    if (req.method === 'POST' && req.body && req.body.action === 'glossary_delete') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      await sql`DELETE FROM glossary WHERE id = ${Number(req.body.id)}`;
+      return res.json({ success: true });
+    }
+
     // Member: submit a case-study exercise answer. Write-once — the reveal
     // only means something if the answer came first.
     if (req.method === 'POST' && req.body && req.body.action === 'exercise_submit') {
