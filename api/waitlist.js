@@ -124,6 +124,8 @@ export function recommendPlan(e) {
     return { ...{ 1: PLANS.Basic, 2: PLANS.Builder, 3: PLANS.Premium, 4: PLANS.Elite }[r], next: r < 4 ? { 1: PLANS.Builder, 2: PLANS.Premium, 3: PLANS.Elite }[r] : null };
   }
   const rank = wantsDealSupport ? 4
+    : e.budget === 'I want to learn the industry' ? 1
+    : e.budget === 'I want to become an expert' ? 2
     : e.budget === 'I need specific, customized deal help' ? 4
     : (e.budget === 'I need general deal support & guidance' || e.budget === 'I need general support & guidance') ? 3
     : e.budget === '$500+' ? 4
@@ -178,6 +180,7 @@ export const BUDGET_EST = {
   // One-time picks: no MRR — their dollars live in BUDGET_ONETIME below
   'I want Single Course Pass': 0, 'I want All-Access Pass': 0, 'I want Lifetime Pass': 0,
   'I need general deal support & guidance': 250, 'I need general support & guidance': 250,
+  'I want to learn the industry': 50, 'I want to become an expert': 150,
   'I need specific, customized deal help': 500,
   // legacy ranges from earlier signups
   'Under $25': 15, '$25–$100': 60, '$100–$200': 166, '$300+': 600, 'Under $50': 40,

@@ -1168,13 +1168,24 @@ export function WaitlistForm({ list = "insider" }) {
 
   const submit = async (e) => {
     e.preventDefault();
-    const learnVal = learn === "Other" ? learnOther.trim() : learn;
-    const painVal = pain === "Other" ? painOther.trim() : pain;
-    if (!learnVal) { setMsg("Tell us what you hope to learn."); return; }
-    if (!painVal) { setMsg("Tell us your main pain point."); return; }
-    if (!budget) { setMsg("Pick the monthly budget that fits you."); return; }
-    if (budget === "I already know what tier I want" && !wantTier) { setMsg("Pick the tier you want."); return; }
-    const budgetVal = budget === "I already know what tier I want" ? `I want ${wantTier}` : budget;
+    let learnVal, painVal, budgetVal;
+    if (insider) {
+      learnVal = learn === "Other" ? learnOther.trim() : learn;
+      painVal = pain === "Other" ? painOther.trim() : pain;
+      if (!learnVal) { setMsg("Tell us what you hope to learn."); return; }
+      if (!painVal) { setMsg("Tell us your main pain point."); return; }
+      if (!budget) { setMsg("Pick the monthly budget that fits you."); return; }
+      if (budget === "I already know what tier I want" && !wantTier) { setMsg("Pick the tier you want."); return; }
+      budgetVal = budget === "I already know what tier I want" ? `I want ${wantTier}` : budget;
+    } else {
+      // General list: the single goal question answers everything
+      if (!goal) { setMsg("Pick your goal."); return; }
+      if (goal === "I already know what tier I want" && !wantTier) { setMsg("Pick the tier you want."); return; }
+      const g = GEN_GOALS.find(x => x.value === goal);
+      const goalText = (g?.label || goal).replace(/^\S+\s/, "");
+      learnVal = goalText; painVal = goalText;
+      budgetVal = goal === "I already know what tier I want" ? `I want ${wantTier}` : goal;
+    }
     setBusy(true); setMsg(null);
     try {
       await api("/api/waitlist", { method: "POST", body: JSON.stringify({ action: "join", name, email, phone, learn: learnVal, pain: painVal, budget: budgetVal, source: source || undefined, list }) });
@@ -1185,6 +1196,17 @@ export function WaitlistForm({ list = "insider" }) {
   };
 
   const sel = { ...inp, appearance: "auto", cursor: "pointer" };
+  // General waitlist: one question — what's your goal — instead of the full
+  // insider questionnaire. Each goal maps straight to a plan recommendation.
+  const GEN_GOALS = [
+    { label: "🎯 I already know what tier I want", value: "I already know what tier I want", bubble: null },
+    { label: "📚 I want to learn more about the real estate development industry", value: "I want to learn the industry", bubble: <span>Perfect start — the <strong style={{ color: "#f0d8d8" }}>Member plan</strong> ($49.99/mo): every course, free live Lunch &amp; Learns, and a seat in the community. That's what we'll recommend.</span> },
+    { label: "🛠 I'm interested in becoming an expert", value: "I want to become an expert", bubble: <span>That's the <strong style={{ color: "#f0d8d8" }}>Builder plan</strong> ($149.99/mo) — post and network in the community, the full recording library, and every template at your fingertips. That's what we'll recommend.</span> },
+    { label: "🧭 I need general support & guidance for my deals", value: "I need general support & guidance", bubble: <span>Think of <strong style={{ color: "#f0d8d8" }}>Premium</strong> ($249.99/mo) as your safety net — the tools, templates, Opportunity Board, and group office hours with Dr. Merritt. That's what we'll recommend.</span> },
+    { label: "🔴 I need specific, customized deal help", value: "I need specific, customized deal help", bubble: <span>Deal-specific support — your numbers, your gap, your structure — comes with the <strong style={{ color: "#f0d8d8" }}>Owner plan</strong> ($499.99/mo) or the Senior Advisor retainer. We'll recommend Owner.</span> },
+    { label: "✦ Thought partnership", value: "$3,000+", bubble: <span><strong style={{ color: "#f0d8d8" }}>This isn't a subscription — it's a retainer.</strong> Dr. Gina Merritt directly on YOUR project — starting at <strong style={{ color: "#f0d8d8" }}>$3,025/mo</strong>, her expertise, deliverable support, and standing behind your deals.</span> },
+  ];
+  const [goal, setGoal] = useState("");
   // Thought partnership needs a beat of explanation — show it on hover, not just on select
   const [partnerHover, setPartnerHover] = useState(false);
   const [wantTier, setWantTier] = useState("");
@@ -1243,6 +1265,7 @@ export function WaitlistForm({ list = "insider" }) {
                 <label style={lbl}>Phone</label>
                 <input style={inp} type="tel" value={phone} onChange={e => setPhone(e.target.value)} required placeholder="(555) 555-5555" />
               </div>
+              {insider ? (<>
               <div style={{ marginBottom: 14 }}>
                 <label style={lbl}>What do you hope to learn?</label>
                 <select style={sel} value={learn} onChange={e => setLearn(e.target.value)} required>
@@ -1329,6 +1352,36 @@ export function WaitlistForm({ list = "insider" }) {
                   })}
                 </div>
               </div>
+              </>) : (
+              <div style={{ marginBottom: 14 }}>
+                <label style={lbl}>What's your goal?</label>
+                <div style={{ display: "grid", gap: 8, marginTop: 6 }}>
+                  {GEN_GOALS.map(g => (
+                    <div key={g.value}>
+                      <button type="button" onClick={() => setGoal(g.value)}
+                        style={{ width: "100%", textAlign: "center", background: goal === g.value ? "#b8010118" : "transparent", border: goal === g.value ? "1px solid #b80101" : g.value === "$3,000+" ? "1px solid #e0c4c455" : "1px solid #b8010145", borderRadius: 8, padding: "12px 14px", cursor: "pointer", color: goal === g.value ? "#f0d8d8" : g.value === "$3,000+" ? "#e0c4c4" : "#c8a8a8", fontWeight: 700, fontSize: 13, fontFamily: font }}>
+                        {g.label}
+                      </button>
+                      {goal === g.value && g.bubble && (
+                        <div style={{ marginTop: 8, background: "#1c0404", border: "1.5px solid #b80101", borderRadius: 8, padding: "10px 12px", color: "#e8c8c8", fontSize: 12, fontFamily: font, lineHeight: 1.7 }}>{g.bubble}</div>
+                      )}
+                      {goal === g.value && g.value === "I already know what tier I want" && (
+                        <select style={{ ...sel, width: "100%", marginTop: 8 }} value={wantTier} onChange={e => setWantTier(e.target.value)} required>
+                          <option value="" disabled>Pick your tier…</option>
+                          <option value="Member">Member — $49.99/mo</option>
+                          <option value="Builder">Builder — $149.99/mo</option>
+                          <option value="Premium">Premium — $249.99/mo</option>
+                          <option value="Elite">Owner — $499.99/mo</option>
+                          <option value="Single Course Pass">Single Course Pass — $100 one-time</option>
+                          <option value="All-Access Pass">All-Access Pass — $275 one-time</option>
+                          <option value="Lifetime Pass">GroundUp Lifetime Pass — $5,000 one-time</option>
+                        </select>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              )}
               {!urlSource && (
               <div style={{ marginBottom: 18 }}>
                 <label style={lbl}>Where did you hear about us? <span style={{ color: "#5a4040", textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>

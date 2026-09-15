@@ -2701,11 +2701,14 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
     ...(insider ? [
       { num: "05", locked: true },
       { num: "06", locked: true },
+      { num: "07", ghost: true },
     ] : [
       { num: "05", title: "Zoning, Entitlements & Predevelopment", teaser: "The gauntlet before the groundbreaking — approvals, community process, and the money you spend before the money shows up." },
       { num: "06", title: "From Construction to Operations", teaser: "Delivering the building and running it well — the part of the business that decides whether the deal was worth doing." },
+      { num: "07", ghost: true },
+      { num: "08", locked: true },
+      { num: "09", locked: true },
     ]),
-    { num: "07", ghost: true },
   ];
 
   return (
@@ -2728,7 +2731,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
 
       {/* Hero + countdown */}
       <div style={{ minHeight: "88vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "80px 20px 60px", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: insider ? "url(/LIIF-Stills2.png)" : "url(/DSC00837.jpg)", backgroundSize: "cover", backgroundPosition: insider ? "center 25%" : "15% 35%", opacity: insider ? 0.28 : 0.42, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", inset: 0, backgroundImage: insider ? "url(/LIIF-Stills2.png)" : "url(/general-waitlist-hero.jpg)", backgroundSize: "cover", backgroundPosition: insider ? "center 25%" : "center 30%", opacity: insider ? 0.28 : 0.42, pointerEvents: "none" }} />
         <div style={{ position: "absolute", inset: 0, background: insider ? "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.75) 55%, #000 100%)" : "linear-gradient(180deg, rgba(33,9,9,0.45) 0%, rgba(33,9,9,0.7) 55%, #210909 100%)", pointerEvents: "none" }} />
         <div className="gu-drift" style={{ position: "absolute", top: "0%", left: "20%", width: 700, height: 700, borderRadius: "50%", background: "radial-gradient(circle, #57040428 0%, transparent 65%)", pointerEvents: "none" }} />
         <div className="gu-up" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#0a050599", border: "1px solid #7a615140", borderRadius: 99, padding: "8px 20px", marginBottom: 36, position: "relative", zIndex: 1 }}>
@@ -2758,7 +2761,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
       <div style={{ padding: "70px clamp(20px,5vw,80px)", maxWidth: 1050, margin: "0 auto" }}>
         <div style={{ display: "flex", gap: 44, alignItems: "center", flexWrap: "wrap" }}>
           <div style={{ flexShrink: 0, width: "clamp(260px,36%,400px)", borderRadius: 20, overflow: "hidden", border: "1px solid #2a0000" }}>
-            <img src="/GM Headshot.jpg" alt="Dr. Gina Merritt" style={{ width: "100%", display: "block" }} />
+            <img src={insider ? "/GM Headshot.jpg" : "/gina-hough.jpg"} alt="Dr. Gina Merritt" style={{ width: "100%", display: "block" }} />
           </div>
           <div style={{ flex: 1, minWidth: 300 }}>
             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 14 }}>The Real Value</div>
@@ -2827,6 +2830,47 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Pricing at Launch</div>
           <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(28px,4vw,40px)", color: "#f5e8e8" }}>Every path in. One mission.</h2>
         </div>
+        {!insider && (
+          <div style={{ marginBottom: 36, background: "#180606", border: "1px solid #3a1212", borderRadius: 16, overflow: "hidden" }}>
+            <div style={{ padding: "22px 28px 6px" }}>
+              <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font }}>What each plan includes</div>
+            </div>
+            <div style={{ overflowX: "auto", padding: "0 12px 18px" }}>
+              <table style={{ width: "100%", minWidth: 680, borderCollapse: "collapse", fontFamily: font }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: "left", padding: "14px 16px", color: "#8a5a5a", fontSize: 11, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase" }}>Benefit</th>
+                    {["Member", "Builder", "Premium", "Owner"].map(t => (
+                      <th key={t} style={{ padding: "14px 12px", color: t === "Owner" ? "#e0c4c4" : "#c8a8a8", fontSize: 12.5, fontWeight: 800, textAlign: "center", whiteSpace: "nowrap" }}>{t}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    ["Every course — plus each new one we add", "✓", "✓", "✓", "✓"],
+                    ["Live Lunch & Learns with Dr. Merritt", "✓", "✓", "✓", "✓"],
+                    ["Lunch & Learn recording library", "—", "✓", "✓", "✓"],
+                    ["Community", "Read", "Post & network", "Post & network", "Priority"],
+                    ["Guides, templates & the Playbook", "—", "View only", "3 downloads/mo", "Unlimited"],
+                    ["The Opportunity Board — RFPs & funding windows", "—", "—", "✓", "✓"],
+                    ["Group office hours with Dr. Merritt", "—", "—", "✓", "✓"],
+                    ["Discount on paid 1:1 sessions", "—", "—", "10%", "30%"],
+                    ["Included 1:1 time with Dr. Merritt", "—", "—", "1 session/yr", "3 advisory calls/yr"],
+                    ["Direct messages to Dr. Merritt & her team", "—", "—", "—", "✓"],
+                    ["Deal support — bring YOUR deal", "—", "—", "—", "✓"],
+                  ].map((row, i) => (
+                    <tr key={i} style={{ borderTop: "1px solid #2a0e0e" }}>
+                      <td style={{ padding: "11px 16px", color: "#b09090", fontSize: 13, lineHeight: 1.5 }}>{row[0]}</td>
+                      {row.slice(1).map((cell, j) => (
+                        <td key={j} style={{ padding: "11px 12px", textAlign: "center", fontSize: cell === "✓" ? 15 : 12, fontWeight: 700, color: cell === "—" ? "#4a2828" : cell === "✓" ? "#22c55e" : "#e0c4c4", whiteSpace: "nowrap" }}>{cell}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
         {(() => {
           const CARD = (p, i) => (
             <div key={i} style={{ background: p.popular || p.best ? "#0d0404" : "#080404", border: "1px solid " + (p.popular ? "#b8010140" : p.best ? "#c9a22745" : "#150000"), borderRadius: 16, padding: "26px 24px", textAlign: "center", position: "relative" }}>
@@ -2847,8 +2891,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
             { name: "Premium", price: "$249.99", period: "/mo", desc: "Deal tools — downloads, the Opportunity Board, and office hours with Dr. Merritt.", popular: true },
             { name: "Owner", price: "$499.99", period: "/mo", desc: "Direct access — advisory calls, DMs, and deal support on YOUR project. 15 seats." },
           ];
-          // General list: the plans show, the numbers wait for launch day
-          if (!insider) tiers = tiers.map(t => ({ ...t, price: "Revealed", period: " at launch" }));
+
           return (<>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14, maxWidth: 620, margin: "0 auto 14px" }}>{passes.map(CARD)}</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>{tiers.map(CARD)}</div>
@@ -4770,6 +4813,8 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
   const recFor = (e) => {
     if (e.rec_override) return { Basic: "Member — $49.99/mo", Builder: "Builder — $149.99/mo", Premium: "Premium — $249.99/mo", Elite: "Owner — $499.99/mo", Advisor: "Senior Advisor — from $3,025/mo" }[e.rec_override] || "Member — $49.99/mo";
     if (e.budget === "$2,000+" || e.budget === "$3,000+") return "Senior Advisor — from $3,025/mo";
+    if (e.budget === "I want to learn the industry") return "Member — $49.99/mo";
+    if (e.budget === "I want to become an expert") return "Builder — $149.99/mo";
     const passPick = { "I want Single Course Pass": "Single Course Pass — $100 once", "I want All-Access Pass": "All-Access Pass — $275 once", "I want Lifetime Pass": "Lifetime Pass — $5,000 once" }[e.budget];
     if (passPick) return passPick;
     const wanted = /^I want (Member|Builder|Premium|Elite|Senior Advisor)$/.exec(e.budget || "");
@@ -5025,7 +5070,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
               </div>
               {e.budget && (e.budget.startsWith("$")
                 ? <span style={{ color: "#b80101", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.5px" }}>{e.budget}/mo</span>
-                : <span style={{ color: "#b80101", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.5px" }}>{(e.budget === "I need general deal support & guidance" || e.budget === "I need general support & guidance") ? "General support" : e.budget === "I need specific, customized deal help" ? "Personalized support" : ({ "I want Member": "$49.99/mo", "I want Builder": "$149.99/mo", "I want Premium": "$249.99/mo", "I want Elite": "$499.99/mo", "I want Senior Advisor": "$3,025+/mo", "I want Single Course Pass": "$100 once", "I want All-Access Pass": "$275 once", "I want Lifetime Pass": "$5,000 once" }[e.budget] || e.budget)}</span>)}
+                : <span style={{ color: "#b80101", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.5px" }}>{(e.budget === "I need general deal support & guidance" || e.budget === "I need general support & guidance") ? "General support" : e.budget === "I need specific, customized deal help" ? "Personalized support" : ({ "I want Member": "$49.99/mo", "I want Builder": "$149.99/mo", "I want Premium": "$249.99/mo", "I want Elite": "$499.99/mo", "I want Senior Advisor": "$3,025+/mo", "I want to learn the industry": "$49.99/mo", "I want to become an expert": "$149.99/mo", "I want Single Course Pass": "$100 once", "I want All-Access Pass": "$275 once", "I want Lifetime Pass": "$5,000 once" }[e.budget] || e.budget)}</span>)}
               {e.phone && <span style={{ color: "#666666", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{e.phone}</span>}
               <span style={{ color: (e.list || "insider") === "insider" ? "#b80101" : "#8a8a8a", fontSize: 9, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{(e.list || "insider") === "insider" ? "Insider" : "General"}</span>
               {e.founding_lnl && <BadgeChips badges={["founding25"]} small />}
