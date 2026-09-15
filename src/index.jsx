@@ -4725,13 +4725,12 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
       {/* Partner referral codes */}
       <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 20 }}>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Partner & Friend Referral Codes</div>
-        <p style={{ color: "#8d847a", fontSize: 12, marginBottom: 16, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>For partners, ambassadors, and friends alike: write the ending you want for their link (the code), add their name and company, and copy their custom link. People arriving through it see a you've-been-referred banner and get a two-year member discount when they join ($5/$15/$20/$25 off per month by tier). Every waitlist signup counts toward the goal; hitting it emails you to comp their membership (Admin → Users → Comped).</p>
+        <p style={{ color: "#8d847a", fontSize: 12, marginBottom: 16, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>For partners, ambassadors, and friends alike: write the ending you want for their link (the code), add their name and company, and copy their custom link. People arriving through it see a you've-been-referred banner and get a two-year member discount when they join ($5/$15/$20/$25 off per month by tier). The referrer climbs the program ladder automatically: 15 referrals → 25% off their membership · 25 → 50% off · 50 → fully comped — you get an email each time a rung is crossed. Every waitlist signup counts toward the goal; hitting it emails you to comp their membership (Admin → Users → Comped).</p>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 18 }}>
           <div><label style={lbl}>Owner name</label><input style={{ ...inp, marginBottom: 0 }} value={pcForm.owner_name} onChange={e => setPcForm({ ...pcForm, owner_name: e.target.value })} placeholder="Jasmine Carter" /></div>
           <div><label style={lbl}>Owner email (optional)</label><input style={{ ...inp, marginBottom: 0 }} value={pcForm.owner_email} onChange={e => setPcForm({ ...pcForm, owner_email: e.target.value })} placeholder="jasmine@…" /></div>
           <div><label style={lbl}>Company (optional)</label><input style={{ ...inp, marginBottom: 0 }} value={pcForm.company} onChange={e => setPcForm({ ...pcForm, company: e.target.value })} placeholder="Carter Development" /></div>
           <div><label style={lbl}>Code (blank = from name)</label><input style={{ ...inp, marginBottom: 0, maxWidth: 160 }} value={pcForm.code} onChange={e => setPcForm({ ...pcForm, code: e.target.value })} placeholder="jasmine" /></div>
-          <div><label style={lbl}>Referrals needed to earn their reward</label><input type="number" min="1" style={{ ...inp, marginBottom: 0, maxWidth: 90 }} value={pcForm.goal} onChange={e => setPcForm({ ...pcForm, goal: e.target.value })} /></div>
           <button onClick={createCode} style={btnRed}>Create Code</button>
         </div>
         {pcodes.length === 0 ? (
@@ -4742,9 +4741,16 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
               <span style={{ color: "#222222", fontSize: 13, fontWeight: 800 }}>{c.owner_name}</span>
               <span style={{ color: "#9a9a9a", fontSize: 12 }}>{c.company ? ` · ${c.company}` : ""} · code <code style={{ color: "#b80101" }}>{c.code}</code>{c.owner_email ? ` · ${c.owner_email}` : ""}</span>
             </div>
-            <span style={{ color: c.signups >= c.goal ? "#22c55e" : "#b80101", fontSize: 12.5, fontWeight: 800, whiteSpace: "nowrap" }}>
-              {c.signups} / {c.goal} signups{c.rewarded ? " · 🎉 earned" : ""}
-            </span>
+            {(() => {
+              const L = [[15, "25% off"], [25, "50% off"], [50, "Comped"]];
+              const rung = L.filter(([at]) => c.signups >= at).length;
+              const next = L[rung];
+              return (
+                <span style={{ color: rung > 0 ? "#22c55e" : "#b80101", fontSize: 12.5, fontWeight: 800, whiteSpace: "nowrap" }}>
+                  {c.signups} referral{c.signups === 1 ? "" : "s"}{rung > 0 ? ` · 🎉 ${L[rung - 1][1]}` : ""}{next ? ` · ${next[0] - c.signups} to ${next[1]}` : ""}
+                </span>
+              );
+            })()}
             <button onClick={() => { navigator.clipboard && navigator.clipboard.writeText(codeLink(c)); flash(true, `${c.owner_name}'s link copied.`); }} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Copy link</button>
             <button onClick={() => deleteCode(c)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Delete</button>
           </div>
