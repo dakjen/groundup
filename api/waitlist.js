@@ -125,7 +125,7 @@ export function recommendPlan(e) {
   }
   const rank = wantsDealSupport ? 4
     : e.budget === 'I need specific, customized deal help' ? 4
-    : e.budget === 'I need general deal support & guidance' ? 3
+    : (e.budget === 'I need general deal support & guidance' || e.budget === 'I need general support & guidance') ? 3
     : e.budget === '$500+' ? 4
     : HIGH_B.includes(e.budget) ? (need >= 3 ? 4 : 3)
     : MID_B.includes(e.budget) && need >= 2 ? 2
@@ -177,7 +177,7 @@ export const BUDGET_EST = {
   'I want Member': 50, 'I want Builder': 150, 'I want Premium': 250, 'I want Elite': 500, 'I want Senior Advisor': 3025,
   // One-time picks: no MRR — their dollars live in BUDGET_ONETIME below
   'I want Single Course Pass': 0, 'I want All-Access Pass': 0, 'I want Lifetime Pass': 0,
-  'I need general deal support & guidance': 250,
+  'I need general deal support & guidance': 250, 'I need general support & guidance': 250,
   'I need specific, customized deal help': 500,
   // legacy ranges from earlier signups
   'Under $25': 15, '$25–$100': 60, '$100–$200': 166, '$300+': 600, 'Under $50': 40,

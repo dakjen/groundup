@@ -1137,7 +1137,7 @@ const WL_PAIN = [
   "Other",
 ];
 const WL_SOURCE = ["Dr. Merritt / NREUV", "A Lunch & Learn", "LinkedIn", "Instagram", "Word of mouth", "An event or conference", "Other"];
-const WL_BUDGETS = ["$50", "$50–$150", "$150–$500", "$500+", "I already know what tier I want", "I need general deal support & guidance", "I need specific, customized deal help", "$3,000+"];
+const WL_BUDGETS = ["$50", "$50–$150", "$150–$500", "$500+", "I already know what tier I want", "I need general support & guidance", "I need specific, customized deal help", "$3,000+"];
 
 // Two lists, one form. "insider" is the secret /waitlist page (first access);
 // "general" is what the public homepage collects before the general launch.
@@ -1247,13 +1247,13 @@ export function WaitlistForm({ list = "insider" }) {
                 <div style={{ color: "#7a5050", fontSize: 11.5, fontFamily: font, lineHeight: 1.6, margin: "2px 0 8px" }}>The lower tiers build your foundation — the courses, the community, the knowledge. The higher tiers add deal-specific support with Dr. Merritt.</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   {WL_BUDGETS.map(b => {
-                    const long = b === "$3,000+" || b === "I need specific, customized deal help" || b === "I need general deal support & guidance" || b === "I already know what tier I want";
+                    const long = b === "$3,000+" || b === "I need specific, customized deal help" || b === "I need general support & guidance" || b === "I already know what tier I want";
                     const btn = (
                       <button type="button" key={b} onClick={() => setBudget(b)}
                         onMouseEnter={() => b === "$3,000+" && setPartnerHover(true)}
                         onMouseLeave={() => b === "$3,000+" && setPartnerHover(false)}
                         style={{ width: long ? "100%" : undefined, gridColumn: !long ? undefined : "1 / -1", background: budget === b ? "#b8010118" : "transparent", border: budget === b ? "1px solid #b80101" : b === "$3,000+" ? "1px solid #e0c4c455" : long ? "1px solid #b8010145" : "1px solid #2a0000", borderRadius: 8, padding: "11px 12px", cursor: "pointer", color: budget === b ? "#f0d8d8" : b === "$3,000+" ? "#e0c4c4" : long ? "#c8a8a8" : "#8a7070", fontWeight: 700, fontSize: 13, fontFamily: font }}>
-                        {b === "$3,000+" ? "✦ $3,000+ · Thought partnership" : b === "I need specific, customized deal help" ? "🔴 I need specific, customized deal help" : b === "I need general deal support & guidance" ? "🧭 I need general deal support & guidance" : b === "I already know what tier I want" ? "🎯 I already know what tier I want" : b}
+                        {b === "$3,000+" ? "✦ $3,000+ · Thought partnership" : b === "I need specific, customized deal help" ? "🔴 I need specific, customized deal help" : b === "I need general support & guidance" ? "🧭 I need general support & guidance" : b === "I already know what tier I want" ? "🎯 I already know what tier I want" : b}
                       </button>
                     );
                     if (!long) return btn;
@@ -1276,8 +1276,8 @@ export function WaitlistForm({ list = "insider" }) {
                           <option value="Lifetime Pass">GroundUp Lifetime Pass — $5,000 one-time</option>
                         </select>
                       );
-                      else if (b === "I need general deal support & guidance") bubbleBody = (
-                        <span>General deal support — the tools, templates, Opportunity Board, and group office hours with Dr. Merritt — lives in the <strong style={{ color: "#f0d8d8" }}>Premium plan</strong> ($249.99/mo). That's what we'll recommend.</span>
+                      else if (b === "I need general support & guidance") bubbleBody = (
+                        <span>General support — the tools, templates, Opportunity Board, and group office hours with Dr. Merritt — lives in the <strong style={{ color: "#f0d8d8" }}>Premium plan</strong> ($249.99/mo). That's what we'll recommend.</span>
                       );
                       else if (b === "I need specific, customized deal help") bubbleBody = (
                         <span>Deal-specific support — your numbers, your gap, your structure — comes with the <strong style={{ color: "#f0d8d8" }}>Owner plan</strong> ($499.99/mo) or the Senior Advisor retainer. We'll recommend Owner and point you at the fastest way to get Dr. Merritt on your deal.</span>

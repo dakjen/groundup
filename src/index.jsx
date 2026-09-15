@@ -4770,7 +4770,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
     const PN = { "I don't understand the numbers": 2, "I can't find the capital": 2, "I need partners or a team": 2, "No network in the industry": 2, "Navigating government & compliance": 3, "I have a deal but I'm stuck": 3 };
     const need = Math.max(LN[e.learn] || 1, PN[e.reason] || 1);
     if (e.budget === "I need specific, customized deal help") return "Owner — $499.99/mo";
-    if (e.budget === "I need general deal support & guidance") return "Premium — $249.99/mo";
+    if (e.budget === "I need general deal support & guidance" || e.budget === "I need general support & guidance") return "Premium — $249.99/mo";
     if (e.budget === "$500+") return "Owner — $499.99/mo";
     if (["$150–$500", "$300+"].includes(e.budget)) return need >= 3 ? "Owner — $499.99/mo" : "Premium — $249.99/mo";
     if (["$50–$150", "$100–$200"].includes(e.budget) && need >= 2) return "Builder — $149.99/mo";
@@ -4913,7 +4913,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
           Conservative maps their budget to the plan it comfortably covers;
           upside assumes each stretches one tier. */}
       {(() => {
-        const PLAN_FIT = { "I need specific, customized deal help": 499.99, "I need general deal support & guidance": 249.99, "$50": 49.99, "Under $25": 0, "$25–$100": 49.99, "$100–$200": 149.99, "$300+": 249.99, "$2,000+": 3025, "$3,000+": 3025, "Under $50": 0, "$50–$150": 49.99, "$150–$500": 249.99, "$500+": 499.99 };
+        const PLAN_FIT = { "I need specific, customized deal help": 499.99, "I need general deal support & guidance": 249.99, "I need general support & guidance": 249.99, "$50": 49.99, "Under $25": 0, "$25–$100": 49.99, "$100–$200": 149.99, "$300+": 249.99, "$2,000+": 3025, "$3,000+": 3025, "Under $50": 0, "$50–$150": 49.99, "$150–$500": 249.99, "$500+": 499.99 };
         const fitFor = (e) => {
           const r = recFor(e);
           if (e.comped) return 0;
@@ -4924,7 +4924,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
           if (r.includes("Pass")) return 0; // one-time money, not MRR
           return r.startsWith("Member") ? 49.99 : r.startsWith("Owner") ? 499.99 : r.startsWith("Senior") ? 3025 : (PLAN_FIT[e.budget] || 0);
         };
-        const STRETCH = { "I need specific, customized deal help": 499.99, "I need general deal support & guidance": 499.99, "$50": 149.99, "Under $25": 49.99, "$25–$100": 149.99, "$100–$200": 249.99, "$300+": 499.99, "$2,000+": 3025, "$3,000+": 3025, "Under $50": 49.99, "$50–$150": 149.99, "$150–$500": 499.99, "$500+": 499.99 };
+        const STRETCH = { "I need specific, customized deal help": 499.99, "I need general deal support & guidance": 499.99, "I need general support & guidance": 499.99, "$50": 149.99, "Under $25": 49.99, "$25–$100": 149.99, "$100–$200": 249.99, "$300+": 499.99, "$2,000+": 3025, "$3,000+": 3025, "Under $50": 49.99, "$50–$150": 149.99, "$150–$500": 499.99, "$500+": 499.99 };
         const allEntries = data.entries;
         const mrrFit = allEntries.reduce((s, e) => s + fitFor(e), 0);
         // Premium is the ideal recommendation; Elite (and Advisor) are the exceptional wins
@@ -5016,7 +5016,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
               </div>
               {e.budget && (e.budget.startsWith("$")
                 ? <span style={{ color: "#b80101", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.5px" }}>{e.budget}/mo</span>
-                : <span style={{ color: "#b80101", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.5px" }}>{e.budget === "I need general deal support & guidance" ? "Deal support" : e.budget === "I need specific, customized deal help" ? "Personalized support" : ({ "I want Member": "$49.99/mo", "I want Builder": "$149.99/mo", "I want Premium": "$249.99/mo", "I want Elite": "$499.99/mo", "I want Senior Advisor": "$3,025+/mo", "I want Single Course Pass": "$100 once", "I want All-Access Pass": "$275 once", "I want Lifetime Pass": "$5,000 once" }[e.budget] || e.budget)}</span>)}
+                : <span style={{ color: "#b80101", fontSize: 11, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.5px" }}>{(e.budget === "I need general deal support & guidance" || e.budget === "I need general support & guidance") ? "General support" : e.budget === "I need specific, customized deal help" ? "Personalized support" : ({ "I want Member": "$49.99/mo", "I want Builder": "$149.99/mo", "I want Premium": "$249.99/mo", "I want Elite": "$499.99/mo", "I want Senior Advisor": "$3,025+/mo", "I want Single Course Pass": "$100 once", "I want All-Access Pass": "$275 once", "I want Lifetime Pass": "$5,000 once" }[e.budget] || e.budget)}</span>)}
               {e.phone && <span style={{ color: "#666666", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{e.phone}</span>}
               <span style={{ color: (e.list || "insider") === "insider" ? "#b80101" : "#8a8a8a", fontSize: 9, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{(e.list || "insider") === "insider" ? "Insider" : "General"}</span>
               {e.founding_lnl && <BadgeChips badges={["founding25"]} small />}
