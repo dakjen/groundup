@@ -1177,6 +1177,24 @@ const passPlans = [
 // `tier` is the internal access level stored on the account.
 const plans = [
   {
+    name: "Free",
+    tier: "Free",
+    price: "$0",
+    period: "",
+    description: "See what's inside before you commit — no card required.",
+    value: "",
+    accent: "#8a8a8a",
+    popular: false,
+    cta: "Start Free",
+    features: [
+      "Every course title & curriculum — see the full map",
+      "One free live Lunch & Learn with Dr. Merritt",
+      "Set up your community profile",
+      "Buy passes, sessions & shop items anytime",
+    ],
+    locked: ["Lesson content — a membership or pass unlocks it"],
+  },
+  {
     name: "Member",
     tier: "Basic",
     price: "$49.99",
@@ -1537,6 +1555,7 @@ function PricingPage({ onSignUp }) {
               if (plan.tier === "Advisor") { window.location.href = "/contact"; return; }
               // Elite is capped — send full-cohort visitors to the waitlist, not to checkout
               if (plan.limited && elite?.full) { window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("Owner waitlist — notify me when a seat opens"); return; }
+              if (plan.tier === "Free") { onSignUp && onSignUp("Free"); return; }
               if (getMember()) { startCheckout("sub_" + plan.tier + (annual && ANNUAL_PRICES[plan.tier] ? "_annual" : ""), { gift: localStorage.getItem("guGift") || undefined, promo: localStorage.getItem("guPromo") || undefined }); return; }
               onSignUp && onSignUp(plan.tier);
             }} />
@@ -2860,24 +2879,24 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
                 <thead>
                   <tr>
                     <th style={{ textAlign: "left", padding: "14px 16px", color: "#8a5a5a", fontSize: 11, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase" }}>Benefit</th>
-                    {["Member", "Builder", "Premium", "Owner"].map(t => (
+                    {["Free", "Member", "Builder", "Premium", "Owner"].map(t => (
                       <th key={t} style={{ padding: "14px 12px", color: t === "Owner" ? "#e0c4c4" : "#c8a8a8", fontSize: 12.5, fontWeight: 800, textAlign: "center", whiteSpace: "nowrap" }}>{t}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {[
-                    ["Every course — plus each new one we add", "✓", "✓", "✓", "✓"],
-                    ["Live Lunch & Learns with Dr. Merritt", "✓", "✓", "✓", "✓"],
-                    ["Lunch & Learn recording library", "—", "✓", "✓", "✓"],
-                    ["Community", "Read", "Post & network", "Post & network", "Priority"],
-                    ["Guides, templates & the Playbook", "—", "View only", "3 downloads/mo", "Unlimited"],
-                    ["The Opportunity Board — RFPs & funding windows", "—", "—", "✓", "✓"],
-                    ["Group office hours with Dr. Merritt", "—", "—", "✓", "✓"],
-                    ["Discount on paid 1:1 sessions", "—", "—", "10%", "30%"],
-                    ["Included 1:1 time with Dr. Merritt", "—", "—", "1 session/yr", "3 advisory calls/yr"],
-                    ["Direct messages to Dr. Merritt & her team", "—", "—", "—", "✓"],
-                    ["Deal support — bring YOUR deal", "—", "—", "—", "✓"],
+                    ["Every course — plus each new one we add", "Titles only", "✓", "✓", "✓", "✓"],
+                    ["Live Lunch & Learns with Dr. Merritt", "1 free, ever", "✓", "✓", "✓", "✓"],
+                    ["Lunch & Learn recording library", "—", "—", "✓", "✓", "✓"],
+                    ["Community", "—", "Read", "Post & network", "Post & network", "Priority"],
+                    ["Guides, templates & the Playbook", "—", "—", "View only", "3 downloads/mo", "Unlimited"],
+                    ["The Opportunity Board — RFPs & funding windows", "—", "—", "—", "✓", "✓"],
+                    ["Group office hours with Dr. Merritt", "—", "—", "—", "✓", "✓"],
+                    ["Discount on paid 1:1 sessions", "—", "—", "—", "10%", "30%"],
+                    ["Included 1:1 time with Dr. Merritt", "—", "—", "—", "1 session/yr", "3 advisory calls/yr"],
+                    ["Direct messages to Dr. Merritt & her team", "—", "—", "—", "—", "✓"],
+                    ["Deal support — bring YOUR deal", "—", "—", "—", "—", "✓"],
                   ].map((row, i) => (
                     <tr key={i} style={{ borderTop: "1px solid #2a0e0e" }}>
                       <td title={BENEFIT_HELP[row[0]] || undefined} style={{ padding: "11px 16px", color: "#b09090", fontSize: "clamp(11px,1.6vw,13px)", lineHeight: 1.5, cursor: BENEFIT_HELP[row[0]] ? "help" : undefined, textDecoration: BENEFIT_HELP[row[0]] ? "underline dotted #5a3030" : undefined, textUnderlineOffset: 3 }}>{row[0]}</td>
@@ -2906,6 +2925,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
             { name: "All-Access Pass", price: "$275", period: "one-time", desc: "30 days of the entire curriculum.", best: true },
           ];
           let tiers = [
+            { name: "Free", price: "$0", period: "", desc: "Course titles & curricula, one free live Lunch & Learn, and your community profile — no card required." },
             { name: "Member", price: "$49.99", period: "/mo", desc: "Every course — plus each new one we add — free live Lunch & Learns, and a seat in the community." },
             { name: "Builder", price: "$149.99", period: "/mo", desc: "A voice in the community — post and network — plus the Lunch & Learn recording library.", popular: true },
             { name: "Premium", price: "$249.99", period: "/mo", desc: "Deal tools — downloads, the Opportunity Board, and office hours with Dr. Merritt.", best: true },
