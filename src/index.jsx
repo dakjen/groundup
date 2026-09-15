@@ -269,17 +269,31 @@ function LessonCalc({ kind, color }) {
   );
 }
 
-function LessonRich({ text }) {
-  const bold = (str) => String(str).split(/\*\*(.+?)\*\*/g).map((part, i) => i % 2 ? <strong key={i} style={{ color: "#e8d0d0", fontWeight: 700 }}>{part}</strong> : part);
+function LessonRich({ text, lead }) {
+  const bold = (str) => String(str).split(/\*\*(.+?)\*\*/g).map((part, i) => i % 2 ? <strong key={i} style={{ color: "#f0d8d8", fontWeight: 700 }}>{part}</strong> : part);
+  const blocks = lessonBlocks(text);
+  const paraIdxs = blocks.map((b, i) => b.kind === "p" ? i : -1).filter(i => i >= 0);
+  // Rhythm: in a long read, lift one strong short paragraph out as a callout
+  const calloutAt = lead && paraIdxs.length >= 6
+    ? paraIdxs.slice(2).find(i => blocks[i].text.length > 80 && blocks[i].text.length < 240)
+    : undefined;
   return (<>
-    {lessonBlocks(text).map((b, i) => b.kind === "head" ? (
-      <div key={i} style={{ fontSize: 11, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", margin: "26px 0 14px" }}>{b.text}</div>
+    {blocks.map((b, i) => b.kind === "head" ? (
+      <div key={i} style={{ fontSize: 11, color: "#b80101", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", margin: "34px 0 16px", paddingTop: 22, borderTop: "1px solid #1a0000" }}>{b.text}</div>
     ) : b.kind === "list" ? (
-      <ul key={i} style={{ margin: "0 0 16px", paddingLeft: 22 }}>
-        {b.items.map((it, j) => <li key={j} style={{ color: "#a89080", fontSize: 15, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>{bold(it)}</li>)}
+      <ul key={i} style={{ margin: "0 0 22px", paddingLeft: 4, listStyle: "none" }}>
+        {b.items.map((it, j) => (
+          <li key={j} style={{ color: "#b8a090", fontSize: 15.5, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", marginBottom: 10, paddingLeft: 20, position: "relative" }}>
+            <span style={{ position: "absolute", left: 0, color: "#b80101", fontWeight: 800 }}>—</span>{bold(it)}
+          </li>
+        ))}
       </ul>
+    ) : i === calloutAt ? (
+      <blockquote key={i} style={{ margin: "30px 0", padding: "4px 0 4px 22px", borderLeft: "3px solid #b80101" }}>
+        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 21, lineHeight: 1.6, color: "#e0c4c4", margin: 0, fontWeight: 600 }}>{bold(b.text)}</p>
+      </blockquote>
     ) : (
-      <p key={i} style={{ color: "#a89080", fontSize: 15, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{bold(b.text)}</p>
+      <p key={i} style={{ color: "#b8a090", fontSize: lead && i === paraIdxs[0] ? 17 : 15.5, lineHeight: 1.95, fontFamily: "'DM Sans', sans-serif", marginBottom: 20, ...(lead && i === paraIdxs[0] ? { color: "#d0b8a8" } : {}) }}>{bold(b.text)}</p>
     ))}
   </>);
 }
@@ -423,8 +437,8 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
               {lesson.photo.caption && <figcaption style={{ background: "#0d0404", color: "#8a7070", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, padding: "10px 16px" }}>{lesson.photo.caption}</figcaption>}
             </figure>
           )}
-          <div style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 16, padding: "28px 32px", marginBottom: 32 }}>
-            <LessonRich text={lesson.summary} />
+          <div style={{ marginBottom: 40, maxWidth: 640 }}>
+            <LessonRich text={lesson.summary} lead />
           </div>
           {lesson.exercise && (() => {
             const done = myResponses[lesson.id];
