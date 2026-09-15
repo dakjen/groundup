@@ -2698,13 +2698,18 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
     { num: "02", title: "Teams, Partners & Joint Ventures", teaser: "What you actually bring to the table, and the structures that protect you when the deal gets real." },
     { num: "03", title: "Financing the Deal", teaser: "Capital stacks, tax credits, subsidy — how deals that 'don't pencil' actually close." },
     { num: "04", title: "Why Affordable Housing Doesn't Pencil", teaser: "The economics nobody explains — and the strategies that make the numbers work anyway." },
-    { num: "05", locked: true },
-    { num: "06", locked: true },
+    ...(insider ? [
+      { num: "05", locked: true },
+      { num: "06", locked: true },
+    ] : [
+      { num: "05", title: "Zoning, Entitlements & Predevelopment", teaser: "The gauntlet before the groundbreaking — approvals, community process, and the money you spend before the money shows up." },
+      { num: "06", title: "From Construction to Operations", teaser: "Delivering the building and running it well — the part of the business that decides whether the deal was worth doing." },
+    ]),
     { num: "07", ghost: true },
   ];
 
   return (
-    <div style={{ background: "#000", minHeight: "100vh" }}>
+    <div style={{ background: insider ? "#000" : "#160d08", minHeight: "100vh" }}>
       <style>{`
         :root { --gu-bg: #000000; --gu-panel: #070303; --gu-card: #0d0404; --gu-card2: #0a0808; --gu-card3: #140808; --gu-red-tint: #12060a; --gu-border: #2a0000; --gu-border2: #1a0000; --gu-text: #f5e8e8; --gu-text2: #f0d8d8; --gu-body: #c8a8a8; --gu-muted: #8a7070; --gu-muted2: #7a5050; --gu-faint: #5a4040; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2723,8 +2728,8 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
 
       {/* Hero + countdown */}
       <div style={{ minHeight: "88vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "80px 20px 60px", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "url(/LIIF-Stills2.png)", backgroundSize: "cover", backgroundPosition: "center 25%", opacity: 0.28, pointerEvents: "none" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.75) 55%, #000 100%)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", inset: 0, backgroundImage: insider ? "url(/LIIF-Stills2.png)" : "url(/Cleveland19-still.png)", backgroundSize: "cover", backgroundPosition: "center 25%", opacity: insider ? 0.28 : 0.34, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", inset: 0, background: insider ? "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.75) 55%, #000 100%)" : "linear-gradient(180deg, rgba(22,13,8,0.5) 0%, rgba(22,13,8,0.72) 55%, #160d08 100%)", pointerEvents: "none" }} />
         <div className="gu-drift" style={{ position: "absolute", top: "0%", left: "20%", width: 700, height: 700, borderRadius: "50%", background: "radial-gradient(circle, #57040428 0%, transparent 65%)", pointerEvents: "none" }} />
         <div className="gu-up" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#0a050599", border: "1px solid #7a615140", borderRadius: 99, padding: "8px 20px", marginBottom: 36, position: "relative", zIndex: 1 }}>
           <span className="gu-pulse" style={{ width: 6, height: 6, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
@@ -2836,12 +2841,14 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
             { name: "One Course", price: "$100", period: "one-time", desc: "60 days inside one course of your choice." },
             { name: "All-Access Pass", price: "$275", period: "one-time", desc: "30 days of the entire curriculum.", best: true },
           ];
-          const tiers = [
+          let tiers = [
             { name: "Member", price: "$49.99", period: "/mo", desc: "Every course — plus each new one we add — free live Lunch & Learns, and a seat in the community." },
             { name: "Builder", price: "$149.99", period: "/mo", desc: "A voice in the community — post and network — plus the Lunch & Learn recording library." },
             { name: "Premium", price: "$249.99", period: "/mo", desc: "Deal tools — downloads, the Opportunity Board, and office hours with Dr. Merritt.", popular: true },
             { name: "Owner", price: "$499.99", period: "/mo", desc: "Direct access — advisory calls, DMs, and deal support on YOUR project. 15 seats." },
           ];
+          // General list: the plans show, the numbers wait for launch day
+          if (!insider) tiers = tiers.map(t => ({ ...t, price: "Revealed", period: " at launch" }));
           return (<>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14, maxWidth: 620, margin: "0 auto 14px" }}>{passes.map(CARD)}</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>{tiers.map(CARD)}</div>
