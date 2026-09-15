@@ -134,6 +134,10 @@ const STATEMENTS = [
     category TEXT DEFAULT 'resource', min_tier TEXT DEFAULT 'Premium',
     position INTEGER DEFAULT 0, created_at TIMESTAMP DEFAULT NOW())`,
   `ALTER TABLE resources ADD COLUMN IF NOT EXISTS recommendation TEXT`,
+  `CREATE TABLE IF NOT EXISTS resource_clicks (
+    id SERIAL PRIMARY KEY, resource_id INTEGER NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT NOW())`,
   `CREATE TABLE IF NOT EXISTS lnl_rsvps (
     id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     event_key TEXT NOT NULL, created_at TIMESTAMP DEFAULT NOW(), UNIQUE(user_id, event_key))`,

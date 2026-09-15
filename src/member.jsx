@@ -1337,6 +1337,9 @@ export function ResourcesPage({ member, onUpgrade }) {
     api("/api/resources").then(setData).catch(e => setError(e.message));
   }, [member?.id]);
 
+  // Count every resource use — link opens and code copies — for the admin panel
+  const ping = (id) => { try { api("/api/resources", { method: "POST", body: JSON.stringify({ action: "resource_click", id }) }).catch(() => {}); } catch {} };
+
   if (!member || (rank < 2 && member.role !== "admin")) {
     return (
       <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "140px 20px", textAlign: "center" }}>
@@ -1386,7 +1389,7 @@ export function ResourcesPage({ member, onUpgrade }) {
                     <div key={r.id} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 14, padding: "20px 26px", display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: "10px 28px" }}>
                       <div style={{ flex: 1, minWidth: 260, display: "flex", flexDirection: "column", gap: 8 }}>
                       {r.url && !/youtube\.com|youtu\.be/.test(r.url) ? (
-                        <a href={r.url} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontWeight: 800, fontSize: 16, fontFamily: font, textDecoration: "none" }}>{r.title} ↗</a>
+                        <a href={r.url} target="_blank" rel="noreferrer" onClick={() => ping(r.id)} style={{ color: "#b80101", fontWeight: 800, fontSize: 16, fontFamily: font, textDecoration: "none" }}>{r.title} ↗</a>
                       ) : (
                         <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font }}>{r.title}</div>
                       )}
@@ -1403,7 +1406,7 @@ export function ResourcesPage({ member, onUpgrade }) {
                         <div style={{ background: "var(--gu-card2)", border: "1px dashed #e0c4c440", borderRadius: 8, padding: "8px 12px", display: "flex", alignItems: "center", gap: 10 }}>
                           <span style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", fontFamily: font }}>CODE</span>
                           <code style={{ color: "var(--gu-text2)", fontSize: 13, letterSpacing: "1px" }}>{r.code}</code>
-                          <button onClick={() => navigator.clipboard && navigator.clipboard.writeText(r.code)} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 11, fontFamily: font, fontWeight: 700 }}>Copy</button>
+                          <button onClick={() => { ping(r.id); navigator.clipboard && navigator.clipboard.writeText(r.code); }} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 11, fontFamily: font, fontWeight: 700 }}>Copy</button>
                         </div>
                       )}
                       {r.url && (() => {
@@ -1413,7 +1416,7 @@ export function ResourcesPage({ member, onUpgrade }) {
                             <iframe src={`https://www.youtube.com/embed/${yt[1]}`} title={r.title} allowFullScreen allow="accelerometer; encrypted-media; picture-in-picture" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }} />
                           </div>
                         );
-                        return <a href={r.url} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontSize: 13, fontFamily: font, fontWeight: 800, textDecoration: "none" }}>Open →</a>;
+                        return <a href={r.url} target="_blank" rel="noreferrer" onClick={() => ping(r.id)} style={{ color: "#b80101", fontSize: 13, fontFamily: font, fontWeight: 800, textDecoration: "none" }}>Open →</a>;
                       })()}
                       </div>
                     </div>

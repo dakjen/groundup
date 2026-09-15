@@ -5119,6 +5119,9 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
           <div style={{ flex: 1, minWidth: 180 }}>
             <div style={{ color: "#222222", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{r.title}</div>
             <div style={{ color: "#777777", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{r.url || "no link"}{r.code ? ` · code ${r.code}` : ""}</div>
+            <div style={{ color: r.clicks ? "#b80101" : "#9a9a9a", fontSize: 11.5, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>
+              {r.clicks ? `${r.clicks} click${r.clicks === 1 ? "" : "s"} · ${r.clickers} member${r.clickers === 1 ? "" : "s"} · last ${new Date(r.last_click).toLocaleDateString()}` : "No clicks yet"}
+            </div>
           </div>
           <span style={{ color: "#666666", fontSize: 10, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{CAT_LABEL[r.category]}</span>
           <select value={r.min_tier} onChange={e => patch(r.id, { min_tier: e.target.value })} style={{ background: "#ececec", color: "#b80101", border: "1px solid #2a1010", borderRadius: 6, padding: "5px 8px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 11, cursor: "pointer", outline: "none" }}>

@@ -70,6 +70,14 @@ export default async function handler(req, res) {
       return res.json({ live: true, tier_rank: tierRank, dl, gate: typeof gate !== "undefined" ? gate : { active: false }, products });
     }
 
+    // Member: count a resource click — fire-and-forget from the Resources page
+    if (req.method === 'POST' && req.body && req.body.action === 'resource_click') {
+      const session = getSession(req);
+      const rid = Number(req.body.id);
+      if (rid) await sql`INSERT INTO resource_clicks (resource_id, user_id, created_at) VALUES (${rid}, ${session?.uid || null}, NOW())`;
+      return res.json({ success: true });
+    }
+
     if (req.method === 'POST' && req.body && req.body.action === 'product_save') {
       if (!admin) return res.status(401).json({ error: 'Unauthorized' });
       const { id, title, description, price_cents, value_cents, cover_url, delivery_url, active, position, is_playbook } = req.body;
@@ -269,7 +277,17 @@ export default async function handler(req, res) {
 
     if (req.method === 'GET') {
       if (admin) {
-        const rows = await sql`SELECT * FROM resources ORDER BY category, position, id`;
+        const rows = await sql`
+          SELECT r.*,
+            COALESCE(c.clicks, 0)::int AS clicks,
+            COALESCE(c.people, 0)::int AS clickers,
+            c.last_click
+          FROM resources r
+          LEFT JOIN (
+            SELECT resource_id, COUNT(*) AS clicks, COUNT(DISTINCT user_id) AS people, MAX(created_at) AS last_click
+            FROM resource_clicks GROUP BY resource_id
+          ) c ON c.resource_id = r.id
+          ORDER BY r.category, r.position, r.id`;
         return res.json({ resources: rows });
       }
       const session = getSession(req);
