@@ -1190,6 +1190,10 @@ export function WaitlistForm({ list = "insider" }) {
   const [wantTier, setWantTier] = useState("");
   // ?source=ref:<code> — a partner referral link. Look the partner up and show
   // the you've-been-referred banner with the 10% offer.
+  const [partners, setPartners] = useState([]);
+  useEffect(() => {
+    fetch("/api/waitlist?public=1").then(r => r.json()).then(d => setPartners(d?.partners || [])).catch(() => {});
+  }, []);
   const [refBy, setRefBy] = useState(null);
   const [refDismissed, setRefDismissed] = useState(false);
   useEffect(() => {
@@ -1331,6 +1335,7 @@ export function WaitlistForm({ list = "insider" }) {
                 <select style={sel} value={source} onChange={e => setSource(e.target.value)}>
                   <option value="">Prefer not to say</option>
                   {WL_SOURCE.map(o => <option key={o} value={o}>{o}</option>)}
+                  {partners.map(p => <option key={p.code} value={"heard-ref:" + p.code}>Referred by {p.label}</option>)}
                 </select>
               </div>
               )}

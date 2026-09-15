@@ -5960,7 +5960,9 @@ export default function App() {
       );
     }
     // The secret shareable link — insider list, insider countdown (first access)
-    return <LaunchPage launchAt={insiderAt || launchAt} list="insider" eliteSpots={eliteSpots} onAdmin={() => setShowAdminLogin(true)} />;
+    // ?list=general previews the post-launch general form on the waitlist URL
+    const wlList = new URLSearchParams(window.location.search).get("list") === "general" ? "general" : "insider";
+    return <LaunchPage launchAt={wlList === "general" ? launchAt : (insiderAt || launchAt)} list={wlList} eliteSpots={eliteSpots} onAdmin={() => setShowAdminLogin(true)} />;
   }
   // Pre-launch, the site is fully BROWSABLE — home, courses, pricing, all of it.
   // What's gated is DOING anything: any join/sign-in/enroll click pops the
