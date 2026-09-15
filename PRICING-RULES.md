@@ -51,9 +51,8 @@ This document reflects every pricing rule currently implemented in code. Prices 
 | Strategy Session | $425 |
 | Capital Stack Review | $550 |
 | Community Development | $375 |
-| BIPOC Developer Session | $275 — **never discounted** (already priced as an access offering) |
 
-- **Member session discounts:** Premium 10% · Elite 30% (all sessions except BIPOC). Discounted prices round **down** to the nearest $5, always in the member's favor. Applied server-side; the client never sends an amount.
+- **Member session discounts:** Premium 10% · Elite 30% (all sessions). Discounted prices round **down** to the nearest $5, always in the member's favor. Applied server-side; the client never sends an amount.
 - Split: **90% NREUV / 10% platform**.
 
 ## 6. Senior Advisor retainer & the Full Project Intake

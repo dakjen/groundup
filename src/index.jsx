@@ -1656,7 +1656,6 @@ function ContactPage({ setActivePage, advisorLink }) {
     { id: "strategy", title: "Strategy Session", desc: "Big picture direction: where to focus, how to grow your pipeline, what JV structures make sense for your stage.", price: "$425", duration: "45 min", Icon: Compass, stripe: "https://buy.stripe.com/placeholder_strategy" },
     { id: "capital", title: "Capital Stack Review", desc: "Deep dive into your financing structure — tax credit sizing, subsidy sequencing, gap analysis, and how to close the deal.", price: "$550", duration: "45 min", Icon: BarChart3, stripe: "https://buy.stripe.com/placeholder_capital" },
     { id: "community", title: "Community Development", desc: "Community engagement strategy, political capital, government relationships, and neighborhood support for your project.", price: "$375", duration: "45 min", Icon: Handshake, stripe: "https://buy.stripe.com/placeholder_community" },
-    { id: "bipoc", title: "BIPOC Developer Session", desc: "A dedicated session for BIPOC developers — navigating the industry, building capital relationships, and growing as an underrepresented developer. Reserved for BIPOC clients.", price: "$275", duration: "45 min", Icon: UsersIcon, stripe: "https://buy.stripe.com/placeholder_bipoc" },
     { id: "advisor", title: "Senior Advisor — start with the Full Project Intake", desc: "Have a live deal? Send her the whole thing. The $1,500 intake takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. Then the retainer puts Dr. Merritt on your project month over month: 5 hrs/mo — $3,025 · 10 hrs/mo — $5,500 · 15 hrs/mo — $7,700. Continue and the $1,500 credits against your first month.", price: "$1,500", duration: "intake · credited if you continue", Icon: Handshake, advisor: true },
   ];
 
@@ -1740,14 +1739,14 @@ function ContactPage({ setActivePage, advisorLink }) {
           <div style={{ background: "#1a0808", border: "1px solid #b80101", borderRadius: 12, padding: "16px 22px", margin: "20px 0 8px", display: "flex", alignItems: "center", gap: 12 }}>
             <BadgePercent size={20} color="#b80101" style={{ flexShrink: 0 }} />
             <div style={{ color: "#e0c4c4", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>
-              <strong style={{ color: "#f0d8d8" }}>Your {pricing.tier} member rate is applied</strong> — {Math.round(pricing.session_discount * 100)}% off the sessions below. Nothing to enter; it comes off at checkout. The BIPOC Developer Session is already offered at an access rate, so the member discount doesn't apply there.
+              <strong style={{ color: "#f0d8d8" }}>Your {pricing.tier} member rate is applied</strong> — {Math.round(pricing.session_discount * 100)}% off the sessions below. Nothing to enter; it comes off at checkout.
             </div>
           </div>
         ) : (
           <div style={{ background: "#110606", border: "1px solid #2a0000", borderRadius: 12, padding: "16px 22px", margin: "20px 0 8px", display: "flex", alignItems: "center", gap: 12 }}>
             <BadgePercent size={20} color="#7a5050" style={{ flexShrink: 0 }} />
             <div style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>
-              Members save on 1:1 sessions — <strong style={{ color: "#c8a8a8" }}>Premium 10% off, Owner 30% off</strong>. Applied automatically once you're signed in. The BIPOC Developer Session is already at an access rate.
+              Members save on 1:1 sessions — <strong style={{ color: "#c8a8a8" }}>Premium 10% off, Owner 30% off</strong>. Applied automatically once you're signed in.
             </div>
           </div>
         ))}
@@ -5856,7 +5855,7 @@ export default function App() {
       pricing: ["Plans & Pricing — GroundUp", "Member $49.99, Builder $149.99, Premium $249.99, Owner $499.99 — plus one-time course passes and Lunch & Learn access. Every plan includes the full course library."],
       about: ["About Dr. Gina Merritt — GroundUp", "From public housing in the Bronx to $600M+ in real estate development. The story behind GroundUp and Northern Real Estate Urban Ventures."],
       lunchlearn: ["Lunch & Learns — GroundUp", "Live monthly sessions with Dr. Gina Merritt — real deals, real numbers, live Q&A, plus a recording library."],
-      contact: ["Book a 1:1 Session — GroundUp", "Work directly with Dr. Gina Merritt: deal review, strategy, capital stack review, community development, and BIPOC developer sessions."],
+      contact: ["Book a 1:1 Session — GroundUp", "Work directly with Dr. Gina Merritt: deal review, strategy, capital stack review and community development sessions."],
       terms: ["Terms of Use — GroundUp", "The GroundUp Terms of Use: content license, memberships, billing, refunds, and community rules."],
       privacy: ["Privacy Policy — GroundUp", "What GroundUp collects, how it is used, who processes it, and how deletion works."],
     };

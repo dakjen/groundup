@@ -26,7 +26,6 @@ const CATALOG = {
   session_strategy:  { mode: 'payment', name: '1:1 Strategy Session (45 min)',   amount: 42500 },
   session_capital:   { mode: 'payment', name: '1:1 Capital Stack Review (45 min)', amount: 55000 },
   session_community: { mode: 'payment', name: '1:1 Community Development (45 min)', amount: 37500 },
-  session_bipoc:     { mode: 'payment', name: '1:1 BIPOC Developer Session (45 min)', amount: 27500 },
   retainer_onboarding: { mode: 'payment', name: 'Full Project Intake with Dr. Merritt', amount: 150000 },
   retainer_5:  { mode: 'subscription', name: 'Senior Advisor Retainer — 5 hrs/month',  amount: 302500, retainerHours: 5 },
   retainer_10: { mode: 'subscription', name: 'Senior Advisor Retainer — 10 hrs/month', amount: 550000, retainerHours: 10 },
@@ -40,7 +39,7 @@ const SPLIT = {
   lnl: 1.00, lnl_year: 1.00, lnl_life: 1.00, // Lunch & Learn: 100% to NREUV, platform takes no cut
   // Dr. Merritt's own hours — 90/10
   session_deal: 0.90, session_strategy: 0.90, session_capital: 0.90,
-  session_community: 0.90, session_bipoc: 0.90,
+  session_community: 0.90,
   retainer_onboarding: 0.90, retainer_5: 0.90, retainer_10: 0.90, retainer_15: 0.90,
 };
 const splitRate = (item) => (item && SPLIT[item] !== undefined ? SPLIT[item] : SPLIT.DEFAULT);
@@ -51,9 +50,8 @@ const SESSION_DISCOUNT = { Premium: 0.10, Elite: 0.30 };
 export const sessionDiscountRate = (tier) => SESSION_DISCOUNT[tier] || 0;
 
 // What a member actually pays for a session, in cents.
-// The BIPOC Developer Session is already priced as an access offering — the
-// member tier discount does not stack on top of it.
-const NO_MEMBER_DISCOUNT = new Set(['session_bipoc']);
+// Sessions listed here never take the member discount (none currently).
+const NO_MEMBER_DISCOUNT = new Set([]);
 
 export function memberPrice(item, tier) {
   const spec = CATALOG[item];
