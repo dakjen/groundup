@@ -77,24 +77,30 @@ export default async function handler(req, res) {
       const msLeft = new Date(lr.value) - Date.now();
       const DAY = 86400000;
       try {
+        const sendCountdown = async (stage, flag) => {
+          const [done] = await sql`SELECT value FROM settings WHERE key = ${flag}`;
+          if (done?.value) return;
+          const entries = await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = ${list} AND NOT COALESCE(comped, FALSE)`;
+          if (entries.length) {
+            const launchText = new Date(lr.value).toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+            const mail = countdownEmail(stage, launchText);
+            drip[list + '_countdown_' + stage.replace(' ', '')] = await sendBulk(entries, mail.subject, mail.html);
+          }
+          await sql`INSERT INTO settings (key, value) VALUES (${flag}, 'sent') ON CONFLICT (key) DO UPDATE SET value = 'sent'`;
+        };
         if (msLeft <= 0) {
           const r = await sendLaunchBatch(sql, list);
           if (r.total) drip[list + '_launch'] = r.sent;
+        } else if (msLeft <= 2 * DAY) {
+          // Final stretch: make sure recommendations went out, then the 2-day hype
+          const r = await sendRecommendBatch(sql, list);
+          if (r.total) drip[list + '_recommend'] = r.sent;
+          await sendCountdown('2 days', 'drip_countdown2_' + list);
         } else if (msLeft <= 7 * DAY) {
           const r = await sendRecommendBatch(sql, list);
           if (r.total) drip[list + '_recommend'] = r.sent;
         } else if (msLeft <= 14 * DAY) {
-          const flag = 'drip_countdown14_' + list;
-          const [done] = await sql`SELECT value FROM settings WHERE key = ${flag}`;
-          if (!done?.value) {
-            const entries = await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = ${list} AND NOT COALESCE(comped, FALSE)`;
-            if (entries.length) {
-              const launchText = new Date(lr.value).toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
-              const mail = countdownEmail('2 weeks', launchText);
-              drip[list + '_countdown'] = await sendBulk(entries, mail.subject, mail.html);
-            }
-            await sql`INSERT INTO settings (key, value) VALUES (${flag}, 'sent') ON CONFLICT (key) DO UPDATE SET value = 'sent'`;
-          }
+          await sendCountdown('2 weeks', 'drip_countdown14_' + list);
         }
       } catch (e) { console.error('launch drip failed for ' + list, e.message); }
     }

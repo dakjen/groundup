@@ -4771,29 +4771,6 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
     try { await call("POST", { action: "set_launch", which, launch_at: at }); flash(true, which === "insider" ? "Insider launch date saved." : "General launch date saved."); await load(); } catch (e) { flash(false, e.message); }
   };
 
-  const sendStage = async (stage) => {
-    if (!window.confirm(`Send the "${stage}" countdown email to everyone on the waitlist?`)) return;
-    setBusy(true);
-    try { const d = await call("POST", { action: "countdown", stage }); flash(true, `Countdown sent to ${d.sent} of ${d.total}.`); } catch (e) { flash(false, e.message); } finally { setBusy(false); }
-  };
-
-  // The two-stage sequence: recommendations ~14 days out, pay links on launch day.
-  // Clicking a button opens a review panel — exactly who gets it and what it says —
-  // and nothing sends until Confirm.
-  const [confirmSend, setConfirmSend] = useState(null); // { step, list }
-  const pendingFor = (step, list) => (data?.entries || []).filter(e =>
-    (e.list || "insider") === list && !e.comped && !(step === "recommend" ? e.recommended_notified : e.launched_notified));
-  const executeSend = async () => {
-    const { step, list } = confirmSend;
-    setBusy(true);
-    try {
-      const d = await call("POST", { action: step === "recommend" ? "recommend" : "launch", list });
-      flash(true, `${step === "recommend" ? "Recommendations" : "Launch emails"} sent to ${d.sent} of ${d.total}. Full record below in Sent Emails.`);
-      setConfirmSend(null);
-      await load();
-    } catch (e) { flash(false, e.message); } finally { setBusy(false); }
-  };
-
   const removeEntry = async (entry) => {
     if (!window.confirm(`Remove ${entry.name} from the waitlist?`)) return;
     try { await call("POST", { action: "remove", id: entry.id }); await load(); } catch (e) { flash(false, e.message); }
@@ -4924,58 +4901,24 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
         );
       })()}
 
-      {/* Countdown emails */}
+      {/* The launch drip runs itself off the countdown dates */}
       <div style={section}>
-        <div style={heading}>Countdown Emails</div>
-        <p style={{ color: "#666666", fontSize: 12, marginBottom: 14, fontFamily: "'DM Sans', sans-serif" }}>Each button sends one countdown email to the whole waitlist. Launch sends everyone their personal claim link for the plan they chose.</p>
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-          {["2 days", "1 day", "12 hours", "5 hours"].map(stage => (
-            <button key={stage} disabled={busy} onClick={() => sendStage(stage)} style={{ ...btnGhost, opacity: busy ? 0.6 : 1 }}>{stage}</button>
-          ))}
-        </div>
-        <div style={{ borderTop: "1px solid #eeebe4", marginTop: 16, paddingTop: 16 }}>
-          <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>The launch sequence — two emails per person</div>
-          <p style={{ color: "#8d847a", fontSize: 12, marginBottom: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
-            <strong>Step 1 (~14 days out):</strong> their personalized plan recommendation — built from their budget and their answers — with everything the plan includes. No pay link yet.<br />
-            <strong>Step 2 (launch day):</strong> "We're live" with their personal checkout link for that plan.
-          </p>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            {[["recommend", "insider", "1 · Recommendations — Insiders", btnGhost], ["recommend", "general", "1 · Recommendations — General", btnGhost],
-              ["launch", "insider", "2 · Launch + Pay Links — Insiders", btnRed], ["launch", "general", "2 · Launch + Pay Links — General", btnRed]].map(([step, list, label, style]) => {
-              const n = pendingFor(step, list).length;
-              return <button key={label} disabled={busy || n === 0} onClick={() => setConfirmSend({ step, list })} style={{ ...style, opacity: busy || n === 0 ? 0.5 : 1 }}>{label} ({n} waiting)</button>;
-            })}
+        <div style={heading}>Launch Emails — Automatic</div>
+        <p style={{ color: "#666666", fontSize: 12, marginBottom: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8 }}>
+          The whole sequence runs itself from the launch dates above — nothing to press. Per list, the daily run sends:
+        </p>
+        {[["~14 days out", "Save-the-date countdown to everyone on the list"],
+          ["~7 days out", "Each person's personalized plan recommendation — no pay link yet"],
+          ["~2 days out", "The final-stretch countdown (recommendations caught up first if the date was set late)"],
+          ["Launch day", "\"We're live\" with their personal checkout link — retainer-track people get the discovery-call invite instead"]].map(([when, what]) => (
+          <div key={when} style={{ display: "flex", gap: 14, padding: "8px 0", borderBottom: "1px solid #f5f2ec", fontFamily: "'DM Sans', sans-serif" }}>
+            <span style={{ color: "#b80101", fontSize: 12, fontWeight: 800, minWidth: 100, whiteSpace: "nowrap" }}>{when}</span>
+            <span style={{ color: "#444444", fontSize: 12.5, lineHeight: 1.6 }}>{what}</span>
           </div>
-
-          {/* Review before send — who, what, then Confirm */}
-          {confirmSend && (() => {
-            const pending = pendingFor(confirmSend.step, confirmSend.list);
-            const isRec = confirmSend.step === "recommend";
-            return (
-              <div style={{ marginTop: 16, background: "#fdf8f0", border: "1px solid #b8010140", borderRadius: 12, padding: "18px 22px" }}>
-                <div style={{ fontSize: 11, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Review before sending</div>
-                <div style={{ color: "#444444", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 10 }}>
-                  {isRec
-                    ? <>The <strong>"here's the plan we'd pick for you"</strong> email — their personalized recommendation with everything the plan includes, plus a peek at the next tier up. No payment link.</>
-                    : <>The <strong>"We're live"</strong> email — their recommendation with a personal <strong>checkout link that charges real cards</strong>, plus the next-tier option.</>}
-                  {" "}Each person receives it once, ever.
-                </div>
-                <div style={{ background: "#ffffff", border: "1px solid #eeebe4", borderRadius: 8, padding: "10px 14px", maxHeight: 180, overflowY: "auto", marginBottom: 12 }}>
-                  {pending.map(e => (
-                    <div key={e.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", padding: "4px 0", borderBottom: "1px solid #f5f2ec" }}>
-                      <span style={{ color: "#222222", fontWeight: 700 }}>{e.name} <span style={{ color: "#9a9a9a", fontWeight: 400 }}>({e.email})</span></span>
-                      <span style={{ color: "#b80101", fontWeight: 700, whiteSpace: "nowrap" }}>{recFor(e).split(" — ")[0]}</span>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ display: "flex", gap: 10 }}>
-                  <button disabled={busy} onClick={executeSend} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>{busy ? "Sending…" : `Confirm — send to ${pending.length} ${pending.length === 1 ? "person" : "people"}`}</button>
-                  <button disabled={busy} onClick={() => setConfirmSend(null)} style={btnGhost}>Cancel</button>
-                </div>
-              </div>
-            );
-          })()}
-        </div>
+        ))}
+        <p style={{ color: "#8d847a", fontSize: 11.5, marginTop: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
+          Every send is once-ever per person ({(data.entries || []).filter(e => e.launched_notified).length} of {(data.entries || []).length} have their launch email). Sends land in the record below. Preview every email from the Email tab; changing a launch date shifts the whole schedule with it.
+        </p>
       </div>
 
       {/* Sent Emails — the permanent record */}
