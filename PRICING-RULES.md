@@ -69,7 +69,8 @@ This document reflects every pricing rule currently implemented in code. Prices 
 3. **PASSJOIN15** — 15% off an annual plan, within 7 days of a course-pass expiry.
 4. **ANNUAL10** — 10% off any annual plan, every year.
 5. **STRETCH10 / STRETCH15** — the waitlist stretch offer (see §8); 10% (15% for first-10) off the first 12 months. Server-verified against the waitlist record; URL parameters alone cannot unlock it.
-6. **LNL25** — 25% off the first membership month for Lunch & Learn attendees.
+6. **Partner referral (REF2Y5/15/20/25)** — a member who came in through a partner referral link gets a fixed amount off every month for their **first 24 months**, stepped by tier: Member $5 · Builder $15 · Premium $20 · Owner $25 (rolls to list at month 25). Server-validated against the partner_codes table.
+7. **LNL25** — 25% off the first membership month for Lunch & Learn attendees.
 
 **Elite is never discounted** by the stretch offer. Gifts still collect card details and bill normally from month 2.
 
