@@ -217,6 +217,58 @@ function lessonBlocks(text) {
   }
   return blocks;
 }
+
+// Interactive lesson calculators — a visual learner's playground. A lesson
+// declares { calc: "gap" } or { calc: "dscr" } and gets a live tool.
+function LessonCalc({ kind, color }) {
+  const font = "'DM Sans', sans-serif";
+  const [v, setV] = useState(kind === "gap"
+    ? { tdc: 12000000, debt: 5500000, lihtc: 4200000, subsidy: 1000000, equity: 300000 }
+    : { noi: 520000, rate: 6.5, years: 35, loan: 5500000 });
+  const num = (x) => Number(x) || 0;
+  const money = (n) => "$" + Math.round(n).toLocaleString();
+  const field = (label, key, step = 100000) => (
+    <label key={key} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <span style={{ fontSize: 9, color: "#8a7070", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font }}>{label}</span>
+      <input type="number" step={step} value={v[key]} onChange={e => setV({ ...v, [key]: e.target.value })}
+        style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 8, padding: "10px 12px", color: "#f0d8d8", fontSize: 14, fontFamily: font, outline: "none", width: "100%", boxSizing: "border-box" }} />
+    </label>
+  );
+  let inputs, result;
+  if (kind === "gap") {
+    const sources = num(v.debt) + num(v.lihtc) + num(v.subsidy) + num(v.equity);
+    const gap = num(v.tdc) - sources;
+    inputs = [field("Total development cost", "tdc"), field("Senior debt", "debt"), field("LIHTC equity", "lihtc"), field("Soft subsidy", "subsidy"), field("Developer equity", "equity", 50000)];
+    result = (
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>{gap > 0 ? "Your gap" : gap < 0 ? "Over-sourced by" : "Fully sourced"}</div>
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 44, color: gap > 0 ? "#b80101" : "#22c55e", lineHeight: 1 }}>{money(Math.abs(gap))}</div>
+        <div style={{ color: "#7a5c50", fontSize: 12, fontFamily: font, marginTop: 10, lineHeight: 1.7 }}>{gap > 0 ? "This is the number every conversation is about — the amount the deal doesn't yet have. Play with the sources and watch what actually moves it." : "Sources cover costs — now stress-test it: cut the subsidy 20% and see what happens."}</div>
+      </div>
+    );
+  } else {
+    const r = num(v.rate) / 100 / 12, n = num(v.years) * 12;
+    const pmt = r > 0 ? num(v.loan) * r / (1 - Math.pow(1 + r, -n)) : num(v.loan) / n;
+    const ads = pmt * 12;
+    const dscr = ads > 0 ? num(v.noi) / ads : 0;
+    inputs = [field("Net operating income (annual)", "noi", 10000), field("Loan amount", "loan"), field("Interest rate %", "rate", 0.25), field("Amortization (years)", "years", 5)];
+    result = (
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Debt service coverage</div>
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 44, color: dscr >= 1.15 ? "#22c55e" : dscr >= 1.0 ? "#c9a227" : "#b80101", lineHeight: 1 }}>{dscr.toFixed(2)}x</div>
+        <div style={{ color: "#7a5c50", fontSize: 12, fontFamily: font, marginTop: 10, lineHeight: 1.7 }}>Annual debt service {money(ads)}. Most lenders want 1.15x–1.20x. Below 1.0x the property can't pay its own mortgage — watch how fast a rate change moves this.</div>
+      </div>
+    );
+  }
+  return (
+    <div style={{ background: "#0a0808", border: `1px solid ${color || "#b80101"}40`, borderRadius: 16, padding: "26px 28px", marginBottom: 32 }}>
+      <div style={{ fontSize: 10, color: color || "#b80101", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 18 }}>Try it yourself — {kind === "gap" ? "the capital stack gap" : "DSCR"}</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 22 }}>{inputs}</div>
+      {result}
+    </div>
+  );
+}
+
 function LessonRich({ text }) {
   const bold = (str) => String(str).split(/\*\*(.+?)\*\*/g).map((part, i) => i % 2 ? <strong key={i} style={{ color: "#e8d0d0", fontWeight: 700 }}>{part}</strong> : part);
   return (<>
@@ -422,6 +474,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
             </div>
           )}
           <LessonChart chart={lesson.chart} color={course.stageColor} />
+          {lesson.calc && <LessonCalc kind={lesson.calc} color={course.stageColor} />}
           {lesson.table && (
             <div style={{ marginBottom: 32, overflowX: "auto" }}>
               {lesson.table.title && <div style={{ fontSize: 9, color: course.stageColor, fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>{lesson.table.title}</div>}
