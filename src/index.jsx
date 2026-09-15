@@ -4547,6 +4547,33 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
     return { label: `${days}d left`, color: "#b80101" };
   };
 
+  // ── Partner referral codes: a custom code per ambassador; hitting the
+  // signup goal earns them a comped membership (the team gets an alert) ──
+  const [pcodes, setPcodes] = useState([]);
+  const [pcForm, setPcForm] = useState({ owner_name: "", owner_email: "", code: "", goal: 5 });
+  const loadCodes = async () => {
+    try {
+      const res = await fetch("/api/referrals?partner_codes=1", { headers: { Authorization: "Bearer " + sessionStorage.getItem("adminToken") } });
+      const d = await res.json();
+      if (res.ok) setPcodes(d.codes || []);
+    } catch {}
+  };
+  useEffect(() => { loadCodes(); }, []);
+  const createCode = async () => {
+    if (!pcForm.owner_name) { flash(false, "Who owns this code?"); return; }
+    try {
+      await call("POST", { kind: "partner_code", ...pcForm });
+      flash(true, "Code created — copy their link below.");
+      setPcForm({ owner_name: "", owner_email: "", code: "", goal: 5 });
+      await loadCodes();
+    } catch (e) { flash(false, e.message); }
+  };
+  const deleteCode = async (c) => {
+    if (!window.confirm(`Delete the code "${c.code}"? Its signups stay on the waitlist.`)) return;
+    try { await call("DELETE", { kind: "partner_code", id: c.id }); await loadCodes(); } catch (e) { flash(false, e.message); }
+  };
+  const codeLink = (c) => `https://community.drginamerritt.net/waitlist?source=${encodeURIComponent("ref:" + c.code)}`;
+
   // ── Month-free gifts: personal single-use links, solo or by CSV ──
   const [giftForm, setGiftForm] = useState({ name: "", email: "" });
   const [csvPeople, setCsvPeople] = useState(null); // parsed [{name,email}]
@@ -4603,6 +4630,34 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
       <p style={{ color: "#666666", fontSize: 13, marginBottom: 32 }}>Send a personal invite — they get a branded email explaining GroundUp with a 7-day trial link.</p>
 
       {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
+
+      {/* Partner referral codes */}
+      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 20 }}>
+        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Partner Referral Codes</div>
+        <p style={{ color: "#8d847a", fontSize: 12, marginBottom: 16, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>Give someone a custom code and share their link — every waitlist signup through it counts toward their goal. When they hit it, you get an email to comp their membership (Admin → Users → Comped).</p>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 18 }}>
+          <div><label style={lbl}>Owner name</label><input style={{ ...inp, marginBottom: 0 }} value={pcForm.owner_name} onChange={e => setPcForm({ ...pcForm, owner_name: e.target.value })} placeholder="Jasmine Carter" /></div>
+          <div><label style={lbl}>Owner email (optional)</label><input style={{ ...inp, marginBottom: 0 }} value={pcForm.owner_email} onChange={e => setPcForm({ ...pcForm, owner_email: e.target.value })} placeholder="jasmine@…" /></div>
+          <div><label style={lbl}>Code (blank = from name)</label><input style={{ ...inp, marginBottom: 0, maxWidth: 160 }} value={pcForm.code} onChange={e => setPcForm({ ...pcForm, code: e.target.value })} placeholder="jasmine" /></div>
+          <div><label style={lbl}>Signups to earn it</label><input type="number" min="1" style={{ ...inp, marginBottom: 0, maxWidth: 90 }} value={pcForm.goal} onChange={e => setPcForm({ ...pcForm, goal: e.target.value })} /></div>
+          <button onClick={createCode} style={btnRed}>Create Code</button>
+        </div>
+        {pcodes.length === 0 ? (
+          <div style={{ color: "#9a9a9a", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif" }}>No codes yet.</div>
+        ) : pcodes.map(c => (
+          <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", padding: "10px 0", borderBottom: "1px solid #f5f2ec", fontFamily: "'DM Sans', sans-serif" }}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <span style={{ color: "#222222", fontSize: 13, fontWeight: 800 }}>{c.owner_name}</span>
+              <span style={{ color: "#9a9a9a", fontSize: 12 }}> · code <code style={{ color: "#b80101" }}>{c.code}</code>{c.owner_email ? ` · ${c.owner_email}` : ""}</span>
+            </div>
+            <span style={{ color: c.signups >= c.goal ? "#22c55e" : "#b80101", fontSize: 12.5, fontWeight: 800, whiteSpace: "nowrap" }}>
+              {c.signups} / {c.goal} signups{c.rewarded ? " · 🎉 earned" : ""}
+            </span>
+            <button onClick={() => { navigator.clipboard && navigator.clipboard.writeText(codeLink(c)); flash(true, `${c.owner_name}'s link copied.`); }} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Copy link</button>
+            <button onClick={() => deleteCode(c)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Delete</button>
+          </div>
+        ))}
+      </div>
 
       {/* Month-free gifts */}
       <div style={{ background: "#ffffff", border: "1px solid #b8010140", borderRadius: 14, padding: 28, marginBottom: 28 }}>

@@ -16,9 +16,41 @@ export default async function handler(req, res) {
   const sql = neon(process.env.DATABASE_URL);
 
   try {
+    // Partner referral codes: a custom code per ambassador; signups through
+    // their link count toward a goal that earns them a comped membership.
+    if (req.method === 'GET' && req.query.partner_codes === '1') {
+      const codes = await sql`
+        SELECT p.*, COALESCE(w.n, 0)::int AS signups
+        FROM partner_codes p
+        LEFT JOIN (SELECT source, COUNT(*) AS n FROM waitlist GROUP BY source) w
+          ON w.source = 'ref:' || p.code
+        ORDER BY p.created_at DESC`;
+      return res.json({ codes });
+    }
+
     if (req.method === 'GET') {
       const referrals = await sql`SELECT * FROM referrals ORDER BY created_at DESC LIMIT 200`;
       return res.json(referrals);
+    }
+
+    if (req.method === 'POST' && req.body.kind === 'partner_code') {
+      const owner_name = String(req.body.owner_name || '').trim();
+      const owner_email = String(req.body.owner_email || '').trim().toLowerCase() || null;
+      const goal = Math.max(1, Number(req.body.goal) || 5);
+      if (!owner_name) return res.status(400).json({ error: 'Name required' });
+      const code = String(req.body.code || owner_name).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+      if (!code) return res.status(400).json({ error: 'Code required' });
+      const [row] = await sql`
+        INSERT INTO partner_codes (code, owner_name, owner_email, goal, created_at)
+        VALUES (${code}, ${owner_name}, ${owner_email}, ${goal}, NOW())
+        ON CONFLICT (code) DO NOTHING RETURNING *`;
+      if (!row) return res.status(409).json({ error: 'That code already exists' });
+      return res.status(201).json(row);
+    }
+
+    if (req.method === 'DELETE' && req.body?.kind === 'partner_code') {
+      await sql`DELETE FROM partner_codes WHERE id = ${Number(req.body.id)}`;
+      return res.json({ success: true });
     }
 
     // Month-free gift: a personal link locked to ONE person's email. The link

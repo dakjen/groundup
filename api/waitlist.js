@@ -380,6 +380,24 @@ export default async function handler(req, res) {
       // their discovery-call email waits for the launch send; once we're live,
       // new retainer leads get it immediately at signup.
       const isRetainerLead = recommendPlan(entry).tier === 'Advisor';
+      // Ambassador code goal check: the moment their referral count hits the
+      // goal, the team is told to comp the owner's membership.
+      if (isNew && /^ref:/.test(entry.source || '')) {
+        try {
+          const codeSlug = entry.source.slice(4);
+          const [pc] = await sql`SELECT * FROM partner_codes WHERE code = ${codeSlug} AND NOT rewarded`;
+          if (pc) {
+            const [{ n }] = await sql`SELECT COUNT(*)::int AS n FROM waitlist WHERE source = ${entry.source}`;
+            if (n >= pc.goal) {
+              await sql`UPDATE partner_codes SET rewarded = TRUE WHERE id = ${pc.id}`;
+              await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
+                `🎉 REFERRAL GOAL REACHED: ${pc.owner_name} (${pc.code}) — comp their membership`,
+                `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">${pc.owner_name} hit their goal</h2>
+                 <p style="color:#a89080;font-size:14px;line-height:1.9;">Their code <strong style="color:#f0d8d8;">${pc.code}</strong> just brought in signup <strong style="color:#f0d8d8;">#${n} of ${pc.goal}</strong>. They've earned their <strong style="color:#f0d8d8;">comped membership</strong> — set it up from Admin → Users (add or find ${pc.owner_email || pc.owner_name}, pick the tier, toggle Comped).</p>`);
+            }
+          }
+        } catch (e) { console.error('partner code check failed', e.message); }
+      }
       let retainerMail = null;
       if (isRetainerLead && isNew) {
         const launchKey = (entry.list || 'insider') === 'insider' ? 'launch_insider_at' : 'launch_at';
