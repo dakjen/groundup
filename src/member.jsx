@@ -1481,7 +1481,7 @@ export function RetainerPage({ member, setActivePage }) {
             {data.notes || "Following your call with Dr. Merritt — pick the monthly block that fits your project. Billed monthly, cancel anytime. Your workspace opens the moment you're set."}
           </p>
           <div style={{ background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 12, padding: "14px 20px", maxWidth: 520, margin: "0 auto 28px", color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>
-            A one-time <strong style={{ color: "var(--gu-text2)" }}>$1,500 onboarding fee</strong> covers Dr. Merritt's project intake — reviewing your deal, documents, and goals before the first working session.
+            Already paid the <strong style={{ color: "var(--gu-text2)" }}>$1,500 Full Project Intake</strong>? It credits automatically against your first month at checkout. Haven't yet? The intake — Dr. Merritt reviewing your whole deal before the first working session — is the first step.
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
             {PLANS.map(p => (

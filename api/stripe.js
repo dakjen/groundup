@@ -213,12 +213,19 @@ async function fulfill(sql, session) {
     // missed, and the $1,500 credits against the first retainer month if they continue.
     await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at)
       VALUES (${userId}, 'intake', 'intake_paid', NULL, NOW())`;
+    // Paying the intake opens the advisory workspace right away (status
+    // 'offered'): the client sees the hour blocks, both sides settle scope on
+    // the call, and checkout on a block starts the auto-billing subscription
+    // with the \$1,500 credited.
+    const [existing] = await sql`SELECT id FROM retainers WHERE user_id = ${userId} AND status IN ('active','offered') LIMIT 1`;
+    if (!existing) await sql`INSERT INTO retainers (user_id, hours_per_month, monthly_amount, status, notes, started_at, created_at)
+      VALUES (${userId}, 10, 5500, 'offered', 'Your intake is paid — book the call below. On it, you and Dr. Merritt will settle the scope and the monthly block that fits; start it here after and your \$1,500 credits against the first month.', NOW(), NOW())`;
     try {
       const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
       if (u) {
         await sendEmail(u.email, 'Your Full Project Intake is booked in',
           `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Send it all, ${u.name.split(' ')[0]}.</h2>
-           <p style="color:#a89080;font-size:14px;line-height:1.8;">Your Full Project Intake with Dr. Merritt is paid. Next step: book your intake call on her calendar (link below), and come ready to share the whole deal — pro forma, capital stack, site, timeline. This is the session where the thing you missed gets found.</p>
+           <p style="color:#a89080;font-size:14px;line-height:1.8;">Your Full Project Intake with Dr. Merritt is paid. Your advisory workspace is open now \u2014 book your intake call from it (button below), and come ready to share the whole deal — pro forma, capital stack, site, timeline. This is the session where the thing you missed gets found.</p>
            <p style="color:#7a5050;font-size:12px;line-height:1.7;">A note on the fee: the \$1,500 intake buys Dr. Merritt\u2019s full review of your project and is refundable only at our discretion. If the session happens without a genuine deal on the table, any refund is reduced by \$550 \u2014 the rate of a 1:1 session with her. With a real deal, the full \$1,500 credits against your first retainer month.</p>
            <p style="color:#a89080;font-size:14px;line-height:1.8;">And if you continue into the Senior Advisor retainer, <strong style="color:#f0d8d8;">your \$1,500 is credited against your first month</strong> — the intake is never wasted money.</p>
            <a href="${siteUrl()}/advisory" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Book your intake call</a>`);
