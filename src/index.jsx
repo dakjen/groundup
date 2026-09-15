@@ -4634,8 +4634,8 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
 
       {/* Partner referral codes */}
       <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 20 }}>
-        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Partner Referral Codes</div>
-        <p style={{ color: "#8d847a", fontSize: 12, marginBottom: 16, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>Give someone a custom code and share their link — every waitlist signup through it counts toward their goal. When they hit it, you get an email to comp their membership (Admin → Users → Comped).</p>
+        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Partner & Friend Referral Codes</div>
+        <p style={{ color: "#8d847a", fontSize: 12, marginBottom: 16, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>For partners, ambassadors, and friends alike: give anyone a custom code and share their link — every waitlist signup through it counts toward their goal. When they hit it, you get an email to comp their membership (Admin → Users → Comped). Set the goal per person — a big partner might need 10, a friend maybe 3.</p>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 18 }}>
           <div><label style={lbl}>Owner name</label><input style={{ ...inp, marginBottom: 0 }} value={pcForm.owner_name} onChange={e => setPcForm({ ...pcForm, owner_name: e.target.value })} placeholder="Jasmine Carter" /></div>
           <div><label style={lbl}>Owner email (optional)</label><input style={{ ...inp, marginBottom: 0 }} value={pcForm.owner_email} onChange={e => setPcForm({ ...pcForm, owner_email: e.target.value })} placeholder="jasmine@…" /></div>
