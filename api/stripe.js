@@ -736,17 +736,19 @@ export default async function handler(req, res) {
     // year — Member gets a clean 10%, higher tiers get \$12.50/mo off (the cap
     // spread evenly). Server-validated against the partner_codes table; annual
     // checkouts already carry ANNUAL10, and discounts never stack.
-    if (!discounted && product.mode === 'subscription' && product.tier && !product.annual && user.referred_by) {
+    // Fixed dollars for 24 months, stepped by tier (the referral memo's final
+    // structure): Member \$5 · Builder \$15 · Premium \$20 · Owner \$25 off per
+    // month, rolling to list price at month 25. Dollars, not a percentage, so
+    // the exposure stays capped at the top of the ladder.
+    const REF_OFF = { sub_Basic: 500, sub_Builder: 1500, sub_Premium: 2000, sub_Elite: 2500 };
+    if (!discounted && product.mode === 'subscription' && REF_OFF[item] && !product.annual && user.referred_by) {
       const [pc] = await sql`SELECT code FROM partner_codes WHERE code = ${user.referred_by}`;
       if (pc) {
+        const off = REF_OFF[item];
+        const id = 'REF2Y' + off;
         let coupon;
-        if (item === 'sub_Basic') {
-          try { coupon = (await stripe.coupons.retrieve('REF10')).id; }
-          catch { coupon = (await stripe.coupons.create({ id: 'REF10', percent_off: 10, duration: 'repeating', duration_in_months: 12, name: 'Referred by a GroundUp partner — 10% off first year' })).id; }
-        } else {
-          try { coupon = (await stripe.coupons.retrieve('REFCAP')).id; }
-          catch { coupon = (await stripe.coupons.create({ id: 'REFCAP', amount_off: 1250, currency: 'usd', duration: 'repeating', duration_in_months: 12, name: 'Referred by a GroundUp partner — \$12.50 off/mo, first year' })).id; }
-        }
+        try { coupon = (await stripe.coupons.retrieve(id)).id; }
+        catch { coupon = (await stripe.coupons.create({ id, amount_off: off, currency: 'usd', duration: 'repeating', duration_in_months: 24, name: `Referred by a GroundUp partner — \$${(off / 100).toFixed(0)} off/mo for 2 years` })).id; }
         params.discounts = [{ coupon }];
         discounted = true;
       }

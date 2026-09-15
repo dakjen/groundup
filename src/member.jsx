@@ -1216,7 +1216,7 @@ export function WaitlistForm({ list = "insider" }) {
                 <span style={{ fontSize: 20 }}>🎁</span>
                 <div style={{ flex: 1 }}>
                   <div style={{ color: "#f0d8d8", fontSize: 13.5, fontWeight: 800, fontFamily: font, marginBottom: 3 }}>You've been referred by {refBy.name}{refBy.company ? ` of ${refBy.company}` : ""}!</div>
-                  <div style={{ color: "#c8a8a8", fontSize: 12.5, fontFamily: font, lineHeight: 1.6 }}>Join the waitlist now and you'll get <strong style={{ color: "#f0d8d8" }}>10% off your first year</strong> when you become a member at launch — applied automatically at checkout.</div>
+                  <div style={{ color: "#c8a8a8", fontSize: 12.5, fontFamily: font, lineHeight: 1.6 }}>Join the waitlist now and you'll get <strong style={{ color: "#f0d8d8" }}>a member discount for your first two years</strong> — $5 to $25 off every month depending on your plan, applied automatically at checkout.</div>
                 </div>
                 <button onClick={() => setRefDismissed(true)} style={{ background: "none", border: "none", color: "#7a5050", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 2 }}>×</button>
               </div>
