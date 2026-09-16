@@ -2750,11 +2750,11 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
         <div style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 16 }}>
           <div>
             <label style={lbl}>The document (PDF) {form.delivery_url && <span style={{ color: "#1a7a3a" }}>✓ uploaded</span>}</label>
-            <input type="file" accept=".pdf" disabled={busy} onChange={e => upload(e.target.files[0], "file", (u) => setForm(f => ({ ...f, delivery_url: u })))} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12 }} />
+            <label style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "9px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer", display: "inline-block" }}>{busy ? "Uploading…" : form.delivery_url ? "Replace PDF" : "Upload PDF"}<input type="file" accept=".pdf" disabled={busy} onChange={e => upload(e.target.files[0], "file", (u) => setForm(f => ({ ...f, delivery_url: u })))} style={{ display: "none" }} /></label>
           </div>
           <div>
             <label style={lbl}>Cover image {form.cover_url && <span style={{ color: "#1a7a3a" }}>✓ uploaded</span>}</label>
-            <input type="file" accept=".png,.jpg,.jpeg,.webp" disabled={busy} onChange={e => upload(e.target.files[0], "cover", (u) => setForm(f => ({ ...f, cover_url: u })))} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12 }} />
+            <label style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "9px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer", display: "inline-block" }}>{busy ? "Uploading…" : form.cover_url ? "Replace cover image" : "Upload cover image"}<input type="file" accept=".png,.jpg,.jpeg,.webp" disabled={busy} onChange={e => upload(e.target.files[0], "cover", (u) => setForm(f => ({ ...f, cover_url: u })))} style={{ display: "none" }} /></label>
           </div>
         </div>
         <label style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 14, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#444444", cursor: "pointer" }}>
@@ -3614,7 +3614,10 @@ function PartnerAdmin({ btnRed, btnGhost, inp, lbl, courseList, flash }) {
         <div><label style={lbl}>URL slug</label><input value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} placeholder="acme-cdfi" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
         <div>
           <label style={lbl}>Logo {busyLogo ? "(uploading…)" : ""}</label>
-          <input type="file" accept="image/*" onChange={e => uploadLogo(e.target.files?.[0])} style={{ fontSize: 12, fontFamily: "'DM Sans', sans-serif" }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <label style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "9px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer", display: "inline-block" }}>{busyLogo ? "Uploading…" : form.logo_url ? "Replace logo" : "Upload logo"}<input type="file" accept="image/*" onChange={e => uploadLogo(e.target.files?.[0])} style={{ display: "none" }} /></label>
+            {form.logo_url && <img src={form.logo_url} alt="logo preview" style={{ height: 30, maxWidth: 110, objectFit: "contain" }} />}
+          </div>
           {form.logo_url && <img src={form.logo_url} alt="logo" style={{ height: 30, marginTop: 6, display: "block" }} />}
         </div>
       </div>
@@ -5187,7 +5190,7 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
         <div style={{ borderTop: "1px solid #f2efe8", paddingTop: 18 }}>
           <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Or invite a whole list (CSV)</div>
           <p style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 10 }}>Upload a CSV with name and email columns. You'll see who's in it before anything sends — then each person gets the gift email with their own personal link.</p>
-          <input type="file" accept=".csv,.txt" onChange={e => { parseCsv(e.target.files[0]); e.target.value = ""; }} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, marginBottom: 12 }} />
+          <label style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "9px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer", display: "inline-block", marginBottom: 12 }}>Choose CSV file<input type="file" accept=".csv,.txt" onChange={e => { parseCsv(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} /></label>
           {csvPeople && (
             <div style={{ background: "#faf8f4", border: "1px solid #eeebe4", borderRadius: 10, padding: "14px 18px" }}>
               <div style={{ color: "#222222", fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>{csvPeople.length} people ready</div>
