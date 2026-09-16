@@ -837,7 +837,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
   const pages = isTeam
     ? ["community", "resources", "lunchlearn"]
     : member
-    ? ["courses", "glossary", "community", "resources", "advisory", "lunchlearn", "officehours", "contact", "support"]
+    ? ["courses", "community", "resources", "advisory", "lunchlearn", "officehours", "contact", "support"]
     : ["home", "courses", "about", "pricing", "lunchlearn", "contact", "support"];
   const ADMIN_TOOLS = [
     ["admin-users", "Users"], ["admin-referrals", "Referrals"], ["admin-waitlist", "Waitlist"],
@@ -1208,7 +1208,7 @@ function GlossaryPage({ member, onSignIn, setActivePage }) {
 
 // ─── COURSES PAGE ────────────────────────────────────────────────────────────
 
-function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate }) {
+function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary }) {
   const [activeMiniCourse, setActiveMiniCourse] = useState(null);
   // Survive refresh: reopen the course named in the URL hash once the catalog is in
   const hashCourseId = (window.location.hash.match(/c=([\w-]+)/) || [])[1] || null;
@@ -1253,7 +1253,10 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate }) {
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <div style={{ marginBottom: 56 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Learn at your pace</div>
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 52, color: "#f5e8e8", marginBottom: 14 }}>The Curriculum</h1>
+          <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap", marginBottom: 14 }}>
+            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 52, color: "#f5e8e8", margin: 0 }}>The Curriculum</h1>
+            <button onClick={onGlossary} style={{ background: "transparent", color: "#c8a8a8", border: "1px solid #b8010145", borderRadius: 99, padding: "9px 20px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12.5, cursor: "pointer" }}>📖 The Glossary — every term, explained</button>
+          </div>
           <p style={{ color: "#8a7070", fontSize: 15, maxWidth: 580, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif" }}>Seven courses built from Dr. Gina Merritt's actual deal experience — from first principles to what happens after opening day.</p>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -6645,7 +6648,7 @@ export default function App() {
           route to the waitlist before launch. */}
       <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => { setAuthMode("login"); setSignupTier("Free"); setShowSignup(true); }} member={member} unread={(notif?.unread || 0) + (notif?.dm_unread || 0)} />
       {activePage === "home" && <HomePage setActivePage={navigateTo} onSignUp={openSignup} currentUser={currentUser} eventInvited={eventInvited} />}
-      {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} /></div>}
+      {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} onGlossary={() => navigateTo("glossary")} /></div>}
       {activePage === "advisory" && <RetainerPage member={member} setActivePage={navigateTo} />}
       {activePage === "partner-interest" && <PartnerInterestPage />}
       {activePage === "partner" && <PartnerPage slug={partnerSlug} onSignIn={() => setShowAuth("login")} onExplore={() => navigateTo("courses")} />}
