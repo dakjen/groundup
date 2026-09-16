@@ -1614,7 +1614,7 @@ const plans = [
       "Development timeline templates",
       "Group office hours with Dr. Merritt + priority booking",
       "10% off 1:1 sessions with Dr. Merritt",
-      "1 free 1:1 session with Dr. Merritt every year — unlocks after 4 months",
+      "1 free 1:1 session with Dr. Merritt every year — unlocks after 4 months, no rollover",
       "GroundUp-only rates with our partners",
     ],
     locked: ["The Developer's Playbook download (view-only until Owner)", "Deal-specific support — an Owner benefit"],
@@ -1766,8 +1766,8 @@ const BENEFIT_HELP = {
   "Group office hours with Dr. Merritt": "Live group Q&A sessions with Dr. Merritt — bring your questions (Premium books 2 a year, Owner 6).",
   "Discount on paid 1:1 sessions": "A standing discount on private paid sessions with Dr. Merritt — deal review, strategy, capital stack.",
   "Discount on 1:1 sessions": "A standing discount on private paid sessions with Dr. Merritt — deal review, strategy, capital stack.",
-  "Included 1:1 time with Dr. Merritt": "Private one-on-one time included in your membership — Premium gets 1 session a year, Owner gets 3 advisory calls a year, unlocking after 4 months.",
-  "Included 1:1 time with Dr. Merritt (after 4 months)": "Private one-on-one time included in your membership — Premium gets 1 session a year, Owner gets 3 advisory calls a year, unlocking after 4 months.",
+  "Included 1:1 time with Dr. Merritt": "Private one-on-one time included in your membership — Premium gets 1 session a year, Owner gets 3 advisory calls a year, unlocking after 4 months. Use them or lose them: unused sessions don't roll over.",
+  "Included 1:1 time with Dr. Merritt (after 4 months)": "Private one-on-one time included in your membership — Premium 1/yr, Owner 3/yr, unlocking after 4 months. Use them or lose them: unused sessions don't roll over.",
   "GroundUp-only rates with our partners": "Member-only rates with our partner network — services and tools at prices reserved for GroundUp.",
   "Direct messages to Dr. Merritt & her team": "Message Dr. Merritt and her team directly — quick questions answered within 2 business days.",
   "Advisory calls — 3/yr (unlock after 4 months)": "Three private advisory calls a year with Dr. Merritt, included with Owner — where deal support happens.",
@@ -2819,7 +2819,7 @@ function TermsPage() {
 
       <h2 style={S.h2}>3. Memberships & billing</h2>
       <p style={S.p}>Plans: Member $49.99/mo · Builder $149.99/mo · Premium $249.99/mo · Owner $499.99/mo (limited seats), plus one-time course passes, Lunch &amp; Learn access, digital products, 1:1 sessions, and advisory retainers. Subscriptions <strong style={S.strong}>renew automatically each month</strong> on your billing date and are charged to your card by Stripe until you cancel. You can <strong style={S.strong}>cancel anytime, self-service</strong>, from Membership &amp; Billing on your member page — access continues through the period you've paid for. Prices may change with advance notice; changes apply from your next billing cycle.</p>
-      <p style={S.p}>Some benefits unlock with tenure: advisory calls and networking events open after 4 months of continuous membership. Premium includes 3 product downloads per billing month (unused downloads don't roll over); the Developer's Playbook is view-only below Owner. Owner seats are limited and offered while available.</p>
+      <p style={S.p}>Some benefits unlock with tenure: advisory calls, Premium's included yearly session, and networking events open after 4 months of continuous membership. Included one-on-one sessions are use-them-or-lose-them — unused sessions do not roll over or accumulate across years. Premium includes 3 product downloads per billing month (unused downloads don't roll over); the Developer's Playbook is view-only below Owner. Owner seats are limited and offered while available.</p>
 
       <h2 style={S.h2}>4. Refunds</h2>
       <p style={S.p}><strong style={S.strong}>All sales are final once content has been viewed or downloaded.</strong> For subscriptions: if you cancel <strong style={S.strong}>before the 5th day of the month</strong>, your payment for that month is refunded; cancellations on or after the 5th are not refunded for the current month, and your access continues through the period you paid for. For <strong style={S.strong}>annual subscriptions</strong> (billed once for the year): cancel within the first 6 months — a 10-day grace period past the 6-month mark is honored — and half of your annual payment (6 months) is refunded; more than 10 days into the second half, the refund is forfeited and your access continues through the end of the paid year. Where a statutory cooling-off or refund right applies in your jurisdiction, that right is honored to the extent required by law.</p>

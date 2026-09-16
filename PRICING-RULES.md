@@ -99,7 +99,7 @@ This document reflects every pricing rule currently implemented in code. Prices 
 
 ## 10. Gates
 
-- **Advisory calls, Premium's included yearly 1:1 session, + the networking-event invite unlock after 4 months (120 days) of continuous membership.** Only these benefits are gated — everything else is immediate. Gate length is a setting (`benefit_gate_days`).
+- **Advisory calls, Premium's included yearly 1:1 session, + the networking-event invite unlock after 4 months (120 days) of continuous membership.** Included 1:1s are **use-them-or-lose-them** — unused sessions never roll over. Only these benefits are gated — everything else is immediate. Gate length is a setting (`benefit_gate_days`).
 
 ## 11. Refunds & cancellation
 
