@@ -5827,13 +5827,17 @@ function SystemStatusTab() {
       <div style={{ background: missing.length ? "#fdf0f0" : "#eef7ee", border: `1px solid ${missing.length ? "#b8010140" : "#22c55e40"}`, color: missing.length ? "#b80101" : "#1a7a3a", borderRadius: 10, padding: "14px 18px", fontSize: 13.5, fontFamily: F, fontWeight: 700, marginBottom: 20 }}>
         {missing.length ? `${missing.length} setting${missing.length > 1 ? "s" : ""} missing — ${missing.map(m => m.label).join(", ")}` : "Everything is configured. Payments, splits, and email are all live."}
       </div>
-      {stripeInfo && !stripeInfo.error && (
+      {stripeInfo && (
         <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: "22px 24px", marginBottom: 20 }}>
-          <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: F, marginBottom: 10 }}>Where the money goes — Stripe <span style={{ color: stripeInfo.mode === "LIVE" ? "#1a7a3a" : "#b87a08" }}>({stripeInfo.mode})</span></div>
+          <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: F, marginBottom: 10 }}>Where the money goes — Stripe {!stripeInfo.error && <span style={{ color: stripeInfo.mode === "LIVE" ? "#1a7a3a" : "#b87a08" }}>({stripeInfo.mode})</span>}</div>
+          {stripeInfo.error ? (
+            <div style={{ fontSize: 13, fontFamily: F, color: "#b80101", lineHeight: 1.7 }}>Couldn't reach Stripe from the server: {stripeInfo.error}</div>
+          ) : (
           <div style={{ fontSize: 13, fontFamily: F, color: "#333333", lineHeight: 2 }}>
             <div><strong>Payments land in:</strong> {stripeInfo.platform.name || "(unnamed account)"}{stripeInfo.platform.email ? ` · ${stripeInfo.platform.email}` : ""} <code style={{ color: "#9a9a9a", fontSize: 11 }}>{stripeInfo.platform.id}</code></div>
             <div><strong>NREUV split pays out to:</strong> {stripeInfo.nreuv ? (stripeInfo.nreuv.error ? <span style={{ color: "#b80101" }}>{stripeInfo.nreuv.id} — {stripeInfo.nreuv.error}</span> : <>{stripeInfo.nreuv.name || "(unnamed account)"}{stripeInfo.nreuv.email ? ` · ${stripeInfo.nreuv.email}` : ""} <code style={{ color: "#9a9a9a", fontSize: 11 }}>{stripeInfo.nreuv.id}</code>{stripeInfo.nreuv.payouts_enabled === false && <span style={{ color: "#b80101", fontWeight: 800 }}> · PAYOUTS NOT ENABLED</span>}</>) : <span style={{ color: "#b80101" }}>not configured</span>}</div>
           </div>
+          )}
         </div>
       )}
       <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: "22px 24px", marginBottom: 20 }}>
