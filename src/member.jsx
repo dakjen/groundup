@@ -1409,6 +1409,80 @@ export function WaitlistForm({ list = "insider" }) {
 
 // ─── RESOURCES & TEMPLATES (Premium+; partner network is Elite) ─────────────
 
+// ─── THE LIBRARY — the same materials as Resources, filed the way a deal
+// actually runs: by development phase, 1 through 9, then the general pile. ───
+export function LibraryPage({ member, onUpgrade }) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  const rank = member && !member.suspended ? (TIER_RANK[member.tier] ?? 0) : 0;
+  const allowed = member && (rank >= 2 || member.role === "admin");
+
+  useEffect(() => {
+    if (!allowed) return;
+    api("/api/resources").then(setData).catch(e => setError(e.message));
+  }, [member?.id]);
+
+  const ping = (id) => { try { api("/api/resources", { method: "POST", body: JSON.stringify({ action: "resource_click", id }) }).catch(() => {}); } catch {} };
+
+  if (!allowed) {
+    return (
+      <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "140px 20px", textAlign: "center" }}>
+        <div style={{ marginBottom: 16 }}><Lock size={36} color="#b80101" style={{ display: "inline-block" }} /></div>
+        <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "var(--gu-text)", marginBottom: 14 }}>The Library</h1>
+        <p style={{ color: "var(--gu-muted)", fontFamily: font, fontSize: 15, maxWidth: 480, margin: "0 auto 28px", lineHeight: 1.8 }}>Templates, downloads, and working documents filed by development phase — a Premium benefit.</p>
+        <button style={btnRed} onClick={onUpgrade}>View Plans →</button>
+      </div>
+    );
+  }
+
+  const items = data ? data.resources.filter(r => r.category !== "partner") : [];
+  return (
+    <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>The Library</div>
+        <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "var(--gu-text)", marginBottom: 10 }}>Filed the way a deal runs</h1>
+        <p style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.8, maxWidth: 600, marginBottom: 44 }}>Every template and tool in the member collection, organized by the nine phases of the development process — so when you're in construction, you look under construction. The same materials also live topic-by-topic on the Resources page.</p>
+        {error && <div style={{ color: "#ff6b6b", fontFamily: font, fontSize: 13, marginBottom: 20 }}>{error}</div>}
+        {!data ? <div style={{ color: "var(--gu-muted)", fontFamily: font }}>Loading…</div> : (
+          [...Array.from({ length: 9 }, (_, i) => i + 1), null].map(ph => {
+            const phItems = items.filter(r => (r.phase || null) === ph);
+            const name = ph ? `Phase ${ph} — ${DEV_PHASES[ph - 1]}` : "General — the whole process";
+            return (
+              <div key={String(ph)} style={{ marginBottom: 28 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                  {ph && <span style={{ fontFamily: serif, fontWeight: 700, fontSize: 26, color: "#b80101", opacity: 0.55, lineHeight: 1, minWidth: 24 }}>{ph}</span>}
+                  <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 22, color: "var(--gu-text2)", margin: 0 }}>{ph ? DEV_PHASES[ph - 1] : "The Whole Process"}</h2>
+                  <span style={{ flex: 1, borderTop: "1px solid #1e0000" }} />
+                  <span style={{ color: "var(--gu-faint)", fontSize: 12, fontFamily: font }}>{phItems.length || "—"}</span>
+                </div>
+                {phItems.length === 0 ? (
+                  <div style={{ color: "var(--gu-faint)", fontSize: 12.5, fontFamily: font, padding: "4px 0 4px 36px" }}>Nothing filed here yet.</div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {phItems.map(r => (
+                      <div key={r.id} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 12, padding: "16px 22px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 20px" }}>
+                        <div style={{ flex: 1, minWidth: 240 }}>
+                          {r.url ? (
+                            <a href={r.url} target="_blank" rel="noreferrer" onClick={() => ping(r.id)} style={{ color: "#b80101", fontWeight: 800, fontSize: 15, fontFamily: font, textDecoration: "none" }}>{r.title} ↗</a>
+                          ) : (
+                            <span style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15, fontFamily: font }}>{r.title}</span>
+                          )}
+                          {r.description && <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, lineHeight: 1.6, marginTop: 4 }}>{r.description}</div>}
+                        </div>
+                        <span style={{ fontSize: 9.5, color: r.category === "template" ? "#c9a227" : "var(--gu-muted)", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, flexShrink: 0 }}>{r.category === "template" ? "Template" : "Resource"}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function ResourcesPage({ member, onUpgrade }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
@@ -1466,22 +1540,8 @@ export function ResourcesPage({ member, onUpgrade }) {
               ) : items.length === 0 ? (
                 <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font, background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 12, padding: "20px 24px" }}>Nothing here yet — check back soon.</div>
               ) : (
-                // Filed the way a deal actually runs: phases 1–9 in order, then
-                // the general pile for what spans the whole process.
-                [...Array.from({ length: 9 }, (_, i) => i + 1), null].map(ph => {
-                  const phItems = items.filter(r => (r.phase || null) === ph);
-                  if (!phItems.length) return null;
-                  const showHeads = g.key !== "partner" && items.some(r => r.phase);
-                  return (
-                    <div key={String(ph)} style={{ marginBottom: 18 }}>
-                      {showHeads && (
-                        <div style={{ fontSize: 10, color: ph ? "#b80101" : "var(--gu-faint)", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, margin: "0 0 10px", display: "flex", alignItems: "center", gap: 10 }}>
-                          {ph ? `Phase ${ph} — ${DEV_PHASES[ph - 1]}` : "General — the whole process"}
-                          <span style={{ flex: 1, borderTop: "1px solid #1e0000" }} />
-                        </div>
-                      )}
-                      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {phItems.map(r => (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {items.map(r => (
                     <div key={r.id} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 14, padding: "20px 26px", display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: "10px 28px" }}>
                       <div style={{ flex: 1, minWidth: 260, display: "flex", flexDirection: "column", gap: 8 }}>
                       {r.url && !/youtube\.com|youtu\.be/.test(r.url) ? (
@@ -1517,10 +1577,7 @@ export function ResourcesPage({ member, onUpgrade }) {
                       </div>
                     </div>
                   ))}
-                      </div>
-                    </div>
-                  );
-                })
+                </div>
               )}
             </div>
           );

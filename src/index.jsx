@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { FileText, Send, Hourglass, FolderOpen, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2, BadgePercent } from "lucide-react";
 import COURSE_CATALOG from "./courseCatalog.js";
-import { AuthModal, ResetPasswordModal, WaitlistForm, ResourcesPage, RetainerPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
+import { AuthModal, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, RetainerPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -846,7 +846,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
   const [adminOpen, setAdminOpen] = useState(false);
   const lightNav = member?.role === "admin";
   const navInactive = lightNav ? "#5a5a5a" : "#6a6b69";
-  const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", officehours: "Office Hours", contact: "Book with Dr. Gina", support: "Contact Us", glossary: "Glossary", community: "Community", membership: "Membership", resources: "Resources", advisory: "Advisory" };
+  const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", officehours: "Office Hours", contact: "Book with Dr. Gina", support: "Contact Us", glossary: "Glossary", community: "Community", library: "The Library", membership: "Membership", resources: "Resources", advisory: "Advisory" };
   return (
     <>
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: lightNav ? "rgba(255,255,255,0.97)" : "rgba(0,0,0,0.97)", backdropFilter: "blur(16px)", borderBottom: lightNav ? "1px solid #d8ccb6" : "1px solid #1a0000", padding: "0 clamp(16px,4vw,48px)", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
@@ -1259,11 +1259,10 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 64 }}>
           {[
-            { Icon: FolderOpen, title: "The Library", desc: "Downloads, templates & tools", go: () => onNav("resources"), color: "#b80101" },
+            { Icon: FolderOpen, title: "The Library", desc: "Templates & tools, filed by development phase", go: () => onNav("library"), color: "#b80101" },
             { Icon: FileText, title: "The Glossary", desc: "Every term, explained", go: onGlossary, color: "#c9a227" },
             { Icon: MessagesSquare, title: "The Community", desc: "Ask, answer, connect", go: () => onNav("community"), color: "#b80101" },
-            { Icon: Calendar, title: "Lunch & Learn", desc: "Monthly live sessions", go: () => onNav("lunchlearn"), color: "#c9a227" },
-            { Icon: Video, title: "Book with Dr. Gina", desc: "1:1 time on your deal", go: () => onNav("contact"), color: "#b80101" },
+            { Icon: Calendar, title: "Office Hours", desc: "Group sessions with Dr. Gina", go: () => onNav("officehours"), color: "#c9a227" },
           ].map(t => (
             <div key={t.title} onClick={t.go}
               style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "22px 20px", cursor: "pointer", transition: "all 0.25s" }}
@@ -1275,11 +1274,19 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
             </div>
           ))}
         </div>
-        <div style={{ marginBottom: 56, borderTop: "1px solid #1c0808", paddingTop: 48 }}>
+        <div style={{ marginBottom: 40, borderTop: "1px solid #1c0808", paddingTop: 48 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Learn at your pace</div>
-          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(32px,4.5vw,46px)", color: "#f5e8e8", margin: "0 0 14px" }}>The Curriculum</h2>
-          <p style={{ color: "#8a7070", fontSize: 15, maxWidth: 580, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif" }}>Seven courses built from Dr. Gina Merritt's actual deal experience — from first principles to what happens after opening day.</p>
+          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(32px,4.5vw,46px)", color: "#f5e8e8", margin: "0 0 14px" }}>The Development Overview</h2>
+          <p style={{ color: "#8a7070", fontSize: 15, maxWidth: 580, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif" }}>The full arc of a deal in seven courses, built from Dr. Gina Merritt's actual experience — with deeper, more specific courses launching as the community grows.</p>
         </div>
+        {/* Coming soon: the Underwriting Series teaser (remove when published) */}
+        {!seriesGroups["The Underwriting Series"] && (
+          <div style={{ marginBottom: 28, background: "linear-gradient(135deg, #171004, #0d0404)", border: "1px dashed #c9a22755", borderRadius: 14, padding: "16px 24px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 9.5, color: "#c9a227", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>Coming Soon</span>
+            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(18px,2.4vw,24px)", color: "#e6c766", flexShrink: 0 }}>The Underwriting Series</span>
+            <span style={{ color: "#a89070", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, flex: 1, minWidth: 220 }}>Underwriting the Project Budget & The Closing Draw — Dr. Merritt's own method, line by line.</span>
+          </div>
+        )}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {regular.map((course, i) => (
             <div key={course.id} onClick={() => setActiveMiniCourse(course)}
@@ -1300,14 +1307,6 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
           ))}
         </div>
 
-        {/* Coming soon: the Underwriting Series teaser (remove when published) */}
-        {!seriesGroups["The Underwriting Series"] && (
-          <div style={{ marginTop: 40, background: "linear-gradient(135deg, #171004, #0d0404)", border: "1px dashed #c9a22755", borderRadius: 18, padding: "32px 36px", textAlign: "center" }}>
-            <div style={{ fontSize: 10, color: "#c9a227", fontWeight: 800, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Coming Soon</div>
-            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(24px,3.5vw,34px)", color: "#e6c766", marginBottom: 10 }}>The Underwriting Series</div>
-            <p style={{ color: "#a89070", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8, maxWidth: 560, margin: "0 auto" }}>A two-part deep dive into the work that separates professionals: <strong style={{ color: "#e0c4a0" }}>Underwriting the Project Budget</strong> and <strong style={{ color: "#e0c4a0" }}>The Closing Draw</strong> — Dr. Merritt's own method, line by line.</p>
-          </div>
-        )}
         {/* ── Series: focused deep-dives, distinct from the main curriculum ── */}
         {Object.entries(seriesGroups).map(([name, list]) => (
           <div key={name} style={{ marginTop: 72 }}>
@@ -6690,6 +6689,7 @@ export default function App() {
       {member?.role === "admin" && activePage === "admin-contacts" && <TeamPage><ContactsTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-shop" && <TeamPage><h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#171106", marginBottom: 8 }}>Shop</h2><p style={{ color: "#6a5c40", fontSize: 13, marginBottom: 24, fontFamily: "'DM Sans', sans-serif" }}>Digital products — upload PDFs, set prices and value framing, control visibility.</p><ShopAdmin btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {activePage === "resources" && (member?.role === "admin" ? <TeamPage><ResourcesTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage> : <ResourcesPage member={member} onUpgrade={() => navigateTo("pricing")} />)}
+      {activePage === "library" && <LibraryPage member={member} onUpgrade={() => navigateTo("pricing")} />}
       {activePage === "membership" && <MemberPage member={member} setActivePage={navigateTo} onSignIn={() => openSignup("Free")} onSignOut={() => { clearMember(); setMember(null); sessionStorage.removeItem("currentUser"); setCurrentUser(null); navigateTo("home"); }} />}
       {activePage === "community" && <CommunityPage member={member} isAdmin={member?.role === "admin"} onSignIn={() => member ? navigateTo("pricing") : openSignup("Basic")} />}
       {activePage === "about" && <AboutPage setActivePage={navigateTo} />}
