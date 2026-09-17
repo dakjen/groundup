@@ -41,10 +41,17 @@ export default async function handler(req, res) {
             AND (user_id IS NULL OR user_id != ${user.id})`;
         unread = row.n;
       }
-      const [dmRow] = await sql`
-        SELECT COUNT(*)::int AS n FROM dms
-        WHERE user_id = ${user.id} AND from_admin = TRUE
-          AND created_at > ${me?.last_seen_dm || new Date(0).toISOString()}`;
+      // Members are alerted to team replies; the team (admin) is alerted to
+      // any member-sent DM across every thread.
+      const [dmRow] = user.role === 'admin'
+        ? await sql`
+            SELECT COUNT(*)::int AS n FROM dms
+            WHERE from_admin = FALSE
+              AND created_at > ${me?.last_seen_dm || new Date(0).toISOString()}`
+        : await sql`
+            SELECT COUNT(*)::int AS n FROM dms
+            WHERE user_id = ${user.id} AND from_admin = TRUE
+              AND created_at > ${me?.last_seen_dm || new Date(0).toISOString()}`;
       const [annCh] = await sql`SELECT id FROM channels WHERE slug = 'announcements'`;
       let announcement = null;
       if (annCh && user.rank >= 1) {
@@ -276,6 +283,22 @@ export default async function handler(req, res) {
         INSERT INTO messages (channel_id, user_id, parent_id, body, is_admin, created_at)
         VALUES (${channel_id}, ${user.id}, ${parent_id || null}, ${text}, ${user.role === 'admin'}, NOW())
         RETURNING *`;
+      // Member posted → Dr. Merritt (and ONLY Dr. Merritt) hears about it on her
+      // phone, so she can jump into the channel and answer. Nobody else is emailed.
+      if (user.role !== 'admin') {
+        try {
+          const [gina] = await sql`SELECT email FROM users WHERE badge = 'drmerritt' LIMIT 1`;
+          if (gina?.email) {
+            const snippet = text.length > 300 ? text.slice(0, 300) + '…' : text;
+            const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const html = `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">New post in #${esc(channel.slug || channel.name)}</h2>
+              <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${esc(user.name)}</strong> (${esc(user.tier)}) ${parent_id ? 'replied in a thread' : 'posted'}:</p>
+              <p style="color:#e8e0da;font-size:14px;line-height:1.8;border-left:3px solid #b80101;padding-left:14px;">${esc(snippet)}</p>
+              <p style="margin-top:18px;"><a href="https://community.drginamerritt.net/community" style="color:#c9a227;font-weight:700;">Open the community →</a></p>`;
+            await sendEmail(gina.email, `💬 ${user.name} posted in #${channel.slug || channel.name}`, html);
+          }
+        } catch (e) { console.error('channel notify failed', e); }
+      }
       return res.status(201).json({ message: { ...msg, author_name: user.role === 'admin' ? (user.name || 'GroundUp Team') : user.name, author_tier: user.tier, author_badge: user.badge || null, author_badges: user.badges || [], reply_count: 0 } });
     }
 
