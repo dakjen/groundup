@@ -1409,6 +1409,75 @@ export function WaitlistForm({ list = "insider" }) {
 
 // ─── RESOURCES & TEMPLATES (Premium+; partner network is Elite) ─────────────
 
+// ─── MY COHORT — the home tab for members sponsored through a partner org:
+// their program's branding, their curriculum, their private channel. ─────────
+export function MyCohortPage({ member, onNav, onCourse }) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    if (!member?.partner_slug) return;
+    fetch(`/api/resources?partner=${encodeURIComponent(member.partner_slug)}`)
+      .then(r => r.ok ? r.json() : Promise.reject(new Error("Couldn't load your cohort")))
+      .then(setData).catch(e => setError(e.message));
+  }, [member?.partner_slug]);
+
+  if (!member?.partner_slug) {
+    return (
+      <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "140px 20px", textAlign: "center" }}>
+        <p style={{ color: "var(--gu-muted)", fontFamily: font, fontSize: 15 }}>Your account isn't part of a cohort.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+        {error && <div style={{ color: "#ff6b6b", fontFamily: font, fontSize: 13, marginBottom: 20 }}>{error}</div>}
+        {!data ? <div style={{ color: "var(--gu-muted)", fontFamily: font }}>Loading…</div> : (
+          <>
+            <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", marginBottom: 14 }}>
+              {data.partner.logo_url && <img src={data.partner.logo_url} alt={data.partner.name} style={{ height: 54, maxWidth: 180, objectFit: "contain", background: "#fff", borderRadius: 10, padding: "6px 12px" }} />}
+              <div>
+                <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>My Cohort</div>
+                <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4.5vw,44px)", color: "var(--gu-text)", margin: 0, lineHeight: 1.1 }}>{data.partner.name}</h1>
+              </div>
+            </div>
+            <p style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.8, maxWidth: 600, marginBottom: 36 }}>Your program's home base — the curriculum selected for your cohort, your private channel, and everything your group does together.</p>
+
+            <div onClick={() => onNav("community")} style={{ background: "var(--gu-card)", border: "1px solid #b8010140", borderRadius: 16, padding: "22px 26px", cursor: "pointer", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 40 }}>
+              <span style={{ fontSize: 22 }}>💬</span>
+              <div style={{ flex: 1, minWidth: 220 }}>
+                <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 3 }}>{data.partner.name} Cohort — your private channel</div>
+                <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.6 }}>Just your group and Dr. Merritt — ask questions, share progress, and hear about cohort sessions here first.</div>
+              </div>
+              <span style={{ color: "#b80101", fontWeight: 800, fontSize: 14, fontFamily: font }}>Open →</span>
+            </div>
+
+            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 26, color: "var(--gu-text2)", marginBottom: 6 }}>Your curriculum</h2>
+            <p style={{ color: "var(--gu-muted2)", fontSize: 13, fontFamily: font, marginBottom: 18 }}>Selected for your cohort and taught by Dr. Gina Merritt.</p>
+            {data.courses.length === 0 ? (
+              <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font, background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 12, padding: "20px 24px" }}>Your curriculum is being set up — check back soon.</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {data.courses.map(c => (
+                  <div key={c.id} onClick={() => onCourse(c.id)} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 14, padding: "18px 24px", cursor: "pointer", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+                    <span style={{ background: (c.stageColor || "#b80101") + "18", color: c.stageColor || "#b80101", border: "1px solid " + (c.stageColor || "#b80101") + "35", borderRadius: 4, padding: "3px 10px", fontSize: 10, fontFamily: font, fontWeight: 800, letterSpacing: "1px", flexShrink: 0 }}>{c.stage}</span>
+                    <div style={{ flex: 1, minWidth: 220 }}>
+                      <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 19, color: "var(--gu-text2)", lineHeight: 1.2 }}>{c.title}</div>
+                    </div>
+                    <span style={{ color: "var(--gu-faint)", fontSize: 12, fontFamily: font, flexShrink: 0 }}>{c.lessonCount} lessons</span>
+                    <span style={{ color: c.stageColor || "#b80101", fontSize: 16 }}>→</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── THE LIBRARY — the same materials as Resources, filed the way a deal
 // actually runs: by development phase, 1 through 9, then the general pile. ───
 export function LibraryPage({ member, onUpgrade }) {

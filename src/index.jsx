@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { FileText, Send, Hourglass, FolderOpen, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2, BadgePercent } from "lucide-react";
 import COURSE_CATALOG from "./courseCatalog.js";
-import { AuthModal, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, RetainerPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
+import { AuthModal, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -834,10 +834,14 @@ function GULogo({ size = 40, light = false }) {
 function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread = 0 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const isTeam = member?.role === "admin";
+  // Members get the session-type tabs folded into one "With Dr. Gina" dropdown,
+  // and cohort members get their own tab.
+  const SESSION_PAGES = [["lunchlearn", "Lunch & Learns"], ["officehours", "Office Hours"], ["contact", "Book with Dr. Gina"]];
+  const [sessionsOpen, setSessionsOpen] = useState(false);
   const pages = isTeam
     ? ["community", "resources", "lunchlearn"]
     : member
-    ? ["courses", "community", "resources", "advisory", "lunchlearn", "officehours", "contact", "support"]
+    ? ["courses", ...(member.partner_slug ? ["cohort"] : []), "community", "resources", "advisory", "support"]
     : ["home", "courses", "about", "pricing", "lunchlearn", "contact", "support"];
   const ADMIN_TOOLS = [
     ["admin-users", "Users"], ["admin-referrals", "Referrals"], ["admin-waitlist", "Waitlist"],
@@ -846,7 +850,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
   const [adminOpen, setAdminOpen] = useState(false);
   const lightNav = member?.role === "admin";
   const navInactive = lightNav ? "#5a5a5a" : "#6a6b69";
-  const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", officehours: "Office Hours", contact: "Book with Dr. Gina", support: "Contact Us", glossary: "Glossary", community: "Community", library: "The Library", membership: "Membership", resources: "Resources", advisory: "Advisory" };
+  const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", officehours: "Office Hours", contact: "Book with Dr. Gina", support: "Contact Us", glossary: "Glossary", community: "Community", library: "The Library", membership: "Membership", resources: "Resources", advisory: "Advisory", cohort: "My Cohort" };
   return (
     <>
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: lightNav ? "rgba(255,255,255,0.97)" : "rgba(0,0,0,0.97)", backdropFilter: "blur(16px)", borderBottom: lightNav ? "1px solid #d8ccb6" : "1px solid #1a0000", padding: "0 clamp(16px,4vw,48px)", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
@@ -862,6 +866,18 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
           {pages.map(page => (
             <button key={page} onClick={() => setActivePage(page)} style={{ background: activePage === page ? "#57040418" : "transparent", color: activePage === page ? "#b80101" : navInactive, border: activePage === page ? "1px solid #b8010130" : "1px solid transparent", borderRadius: 7, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }}>{pageLabels[page] || page}</button>
           ))}
+          {member && !isTeam && (
+            <div style={{ position: "relative" }}>
+              <button onClick={() => setSessionsOpen(!sessionsOpen)} style={{ background: SESSION_PAGES.some(([id]) => id === activePage) ? "#57040418" : "transparent", color: SESSION_PAGES.some(([id]) => id === activePage) ? "#b80101" : navInactive, border: SESSION_PAGES.some(([id]) => id === activePage) ? "1px solid #b8010130" : "1px solid transparent", borderRadius: 7, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>With Dr. Gina ▾</button>
+              {sessionsOpen && (
+                <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, background: "#0d0404", border: "1px solid #2a0000", borderRadius: 12, padding: 6, minWidth: 180, boxShadow: "0 12px 40px rgba(0,0,0,0.5)", zIndex: 200 }}>
+                  {SESSION_PAGES.map(([id, label]) => (
+                    <button key={id} onClick={() => { setSessionsOpen(false); setActivePage(id); }} style={{ display: "block", width: "100%", textAlign: "left", background: activePage === id ? "#57040430" : "transparent", color: activePage === id ? "#b80101" : "#c8a0a0", border: "none", borderRadius: 8, padding: "10px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>{label}</button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           {member ? (
             <>
             {isTeam && (
@@ -894,6 +910,9 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
         <div style={{ position: "fixed", top: 64, left: 0, right: 0, zIndex: 99, background: lightNav ? "#f7f7f7" : "#050202", borderBottom: lightNav ? "1px solid #d8ccb6" : "1px solid #1a0000", padding: "16px 20px 24px", display: "flex", flexDirection: "column", gap: 4 }}>
           {pages.map(page => (
             <button key={page} onClick={() => { setActivePage(page); setMenuOpen(false); }} style={{ background: activePage === page ? "#57040418" : "transparent", color: activePage === page ? "#b80101" : "#c8a0a0", border: activePage === page ? "1px solid #57040440" : "1px solid transparent", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>{pageLabels[page] || page}</button>
+          ))}
+          {member && !isTeam && SESSION_PAGES.map(([id, label]) => (
+            <button key={id} onClick={() => { setActivePage(id); setMenuOpen(false); }} style={{ background: activePage === id ? "#57040418" : "transparent", color: activePage === id ? "#b80101" : "#c8a0a0", border: "1px solid transparent", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>{label}</button>
           ))}
           {isTeam && ADMIN_TOOLS.map(([id, label]) => (
             <button key={id} onClick={() => { setActivePage(id); setMenuOpen(false); }} style={{ background: activePage === id ? "#b8010112" : "transparent", color: activePage === id ? "#b80101" : "#8a2020", border: "1px solid transparent", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>Admin · {label}</button>
@@ -1210,6 +1229,9 @@ function GlossaryPage({ member, onSignIn, setActivePage }) {
 
 function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, onNav }) {
   const [activeMiniCourse, setActiveMiniCourse] = useState(null);
+  const [topicReq, setTopicReq] = useState("");
+  const [topicBusy, setTopicBusy] = useState(false);
+  const [topicDone, setTopicDone] = useState(false);
   // Survive refresh: reopen the course named in the URL hash once the catalog is in
   const hashCourseId = (window.location.hash.match(/c=([\w-]+)/) || [])[1] || null;
   const pageBg = "#000";
@@ -1333,6 +1355,29 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
             </div>
           </div>
         ))}
+
+        {/* ── Request a course topic: members tell Dr. Merritt what to teach next ── */}
+        <div style={{ marginTop: 72, background: "#0d0404", border: "1px solid #2a0000", borderRadius: 18, padding: "32px 36px" }}>
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>What should she teach next?</div>
+          <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(22px,3vw,30px)", color: "#f0d8d8", marginBottom: 8 }}>Request a course topic</h3>
+          <p style={{ color: "#8a7070", fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8, maxWidth: 560, marginBottom: 18 }}>Stuck on something the curriculum doesn't cover yet? Tell us — new, more specific courses launch based on what members ask for.</p>
+          {topicDone ? (
+            <div style={{ color: "#4ade80", fontSize: 14, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>✓ Got it — your request is in front of the team.</div>
+          ) : (
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <input value={topicReq} onChange={e => setTopicReq(e.target.value)} placeholder="e.g. How to read a construction draw schedule" maxLength={500}
+                style={{ flex: 1, minWidth: 240, background: "#000", border: "1px solid #2a0000", borderRadius: 10, padding: "13px 16px", color: "#f0d8d8", fontSize: 14, fontFamily: "'DM Sans', sans-serif", outline: "none" }} />
+              <button disabled={topicBusy || !topicReq.trim()} onClick={async () => {
+                setTopicBusy(true);
+                try {
+                  const res = await fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "request", body: "[Course topic] " + topicReq.trim() }) });
+                  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Couldn't send — try again.");
+                  setTopicDone(true);
+                } catch (e) { alert(e.message); } finally { setTopicBusy(false); }
+              }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "13px 26px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", opacity: topicBusy || !topicReq.trim() ? 0.5 : 1 }}>{topicBusy ? "Sending…" : "Send It →"}</button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -4759,6 +4804,7 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
   const [search, setSearch] = useState("");
   const [filterTier, setFilterTier] = useState("All");
   const [tempPw, setTempPw] = useState(null); // { name, password } after a reset
+  const [partners, setPartners] = useState([]); // cohort assignment options
 
   const adminApi = async (method, body) => {
     const res = await fetch("/api/users", {
@@ -4773,7 +4819,11 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
 
   const loadUsers = () => adminApi("GET").then(setUsers).catch(() => {});
 
-  useEffect(() => { loadUsers().finally(() => setLoading(false)); }, []);
+  useEffect(() => {
+    loadUsers().finally(() => setLoading(false));
+    fetch("/api/resources?partners=1", { headers: { Authorization: "Bearer " + sessionStorage.getItem("adminToken") } })
+      .then(r => r.ok ? r.json() : { partners: [] }).then(d => setPartners(d.partners || [])).catch(() => {});
+  }, []);
 
   const genPassword = () => {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
@@ -4935,6 +4985,18 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
                   title={user.comped ? "Comped — click to mark as paying" : "Mark this plan as comped (free of charge)"}
                   style={{ background: user.comped ? "#1a7a3a15" : "transparent", color: user.comped ? "#1a7a3a" : "#9a9a9a", border: "1px solid " + (user.comped ? "#1a7a3a50" : "#d8d4cc"), borderRadius: 6, padding: "6px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 10, letterSpacing: "1px", cursor: "pointer", textTransform: "uppercase" }}
                 >{user.comped ? "Comped ✓" : "Comp"}</button>
+                {/* Cohort assignment: gives them the My Cohort tab + the cohort's private channel */}
+                {partners.length > 0 && (
+                  <select
+                    value={user.partner_slug || ""}
+                    onChange={e => patchUser(user.id, { partner_slug: e.target.value || null })}
+                    title="Cohort — which partner program this member belongs to"
+                    style={{ background: user.partner_slug ? "#8a5a0815" : "transparent", color: user.partner_slug ? "#8a5a08" : "#9a9a9a", border: "1px solid " + (user.partner_slug ? "#8a5a0850" : "#d8d4cc"), borderRadius: 6, padding: "6px 8px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 11, cursor: "pointer", outline: "none", maxWidth: 140 }}
+                  >
+                    <option value="" style={{ background: "#ffffff", color: "#222222" }}>No cohort</option>
+                    {partners.map(p => <option key={p.slug} value={p.slug} style={{ background: "#ffffff", color: "#222222" }}>{p.name}</option>)}
+                  </select>
+                )}
               </div>
               )}
               <select
@@ -6690,6 +6752,7 @@ export default function App() {
       {member?.role === "admin" && activePage === "admin-shop" && <TeamPage><h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#171106", marginBottom: 8 }}>Shop</h2><p style={{ color: "#6a5c40", fontSize: 13, marginBottom: 24, fontFamily: "'DM Sans', sans-serif" }}>Digital products — upload PDFs, set prices and value framing, control visibility.</p><ShopAdmin btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {activePage === "resources" && (member?.role === "admin" ? <TeamPage><ResourcesTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage> : <ResourcesPage member={member} onUpgrade={() => navigateTo("pricing")} />)}
       {activePage === "library" && <LibraryPage member={member} onUpgrade={() => navigateTo("pricing")} />}
+      {activePage === "cohort" && <MyCohortPage member={member} onNav={navigateTo} onCourse={(id) => { window.location.hash = `c=${id}`; navigateTo("courses"); }} />}
       {activePage === "membership" && <MemberPage member={member} setActivePage={navigateTo} onSignIn={() => openSignup("Free")} onSignOut={() => { clearMember(); setMember(null); sessionStorage.removeItem("currentUser"); setCurrentUser(null); navigateTo("home"); }} />}
       {activePage === "community" && <CommunityPage member={member} isAdmin={member?.role === "admin"} onSignIn={() => member ? navigateTo("pricing") : openSignup("Basic")} />}
       {activePage === "about" && <AboutPage setActivePage={navigateTo} />}

@@ -42,7 +42,7 @@ export default async function handler(req, res) {
 
     if (req.method === 'GET') {
       const users = await sql`
-        SELECT id, name, email, tier, role, badge, membership_status, comped, badges, created_at
+        SELECT id, name, email, tier, role, badge, membership_status, comped, badges, partner_slug, created_at
         FROM users ORDER BY created_at DESC`;
       return res.json(users);
     }
@@ -69,7 +69,7 @@ export default async function handler(req, res) {
 
     // Update tier / role / badge / comped, or reset a password ({ id, new_password })
     if (req.method === 'PATCH') {
-      const { id, tier, role, badge, comped, new_password } = req.body;
+      const { id, tier, role, badge, comped, new_password, partner_slug } = req.body;
       if (!id) return res.status(400).json({ error: 'id required' });
       if (role !== undefined && !['member', 'admin'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
       if (badge !== undefined && badge !== null && !['team', 'drmerritt'].includes(badge)) return res.status(400).json({ error: 'Invalid badge' });
@@ -79,6 +79,7 @@ export default async function handler(req, res) {
       }
       const hasBadge = 'badge' in req.body;
       const hasComped = 'comped' in req.body;
+      const hasPartner = 'partner_slug' in req.body;
       const [user] = await sql`
         UPDATE users SET
           tier_since = CASE WHEN ${tier ?? null}::text IS NOT NULL AND tier IS DISTINCT FROM ${tier ?? null} THEN NOW() ELSE tier_since END,
@@ -86,9 +87,10 @@ export default async function handler(req, res) {
           role = COALESCE(${role ?? null}, role),
           badge = CASE WHEN ${hasBadge} THEN ${badge ?? null} ELSE badge END,
           comped = CASE WHEN ${hasComped} THEN ${comped ?? false} ELSE comped END,
+          partner_slug = CASE WHEN ${hasPartner} THEN ${partner_slug || null} ELSE partner_slug END,
           password_hash = COALESCE(${new_password ? hashPassword(new_password) : null}, password_hash)
         WHERE id = ${id}
-        RETURNING id, name, email, tier, role, badge, membership_status, comped, badges, created_at
+        RETURNING id, name, email, tier, role, badge, membership_status, comped, badges, partner_slug, created_at
       `;
       if (!user) return res.status(404).json({ error: 'User not found' });
       // A team password reset should never be silent — the member hears about it

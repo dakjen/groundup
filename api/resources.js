@@ -295,6 +295,16 @@ export default async function handler(req, res) {
         VALUES (${slug}, ${name}, ${logo}, ${JSON.stringify(courseIds)}, ${active}, NOW())
         ON CONFLICT (slug) DO UPDATE SET name = ${name}, logo_url = ${logo}, course_ids = ${JSON.stringify(courseIds)}, active = ${active}
         RETURNING *`;
+      // Every cohort gets its own private channel — visible only to members
+      // whose account carries this partner_slug (and the team).
+      try {
+        const [chExists] = await sql`SELECT id FROM channels WHERE partner_slug = ${slug}`;
+        if (!chExists) {
+          const [{ n }] = await sql`SELECT COUNT(*)::int AS n FROM channels`;
+          await sql`INSERT INTO channels (slug, name, description, min_tier, admin_only_post, position, team_only, partner_slug, created_at)
+            VALUES (${'cohort-' + slug}, ${name + ' Cohort'}, ${'The private room for the ' + name + ' cohort — just your group and Dr. Merritt.'}, 'Free', FALSE, ${n}, FALSE, ${slug}, NOW())`;
+        }
+      } catch (e) { console.error('cohort channel create failed', e); }
       return res.json({ success: true, partner: row });
     }
     if (req.method === 'POST' && req.body && req.body.action === 'partner_delete') {

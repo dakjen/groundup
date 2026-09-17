@@ -2,19 +2,27 @@ import { neon } from '@neondatabase/serverless';
 import { getSession, getAdmin, TIER_RANK } from './_utils.js';
 import { sendEmail, dmReplyEmail } from './_email.js';
 
+// A channel is visible when the tier gate passes, team-only channels stay with
+// the team, and a cohort channel stays inside its cohort (admins see all).
+function canSeeChannel(ch, user) {
+  if (ch.team_only && user.role !== 'admin') return false;
+  if (ch.partner_slug && user.role !== 'admin' && user.partner_slug !== ch.partner_slug) return false;
+  return user.rank >= (TIER_RANK[ch.min_tier] ?? 1);
+}
+
 // Resolve the requesting user (member or admin). Admins get Elite-level access.
 async function resolveUser(req, sql) {
   const session = getSession(req);
   if (!session) return null;
   if (session.role === 'admin') {
     if (session.uid) {
-      const [u] = await sql`SELECT id, name, tier, role, badge, badges FROM users WHERE id = ${session.uid}`;
+      const [u] = await sql`SELECT id, name, tier, role, badge, badges, partner_slug FROM users WHERE id = ${session.uid}`;
       if (u) return { ...u, role: 'admin', badge: u.badge || 'team', rank: TIER_RANK.Elite };
     }
     return { id: null, name: 'GroundUp Team', tier: 'Elite', role: 'admin', badge: 'team', rank: TIER_RANK.Elite };
   }
   if (!session.uid) return null;
-  const [u] = await sql`SELECT id, name, tier, role, membership_status, badge, badges FROM users WHERE id = ${session.uid}`;
+  const [u] = await sql`SELECT id, name, tier, role, membership_status, badge, badges, partner_slug FROM users WHERE id = ${session.uid}`;
   if (!u || u.membership_status !== 'active') return null;  // past_due/suspended = no access
   return { ...u, rank: TIER_RANK[u.tier] ?? 0 };
 }
@@ -31,7 +39,7 @@ export default async function handler(req, res) {
       if (!user.id) return res.json({ unread: 0, dm_unread: 0, announcement: null });
       const [me] = await sql`SELECT last_seen_community, last_seen_dm, seen_announcement_id FROM users WHERE id = ${user.id}`;
       const channels = await sql`SELECT * FROM channels`;
-      const visibleIds = channels.filter(ch => (!ch.team_only || user.role === 'admin') && user.rank >= (TIER_RANK[ch.min_tier] ?? 1)).map(ch => ch.id);
+      const visibleIds = channels.filter(ch => canSeeChannel(ch, user)).map(ch => ch.id);
       let unread = 0;
       if (visibleIds.length) {
         const [row] = await sql`
@@ -78,7 +86,7 @@ export default async function handler(req, res) {
     // GET ?resource=channels — channels visible to this user
     if (req.method === 'GET' && req.query.resource === 'channels') {
       const channels = await sql`SELECT * FROM channels ORDER BY position, id`;
-      const visible = channels.filter(c => (!c.team_only || user.role === 'admin') && user.rank >= (TIER_RANK[c.min_tier] ?? 1));
+      const visible = channels.filter(c => canSeeChannel(c, user));
       return res.json({ channels: visible, tier: user.tier });
     }
 
@@ -87,7 +95,7 @@ export default async function handler(req, res) {
       const channelId = Number(req.query.channel);
       if (!channelId) return res.status(400).json({ error: 'channel required' });
       const [channel] = await sql`SELECT * FROM channels WHERE id = ${channelId}`;
-      if (!channel || user.rank < (TIER_RANK[channel.min_tier] ?? 1) || (channel.team_only && user.role !== 'admin')) {
+      if (!channel || !canSeeChannel(channel, user)) {
         return res.status(403).json({ error: 'No access to this channel' });
       }
       const threadId = req.query.thread ? Number(req.query.thread) : null;
@@ -267,7 +275,7 @@ export default async function handler(req, res) {
       if (!channel_id || !text) return res.status(400).json({ error: 'channel_id and body required' });
       if (text.length > 4000) return res.status(400).json({ error: 'Message too long' });
       const [channel] = await sql`SELECT * FROM channels WHERE id = ${channel_id}`;
-      if (!channel || user.rank < (TIER_RANK[channel.min_tier] ?? 1) || (channel.team_only && user.role !== 'admin')) {
+      if (!channel || !canSeeChannel(channel, user)) {
         return res.status(403).json({ error: 'No access to this channel' });
       }
       if (channel.admin_only_post && user.role !== 'admin') {

@@ -135,6 +135,8 @@ const STATEMENTS = [
     position INTEGER DEFAULT 0, created_at TIMESTAMP DEFAULT NOW())`,
   `ALTER TABLE resources ADD COLUMN IF NOT EXISTS recommendation TEXT`,
   `ALTER TABLE resources ADD COLUMN IF NOT EXISTS phase INTEGER`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS partner_slug TEXT`,
+  `ALTER TABLE channels ADD COLUMN IF NOT EXISTS partner_slug TEXT`,
   `CREATE TABLE IF NOT EXISTS glossary (
     id SERIAL PRIMARY KEY, term TEXT UNIQUE NOT NULL, definition TEXT NOT NULL,
     refs JSONB DEFAULT '[]', created_at TIMESTAMP DEFAULT NOW())`,
