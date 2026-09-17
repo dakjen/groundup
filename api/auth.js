@@ -93,6 +93,28 @@ export default async function handler(req, res) {
           { key: 'ADMIN_EMAIL', label: 'Team alert inbox', ok: has('ADMIN_EMAIL'), why: 'Where team alerts go' },
           { key: 'BLOB_READ_WRITE_TOKEN', label: 'File uploads', ok: has('BLOB_READ_WRITE_TOKEN'), why: 'Lesson PDF uploads' },
         ],
+        // Which Stripe accounts money actually moves through — business names
+        // and modes only, never keys.
+        stripe: await (async () => {
+          if (!has('STRIPE_SECRET_KEY')) return null;
+          try {
+            const { default: Stripe } = await import('stripe');
+            const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+            const acct = await stripe.accounts.retrieve();
+            const out = {
+              mode: process.env.STRIPE_SECRET_KEY.startsWith('sk_live') ? 'LIVE' : 'TEST',
+              platform: { id: acct.id, name: acct.settings?.dashboard?.display_name || acct.business_profile?.name || null, email: acct.email || null },
+              nreuv: null,
+            };
+            if (has('NREUV_CONNECT_ACCOUNT')) {
+              try {
+                const c = await stripe.accounts.retrieve(process.env.NREUV_CONNECT_ACCOUNT);
+                out.nreuv = { id: c.id, name: c.settings?.dashboard?.display_name || c.business_profile?.name || null, email: c.email || null, payouts_enabled: c.payouts_enabled };
+              } catch { out.nreuv = { id: process.env.NREUV_CONNECT_ACCOUNT, error: 'not reachable from this platform account' }; }
+            }
+            return out;
+          } catch (e) { return { error: e.message }; }
+        })(),
       });
     }
 
