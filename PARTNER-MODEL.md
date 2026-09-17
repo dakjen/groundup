@@ -56,7 +56,8 @@ What it is **not**: a separate app or login system. It's a branded front door; c
 ## 5. Data model (for the technically curious)
 
 - **`partners` table**: `slug` (unique), `name`, `logo_url`, `course_ids` (JSON list of course ids), `active`, `created_at`
-- Cohort membership is **not** a table — it's ordinary `users` rows with comped/gifted access. This keeps every existing system (community, progress, entitlements, email) working for cohort members with zero special cases.
+- Cohort membership lives on the user: **`users.partner_slug`** ties a member to their program (set per row in Admin → Users via the cohort dropdown). A member with a `partner_slug` gets a **My Cohort tab** — their program's logo, name, selected curriculum, and a door into their channel.
+- **Every partner page auto-creates a private cohort channel** (`channels.partner_slug`) visible only to that cohort and the team — "Acme Cohort," their room with Dr. Merritt. Access to everything else still comes from ordinary comped/gifted membership, so community, progress, entitlements, and email all work with zero special cases.
 - Public API: `GET /api/resources?partner=<slug>` returns the branding plus only that partner's **published** courses; admin endpoints handle save/toggle. Server-side filtering — a partner page can never expose unpublished content or content outside its list.
 
 ## 6. Honest gaps — what the model does NOT yet do
@@ -65,9 +66,10 @@ Worth knowing before selling hard:
 
 1. **No automated year-end expiry.** Comped access doesn't expire on its own; ending a sponsored year means un-comping the cohort from Admin → Users (the gift-link path self-limits to one month, so comping is the real tool and it's manual). A "cohort end date" with automatic reversion is buildable if partnerships multiply.
 2. **No per-partner course *restriction* on accounts.** The partner page *displays* only their curriculum, but a comped account at a given tier can browse the full catalog like any member of that tier. In practice this is a feature (taste of the whole platform → conversion), but if a partner contract requires strict curriculum limits, that enforcement doesn't exist yet.
-3. **No partner-facing dashboard.** The organization can't see their cohort's progress or usage; reporting to partners is manual. (Lesson-level progress data exists in the platform, so a cohort report is buildable.)
-4. **No self-serve partner billing.** By design — every deal is negotiated — but it means invoicing lives outside the platform (QuickBooks/NREUV side).
-5. **Partner tier label vs. reality.** The `Partner` tier value exists on user accounts as a label, but access really comes from the tier + comped combination; the label is cosmetic.
+3. **No cohort-specific events yet.** The cohort channel is where cohort-only office hours or sessions get announced, but there's no separate scheduling machinery per cohort — Dr. Merritt posts the invite in their channel.
+4. **No partner-facing dashboard.** The organization can't see their cohort's progress or usage; reporting to partners is manual. (Lesson-level progress data exists in the platform, so a cohort report is buildable.)
+5. **No self-serve partner billing.** By design — every deal is negotiated — but it means invoicing lives outside the platform (QuickBooks/NREUV side).
+6. **Partner tier label vs. reality.** The `Partner` tier value exists on user accounts as a label, but access really comes from the tier + comped combination; the label is cosmetic.
 
 ## 7. How Partner relates to everything else
 
