@@ -57,7 +57,7 @@ async function grantAccess(sql, userId, source) {
     if (u) {
       const mail = lnlAccessEmail(u.name, ent.expires_at, !!linkRow?.value);
       await Promise.allSettled([
-        sendEmail(u.email, mail.subject, mail.html),
+        sendEmail(u.email, mail.subject, mail.html, { marketing: true }),
         addLnlContact(u.email, u.name),
       ]);
     }

@@ -250,7 +250,7 @@ function LessonLifecycle({ current, color }) {
           return (
             <div key={name} style={{ flex: 1, position: "relative", padding: "0 10px 0 0" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
-                <div style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, background: here ? "#b80101" : "#140a0a", border: here ? "2px solid #e0c4c4" : "1px solid #3a2020", color: here ? "#fff" : "#7a5050", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, fontFamily: font, zIndex: 1, position: "relative" }}>{i + 1}</div>
+                <div style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, background: here ? "#b80101" : "#140a0a", border: here ? "2px solid #e0c4c4" : "1px solid #3a2020", color: here ? "#fff" : "#8f7070", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, fontFamily: font, zIndex: 1, position: "relative" }}>{i + 1}</div>
                 {i < STAGES.length - 1 && <div style={{ flex: 1, height: 2, background: "#2a1010" }} />}
               </div>
               <div style={{ fontSize: 11.5, fontWeight: 800, color: here ? "#f0d8d8" : "#a08080", fontFamily: font, lineHeight: 1.4, marginBottom: 6 }}>{name}{here && <span style={{ display: "block", color: "#b80101", fontSize: 9, letterSpacing: "1.5px", marginTop: 3 }}>YOU ARE HERE</span>}</div>
@@ -594,7 +594,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
                     <span style={{ fontSize: 16 }}>{yt || mt.kind === "Video" ? "▶" : "📄"}</span>
                     <span style={{ background: "#b8010115", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "2px 8px", fontSize: 9, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>{mt.kind}</span>
                     <span style={{ color: "#f0d8d8", fontSize: 14, fontWeight: 600, fontFamily: "'DM Sans', sans-serif", flex: 1 }}>{mt.title}</span>
-                    <span style={{ color: "#7a5050", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>Open ↗</span>
+                    <span style={{ color: "#8f7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>Open ↗</span>
                   </a>
                 );
               })}
@@ -676,7 +676,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
                 <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#1a0808", border: "1px solid #2a0000", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#b80101", fontWeight: 800, flexShrink: 0, fontFamily: "'DM Sans', sans-serif" }}>{i + 1}</div>
                 <div>
                   <div style={{ color: "#f0d8d8", fontSize: 15, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", marginBottom: 4 }}>{lesson.title}</div>
-                  <div style={{ color: "#7a5050", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{lesson.summary ? lesson.summary.substring(0, 80) + "..." : ""}</div>
+                  <div style={{ color: "#8f7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{lesson.summary ? lesson.summary.substring(0, 80) + "..." : ""}</div>
                 </div>
               </div>
               <span style={{ color: "#b80101", fontSize: 18, flexShrink: 0 }}>{lessonUnlocked(i) ? "→" : <Lock size={16} color="#8a7070" />}</span>
@@ -736,7 +736,7 @@ function EventCard({ currentUser, eventInvited, onSignUp, setActivePage }) {
           <button onClick={() => onSignUp && onSignUp("Free")} style={{ background: "#b80101", color: "#fff", border: "1px solid #b80101", borderRadius: 10, padding: "12px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", transition: "all 0.2s" }}>
             Sign Up to RSVP
           </button>
-          <span style={{ fontSize: 12, color: "#7a5050", fontFamily: "'DM Sans', sans-serif" }}>Create an account to reserve your spot</span>
+          <span style={{ fontSize: 12, color: "#8f7070", fontFamily: "'DM Sans', sans-serif" }}>Create an account to reserve your spot</span>
         </div>
       );
     }
@@ -746,7 +746,7 @@ function EventCard({ currentUser, eventInvited, onSignUp, setActivePage }) {
           <button onClick={() => setActivePage && setActivePage("pricing")} style={{ background: "transparent", color: "#b80101", border: "1px solid #b80101", borderRadius: 10, padding: "12px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", transition: "all 0.2s" }}>
             Upgrade to RSVP
           </button>
-          <span style={{ fontSize: 12, color: "#7a5050", fontFamily: "'DM Sans', sans-serif" }}>Available for Basic, Premium & Owner members</span>
+          <span style={{ fontSize: 12, color: "#8f7070", fontFamily: "'DM Sans', sans-serif" }}>Available for Basic, Premium & Owner members</span>
         </div>
       );
     }
@@ -755,7 +755,7 @@ function EventCard({ currentUser, eventInvited, onSignUp, setActivePage }) {
         <button onClick={() => !rsvpd && handleRsvp()} style={{ background: rsvpd ? "#1a0a0a" : "#b80101", color: rsvpd ? "#b80101" : "#fff", border: "1px solid #b80101", borderRadius: 10, padding: "12px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: rsvpd ? "default" : "pointer", transition: "all 0.2s" }}>
           {rsvpd ? "✓ You're registered" : "RSVP Now"}
         </button>
-        <span style={{ fontSize: 12, color: "#7a5050", fontFamily: "'DM Sans', sans-serif" }}>
+        <span style={{ fontSize: 12, color: "#8f7070", fontFamily: "'DM Sans', sans-serif" }}>
           {rsvpd ? "A calendar invite will be sent to your email." : "Limited spots · Basic, Premium & Owner members"}
         </span>
       </div>
@@ -772,7 +772,7 @@ function EventCard({ currentUser, eventInvited, onSignUp, setActivePage }) {
           <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 26, color: "#f0d8d8", marginBottom: 6 }}>
             {liveEvent ? liveEvent.title : "Lunch & Learn"}
           </div>
-          <div style={{ fontSize: 13, color: "#7a5050", fontFamily: "'DM Sans', sans-serif" }}>
+          <div style={{ fontSize: 13, color: "#8f7070", fontFamily: "'DM Sans', sans-serif" }}>
             {liveEvent ? liveEvent.date + (liveEvent.time ? " · " + liveEvent.time : "") : "Next session being scheduled"} · Zoom · 2 hours
           </div>
         </div>
@@ -1018,7 +1018,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
               <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 21, color: "#f0d8d8", marginBottom: 10, lineHeight: 1.25 }}>{course.title}</h3>
               <p style={{ color: "#8a7070", fontSize: 13, lineHeight: 1.75, marginBottom: 20, fontFamily: "'DM Sans', sans-serif" }}>{course.description.substring(0, 140)}...</p>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: 12, color: "#7a5050", fontFamily: "'DM Sans', sans-serif" }}>{course.lessons.length} lessons · {course.duration}</span>
+                <span style={{ fontSize: 12, color: "#8f7070", fontFamily: "'DM Sans', sans-serif" }}>{course.lessons.length} lessons · {course.duration}</span>
                 <span style={{ color: "#b80101", fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>View →</span>
               </div>
             </div>
@@ -1146,7 +1146,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
           </h2>
           <p style={{ color: "#8a7070", fontSize: 15, lineHeight: 1.8, marginBottom: 40, fontFamily: "'DM Sans', sans-serif" }}>One course. One deal. One building at a time.</p>
           <button onClick={() => setActivePage("courses")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "16px 44px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", letterSpacing: "1px" }}>START FOR FREE</button>
-          <div style={{ marginTop: 20, color: "#7a5050", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>No credit card · Cancel anytime · Scholarship access available</div>
+          <div style={{ marginTop: 20, color: "#8f7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>No credit card · Cancel anytime · Scholarship access available</div>
         </div>
       </div>
     </div>
@@ -1205,7 +1205,7 @@ function GlossaryPage({ member, onSignIn, setActivePage }) {
               style={{ background: "#0d0404", border: open ? "1px solid #b8010160" : "1px solid #1e0808", borderRadius: 12, padding: "16px 22px", marginBottom: 10, cursor: "pointer" }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
                 <span style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 15.5, fontFamily: font }}>{t.term}</span>
-                {refs.length > 0 && <span style={{ color: "#7a5050", fontSize: 11, fontFamily: font }}>{refs.length} course{refs.length === 1 ? "" : "s"} ▾</span>}
+                {refs.length > 0 && <span style={{ color: "#8f7070", fontSize: 11, fontFamily: font }}>{refs.length} course{refs.length === 1 ? "" : "s"} ▾</span>}
               </div>
               <p style={{ color: "#c8b0a0", fontSize: 13.5, fontFamily: font, lineHeight: 1.8, margin: "8px 0 0" }}>{t.definition}</p>
               {open && refs.length > 0 && (
@@ -1322,7 +1322,7 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
                   <p style={{ fontSize: 12.5, color: "#7a5858", fontFamily: "'DM Sans', sans-serif", margin: 0, lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" }}>{course.description}</p>
                 </div>
                 <span style={{ background: course.stageColor + "18", color: course.stageColor, border: "1px solid " + course.stageColor + "35", borderRadius: 4, padding: "3px 10px", fontSize: 10, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "1px", flexShrink: 0 }}>{course.stage}</span>
-                <span style={{ color: "#7a5050", fontSize: 12, fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>{course.lessons.length} lessons</span>
+                <span style={{ color: "#8f7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>{course.lessons.length} lessons</span>
                 <span style={{ color: course.stageColor, fontSize: 18, fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>→</span>
               </div>
             </div>
@@ -1480,7 +1480,7 @@ function AboutPage({ setActivePage }) {
                   <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 21, color: "#f0d8d8" }}>{p.name}</div>
                   <div style={{ color: "#b80101", fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", margin: "4px 0 10px" }}>{p.where}</div>
                   <p style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.75, marginBottom: 10 }}>{p.story}</p>
-                  <div style={{ color: "#5a4040", fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontStyle: "italic" }}>{p.taught}</div>
+                  <div style={{ color: "#9a7878", fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontStyle: "italic" }}>{p.taught}</div>
                 </div>
               </div>
             ))}
@@ -1772,7 +1772,7 @@ function PlanCard({ plan, onSelect, seats, compact }) {
         <span style={{ color: "#8a7070", fontSize: 15, fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap" }}>{plan.period}</span>
       </div>
       <p style={{ color: "#8a7070", fontSize: 13, marginBottom: plan.value || seats ? 14 : 28, lineHeight: 1.65, fontFamily: "'DM Sans', sans-serif" }}>{plan.description}</p>
-      {plan.value && <div style={{ color: "#7a5050", fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontStyle: "italic", marginBottom: 14 }}>{plan.value}</div>}
+      {plan.value && <div style={{ color: "#8f7070", fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontStyle: "italic", marginBottom: 14 }}>{plan.value}</div>}
 
       {showSeats && (
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, background: "#1a0808", border: "1px solid #b8010140", borderRadius: 8, padding: "9px 13px" }}>
@@ -1842,12 +1842,12 @@ function HonestRule() {
   const [open, setOpen] = useState(false);
   return (
     <div style={{ marginTop: 14 }}>
-      <div style={{ color: "#7a5050", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
+      <div style={{ color: "#8f7070", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
         Have a live deal? The $1,500 Full Project Intake is the front door — credited to your first retainer month if you continue.{" "}
         <button onClick={() => setOpen(o => !o)} style={{ background: "none", border: "none", color: "#b80101", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12.5, cursor: "pointer", padding: 0 }}>{open ? "Less ↑" : "How this works ↓"}</button>
       </div>
       {open && (
-        <div style={{ color: "#7a5050", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginTop: 8 }}>
+        <div style={{ color: "#8f7070", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginTop: 8 }}>
           {"Member, Builder, and Premium are the industry essentials. \"How do I calculate a rate of return?\" lives there. \"I can't solve the gap on MY deal\" needs Dr. Merritt in the whole deal — so send it to her: she takes in your entire project and finds what you missed. Not ready for Owner? Start at Premium — 10% off 1:1 sessions, and upgrade the moment your deal heats up."}
         </div>
       )}
@@ -1996,7 +1996,7 @@ function PricingPage({ onSignUp }) {
             <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "'DM Sans', sans-serif" }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: "left", padding: "14px 16px", color: "#7a5050", fontSize: 11, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase" }}>Benefit</th>
+                  <th style={{ textAlign: "left", padding: "14px 16px", color: "#8f7070", fontSize: 11, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase" }}>Benefit</th>
                   {["Free", "Member", "Builder", "Premium", "Elite"].map(t => (
                     <th key={t} style={{ padding: "14px 12px", color: t === "Elite" ? "#e0c4c4" : "#c8a8a8", fontSize: 12.5, fontWeight: 800, textAlign: "center", whiteSpace: "nowrap" }}>{t === "Elite" ? "Owner" : t}</th>
                   ))}
@@ -2028,7 +2028,7 @@ function PricingPage({ onSignUp }) {
               </tbody>
             </table>
           </div>
-          <div style={{ padding: "0 28px 20px", color: "#7a5050", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
+          <div style={{ padding: "0 28px 20px", color: "#8f7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
             Senior Advisor includes everything in Owner — plus Dr. Merritt embedded on your project, month over month.
           </div>
         </div>
@@ -2168,7 +2168,7 @@ function ContactPage({ setActivePage, advisorLink }) {
           </div>
         ) : (
           <div style={{ background: "#110606", border: "1px solid #2a0000", borderRadius: 12, padding: "16px 22px", margin: "20px 0 8px", display: "flex", alignItems: "center", gap: 12 }}>
-            <BadgePercent size={20} color="#7a5050" style={{ flexShrink: 0 }} />
+            <BadgePercent size={20} color="#8f7070" style={{ flexShrink: 0 }} />
             <div style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>
               Members save on 1:1 sessions — <strong style={{ color: "#c8a8a8" }}>Premium 10% off, Owner 30% off</strong>. Applied automatically once you're signed in.
             </div>
@@ -2215,7 +2215,7 @@ function ContactPage({ setActivePage, advisorLink }) {
             <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 14, padding: "24px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
               <div>
                 <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#f0d8d8", marginBottom: 4 }}>{selected.title}</div>
-                <div style={{ fontSize: 13, color: "#7a5050", fontFamily: "'DM Sans', sans-serif" }}>{selected.advisor ? "Monthly retainer · starts with a 30-min engagement call" : "45 min · Dr. Gina Merritt · Zoom"}</div>
+                <div style={{ fontSize: 13, color: "#8f7070", fontFamily: "'DM Sans', sans-serif" }}>{selected.advisor ? "Monthly retainer · starts with a 30-min engagement call" : "45 min · Dr. Gina Merritt · Zoom"}</div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
                 <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#b80101" }}>{selected.price}</div>
@@ -2232,7 +2232,7 @@ function ContactPage({ setActivePage, advisorLink }) {
                 The Full Project Intake stands on its own: Dr. Merritt takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. Retainer pricing: <strong style={{ color: "#e0c4c4" }}>5 hrs/mo — $3,025 · 10 hrs/mo — $5,500 · 15 hrs/mo — $7,700</strong>, everything in Owner included. If you continue into the retainer, <strong style={{ color: "#e0c4c4" }}>the $1,500 is credited against your first month</strong> — it's never wasted money. The intake buys Dr. Merritt's full review of your project — not a conversation. Refunds are at our discretion, and if the call took place without a real deal on the table, <strong style={{ color: "#e0c4c4" }}>$550 — the rate of a 1:1 session with her — is deducted from any refund</strong>. Prefer to talk first? The engagement call is free.
               </div>
             ) : (
-              <div style={{ marginTop: 10, fontSize: 12, color: "#5a4040", fontFamily: "'DM Sans', sans-serif" }}>After payment, complete the form below so Dr. Merritt can prepare for your session.</div>
+              <div style={{ marginTop: 10, fontSize: 12, color: "#9a7878", fontFamily: "'DM Sans', sans-serif" }}>After payment, complete the form below so Dr. Merritt can prepare for your session.</div>
             )}
           </div>
         )}
@@ -2256,7 +2256,7 @@ function ContactPage({ setActivePage, advisorLink }) {
               <textarea value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} placeholder="Describe your deal, question, or challenge in as much detail as possible." rows={5} style={{ ...inputStyle, resize: "vertical", height: 140 }} />
               {error && <div style={{ color: "#b80101", fontSize: 13, marginBottom: 14 }}>{error}</div>}
               <button onClick={handleSubmit} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "14px 36px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Submit Request</button>
-              <div style={{ marginTop: 12, fontSize: 11, color: "#5a4040", fontFamily: "'DM Sans', sans-serif" }}>Dr. Merritt will confirm within 2 business days and send a calendar invite.</div>
+              <div style={{ marginTop: 12, fontSize: 11, color: "#9a7878", fontFamily: "'DM Sans', sans-serif" }}>Dr. Merritt will confirm within 2 business days and send a calendar invite.</div>
             </div>
           </div>
         )}
@@ -2340,7 +2340,7 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
             <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 14, padding: "20px 20px 16px", position: "sticky", top: 90 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
                 <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font }}>Your notes</div>
-                <span style={{ color: noteStatus === "saved" ? "#22c55e" : "#7a5050", fontSize: 11, fontFamily: font }}>{noteStatus === "saved" ? "Saved ✓" : noteStatus === "saving" ? "Saving…" : noteStatus === "typing" ? "…" : ""}</span>
+                <span style={{ color: noteStatus === "saved" ? "#22c55e" : "#8f7070", fontSize: 11, fontFamily: font }}>{noteStatus === "saved" ? "Saved ✓" : noteStatus === "saving" ? "Saving…" : noteStatus === "typing" ? "…" : ""}</span>
               </div>
               <textarea
                 value={notes[noteKey] || ""}
@@ -2349,7 +2349,7 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
                 rows={16}
                 style={{ width: "100%", boxSizing: "border-box", background: "#0a0505", border: "1px solid #2a0000", borderRadius: 10, padding: "14px 14px", color: "#f0d8d8", fontFamily: font, fontSize: 13.5, lineHeight: 1.8, outline: "none", resize: "vertical", minHeight: 300 }}
               />
-              <div style={{ color: "#5a4040", fontSize: 11, fontFamily: font, marginTop: 8 }}>Notes are private to you and follow your account on any device.</div>
+              <div style={{ color: "#9a7878", fontSize: 11, fontFamily: font, marginTop: 8 }}>Notes are private to you and follow your account on any device.</div>
             </div>
           </div>
           <style>{`@media (max-width: 860px) { .lnl-watch-grid { grid-template-columns: 1fr !important; } }`}</style>
@@ -2425,7 +2425,7 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
                   <button onClick={() => startCheckout("lnl_year")} style={{ background: "transparent", color: "#e0c4c4", border: "1px solid #e0c4c460", borderRadius: 10, padding: "14px 32px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Full Year — $105</button>
                   <button onClick={() => startCheckout("lnl_life")} style={{ background: "linear-gradient(135deg, #1a1408, #0d0a04)", color: "#c9a227", border: "1px solid #c9a22760", borderRadius: 10, padding: "14px 32px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>✦ Lifetime — $350</button>
                 </div>
-                <div style={{ color: "#7a5050", fontSize: 12, fontFamily: font, marginTop: 10 }}>The year pass covers every live session for 12 months — all four quarterly sessions for less than the price of three. The Lifetime Pass is every session and recording, forever.</div>
+                <div style={{ color: "#8f7070", fontSize: 12, fontFamily: font, marginTop: 10 }}>The year pass covers every live session for 12 months — all four quarterly sessions for less than the price of three. The Lifetime Pass is every session and recording, forever.</div>
                 <form onSubmit={redeem} style={{ marginTop: 22, display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
                   <input value={code} onChange={e => setCode(e.target.value)} placeholder="Have a code from Dr. Merritt?" style={{ background: "#0a0505", border: "1px solid #2a0000", borderRadius: 8, padding: "12px 14px", color: "#f5e8e8", fontFamily: font, fontSize: 13, outline: "none", width: 260, textTransform: "uppercase" }} />
                   <button type="submit" style={{ background: "transparent", color: "#e0c4c4", border: "1px solid #e0c4c450", borderRadius: 8, padding: "12px 20px", fontFamily: font, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Redeem</button>
@@ -2474,7 +2474,7 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
               ) : (
                 <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>The join link for the next session will appear here — check back closer to the date.</p>
               )}
-              {status?.expires_at && <div style={{ color: "#5a4040", fontSize: 12, fontFamily: font, marginTop: 14 }}>Access through {fmt(status.expires_at)}</div>}
+              {status?.expires_at && <div style={{ color: "#9a7878", fontSize: 12, fontFamily: font, marginTop: 14 }}>Access through {fmt(status.expires_at)}</div>}
             </div>
             <div style={{ ...card, padding: "28px 30px" }}>
               <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Shape the next session</div>
@@ -2715,7 +2715,7 @@ function ShopPage({ member, onSignIn }) {
                   I agree that every document, guide, and template on GroundUp is the exclusive intellectual property of Dr. Gina Merritt, licensed for my personal use only. I will not sell, distribute, copy, share, or reproduce any of it, in any form. I understand all sales are final once a product has been viewed or downloaded.
                 </span>
               </label>
-              <div style={{ color: "#5a4040", fontSize: 11.5, fontFamily: font, marginBottom: 16 }}>You'll only be asked this once — your agreement is recorded on your account.</div>
+              <div style={{ color: "#9a7878", fontSize: 11.5, fontFamily: font, marginBottom: 16 }}>You'll only be asked this once — your agreement is recorded on your account.</div>
               <div style={{ display: "flex", gap: 10 }}>
                 <button disabled={!ipChecked} onClick={confirmAgreement} style={{ flex: 1, background: ipChecked ? "#b80101" : "#2a1010", color: ipChecked ? "#fff" : "#6a5050", border: "none", borderRadius: 10, padding: "13px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: ipChecked ? "pointer" : "not-allowed" }}>I agree — continue</button>
                 <button onClick={() => setNeedAgree(null)} style={{ background: "transparent", color: "#8a7070", border: "1px solid #2a0000", borderRadius: 10, padding: "13px 18px", fontFamily: font, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Cancel</button>
@@ -2857,7 +2857,7 @@ const LEGAL_STYLES = {
   page: { background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px" },
   wrap: { maxWidth: 760, margin: "0 auto" },
   h1: { fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(32px,4.5vw,46px)", color: "#f5e8e8", marginBottom: 8 },
-  meta: { color: "#5a4040", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginBottom: 36 },
+  meta: { color: "#9a7878", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginBottom: 36 },
   h2: { fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 16, color: "#e0c4c4", margin: "30px 0 10px" },
   p: { color: "#9a8080", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.85, marginBottom: 12 },
   strong: { color: "#c8a8a8" },
@@ -2967,7 +2967,7 @@ function IpAgreementGate({ member, onAgreed, onSignOut, onDismiss }) {
           <button disabled={!checked || busy} onClick={agree} style={{ flex: 1, background: checked ? "#b80101" : "#2a1010", color: checked ? "#fff" : "#6a5050", border: "none", borderRadius: 10, padding: "14px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: checked && !busy ? "pointer" : "not-allowed", opacity: busy ? 0.6 : 1 }}>{busy ? "Saving…" : "I agree — enter GroundUp"}</button>
           <button onClick={onDismiss || onSignOut} style={{ background: "transparent", color: "#6a5050", border: "1px solid #2a0000", borderRadius: 10, padding: "14px 18px", fontFamily: font, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>{onDismiss ? "Not now" : "Sign out"}</button>
         </div>
-        <div style={{ color: "#5a4040", fontSize: 11.5, fontFamily: font, marginTop: 12, textAlign: "center" }}>You can browse without agreeing — but courses, recordings, and downloads stay locked until you do. Recorded on your account with a timestamp.</div>
+        <div style={{ color: "#9a7878", fontSize: 11.5, fontFamily: font, marginTop: 12, textAlign: "center" }}>You can browse without agreeing — but courses, recordings, and downloads stay locked until you do. Recorded on your account with a timestamp.</div>
       </div>
     </div>
   );
@@ -3061,7 +3061,7 @@ function OfficeHoursPage({ member, onSignIn, setActivePage }) {
                       {ev.description && <div style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginTop: 6 }}>{ev.description}</div>}
                     </div>
                     <div style={{ textAlign: "center", minWidth: 130 }}>
-                      <div style={{ fontSize: 9, color: "#7a5050", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 4 }}>Starts in</div>
+                      <div style={{ fontSize: 9, color: "#8f7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 4 }}>Starts in</div>
                       <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 22, color: "#b80101" }}>{cd(ev.date)}</div>
                     </div>
                     <button
@@ -3176,7 +3176,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
   return (
     <div style={{ background: insider ? "#000" : "#210909", minHeight: "100vh" }}>
       <style>{`
-        :root { --gu-bg: #000000; --gu-panel: #070303; --gu-card: #0d0404; --gu-card2: #0a0808; --gu-card3: #140808; --gu-red-tint: #12060a; --gu-border: #2a0000; --gu-border2: #1a0000; --gu-text: #f5e8e8; --gu-text2: #f0d8d8; --gu-body: #c8a8a8; --gu-muted: #8a7070; --gu-muted2: #7a5050; --gu-faint: #5a4040; }
+        :root { --gu-bg: #000000; --gu-panel: #070303; --gu-card: #0d0404; --gu-card2: #0a0808; --gu-card3: #140808; --gu-red-tint: #12060a; --gu-border: #2a0000; --gu-border2: #1a0000; --gu-text: #f5e8e8; --gu-text2: #f0d8d8; --gu-body: #c8a8a8; --gu-muted: #8a7070; --gu-muted2: #8f7070; --gu-faint: #9a7878; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #000; color: #f5e8e8; font-family: 'DM Sans', sans-serif; }
         @keyframes guFadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
@@ -3193,7 +3193,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
 
       {/* Hero + countdown */}
       <div style={{ minHeight: "88vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "80px 20px 60px", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: insider ? "url(/LIIF-Stills2.png)" : "url(/general-waitlist-hero.jpg)", backgroundSize: "cover", backgroundPosition: insider ? "center 25%" : "center 30%", opacity: insider ? 0.28 : 0.42, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", inset: 0, backgroundImage: insider ? "url(/LIIF-Stills2.jpg)" : "url(/general-waitlist-hero.jpg)", backgroundSize: "cover", backgroundPosition: insider ? "center 25%" : "center 30%", opacity: insider ? 0.28 : 0.42, pointerEvents: "none" }} />
         <div style={{ position: "absolute", inset: 0, background: insider ? "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.75) 55%, #000 100%)" : "linear-gradient(180deg, rgba(33,9,9,0.45) 0%, rgba(33,9,9,0.7) 55%, #210909 100%)", pointerEvents: "none" }} />
         <div className="gu-drift" style={{ position: "absolute", top: "0%", left: "20%", width: 700, height: 700, borderRadius: "50%", background: "radial-gradient(circle, #57040428 0%, transparent 65%)", pointerEvents: "none" }} />
         <div className="gu-up" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#0a050599", border: "1px solid #7a615140", borderRadius: 99, padding: "8px 20px", marginBottom: 36, position: "relative", zIndex: 1 }}>
@@ -3341,7 +3341,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
               {p.popular && <div style={{ position: "absolute", top: 12, right: 12, background: "#b8010115", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "2px 8px", fontSize: 8, fontFamily: font, fontWeight: 800, letterSpacing: "1.5px" }}>POPULAR</div>}
               {p.best && <div style={{ position: "absolute", top: 12, right: 12, background: "#c9a22715", color: "#c9a227", border: "1px solid #c9a22735", borderRadius: 4, padding: "2px 8px", fontSize: 8, fontFamily: font, fontWeight: 800, letterSpacing: "1.5px" }}>BEST VALUE</div>}
               <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>{p.name}</div>
-              <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", lineHeight: 1 }}>{p.price}<span style={{ fontSize: 14, color: "#7a5050", fontFamily: font, fontWeight: 400 }}> {p.period}</span></div>
+              <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", lineHeight: 1 }}>{p.price}<span style={{ fontSize: 14, color: "#8f7070", fontFamily: font, fontWeight: 400 }}> {p.period}</span></div>
               <p style={{ fontSize: 12.5, color: "#8a7070", lineHeight: 1.7, fontFamily: font, marginTop: 10 }}>{p.desc}</p>
             </div>
           );
@@ -3390,7 +3390,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
       </div>
 
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>
-        <div style={{ fontFamily: font, fontSize: 12, color: "#3a2a2a" }}>© {new Date().getFullYear()} GroundUp · Northern Real Estate Urban Ventures<span style={{ margin: "0 8px" }}>·</span><a href="/terms" style={{ color: "#5a4040", fontSize: 12, textDecoration: "none" }}>Terms</a><span style={{ margin: "0 6px" }}>·</span><a href="/privacy" style={{ color: "#5a4040", fontSize: 12, textDecoration: "none" }}>Privacy</a><span style={{ margin: "0 6px" }}>·</span><a href="mailto:groundup@drginamerritt.net?subject=Tech%20support%20—%20GroundUp" style={{ color: "#5a4040", fontSize: 12, textDecoration: "none" }}>Tech Support</a><span style={{ margin: "0 8px" }}>·</span><span style={{ color: "#4a3535" }}>Powered by DakJen Creative</span></div>
+        <div style={{ fontFamily: font, fontSize: 12, color: "#8a7575" }}>© {new Date().getFullYear()} GroundUp · Northern Real Estate Urban Ventures<span style={{ margin: "0 8px" }}>·</span><a href="/terms" style={{ color: "#9a7878", fontSize: 12, textDecoration: "none" }}>Terms</a><span style={{ margin: "0 6px" }}>·</span><a href="/privacy" style={{ color: "#9a7878", fontSize: 12, textDecoration: "none" }}>Privacy</a><span style={{ margin: "0 6px" }}>·</span><a href="mailto:groundup@drginamerritt.net?subject=Tech%20support%20—%20GroundUp" style={{ color: "#9a7878", fontSize: 12, textDecoration: "none" }}>Tech Support</a><span style={{ margin: "0 8px" }}>·</span><span style={{ color: "#4a3535" }}>Powered by DakJen Creative</span></div>
         <button onClick={onAdmin} style={{ background: "transparent", border: "none", color: "#2a1a1a", fontFamily: font, fontSize: 11, cursor: "pointer", letterSpacing: "1px" }}>Admin</button>
       </footer>
     </div>
@@ -3610,14 +3610,14 @@ function PartnerPage({ slug, onSignIn, onExplore }) {
             <div key={c.id} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
                 <span style={{ background: (c.stageColor || "#b80101") + "18", color: c.stageColor || "#b80101", border: `1px solid ${c.stageColor || "#b80101"}40`, borderRadius: 4, padding: "2px 9px", fontSize: 10, fontFamily: font, fontWeight: 800, letterSpacing: "1px" }}>{c.stage}</span>
-                <span style={{ color: "#5a4040", fontSize: 12, fontFamily: font }}>{c.lessonCount} lessons · {c.duration}</span>
+                <span style={{ color: "#9a7878", fontSize: 12, fontFamily: font }}>{c.lessonCount} lessons · {c.duration}</span>
               </div>
               <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#f0d8d8", marginBottom: 8, lineHeight: 1.25 }}>{c.title}</div>
               <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{c.description}</p>
             </div>
           ))}
         </div>
-        {courses.length === 0 && <p style={{ color: "#7a5050", textAlign: "center", fontFamily: font, fontSize: 14 }}>Curriculum coming soon — check back shortly.</p>}
+        {courses.length === 0 && <p style={{ color: "#8f7070", textAlign: "center", fontFamily: font, fontSize: 14 }}>Curriculum coming soon — check back shortly.</p>}
       </div>
     </div>
   );
@@ -6398,7 +6398,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
             </div>
             {error && <div style={{ color: "#b80101", fontSize: 13, marginBottom: 14, fontFamily: "'DM Sans', sans-serif" }}>{error}</div>}
             <button onClick={handleSubmit} style={{ width: "100%", background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Create Account →</button>
-            <div style={{ textAlign: "center", marginTop: 14, color: "#5a4040", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>No credit card required to start free</div>
+            <div style={{ textAlign: "center", marginTop: 14, color: "#9a7878", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>No credit card required to start free</div>
           </>
         )}
       </div>
@@ -6540,7 +6540,7 @@ export default function App() {
       "--gu-bg": "#000000", "--gu-panel": "#070303", "--gu-card": "#0d0404", "--gu-card2": "#0a0808",
       "--gu-card3": "#140808", "--gu-red-tint": "#12060a", "--gu-border": "#2a0000", "--gu-border2": "#1a0000",
       "--gu-text": "#f5e8e8", "--gu-text2": "#f0d8d8", "--gu-body": "#c8a8a8", "--gu-muted": "#8a7070",
-      "--gu-muted2": "#7a5050", "--gu-faint": "#5a4040",
+      "--gu-muted2": "#8f7070", "--gu-faint": "#9a7878",
     };
     for (const [k, v] of Object.entries(V)) document.documentElement.style.setProperty(k, v);
   }, [member?.role, activePage]);
@@ -6656,7 +6656,7 @@ export default function App() {
   return (
     <>
       <style>{`
-        :root { --gu-bg: #000000; --gu-panel: #070303; --gu-card: #0d0404; --gu-card2: #0a0808; --gu-card3: #140808; --gu-red-tint: #12060a; --gu-border: #2a0000; --gu-border2: #1a0000; --gu-text: #f5e8e8; --gu-text2: #f0d8d8; --gu-body: #c8a8a8; --gu-muted: #8a7070; --gu-muted2: #7a5050; --gu-faint: #5a4040; }
+        :root { --gu-bg: #000000; --gu-panel: #070303; --gu-card: #0d0404; --gu-card2: #0a0808; --gu-card3: #140808; --gu-red-tint: #12060a; --gu-border: #2a0000; --gu-border2: #1a0000; --gu-text: #f5e8e8; --gu-text2: #f0d8d8; --gu-body: #c8a8a8; --gu-muted: #8a7070; --gu-muted2: #8f7070; --gu-faint: #9a7878; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #000; color: #f5e8e8; font-family: 'DM Sans', sans-serif; }
         ::-webkit-scrollbar { width: 5px; }
@@ -6716,7 +6716,7 @@ export default function App() {
                     <span style={{ color: "#e0c4c4", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "0.5px" }}>
                       {days > 0 ? `Launching in ${days} day${days === 1 ? "" : "s"}, ${hours} hour${hours === 1 ? "" : "s"}` : `Launching in ${hours} hour${hours === 1 ? "" : "s"}`}
                     </span>
-                    <span style={{ color: "#7a5050", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>
+                    <span style={{ color: "#8f7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>
                       · {new Date(launchAt).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}
                     </span>
                   </div>
@@ -6819,7 +6819,7 @@ export default function App() {
       {activePage === "support" && <SupportPage />}
       {activePage === "glossary" && <GlossaryPage member={member} onSignIn={() => setShowSignup(true)} setActivePage={navigateTo} />}
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>
-        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#3a2a2a" }}>© {new Date().getFullYear()} GroundUp · Northern Real Estate Urban Ventures<span style={{ margin: "0 8px" }}>·</span><button onClick={() => navigateTo("terms")} style={{ background: "none", border: "none", color: "#5a4040", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Terms</button><span style={{ margin: "0 6px" }}>·</span><button onClick={() => navigateTo("privacy")} style={{ background: "none", border: "none", color: "#5a4040", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Privacy</button><span style={{ margin: "0 6px" }}>·</span><button onClick={() => navigateTo("support")} style={{ background: "none", border: "none", color: "#5a4040", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Tech Support</button><span style={{ margin: "0 8px" }}>·</span><span style={{ color: "#4a3535" }}>Powered by DakJen Creative</span></div>
+        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#8a7575" }}>© {new Date().getFullYear()} GroundUp · Northern Real Estate Urban Ventures<span style={{ margin: "0 8px" }}>·</span><button onClick={() => navigateTo("terms")} style={{ background: "none", border: "none", color: "#9a7878", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Terms</button><span style={{ margin: "0 6px" }}>·</span><button onClick={() => navigateTo("privacy")} style={{ background: "none", border: "none", color: "#9a7878", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Privacy</button><span style={{ margin: "0 6px" }}>·</span><button onClick={() => navigateTo("support")} style={{ background: "none", border: "none", color: "#9a7878", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Tech Support</button><span style={{ margin: "0 8px" }}>·</span><span style={{ color: "#4a3535" }}>Powered by DakJen Creative</span></div>
       </footer>
     </>
   );

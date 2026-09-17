@@ -159,7 +159,7 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
                 {["Free", "Basic", "Builder", "Premium", "Elite"].map(t => (
                   <button type="button" key={t} onClick={() => setTier(t)} style={{ background: tier === t ? "#b8010118" : "transparent", border: tier === t ? "1px solid #b80101" : "1px solid #2a0000", borderRadius: 8, padding: "10px 12px", cursor: "pointer", textAlign: "left" }}>
                     <div style={{ color: tier === t ? "#f0d8d8" : "#8a7070", fontWeight: 800, fontSize: 13, fontFamily: font }}>{TIER_LABELS[t]}</div>
-                    <div style={{ color: "#7a5050", fontSize: 11, fontFamily: font }}>{{ Free: "$0", Basic: "$49.99/mo", Builder: "$149.99/mo", Premium: "$249.99/mo", Elite: "$499.99/mo" }[t]}</div>
+                    <div style={{ color: "#8f7070", fontSize: 11, fontFamily: font }}>{{ Free: "$0", Basic: "$49.99/mo", Builder: "$149.99/mo", Premium: "$249.99/mo", Elite: "$499.99/mo" }[t]}</div>
                   </button>
                 ))}
               </div>
@@ -190,7 +190,7 @@ I agree to the <a href="/terms" target="_blank" style={{ color: "#b80101", fontW
         <div style={{ marginTop: 18, textAlign: "center", fontSize: 13, fontFamily: font, color: "#8a7070" }}>
           {mode === "signup" ? <>Already a member? <button onClick={() => { setMode("login"); setError(""); }} style={{ background: "none", border: "none", color: "#b80101", cursor: "pointer", fontWeight: 700, fontFamily: font, fontSize: 13 }}>Sign in</button></>
             : mode === "forgot" ? <button onClick={() => { setMode("login"); setError(""); setNotice(""); }} style={{ background: "none", border: "none", color: "#b80101", cursor: "pointer", fontWeight: 700, fontFamily: font, fontSize: 13 }}>← Back to sign in</button>
-            : <>{allowSignup && <>New here? <button onClick={() => { setMode("signup"); setError(""); }} style={{ background: "none", border: "none", color: "#b80101", cursor: "pointer", fontWeight: 700, fontFamily: font, fontSize: 13 }}>Create an account</button><span style={{ margin: "0 8px", color: "#3a2a2a" }}>·</span></>}<button onClick={() => { setMode("forgot"); setError(""); }} style={{ background: "none", border: "none", color: "#8a7070", cursor: "pointer", fontWeight: 600, fontFamily: font, fontSize: 13 }}>Forgot password?</button></>}
+            : <>{allowSignup && <>New here? <button onClick={() => { setMode("signup"); setError(""); }} style={{ background: "none", border: "none", color: "#b80101", cursor: "pointer", fontWeight: 700, fontFamily: font, fontSize: 13 }}>Create an account</button><span style={{ margin: "0 8px", color: "#8a7575" }}>·</span></>}<button onClick={() => { setMode("forgot"); setError(""); }} style={{ background: "none", border: "none", color: "#8a7070", cursor: "pointer", fontWeight: 600, fontFamily: font, fontSize: 13 }}>Forgot password?</button></>}
         </div>
       </div>
     </div>
@@ -1147,6 +1147,10 @@ const WL_BUDGETS = ["$50", "$50–$150", "$150–$500", "$500+", "I already know
 // "general" is what the public homepage collects before the general launch.
 export function WaitlistForm({ list = "insider" }) {
   const insider = list === "insider";
+  // Spam guard: a honeypot field bots fill and humans never see, plus the time
+  // the form mounted (a sub-1.5s submit is not a person).
+  const [hp, setHp] = useState("");
+  const mountedAt = useRef(Date.now());
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -1192,7 +1196,7 @@ export function WaitlistForm({ list = "insider" }) {
     }
     setBusy(true); setMsg(null);
     try {
-      await api("/api/waitlist", { method: "POST", body: JSON.stringify({ action: "join", name, email, phone, learn: learnVal, pain: painVal, budget: budgetVal, source: source || undefined, list }) });
+      await api("/api/waitlist", { method: "POST", body: JSON.stringify({ action: "join", name, email, phone, learn: learnVal, pain: painVal, budget: budgetVal, source: source || undefined, list, website: hp, elapsed: Date.now() - mountedAt.current }) });
       setDone(true);
     } catch (err) {
       setMsg(err.message);
@@ -1244,13 +1248,13 @@ export function WaitlistForm({ list = "insider" }) {
                   <div style={{ color: "#f0d8d8", fontSize: 13.5, fontWeight: 800, fontFamily: font, marginBottom: 3 }}>You've been referred by {refBy.name}{refBy.company ? ` of ${refBy.company}` : ""}!</div>
                   <div style={{ color: "#c8a8a8", fontSize: 12.5, fontFamily: font, lineHeight: 1.6 }}>Join the waitlist now and you'll get <strong style={{ color: "#f0d8d8" }}>a member discount for your first two years</strong> — $5 to $25 off every month depending on your plan, applied automatically at checkout.</div>
                 </div>
-                <button onClick={() => setRefDismissed(true)} style={{ background: "none", border: "none", color: "#7a5050", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 2 }}>×</button>
+                <button onClick={() => setRefDismissed(true)} style={{ background: "none", border: "none", color: "#8f7070", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 2 }}>×</button>
               </div>
             )}
             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>{insider ? "Insider Waitlist" : "GroundUp Waitlist"}</div>
             <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>{insider ? "Become an insider" : "Get on the list"}</h2>
             <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginBottom: 8 }}>{insider ? "Tell us where you are and what's in your way — at launch, you'll get first access and our personal recommendation for the plan that fits." : "Tell us where you are and what's in your way — the moment doors open, you'll get your invite and our personal recommendation for the plan that fits."}</p>
-            <p style={{ color: "#7a5050", fontSize: 12, fontFamily: font, lineHeight: 1.7, marginBottom: insider ? 14 : 22 }}>Questions about the tiers? <a href="/pricing" target="_blank" rel="noreferrer" style={{ color: "#b80101", fontWeight: 800, textDecoration: "none" }}>See the full breakdown on the website ↗</a></p>
+            <p style={{ color: "#8f7070", fontSize: 12, fontFamily: font, lineHeight: 1.7, marginBottom: insider ? 14 : 22 }}>Questions about the tiers? <a href="/pricing" target="_blank" rel="noreferrer" style={{ color: "#b80101", fontWeight: 800, textDecoration: "none" }}>See the full breakdown on the website ↗</a></p>
             {insider && (
               <div style={{ background: "#e0c4c410", border: "1px solid #e0c4c445", borderRadius: 12, padding: "14px 18px", marginBottom: 22 }}>
                 <div style={{ color: "#e0c4c4", fontSize: 11, fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>✦ Founding 25</div>
@@ -1258,6 +1262,8 @@ export function WaitlistForm({ list = "insider" }) {
               </div>
             )}
             <form onSubmit={submit}>
+              {/* Honeypot — offscreen, humans never see or tab into it */}
+              <input type="text" name="website" value={hp} onChange={e => setHp(e.target.value)} tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }} />
               <div style={{ marginBottom: 14 }}>
                 <label style={lbl}>Full name</label>
                 <input style={inp} value={name} onChange={e => setName(e.target.value)} required placeholder="Your name" />
@@ -1295,7 +1301,7 @@ export function WaitlistForm({ list = "insider" }) {
               </div>
               <div style={{ marginBottom: 14 }}>
                 <label style={lbl}>Monthly budget for a course, community, and access to support</label>
-                <div style={{ color: "#7a5050", fontSize: 11.5, fontFamily: font, lineHeight: 1.6, margin: "2px 0 8px" }}>The lower tiers build your foundation — the courses, the community, the knowledge. The higher tiers add deal-specific support with Dr. Merritt.</div>
+                <div style={{ color: "#8f7070", fontSize: 11.5, fontFamily: font, lineHeight: 1.6, margin: "2px 0 8px" }}>The lower tiers build your foundation — the courses, the community, the knowledge. The higher tiers add deal-specific support with Dr. Merritt.</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   {WL_BUDGETS.map(b => {
                     const long = b === "$3,000+" || b === "I need specific, customized deal help" || b === "I need general support & guidance" || b === "I already know what tier I want";
@@ -1389,7 +1395,7 @@ export function WaitlistForm({ list = "insider" }) {
               )}
               {!urlSource && (
               <div style={{ marginBottom: 18 }}>
-                <label style={lbl}>Where did you hear about us? <span style={{ color: "#5a4040", textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
+                <label style={lbl}>Where did you hear about us? <span style={{ color: "#9a7878", textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
                 <select style={sel} value={source} onChange={e => setSource(e.target.value)}>
                   <option value="">Prefer not to say</option>
                   {WL_SOURCE.map(o => <option key={o} value={o}>{o}</option>)}

@@ -45,7 +45,7 @@ export default async function handler(req, res) {
     let sent = 0;
     for (const r of rows) {
       const mail = passExpiryEmail(r.name, r.course_id !== 'all');
-      const ok = await sendEmail(r.email, mail.subject, mail.html);
+      const ok = await sendEmail(r.email, mail.subject, mail.html, { marketing: true });
       if (ok) { sent++; await sql`UPDATE entitlements SET source = 'stripe_onetime_nudged' WHERE id = ${r.id}`; }
     }
 
@@ -192,7 +192,7 @@ export default async function handler(req, res) {
       if (!to_email || !date) return res.status(400).json({ error: 'Recipient email and date required' });
       if (link) { try { new URL(link); } catch { return res.status(400).json({ error: 'Invalid meeting link' }); } }
       const mail = meetingEmail(to_name || '', title, date, time, link);
-      const ok = await sendEmail(to_email, mail.subject, mail.html);
+      const ok = await sendEmail(to_email, mail.subject, mail.html, { marketing: true });
       return ok ? res.json({ success: true, sent: 1, total: 1 }) : res.status(502).json({ error: 'Email failed to send — is Brevo configured?' });
     }
 

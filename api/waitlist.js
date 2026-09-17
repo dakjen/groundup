@@ -204,7 +204,7 @@ export async function sendRecommendBatch(sql, target) {
     const results = await Promise.allSettled(chunk.map(e => {
       const rec = recommendPlan(e);
       const mail = recommendEmail(e.name, rec, launchRow?.value || null, e.reason);
-      return sendEmail(e.email, mail.subject, mail.html).then(ok => { logRows.push({ name: e.name, email: e.email, ok: !!ok, plan: rec.label }); return ok; });
+      return sendEmail(e.email, mail.subject, mail.html, { marketing: true }).then(ok => { logRows.push({ name: e.name, email: e.email, ok: !!ok, plan: rec.label }); return ok; });
     }));
     sent += results.filter(x => x.status === 'fulfilled' && x.value).length;
   }
@@ -235,7 +235,7 @@ export async function sendLaunchBatch(sql, target) {
       const stretchLink = rec.stretch ? `${siteUrl()}/?join=1&plan=${rec.stretch.tier}&promo=stretch10&email=${encodeURIComponent(e.email)}` : null;
       // Retainer track: no pay link — the launch email IS the discovery-call invite
       const mail = rec.tier === 'Advisor' ? retainerInterestEmail(e.name, callRow?.value || null) : launchEmail(e.name, rec, link, e.reason, stretchLink);
-      return sendEmail(e.email, mail.subject, mail.html).then(ok => { logRows.push({ name: `${e.name} → ${rec.label}`, email: e.email, ok: !!ok }); return ok; });
+      return sendEmail(e.email, mail.subject, mail.html, { marketing: true }).then(ok => { logRows.push({ name: `${e.name} → ${rec.label}`, email: e.email, ok: !!ok }); return ok; });
     }));
     sent += results.filter(x => x.status === 'fulfilled' && x.value).length;
   }
@@ -334,7 +334,12 @@ export default async function handler(req, res) {
     }
 
     if (action === 'join') {
-      const { name, email, phone, learn, pain, budget, source, list } = req.body;
+      const { name, email, phone, learn, pain, budget, source, list, website, elapsed } = req.body;
+      // Spam guard: bots fill the honeypot or submit instantly. Fake success —
+      // never tell a bot it was caught.
+      if ((website && String(website).trim()) || (elapsed !== undefined && Number(elapsed) < 1500)) {
+        return res.status(201).json({ success: true });
+      }
       const safeList = list === 'general' ? 'general' : 'insider';
       // The insider waitlist CLOSES once insiders get access — after the insider
       // launch passes, the door is shut (latecomers use the general list).
@@ -433,8 +438,8 @@ export default async function handler(req, res) {
         }
       }
       await Promise.allSettled([
-        ...(retainerMail ? [sendEmail(entry.email, retainerMail.subject, retainerMail.html)] : []),
-        sendEmail(entry.email, mail.subject, mail.html),
+        ...(retainerMail ? [sendEmail(entry.email, retainerMail.subject, retainerMail.html, { marketing: true })] : []),
+        sendEmail(entry.email, mail.subject, mail.html, { marketing: true }),
         addContact(entry.email, entry.name, { WAITLIST_BUDGET: budget, SMS: cleanPhone }),
         sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
           `${isNew ? 'WAITLIST +1' : 'Waitlist update'}: ${entry.name} (${entry.list === 'insider' ? 'Insider' : 'General'})${isRetainerLead ? ' · 🔥 RETAINER LEAD' : ''}${founding ? ' · FOUNDING 25' : ''} — ${total} total`,

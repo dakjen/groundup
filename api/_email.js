@@ -31,26 +31,57 @@ async function brevo(path, body) {
   return res.json().catch(() => ({}));
 }
 
-const wrap = (inner) => `
+import { createHmac } from 'crypto';
+
+// Unsubscribe: a signed per-address link in every email footer. Clicking it
+// lands the address in email_optouts; marketing sends check that table first.
+// Transactional email (resets, receipts) still delivers to opted-out addresses.
+export function unsubToken(email) {
+  return createHmac('sha256', process.env.SESSION_SECRET || 'unsub').update(String(email).trim().toLowerCase()).digest('hex').slice(0, 24);
+}
+const unsubLink = (email) => `${siteUrl()}/api/auth?unsubscribe=${encodeURIComponent(String(email).trim().toLowerCase())}&t=${unsubToken(email)}`;
+
+const wrap = (inner, toEmail) => `
   <div style="background:#000;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;">
     <div style="max-width:560px;margin:0 auto;background:#0d0404;border:1px solid #2a0000;border-radius:16px;padding:36px 32px;color:#e8d8d8;">
       <div style="font-size:20px;font-weight:bold;color:#fff;letter-spacing:1px;margin-bottom:4px;">GROUNDUP</div>
       <div style="font-size:10px;color:#7a6151;letter-spacing:2px;text-transform:uppercase;margin-bottom:28px;">for underrepresented developers</div>
       ${inner}
       <div style="border-top:1px solid #2a0000;margin-top:32px;padding-top:16px;font-size:11px;color:#5a4040;">
-        Northern Real Estate Urban Ventures · 825 10th St NW, Suite 981, Washington, DC 20001
+        Northern Real Estate Urban Ventures · 825 10th St NW, Suite 981, Washington, DC 20001${toEmail ? ` · <a href="${unsubLink(toEmail)}" style="color:#7a5555;">Unsubscribe</a>` : ''}
       </div>
     </div>
   </div>`;
 
-export async function sendEmail(to, subject, innerHtml) {
+export async function sendEmail(to, subject, innerHtml, opts = {}) {
+  if (opts.marketing && await isOptedOut(to)) return false;
   const r = await brevo('/smtp/email', {
     sender: sender(),
     to: [{ email: to }],
     subject,
-    htmlContent: wrap(innerHtml),
+    htmlContent: wrap(innerHtml, to),
   });
   return !!r;
+}
+
+async function isOptedOut(email) {
+  try {
+    if (!process.env.DATABASE_URL) return false;
+    const { neon } = await import('@neondatabase/serverless');
+    const sql = neon(process.env.DATABASE_URL);
+    const [row] = await sql`SELECT 1 AS x FROM email_optouts WHERE email = ${String(email).trim().toLowerCase()}`;
+    return !!row;
+  } catch { return false; }
+}
+
+// The full suppression list, for filtering bulk audiences in one query
+export async function optedOutSet() {
+  try {
+    if (!process.env.DATABASE_URL) return new Set();
+    const { neon } = await import('@neondatabase/serverless');
+    const sql = neon(process.env.DATABASE_URL);
+    return new Set((await sql`SELECT email FROM email_optouts`).map(r => r.email));
+  } catch { return new Set(); }
 }
 
 export async function addContact(email, name, attributes = {}, extraListIds = []) {
@@ -86,6 +117,8 @@ export function welcomeEmail(name, tier) {
 
 // Send to many recipients individually (no shared 'to' — keeps addresses private)
 export async function sendBulk(recipients, subject, innerHtml) {
+  const out = await optedOutSet();
+  recipients = recipients.filter(r => !out.has(String(r.email || '').trim().toLowerCase()));
   let sent = 0;
   for (let i = 0; i < recipients.length; i += 10) {
     const chunk = recipients.slice(i, i + 10);
