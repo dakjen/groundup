@@ -5827,6 +5827,16 @@ function SystemStatusTab() {
       <div style={{ background: missing.length ? "#fdf0f0" : "#eef7ee", border: `1px solid ${missing.length ? "#b8010140" : "#22c55e40"}`, color: missing.length ? "#b80101" : "#1a7a3a", borderRadius: 10, padding: "14px 18px", fontSize: 13.5, fontFamily: F, fontWeight: 700, marginBottom: 20 }}>
         {missing.length ? `${missing.length} setting${missing.length > 1 ? "s" : ""} missing — ${missing.map(m => m.label).join(", ")}` : "Everything is configured. Payments, splits, and email are all live."}
       </div>
+      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: "22px 24px", marginBottom: 20 }}>
+        <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: F, marginBottom: 6 }}>Lifetime Pass — total sellable</div>
+        <p style={{ color: "#666666", fontSize: 12, fontFamily: F, marginBottom: 12 }}>The $5,000 pass is a numbered run. Set the total that may ever be sold; 0 takes it off sale (the card vanishes from the pricing page). Sold so far: <strong>{lt ? lt.sold : "…"}</strong>{lt && lt.cap > 0 ? ` · ${lt.remaining} remaining` : ""}</p>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <input type="number" min="0" value={capDraft} onChange={e => setCapDraft(e.target.value)} style={{ width: 110, background: "#faf8f5", border: "1px solid #dcd8d0", borderRadius: 8, padding: "10px 12px", fontFamily: F, fontSize: 14, fontWeight: 700 }} />
+          <button onClick={saveCap} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontFamily: F, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Save Cap</button>
+          {ltMsg && <span style={{ color: ltMsg.ok ? "#1a7a3a" : "#b80101", fontSize: 12.5, fontFamily: F, fontWeight: 700 }}>{ltMsg.text}</span>}
+        </div>
+      </div>
+
       {stripeInfo && (
         <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: "22px 24px", marginBottom: 20 }}>
           <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: F, marginBottom: 10 }}>Where the money goes — Stripe {!stripeInfo.error && <span style={{ color: stripeInfo.mode === "LIVE" ? "#1a7a3a" : "#b87a08" }}>({stripeInfo.mode})</span>}</div>
@@ -5840,16 +5850,6 @@ function SystemStatusTab() {
           )}
         </div>
       )}
-      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: "22px 24px", marginBottom: 20 }}>
-        <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: F, marginBottom: 6 }}>Lifetime Pass — total sellable</div>
-        <p style={{ color: "#666666", fontSize: 12, fontFamily: F, marginBottom: 12 }}>The $5,000 pass is a numbered run. Set the total that may ever be sold; 0 takes it off sale (the card vanishes from the pricing page). Sold so far: <strong>{lt ? lt.sold : "…"}</strong>{lt && lt.cap > 0 ? ` · ${lt.remaining} remaining` : ""}</p>
-        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <input type="number" min="0" value={capDraft} onChange={e => setCapDraft(e.target.value)} style={{ width: 110, background: "#faf8f5", border: "1px solid #dcd8d0", borderRadius: 8, padding: "10px 12px", fontFamily: F, fontSize: 14, fontWeight: 700 }} />
-          <button onClick={saveCap} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontFamily: F, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Save Cap</button>
-          {ltMsg && <span style={{ color: ltMsg.ok ? "#1a7a3a" : "#b80101", fontSize: 12.5, fontFamily: F, fontWeight: 700 }}>{ltMsg.text}</span>}
-        </div>
-      </div>
-
       <div style={{ background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 14, padding: "8px 24px" }}>
         {cfg.map(c => (
           <div key={c.key} style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 0", borderBottom: "1px solid #f2efe8" }}>
