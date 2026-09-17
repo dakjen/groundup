@@ -356,20 +356,21 @@ export default async function handler(req, res) {
     if (!admin) return res.status(401).json({ error: 'Unauthorized' });
 
     if (req.method === 'POST') {
-      const { title, description, url, code, category, min_tier, position, recommendation } = req.body;
+      const { title, description, url, code, category, min_tier, position, recommendation, phase } = req.body;
       if (!title) return res.status(400).json({ error: 'Title required' });
       if (url) { try { new URL(url); } catch { return res.status(400).json({ error: 'Invalid URL' }); } }
       const safeCat = ['resource', 'template', 'partner'].includes(category) ? category : 'resource';
       const safeTier = ['Premium', 'Elite'].includes(min_tier) ? min_tier : 'Premium';
+      const safePhase = phase >= 1 && phase <= 9 ? Number(phase) : null;
       const [row] = await sql`
-        INSERT INTO resources (title, description, url, code, category, min_tier, position, recommendation, created_at)
-        VALUES (${String(title).trim()}, ${description || null}, ${url || null}, ${code || null}, ${safeCat}, ${safeTier}, ${Number(position) || 0}, ${recommendation || null}, NOW())
+        INSERT INTO resources (title, description, url, code, category, min_tier, position, recommendation, phase, created_at)
+        VALUES (${String(title).trim()}, ${description || null}, ${url || null}, ${code || null}, ${safeCat}, ${safeTier}, ${Number(position) || 0}, ${recommendation || null}, ${safePhase}, NOW())
         RETURNING *`;
       return res.status(201).json(row);
     }
 
     if (req.method === 'PATCH') {
-      const { id, title, description, url, code, category, min_tier, position, recommendation } = req.body;
+      const { id, title, description, url, code, category, min_tier, position, recommendation, phase } = req.body;
       if (!id) return res.status(400).json({ error: 'id required' });
       if (url) { try { new URL(url); } catch { return res.status(400).json({ error: 'Invalid URL' }); } }
       const [row] = await sql`
@@ -381,7 +382,8 @@ export default async function handler(req, res) {
           category = COALESCE(${category ?? null}, category),
           min_tier = COALESCE(${min_tier ?? null}, min_tier),
           position = COALESCE(${position ?? null}, position),
-          recommendation = COALESCE(${recommendation ?? null}, recommendation)
+          recommendation = COALESCE(${recommendation ?? null}, recommendation),
+          phase = CASE WHEN ${phase !== undefined} THEN ${phase >= 1 && phase <= 9 ? Number(phase) : null} ELSE phase END
         WHERE id = ${id} RETURNING *`;
       if (!row) return res.status(404).json({ error: 'Not found' });
       return res.json(row);

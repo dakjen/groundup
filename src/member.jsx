@@ -4,6 +4,10 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 // ─── MEMBER SESSION HELPERS ─────────────────────────────────────────────────
 
 export const TIER_RANK = { Free: 0, Basic: 1, Builder: 2, Premium: 3, Elite: 4 };
+// The nine phases of development, in order — the library files everything by
+// these. Working names until Dr. Merritt's Stage 0 write-ups land; rename here
+// and every phase label in the app follows.
+export const DEV_PHASES = ["Concept & Site Control", "Predevelopment", "Zoning & Entitlements", "Design", "Financing & Underwriting", "Closing", "Construction", "Lease-Up & Operations", "Compliance & Asset Management"];
 
 export function getMember() {
   try { const m = localStorage.getItem("guMember"); return m ? JSON.parse(m) : null; } catch { return null; }
@@ -1462,8 +1466,22 @@ export function ResourcesPage({ member, onUpgrade }) {
               ) : items.length === 0 ? (
                 <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font, background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 12, padding: "20px 24px" }}>Nothing here yet — check back soon.</div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {items.map(r => (
+                // Filed the way a deal actually runs: phases 1–9 in order, then
+                // the general pile for what spans the whole process.
+                [...Array.from({ length: 9 }, (_, i) => i + 1), null].map(ph => {
+                  const phItems = items.filter(r => (r.phase || null) === ph);
+                  if (!phItems.length) return null;
+                  const showHeads = g.key !== "partner" && items.some(r => r.phase);
+                  return (
+                    <div key={String(ph)} style={{ marginBottom: 18 }}>
+                      {showHeads && (
+                        <div style={{ fontSize: 10, color: ph ? "#b80101" : "var(--gu-faint)", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, margin: "0 0 10px", display: "flex", alignItems: "center", gap: 10 }}>
+                          {ph ? `Phase ${ph} — ${DEV_PHASES[ph - 1]}` : "General — the whole process"}
+                          <span style={{ flex: 1, borderTop: "1px solid #1e0000" }} />
+                        </div>
+                      )}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {phItems.map(r => (
                     <div key={r.id} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 14, padding: "20px 26px", display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: "10px 28px" }}>
                       <div style={{ flex: 1, minWidth: 260, display: "flex", flexDirection: "column", gap: 8 }}>
                       {r.url && !/youtube\.com|youtu\.be/.test(r.url) ? (
@@ -1499,7 +1517,10 @@ export function ResourcesPage({ member, onUpgrade }) {
                       </div>
                     </div>
                   ))}
-                </div>
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
           );

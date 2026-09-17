@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { FileText, Send, Hourglass, FolderOpen, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2, BadgePercent } from "lucide-react";
 import COURSE_CATALOG from "./courseCatalog.js";
-import { AuthModal, ResetPasswordModal, WaitlistForm, ResourcesPage, RetainerPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
+import { AuthModal, ResetPasswordModal, WaitlistForm, ResourcesPage, RetainerPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -1208,7 +1208,7 @@ function GlossaryPage({ member, onSignIn, setActivePage }) {
 
 // ─── COURSES PAGE ────────────────────────────────────────────────────────────
 
-function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary }) {
+function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, onNav }) {
   const [activeMiniCourse, setActiveMiniCourse] = useState(null);
   // Survive refresh: reopen the course named in the URL hash once the catalog is in
   const hashCourseId = (window.location.hash.match(/c=([\w-]+)/) || [])[1] || null;
@@ -1251,33 +1251,50 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary }
   return (
     <div style={{ background: pageBg, minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        <div style={{ marginBottom: 56 }}>
+        {/* ── The learning home: welcome + main resources before the courses ── */}
+        <div style={{ marginBottom: 40 }}>
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Your learning home</div>
+          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(38px,5vw,52px)", color: "#f5e8e8", margin: "0 0 12px", lineHeight: 1.1 }}>Welcome back{member?.name ? `, ${member.name.split(" ")[0]}` : ""}.</h1>
+          <p style={{ color: "#8a7070", fontSize: 15, maxWidth: 620, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif", margin: 0 }}>Everything you learn with lives here — the courses, the library, the glossary, and the rooms where your questions get answered.</p>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 64 }}>
+          {[
+            { Icon: FolderOpen, title: "The Library", desc: "Downloads, templates & tools", go: () => onNav("resources"), color: "#b80101" },
+            { Icon: FileText, title: "The Glossary", desc: "Every term, explained", go: onGlossary, color: "#c9a227" },
+            { Icon: MessagesSquare, title: "The Community", desc: "Ask, answer, connect", go: () => onNav("community"), color: "#b80101" },
+            { Icon: Calendar, title: "Lunch & Learn", desc: "Monthly live sessions", go: () => onNav("lunchlearn"), color: "#c9a227" },
+            { Icon: Video, title: "Book with Dr. Gina", desc: "1:1 time on your deal", go: () => onNav("contact"), color: "#b80101" },
+          ].map(t => (
+            <div key={t.title} onClick={t.go}
+              style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "22px 20px", cursor: "pointer", transition: "all 0.25s" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = t.color + "70"; e.currentTarget.style.transform = "translateY(-3px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a0000"; e.currentTarget.style.transform = "none"; }}>
+              <t.Icon size={20} color={t.color} style={{ marginBottom: 12 }} />
+              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 19, color: "#f0d8d8", marginBottom: 5, lineHeight: 1.15 }}>{t.title}</div>
+              <div style={{ fontSize: 12, color: "#8a7070", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.5 }}>{t.desc}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ marginBottom: 56, borderTop: "1px solid #1c0808", paddingTop: 48 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Learn at your pace</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap", marginBottom: 14 }}>
-            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 52, color: "#f5e8e8", margin: 0 }}>The Curriculum</h1>
-            <button onClick={onGlossary} style={{ background: "transparent", color: "#c8a8a8", border: "1px solid #b8010145", borderRadius: 99, padding: "9px 20px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12.5, cursor: "pointer" }}>📖 The Glossary — every term, explained</button>
-          </div>
+          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(32px,4.5vw,46px)", color: "#f5e8e8", margin: "0 0 14px" }}>The Curriculum</h2>
           <p style={{ color: "#8a7070", fontSize: 15, maxWidth: 580, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif" }}>Seven courses built from Dr. Gina Merritt's actual deal experience — from first principles to what happens after opening day.</p>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {regular.map((course, i) => (
             <div key={course.id} onClick={() => setActiveMiniCourse(course)}
-              style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "32px 36px", cursor: "pointer", transition: "all 0.25s" }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = "#b8010145"; e.currentTarget.style.transform = "translateY(-3px)"; }}
+              style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "18px 28px", cursor: "pointer", transition: "all 0.25s" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "#b8010145"; e.currentTarget.style.transform = "translateY(-2px)"; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a0000"; e.currentTarget.style.transform = "none"; }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
-                <div style={{ flex: 1, minWidth: 260 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                    <span style={{ background: course.stageColor + "18", color: course.stageColor, border: "1px solid " + course.stageColor + "35", borderRadius: 4, padding: "3px 10px", fontSize: 10, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "1px" }}>{course.stage}</span>
-                    <span style={{ color: "#7a5050", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{course.lessons.length} lessons · {course.duration}</span>
-                  </div>
-                  <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(20px,2.5vw,28px)", color: "#f0d8d8", marginBottom: 12, lineHeight: 1.2 }}>{course.title}</h2>
-                  <p style={{ fontSize: 14, color: "#8a7070", lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif", maxWidth: 540 }}>{course.description}</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 30, color: course.stageColor, lineHeight: 1, opacity: 0.4, minWidth: 40 }}>0{i + 1}</div>
+                <div style={{ flex: 1, minWidth: 220 }}>
+                  <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(18px,2.2vw,23px)", color: "#f0d8d8", margin: "0 0 3px", lineHeight: 1.2 }}>{course.title}</h2>
+                  <p style={{ fontSize: 12.5, color: "#7a5858", fontFamily: "'DM Sans', sans-serif", margin: 0, lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" }}>{course.description}</p>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 12, flexShrink: 0 }}>
-                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 64, color: course.stageColor, lineHeight: 1, opacity: 0.3 }}>0{i + 1}</div>
-                  <button style={{ background: course.stageColor, color: "#fff", border: "none", borderRadius: 8, padding: "10px 22px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Begin →</button>
-                </div>
+                <span style={{ background: course.stageColor + "18", color: course.stageColor, border: "1px solid " + course.stageColor + "35", borderRadius: 4, padding: "3px 10px", fontSize: 10, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "1px", flexShrink: 0 }}>{course.stage}</span>
+                <span style={{ color: "#7a5050", fontSize: 12, fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>{course.lessons.length} lessons</span>
+                <span style={{ color: course.stageColor, fontSize: 18, fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>→</span>
               </div>
             </div>
           ))}
@@ -5579,7 +5596,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
 
 function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
   const [rows, setRows] = useState(null);
-  const [form, setForm] = useState({ title: "", description: "", url: "", code: "", category: "resource", min_tier: "Premium", recommendation: "" });
+  const [form, setForm] = useState({ title: "", description: "", url: "", code: "", category: "resource", min_tier: "Premium", recommendation: "", phase: "" });
   const [msg, setMsg] = useState(null);
   const [editId, setEditId] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -5598,18 +5615,19 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
   useEffect(() => { load(); }, []);
   const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 4000); };
 
-  const blank = () => ({ title: "", description: "", url: "", code: "", category: form.category, min_tier: form.min_tier, recommendation: "" });
+  const blank = () => ({ title: "", description: "", url: "", code: "", category: form.category, min_tier: form.min_tier, recommendation: "", phase: "" });
   const add = async () => {
     if (!form.title) { flash(false, "Title required."); return; }
     try {
-      if (editId) { await call("PATCH", { id: editId, ...form }); flash(true, "Saved."); }
-      else { await call("POST", form); flash(true, "Added."); }
+      const payload = { ...form, phase: form.phase ? Number(form.phase) : null };
+      if (editId) { await call("PATCH", { id: editId, ...payload }); flash(true, "Saved."); }
+      else { await call("POST", payload); flash(true, "Added."); }
       setForm(blank()); setEditId(null); await load();
     } catch (e) { flash(false, e.message); }
   };
   const startEdit = (r) => {
     setEditId(r.id);
-    setForm({ title: r.title || "", description: r.description || "", url: r.url || "", code: r.code || "", category: r.category || "resource", min_tier: r.min_tier || "Premium", recommendation: r.recommendation || "" });
+    setForm({ title: r.title || "", description: r.description || "", url: r.url || "", code: r.code || "", category: r.category || "resource", min_tier: r.min_tier || "Premium", recommendation: r.recommendation || "", phase: r.phase || "" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const uploadPdf = async (file) => {
@@ -5668,6 +5686,13 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
             <label style={lbl}>Unlocks at</label>
             <select value={form.min_tier} onChange={e => setForm({ ...form, min_tier: e.target.value })} style={{ ...inp, maxWidth: "none", marginBottom: 0, cursor: "pointer" }}>
               <option value="Premium">Premium</option><option value="Elite">Owner</option>
+            </select>
+          </div>
+          <div>
+            <label style={lbl}>Development phase <span style={{ textTransform: "none", letterSpacing: 0, color: "#9a9a9a" }}>(files it in the library's 1–9 order)</span></label>
+            <select value={form.phase} onChange={e => setForm({ ...form, phase: e.target.value })} style={{ ...inp, maxWidth: "none", marginBottom: 0, cursor: "pointer" }}>
+              <option value="">General — whole process</option>
+              {DEV_PHASES.map((p, i) => <option key={i} value={i + 1}>{`Phase ${i + 1} — ${p}`}</option>)}
             </select>
           </div>
         </div>
@@ -6651,7 +6676,7 @@ export default function App() {
           route to the waitlist before launch. */}
       <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => { setAuthMode("login"); setSignupTier("Free"); setShowSignup(true); }} member={member} unread={(notif?.unread || 0) + (notif?.dm_unread || 0)} />
       {activePage === "home" && <HomePage setActivePage={navigateTo} onSignUp={openSignup} currentUser={currentUser} eventInvited={eventInvited} />}
-      {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} onGlossary={() => navigateTo("glossary")} /></div>}
+      {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} onGlossary={() => navigateTo("glossary")} onNav={navigateTo} /></div>}
       {activePage === "advisory" && <RetainerPage member={member} setActivePage={navigateTo} />}
       {activePage === "partner-interest" && <PartnerInterestPage />}
       {activePage === "partner" && <PartnerPage slug={partnerSlug} onSignIn={() => setShowAuth("login")} onExplore={() => navigateTo("courses")} />}

@@ -134,6 +134,7 @@ const STATEMENTS = [
     category TEXT DEFAULT 'resource', min_tier TEXT DEFAULT 'Premium',
     position INTEGER DEFAULT 0, created_at TIMESTAMP DEFAULT NOW())`,
   `ALTER TABLE resources ADD COLUMN IF NOT EXISTS recommendation TEXT`,
+  `ALTER TABLE resources ADD COLUMN IF NOT EXISTS phase INTEGER`,
   `CREATE TABLE IF NOT EXISTS glossary (
     id SERIAL PRIMARY KEY, term TEXT UNIQUE NOT NULL, definition TEXT NOT NULL,
     refs JSONB DEFAULT '[]', created_at TIMESTAMP DEFAULT NOW())`,
