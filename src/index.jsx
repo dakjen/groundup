@@ -4723,6 +4723,39 @@ function RevenueTab() {
         {statCard("Trial Conversions", trialConversions, `${trialPending} invites pending`, "#a08030")}
       </div>
 
+      {/* The split: NREUV's share of the MRR vs what stays with the platform.
+          Rates per PRICING-RULES §12 — memberships 75%, retainers 90% (of gross;
+          the platform absorbs Stripe fees). */}
+      {(() => {
+        const nreuvShare = memberMrr * 0.75 + retainers.retainer_mrr * 0.90;
+        const platformShare = mrr - nreuvShare;
+        const pct = mrr > 0 ? (nreuvShare / mrr) * 100 : 0;
+        return (
+          <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 20 }}>
+            <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>The Split — where the MRR goes</div>
+            <div style={{ display: "flex", gap: 28, flexWrap: "wrap", marginBottom: 14 }}>
+              <div>
+                <div style={{ fontSize: 11, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, marginBottom: 4 }}>TO NREUV / MO</div>
+                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 30, color: "#570404", lineHeight: 1 }}>${nreuvShare.toFixed(2)}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, marginBottom: 4 }}>STAYS WITH PLATFORM / MO</div>
+                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 30, color: "#222222", lineHeight: 1 }}>${platformShare.toFixed(2)}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, marginBottom: 4 }}>TOTAL MRR</div>
+                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 30, color: "#b80101", lineHeight: 1 }}>${mrr.toFixed(2)}</div>
+              </div>
+            </div>
+            <div style={{ height: 10, background: "#efe9e2", borderRadius: 99, overflow: "hidden", display: "flex", marginBottom: 8 }}>
+              <div style={{ width: `${pct}%`, background: "linear-gradient(90deg, #570404, #7a1010)" }} />
+              <div style={{ flex: 1, background: "#c9a227" }} />
+            </div>
+            <div style={{ fontSize: 12, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>Memberships split <strong>75% to NREUV</strong> · retainers, 1:1s & intakes <strong>90%</strong> · Lunch & Learn <strong>100%</strong> (one-time revenue like L&L and passes isn't in MRR, so it isn't shown here). Shares are of gross — the platform absorbs Stripe's fees.</div>
+          </div>
+        );
+      })()}
+
       {/* Revenue by tier */}
       <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 20 }}>
         <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>Revenue by Tier</div>
