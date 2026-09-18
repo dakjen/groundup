@@ -1472,7 +1472,7 @@ function AboutPage({ setActivePage }) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18 }}>
             {[
               {
-                img: "/opt/Cleveland19-still.jpg", name: "9410 Hough", where: "Cleveland, OH",
+                img: "/opt/hough-exterior.jpg", name: "9410 Hough", where: "Cleveland, OH",
                 story: "No investment had come to the Hough neighborhood in decades. Dr. Merritt's read: two blocks away sat $5,000 rents and a university — build the catalyst, and investment follows. The deal survived a mid-stream blow-up, took two extra years of problem-solving, and closed anyway. Others started developing in Hough shortly after.",
                 taught: "Taught in: Predevelopment · Financing the Deal",
               },
@@ -1485,6 +1485,11 @@ function AboutPage({ setActivePage }) {
                 img: "/kerconway_017.webp", name: "John & Jill Ker Conway Residence", where: "Washington, DC",
                 story: "A landmark residence in the heart of the District — design-forward architecture in service of the people who live inside it. The standard the curriculum holds every project to: build something the neighborhood is proud to look at.",
                 taught: "Taught in: Design for the People You're Serving",
+              },
+              {
+                img: "/opt/nannie-helen.jpg", name: "Nannie Helen at 4800", where: "Washington, DC",
+                story: "Affordable homes on Nannie Helen Burroughs Avenue NE — one of the deals that turned NREUV from advisor into owner. The proof behind a core curriculum lesson: ownership structure is where wealth is actually built, and you can negotiate for it.",
+                taught: "Taught in: Building Your Team · JV Structures",
               },
               {
                 img: "/opt/beacon-center.jpg", name: "The Beacon Center", where: "Washington, DC",
@@ -1508,6 +1513,8 @@ function AboutPage({ setActivePage }) {
         <div style={{ marginBottom: 64 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>The Instructor</div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(38px,5vw,58px)", color: "#f5e8e8", marginBottom: 24, lineHeight: 1.1 }}>Dr. Gina Merritt</h1>
+          <div style={{ display: "flex", gap: 44, alignItems: "flex-start", flexWrap: "wrap" }}>
+          <div style={{ flex: "1 1 420px", minWidth: 300 }}>
           <p style={{ color: "#9a8080", fontSize: 16, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", maxWidth: 700, marginBottom: 16 }}>
             Dr. Gina Merritt grew up in affordable housing in the Bronx. She knows what it means to live inside the units this industry builds — and what it costs a neighborhood when nobody builds them well. That fact shapes every deal she touches: the design standards, the community engagement, the insistence that residents get buildings they're proud of.
           </p>
@@ -1517,6 +1524,9 @@ function AboutPage({ setActivePage }) {
           <p style={{ color: "#9a8080", fontSize: 16, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", maxWidth: 700 }}>
             She has spent 30+ years in hands-on development, finance, construction, and asset management — first two decades running other people's deals as a development manager and advisor, then, starting in 2020, owning her own. She built her ownership pipeline from nearly zero to over $600 million. GroundUp exists to hand you the playbook that took her thirty years to write.
           </p>
+          </div>
+          <img loading="lazy" src="/GM Headshot.jpg" alt="Dr. Gina Merritt" style={{ flex: "0 0 280px", width: 280, maxWidth: "100%", borderRadius: 16, border: "1px solid #2a0000", objectFit: "cover", alignSelf: "stretch", maxHeight: 420 }} />
+          </div>
         </div>
 
         <div style={{ background: "#160808", border: "1px solid #2a0000", borderRadius: 20, padding: "40px", marginBottom: 40 }}>
@@ -1556,14 +1566,14 @@ function AboutPage({ setActivePage }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             {[
               { src: "/opt/DSC00837.jpg", label: "Mary's House — Groundbreaking", sub: "Cleveland, OH" },
-              { src: "/opt/SIS-AWARD-GM.jpg", label: "SIS Award — Economic Empowerment", sub: "Social Innovation Summit 2022" },
+              { src: "/opt/SIS-AWARD-GM.jpg", pos: "center 18%", label: "SIS Award — Economic Empowerment", sub: "Social Innovation Summit 2022" },
               { src: "/opt/IMG_8113.jpg", label: "Honoree — Fireside Chat", sub: "National DCRE Conference" },
               { src: "/opt/SISAwards-acceptance.jpg", label: "Speaking Engagement", sub: "Social Innovation Summit 2022" },
               { src: "/opt/StevieAwards-GroupPhoto.jpg", label: "Stevie Awards", sub: "With the team" },
               { src: "/opt/GM at DCRE.jpg", label: "On Stage", sub: "National DCRE Conference" },
             ].map((p, i) => (
               <div key={i} style={{ borderRadius: 12, overflow: "hidden", position: "relative", border: "1px solid #2a0000" }}>
-                <img src={p.src} alt={p.label} style={{ width: "100%", height: 180, objectFit: "cover", display: "block" }} />
+                <img src={p.src} alt={p.label} style={{ width: "100%", height: 180, objectFit: "cover", objectPosition: p.pos || "center", display: "block" }} />
                 <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(transparent, rgba(0,0,0,0.8))", padding: "20px 14px 10px" }}>
                   <div style={{ fontSize: 11, color: "#f0d8d8", fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>{p.label}</div>
                   <div style={{ fontSize: 10, color: "#9a7070", fontFamily: "'DM Sans', sans-serif" }}>{p.sub}</div>
