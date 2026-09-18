@@ -168,7 +168,7 @@ export default async function handler(req, res) {
         const mail = foundingThanksEmail('Dakotah');
         const recips = String(to_email).split(/[,;\s]+/).map(a => a.trim()).filter(a => a.includes('@'));
         let sent = 0;
-        for (const addr of recips) { if (await sendEmail(addr, `[PREVIEW] ${mail.subject}`, mail.html)) sent++; }
+        for (const addr of recips) { if (await sendEmail(addr, `[PREVIEW] ${mail.subject}`, mail.html, { light: true })) sent++; }
         return sent ? res.json({ success: true, sent, preview: true }) : res.status(502).json({ error: 'Email failed to send — is Brevo configured?' });
       }
       await sql`ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS founding_thanked TIMESTAMPTZ`;
@@ -176,7 +176,7 @@ export default async function handler(req, res) {
       let sent = 0;
       for (const r of rows) {
         const mail = foundingThanksEmail(r.name);
-        const ok = await sendEmail(r.email, mail.subject, mail.html, { marketing: true });
+        const ok = await sendEmail(r.email, mail.subject, mail.html, { marketing: true, light: true });
         if (ok) { await sql`UPDATE waitlist SET founding_thanked = NOW() WHERE id = ${r.id}`; sent++; }
       }
       return res.json({ success: true, sent, total: rows.length });
