@@ -612,14 +612,19 @@ export default async function handler(req, res) {
     // Member discount on 1:1 sessions — computed here from the signed-in user's tier.
     // Label off the actual price delta, so an item excluded from the discount
     // (see NO_MEMBER_DISCOUNT) is never labeled as discounted.
-    // FOUNDING 25 PRICING: the first 25 insiders get launch pricing for their
-    // FIRST YEAR (Builder $99.99 / Premium $149.99), then standard rates — done
-    // as a 12-month coupon so the subscription itself carries the real price.
+    // FOUNDING PRICING: founding members (insider waitlist) get 30% off ANY
+    // membership tier for their FIRST YEAR, then standard rates — done as a
+    // 12-month percent coupon so Stripe checkout shows the list price with the
+    // founding discount beneath it, and the subscription carries the real price.
     const FOUNDING = {
-      sub_Builder:        { id: 'FOUND25B',  amount_off: 5000,   duration: 'repeating', months: 12 },
-      sub_Premium:        { id: 'FOUND25P',  amount_off: 10000,  duration: 'repeating', months: 12 },
-      sub_Builder_annual: { id: 'FOUND25BA', amount_off: 60000,  duration: 'once' },
-      sub_Premium_annual: { id: 'FOUND25PA', amount_off: 120000, duration: 'once' },
+      sub_Basic:          { id: 'FOUND30', percent_off: 30, duration: 'repeating', months: 12 },
+      sub_Builder:        { id: 'FOUND30', percent_off: 30, duration: 'repeating', months: 12 },
+      sub_Premium:        { id: 'FOUND30', percent_off: 30, duration: 'repeating', months: 12 },
+      sub_Elite:          { id: 'FOUND30', percent_off: 30, duration: 'repeating', months: 12 },
+      sub_Basic_annual:   { id: 'FOUND30A', percent_off: 30, duration: 'once' },
+      sub_Builder_annual: { id: 'FOUND30A', percent_off: 30, duration: 'once' },
+      sub_Premium_annual: { id: 'FOUND30A', percent_off: 30, duration: 'once' },
+      sub_Elite_annual:   { id: 'FOUND30A', percent_off: 30, duration: 'once' },
     };
     let foundingSpec = null;
     if (FOUNDING[item]) {
@@ -630,7 +635,7 @@ export default async function handler(req, res) {
     const grandfathered = !!foundingSpec;
     const saved = product.amount - unitAmount;
     const productName = grandfathered
-      ? `${product.name} — Founding 25 launch rate, first year`
+      ? `${product.name} — Founding Member`
       : saved > 0
         ? `${product.name} — ${user.tier} member rate (${Math.round((saved / product.amount) * 100)}% off)`
         : product.name;
@@ -663,9 +668,9 @@ export default async function handler(req, res) {
       try { coupon = (await stripe.coupons.retrieve(foundingSpec.id)).id; }
       catch {
         coupon = (await stripe.coupons.create({
-          id: foundingSpec.id, amount_off: foundingSpec.amount_off, currency: 'usd',
+          id: foundingSpec.id,
+          ...(foundingSpec.percent_off ? { percent_off: foundingSpec.percent_off, name: 'Founding Member — 30% off, first year' } : { amount_off: foundingSpec.amount_off, currency: 'usd' }),
           duration: foundingSpec.duration, ...(foundingSpec.months ? { duration_in_months: foundingSpec.months } : {}),
-          name: 'Founding 25 — launch pricing, first year',
         })).id;
       }
       params.discounts = [{ coupon }];
