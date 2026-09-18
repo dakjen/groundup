@@ -634,7 +634,7 @@ export default async function handler(req, res) {
       // intake credit exists ($1,500 beats 15%, and the intake coupon applies later)
       if (wl && item.startsWith('retainer_')) {
         const [intake] = await sql`SELECT id FROM entitlements WHERE user_id = ${user.id} AND course_id = 'intake' AND source = 'intake_paid' LIMIT 1`;
-        if (!intake) foundingSpec = { id: 'FOUNDRET15', percent_off: 15, duration: 'once' };
+        if (!intake) foundingSpec = { id: 'FOUNDRET15X3', percent_off: 15, duration: 'repeating', months: 3 };
       }
     }
     const unitAmount = memberPrice(item, user.tier);
