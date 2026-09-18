@@ -355,7 +355,7 @@ export function waitlistConfirmEmail(name, founding, first10, list = 'insider') 
   const about = `
       <div style="border-top:1px solid #2a0000;margin-top:20px;padding-top:18px;">
         <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:10px;">What GroundUp is</div>
-        <p style="color:#a89080;font-size:14px;line-height:1.9;">Dr. Gina Merritt went from public housing in the Bronx to <strong style="color:#f0d8d8;">$600M+ in real estate deals</strong> — and she had to fight for every piece of knowledge alone. She built GroundUp so you don't have to. It's the full development playbook, taught from deals that actually closed, plus a community of developers building alongside you and direct access to her and her team.</p>
+        <p style="color:#a89080;font-size:14px;line-height:1.9;">Dr. Gina Merritt went from public housing in the Bronx to <strong style="color:#f0d8d8;">billions of dollars in real estate deals</strong> — and she had to fight for every piece of knowledge alone. She built GroundUp so you don't have to. It's the full development playbook, taught from deals that actually closed, plus a community of developers building alongside you and direct access to her and her team.</p>
         <p style="color:#c8a8a8;font-size:13px;line-height:2;margin:10px 0;">
           <span style="color:#b80101;">→</span> Predevelopment — finding, evaluating &amp; controlling a deal<br/>
           <span style="color:#b80101;">→</span> Building your team, JV partnerships &amp; structuring<br/>
@@ -580,7 +580,7 @@ export function foundingThanksEmail(name, opts = {}) {
         <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;border:2px solid #b80101;box-sizing:border-box;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">December 5 \u2014 The Launch Party.</strong> Every founding member is invited \u2014 save the date; your invitation is coming soon.</td></tr>
       </table>
 
-      <p style="font-family:${SANS};color:#444444;font-size:15px;line-height:1.85;margin:0 0 26px;">This community was built on 30+ years and $600M+ of real deals \u2014 and it was built for you. We can\u2019t wait to show you inside.</p>
+      <p style="font-family:${SANS};color:#444444;font-size:15px;line-height:1.85;margin:0 0 26px;">This community was built on 30+ years and billions of dollars in real deals \u2014 and it was built for you. We can\u2019t wait to show you inside.</p>
       <a href="${siteUrl()}" style="display:inline-block;background:#b80101;color:#ffffff;border-radius:10px;padding:14px 32px;font-family:${SANS};font-weight:bold;font-size:14px;text-decoration:none;">See what\u2019s coming \u2192</a>
       <p style="font-family:${SANS};color:#777777;font-size:13px;line-height:1.8;margin:26px 0 0;">With gratitude,<br /><strong style="color:#161616;">Dr. Gina Merritt</strong> &amp; the GroundUp team</p>`,
     light: 'card',
