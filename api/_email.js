@@ -43,7 +43,28 @@ const unsubLink = (email) => `${siteUrl()}/api/auth?unsubscribe=${encodeURICompo
 
 // Two shells: the dark brand wrap (default), and a light cream one for
 // utility emails like sign-in codes where a wall of black reads heavy.
-const wrap = (inner, toEmail, light) => light ? `
+const FONT_LINK = '<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">';
+const SERIF = "'Cormorant Garamond',Georgia,'Times New Roman',serif";
+const SANS  = "'DM Sans',Arial,Helvetica,sans-serif";
+
+const wrap = (inner, toEmail, light) => light === 'card' ? `
+  ${FONT_LINK}
+  <div style="background:#000000;padding:32px 16px;font-family:${SANS};">
+    <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;color:#333333;">
+      <div style="background:#000000;padding:26px 32px 22px;">
+        <img src="${siteUrl()}/icon-192.png" alt="" width="42" height="42" style="display:block;border-radius:10px;margin-bottom:10px;" />
+        <div style="font-family:${SANS};font-size:20px;font-weight:bold;color:#ffffff;letter-spacing:1px;margin-bottom:4px;">GROUNDUP</div>
+        <div style="font-family:${SANS};font-size:10px;color:#a08560;letter-spacing:2px;text-transform:uppercase;">for underrepresented developers</div>
+      </div>
+      <div style="height:4px;background:#b80101;font-size:0;line-height:0;">&nbsp;</div>
+      <div style="padding:32px 32px 28px;">
+        ${inner}
+      </div>
+      <div style="background:#000000;padding:16px 32px;font-family:${SANS};font-size:11px;color:#7a6151;">
+        Northern Real Estate Urban Ventures · 825 10th St NW, Suite 981, Washington, DC 20001${toEmail ? ` · <a href="${unsubLink(toEmail)}" style="color:#a08560;">Unsubscribe</a>` : ''}
+      </div>
+    </div>
+  </div>` : light ? `
   <div style="background:#f3ede4;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;">
     <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e5dccf;border-radius:16px;padding:36px 32px;color:#333333;">
       <img src="${siteUrl()}/icon-192.png" alt="" width="42" height="42" style="display:block;border-radius:10px;margin-bottom:10px;" />
@@ -453,37 +474,97 @@ export function lnlAccessEmail(name, expiresAt, hasLink) {
 }
 
 // ── The founding-member thank-you: sent once to the insider waitlist ─────────
-// White card on black, red and white only — no gold. Uses its own light shell
-// via { light: true }? No: it carries its OWN full-white design inside the
-// standard dark page so the white card pops.
-export function foundingThanksEmail(name) {
+// Dakotah's review (Sep 18): "You were here first" stands alone as the
+// heading, the thank-you with their name sits under it, the founding-member
+// section stays, black comes back as the page around a white card (the
+// 'card' shell), brand fonts where clients allow them, and the dates as a
+// row of calendar tiles — a table, because that survives every mail client.
+/* One month as a 7-column table. `marks` is { 'YYYY-MM-DD': { bg, fg, ring } }.
+   Cells are small on purpose so four months fit a 560px email; the marked
+   days carry the meaning, the rest is context. */
+function monthGrid(year, month, marks) {
+  const first = new Date(Date.UTC(year, month, 1));
+  const days = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  const name = first.toLocaleDateString('en-US', { month: 'long', timeZone: 'UTC' });
+  const key = (d) => `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  const cell = (inner, style) => `<td align="center" style="width:14.28%;height:26px;font-family:${SANS};font-size:11px;line-height:1;${style}">${inner}</td>`;
+  let rows = '', d = 1;
+  for (let r = 0; r < 6 && d <= days; r++) {
+    let tr = '';
+    for (let c = 0; c < 7; c++) {
+      const inGrid = (r > 0 || c >= first.getUTCDay()) && d <= days;
+      if (!inGrid) { tr += cell('', ''); continue; }
+      const m = marks[key(d)];
+      tr += m
+        ? cell(`<span style="display:inline-block;min-width:22px;padding:5px 0;border-radius:11px;background:${m.bg};color:${m.fg};font-weight:bold;">${d}</span>`, '')
+        : cell(d, 'color:#555555;');
+      d++;
+    }
+    rows += `<tr>${tr}</tr>`;
+  }
+  const wk = ['S','M','T','W','T','F','S'].map((w) => cell(w, 'color:#999999;font-size:9px;font-weight:bold;height:18px;')).join('');
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #e3dbd0;border-radius:10px;overflow:hidden;">
+      <tr><td colspan="7" align="center" style="background:#161616;color:#ffffff;font-family:${SERIF};font-size:15px;font-weight:700;letter-spacing:1px;padding:7px 4px;">${name} ${year}</td></tr>
+      <tr>${wk}</tr>
+      ${rows}
+    </table>`;
+}
+
+export function foundingThanksEmail(name, opts = {}) {
   const first = (name || 'there').split(' ')[0];
+  const now = opts.now || new Date();
+  // Today in Eastern time, then the two months after it; November and
+  // December are fixed because those are the launch dates.
+  const etParts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
+  const y0 = +etParts.find((p) => p.type === 'year').value, m0 = +etParts.find((p) => p.type === 'month').value - 1, d0 = +etParts.find((p) => p.type === 'day').value;
+  const y1 = m0 === 11 ? y0 + 1 : y0, m1 = (m0 + 1) % 12;
+  const todayKey = `${y0}-${String(m0 + 1).padStart(2, '0')}-${String(d0).padStart(2, '0')}`;
+  const marks = {
+    [todayKey]: { bg: '#161616', fg: '#ffffff' },
+    '2026-11-01': { bg: '#b80101', fg: '#ffffff' },
+    '2026-12-01': { bg: '#a08560', fg: '#ffffff' },
+  };
+
   return {
-    subject: 'The countdown is on \u2014 your insider access opens November 1',
+    subject: 'You were here first \u2014 your insider access opens November 1',
     html: `
-      <img src="${siteUrl()}/opt/founding-banner.jpg" alt="Dr. Gina Merritt at 9410 Hough" width="496" style="width:100%;border-radius:10px;display:block;margin:0 0 24px;" />
-      <h2 style="font-family:Georgia,'Times New Roman',serif;color:#161616;font-size:23px;line-height:1.3;margin:0 0 14px;">Thank you, ${first} \u2014 you were here first.</h2>
-      <p style="color:#444444;font-size:15px;line-height:1.9;margin:0 0 14px;">Thank you for joining the GroundUp waitlist. We are so excited \u2014 and so close. What Dr.\u00A0Gina Merritt has been building for you is almost ready to open its doors.</p>
-      <p style="color:#444444;font-size:15px;line-height:1.9;margin:0 0 24px;">And because you believed in this before anyone else, you\u2019re not just an early signup. <strong style="color:#b80101;">You are a founding member.</strong></p>
+      <img src="${siteUrl()}/opt/founding-banner.jpg" alt="Dr. Gina Merritt at 9410 Hough" width="496" style="width:100%;border-radius:10px;display:block;margin:0 0 26px;" />
 
-      <div style="border-left:4px solid #b80101;background:#faf7f7;border-radius:0 12px 12px 0;padding:22px 26px;margin:0 0 18px;">
-        <div style="font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px;">What founding member means</div>
-        <p style="color:#333333;font-size:14px;line-height:1.9;margin:0 0 10px;">Founding members lock in <strong style="color:#b80101;">special founding rates for their entire first year</strong> \u2014 pricing that will never be offered again after launch. Your account carries a permanent founding badge in the community, so everyone knows you were part of the original circle.</p>
-        <p style="color:#333333;font-size:14px;line-height:1.9;margin:0;">Your founding benefit applies automatically the moment you <strong style="color:#b80101;">sign up and choose your membership</strong> \u2014 no codes to remember, nothing to claim. We\u2019ll recognize you.</p>
+      <h1 style="font-family:${SERIF};color:#161616;font-size:34px;line-height:1.15;font-weight:700;margin:0 0 10px;">You were here first.</h1>
+      <p style="font-family:${SANS};color:#161616;font-size:16px;line-height:1.7;margin:0 0 18px;">Thank you, ${first}, for joining the GroundUp waitlist.</p>
+      <p style="font-family:${SANS};color:#444444;font-size:15px;line-height:1.85;margin:0 0 24px;">We are so excited \u2014 and so close. What Dr.\u00A0Gina Merritt has been building is almost ready to open its doors. And because you believed in this before anyone else, you\u2019re not just an early signup. <strong style="color:#b80101;">You are a founding member.</strong></p>
+
+      <div style="border-left:4px solid #b80101;background:#faf7f7;border-radius:0 12px 12px 0;padding:22px 26px;margin:0 0 26px;">
+        <div style="font-family:${SANS};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;">What founding member means</div>
+        <p style="font-family:${SANS};color:#333333;font-size:14px;line-height:1.85;margin:0 0 10px;">You walk in on <strong style="color:#b80101;">November 1 \u2014 a full month before the public</strong> \u2014 with the courses, the community, all of it. And your account carries a permanent <strong style="color:#b80101;">founding badge</strong> in the community, so everyone knows you were part of the original circle.</p>
+        <p style="font-family:${SANS};color:#333333;font-size:14px;line-height:1.85;margin:0;">It all applies automatically the moment you <strong style="color:#b80101;">sign up and choose your membership</strong> \u2014 no codes to remember, nothing to claim. We\u2019ll recognize you.</p>
       </div>
 
-      <div style="border-left:4px solid #161616;background:#faf7f7;border-radius:0 12px 12px 0;padding:22px 26px;margin:0 0 24px;">
-        <div style="font-size:11px;color:#161616;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:14px;">The dates that matter</div>
-        <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;">
-          <tr><td style="color:#b80101;font-weight:bold;font-size:14px;padding:6px 14px 6px 0;white-space:nowrap;vertical-align:top;">November 1</td><td style="color:#444444;font-size:14px;line-height:1.7;padding:6px 0;"><strong style="color:#161616;">Insider access opens.</strong> As a founding member, you walk in a full month before the public \u2014 courses, community, all of it.</td></tr>
-          <tr><td style="color:#b80101;font-weight:bold;font-size:14px;padding:6px 14px 6px 0;white-space:nowrap;vertical-align:top;">December 1</td><td style="color:#444444;font-size:14px;line-height:1.7;padding:6px 0;"><strong style="color:#161616;">Full public launch.</strong> The doors open to everyone \u2014 and you\u2019ll already be a month ahead.</td></tr>
-          <tr><td style="color:#b80101;font-weight:bold;font-size:14px;padding:6px 14px 6px 0;white-space:nowrap;vertical-align:top;">The party</td><td style="color:#444444;font-size:14px;line-height:1.7;padding:6px 0;"><strong style="color:#161616;">The GroundUp Launch Party.</strong> Every founding member is invited \u2014 your invitation with the details is coming soon.</td></tr>
-        </table>
-      </div>
+      <div style="font-family:${SANS};font-size:11px;color:#161616;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 12px;">The dates that matter</div>
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 12px;">
+        <tr>
+          <td width="50%" valign="top" style="padding:0 6px 12px 0;">${monthGrid(y0, m0, marks)}</td>
+          <td width="50%" valign="top" style="padding:0 0 12px 6px;">${monthGrid(y1, m1, marks)}</td>
+        </tr>
+        <tr>
+          <td width="50%" valign="top" style="padding:0 6px 0 0;">${monthGrid(2026, 10, marks)}</td>
+          <td width="50%" valign="top" style="padding:0 0 0 6px;">${monthGrid(2026, 11, marks)}</td>
+        </tr>
+      </table>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 26px;">
+        <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#161616;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">Today</strong> \u2014 you\u2019re on the list</td></tr>
+        <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#b80101;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">November 1</strong> \u2014 insider access opens. Founding members walk in a full month before the public: courses, community, all of it.</td></tr>
+        <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#a08560;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">December 1</strong> \u2014 full public launch. You\u2019ll already be a month ahead.</td></tr>
+        <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;border:2px solid #b80101;box-sizing:border-box;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">The Launch Party</strong> \u2014 every founding member is invited. Date and invitation coming soon.</td></tr>
+      </table>
 
-      <p style="color:#444444;font-size:15px;line-height:1.9;margin:0 0 26px;">This community was built on 30+ years and $600M+ of real deals \u2014 and it was built for you. We can\u2019t wait to show you inside.</p>
-      <a href="${siteUrl()}" style="display:inline-block;background:#b80101;color:#ffffff;border-radius:10px;padding:14px 32px;font-weight:bold;font-size:14px;text-decoration:none;">See what\u2019s coming \u2192</a>
-      <p style="color:#777777;font-size:13px;line-height:1.8;margin:24px 0 0;">With gratitude,<br /><strong style="color:#161616;">Dr. Gina Merritt</strong> & the GroundUp team</p>`,
-    light: true,
+      <p style="font-family:${SANS};color:#444444;font-size:15px;line-height:1.85;margin:0 0 26px;">This community was built on 30+ years and $600M+ of real deals \u2014 and it was built for you. We can\u2019t wait to show you inside.</p>
+      <a href="${siteUrl()}" style="display:inline-block;background:#b80101;color:#ffffff;border-radius:10px;padding:14px 32px;font-family:${SANS};font-weight:bold;font-size:14px;text-decoration:none;">See what\u2019s coming \u2192</a>
+      <p style="font-family:${SANS};color:#777777;font-size:13px;line-height:1.8;margin:26px 0 0;">With gratitude,<br /><strong style="color:#161616;">Dr. Gina Merritt</strong> &amp; the GroundUp team</p>`,
+    light: 'card',
   };
 }
+
+// For rendering previews outside a send.
+export const _wrapForPreview = wrap;
