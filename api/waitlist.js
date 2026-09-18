@@ -518,7 +518,7 @@ export default async function handler(req, res) {
 
     // Team override of a person's plan recommendation ('' clears back to the algorithm)
     if (action === 'set_override') {
-      const val = ['Basic', 'Premium', 'Elite', 'Advisor'].includes(req.body.tier) ? req.body.tier : null;
+      const val = ['Basic', 'Builder', 'Premium', 'Elite', 'Advisor'].includes(req.body.tier) ? req.body.tier : null;
       await sql`UPDATE waitlist SET rec_override = ${val} WHERE id = ${Number(req.body.id)}`;
       return res.json({ success: true, rec_override: val });
     }
