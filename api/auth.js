@@ -79,11 +79,45 @@ export default async function handler(req, res) {
     const LIMITED = (mins) => res.status(429).json({ error: `Too many attempts — please wait ${mins} minutes and try again.` });
 
     // Admin env login (folded in from /api/login)
+    // ── Email-code 2FA for admin sign-ins ─────────────────────────────────
+    // After a correct password, a 6-digit code goes to the admin's inbox and
+    // the session token is only issued once it's entered. Codes live 10
+    // minutes, allow 5 attempts, and are stored hashed.
+    const codeHash = (c) => crypto.createHash('sha256').update(String(c)).digest('hex');
+    const issueLoginCode = async (email) => {
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      await sql`INSERT INTO login_codes (email, code_hash, expires_at, tries)
+        VALUES (${email}, ${codeHash(code)}, NOW() + INTERVAL '10 minutes', 0)
+        ON CONFLICT (email) DO UPDATE SET code_hash = ${codeHash(code)}, expires_at = NOW() + INTERVAL '10 minutes', tries = 0`;
+      const { sendEmail } = await import('./_email.js');
+      await sendEmail(email, `${code} is your GroundUp sign-in code`,
+        `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Your sign-in code</h2>
+         <p style="color:#a89080;font-size:14px;line-height:1.8;">Someone (hopefully you) is signing in to the GroundUp admin. Enter this code to finish:</p>
+         <div style="font-size:34px;font-weight:bold;letter-spacing:8px;color:#fff;background:#1a0808;border:1px solid #2a0000;border-radius:12px;padding:18px 0;text-align:center;margin:18px 0;">${code}</div>
+         <p style="color:#8f7070;font-size:12px;line-height:1.7;">It expires in 10 minutes. If this wasn't you, change your password now.</p>`);
+    };
+    const checkLoginCode = async (email, code) => {
+      const [row] = await sql`SELECT * FROM login_codes WHERE email = ${email}`;
+      if (!row || new Date(row.expires_at).getTime() < Date.now()) return 'expired';
+      if (row.tries >= 5) return 'expired';
+      if (row.code_hash !== codeHash(String(code).trim())) {
+        await sql`UPDATE login_codes SET tries = tries + 1 WHERE email = ${email}`;
+        return 'wrong';
+      }
+      await sql`DELETE FROM login_codes WHERE email = ${email}`;
+      return 'ok';
+    };
+
     if (action === 'admin_login') {
       if (await tooMany(`admin:${clientIp}`, 5, 15)) return LIMITED(15);
       const { email, password } = req.body;
       if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD && email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
         try { const { ensureSchema } = await import('./_migrate.js'); await ensureSchema(); } catch (e) { console.error('migration failed', e); }
+        const code = req.body.code;
+        if (!code) { await issueLoginCode(email); return res.json({ mfa: true }); }
+        const v = await checkLoginCode(email, code);
+        if (v === 'expired') return res.status(401).json({ error: 'That code expired — sign in again for a fresh one.' });
+        if (v === 'wrong') return res.status(401).json({ error: 'Wrong code — check the email and try again.' });
         return res.json({ success: true, token: signToken({ role: 'admin' }) });
       }
       await recordFail(`admin:${clientIp}`);
@@ -238,6 +272,14 @@ export default async function handler(req, res) {
         return res.status(401).json({ error: 'Invalid email or password' });
       }
       await clearFails(`login:${cleanEmail}`); // a good login resets the account's counter
+      // Admin-role accounts (the team, Dr. Merritt) need the emailed code too
+      if (user.role === 'admin') {
+        const code = req.body.code;
+        if (!code) { await issueLoginCode(cleanEmail); return res.json({ mfa: true }); }
+        const v = await checkLoginCode(cleanEmail, code);
+        if (v === 'expired') return res.status(401).json({ error: 'That code expired — sign in again for a fresh one.' });
+        if (v === 'wrong') return res.status(401).json({ error: 'Wrong code — check the email and try again.' });
+      }
       const token = signToken({ uid: user.id, role: user.role === 'admin' ? 'admin' : 'member', viewer: user.role === 'admin' && user.badge === 'drmerritt' ? true : undefined });
       const { password_hash, ...safe } = user;
       safe.entitlements = await sql`SELECT course_id, expires_at FROM entitlements WHERE user_id = ${user.id} AND (expires_at IS NULL OR expires_at > NOW())`;

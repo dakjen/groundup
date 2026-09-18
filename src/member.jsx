@@ -96,6 +96,8 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
   const [agreed, setAgreed] = useState(false);
 
   const [notice, setNotice] = useState("");
+  const [mfa, setMfa] = useState(false); // admin accounts: emailed code step
+  const [mfaCode, setMfaCode] = useState("");
 
   const submit = async (e) => {
     e.preventDefault();
@@ -115,7 +117,9 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
       // checkout (below) or an admin. The picker records intent, nothing more.
       const data = mode === "signup"
         ? await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "signup", name, email, password, ref: localStorage.getItem("guRef") || undefined }) })
-        : await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "login", email, password }) });
+        : await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "login", email, password, ...(mfa ? { code: mfaCode } : {}) }) });
+      // Team accounts get a second step: the emailed 6-digit sign-in code
+      if (data.mfa) { setMfa(true); setBusy(false); return; }
       saveMember(data.user, data.token);
       onAuthed(data.user);
       if (mode === "signup" && tier !== "Free" && window.startCheckout) {
@@ -150,6 +154,13 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
             <div style={{ marginBottom: 16 }}>
               <label style={lbl}>Password</label>
               <input style={inp} type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} placeholder={mode === "signup" ? "At least 8 characters" : "Your password"} />
+            </div>
+          )}
+          {mfa && mode === "login" && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ color: "#a89080", fontSize: 12.5, fontFamily: font, lineHeight: 1.6, marginBottom: 10 }}>Team accounts need one more step — a 6-digit code just landed in <strong style={{ color: "#f0d8d8" }}>{email}</strong>. It's good for 10 minutes.</div>
+              <label style={lbl}>Sign-in code</label>
+              <input style={{ ...inp, fontSize: 20, letterSpacing: "8px", textAlign: "center" }} value={mfaCode} onChange={e => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoFocus placeholder="000000" />
             </div>
           )}
           {mode === "signup" && (

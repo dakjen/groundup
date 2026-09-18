@@ -3465,6 +3465,8 @@ function AdminLoginPage({ onLogin }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mfa, setMfa] = useState(false); // password accepted, code emailed
+  const [code, setCode] = useState("");
 
   const handleLogin = async () => {
     setError("");
@@ -3473,10 +3475,12 @@ function AdminLoginPage({ onLogin }) {
       const res = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "admin_login", email, password }),
+        body: JSON.stringify({ action: "admin_login", email, password, ...(mfa ? { code } : {}) }),
       });
       const data = await res.json();
-      if (data.success) {
+      if (data.mfa) {
+        setMfa(true);
+      } else if (data.success) {
         onLogin(data.token);
       } else {
         setError(data.error || "Invalid email or password.");
@@ -3495,6 +3499,14 @@ function AdminLoginPage({ onLogin }) {
           <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 6 }}>Admin Portal</div>
           <div style={{ fontSize: 12, color: "#6a5050", fontFamily: "'DM Sans', sans-serif" }}>GroundUp · Restricted Access</div>
         </div>
+        {mfa ? (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ color: "#a89080", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 14 }}>A 6-digit code just landed in <strong style={{ color: "#f0d8d8" }}>{email}</strong>. Enter it to finish signing in — it's good for 10 minutes.</div>
+            <label style={{ fontSize: 11, color: "#8a7070", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", display: "block", marginBottom: 8 }}>Sign-in code</label>
+            <input value={code} onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoFocus placeholder="000000" onKeyDown={e => e.key === "Enter" && handleLogin()} style={{ width: "100%", background: "#1a0808", border: "1px solid #2a0000", borderRadius: 8, padding: "12px 14px", color: "#f0d8d8", fontSize: 22, letterSpacing: "8px", textAlign: "center", fontFamily: "'DM Sans', sans-serif", outline: "none" }} />
+          </div>
+        ) : (
+          <>
         <div style={{ marginBottom: 16 }}>
           <label style={{ fontSize: 11, color: "#8a7070", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", display: "block", marginBottom: 8 }}>Email</label>
           <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="admin@groundup.com" style={{ width: "100%", background: "#1a0808", border: "1px solid #2a0000", borderRadius: 8, padding: "12px 14px", color: "#f0d8d8", fontSize: 14, fontFamily: "'DM Sans', sans-serif", outline: "none" }} />
@@ -3503,8 +3515,11 @@ function AdminLoginPage({ onLogin }) {
           <label style={{ fontSize: 11, color: "#8a7070", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", display: "block", marginBottom: 8 }}>Password</label>
           <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="••••••••" onKeyDown={e => e.key === "Enter" && handleLogin()} style={{ width: "100%", background: "#1a0808", border: "1px solid #2a0000", borderRadius: 8, padding: "12px 14px", color: "#f0d8d8", fontSize: 14, fontFamily: "'DM Sans', sans-serif", outline: "none" }} />
         </div>
+          </>
+        )}
         {error && <div style={{ color: "#b80101", fontSize: 13, marginBottom: 16, fontFamily: "'DM Sans', sans-serif" }}>{error}</div>}
-        <button onClick={handleLogin} disabled={loading} style={{ width: "100%", background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "13px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Sign In</button>
+        <button onClick={handleLogin} disabled={loading || (mfa && code.length < 6)} style={{ width: "100%", background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "13px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", opacity: loading || (mfa && code.length < 6) ? 0.6 : 1 }}>{mfa ? "Verify Code" : "Sign In"}</button>
+        {mfa && <button onClick={() => { setMfa(false); setCode(""); setError(""); }} style={{ width: "100%", background: "transparent", color: "#8f7070", border: "none", padding: "12px 0 0", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 12, cursor: "pointer" }}>← Start over (sends a new code)</button>}
       </div>
     </div>
   );
