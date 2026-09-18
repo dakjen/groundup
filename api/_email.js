@@ -532,7 +532,7 @@ export function foundingThanksEmail(name, opts = {}) {
   return {
     subject: 'You were here first \u2014 your insider access opens November 1',
     html: `
-      <img src="${siteUrl()}/opt/founding-banner.jpg" alt="Dr. Gina Merritt at 9410 Hough" width="496" style="width:100%;border-radius:10px;display:block;margin:0 0 26px;" />
+      <img src="${siteUrl()}/opt/founding-banner-v2.jpg" alt="Dr. Gina Merritt at 9410 Hough" width="496" style="width:100%;border-radius:10px;display:block;margin:0 0 26px;" />
 
       <h1 style="font-family:${SERIF};color:#161616;font-size:34px;line-height:1.15;font-weight:700;margin:0 0 10px;">You were here first.</h1>
       <p style="font-family:${SANS};color:#161616;font-size:16px;line-height:1.7;margin:0 0 18px;">Thank you, ${first}, for joining the GroundUp waitlist.</p>
