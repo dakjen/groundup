@@ -1569,20 +1569,26 @@ export function LibraryPage({ member, onUpgrade }) {
                 {phItems.length === 0 ? (
                   <div style={{ color: "var(--gu-faint)", fontSize: 12.5, fontFamily: font, padding: "4px 0 4px 36px" }}>Nothing filed here yet.</div>
                 ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    {phItems.map(r => (
-                      <div key={r.id} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 12, padding: "16px 22px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 20px" }}>
-                        <div style={{ flex: 1, minWidth: 240 }}>
-                          {r.url ? (
-                            <a href={r.url} target="_blank" rel="noreferrer" onClick={() => ping(r.id)} style={{ color: "#b80101", fontWeight: 800, fontSize: 15, fontFamily: font, textDecoration: "none" }}>{r.title} ↗</a>
-                          ) : (
-                            <span style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15, fontFamily: font }}>{r.title}</span>
-                          )}
-                          {r.description && <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, lineHeight: 1.6, marginTop: 4 }}>{r.description}</div>}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
+                    {phItems.map(r => {
+                      const isTemplate = r.category === "template";
+                      const open = () => { if (r.url) { ping(r.id); window.open(r.url, "_blank", "noreferrer"); } };
+                      return (
+                        <div key={r.id} onClick={open} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 14, padding: "18px 20px", cursor: r.url ? "pointer" : "default", display: "flex", gap: 14, alignItems: "flex-start", transition: "all 0.2s" }}
+                          onMouseEnter={e => { if (r.url) { e.currentTarget.style.borderColor = "#b8010150"; e.currentTarget.style.transform = "translateY(-2px)"; } }}
+                          onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a0000"; e.currentTarget.style.transform = "none"; }}>
+                          <div style={{ width: 38, height: 38, borderRadius: 10, background: isTemplate ? "#c9a22718" : "#b8010115", border: "1px solid " + (isTemplate ? "#c9a22740" : "#b8010130"), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>{isTemplate ? "📄" : "🔗"}</div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 14.5, fontFamily: font, lineHeight: 1.35, marginBottom: 4 }}>{r.title}</div>
+                            {r.description && <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font, lineHeight: 1.6, marginBottom: 8, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{r.description}</div>}
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <span style={{ fontSize: 9, color: isTemplate ? "#c9a227" : "#8f7070", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font }}>{isTemplate ? "Template" : "Resource"}</span>
+                              {r.url && <span style={{ color: "#b80101", fontWeight: 800, fontSize: 12, fontFamily: font, marginLeft: "auto" }}>Open →</span>}
+                            </div>
+                          </div>
                         </div>
-                        <span style={{ fontSize: 9.5, color: r.category === "template" ? "#c9a227" : "var(--gu-muted)", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, flexShrink: 0 }}>{r.category === "template" ? "Template" : "Resource"}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

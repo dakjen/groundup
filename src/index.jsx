@@ -1247,13 +1247,16 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
   const pageBg = "#000";
   // The live catalog: newly published courses (and series) appear without a deploy.
   const [catalog, setCatalog] = useState(null);
+  const [catalogFailed, setCatalogFailed] = useState(false);
   useEffect(() => {
     fetch("/api/resources?courses=1", { headers: getMemberToken() ? { Authorization: "Bearer " + getMemberToken() } : {} })
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.courses?.length) setCatalog(d.courses.filter(c => !c.hidden)); })
-      .catch(() => {});
+      .then(d => { if (d?.courses?.length) setCatalog(d.courses.filter(c => !c.hidden)); else setCatalogFailed(true); })
+      .catch(() => setCatalogFailed(true));
   }, []);
-  const allCourses = catalog || miniCourses;
+  // No flash-of-wrong-catalog: wait for the live list, and only fall back to
+  // the built-in one if the fetch actually fails.
+  const allCourses = catalog || (catalogFailed ? miniCourses : []);
   useEffect(() => {
     if (hashCourseId && !activeMiniCourse) {
       const found = allCourses.find(c => c.id === hashCourseId);
@@ -1317,6 +1320,11 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
             <span style={{ fontSize: 9.5, color: "#c9a227", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>Coming Soon</span>
             <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(18px,2.4vw,24px)", color: "#e6c766", flexShrink: 0 }}>The Underwriting Series</span>
             <span style={{ color: "#a89070", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, flex: 1, minWidth: 220 }}>Underwriting the Project Budget & The Closing Draw — Dr. Merritt's own method, line by line.</span>
+          </div>
+        )}
+        {!catalog && !catalogFailed && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {[0,1,2,3].map(i => <div key={i} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, height: 76, opacity: 0.6 }} />)}
           </div>
         )}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
