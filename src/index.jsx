@@ -4703,9 +4703,9 @@ function RevenueTab() {
   if (loading) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
 
   const paying = users.filter(u => u.tier !== "Free" && !u.comped && (u.role || "member") === "member");
-  // Founding members bill at 30% off list through their first year — the
-  // FOUND30 coupon on their subscription
-  const FOUNDING_PRICES = { Basic: 34.99, Builder: 104.99, Premium: 174.99, Elite: 349.99 };
+  // Founding members bill at 25% off list through their first year — the
+  // FOUNDING25PCT coupon on their subscription
+  const FOUNDING_PRICES = { Basic: 37.49, Builder: 112.49, Premium: 187.49, Elite: 374.99 };
   const isFounding = (u) => (Array.isArray(u.badges) ? u.badges : []).includes("founding25");
   const priceFor = (u) => (isFounding(u) && FOUNDING_PRICES[u.tier]) || TIER_PRICES[u.tier] || 0;
   const memberMrr = paying.reduce((sum, u) => sum + priceFor(u), 0);
@@ -5594,9 +5594,9 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
         const fitFor = (e) => {
           const r = recFor(e);
           if (e.comped) return 0;
-          // Founding members pay 30% off ANY tier for their entire first year —
+          // Founding members pay 25% off ANY tier for their entire first year —
           // anticipated MRR reflects the founding rate for them
-          const found = (list) => e.founding_lnl ? Math.round(list * 0.7 * 100) / 100 : list;
+          const found = (list) => e.founding_lnl ? Math.round(list * 0.75 * 100) / 100 : list;
           if (r.startsWith("Builder")) return found(149.99);
           if (r.startsWith("Premium")) return found(249.99);
           if (r.includes("Pass")) return 0; // one-time money, not MRR
