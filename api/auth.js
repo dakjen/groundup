@@ -84,17 +84,22 @@ export default async function handler(req, res) {
     // the session token is only issued once it's entered. Codes live 10
     // minutes, allow 5 attempts, and are stored hashed.
     const codeHash = (c) => crypto.createHash('sha256').update(String(c)).digest('hex');
-    const issueLoginCode = async (email) => {
+    // The code is keyed to the login email, but DELIVERED to every inbox in
+    // `sendTo` — the env ADMIN_EMAIL can be an unmonitored alias, so portal
+    // codes also go to the team's real account emails.
+    const issueLoginCode = async (email, sendTo) => {
       const code = String(Math.floor(100000 + Math.random() * 900000));
       await sql`INSERT INTO login_codes (email, code_hash, expires_at, tries)
         VALUES (${email}, ${codeHash(code)}, NOW() + INTERVAL '10 minutes', 0)
         ON CONFLICT (email) DO UPDATE SET code_hash = ${codeHash(code)}, expires_at = NOW() + INTERVAL '10 minutes', tries = 0`;
       const { sendEmail } = await import('./_email.js');
-      await sendEmail(email, `${code} is your GroundUp sign-in code`,
+      const recipients = [...new Set((sendTo && sendTo.length ? sendTo : [email]).map(e => String(e).trim().toLowerCase()).filter(Boolean))];
+      const results = await Promise.all(recipients.map(to => sendEmail(to, `${code} is your GroundUp sign-in code`,
         `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Your sign-in code</h2>
          <p style="color:#a89080;font-size:14px;line-height:1.8;">Someone (hopefully you) is signing in to the GroundUp admin. Enter this code to finish:</p>
          <div style="font-size:34px;font-weight:bold;letter-spacing:8px;color:#fff;background:#1a0808;border:1px solid #2a0000;border-radius:12px;padding:18px 0;text-align:center;margin:18px 0;">${code}</div>
-         <p style="color:#8f7070;font-size:12px;line-height:1.7;">It expires in 10 minutes. If this wasn't you, change your password now.</p>`);
+         <p style="color:#8f7070;font-size:12px;line-height:1.7;">It expires in 10 minutes. If this wasn't you, change your password now.</p>`)));
+      return results.some(Boolean);
     };
     const checkLoginCode = async (email, code) => {
       const [row] = await sql`SELECT * FROM login_codes WHERE email = ${email}`;
@@ -114,7 +119,14 @@ export default async function handler(req, res) {
       if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD && email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
         try { const { ensureSchema } = await import('./_migrate.js'); await ensureSchema(); } catch (e) { console.error('migration failed', e); }
         const code = req.body.code;
-        if (!code) { await issueLoginCode(email); return res.json({ mfa: true }); }
+        if (!code) {
+          // Portal codes go to the env inbox AND every team account's real email
+          let team = [];
+          try { team = (await sql`SELECT email FROM users WHERE role = 'admin'`).map(r => r.email); } catch {}
+          const ok = await issueLoginCode(email, [email, ...team]);
+          if (!ok) return res.status(500).json({ error: 'The sign-in code email could not be sent — email service is down. Try again in a minute.' });
+          return res.json({ mfa: true });
+        }
         const v = await checkLoginCode(email, code);
         if (v === 'expired') return res.status(401).json({ error: 'That code expired — sign in again for a fresh one.' });
         if (v === 'wrong') return res.status(401).json({ error: 'Wrong code — check the email and try again.' });
@@ -275,7 +287,11 @@ export default async function handler(req, res) {
       // Admin-role accounts (the team, Dr. Merritt) need the emailed code too
       if (user.role === 'admin') {
         const code = req.body.code;
-        if (!code) { await issueLoginCode(cleanEmail); return res.json({ mfa: true }); }
+        if (!code) {
+          const ok = await issueLoginCode(cleanEmail);
+          if (!ok) return res.status(500).json({ error: 'The sign-in code email could not be sent — try again in a minute.' });
+          return res.json({ mfa: true });
+        }
         const v = await checkLoginCode(cleanEmail, code);
         if (v === 'expired') return res.status(401).json({ error: 'That code expired — sign in again for a fresh one.' });
         if (v === 'wrong') return res.status(401).json({ error: 'Wrong code — check the email and try again.' });
