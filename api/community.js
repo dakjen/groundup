@@ -7,6 +7,9 @@ import { sendEmail, dmReplyEmail } from './_email.js';
 function canSeeChannel(ch, user) {
   if (ch.team_only && user.role !== 'admin') return false;
   if (ch.partner_slug && user.role !== 'admin' && user.partner_slug !== ch.partner_slug) return false;
+  // Course Discussions stay dark until the December public launch — the
+  // insider month runs on the topic channels; the team sees everything.
+  if (ch.section === 'course' && user.role !== 'admin' && !user.courseChannelsLive) return false;
   return user.rank >= (TIER_RANK[ch.min_tier] ?? 1);
 }
 
@@ -27,12 +30,21 @@ async function resolveUser(req, sql) {
   return { ...u, rank: TIER_RANK[u.tier] ?? 0 };
 }
 
+// Course-discussion channels unlock at the general (December) launch
+async function courseChannelsLive(sql) {
+  try {
+    const [row] = await sql`SELECT value FROM settings WHERE key = 'launch_at'`;
+    return !!row?.value && new Date(row.value).getTime() <= Date.now();
+  } catch { return false; }
+}
+
 export default async function handler(req, res) {
   const sql = neon(process.env.DATABASE_URL);
 
   try {
     const user = await resolveUser(req, sql);
     if (!user) return res.status(401).json({ error: 'Sign in required' });
+    user.courseChannelsLive = user.role === 'admin' ? true : await courseChannelsLive(sql);
 
     // GET ?resource=notifications — unread counts + latest unseen announcement
     if (req.method === 'GET' && req.query.resource === 'notifications') {
