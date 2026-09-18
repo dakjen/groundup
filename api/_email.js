@@ -450,3 +450,35 @@ export function lnlAccessEmail(name, expiresAt, hasLink) {
       ${dealSupportBlock()}`,
   };
 }
+
+// ── The founding-member thank-you: sent once to the insider waitlist ─────────
+export function foundingThanksEmail(name) {
+  const first = (name || 'there').split(' ')[0];
+  return {
+    subject: 'You’re a founding member of GroundUp — here’s what that means',
+    html: `
+      <img src="${siteUrl()}/opt/gina-9410.jpg" alt="Dr. Gina Merritt at 9410 Hough" width="496" style="width:100%;border-radius:12px;display:block;margin:0 0 26px;" />
+      <h2 style="font-family:Georgia,'Times New Roman',serif;color:#f5e8e8;font-size:28px;line-height:1.25;margin:0 0 16px;">Thank you, ${first}. You were here first.</h2>
+      <p style="color:#c8b2a2;font-size:15px;line-height:1.9;margin:0 0 14px;">Thank you for joining the GroundUp waitlist. We are so excited — and so close. What Dr. Gina Merritt has been building for you is almost ready to open its doors.</p>
+      <p style="color:#c8b2a2;font-size:15px;line-height:1.9;margin:0 0 22px;">And because you believed in this before anyone else, you’re not just an early signup. <strong style="color:#e6c766;">You are a founding member.</strong></p>
+
+      <div style="background:#171004;border:1px solid #c9a22745;border-radius:14px;padding:24px 26px;margin:0 0 22px;">
+        <div style="font-size:10px;color:#c9a227;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px;">✦ What founding member means</div>
+        <p style="color:#d8c9a8;font-size:14px;line-height:1.9;margin:0 0 10px;">Founding members lock in <strong style="color:#e6c766;">special founding rates for their entire first year</strong> — pricing that will never be offered again after launch. Your account carries a permanent founding badge in the community, so everyone knows you were part of the original circle.</p>
+        <p style="color:#d8c9a8;font-size:14px;line-height:1.9;margin:0;">Your founding benefit applies automatically the moment you <strong style="color:#e6c766;">sign up and choose your membership</strong> — no codes to remember, nothing to claim. We’ll recognize you.</p>
+      </div>
+
+      <div style="background:#12060a;border:1px solid #b8010140;border-radius:14px;padding:24px 26px;margin:0 0 22px;">
+        <div style="font-size:10px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:14px;">The dates that matter</div>
+        <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;">
+          <tr><td style="color:#e6c766;font-weight:bold;font-size:14px;padding:6px 14px 6px 0;white-space:nowrap;vertical-align:top;">November 1</td><td style="color:#c8b2a2;font-size:14px;line-height:1.7;padding:6px 0;"><strong style="color:#f0d8d8;">Insider access opens.</strong> As a founding member, you walk in a full month before the public — courses, community, all of it.</td></tr>
+          <tr><td style="color:#e6c766;font-weight:bold;font-size:14px;padding:6px 14px 6px 0;white-space:nowrap;vertical-align:top;">December 1</td><td style="color:#c8b2a2;font-size:14px;line-height:1.7;padding:6px 0;"><strong style="color:#f0d8d8;">Full public launch.</strong> The doors open to everyone — and you’ll already be a month ahead.</td></tr>
+          <tr><td style="color:#e6c766;font-weight:bold;font-size:14px;padding:6px 14px 6px 0;white-space:nowrap;vertical-align:top;">🎉</td><td style="color:#c8b2a2;font-size:14px;line-height:1.7;padding:6px 0;"><strong style="color:#f0d8d8;">The GroundUp Launch Party.</strong> Every founding member is invited — your invitation with the details is coming soon.</td></tr>
+        </table>
+      </div>
+
+      <p style="color:#c8b2a2;font-size:15px;line-height:1.9;margin:0 0 24px;">This community was built on 30+ years and $600M+ of real deals — and it was built for you. We can’t wait to show you inside.</p>
+      <a href="${siteUrl()}" style="display:inline-block;background:#b80101;color:#ffffff;border-radius:10px;padding:14px 30px;font-weight:bold;font-size:14px;text-decoration:none;">See what’s coming →</a>
+      <p style="color:#8f7070;font-size:13px;line-height:1.8;margin:22px 0 0;">With gratitude,<br /><strong style="color:#f0d8d8;">Dr. Gina Merritt</strong> & the GroundUp team</p>`,
+  };
+}

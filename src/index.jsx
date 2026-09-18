@@ -6263,6 +6263,17 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
         </div>
       </div>
 
+      {/* Founding-member thank-you */}
+      <div style={section}>
+        <div style={heading}>Founding Thank-You — Insider Waitlist</div>
+        <p style={sub}>The gorgeous one: hero photo, "you were here first," what founding member means (first-year founding rates + the badge, applied automatically at signup), the launch-party invite, and the two dates — insider access November 1, public launch December 1. Preview it to yourself first; the real send goes once to every insider waitlister and remembers who got it, so it can never double-send.</p>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <input value={meeting.to_email} onChange={e => setMeeting({ ...meeting, to_email: e.target.value })} type="email" placeholder="djmj@nreuv.com" style={{ ...inp, maxWidth: 300, marginBottom: 0 }} />
+          <button disabled={busy} onClick={() => send({ kind: "founding_thanks", to_email: meeting.to_email || "djmj@nreuv.com" }, `Send the founding thank-you PREVIEW to ${meeting.to_email || "djmj@nreuv.com"}?`)} style={{ ...btnGhost }}>Send Me the Preview</button>
+          <button disabled={busy} onClick={() => send({ kind: "founding_thanks" }, "Send the founding thank-you to EVERY insider waitlister who hasn't received it? This is the real send.")} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>Send to Insider Waitlist</button>
+        </div>
+      </div>
+
       {/* Deal-support nudge */}
       <div style={section}>
         <div style={heading}>Deal-Support Nudge</div>

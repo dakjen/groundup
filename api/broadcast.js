@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { neon } from '@neondatabase/serverless';
 import { requireAdmin } from './_utils.js';
-import { sendBulk, sendEmail, siteUrl, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail, passExpiryEmail, waitlistConfirmEmail, retainerInterestEmail, countdownEmail, recommendEmail, launchEmail } from './_email.js';
+import { sendBulk, sendEmail, siteUrl, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail, passExpiryEmail, waitlistConfirmEmail, retainerInterestEmail, countdownEmail, recommendEmail, launchEmail, foundingThanksEmail } from './_email.js';
 import { recommendPlan, sendRecommendBatch, sendLaunchBatch } from './waitlist.js';
 
 // Team email tools: send a custom email or an event announcement to a segment.
@@ -161,6 +161,27 @@ export default async function handler(req, res) {
 
     // Team preview: the waitlist welcome emails, sent to any address so the
     // wording can be reviewed in a real inbox. Subjects are [PREVIEW]-prefixed.
+    // Founding thank-you: preview to any addresses, or the real once-only send
+    // to every insider waitlister who hasn't gotten it yet.
+    if (kind === 'founding_thanks') {
+      if (to_email) {
+        const mail = foundingThanksEmail('Dakotah');
+        const recips = String(to_email).split(/[,;\s]+/).map(a => a.trim()).filter(a => a.includes('@'));
+        let sent = 0;
+        for (const addr of recips) { if (await sendEmail(addr, `[PREVIEW] ${mail.subject}`, mail.html)) sent++; }
+        return sent ? res.json({ success: true, sent, preview: true }) : res.status(502).json({ error: 'Email failed to send — is Brevo configured?' });
+      }
+      await sql`ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS founding_thanked TIMESTAMPTZ`;
+      const rows = await sql`SELECT id, name, email FROM waitlist WHERE COALESCE(list,'insider') = 'insider' AND founding_thanked IS NULL`;
+      let sent = 0;
+      for (const r of rows) {
+        const mail = foundingThanksEmail(r.name);
+        const ok = await sendEmail(r.email, mail.subject, mail.html, { marketing: true });
+        if (ok) { await sql`UPDATE waitlist SET founding_thanked = NOW() WHERE id = ${r.id}`; sent++; }
+      }
+      return res.json({ success: true, sent, total: rows.length });
+    }
+
     if (kind === 'waitlist_preview') {
       if (!to_email) return res.status(400).json({ error: 'Recipient email required' });
       const first = (to_name || 'Dakotah').split(' ')[0];
