@@ -1971,8 +1971,23 @@ function PricingPage({ onSignUp }) {
           </div>
         )}
 
+        {/* Free rides above the paid row as a full-width band — one clean row of five below */}
+        {(() => {
+          const free = plans.find(p => p.tier === "Free");
+          return free && (
+            <div onClick={() => onSignUp && onSignUp("Free")} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "18px 26px", marginBottom: 14, display: "flex", alignItems: "center", gap: "10px 24px", flexWrap: "wrap", cursor: "pointer", transition: "border-color 0.2s" }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = "#8a8a8a60"} onMouseLeave={e => e.currentTarget.style.borderColor = "#2a0000"}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexShrink: 0 }}>
+                <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 24, color: "#f0d8d8" }}>Free</span>
+                <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 20, color: "#8a8a8a" }}>$0</span>
+              </div>
+              <span style={{ color: "#8f7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, flex: 1, minWidth: 260 }}>{free.description} Every curriculum to browse, one free live Lunch & Learn, a community profile — lesson content stays locked until a membership or pass.</span>
+              <button onClick={e => { e.stopPropagation(); onSignUp && onSignUp("Free"); }} style={{ background: "transparent", color: "#f0d8d8", border: "1px solid #8a8a8a70", borderRadius: 8, padding: "10px 24px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", flexShrink: 0 }}>Start Free →</button>
+            </div>
+          );
+        })()}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(215px, 1fr))", gap: 14, alignItems: "start", overflowX: "auto", paddingBottom: 6 }}>
-          {plans.filter(p => p.tier !== "Partner").map((raw, i) => {
+          {plans.filter(p => p.tier !== "Partner" && p.tier !== "Free").map((raw, i) => {
             const plan = annual && ANNUAL_PRICES[raw.tier] ? { ...raw, price: ANNUAL_PRICES[raw.tier], period: "/yr" } : raw;
             return (
             <PlanCard key={i} plan={plan} compact seats={plan.limited ? elite : null} onSelect={() => {
