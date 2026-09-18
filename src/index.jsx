@@ -1183,7 +1183,14 @@ function GlossaryPage({ member, onSignIn, setActivePage }) {
       <button onClick={onSignIn} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "13px 26px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Sign In / Join Free →</button>
     </div>
   );
-  const list = (terms || []).filter(t => !q.trim() || (t.term + " " + t.definition).toLowerCase().includes(q.trim().toLowerCase()));
+  // Short queries match the term itself only ("ds" → DSCR, not every word
+  // containing "ds"); definitions join the search once the query has substance.
+  const list = (terms || []).filter(t => {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return true;
+    if (t.term.toLowerCase().includes(needle)) return true;
+    return needle.length >= 4 && t.definition.toLowerCase().includes(needle);
+  });
   const refLabel = (r) => {
     const c = courseTitles[r.course_id];
     if (!c || c.hidden) return null;
