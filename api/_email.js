@@ -345,7 +345,7 @@ export function waitlistConfirmEmail(name, founding, first10, list = 'insider') 
   const perks = `
       ${founding ? `<div style="background:#12060a;border:1px solid #b8010140;border-radius:12px;padding:16px 20px;margin:14px 0;">
         <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">✦ Founding 25</div>
-        <p style="color:#e0c4c4;font-size:14px;line-height:1.8;margin:0;">Your first <strong style="color:#f5e8e8;">YEAR of Lunch & Learn sessions with Dr. Merritt is on us</strong> — live sessions and every recording, free, on any plan. It attaches to your account automatically the moment you create it at launch.</p>
+        <p style="color:#e0c4c4;font-size:14px;line-height:1.8;margin:0;">Your first <strong style="color:#f5e8e8;">YEAR of LIVE Lunch & Learn sessions with Dr. Merritt is on us</strong> — free, on any plan. It attaches to your account automatically the moment you create it at launch.</p>
       </div>` : ''}
       ${first10 ? `<div style="background:#12060a;border:1px solid #b8010140;border-radius:12px;padding:16px 20px;margin:14px 0;">
         <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">✦ First 10</div>
@@ -557,7 +557,7 @@ export function foundingThanksEmail(name, opts = {}) {
           <tr><td style="font-family:${SANS};font-size:14px;color:#161616;font-weight:bold;padding:5px 12px 5px 0;white-space:nowrap;">Builder</td><td style="font-family:${SANS};font-size:14px;color:#444444;padding:5px 0;"><s style="color:#999999;">$149.99</s> &nbsp;<strong style="color:#b80101;">$112.49/mo</strong> your first year</td></tr>
           <tr><td style="font-family:${SANS};font-size:14px;color:#161616;font-weight:bold;padding:5px 12px 5px 0;white-space:nowrap;">Premium</td><td style="font-family:${SANS};font-size:14px;color:#444444;padding:5px 0;"><s style="color:#999999;">$249.99</s> &nbsp;<strong style="color:#b80101;">$187.49/mo</strong> your first year</td></tr>
           <tr><td style="font-family:${SANS};font-size:14px;color:#161616;font-weight:bold;padding:5px 12px 5px 0;white-space:nowrap;">Owner</td><td style="font-family:${SANS};font-size:14px;color:#444444;padding:5px 0;"><s style="color:#999999;">$499.99</s> &nbsp;<strong style="color:#b80101;">$374.99/mo</strong> your first year</td></tr>
-          <tr><td colspan="2" style="font-family:${SANS};font-size:13px;color:#444444;padding:5px 0;">\u2026plus your <strong style="color:#161616;">first year of Lunch &amp; Learns free</strong> \u2014 and if you\u2019re headed for the Senior Advisor retainer, <strong style="color:#161616;">15% off your first three retainer months</strong>.</td></tr>
+          <tr><td colspan="2" style="font-family:${SANS};font-size:13px;color:#444444;padding:5px 0;">\u2026plus your <strong style="color:#161616;">first year of LIVE Lunch &amp; Learns free</strong> \u2014 and if you\u2019re headed for the Senior Advisor retainer, <strong style="color:#161616;">15% off your first three retainer months</strong>.</td></tr>
         </table>
         <p style="font-family:${SANS};color:#333333;font-size:14px;line-height:1.85;margin:0;">It all applies automatically the moment you <strong style="color:#b80101;">sign up and choose your membership</strong> \u2014 no codes to remember, nothing to claim. We\u2019ll recognize you.</p>
       </div>
