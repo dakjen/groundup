@@ -613,13 +613,13 @@ export default async function handler(req, res) {
     // Label off the actual price delta, so an item excluded from the discount
     // (see NO_MEMBER_DISCOUNT) is never labeled as discounted.
     // FOUNDING 25 PRICING: the first 25 insiders get launch pricing for their
-    // FIRST YEAR ($50/mo off list: Builder $99.99 / Premium $199.99), then standard rates — done
+    // FIRST YEAR (Builder $99.99 / Premium $149.99), then standard rates — done
     // as a 12-month coupon so the subscription itself carries the real price.
     const FOUNDING = {
       sub_Builder:        { id: 'FOUND25B',  amount_off: 5000,   duration: 'repeating', months: 12 },
-      sub_Premium:        { id: 'FOUND25P2', amount_off: 5000,   duration: 'repeating', months: 12 },
+      sub_Premium:        { id: 'FOUND25P',  amount_off: 10000,  duration: 'repeating', months: 12 },
       sub_Builder_annual: { id: 'FOUND25BA', amount_off: 60000,  duration: 'once' },
-      sub_Premium_annual: { id: 'FOUND25PA2', amount_off: 60000, duration: 'once' },
+      sub_Premium_annual: { id: 'FOUND25PA', amount_off: 120000, duration: 'once' },
     };
     let foundingSpec = null;
     if (FOUNDING[item]) {
