@@ -1443,8 +1443,8 @@ function AboutPage({ setActivePage }) {
     <div style={{ background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 40, borderRadius: 16, overflow: "hidden" }}>
-          <img loading="lazy" src="/opt/gina-dcre-2026.jpg" alt="Dr. Gina Merritt at the 2026 DCRE Conference" style={{ width: "100%", height: 240, objectFit: "cover", objectPosition: "center 25%", display: "block", borderRadius: 12 }} />
-          <img loading="lazy" src="/opt/SISAwards-Award.jpg" alt="Dr. Merritt accepting award on stage" style={{ width: "100%", height: 240, objectFit: "cover", display: "block", borderRadius: 12 }} />
+          <img loading="lazy" src="/opt/gina-dcre-2026.jpg" alt="Dr. Gina Merritt at the 2026 DCRE Conference" style={{ width: "100%", height: 240, objectFit: "cover", objectPosition: "center top", display: "block", borderRadius: 12 }} />
+          <img loading="lazy" src="/opt/LIIF-Stills1.jpg" alt="Dr. Merritt walking one of her development sites" style={{ width: "100%", height: 240, objectFit: "cover", display: "block", borderRadius: 12 }} />
         </div>
         {/* Case studies — her buildings, her stories, told the way the courses tell them */}
         <div style={{ marginBottom: 64 }}>
@@ -1981,7 +1981,7 @@ function PricingPage({ onSignUp }) {
                 <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 24, color: "#f0d8d8" }}>Free</span>
                 <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 20, color: "#8a8a8a" }}>$0</span>
               </div>
-              <span style={{ color: "#8f7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, flex: 1, minWidth: 260 }}>{free.description} Every curriculum to browse, one free live Lunch & Learn, a community profile — lesson content stays locked until a membership or pass.</span>
+              <span style={{ color: "#8f7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, flex: 1, minWidth: 260 }}>See every course's outline (the lessons themselves stay locked), join one free live Lunch & Learn with Dr. Merritt, and set up your community profile — no card required.</span>
               <button onClick={e => { e.stopPropagation(); onSignUp && onSignUp("Free"); }} style={{ background: "transparent", color: "#f0d8d8", border: "1px solid #8a8a8a70", borderRadius: 8, padding: "10px 24px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", flexShrink: 0 }}>Start Free →</button>
             </div>
           );
