@@ -581,7 +581,6 @@ export function foundingThanksEmail(name, opts = {}) {
       </table>
 
       <p style="font-family:${SANS};color:#444444;font-size:15px;line-height:1.85;margin:0 0 26px;">This community was built on 30+ years and billions of dollars in real deals \u2014 and it was built for you. We can\u2019t wait to show you inside.</p>
-      <a href="${siteUrl()}" style="display:inline-block;background:#b80101;color:#ffffff;border-radius:10px;padding:14px 32px;font-family:${SANS};font-weight:bold;font-size:14px;text-decoration:none;">See what\u2019s coming \u2192</a>
       <p style="font-family:${SANS};color:#777777;font-size:13px;line-height:1.8;margin:26px 0 0;">With gratitude,<br /><strong style="color:#161616;">Dr. Gina Merritt</strong> &amp; the GroundUp team</p>`,
     light: 'card',
   };
