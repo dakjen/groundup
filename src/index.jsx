@@ -969,7 +969,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
           <div className="gu-up gu-d6" style={{ flexShrink: 0, width: "clamp(280px,40%,460px)", position: "relative" }}>
             <div className="gu-float">
             <div style={{ width: "100%", borderRadius: 20, overflow: "hidden", background: "#0d0404", border: "1px solid #2a0000" }}>
-              <img src="/opt/hough-exterior.jpg" alt="9410 Hough, the $47M development Dr. Gina Merritt led in Cleveland" fetchPriority="high" style={{ width: "100%", height: 380, objectFit: "cover", objectPosition: "center 55%", display: "block" }} />
+              <img src="/opt/gina-9410.jpg" alt="Dr. Gina Merritt at 9410 Hough, the $47M development she led in Cleveland" fetchPriority="high" style={{ width: "100%", height: 380, objectFit: "cover", objectPosition: "center 42%", display: "block" }} />
               <div style={{ padding: "24px 28px 28px" }}>
                 <div style={{ fontSize: 11, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Dr. Gina Merritt</div>
                 <p style={{ fontSize: 13, color: "#c4a8a8", lineHeight: 1.75, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>
@@ -1033,7 +1033,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
       <div style={{ background: "#0c0404", borderTop: "1px solid #1a0000", borderBottom: "1px solid #1a0000", padding: "80px clamp(20px,5vw,80px)" }}>
         <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", alignItems: "center", gap: 60, flexWrap: "wrap" }}>
           <div style={{ width: 200, flexShrink: 0, borderRadius: 16, overflow: "hidden", border: "1px solid #2a0000" }}>
-            <img src={IMG_SPEECH} alt="Dr. Gina Merritt speaking" style={{ width: "100%", display: "block", objectFit: "cover" }} />
+            <img loading="lazy" src="/opt/GM at DCRE.jpg" alt="Dr. Gina Merritt on stage at the DCRE conference" style={{ width: "100%", height: 300, display: "block", objectFit: "cover", objectPosition: "center 30%" }} />
           </div>
           <div style={{ flex: 1, minWidth: 260, textAlign: "left" }}>
             <div style={{ fontSize: 28, marginBottom: 24, color: "#b80101" }}>❝</div>
