@@ -4,10 +4,17 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 // ─── MEMBER SESSION HELPERS ─────────────────────────────────────────────────
 
 export const TIER_RANK = { Free: 0, Basic: 1, Builder: 2, Premium: 3, Elite: 4 };
-// The nine phases of development, in order — the library files everything by
-// these. Working names until Dr. Merritt's Stage 0 write-ups land; rename here
-// and every phase label in the app follows.
-export const DEV_PHASES = ["Concept & Site Control", "Predevelopment", "Zoning & Entitlements", "Design", "Financing & Underwriting", "Closing", "Construction", "Lease-Up & Operations", "Compliance & Asset Management"];
+// The nine phases of development, in order — Dr. Merritt's official list.
+// The library, the phase channels, and the Development Overview course all
+// follow this array; rename here and every phase label in the app follows.
+// First name for greetings — honorifics keep their next word, so
+// "Dr. Gina Merritt" greets as "Dr. Gina", never a bare "Dr."
+export function firstName(full) {
+  const parts = String(full || "").trim().split(/\s+/);
+  if (/^(Dr|Mr|Mrs|Ms|Prof|Rev)\.?$/i.test(parts[0]) && parts[1]) return parts[0] + " " + parts[1];
+  return parts[0] || "";
+}
+export const DEV_PHASES = ["Feasibility", "Predevelopment", "Program Development", "Acquisition", "Development (Financing, Construction)", "Community Engagement", "Construction", "Stabilization", "Compliance"];
 
 export function getMember() {
   try { const m = localStorage.getItem("guMember"); return m ? JSON.parse(m) : null; } catch { return null; }
@@ -525,7 +532,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16, marginBottom: 40 }}>
           <div>
             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Your Membership</div>
-            <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "var(--gu-text)", lineHeight: 1.1, marginBottom: 10 }}>Welcome, {member.name.split(" ")[0]}.</h1>
+            <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "var(--gu-text)", lineHeight: 1.1, marginBottom: 10 }}>Welcome, {firstName(member.name)}.</h1>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <TierBadge tier={member.tier} />
               <BadgeChips badges={member.badges} small />
@@ -913,16 +920,34 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
     <div style={{ background: "var(--gu-bg)", paddingTop: 64, display: "flex", height: "100vh", boxSizing: "border-box", overflow: "hidden", position: "fixed", inset: 0 }}>
       {/* Channel sidebar */}
       <div className="community-sidebar" style={{ width: 240, flexShrink: 0, borderRight: "1px solid #3f0707", background: "#4a0b0b", padding: "24px 12px", overflowY: "auto", display: sidebarOpen ? "block" : undefined }}>
-        <div style={{ fontSize: 10, color: "#e8b4b4", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "0 12px", marginBottom: 14 }}>Channels</div>
-        {channels.map(c => (
-          <button key={c.id} onClick={() => { setActive(c); setDmOpen(false); setSidebarOpen(false); }}
-            style={{ display: "block", width: "100%", textAlign: "left", background: !dmOpen && active?.id === c.id ? "#b80101" : "transparent", border: "none", borderRadius: 6, padding: "9px 12px", cursor: "pointer", marginBottom: 2 }}>
-            <span style={{ color: "#ffffff", fontWeight: !dmOpen && active?.id === c.id ? 800 : 600, fontSize: 13.5, fontFamily: font }}>
-              {c.admin_only_post ? <Megaphone size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 2 }} /> : "#"} {c.name}
-            </span>
-            {c.min_tier !== "Basic" && <span style={{ marginLeft: 6, fontSize: 9, color: TIER_COLORS[c.min_tier], fontFamily: font, fontWeight: 800 }}>{(TIER_LABELS[c.min_tier] || c.min_tier).toUpperCase()}</span>}
-          </button>
-        ))}
+        {/* Two kinds of talk, kept apart on purpose: topic questions live in the
+            phase channels ("I have a design question"), course questions live in
+            Course Discussions ("in lesson 3 you said X — how?"). */}
+        {(() => {
+          const chanBtn = (c, indent) => (
+            <button key={c.id} onClick={() => { setActive(c); setDmOpen(false); setSidebarOpen(false); }}
+              style={{ display: "block", width: "100%", textAlign: "left", background: !dmOpen && active?.id === c.id ? "#b80101" : "transparent", border: "none", borderRadius: 6, padding: indent ? "8px 12px 8px 20px" : "9px 12px", cursor: "pointer", marginBottom: 2 }}>
+              <span style={{ color: "#ffffff", fontWeight: !dmOpen && active?.id === c.id ? 800 : 600, fontSize: indent ? 12.5 : 13.5, fontFamily: font }}>
+                {c.admin_only_post ? <Megaphone size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 2 }} /> : "#"} {c.name}
+              </span>
+              {c.min_tier !== "Basic" && <span style={{ marginLeft: 6, fontSize: 9, color: TIER_COLORS[c.min_tier], fontFamily: font, fontWeight: 800 }}>{(TIER_LABELS[c.min_tier] || c.min_tier).toUpperCase()}</span>}
+            </button>
+          );
+          const head = (label) => <div style={{ fontSize: 10, color: "#e8b4b4", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "0 12px", margin: "18px 0 10px" }}>{label}</div>;
+          const general = channels.filter(c => !c.section);
+          const phases = channels.filter(c => c.section === "phase");
+          const courses = channels.filter(c => c.section === "course");
+          return (
+            <>
+              <div style={{ fontSize: 10, color: "#e8b4b4", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "0 12px", marginBottom: 10 }}>Channels</div>
+              {general.map(c => chanBtn(c))}
+              {phases.length > 0 && head("By Development Phase")}
+              {phases.map(c => chanBtn(c, true))}
+              {courses.length > 0 && head("Course Discussions")}
+              {courses.map(c => chanBtn(c, true))}
+            </>
+          );
+        })()}
         {isAdmin && (
           <div style={{ margin: "8px 0 4px" }}>
             {!newChanOpen ? (

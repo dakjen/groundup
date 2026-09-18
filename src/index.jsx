@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { FileText, Send, Hourglass, FolderOpen, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2, BadgePercent } from "lucide-react";
 import COURSE_CATALOG from "./courseCatalog.js";
-import { AuthModal, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
+import { AuthModal, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -232,19 +232,22 @@ function lessonBlocks(text) {
 // { lifecycle: "Predevelopment" } to light up where this course lives.
 function LessonLifecycle({ current, color }) {
   const font = "'DM Sans', sans-serif";
+  // Dr. Merritt's official nine phases, in her order — must match DEV_PHASES
   const STAGES = [
-    ["Concept & Market", "Read the region, city, and neighborhood — decide the deal is worth chasing"],
-    ["Site Control", "Option, contract, or LOI — control before you spend real money"],
+    ["Feasibility", "Does this deal pencil at all? Market, site, and first numbers before real money moves"],
     ["Predevelopment", "Zoning & entitlements, design, environmental, financing applications"],
-    ["Financing Close", "Capital stack committed — debt, equity, subsidy all signed"],
+    ["Program Development", "What you're actually building and for whom — units, services, the operating model"],
+    ["Acquisition", "From site control to closing on the land — options, contracts, purchase"],
+    ["Development (Financing, Construction)", "The capital stack committed and the build set in motion"],
+    ["Community Engagement", "The neighborhood's buy-in — meetings, support letters, political will"],
     ["Construction", "Draws, inspections, change orders — the money in motion"],
-    ["Lease-Up & Opening", "Marketing, compliance files, first residents"],
-    ["Operations", "The fifteen years nobody warns you about — compliance, asset management"],
+    ["Stabilization", "Lease-up to steady occupancy — the project starts paying its own way"],
+    ["Compliance", "The years after — reporting, audits, asset management that keep the deal alive"],
   ];
   return (
     <div style={{ background: "#0a0808", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", marginBottom: 36, overflowX: "auto" }}>
       <div style={{ fontSize: 10, color: color || "#b80101", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 20 }}>The Development Lifecycle — where this course lives</div>
-      <div style={{ display: "flex", gap: 0, minWidth: 700 }}>
+      <div style={{ display: "flex", gap: 0, minWidth: 920 }}>
         {STAGES.map(([name, desc], i) => {
           const here = current && name.toLowerCase().includes(String(current).toLowerCase());
           return (
@@ -839,7 +842,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
   const SESSION_PAGES = [["lunchlearn", "Lunch & Learns"], ["officehours", "Office Hours"], ["contact", "Book with Dr. Gina"]];
   const [sessionsOpen, setSessionsOpen] = useState(false);
   const pages = isTeam
-    ? ["community", "resources", "lunchlearn"]
+    ? ["courses", "community", "resources", "advisory", "lunchlearn"]
     : member
     ? ["courses", ...(member.partner_slug ? ["cohort"] : []), "community", "resources", "advisory", "support"]
     : ["home", "courses", "about", "pricing", "lunchlearn", "contact", "support"];
@@ -892,7 +895,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
                 )}
               </div>
             )}
-            <button onClick={() => setActivePage("membership")} style={{ background: lightNav ? "#00000008" : "transparent", color: lightNav ? "#161616" : "#f0d8d8", border: lightNav ? "1px solid #b8a88a" : "1px solid #57040440", borderRadius: 99, padding: "8px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer", marginLeft: 8 }}>{member.name.split(" ")[0]} · {member.role === "admin" ? "Team" : (TIER_LABELS[member.tier] || member.tier)}</button>
+            <button onClick={() => setActivePage("membership")} style={{ background: lightNav ? "#00000008" : "transparent", color: lightNav ? "#161616" : "#f0d8d8", border: lightNav ? "1px solid #b8a88a" : "1px solid #57040440", borderRadius: 99, padding: "8px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer", marginLeft: 8 }}>{firstName(member.name)} · {member.role === "admin" ? "Team" : (TIER_LABELS[member.tier] || member.tier)}</button>
             </>
           ) : (
             <button onClick={onSignUp} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 7, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", marginLeft: 8 }}>Sign In / Join</button>
@@ -918,7 +921,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
             <button key={id} onClick={() => { setActivePage(id); setMenuOpen(false); }} style={{ background: activePage === id ? "#b8010112" : "transparent", color: activePage === id ? "#b80101" : "#8a2020", border: "1px solid transparent", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>Admin · {label}</button>
           ))}
           {member ? (
-            <button onClick={() => { setMenuOpen(false); setActivePage("membership"); }} style={{ background: "transparent", color: lightNav ? "#161616" : "#f0d8d8", border: lightNav ? "1px solid #b8a88a" : "1px solid #57040440", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 15, cursor: "pointer", marginTop: 8, textAlign: "left" }}>{member.name.split(" ")[0]} · {member.role === "admin" ? "Team" : (TIER_LABELS[member.tier] || member.tier)}</button>
+            <button onClick={() => { setMenuOpen(false); setActivePage("membership"); }} style={{ background: "transparent", color: lightNav ? "#161616" : "#f0d8d8", border: lightNav ? "1px solid #b8a88a" : "1px solid #57040440", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 15, cursor: "pointer", marginTop: 8, textAlign: "left" }}>{firstName(member.name)} · {member.role === "admin" ? "Team" : (TIER_LABELS[member.tier] || member.tier)}</button>
           ) : (
             <button onClick={() => { setMenuOpen(false); onSignUp(); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 15, cursor: "pointer", marginTop: 8 }}>Sign In / Join →</button>
           )}
@@ -1276,7 +1279,7 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
         {/* ── The learning home: welcome + main resources before the courses ── */}
         <div style={{ marginBottom: 40 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Your learning home</div>
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(38px,5vw,52px)", color: "#f5e8e8", margin: "0 0 12px", lineHeight: 1.1 }}>Welcome back{member?.name ? `, ${member.name.split(" ")[0]}` : ""}.</h1>
+          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(38px,5vw,52px)", color: "#f5e8e8", margin: "0 0 12px", lineHeight: 1.1 }}>Welcome back{member?.name ? `, ${firstName(member.name)}` : ""}.</h1>
           <p style={{ color: "#8a7070", fontSize: 15, maxWidth: 620, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif", margin: 0 }}>Everything you learn with lives here — the courses, the library, the glossary, and the rooms where your questions get answered.</p>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 64 }}>
@@ -1298,8 +1301,8 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
         </div>
         <div style={{ marginBottom: 40, borderTop: "1px solid #1c0808", paddingTop: 48 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Learn at your pace</div>
-          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(32px,4.5vw,46px)", color: "#f5e8e8", margin: "0 0 14px" }}>The Development Overview</h2>
-          <p style={{ color: "#8a7070", fontSize: 15, maxWidth: 580, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif" }}>The full arc of a deal in seven courses, built from Dr. Gina Merritt's actual experience — with deeper, more specific courses launching as the community grows.</p>
+          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(32px,4.5vw,46px)", color: "#f5e8e8", margin: "0 0 14px" }}>The Curriculum</h2>
+          <p style={{ color: "#8a7070", fontSize: 15, maxWidth: 580, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif" }}>Individual courses built from Dr. Gina Merritt's actual deal experience — with deeper, more specific courses launching as the community grows.</p>
         </div>
         {/* Coming soon: the Underwriting Series teaser (remove when published) */}
         {!seriesGroups["The Underwriting Series"] && (
