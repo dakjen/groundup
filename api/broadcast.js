@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { neon } from '@neondatabase/serverless';
 import { requireAdmin } from './_utils.js';
-import { sendBulk, sendEmail, siteUrl, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail, passExpiryEmail, waitlistConfirmEmail, retainerInterestEmail, countdownEmail, recommendEmail, launchEmail, foundingThanksEmail } from './_email.js';
+import { sendBulk, sendEmail, siteUrl, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail, passExpiryEmail, waitlistConfirmEmail, retainerInterestEmail, countdownEmail, recommendEmail, launchEmail, foundingThanksEmail, firstName } from './_email.js';
 import { recommendPlan, sendRecommendBatch, sendLaunchBatch } from './waitlist.js';
 
 // Team email tools: send a custom email or an event announcement to a segment.
@@ -59,7 +59,7 @@ export default async function handler(req, res) {
       await sql`UPDATE users SET tier = 'Free' WHERE id = ${b.id}`;
       await sql`UPDATE entitlements SET source = 'lifetime_done' WHERE user_id = ${b.id} AND course_id = 'builder_year' AND source = 'lifetime'`;
       await sendEmail(b.email, 'Your Lifetime Pass — the year of Builder has wrapped',
-        `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Your courses are yours forever, ${(b.name || 'there').split(' ')[0]}.</h2>
+        `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Your courses are yours forever, ${firstName(b.name)}.</h2>
          <p style="color:#a89080;font-size:14px;line-height:1.8;">The free year of Builder that came with your Lifetime Pass has ended. Nothing changes about the heart of it: <strong style="color:#f0d8d8;">every course and every Lunch & Learn stays yours in perpetuity</strong>, and office hours run through your first five years. Want the community back — posting, live Lunch & Learns, the recording library? Any membership picks it right back up.</p>
          <a href="https://community.drginamerritt.net/pricing" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">See Memberships</a>`);
     }
@@ -184,7 +184,7 @@ export default async function handler(req, res) {
 
     if (kind === 'waitlist_preview') {
       if (!to_email) return res.status(400).json({ error: 'Recipient email required' });
-      const first = (to_name || 'Dakotah').split(' ')[0];
+      const first = firstName(to_name, 'Dakotah');
       const sampleRec = recommendPlan({ budget: '$150–$500', learn: 'Underwriting and the capital stack', reason: 'My numbers keep coming back short' });
       const [lr] = await sql`SELECT value FROM settings WHERE key = 'launch_insider_at'`;
       const launchAt = lr?.value || null;

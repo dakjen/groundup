@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { getSession, getAdmin } from './_utils.js';
-import { sendEmail } from './_email.js';
+import { sendEmail, firstName } from './_email.js';
 
 // Senior Advisor retainers: clients see their own workspace; the team sees the roster.
 export default async function handler(req, res) {
@@ -45,7 +45,7 @@ export default async function handler(req, res) {
           for (const b of stale) {
             await sendEmail(b.email, `Reminder: book your ${b.label}`,
               `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">You haven't picked a time yet</h2>
-               <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${b.name.split(' ')[0]} — your <strong style="color:#f0d8d8;">${b.label}</strong> is paid and waiting. Grab a slot on Dr. Merritt's calendar so she can prepare for you.</p>
+               <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${firstName(b.name)} — your <strong style="color:#f0d8d8;">${b.label}</strong> is paid and waiting. Grab a slot on Dr. Merritt's calendar so she can prepare for you.</p>
                <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Book Your Time →</a>`);
             await sql`UPDATE bookings SET nudges = COALESCE(nudges,0) + 1, last_nudge_at = NOW() WHERE id = ${b.id}`;
           }
@@ -148,7 +148,7 @@ export default async function handler(req, res) {
       const [linkRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
       await sendEmail(b.email, `Reminder: book your ${b.label}`,
         `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">You haven't picked a time yet</h2>
-         <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${b.name.split(' ')[0]} — your <strong style="color:#f0d8d8;">${b.label}</strong> is paid and waiting. Grab a slot so Dr. Merritt can prepare for you.</p>
+         <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${firstName(b.name)} — your <strong style="color:#f0d8d8;">${b.label}</strong> is paid and waiting. Grab a slot so Dr. Merritt can prepare for you.</p>
          ${linkRow?.value ? `<a href="${linkRow.value}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Book Your Time →</a>` : ''}`);
       await sql`UPDATE bookings SET nudges = COALESCE(nudges,0) + 1, last_nudge_at = NOW() WHERE id = ${b.id}`;
       return res.json({ success: true });
@@ -173,7 +173,7 @@ export default async function handler(req, res) {
       if (st === 'offered') {
         const [u] = await sql`SELECT name, email FROM users WHERE id = ${Number(user_id)}`;
         if (u) await sendEmail(u.email, 'Your Senior Advisor retainer — choose your hours',
-          `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Ready when you are, ${u.name.split(' ')[0]}.</h2>
+          `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Ready when you are, ${firstName(u.name)}.</h2>
            <p style="color:#a89080;font-size:14px;line-height:1.8;">Following your call with Dr. Merritt — your Senior Advisor retainer is ready to start. Sign in and pick the hour block that fits, and your advisory workspace opens immediately.</p>
            <a href="https://community.drginamerritt.net/advisory" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Choose Your Plan</a>`);
       }

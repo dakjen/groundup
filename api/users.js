@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { requireAdmin, hashPassword, signToken } from './_utils.js';
-import { sendEmail, resetEmail, siteUrl } from './_email.js';
+import { sendEmail, resetEmail, siteUrl, firstName } from './_email.js';
 
 const FIELDS = ['id', 'name', 'email', 'tier', 'role', 'badge', 'membership_status', 'created_at'];
 
@@ -98,7 +98,7 @@ export default async function handler(req, res) {
       if (new_password) {
         try {
           await sendEmail(user.email, 'Your GroundUp password was reset',
-            `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Your password was reset, ${user.name.split(' ')[0]}.</h2>
+            `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Your password was reset, ${firstName(user.name)}.</h2>
              <p style="color:#a89080;font-size:14px;line-height:1.8;">The GroundUp team just reset the password on your account. They'll share your new password with you directly — then sign in and change it to something only you know from your member page.</p>
              <p style="color:#7a5050;font-size:12px;line-height:1.7;">Didn't expect this? Reply to this email or contact the team right away.</p>
              <a href="${siteUrl()}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Sign In</a>`);

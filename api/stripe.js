@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { neon } from '@neondatabase/serverless';
 import { getSession } from './_utils.js';
-import { sendEmail, siteUrl, addLnlContact, dealSupportBlock } from './_email.js';
+import { sendEmail, siteUrl, addLnlContact, dealSupportBlock, firstName } from './_email.js';
 
 export const config = { api: { bodyParser: false } };
 
@@ -222,7 +222,7 @@ async function fulfill(sql, session) {
       const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
       if (u) {
         await sendEmail(u.email, 'Your Full Project Intake is booked in',
-          `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Send it all, ${u.name.split(' ')[0]}.</h2>
+          `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Send it all, ${firstName(u.name)}.</h2>
            <p style="color:#a89080;font-size:14px;line-height:1.8;">Your Full Project Intake with Dr. Merritt is paid. Your advisory workspace is open now \u2014 book your intake call from it (button below), and come ready to share the whole deal — pro forma, capital stack, site, timeline. This is the session where the thing you missed gets found.</p>
            <p style="color:#7a5050;font-size:12px;line-height:1.7;">A note on the fee: the \$1,500 intake buys Dr. Merritt\u2019s full review of your project and is refundable only at our discretion. If the session happens without a genuine deal on the table, any refund is reduced by \$550 \u2014 the rate of a 1:1 session with her. With a real deal, the full \$1,500 credits against your first retainer month.</p>
            <p style="color:#a89080;font-size:14px;line-height:1.8;">And if you continue into the Senior Advisor retainer, <strong style="color:#f0d8d8;">your \$1,500 is credited against your first month</strong> — the intake is never wasted money.</p>
@@ -283,7 +283,7 @@ async function fulfill(sql, session) {
         const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
         const [p] = await sql`SELECT title FROM products WHERE id = ${pid}`;
         if (u) await sendEmail(u.email, `Your download is ready: ${p?.title || 'your purchase'}`,
-          `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">It's yours, ${u.name.split(' ')[0]}.</h2>
+          `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">It's yours, ${firstName(u.name)}.</h2>
            <p style="color:#a89080;font-size:14px;line-height:1.8;">Your purchase of <strong style="color:#f0d8d8;">${p?.title || 'your document'}</strong> is complete. It now lives in your account permanently — download it any time from the shop or your member page.</p>
            <p style="color:#a89080;font-size:13px;line-height:1.7;">Reminder: this document is for your personal use — reselling or replicating it isn't permitted.</p>
            <a href="${siteUrl()}/shop" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Open Your Downloads</a>${dealSupportBlock()}`);
@@ -334,7 +334,7 @@ async function fulfill(sql, session) {
       const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
       if (u) {
         await sendEmail(u.email, 'Welcome to GroundUp, for life',
-          `<h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">You're in for good, ${u.name.split(' ')[0]}.</h2>
+          `<h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">You're in for good, ${firstName(u.name)}.</h2>
            <p style="color:#a89080;font-size:14px;line-height:1.8;">Your Lifetime Pass is active: <strong style="color:#f0d8d8;">every course, forever</strong> — including each new one we add — plus <strong style="color:#f0d8d8;">a full year of Builder membership on us</strong>, <strong style="color:#f0d8d8;">office hours with Dr. Merritt through your first five years</strong>, and <strong style="color:#f0d8d8;">every Lunch & Learn — live and recorded — for life</strong>.</p>
            <p style="color:#7a5050;font-size:12px;line-height:1.7;">When your Builder year ends, your courses and Lunch & Learns continue forever and office hours run through year five; community access continues with any membership.</p>
            <a href="${siteUrl()}/courses" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Start Learning</a>`);
@@ -383,7 +383,7 @@ async function fulfill(sql, session) {
   const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
   if (u) {
     await sendEmail(u.email, 'GroundUp — payment received',
-      `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">You're all set, ${u.name.split(' ')[0]}.</h2>
+      `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">You're all set, ${firstName(u.name)}.</h2>
        <p style="color:#a89080;font-size:14px;line-height:1.8;">Your payment for <strong style="color:#f0d8d8;">${CATALOG[item]?.name || 'your purchase'}</strong> went through. ${item.startsWith('session_') ? "<strong style=\"color:#f0d8d8;\">One more step — pick your time on Dr. Merritt's calendar.</strong>" : 'Your access is live — sign in and dive in.'}</p>
        ${item.startsWith('session_') && bookingLink ? `<a href="${bookingLink}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin:6px 0 14px;">Book Your Time →</a>` : ''}
        <a href="${siteUrl()}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Open GroundUp</a>`);
@@ -441,7 +441,7 @@ export default async function handler(req, res) {
           if (u) {
             await sendEmail(u.email, 'Action needed — your GroundUp payment didn\u2019t go through',
               `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">We couldn\u2019t process your payment</h2>
-               <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${u.name.split(' ')[0]} — your card was declined, so your access is paused until it's sorted. Update your card and everything comes right back on.</p>
+               <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${firstName(u.name)} — your card was declined, so your access is paused until it's sorted. Update your card and everything comes right back on.</p>
                <a href="${siteUrl()}/membership" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Fix My Payment</a>`);
             await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
               `PAYMENT FAILED: ${u.name}`,
@@ -515,7 +515,7 @@ export default async function handler(req, res) {
             ? (refundEligible ? ' Because you cancelled within the first six months of your annual plan (the 10-day grace period included), 6 months — half your annual payment — will be refunded to your card.' : ' Annual plans cancelled more than 10 days into their second half aren\'t refunded, so your access continues through the end of the year you paid for.')
             : (refundEligible ? ' Because you cancelled before the 5th, this month\'s payment will be refunded to your card.' : ' Cancellations on or after the 5th aren\'t refunded for the current month, so your access continues through the period you paid for.');
           await sendEmail(u.email, 'Your GroundUp membership is cancelled',
-            `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">You're all set, ${u.name.split(' ')[0]}.</h2>
+            `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">You're all set, ${firstName(u.name)}.</h2>
              <p style="color:#a89080;font-size:14px;line-height:1.8;">Your membership is cancelled and you won't be charged again.${refundNote} <strong style="color:#f0d8d8;">Your account data — community posts, messages, and progress — will be permanently removed after 15 days.</strong> Rejoin before then and everything picks up right where you left it.</p>
              <a href="${siteUrl()}/pricing" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Rejoin GroundUp</a>`);
         }

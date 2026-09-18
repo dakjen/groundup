@@ -87,6 +87,16 @@ const wrap = (inner, toEmail, light) => light === 'card' ? `
     </div>
   </div>`;
 
+
+// First name for greetings — an honorific keeps its next word, so
+// "Dr. Gina Merritt" greets as "Dr. Gina", never a bare "Dr."
+export function firstName(full, fallback = 'there') {
+  const parts = String(full || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return fallback;
+  if (/^(Dr|Mr|Mrs|Ms|Mx|Prof|Rev)\.?$/i.test(parts[0])) return parts[1] ? `${parts[0]} ${parts[1]}` : fallback;
+  return parts[0];
+}
+
 export async function sendEmail(to, subject, innerHtml, opts = {}) {
   if (opts.marketing && await isOptedOut(to)) return false;
   const r = await brevo('/smtp/email', {
@@ -121,7 +131,7 @@ export async function optedOutSet() {
 export async function addContact(email, name, attributes = {}, extraListIds = []) {
   const body = {
     email,
-    attributes: { FIRSTNAME: (name || '').split(' ')[0], FULLNAME: name || '', ...attributes },
+    attributes: { FIRSTNAME: firstName(name, ''), FULLNAME: name || '', ...attributes },
     updateEnabled: true,
   };
   const listIds = [Number(process.env.BREVO_LIST_ID), ...extraListIds].filter(n => Number.isFinite(n) && n > 0);
@@ -142,7 +152,7 @@ export function welcomeEmail(name, tier) {
   return {
     subject: 'Welcome to GroundUp',
     html: `
-      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">Welcome, ${name.split(' ')[0]}.</h2>
+      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">Welcome, ${firstName(name)}.</h2>
       <p style="color:#a89080;font-size:14px;line-height:1.8;">Your GroundUp account is ready on the <strong style="color:#b80101;">${tier === 'Basic' ? 'Member' : tier}</strong> plan. Decades of affordable-housing deal experience, distilled into a curriculum built for developers like you.</p>
       <p style="color:#a89080;font-size:14px;line-height:1.8;">Sign in anytime to pick up where you left off — your courses, the community, and your membership all live in one place.</p>
       <a href="https://community.drginamerritt.net" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Go to GroundUp</a>`,
@@ -156,7 +166,7 @@ export async function sendBulk(recipients, subject, innerHtml) {
   let sent = 0;
   for (let i = 0; i < recipients.length; i += 10) {
     const chunk = recipients.slice(i, i + 10);
-    const results = await Promise.allSettled(chunk.map(r => sendEmail(r.email, subject, innerHtml.replaceAll('{{FIRSTNAME}}', (r.name || 'there').split(' ')[0]))));
+    const results = await Promise.allSettled(chunk.map(r => sendEmail(r.email, subject, innerHtml.replaceAll('{{FIRSTNAME}}', firstName(r.name)))));
     sent += results.filter(x => x.status === 'fulfilled' && x.value).length;
   }
   return sent;
@@ -171,7 +181,7 @@ export function resetEmail(name, link) {
     subject: 'Reset your GroundUp password',
     html: `
       <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">Password reset</h2>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${name.split(' ')[0]} — we received a request to reset your GroundUp password. This link works for one hour:</p>
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${firstName(name)} — we received a request to reset your GroundUp password. This link works for one hour:</p>
       <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin:8px 0;">Reset Password</a>
       <p style="color:#7a6060;font-size:12px;line-height:1.7;">If you didn't request this, you can safely ignore this email — your password won't change.</p>`,
   };
@@ -181,7 +191,7 @@ export function inviteEmail(name, link) {
   return {
     subject: "You're invited to GroundUp",
     html: `
-      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">You're invited, ${name.split(' ')[0]}.</h2>
+      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">You're invited, ${firstName(name)}.</h2>
       <p style="color:#a89080;font-size:14px;line-height:1.8;">Dr. Gina Merritt's team invited you to GroundUp — a curriculum and community for aspiring and emerging affordable-housing developers, built on 30+ years of real deals.</p>
       <p style="color:#a89080;font-size:14px;line-height:1.8;">Your invite includes a free trial week — it's live for the next 7 days.</p>
       <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Accept Your Invite</a>`,
@@ -191,10 +201,10 @@ export function inviteEmail(name, link) {
 // Personal month-free gift: one link, one person, one use — locked to their email
 export function giftEmail(name, link, personalMessage) {
   return {
-    subject: `${name.split(' ')[0]}, your first month of GroundUp is on Dr. Merritt`,
+    subject: `${firstName(name)}, your first month of GroundUp is on Dr. Merritt`,
     html: `
       <div style="font-size:10px;color:#b80101;letter-spacing:3px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">A personal gift</div>
-      <h2 style="color:#f5e8e8;font-size:26px;margin:0 0 14px;">This one's on us, ${name.split(' ')[0]}.</h2>
+      <h2 style="color:#f5e8e8;font-size:26px;margin:0 0 14px;">This one's on us, ${firstName(name)}.</h2>
       ${personalMessage ? `<div style="background:#12060a;border-left:3px solid #b80101;padding:14px 20px;margin:0 0 16px;">
         <p style="color:#e0c4c4;font-size:14px;line-height:1.9;margin:0;font-style:italic;">${String(personalMessage).replace(/</g, '&lt;').replace(/\n/g, '<br/>')}</p>
         <p style="color:#8a7070;font-size:12px;margin:8px 0 0;">— Dr. Gina Merritt &amp; the GroundUp team</p>
@@ -211,7 +221,7 @@ export function dmReplyEmail(name) {
     subject: 'Dr. Merritt\\u2019s team replied to your message',
     html: `
       <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">You have a reply.</h2>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${name.split(' ')[0]} — Dr. Merritt's team responded to your direct message. Sign in to read it in your private thread.</p>
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${firstName(name)} — Dr. Merritt's team responded to your direct message. Sign in to read it in your private thread.</p>
       <a href="${siteUrl()}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Read the Reply</a>`,
   };
 }
@@ -249,7 +259,7 @@ export function meetingEmail(name, title, date, time, link) {
       <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Your 1-on-1 Session</div>
       <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 10px;">${title || 'Session with Dr. Merritt'}</h2>
       <p style="color:#c9a227;font-size:14px;font-weight:bold;margin:0 0 16px;">${date}${time ? ' · ' + time : ''}</p>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${(name || 'there').split(' ')[0]} — your session is coming up. Join with the link below:</p>
+      <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${firstName(name)} — your session is coming up. Join with the link below:</p>
       ${link ? `<a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Join the Meeting</a>` : ''}
       <p style="color:#7a6060;font-size:12px;line-height:1.7;margin-top:14px;">Need to reschedule? Reply to this email and the team will take care of it.</p>`,
   };
@@ -283,7 +293,7 @@ export function dealSupportNudgeEmail() {
 // Sent by the daily cron when a course pass runs out: 7 days to extend, and
 // 15% off if they commit to a full year of membership.
 export function passExpiryEmail(name, single) {
-  const first = (name || 'there').split(' ')[0];
+  const first = firstName(name);
   return {
     subject: `${first}, your course pass has ended — you have 7 days to extend`,
     html: `
@@ -304,7 +314,7 @@ export function passExpiryEmail(name, single) {
 // Retainer-track waitlisters get more than a confirmation — they get the next
 // step: a discovery call with Dr. Merritt. Calls close retainers; emails don't.
 export function retainerInterestEmail(name, callLink) {
-  const first = (name || 'there').split(' ')[0];
+  const first = firstName(name);
   const href = callLink || 'mailto:groundup@drginamerritt.net?subject=' + encodeURIComponent('Senior Advisor — discovery call');
   return {
     subject: `${first} — let's talk about your project`,
@@ -331,7 +341,7 @@ export function broadcastEmail(subject, message) {
 }
 
 export function waitlistConfirmEmail(name, founding, first10, list = 'insider') {
-  const first = name.split(' ')[0];
+  const first = firstName(name);
   const perks = `
       ${founding ? `<div style="background:#12060a;border:1px solid #b8010140;border-radius:12px;padding:16px 20px;margin:14px 0;">
         <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">✦ Founding 25</div>
@@ -397,10 +407,10 @@ export function countdownEmail(stage, launchText) {
 export function recommendEmail(name, rec, launchAt, painPoint) {
   const dateText = launchAt ? new Date(launchAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : 'soon';
   return {
-    subject: `${name.split(' ')[0]}, here's the plan we'd pick for you`,
+    subject: `${firstName(name)}, here's the plan we'd pick for you`,
     html: `
       <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Launch is almost here</div>
-      <h2 style="color:#f5e8e8;font-size:28px;margin:0 0 16px;">We read your answers, ${name.split(' ')[0]}.</h2>
+      <h2 style="color:#f5e8e8;font-size:28px;margin:0 0 16px;">We read your answers, ${firstName(name)}.</h2>
       <p style="color:#a89080;font-size:14px;line-height:1.8;">Doors open <strong style="color:#f0d8d8;">${dateText}</strong>. We went through what you told us${painPoint ? " — what you want to learn, and what's been standing in your way" : ""} — and based on your goals and budget, this is the plan we'd put you on:</p>
       <div style="background:#12060a;border:1px solid #b8010130;border-radius:12px;padding:20px 24px;margin:16px 0;">
         <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">Our recommendation for you</div>
@@ -427,7 +437,7 @@ export function launchEmail(name, rec, link, painPoint, stretchLink) {
     subject: "We're live \u2014 here's the plan we recommend for you",
     html: `
       <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">We're Live</div>
-      <h2 style="color:#f5e8e8;font-size:28px;margin:0 0 16px;">GroundUp is open, ${name.split(' ')[0]}.</h2>
+      <h2 style="color:#f5e8e8;font-size:28px;margin:0 0 16px;">GroundUp is open, ${firstName(name)}.</h2>
       <p style="color:#a89080;font-size:14px;line-height:1.8;">You're getting this first because you're an insider. We read what you told us${painPoint ? " \u2014 including what's been standing in your way" : ""} \u2014 and based on your goals and your budget, here's our recommendation:</p>
       <div style="background:#12060a;border:1px solid #b8010130;border-radius:12px;padding:20px 24px;margin:16px 0;">
         <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">Recommended for you</div>
@@ -463,7 +473,7 @@ export function lnlAccessEmail(name, expiresAt, hasLink) {
   return {
     subject: "You're in — Lunch & Learn access confirmed",
     html: `
-      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">You're in, ${name.split(' ')[0]}.</h2>
+      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">You're in, ${firstName(name)}.</h2>
       <p style="color:#a89080;font-size:14px;line-height:1.8;">Your seat is reserved${through ? ` — your access runs through <strong style="color:#f0d8d8;">${through}</strong>` : ''} for the next live session with Dr. Merritt, its recording included.</p>
       <p style="color:#a89080;font-size:14px;line-height:1.8;">${hasLink ? 'The join link for the next session is waiting on your Lunch & Learn page.' : 'The join link for each session appears on your Lunch & Learn page closer to the date.'} While you're there, tell us what you want to learn about — Dr. Merritt's team reads every submission.</p>
       <p style="color:#c9a227;font-size:14px;line-height:1.8;font-weight:bold;">Your attendee perk: 25% off your first month of membership if you join within two months.</p>
@@ -514,7 +524,7 @@ function monthGrid(year, month, marks) {
 }
 
 export function foundingThanksEmail(name, opts = {}) {
-  const first = (name || 'there').split(' ')[0];
+  const first = firstName(name);
   const now = opts.now || new Date();
   // Today in Eastern time, then the two months after it; November and
   // December are fixed because those are the launch dates.
