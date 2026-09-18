@@ -41,7 +41,19 @@ export function unsubToken(email) {
 }
 const unsubLink = (email) => `${siteUrl()}/api/auth?unsubscribe=${encodeURIComponent(String(email).trim().toLowerCase())}&t=${unsubToken(email)}`;
 
-const wrap = (inner, toEmail) => `
+// Two shells: the dark brand wrap (default), and a light cream one for
+// utility emails like sign-in codes where a wall of black reads heavy.
+const wrap = (inner, toEmail, light) => light ? `
+  <div style="background:#f3ede4;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;">
+    <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e5dccf;border-radius:16px;padding:36px 32px;color:#333333;">
+      <div style="font-size:20px;font-weight:bold;color:#161616;letter-spacing:1px;margin-bottom:4px;">GROUNDUP</div>
+      <div style="font-size:10px;color:#a08560;letter-spacing:2px;text-transform:uppercase;margin-bottom:28px;">for underrepresented developers</div>
+      ${inner}
+      <div style="border-top:1px solid #efe8db;margin-top:32px;padding-top:16px;font-size:11px;color:#9a9285;">
+        Northern Real Estate Urban Ventures · 825 10th St NW, Suite 981, Washington, DC 20001${toEmail ? ` · <a href="${unsubLink(toEmail)}" style="color:#a08560;">Unsubscribe</a>` : ''}
+      </div>
+    </div>
+  </div>` : `
   <div style="background:#000;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;">
     <div style="max-width:560px;margin:0 auto;background:#0d0404;border:1px solid #2a0000;border-radius:16px;padding:36px 32px;color:#e8d8d8;">
       <div style="font-size:20px;font-weight:bold;color:#fff;letter-spacing:1px;margin-bottom:4px;">GROUNDUP</div>
@@ -59,7 +71,7 @@ export async function sendEmail(to, subject, innerHtml, opts = {}) {
     sender: sender(),
     to: [{ email: to }],
     subject,
-    htmlContent: wrap(innerHtml, to),
+    htmlContent: wrap(innerHtml, to, opts.light),
   });
   return !!r;
 }

@@ -95,10 +95,10 @@ export default async function handler(req, res) {
       const { sendEmail } = await import('./_email.js');
       const recipients = [...new Set((sendTo && sendTo.length ? sendTo : [email]).map(e => String(e).trim().toLowerCase()).filter(Boolean))];
       const results = await Promise.all(recipients.map(to => sendEmail(to, `${code} is your GroundUp sign-in code`,
-        `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Your sign-in code</h2>
-         <p style="color:#a89080;font-size:14px;line-height:1.8;">Someone (hopefully you) is signing in to the GroundUp admin. Enter this code to finish:</p>
-         <div style="font-size:34px;font-weight:bold;letter-spacing:8px;color:#fff;background:#1a0808;border:1px solid #2a0000;border-radius:12px;padding:18px 0;text-align:center;margin:18px 0;">${code}</div>
-         <p style="color:#8f7070;font-size:12px;line-height:1.7;">It expires in 10 minutes. If this wasn't you, change your password now.</p>`)));
+        `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Your sign-in code</h2>
+         <p style="color:#5a5a5a;font-size:14px;line-height:1.8;">Someone (hopefully you) is signing in to the GroundUp admin. Enter this code to finish:</p>
+         <div style="font-size:36px;font-weight:bold;letter-spacing:10px;color:#b80101;background:#faf6f0;border:1px solid #e5dccf;border-radius:12px;padding:20px 0;text-align:center;margin:18px 0;">${code}</div>
+         <p style="color:#8a8a8a;font-size:12px;line-height:1.7;">It expires in 10 minutes. If this wasn't you, change your password now.</p>`, { light: true })));
       return results.some(Boolean);
     };
     const checkLoginCode = async (email, code) => {
