@@ -496,7 +496,9 @@ function monthGrid(year, month, marks) {
       if (!inGrid) { tr += cell('', ''); continue; }
       const m = marks[key(d)];
       tr += m
-        ? cell(`<span style="display:inline-block;min-width:22px;padding:5px 0;border-radius:11px;background:${m.bg};color:${m.fg};font-weight:bold;">${d}</span>`, '')
+        ? cell(m.border
+            ? `<span style="display:inline-block;min-width:22px;padding:3px 0;border-radius:11px;border:2px solid ${m.border};color:${m.border};font-weight:bold;">${d}</span>`
+            : `<span style="display:inline-block;min-width:22px;padding:5px 0;border-radius:11px;background:${m.bg};color:${m.fg};font-weight:bold;">${d}</span>`, '')
         : cell(d, 'color:#555555;');
       d++;
     }
@@ -524,6 +526,7 @@ export function foundingThanksEmail(name, opts = {}) {
     [todayKey]: { bg: '#161616', fg: '#ffffff' },
     '2026-11-01': { bg: '#b80101', fg: '#ffffff' },
     '2026-12-01': { bg: '#a08560', fg: '#ffffff' },
+    '2026-12-05': { border: '#b80101' },
   };
 
   return {
@@ -556,7 +559,7 @@ export function foundingThanksEmail(name, opts = {}) {
         <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#161616;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">Today</strong> \u2014 you\u2019re on the list</td></tr>
         <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#b80101;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">November 1</strong> \u2014 insider access opens. Founding members walk in a full month before the public: courses, community, all of it.</td></tr>
         <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#a08560;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">December 1</strong> \u2014 full public launch. You\u2019ll already be a month ahead.</td></tr>
-        <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;border:2px solid #b80101;box-sizing:border-box;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">The Launch Party</strong> \u2014 every founding member is invited. Date and invitation coming soon.</td></tr>
+        <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;border:2px solid #b80101;box-sizing:border-box;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">December 5 \u2014 The Launch Party.</strong> Every founding member is invited \u2014 save the date; your invitation is coming soon.</td></tr>
       </table>
 
       <p style="font-family:${SANS};color:#444444;font-size:15px;line-height:1.85;margin:0 0 26px;">This community was built on 30+ years and $600M+ of real deals \u2014 and it was built for you. We can\u2019t wait to show you inside.</p>
