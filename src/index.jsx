@@ -4703,9 +4703,9 @@ function RevenueTab() {
   if (loading) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
 
   const paying = users.filter(u => u.tier !== "Free" && !u.comped && (u.role || "member") === "member");
-  // Founding-25 members bill at launch rates (Builder $99.99 / Premium $149.99)
+  // Founding-25 members bill at founding rates ($50/mo off: Builder $99.99 / Premium $199.99)
   // through their first year — the FOUND25 coupon on their subscription
-  const FOUNDING_PRICES = { Builder: 99.99, Premium: 149.99 };
+  const FOUNDING_PRICES = { Builder: 99.99, Premium: 199.99 };
   const isFounding = (u) => (Array.isArray(u.badges) ? u.badges : []).includes("founding25");
   const priceFor = (u) => (isFounding(u) && FOUNDING_PRICES[u.tier]) || TIER_PRICES[u.tier] || 0;
   const memberMrr = paying.reduce((sum, u) => sum + priceFor(u), 0);
