@@ -5594,12 +5594,13 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
         const fitFor = (e) => {
           const r = recFor(e);
           if (e.comped) return 0;
-          // Founding 25 pay launch rates (Builder $99.99 / Premium $149.99) for
-          // their entire first year — anticipated MRR reflects what they'd pay
-          if (r.startsWith("Builder")) return e.founding_lnl ? 99.99 : 149.99;
-          if (r.startsWith("Premium")) return e.founding_lnl ? 149.99 : 249.99;
+          // Founding members pay 30% off ANY tier for their entire first year —
+          // anticipated MRR reflects the founding rate for them
+          const found = (list) => e.founding_lnl ? Math.round(list * 0.7 * 100) / 100 : list;
+          if (r.startsWith("Builder")) return found(149.99);
+          if (r.startsWith("Premium")) return found(249.99);
           if (r.includes("Pass")) return 0; // one-time money, not MRR
-          return r.startsWith("Member") ? 49.99 : r.startsWith("Owner") ? 499.99 : r.startsWith("Senior") ? 3025 : (PLAN_FIT[e.budget] || 0);
+          return r.startsWith("Member") ? found(49.99) : r.startsWith("Owner") ? found(499.99) : r.startsWith("Senior") ? 3025 : (PLAN_FIT[e.budget] || 0);
         };
         const STRETCH = { "I need specific, customized deal help": 499.99, "I need general deal support & guidance": 499.99, "I need general support & guidance": 499.99, "$50": 149.99, "Under $25": 49.99, "$25–$100": 149.99, "$100–$200": 249.99, "$300+": 499.99, "$2,000+": 3025, "$3,000+": 3025, "Under $50": 49.99, "$50–$150": 149.99, "$150–$500": 499.99, "$500+": 499.99 };
         const allEntries = data.entries;

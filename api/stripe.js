@@ -627,9 +627,15 @@ export default async function handler(req, res) {
       sub_Elite_annual:   { id: 'FOUND30A', percent_off: 30, duration: 'once' },
     };
     let foundingSpec = null;
-    if (FOUNDING[item]) {
+    if (FOUNDING[item] || item.startsWith('retainer_')) {
       const [wl] = await sql`SELECT id FROM waitlist WHERE LOWER(email) = LOWER(${user.email}) AND COALESCE(list, 'insider') = 'insider' AND founding_lnl = TRUE LIMIT 1`;
-      if (wl) foundingSpec = FOUNDING[item];
+      if (wl && FOUNDING[item]) foundingSpec = FOUNDING[item];
+      // Founding members: 15% off the FIRST retainer month — unless an unused
+      // intake credit exists ($1,500 beats 15%, and the intake coupon applies later)
+      if (wl && item.startsWith('retainer_')) {
+        const [intake] = await sql`SELECT id FROM entitlements WHERE user_id = ${user.id} AND course_id = 'intake' AND source = 'intake_paid' LIMIT 1`;
+        if (!intake) foundingSpec = { id: 'FOUNDRET15', percent_off: 15, duration: 'once' };
+      }
     }
     const unitAmount = memberPrice(item, user.tier);
     const grandfathered = !!foundingSpec;
