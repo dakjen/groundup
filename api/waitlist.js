@@ -104,8 +104,12 @@ export function recommendPlan(e) {
   //   $50–$150  → Builder when the community is the need, else Member
   //   $50       → Member (the only tier at that budget)
   //   Legacy band values from older forms keep their original meaning.
-  const HIGH_B = ['$150–$500', '$300+'];
-  const MID_B = ['$50–$150', '$100–$200'];
+  // Founding members pay 25% off, so higher tiers honestly fit smaller
+  // budgets: Premium at $187.49 fits a $100–$200 budget, Owner at $374.99
+  // fits $300+. The bands widen for them.
+  const founding = !!e.founding_lnl;
+  const HIGH_B = founding ? ['$150–$500', '$300+', '$100–$200'] : ['$150–$500', '$300+'];
+  const MID_B = founding ? ['$50–$150'] : ['$50–$150', '$100–$200'];
   // Deal-specific support exists ONLY at Elite and the Senior Advisor retainer —
   // if that's what they said they need, no lower tier is an honest recommendation.
   const wantsDealSupport = e.learn === 'I need deal-specific support on a live project';
@@ -133,7 +137,12 @@ export function recommendPlan(e) {
     : MID_B.includes(e.budget) && need >= 2 ? 2
     : 1;
   const LADDER = { 1: PLANS.Basic, 2: PLANS.Builder, 3: PLANS.Premium, 4: PLANS.Elite };
-  const rec = LADDER[rank];
+  let rec = LADDER[rank];
+  // Founding members see their actual first-year price on every recommendation
+  if (founding) {
+    const FP = { Basic: '$37.49/mo', Builder: '$112.49/mo', Premium: '$187.49/mo', Elite: '$374.99/mo' };
+    if (FP[rec.tier]) rec = { ...rec, price: `${FP[rec.tier]} founding rate, first year` };
+  }
   // THE STRETCH OFFER: budget $50–$500 but their need sits one tier above what
   // they can afford (no network, can't find capital, needs partners, complex
   // learning goals) → offer the next tier at 10% off their first year.
