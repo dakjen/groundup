@@ -1351,10 +1351,11 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
   // The live catalog: newly published courses (and series) appear without a deploy.
   const [catalog, setCatalog] = useState(null);
   const [catalogFailed, setCatalogFailed] = useState(false);
+  const [progress, setProgress] = useState({}); // course id → lessons completed
   useEffect(() => {
     fetch("/api/resources?courses=1", { headers: getMemberToken() ? { Authorization: "Bearer " + getMemberToken() } : {} })
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.courses?.length) setCatalog(d.courses.filter(c => !c.hidden)); else setCatalogFailed(true); })
+      .then(d => { if (d?.courses?.length) { setCatalog(d.courses.filter(c => !c.hidden)); setProgress(d.progress || {}); } else setCatalogFailed(true); })
       .catch(() => setCatalogFailed(true));
   }, []);
   // No flash-of-wrong-catalog: wait for the live list, and only fall back to
@@ -1443,7 +1444,12 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
                   <p style={{ fontSize: 12.5, color: "#7a5858", fontFamily: "'DM Sans', sans-serif", margin: 0, lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" }}>{course.description}</p>
                 </div>
                 <span style={{ background: course.stageColor + "18", color: course.stageColor, border: "1px solid " + course.stageColor + "35", borderRadius: 4, padding: "3px 10px", fontSize: 10, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "1px", flexShrink: 0 }}>{course.stage}</span>
-                <span style={{ color: "#8f7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>{course.lessons.length} lessons</span>
+                {(() => { const done = progress[course.id] || 0, n = course.lessons.length; const all = n > 0 && done >= n; return (
+                  <span style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                    {done > 0 && <span style={{ width: 54, height: 5, background: "#1a0808", borderRadius: 99, overflow: "hidden", display: "inline-block" }}><span style={{ display: "block", height: "100%", width: `${Math.min(100, (done / n) * 100)}%`, background: all ? "#4ade80" : course.stageColor }} /></span>}
+                    <span style={{ color: all ? "#4ade80" : done > 0 ? "#c8a8a8" : "#8f7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif", fontWeight: done > 0 ? 700 : 400 }}>{all ? "✓ Complete" : done > 0 ? `${done}/${n} done` : `${n} lessons`}</span>
+                  </span>
+                ); })()}
                 <span style={{ color: course.stageColor, fontSize: 18, fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>→</span>
               </div>
             </div>
