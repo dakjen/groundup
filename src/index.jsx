@@ -230,8 +230,33 @@ function lessonBlocks(text) {
 
 // The full development lifecycle, drawn — declared by a lesson as
 // { lifecycle: "Predevelopment" } to light up where this course lives.
-function LessonLifecycle({ current, color }) {
+function LessonLifecycle({ current, color, compact = false }) {
   const font = "'DM Sans', sans-serif";
+  if (compact) {
+    const NAMES = ["Feasibility", "Predevelopment", "Program Development", "Acquisition", "Development (Financing, Construction)", "Community Engagement", "Construction", "Stabilization", "Compliance"];
+    const cur = String(current || "").toLowerCase();
+    const hereIdx = NAMES.findIndex(n => n.toLowerCase().startsWith(cur) || n.toLowerCase().includes(cur));
+    return (
+      <div style={{ background: "#0a0808", border: "1px solid #2a0000", borderRadius: 12, padding: "14px 18px", marginBottom: 32 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
+          {NAMES.map((n, i) => {
+            const here = i === hereIdx, past = i < hereIdx;
+            return (
+              <div key={n} title={`Phase ${i + 1}: ${n}`} style={{ flex: 1, display: "flex", alignItems: "center", minWidth: 0 }}>
+                <div style={{ width: here ? 26 : 18, height: here ? 26 : 18, borderRadius: "50%", flexShrink: 0, background: here ? (color || "#b80101") : past ? "#3a1a1a" : "#140a0a", border: here ? "2px solid #f0d8d8" : "1px solid #3a2020", color: here ? "#fff" : "#8f7070", display: "flex", alignItems: "center", justifyContent: "center", fontSize: here ? 11 : 9, fontWeight: 800, fontFamily: font }}>{i + 1}</div>
+                {i < NAMES.length - 1 && <div style={{ flex: 1, height: 2, background: past ? "#3a1a1a" : "#1e1010" }} />}
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ marginTop: 10, fontSize: 11, fontFamily: font, color: "#8f7070" }}>
+          <span style={{ color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontSize: 9.5 }}>You are here · </span>
+          <span style={{ color: "#f0d8d8", fontWeight: 700 }}>Phase {hereIdx + 1} — {NAMES[hereIdx] || current}</span>
+          <span> of the nine-phase development lifecycle</span>
+        </div>
+      </div>
+    );
+  }
   // Dr. Merritt's official nine phases, in her order — must match DEV_PHASES
   const STAGES = [
     ["Feasibility", "Does this deal pencil at all? Market, site, and first numbers before real money moves"],
@@ -344,6 +369,11 @@ function LessonRich({ text, lead }) {
   </>);
 }
 
+// Which of Dr. Merritt's nine phases each course sits in — drives the "you are
+// here" lifecycle map at the top of every lesson. Multi-phase courses list the
+// phase they open in. Unlisted courses (series, drafts) show no map.
+const COURSE_PHASE = { mc1: "Predevelopment", mc2: "Predevelopment", mc3: "Development", mc5: "Feasibility", mc6: "Predevelopment", mc4: "Construction", mc7: "Stabilization" };
+
 function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
   const pageBg = "#000";
   // Paid members (Basic+) get every lesson. Free members get ONE lesson total across
@@ -364,7 +394,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
     if (!token) return Promise.resolve(null);
     return fetch(`/api/resources?course=${course.id}`, { headers: { Authorization: "Bearer " + token } })
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.course) setContent(d.course); if (d?.responses) setMyResponses(d.responses); return d?.course || null; })
+      .then(d => { if (d?.course) setContent(d.course); if (d?.responses) setMyResponses(d.responses); if (Array.isArray(d?.completed)) setCompleted(d.completed); return d?.course || null; })
       .catch(() => null);
   };
   useEffect(() => { setContent(null); fetchContent(); }, [course.id, member?.id]);
@@ -427,6 +457,23 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
     window.history.replaceState({}, "", window.location.pathname + window.location.search + (activeLesson !== null ? `${base}&l=${activeLesson}` : base));
   }, [activeLesson, course.id]);
   const [myResponses, setMyResponses] = useState({});
+  // Progress: which lesson indexes this member has marked complete
+  const [completed, setCompleted] = useState([]);
+  const isDone = (i) => completed.includes(i);
+  const markComplete = async (i, done = true) => {
+    setCompleted(c => done ? [...new Set([...c, i])] : c.filter(x => x !== i));
+    try {
+      const res = await fetch("/api/resources", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "lesson_complete", course_id: course.id, lesson_idx: i, done }) });
+      const d = await res.json().catch(() => ({}));
+      if (Array.isArray(d.completed)) setCompleted(d.completed);
+    } catch {}
+  };
+  const total = course.lessons.length;
+  const doneCount = completed.filter(i => i < total).length;
+  // Next lesson the member can actually open (skips locked ones)
+  const nextOpenable = (from) => { for (let j = from + 1; j < total; j++) if (lessonAt(j)) return j; return null; };
+  const prevOpenable = (from) => { for (let j = from - 1; j >= 0; j--) if (lessonAt(j)) return j; return null; };
+  const exerciseDraft_ = null;
   const [exerciseDraft, setExerciseDraft] = useState("");
   const [exerciseBusy, setExerciseBusy] = useState(false);
   const submitExercise = async (lesson) => {
@@ -477,9 +524,16 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
       <div style={{ background: pageBg, minHeight: "100vh", padding: "100px clamp(20px,5vw,60px) 80px" }}>
         <ProtectedContent email={member?.email}>
         <div style={{ maxWidth: 760, margin: "0 auto" }}>
-          <button onClick={() => { setActiveLesson(null); setPlayingVideo(false); }} style={{ background: "transparent", color: "#6a6b69", border: "1px solid #1a0000", borderRadius: 8, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", marginBottom: 40 }}>← Back to lessons</button>
-          <div style={{ fontSize: 10, color: course.stageColor, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>{course.stage} · Lesson {activeLesson + 1} of {course.lessons.length}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 40, flexWrap: "wrap" }}>
+            <button onClick={() => { setActiveLesson(null); setPlayingVideo(false); }} style={{ background: "transparent", color: "#6a6b69", border: "1px solid #1a0000", borderRadius: 8, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>← Back to lessons</button>
+            <span style={{ flex: 1 }} />
+            <button disabled={prevOpenable(activeLesson) === null} onClick={() => { const j = prevOpenable(activeLesson); if (j !== null) { setActiveLesson(j); setPlayingVideo(false); window.scrollTo({ top: 0 }); } }} title="Previous lesson" style={{ background: "transparent", color: prevOpenable(activeLesson) === null ? "#3a2a2a" : "#c8a8a8", border: "1px solid #2a0000", borderRadius: 8, padding: "8px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 14, cursor: prevOpenable(activeLesson) === null ? "default" : "pointer" }}>←</button>
+            <span style={{ color: "#8a7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>{activeLesson + 1} / {total}</span>
+            <button disabled={nextOpenable(activeLesson) === null} onClick={() => { const j = nextOpenable(activeLesson); if (j !== null) { setActiveLesson(j); setPlayingVideo(false); window.scrollTo({ top: 0 }); } }} title="Next lesson" style={{ background: nextOpenable(activeLesson) === null ? "transparent" : course.stageColor, color: nextOpenable(activeLesson) === null ? "#3a2a2a" : "#fff", border: "1px solid " + (nextOpenable(activeLesson) === null ? "#2a0000" : course.stageColor), borderRadius: 8, padding: "8px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 14, cursor: nextOpenable(activeLesson) === null ? "default" : "pointer" }}>→</button>
+          </div>
+          <div style={{ fontSize: 10, color: course.stageColor, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>{course.stage} · Lesson {activeLesson + 1} of {course.lessons.length}{isDone(activeLesson) && <span style={{ color: "#4ade80", marginLeft: 10 }}>✓ Completed</span>}</div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(28px,4vw,44px)", color: "#f5e8e8", marginBottom: 32, lineHeight: 1.2 }}>{lesson.title}</h1>
+          {!lesson.lifecycle && (lesson.phase || COURSE_PHASE[course.id]) && <LessonLifecycle current={lesson.phase || COURSE_PHASE[course.id]} color={course.stageColor} compact />}
           {lesson.photo && (
             <figure style={{ margin: "0 0 32px", borderRadius: 14, overflow: "hidden", border: "1px solid #2a0000" }}>
               <img src={lesson.photo.src} alt={lesson.photo.caption || lesson.title} style={{ width: "100%", maxHeight: 380, objectFit: "cover", display: "block" }} />
@@ -587,6 +641,19 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
               <p style={{ color: "#b8a060", fontSize: 14, lineHeight: 1.75, fontFamily: "'DM Sans', sans-serif" }}>{lesson.actionItem}</p>
             </div>
           )}
+          {/* Progress: mark it done and move on */}
+          <div style={{ background: isDone(activeLesson) ? "#061a0d" : "#0d0404", border: "1px solid " + (isDone(activeLesson) ? "#4ade8040" : "#2a0000"), borderRadius: 16, padding: "22px 26px", margin: "36px 0 28px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 220 }}>
+              <div style={{ color: isDone(activeLesson) ? "#4ade80" : "#f0d8d8", fontWeight: 800, fontSize: 15, fontFamily: "'DM Sans', sans-serif", marginBottom: 4 }}>{isDone(activeLesson) ? "✓ Lesson complete" : "Finished this lesson?"}</div>
+              <div style={{ color: "#8a7070", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif" }}>{doneCount} of {total} lessons done in this course{isDone(activeLesson) ? "" : " — mark it and keep going"}</div>
+            </div>
+            {isDone(activeLesson)
+              ? <button onClick={() => markComplete(activeLesson, false)} style={{ background: "transparent", color: "#8a7070", border: "1px solid #2a0000", borderRadius: 10, padding: "11px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12.5, cursor: "pointer" }}>Undo</button>
+              : <button onClick={() => { markComplete(activeLesson, true); }} style={{ background: "transparent", color: "#f0d8d8", border: "1px solid #b8010160", borderRadius: 10, padding: "11px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Mark complete</button>}
+            {nextOpenable(activeLesson) !== null
+              ? <button onClick={() => { markComplete(activeLesson, true); const j = nextOpenable(activeLesson); setActiveLesson(j); setPlayingVideo(false); window.scrollTo({ top: 0 }); }} style={{ background: course.stageColor, color: "#fff", border: "none", borderRadius: 10, padding: "12px 22px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>{isDone(activeLesson) ? "Next lesson →" : "Complete & continue →"}</button>
+              : <button onClick={() => { markComplete(activeLesson, true); setActiveLesson(null); setPlayingVideo(false); window.scrollTo({ top: 0 }); }} style={{ background: course.stageColor, color: "#fff", border: "none", borderRadius: 10, padding: "12px 22px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>{isDone(activeLesson) ? "Back to course →" : "Complete course →"}</button>}
+          </div>
           {lessonMaterials.length > 0 && (
             <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "24px 28px", marginBottom: 32 }}>
               <div style={{ fontSize: 10, color: course.stageColor, fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Templates & Materials</div>
@@ -668,7 +735,19 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
         <button onClick={onBack} style={{ background: "transparent", color: "#6a6b69", border: "1px solid #1a0000", borderRadius: 8, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", marginBottom: 40 }}>← All courses</button>
         <div style={{ fontSize: 10, color: course.stageColor, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>{course.stage}</div>
         <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(28px,4vw,44px)", color: "#f5e8e8", marginBottom: 16, lineHeight: 1.2 }}>{course.title}</h1>
-        <p style={{ color: "#8a7070", fontSize: 15, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif", marginBottom: 48 }}>{course.description}</p>
+        <p style={{ color: "#8a7070", fontSize: 15, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif", marginBottom: 28 }}>{course.description}</p>
+        {member && (
+          <div style={{ marginBottom: 36 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
+              <span style={{ fontSize: 10, color: "#8f7070", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>Your progress</span>
+              <span style={{ fontSize: 13, color: doneCount === total && total > 0 ? "#4ade80" : "#f0d8d8", fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}>{doneCount === total && total > 0 ? "✓ Course complete" : `${doneCount} of ${total} lessons`}</span>
+            </div>
+            <div style={{ height: 8, background: "#1a0808", borderRadius: 99, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${total ? (doneCount / total) * 100 : 0}%`, background: doneCount === total && total > 0 ? "#4ade80" : `linear-gradient(90deg, ${course.stageColor}, ${course.stageColor}aa)`, borderRadius: 99, transition: "width 0.5s ease" }} />
+            </div>
+          </div>
+        )}
+        {COURSE_PHASE[course.id] && <LessonLifecycle current={COURSE_PHASE[course.id]} color={course.stageColor} compact />}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {(content?.lessons?.length ? content.lessons : course.lessons).map((lesson, i) => (
             <div key={i} onClick={() => openLesson(i)}
@@ -676,7 +755,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
               onMouseEnter={e => { e.currentTarget.style.borderColor = "#b8010145"; e.currentTarget.style.background = "#130606"; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = "#1a0000"; e.currentTarget.style.background = "#0d0404"; }}>
               <div style={{ display: "flex", alignItems: "center", gap: 16, flex: 1 }}>
-                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#1a0808", border: "1px solid #2a0000", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#b80101", fontWeight: 800, flexShrink: 0, fontFamily: "'DM Sans', sans-serif" }}>{i + 1}</div>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: isDone(i) ? "#4ade8022" : "#1a0808", border: "1px solid " + (isDone(i) ? "#4ade8060" : "#2a0000"), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: isDone(i) ? "#4ade80" : "#b80101", fontWeight: 800, flexShrink: 0, fontFamily: "'DM Sans', sans-serif" }}>{isDone(i) ? "✓" : i + 1}</div>
                 <div>
                   <div style={{ color: "#f0d8d8", fontSize: 15, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", marginBottom: 4 }}>{lesson.title}</div>
                   <div style={{ color: "#8f7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{lesson.summary ? lesson.summary.substring(0, 80) + "..." : ""}</div>

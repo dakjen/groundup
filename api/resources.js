@@ -97,6 +97,20 @@ export default async function handler(req, res) {
       return res.json({ success: true });
     }
 
+    // Member: mark a lesson complete (or un-mark it). Progress is the member's
+    // own bookkeeping — nothing is gated on it.
+    if (req.method === 'POST' && req.body && req.body.action === 'lesson_complete') {
+      const session = getSession(req);
+      if (!session?.uid) return res.status(401).json({ error: 'Sign in required' });
+      const course_id = String(req.body.course_id || '').slice(0, 40);
+      const idx = Number(req.body.lesson_idx);
+      if (!course_id || !Number.isInteger(idx) || idx < 0) return res.status(400).json({ error: 'Bad lesson' });
+      if (req.body.done === false) await sql`DELETE FROM lesson_progress WHERE user_id = ${session.uid} AND course_id = ${course_id} AND lesson_idx = ${idx}`;
+      else await sql`INSERT INTO lesson_progress (user_id, course_id, lesson_idx) VALUES (${session.uid}, ${course_id}, ${idx}) ON CONFLICT DO NOTHING`;
+      const rows = await sql`SELECT lesson_idx FROM lesson_progress WHERE user_id = ${session.uid} AND course_id = ${course_id}`;
+      return res.json({ success: true, completed: rows.map(r => r.lesson_idx) });
+    }
+
     // Member: submit a case-study exercise answer. Write-once — the reveal
     // only means something if the answer came first.
     if (req.method === 'POST' && req.body && req.body.action === 'exercise_submit') {
@@ -196,7 +210,16 @@ export default async function handler(req, res) {
           hidden: admin ? !!c.hidden : undefined,
           lessons: admin ? (c.lessons || []) : (c.lessons || []).map(l => ({ id: l.id, title: l.title })),
         }));
-      return res.json({ courses: catalog });
+      // Progress per course for the signed-in member — powers the bars on the courses page
+      let progress = {};
+      const sess = getSession(req);
+      if (sess?.uid) {
+        try {
+          const rows = await sql`SELECT course_id, COUNT(*)::int AS n FROM lesson_progress WHERE user_id = ${sess.uid} GROUP BY course_id`;
+          for (const r of rows) progress[r.course_id] = r.n;
+        } catch { /* table appears after migrate */ }
+      }
+      return res.json({ courses: catalog, progress });
     }
 
     // ── Full course content: server-enforced entitlements ──
@@ -229,11 +252,13 @@ export default async function handler(req, res) {
       // Case-study exercises: hand back this member's saved answers so a
       // submitted study stays submitted (and the reveal stays revealed).
       let myResponses = {};
+      let completed = [];
+      try { completed = (await sql`SELECT lesson_idx FROM lesson_progress WHERE user_id = ${user.id} AND course_id = ${c.id}`).map(r => r.lesson_idx); } catch {}
       try {
         const rows = await sql`SELECT lesson_id, response, created_at FROM lesson_responses WHERE user_id = ${user.id} AND course_id = ${c.id}`;
         for (const r of rows) myResponses[r.lesson_id] = { response: r.response, at: r.created_at };
       } catch { /* table appears after migrate */ }
-      if (fullAccess) return res.json({ course: shape(() => true), access: 'full', responses: myResponses });
+      if (fullAccess) return res.json({ course: shape(() => true), access: 'full', responses: myResponses, completed });
 
       // Free plan: the curriculum is the preview — every lesson title visible,
       // zero lesson content. (Accounts that claimed the old free lesson keep it.)
@@ -242,6 +267,7 @@ export default async function handler(req, res) {
         course: shape(i => freeKey === `${c.id}:${i}`),
         access: 'free',
         free_lesson_key: freeKey,
+        completed,
       });
     }
 

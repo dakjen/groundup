@@ -138,6 +138,7 @@ const STATEMENTS = [
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS partner_slug TEXT`,
   `ALTER TABLE channels ADD COLUMN IF NOT EXISTS partner_slug TEXT`,
   `CREATE TABLE IF NOT EXISTS email_optouts (email TEXT PRIMARY KEY, created_at TIMESTAMPTZ DEFAULT NOW())`,
+  `CREATE TABLE IF NOT EXISTS lesson_progress (user_id INTEGER NOT NULL, course_id TEXT NOT NULL, lesson_idx INTEGER NOT NULL, completed_at TIMESTAMPTZ DEFAULT NOW(), PRIMARY KEY (user_id, course_id, lesson_idx))`,
   `CREATE TABLE IF NOT EXISTS login_codes (email TEXT PRIMARY KEY, code_hash TEXT NOT NULL, expires_at TIMESTAMPTZ NOT NULL, tries INTEGER DEFAULT 0)`,
   `CREATE TABLE IF NOT EXISTS glossary (
     id SERIAL PRIMARY KEY, term TEXT UNIQUE NOT NULL, definition TEXT NOT NULL,
