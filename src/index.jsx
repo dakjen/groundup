@@ -1492,7 +1492,7 @@ function AboutPage({ setActivePage }) {
                 taught: "Taught in: Building Your Team · JV Structures",
               },
               {
-                img: "/opt/nannie-helen.jpg", name: "Parkway House", where: "Anacostia, Washington, DC", photoPending: true,
+                img: "/opt/parkway-house.jpg", name: "Parkway House", where: "Anacostia, Washington, DC",
                 story: "An NREUV-owned property where the work didn't stop at the ribbon cutting. For three-plus years, Project Community Capital® has been embedded on site: job placement with 44 employer partners, a 93% retention rate for placed hires, mental-health services, food access, holiday programming. The lesson: ownership is a fifteen-year relationship with a neighborhood, not a closing.",
                 taught: "Taught in: After Opening Day · Community-Led Development",
               },
