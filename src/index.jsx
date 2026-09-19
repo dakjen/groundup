@@ -842,14 +842,24 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
   const SESSION_PAGES = [["lunchlearn", "Lunch & Learns"], ["officehours", "Office Hours"], ["contact", "Book with Dr. Gina"]];
   const [sessionsOpen, setSessionsOpen] = useState(false);
   const pages = isTeam
-    ? ["courses", "community", "resources", "advisory", "lunchlearn"]
+    ? []
     : member
     ? ["courses", ...(member.partner_slug ? ["cohort"] : []), "community", "resources", "advisory", "support"]
     : ["home", "courses", "about", "pricing", "lunchlearn", "contact", "support"];
-  const ADMIN_TOOLS = [
-    ["admin-users", "Users"], ["admin-referrals", "Referrals"], ["admin-waitlist", "Waitlist"],
-    ["admin-email", "Email"], ["admin-courses", "Courses"], ["admin-shop", "Shop"], ["admin-contacts", "Contacts"], ["admin-office", "Office Hours"], ["admin-retainers", "Retainers"], ["admin-revenue", "Revenue"], ["admin-status", "System Status"],
+  // The admin menu, grouped the way the team thinks about the work.
+  // Waitlist heads the People group until the public launch passes; then Users does.
+  const launched = !!(window.__guLaunchAt && new Date(window.__guLaunchAt).getTime() <= Date.now());
+  const ADMIN_GROUPS = [
+    { label: "GroundUp", items: [["courses", "Courses"], ["community", "Community"], ["resources", "Resources"]] },
+    { label: "Advisory & Retainers", items: [["admin-retainers", "Advisory & Retainers"]] },
+    { label: launched ? "Users" : "Waitlist", items: launched
+      ? [["admin-users", "Users"], ["admin-contacts", "Contacts"], ["admin-waitlist", "Waitlist"], ["admin-referrals", "Referrals"], ["admin-invites", "Gifts & Invites"]]
+      : [["admin-waitlist", "Waitlist"], ["admin-contacts", "Contacts"], ["admin-users", "Users"], ["admin-referrals", "Referrals"], ["admin-invites", "Gifts & Invites"]] },
+    { label: "Events", items: [["lunchlearn", "Lunch & Learns"], ["admin-office", "Office Hours"]] },
+    { label: "Revenue", items: [["admin-revenue", "Revenue"]] },
+    { label: "Admin", items: [["admin-email", "Email"], ["admin-team", "Team"], ["admin-shop", "Shop"], ["admin-courses", "All Courses"], ["admin-status", "System Status"]] },
   ];
+  const ADMIN_TOOLS = ADMIN_GROUPS.flatMap(g => g.items).filter(([id]) => id.startsWith("admin-"));
   const [adminOpen, setAdminOpen] = useState(false);
   const lightNav = member?.role === "admin";
   const navInactive = lightNav ? "#5a5a5a" : "#6a6b69";
@@ -887,9 +897,14 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
               <div style={{ position: "relative", marginLeft: 8 }}>
                 <button onClick={() => setAdminOpen(!adminOpen)} style={{ background: activePage.startsWith("admin-") ? "#b80101" : "transparent", color: activePage.startsWith("admin-") ? "#fff" : "#b80101", border: "1px solid #b8010160", borderRadius: 7, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>GroundUp Admin ▾</button>
                 {adminOpen && (
-                  <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 12, padding: 6, minWidth: 170, boxShadow: "0 12px 40px rgba(0,0,0,0.18)", zIndex: 200 }}>
-                    {ADMIN_TOOLS.map(([id, label]) => (
-                      <button key={id} onClick={() => { setAdminOpen(false); setActivePage(id); }} style={{ display: "block", width: "100%", textAlign: "left", background: activePage === id ? "#b8010112" : "transparent", color: activePage === id ? "#b80101" : "#333333", border: "none", borderRadius: 8, padding: "9px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>{label}</button>
+                  <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 14, padding: "14px 10px", boxShadow: "0 12px 40px rgba(0,0,0,0.18)", zIndex: 200, display: "grid", gridTemplateColumns: "repeat(3, minmax(150px, 1fr))", gap: "6px 18px", width: 560 }}>
+                    {ADMIN_GROUPS.map(g => (
+                      <div key={g.label} style={{ padding: "4px 4px 8px" }}>
+                        <div style={{ fontSize: 9.5, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", padding: "4px 10px 6px" }}>{g.label}</div>
+                        {g.items.map(([id, label]) => (
+                          <button key={id} onClick={() => { setAdminOpen(false); setActivePage(id); }} style={{ display: "block", width: "100%", textAlign: "left", background: activePage === id ? "#b8010112" : "transparent", color: activePage === id ? "#b80101" : "#333333", border: "none", borderRadius: 8, padding: "7px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>{label}</button>
+                        ))}
+                      </div>
                     ))}
                   </div>
                 )}
@@ -917,8 +932,13 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
           {member && !isTeam && SESSION_PAGES.map(([id, label]) => (
             <button key={id} onClick={() => { setActivePage(id); setMenuOpen(false); }} style={{ background: activePage === id ? "#57040418" : "transparent", color: activePage === id ? "#b80101" : "#c8a0a0", border: "1px solid transparent", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>{label}</button>
           ))}
-          {isTeam && ADMIN_TOOLS.map(([id, label]) => (
-            <button key={id} onClick={() => { setActivePage(id); setMenuOpen(false); }} style={{ background: activePage === id ? "#b8010112" : "transparent", color: activePage === id ? "#b80101" : "#8a2020", border: "1px solid transparent", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>Admin · {label}</button>
+          {isTeam && ADMIN_GROUPS.map(g => (
+            <div key={g.label}>
+              <div style={{ fontSize: 9.5, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", padding: "14px 16px 4px" }}>{g.label}</div>
+              {g.items.map(([id, label]) => (
+                <button key={id} onClick={() => { setActivePage(id); setMenuOpen(false); }} style={{ display: "block", width: "100%", background: activePage === id ? "#b8010112" : "transparent", color: activePage === id ? "#b80101" : (lightNav ? "#333333" : "#c8a0a0"), border: "1px solid transparent", borderRadius: 8, padding: "10px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>{label}</button>
+              ))}
+            </div>
           ))}
           {member ? (
             <button onClick={() => { setMenuOpen(false); setActivePage("membership"); }} style={{ background: "transparent", color: lightNav ? "#161616" : "#f0d8d8", border: lightNav ? "1px solid #b8a88a" : "1px solid #57040440", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 15, cursor: "pointer", marginTop: 8, textAlign: "left" }}>{firstName(member.name)} · {member.role === "admin" ? "Team" : (TIER_LABELS[member.tier] || member.tier)}</button>
@@ -4892,7 +4912,7 @@ function RevenueTab() {
 const TIERS = ["Free", "Basic", "Builder", "Premium", "Elite"];
 const TIER_COLORS = { Free: "#8a8a8a", Basic: "#b80101", Builder: "#a03030", Premium: "#b80101", Elite: "#570404" };
 
-function UsersTab({ btnRed, btnGhost, inp, lbl }) {
+function UsersTab({ btnRed, btnGhost, inp, lbl, teamOnly = false }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [addForm, setAddForm] = useState({ name: "", email: "", tier: "Free", team: false, password: "" });
@@ -4959,6 +4979,7 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
   };
 
   const filtered = users.filter(u => {
+    if (teamOnly ? u.role !== "admin" : false) return false;
     const matchSearch = !search || u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
     const matchTier = filterTier === "All" || u.tier === filterTier;
     return matchSearch && matchTier;
@@ -4971,7 +4992,7 @@ function UsersTab({ btnRed, btnGhost, inp, lbl }) {
 
   return (
     <div style={{ maxWidth: 800 }}>
-      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#161616", marginBottom: 8 }}>Users & Team</h2>
+      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#161616", marginBottom: 8 }}>{teamOnly ? "Team" : "Users"}</h2>
       <p style={{ color: "#666666", fontSize: 13, marginBottom: 32 }}>Manage members, plan tiers, team access, and password resets.</p>
 
       {tempPw && (
@@ -5183,7 +5204,9 @@ function ContactsTab({ btnRed, btnGhost, inp, lbl }) {
   );
 }
 
-function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
+function ReferralTab({ btnRed, btnGhost, inp, lbl, mode = 'referrals' }) {
+  const showCodes = mode === 'referrals';
+  const showInvites = mode === 'invites';
   const [invites, setInvites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: "", email: "" });
@@ -5309,13 +5332,18 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
 
   return (
     <div style={{ maxWidth: 760 }}>
-      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#161616", marginBottom: 8 }}>Referral Invites</h2>
-      <p style={{ color: "#666666", fontSize: 13, marginBottom: 32 }}>Send a personal invite — they get a branded email explaining GroundUp with a 7-day trial link.</p>
+      {showCodes ? (<>
+      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#161616", marginBottom: 8 }}>Referral Program</h2>
+      <p style={{ color: "#666666", fontSize: 13, marginBottom: 32 }}>Custom referral links for partners and friends — referred members get the two-year discount, referrers climb the 15 / 25 / 50 ladder.</p>
+      </>) : (<>
+      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#161616", marginBottom: 8 }}>Gifts & Invites</h2>
+      <p style={{ color: "#666666", fontSize: 13, marginBottom: 32 }}>Month-free gift links (solo or by CSV) and personal 7-day trial invites.</p>
+      </>)}
 
       {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
 
       {/* Partner referral codes */}
-      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 20 }}>
+      {showCodes && <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 20 }}>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Partner & Friend Referral Codes</div>
         <p style={{ color: "#8d847a", fontSize: 12, marginBottom: 16, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>For partners, ambassadors, and friends alike: write the ending you want for their link (the code), add their name and company, and copy their custom link. People arriving through it see a you've-been-referred banner and get a two-year member discount when they join ($5/$15/$20/$25 off per month by tier). The referrer climbs the program ladder automatically: 15 referrals → 25% off their membership · 25 → 50% off · 50 → fully comped — you get an email each time a rung is crossed. Every waitlist signup counts toward the goal; hitting it emails you to comp their membership (Admin → Users → Comped).</p>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 18 }}>
@@ -5347,10 +5375,10 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
             <button onClick={() => deleteCode(c)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Delete</button>
           </div>
         ))}
-      </div>
+      </div>}
 
       {/* Month-free gifts */}
-      <div style={{ background: "#ffffff", border: "1px solid #b8010140", borderRadius: 14, padding: 28, marginBottom: 28 }}>
+      {showInvites && <div style={{ background: "#ffffff", border: "1px solid #b8010140", borderRadius: 14, padding: 28, marginBottom: 28 }}>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Month-Free Gifts</div>
         <p style={{ color: "#666666", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 18 }}>
           Each person gets their own link, good for <strong>one use only</strong> and locked to <strong>their email address</strong> — forwarding it does nothing for anyone else. At checkout their first month comes off automatically, on any plan.
@@ -5393,9 +5421,9 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
             ))}
           </div>
         )}
-      </div>
+      </div>}
 
-      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 28 }}>
+      {showInvites && <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 28 }}>
         <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>Send an Invite</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", columnGap: 20, rowGap: 18, alignItems: "end" }}>
           <div>
@@ -5408,9 +5436,9 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
           </div>
           <button onClick={sendInvite} style={{ ...btnRed, padding: "12px 24px" }}>Send Invite</button>
         </div>
-      </div>
+      </div>}
 
-      {regularInvites.length === 0 ? (
+      {showInvites && (regularInvites.length === 0 ? (
         <div style={{ background: "#ececec", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No invites yet.</div>
       ) : (
         <div>
@@ -5430,7 +5458,7 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl }) {
             );
           })}
         </div>
-      )}
+      ))}
     </div>
   );
 }
@@ -6485,7 +6513,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "support", "glossary"];
+  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "admin-invites", "admin-team", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "support", "glossary"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
     return PAGES.includes(p) ? p : (sessionStorage.getItem("activePage") || "home");
@@ -6588,7 +6616,7 @@ export default function App() {
 
   useEffect(() => {
     fetch("/api/waitlist?public=1").then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) { if (d.launch_at) setLaunchAt(d.launch_at); if (d.launch_insider_at) setInsiderAt(d.launch_insider_at); if (d.advisor_call_link) setAdvisorLink(d.advisor_call_link); if (d.elite) setEliteSpots(d.elite); } })
+      .then(d => { if (d) { if (d.launch_at) { setLaunchAt(d.launch_at); window.__guLaunchAt = d.launch_at; } if (d.launch_insider_at) setInsiderAt(d.launch_insider_at); if (d.advisor_call_link) setAdvisorLink(d.advisor_call_link); if (d.elite) setEliteSpots(d.elite); } })
       .catch(() => {})
       .finally(() => setLaunchChecked(true));
   }, []);
@@ -6883,7 +6911,9 @@ export default function App() {
         ? <TeamPage><h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#171106", marginBottom: 8 }}>Lunch & Learn</h2><p style={{ color: "#6a5c40", fontSize: 13, marginBottom: 24, fontFamily: "'DM Sans', sans-serif" }}>Session link, comp codes, recordings, topic requests, and who has access.</p><LnLManager btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>
         : <div className="content-protected" onContextMenu={e => e.preventDefault()}><LunchLearnPage member={member} onSignIn={() => openSignup("Free")} setActivePage={navigateTo} /></div>)}
       {member?.role === "admin" && activePage === "admin-users" && <TeamPage><UsersTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
-      {member?.role === "admin" && activePage === "admin-referrals" && <TeamPage><ReferralTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
+      {member?.role === "admin" && activePage === "admin-referrals" && <TeamPage><ReferralTab mode="referrals" btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
+      {member?.role === "admin" && activePage === "admin-invites" && <TeamPage><ReferralTab mode="invites" btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
+      {member?.role === "admin" && activePage === "admin-team" && <TeamPage><UsersTab teamOnly btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-waitlist" && <TeamPage><WaitlistTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-email" && <TeamPage><EmailTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-courses" && <TeamPage><CourseAttachmentsAdmin btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
