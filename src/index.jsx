@@ -802,32 +802,36 @@ function EventCard({ currentUser, eventInvited, onSignUp, setActivePage }) {
 // behind it. Cream line-art + warm tan skyline, like the original; red only at
 // the door. Asymmetric on purpose: this is a climb, not a monument.
 function GULogo({ size = 40, light = false }) {
+  // A sharper mark: the brownstone in one clean weight — square corners,
+  // straight windows, a flat lintel over the door — with the taller tower
+  // behind it in a quieter tone. No rounding anywhere; it reads as drafted,
+  // not drawn.
   const w = light ? "#1a1a1a" : "#f5e8e8";
-  const tan = light ? "#9a9a9a" : "#7a6151";
-  const win = (x, y) => <rect key={x + "-" + y} x={x} y={y} width={4.4} height={5.4} rx={0.7} fill="none" stroke={w} strokeWidth="1.5" />;
+  const tan = light ? "#a0a0a0" : "#7a6151";
+  const win = (x, y) => <rect key={x + "-" + y} x={x} y={y} width={4.5} height={5.5} fill="none" stroke={w} strokeWidth="1.5" />;
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="GroundUp">
-      {/* rising skyline behind, warm tan */}
-      <g stroke={tan} strokeWidth="1.8" fill="none" opacity="0.85">
-        <path d="M40 51 V14 H52 V51" />
-        <path d="M43.5 14 V10.5 H48.5 V14" />
-        <path d="M43.5 20 h5 M43.5 26 h5 M43.5 32 h5 M43.5 38 h5" />
-        <path d="M53.5 51 V24 H59.5" />
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="GroundUp" shapeRendering="geometricPrecision">
+      {/* tower behind, quieter */}
+      <g stroke={tan} strokeWidth="1.8" fill="none">
+        <path d="M40 51 V13 H53 V51" />
+        <path d="M43.5 19 h6 M43.5 25 h6 M43.5 31 h6 M43.5 37 h6 M43.5 43 h6" />
+        <path d="M54.5 51 V26 H60" />
       </g>
-      {/* the brownstone, front and proud */}
-      <path d="M10 51 V19 H38 V51" stroke={w} strokeWidth="2.2" fill="#00000001" strokeLinejoin="round" />
-      <path d="M8 19 H40" stroke={w} strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M12.5 15.5 H35.5 M14 15.5 V19 M34 15.5 V19" stroke={w} strokeWidth="1.8" strokeLinecap="round" />
-      {win(14, 23)} {win(21.5, 23)} {win(29, 23)}
-      {win(14, 32)} {win(21.5, 32)}
-      {win(14, 41)}
-      {/* arched door up the stoop */}
-      <path d="M28.5 51 V37.5 a3.2 3.2 0 0 1 6.4 0 V51" fill="none" stroke={w} strokeWidth="1.8" />
-      <path d="M31.7 44 v3" stroke={w} strokeWidth="1.4" strokeLinecap="round" />
-      {/* the stoop — steps rising from the ground */}
-      <path d="M21 51 h3.5 v-2.6 h3.5 v-2.6 h2.5" stroke={w} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      {/* the brownstone */}
+      <path d="M10 51 V18 H38 V51" stroke={w} strokeWidth="2.2" fill="none" strokeLinejoin="miter" />
+      <path d="M8 18 H40" stroke={w} strokeWidth="2.2" strokeLinecap="square" />
+      <path d="M12.5 14.5 H35.5 V18" stroke={w} strokeWidth="1.8" strokeLinejoin="miter" />
+      <path d="M12.5 14.5 V18" stroke={w} strokeWidth="1.8" />
+      {win(14, 22.5)} {win(21.75, 22.5)} {win(29.5, 22.5)}
+      {win(14, 31.5)} {win(21.75, 31.5)}
+      {win(14, 40.5)}
+      {/* door — flat lintel, no arch */}
+      <path d="M28.5 51 V38 H35 V51" stroke={w} strokeWidth="1.8" fill="none" strokeLinejoin="miter" />
+      <path d="M27 38 H36.5" stroke={w} strokeWidth="1.8" strokeLinecap="square" />
+      {/* stoop */}
+      <path d="M21 51 h3.5 v-2.6 h3.5 v-2.6 h2.5" stroke={w} strokeWidth="1.8" fill="none" strokeLinejoin="miter" />
       {/* ground */}
-      <path d="M4 51 H60" stroke={w} strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M4 51 H60" stroke={w} strokeWidth="2.4" strokeLinecap="square" />
     </svg>
   );
 }
