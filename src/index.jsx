@@ -1492,13 +1492,18 @@ function AboutPage({ setActivePage }) {
                 taught: "Taught in: Building Your Team · JV Structures",
               },
               {
+                img: "/opt/nannie-helen.jpg", name: "Parkway House", where: "Anacostia, Washington, DC", photoPending: true,
+                story: "An NREUV-owned property where the work didn't stop at the ribbon cutting. For three-plus years, Project Community Capital® has been embedded on site: job placement with 44 employer partners, a 93% retention rate for placed hires, mental-health services, food access, holiday programming. The lesson: ownership is a fifteen-year relationship with a neighborhood, not a closing.",
+                taught: "Taught in: After Opening Day · Community-Led Development",
+              },
+              {
                 img: "/opt/beacon-center.jpg", name: "The Beacon Center", where: "Washington, DC",
                 story: "A full city block transformed — housing, community space, and services woven into one campus. The kind of mixed-use complexity the curriculum walks through piece by piece: stacking uses, stacking capital, and making it all pencil.",
                 taught: "Taught in: Mixed-Use & the Fifteen Years After Opening Day",
               },
             ].map(p => (
               <div key={p.name} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, overflow: "hidden" }}>
-                <img src={p.img} alt={`${p.name}, ${p.where}`} style={{ width: "100%", height: 190, objectFit: "cover", display: "block" }} />
+                <img src={p.img} alt={`${p.name}, ${p.where}`} style={{ width: "100%", height: 190, objectFit: "cover", display: "block", filter: p.photoPending ? "grayscale(1) brightness(0.35)" : "none" }} />
                 <div style={{ padding: "20px 22px" }}>
                   <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 21, color: "#f0d8d8" }}>{p.name}</div>
                   <div style={{ color: "#b80101", fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", margin: "4px 0 10px" }}>{p.where}</div>
