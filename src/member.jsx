@@ -680,13 +680,17 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdi
   // Dr. Merritt's messages carry a presence of their own — richer than TEAM,
   // unmistakable at a glance: glowing card, serif name, crowned badge.
   const isGina = m.is_admin && m.author_badge === "drmerritt";
+  const [hover, setHover] = useState(false);
   return (
-    <div style={{ padding: isGina ? "16px 20px" : "12px 16px", borderRadius: 10, background: isGina ? "linear-gradient(135deg, #1a0808 0%, #12060a 100%)" : "transparent", border: isGina ? "1px solid #b8010170" : "1px solid transparent", boxShadow: isGina ? "0 0 24px rgba(184,1,1,0.12)" : "none", marginBottom: 4 }}>
+    <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+      style={{ padding: isGina ? "16px 20px" : "14px 18px", borderRadius: 12, background: isGina ? "linear-gradient(135deg, #1a0808 0%, #12060a 100%)" : "var(--gu-card, #0d0404)", border: isGina ? "1px solid #b8010170" : "1px solid " + (hover ? "#3a1515" : "#1e0a0a"), boxShadow: isGina ? "0 0 24px rgba(184,1,1,0.12)" : "none", marginBottom: 10, maxWidth: 820, transition: "border-color 0.15s" }}>
       {isGina && <div style={{ height: 2, background: "linear-gradient(90deg, transparent, #b80101, transparent)", margin: "-16px -20px 12px", borderRadius: "10px 10px 0 0" }} />}
       <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
       <span style={{ position: "relative", flexShrink: 0, cursor: "default", marginTop: 2 }}
         onMouseEnter={() => !m.is_admin && setShowProfile(true)} onMouseLeave={() => setShowProfile(false)}>
-        <Avatar url={m.author_avatar} name={m.is_admin ? (isGina ? "Gina Merritt" : "GroundUp Team") : m.author_name} size={36} />
+        {m.is_admin && !isGina && !m.author_avatar
+          ? <span style={{ width: 36, height: 36, borderRadius: "50%", background: "#160404", border: "1px solid #b8010150", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}><img src="/icon-192.png" alt="GroundUp" width="26" height="26" style={{ borderRadius: 6 }} /></span>
+          : <Avatar url={m.author_avatar} name={m.is_admin ? (isGina ? "Gina Merritt" : "GroundUp Team") : m.author_name} size={36} />}
         {showProfile && !m.is_admin && <ProfileHover m={m} />}
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -705,7 +709,7 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdi
         {!m.is_admin && <BadgeChips badges={m.author_badges} small />}
         <span style={{ color: "var(--gu-faint)", fontSize: 11, fontFamily: font }}>{timeAgo(m.created_at)}</span>
         {m.edited_at && <span style={{ color: "var(--gu-faint)", fontSize: 10, fontFamily: font, fontStyle: "italic" }}>(edited)</span>}
-        <span style={{ marginLeft: "auto", display: "flex", gap: 10 }}>
+        <span style={{ marginLeft: "auto", display: "flex", gap: 10, opacity: hover || editing ? 1 : 0, transition: "opacity 0.15s" }}>
           {canEdit && !editing && <button onClick={() => { setEditing(true); setEditDraft(m.body); }} style={{ background: "none", border: "none", color: "var(--gu-faint)", cursor: "pointer", fontSize: 11, fontFamily: font }}>edit</button>}
           {canDelete && <button onClick={() => { if (window.confirm("Delete this message? This can't be undone.")) onDelete(m); }} style={{ background: "none", border: "none", color: "var(--gu-faint)", cursor: "pointer", fontSize: 11, fontFamily: font }}>delete</button>}
         </span>
@@ -746,7 +750,7 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdi
         </div>
       )}
       {!inThread && (
-        <button onClick={() => onOpenThread(m)} style={{ background: "none", border: "none", color: Number(m.reply_count) > 0 ? "#b80101" : "var(--gu-faint)", cursor: "pointer", fontSize: 12, fontFamily: font, fontWeight: 700, padding: 0, marginTop: 6 }}>
+        <button onClick={() => onOpenThread(m)} style={{ background: Number(m.reply_count) > 0 ? "#b8010114" : "transparent", border: "1px solid " + (Number(m.reply_count) > 0 ? "#b8010140" : "#2a1010"), color: Number(m.reply_count) > 0 ? "#e0a0a0" : "var(--gu-muted)", cursor: "pointer", fontSize: 11.5, fontFamily: font, fontWeight: 700, padding: "4px 11px", borderRadius: 99, marginTop: 10 }}>
           {Number(m.reply_count) > 0 ? `${m.reply_count} repl${Number(m.reply_count) === 1 ? "y" : "ies"}` : "Reply in thread"}
         </button>
       )}

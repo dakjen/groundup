@@ -976,23 +976,28 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
           )}
           {member ? (
             <>
-            {isTeam && (
-              <div style={{ position: "relative", marginLeft: 8 }}>
-                <button onClick={() => setAdminOpen(!adminOpen)} style={{ background: activePage.startsWith("admin-") ? "#b80101" : "transparent", color: activePage.startsWith("admin-") ? "#fff" : "#b80101", border: "1px solid #b8010160", borderRadius: 7, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>GroundUp Admin ▾</button>
-                {adminOpen && (
-                  <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 14, padding: "14px 10px", boxShadow: "0 12px 40px rgba(0,0,0,0.18)", zIndex: 200, display: "grid", gridTemplateColumns: "repeat(3, minmax(150px, 1fr))", gap: "6px 18px", width: 560 }}>
-                    {ADMIN_GROUPS.map(g => (
-                      <div key={g.label} style={{ padding: "4px 4px 8px" }}>
-                        <div style={{ fontSize: 9.5, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", padding: "4px 10px 6px" }}>{g.label}</div>
-                        {g.items.map(([id, label]) => (
-                          <button key={id} onClick={() => { setAdminOpen(false); setActivePage(id); }} style={{ display: "block", width: "100%", textAlign: "left", background: activePage === id ? "#b8010112" : "transparent", color: activePage === id ? "#b80101" : "#333333", border: "none", borderRadius: 8, padding: "7px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>{label}</button>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+            {isTeam && ADMIN_GROUPS.map(g => {
+              const ids = g.items.map(([id]) => id);
+              const active = ids.includes(activePage);
+              const single = g.items.length === 1;
+              const open = adminOpen === g.label;
+              const go = (id) => { setAdminOpen(false); setActivePage(id); };
+              return (
+                <div key={g.label} style={{ position: "relative" }} onMouseLeave={() => open && setAdminOpen(false)}>
+                  <button onClick={() => single ? go(ids[0]) : setAdminOpen(open ? false : g.label)}
+                    style={{ background: active ? "#b8010112" : "transparent", color: active ? "#b80101" : "#3a3a3a", border: active ? "1px solid #b8010130" : "1px solid transparent", borderRadius: 7, padding: "7px 12px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>
+                    {g.label}{!single && <span style={{ marginLeft: 5, fontSize: 9, opacity: 0.6 }}>▾</span>}
+                  </button>
+                  {open && !single && (
+                    <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 12, padding: 6, minWidth: 190, boxShadow: "0 12px 40px rgba(0,0,0,0.18)", zIndex: 200 }}>
+                      {g.items.map(([id, label]) => (
+                        <button key={id} onClick={() => go(id)} style={{ display: "block", width: "100%", textAlign: "left", background: activePage === id ? "#b8010112" : "transparent", color: activePage === id ? "#b80101" : "#333333", border: "none", borderRadius: 8, padding: "9px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>{label}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
             <button onClick={() => setActivePage("membership")} style={{ background: lightNav ? "#00000008" : "transparent", color: lightNav ? "#161616" : "#f0d8d8", border: lightNav ? "1px solid #b8a88a" : "1px solid #57040440", borderRadius: 99, padding: "8px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer", marginLeft: 8 }}>{firstName(member.name)} · {member.role === "admin" ? "Team" : (TIER_LABELS[member.tier] || member.tier)}</button>
             </>
           ) : (
