@@ -761,6 +761,12 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdi
 }
 
 export function CommunityPage({ member, isAdmin, onSignIn }) {
+  // Where you were survives a refresh: #ch=<slug>[&t=<messageId>] or #dm[=<userId>]
+  const hashState = () => {
+    const h = window.location.hash.slice(1);
+    const m = {}; for (const part of h.split("&")) { const [k, v] = part.split("="); if (k) m[k] = v === undefined ? "" : decodeURIComponent(v); }
+    return m;
+  };
   const [channels, setChannels] = useState([]);
   const [active, setActive] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -776,6 +782,10 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
   const [dmDraft, setDmDraft] = useState("");
   const [dmThreads, setDmThreads] = useState([]);       // admin inbox
   const [dmTarget, setDmTarget] = useState(null);       // admin: selected member thread
+  useEffect(() => {
+    const h = hashState();
+    if ("dm" in h) { setDmOpen(true); if (h.dm) setDmTarget({ id: Number(h.dm) }); }
+  }, []);
   const [newChanOpen, setNewChanOpen] = useState(false);
   const [pollOpen, setPollOpen] = useState(false);
   const [pollForm, setPollForm] = useState({ question: "", options: ["", ""] });
@@ -789,8 +799,18 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
   const loadChannels = useCallback(async () => {
     const data = await api("/api/community?resource=channels");
     setChannels(data.channels);
-    setActive(a => a || data.channels[0] || null);
+    const want = hashState().ch;
+    setActive(a => a || data.channels.find(c => c.slug === want) || data.channels[0] || null);
   }, []);
+  // Write the current spot to the hash whenever it changes
+  useEffect(() => {
+    if (!active && !dmOpen) return;
+    const parts = [];
+    if (dmOpen) parts.push(dmTarget?.id ? `dm=${dmTarget.id}` : "dm");
+    else if (active) { parts.push(`ch=${encodeURIComponent(active.slug)}`); if (thread) parts.push(`t=${thread.id}`); }
+    const next = "#" + parts.join("&");
+    if (window.location.hash !== next) window.history.replaceState({}, "", window.location.pathname + window.location.search + next);
+  }, [active, thread, dmOpen, dmTarget]);
 
   const loadMessages = useCallback(async (channelId, threadId) => {
     const q = threadId ? `&thread=${threadId}` : "";
@@ -832,10 +852,15 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
     } catch (err) { setError(err.message); }
   };
 
+  const pendingThread = useRef(hashState().t ? Number(hashState().t) : null);
   useEffect(() => {
     if (!active) return;
     setThread(null);
-    loadMessages(active.id).catch(e => setError(e.message));
+    loadMessages(active.id).then(() => {
+      // First load after a refresh: reopen the thread that was open
+      const tid = pendingThread.current; pendingThread.current = null;
+      if (tid) api(`/api/community?resource=messages&channel=${active.id}`).then(d => { const parent = (d.messages || []).find(m => m.id === tid); if (parent) setThread(parent); }).catch(() => {});
+    }).catch(e => setError(e.message));
     const t = setInterval(() => loadMessages(active.id).catch(() => {}), 8000);
     return () => clearInterval(t);
   }, [active, loadMessages]);

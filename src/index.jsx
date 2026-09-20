@@ -2012,7 +2012,8 @@ function PricingPage({ onSignUp }) {
   // Live Elite seat count — Elite is sold as a limited cohort
   const [elite, setElite] = useState(null);
   const [annual, setAnnual] = useState(() => { try { return new URLSearchParams(window.location.search).get("annual") === "1"; } catch { return false; } });
-  const [tab, setTab] = useState("plans");
+  const [tab, setTabRaw] = useState(() => (window.location.hash.match(/tab=([\w-]+)/) || [])[1] || "plans");
+  const setTab = (t) => { setTabRaw(t); window.history.replaceState({}, "", window.location.pathname + window.location.search + "#tab=" + t); };
   const [lifetime, setLifetime] = useState(null);
   useEffect(() => {
     fetch("/api/stripe").then(r => r.ok ? r.json() : null).then(d => d?.lifetime && setLifetime(d.lifetime)).catch(() => {});
@@ -4333,7 +4334,9 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
 }
 
 function AdminPanel({ onLogout, onExit }) {
-  const [tab, setTab] = useState("lunch");
+  // The open tab survives a refresh via the URL hash
+  const [tab, setTabRaw] = useState(() => (window.location.hash.match(/tab=([\w-]+)/) || [])[1] || "lunch");
+  const setTab = (t) => { setTabRaw(t); window.history.replaceState({}, "", window.location.pathname + window.location.search + "#tab=" + t); };
   const [courses, setCourses] = useState([]);
   const [inbox, setInbox] = useState([]);
   const [rsvps, setRsvps] = useState([]);
