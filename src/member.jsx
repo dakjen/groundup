@@ -1016,11 +1016,17 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
               {dmMsgs.length === 0 && <div style={{ color: "var(--gu-faint)", fontFamily: font, fontSize: 14, textAlign: "center", marginTop: 60 }}>{isAdmin ? "No messages in this thread yet." : "Start the conversation — the team replies within 2 business days. For deep deal review, book a session so you get real time on it."}</div>}
               {dmMsgs.map(m => (
                 <div key={m.id} style={{ display: "flex", justifyContent: m.from_admin === !isAdmin ? "flex-start" : "flex-end", marginBottom: 10 }}>
-                  <div style={{ maxWidth: "78%", background: m.from_admin ? "var(--gu-red-tint)" : "#ffffff", border: m.from_admin ? "1px solid #b8010130" : "1px solid #1a0000", borderRadius: 12, padding: "10px 14px" }}>
-                    {m.from_admin && <div style={{ marginBottom: 4 }}><span style={{ background: "#b80101", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, fontFamily: font, letterSpacing: "1px" }}>TEAM</span></div>}
-                    <div style={{ color: "var(--gu-body)", fontSize: 14, fontFamily: font, lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.body}</div>
-                    <div style={{ color: "var(--gu-faint)", fontSize: 10, fontFamily: font, marginTop: 4 }}>{timeAgo(m.created_at)}</div>
-                  </div>
+                  {(() => {
+                    // The reader's own messages sit right in brand red; the other side sits left in a dark card
+                    const mine = m.from_admin === !!isAdmin;
+                    return (
+                      <div style={{ maxWidth: "78%", background: mine ? "#b80101" : "#1a0a0a", border: mine ? "none" : "1px solid #3a1515", borderRadius: mine ? "16px 16px 4px 16px" : "16px 16px 16px 4px", padding: "11px 15px" }}>
+                        {!mine && <div style={{ color: m.from_admin ? "#e0a0a0" : "#c8a8a8", fontSize: 10.5, fontWeight: 800, fontFamily: font, letterSpacing: "1px", textTransform: "uppercase", marginBottom: 4 }}>{m.from_admin ? "GroundUp Team" : (dmTarget?.name || "Member")}</div>}
+                        <div style={{ color: mine ? "#ffffff" : "#f0e0e0", fontSize: 14, fontFamily: font, lineHeight: 1.65, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.body}</div>
+                        <div style={{ color: mine ? "rgba(255,255,255,0.7)" : "#8f7070", fontSize: 10, fontFamily: font, marginTop: 5, textAlign: "right" }}>{timeAgo(m.created_at)}</div>
+                      </div>
+                    );
+                  })()}
                 </div>
               ))}
             </div>
