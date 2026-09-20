@@ -550,43 +550,54 @@ export async function sendDakJenMonthly(sql, opts = {}) {
   const notable = opts.notable || null;
 
   // One clean statement: a single table, label left, amount right. No tiles.
-  const S = "'DM Sans',Arial,Helvetica,sans-serif";
-  const line = (label, value, o = {}) => `<tr>
-    <td style="font-family:${S};font-size:13.5px;color:${o.strong ? '#161616' : '#555555'};font-weight:${o.strong ? '800' : '400'};padding:9px 0;border-bottom:1px solid ${o.strong ? '#161616' : '#ebe6de'};${o.indent ? 'padding-left:16px;' : ''}">${label}</td>
-    <td align="right" style="font-family:${S};font-size:13.5px;color:${o.color || '#161616'};font-weight:${o.strong ? '800' : '600'};padding:9px 0;border-bottom:1px solid ${o.strong ? '#161616' : '#ebe6de'};white-space:nowrap;">${value}</td></tr>`;
-  const section = (title) => `<tr><td colspan="2" style="font-family:${S};font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#c07481;font-weight:800;padding:26px 0 6px;">${title}</td></tr>`;
+  // DJC brand, per the marketing-report styling spec: Calibri; Navy #1B2A4A
+  // headings and section bars; Rose #C0737A accent rules and stat numbers;
+  // Dark Gray #2D2D2D body; Medium Gray #6B6B6B captions; Light Gray #F4F4F4 rows.
+  const F = "Calibri,Arial,Helvetica,sans-serif";
+  const NAVY = '#1B2A4A', ROSE = '#C0737A', DARK = '#2D2D2D', MID = '#6B6B6B', LIGHT = '#F4F4F4';
+  let i = 0;
+  const line = (label, value, o = {}) => { const bg = o.strong ? '#ffffff' : (i++ % 2 === 1 ? LIGHT : '#ffffff'); const top = o.strong ? 'border-top:2px solid ' + NAVY + ';' : ''; return `<tr>
+    <td style="font-family:${F};font-size:14px;color:${o.strong ? NAVY : DARK};font-weight:${o.strong ? 'bold' : 'normal'};padding:9px 10px;background:${bg};${top}">${label}</td>
+    <td align="right" style="font-family:${F};font-size:${o.strong ? '17px' : '14px'};color:${o.strong ? (o.color || ROSE) : DARK};font-weight:bold;padding:9px 10px;white-space:nowrap;background:${bg};${top}">${value}</td></tr>`; };
+  const section = (title) => { i = 0; return `<tr><td colspan="2" style="padding:22px 0 0;"><div style="background:${NAVY};color:#ffffff;font-family:${F};font-size:13px;font-weight:bold;letter-spacing:0.5px;padding:8px 12px;">${title}</div></td></tr>`; };
   const statement = (T, label) => T
-    ? line('Collected from members', money(T.gross), { indent: true }) + line('Paid to NREUV', '(' + money(T.nreuv) + ')', { indent: true }) + line('Stripe fees', '(' + money(T.fees) + ')', { indent: true }) + line('DakJen net — ' + label, money(T.net), { strong: true, color: T.net >= 0 ? '#1a7a3a' : '#b80101' })
-    : line('DakJen net — ' + label, 'fills in on the server', { strong: true });
+    ? line('Collected from members', money(T.gross)) + line('Paid to NREUV', '(' + money(T.nreuv) + ')') + line('Stripe fees', '(' + money(T.fees) + ')') + line('DakJen net — ' + label, money(T.net), { strong: true, color: T.net >= 0 ? ROSE : '#b80101' })
+    : line('DakJen net — ' + label, 'fills in on the server', { strong: true, color: MID });
 
-  const html = `
-    <h2 style="font-family:Georgia,serif;color:#161616;font-size:24px;margin:0 0 4px;">DakJen — ${monthName}</h2>
-    <p style="font-family:${S};color:#8a8a8a;font-size:13px;margin:0 0 6px;">Your side of the ledger. The 1st of every month. Never sent to NREUV.</p>
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+  const body = `
+    <div style="font-family:${F};font-size:28px;font-weight:bold;color:${NAVY};line-height:1.1;margin:0 0 6px;">Monthly Statement</div>
+    <div style="font-family:${F};font-size:13px;color:${MID};font-style:italic;margin:0 0 4px;">${monthName} · GroundUp platform revenue, DakJen share</div>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;">
       ${section('GroundUp — ' + mo)}
       ${statement(djM, mo)}
       ${section('GroundUp — ' + start.getFullYear() + ' year to date')}
       ${statement(djY, 'YTD')}
-      ${section('Recurring')}
+      ${section('Recurring revenue')}
       ${line('Gross MRR at month end', money(memberMrr + Number(ret.mrr || 0)))}
       ${line('DakJen share of MRR (25% memberships · 10% retainers)', money(djMrr) + '/mo', { strong: true })}
       ${section('Notable')}
-      ${notable ? line(mo + ' revenue', money(notable.month)) + line(start.getFullYear() + ' YTD', money(notable.ytd), { strong: true }) : line('Not connected yet', '—')}
+      ${notable ? line(mo + ' revenue', money(notable.month)) + line(start.getFullYear() + ' YTD', money(notable.ytd), { strong: true }) : line('Revenue source not yet connected', '—')}
       ${section('GroundUp growth')}
       ${line('New accounts', newSignups)}
       ${line('New paying members', newPaid)}
       ${line('Paying members now', paying.length)}
       ${line('Active retainers', ret.n)}
     </table>
-    ${notable ? '' : `<p style="font-family:${S};color:#8a8a8a;font-size:12px;line-height:1.7;margin:22px 0 0;">Notable fills in once its revenue source is connected (QuickBooks, a Notable Stripe account, or a sheet).</p>`}`;
-  // DakJen's own shell — cream ground, navy type, rose accent, DJC footer. No GroundUp marks.
+    ${notable ? '' : `<p style="font-family:${F};color:${MID};font-size:12px;font-style:italic;line-height:1.6;margin:18px 0 0;">Notable fills in once its revenue source is connected (QuickBooks, a Notable Stripe account, or a sheet).</p>`}`;
+
+  // DJC page: white, the DJC MARKETING header over a rose rule, the DJC footer
   const shell = `
-    <div style="background:#f5f2ee;padding:32px 16px;font-family:${S};">
-      <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e8e3db;border-radius:16px;padding:36px 32px;color:#333333;">
-        <div style="font-family:${S};font-size:18px;font-weight:800;color:#0c1c2c;letter-spacing:0.5px;margin-bottom:2px;">DakJen Creative</div>
-        <div style="font-family:${S};font-size:9px;color:#c07481;letter-spacing:2.5px;text-transform:uppercase;font-weight:800;margin-bottom:26px;">Internal · monthly statement</div>
-        ${html.replace('color:#161616;font-size:24px', 'color:#0c1c2c;font-size:24px')}
-        <div style="border-top:1px solid #e8e3db;margin-top:32px;padding-top:14px;font-family:${S};font-size:11px;color:#9a958f;">DakJen Creative LLC · this report is internal and is never sent to NREUV</div>
+    <div style="background:#ffffff;padding:28px 16px;font-family:${F};">
+      <div style="max-width:600px;margin:0 auto;">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-bottom:2px solid ${ROSE};margin-bottom:26px;"><tr>
+          <td style="font-family:${F};font-size:15px;font-weight:bold;color:${NAVY};letter-spacing:1px;padding:0 0 10px;">DJC MARKETING</td>
+          <td align="right" style="font-family:${F};padding:0 0 10px;"><div style="font-size:13px;font-weight:bold;color:${NAVY};">DakJen Creative LLC</div><div style="font-size:11px;color:${MID};">Monthly Statement | ${monthName}</div></td>
+        </tr></table>
+        ${body}
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-top:1px solid ${ROSE};margin-top:30px;"><tr>
+          <td style="font-family:${F};font-size:11px;color:${MID};padding-top:10px;">dakjencreative.com &nbsp;|&nbsp; marketing@dakjencreative.com</td>
+          <td align="right" style="font-family:${F};font-size:11px;color:${MID};padding-top:10px;">Internal · not sent to NREUV</td>
+        </tr></table>
       </div>
     </div>`;
   const subject = `DakJen monthly — ${monthName}: ${djM ? money(djM.net) : '—'} net · ${djY ? money(djY.net) : '—'} YTD`;
