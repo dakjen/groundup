@@ -1670,13 +1670,12 @@ function AboutPage({ setActivePage }) {
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14, marginTop: 28 }}>
             {[
-              { val: "8,000", label: "Units Developed" },
+              { val: "8,000+", label: "Units Built" },
               { val: "$5B+", label: "Underwritten" },
               { val: "$390M+", label: "Portfolio" },
-              { val: "$310M+", label: "Raised since 2021" },
-              { val: "817", label: "Units in Pipeline" },
               { val: "$310M+", label: "Raised Since 2021" },
-              { val: "800+", label: "Units in Pipeline" },
+              { val: "817", label: "Units in Pipeline" },
+              { val: "19", label: "Buildings in Pipeline" },
               { val: "#730", label: "Inc. 5000" },
             ].map((s, i) => (
               <div key={i} style={{ textAlign: "center", background: "#110606", border: "1px solid #1a0000", borderRadius: 12, padding: "18px 14px" }}>
