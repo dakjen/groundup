@@ -566,7 +566,7 @@ export async function sendDakJenMonthly(sql, opts = {}) {
 
   const body = `
     <div style="font-family:${F};font-size:28px;font-weight:bold;color:${NAVY};line-height:1.1;margin:0 0 6px;">Monthly Statement</div>
-    <div style="font-family:${F};font-size:13px;color:${MID};font-style:italic;margin:0 0 4px;">${monthName} · GroundUp platform revenue, DakJen share</div>
+    <div style="font-family:${F};font-size:13px;color:${MID};font-style:italic;margin:0 0 4px;">${monthName} · GroundUp platform revenue, Notable share</div>
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;">
       ${section('GroundUp — ' + mo)}
       ${statement(djM, mo)}
@@ -590,12 +590,12 @@ export async function sendDakJenMonthly(sql, opts = {}) {
     <div style="background:#ffffff;padding:28px 16px;font-family:${F};">
       <div style="max-width:600px;margin:0 auto;">
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-bottom:2px solid ${ROSE};margin-bottom:26px;"><tr>
-          <td style="font-family:${F};font-size:15px;font-weight:bold;color:${NAVY};letter-spacing:1px;padding:0 0 10px;">DJC MARKETING</td>
-          <td align="right" style="font-family:${F};padding:0 0 10px;"><div style="font-size:13px;font-weight:bold;color:${NAVY};">DakJen Creative LLC</div><div style="font-size:11px;color:${MID};">Monthly Statement | ${monthName}</div></td>
+          <td style="font-family:${F};font-size:15px;font-weight:bold;color:${NAVY};letter-spacing:1px;padding:0 0 10px;">NOTABLE</td>
+          <td align="right" style="font-family:${F};padding:0 0 10px;"><div style="font-size:13px;font-weight:bold;color:${NAVY};">Powered by Notable Services</div><div style="font-size:11px;color:${MID};">Monthly Statement | ${monthName}</div></td>
         </tr></table>
         ${body}
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-top:1px solid ${ROSE};margin-top:30px;"><tr>
-          <td style="font-family:${F};font-size:11px;color:${MID};padding-top:10px;">dakjencreative.com &nbsp;|&nbsp; marketing@dakjencreative.com</td>
+          <td style="font-family:${F};font-size:11px;color:${MID};padding-top:10px;">gobenotable.com &nbsp;|&nbsp; Powered by Notable Services</td>
           <td align="right" style="font-family:${F};font-size:11px;color:${MID};padding-top:10px;">Internal · not sent to NREUV</td>
         </tr></table>
       </div>
