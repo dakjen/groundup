@@ -6493,6 +6493,16 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
         </div>
       </div>
 
+      {/* Monthly report */}
+      <div style={section}>
+        <div style={heading}>Monthly Report — the 1st</div>
+        <p style={sub}>The 1st of every month after launch: the month that just closed — MRR at month end, gained and lost, total collected from Stripe, net change; new sign-ups; new clients above Premium (Owner and retainer, by name); everything pending on the team (unanswered DMs, workspaces awaiting a reply, session requests, unbooked paid sessions); and members by tier. Preview it any time with today's numbers.</p>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <input value={meeting.to_email} onChange={e => setMeeting({ ...meeting, to_email: e.target.value })} type="email" placeholder="djmj@nreuv.com" style={{ ...inp, maxWidth: 300, marginBottom: 0 }} />
+          <button disabled={busy} onClick={() => send({ kind: "monthly_report_preview", to_email: meeting.to_email || "djmj@nreuv.com" }, `Send a preview of the monthly report to ${meeting.to_email || "djmj@nreuv.com"}?`)} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>Send Me the Preview</button>
+        </div>
+      </div>
+
       {/* Founding-member thank-you */}
       <div style={section}>
         <div style={heading}>Founding Thank-You — Insider Waitlist</div>

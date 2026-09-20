@@ -139,7 +139,20 @@ export default async function handler(req, res) {
         await sql`INSERT INTO settings (key, value) VALUES ('weekly_digest_sent', ${stamp}) ON CONFLICT (key) DO UPDATE SET value = ${stamp}`;
       }
     } catch (e) { console.error('weekly digest failed', e.message); }
-    return res.json({ success: true, expired: rows.length, sent, drip, pot_released: released, pot_released_cents: releasedCents, weekly });
+    // Monthly report — the 1st of each month, once the insider launch has passed
+    let monthly = null;
+    try {
+      const nowEt = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      const [ins] = await sql`SELECT value FROM settings WHERE key = 'launch_insider_at'`;
+      const launched = ins?.value && new Date(ins.value).getTime() <= Date.now();
+      const stamp = nowEt.toISOString().slice(0, 7);
+      const [done] = await sql`SELECT value FROM settings WHERE key = 'monthly_report_sent'`;
+      if (launched && nowEt.getDate() === 1 && done?.value !== stamp) {
+        monthly = await sendMonthlyReport(sql);
+        await sql`INSERT INTO settings (key, value) VALUES ('monthly_report_sent', ${stamp}) ON CONFLICT (key) DO UPDATE SET value = ${stamp}`;
+      }
+    } catch (e) { console.error('monthly report failed', e.message); }
+    return res.json({ success: true, expired: rows.length, sent, drip, pot_released: released, pot_released_cents: releasedCents, weekly, monthly });
   }
 
   if (!requireAdmin(req, res)) return;
@@ -182,6 +195,13 @@ export default async function handler(req, res) {
       const recips = String(to_email || '').split(/[,;\s]+/).map(a => a.trim()).filter(a => a.includes('@'));
       if (!recips.length) return res.status(400).json({ error: 'Recipient email required' });
       const r = await sendWeeklyDigest(sql, { to: recips, preview: true });
+      return r.sent ? res.json({ success: true, sent: r.sent }) : res.status(502).json({ error: 'Email failed to send' });
+    }
+
+    if (kind === 'monthly_report_preview') {
+      const recips = String(to_email || '').split(/[,;\s]+/).map(a => a.trim()).filter(a => a.includes('@'));
+      if (!recips.length) return res.status(400).json({ error: 'Recipient email required' });
+      const r = await sendMonthlyReport(sql, { to: recips, preview: true });
       return r.sent ? res.json({ success: true, sent: r.sent }) : res.status(502).json({ error: 'Email failed to send' });
     }
 
@@ -350,4 +370,94 @@ export async function sendWeeklyDigest(sql, opts = {}) {
   let sent = 0;
   for (const addr of to) { if (await sendEmail(addr, (opts.preview ? '[PREVIEW] ' : '') + subject, html, { light: true })) sent++; }
   return { sent, to, subject, mrr: totalMrr, gained: gainedMrr, lost: lostMrr };
+}
+
+
+// ── The monthly report: the 1st of the month, the month that just closed ─────
+export async function sendMonthlyReport(sql, opts = {}) {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);   // first day of last month
+  const end = new Date(now.getFullYear(), now.getMonth(), 1);         // first day of this month
+  const monthName = start.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const users = await sql`SELECT id, name, email, tier, role, comped, badges, membership_status, created_at, tier_since, cancelled_at FROM users`;
+  const active = users.filter(u => u.membership_status === 'active' && (u.role || 'member') === 'member');
+  const paying = active.filter(u => mrrOf(u) > 0);
+  const memberMrr = paying.reduce((a, u) => a + mrrOf(u), 0);
+  const [ret] = await sql`SELECT COUNT(*)::int AS n, COALESCE(SUM(monthly_amount),0)::float AS mrr FROM retainers WHERE status = 'active'`;
+  const totalMrr = memberMrr + Number(ret.mrr || 0);
+
+  const inMonth = (d) => d && new Date(d) >= start && new Date(d) < end;
+  const newSignups = users.filter(u => inMonth(u.created_at) && (u.role || 'member') === 'member');
+  const newPaid = active.filter(u => inMonth(u.tier_since) && mrrOf(u) > 0);
+  const gainedMrr = newPaid.reduce((a, u) => a + mrrOf(u), 0);
+  const lost = users.filter(u => inMonth(u.cancelled_at));
+  const lostMrr = lost.reduce((a, u) => a + (PRICES[u.tier] || 0), 0);
+  // "Above Premium" = Owner members and retainer clients who started this month
+  const newOwners = newPaid.filter(u => u.tier === 'Elite');
+  const newRetainers = await sql`SELECT r.*, u.name, u.email FROM retainers r JOIN users u ON u.id = r.user_id WHERE r.status = 'active' AND r.created_at >= ${start.toISOString()} AND r.created_at < ${end.toISOString()}`;
+
+  // Pending: things waiting on the team right now
+  const [dmPending] = await sql`SELECT COUNT(DISTINCT d.user_id)::int AS n FROM dms d
+    WHERE d.from_admin = FALSE AND NOT EXISTS (SELECT 1 FROM dms a WHERE a.user_id = d.user_id AND a.from_admin = TRUE AND a.created_at > d.created_at)`;
+  const [wsPending] = await sql`SELECT COUNT(DISTINCT m.retainer_id)::int AS n FROM retainer_messages m
+    WHERE m.from_admin = FALSE AND NOT EXISTS (SELECT 1 FROM retainer_messages a WHERE a.retainer_id = m.retainer_id AND a.from_admin = TRUE AND a.created_at > m.created_at)`;
+  let sessionsPending = 0; try { const [sp] = await sql`SELECT COUNT(*)::int AS n FROM session_requests WHERE status = 'pending'`; sessionsPending = sp.n; } catch {}
+  let bookingsPending = 0; try { const [bp] = await sql`SELECT COUNT(*)::int AS n FROM bookings WHERE status = 'awaiting_booking'`; bookingsPending = bp.n; } catch {}
+  let topicReqs = 0; try { const [tr] = await sql`SELECT COUNT(*)::int AS n FROM lnl_requests WHERE created_at >= ${start.toISOString()} AND created_at < ${end.toISOString()}`; topicReqs = tr.n; } catch {}
+
+  // One-time revenue this month from Stripe, if reachable (passes, sessions, L&L, intake)
+  let oneTime = null;
+  try {
+    if (process.env.STRIPE_SECRET_KEY) {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+      let total = 0, count = 0, starting_after;
+      for (let page = 0; page < 10; page++) {
+        const res = await stripe.charges.list({ limit: 100, created: { gte: Math.floor(start.getTime() / 1000), lt: Math.floor(end.getTime() / 1000) }, ...(starting_after ? { starting_after } : {}) });
+        for (const c of res.data) if (c.paid && !c.refunded) { total += c.amount; count++; }
+        if (!res.has_more) break; starting_after = res.data[res.data.length - 1].id;
+      }
+      oneTime = { total: total / 100, count };
+    }
+  } catch (e) { console.error('monthly stripe pull failed', e.message); }
+
+  const tierCounts = ['Elite', 'Premium', 'Builder', 'Basic'].map(t => [TIER_LABEL[t], active.filter(u => u.tier === t).length]);
+  const S = "'DM Sans',Arial,Helvetica,sans-serif";
+  const stat = (label, value, sub, color = '#161616') => `<td style="padding:6px;width:33%;vertical-align:top;"><div style="background:#faf7f2;border:1px solid #e5dccf;border-radius:12px;padding:16px 14px;"><div style="font-family:${S};font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#8a8a8a;font-weight:bold;margin-bottom:8px;">${label}</div><div style="font-family:Georgia,serif;font-size:26px;font-weight:bold;color:${color};line-height:1;">${value}</div>${sub ? `<div style="font-family:${S};font-size:11px;color:#8a8a8a;margin-top:6px;">${sub}</div>` : ''}</div></td>`;
+  const row = (label, value) => `<tr><td style="font-family:${S};font-size:13px;color:#444444;padding:6px 0;border-bottom:1px solid #f0ece4;">${label}</td><td align="right" style="font-family:${S};font-size:13px;color:#161616;font-weight:bold;padding:6px 0;border-bottom:1px solid #f0ece4;">${value}</td></tr>`;
+  const person = (name, email, extra) => `<tr><td style="font-family:${S};font-size:13px;color:#161616;padding:5px 0;">${name} <span style="color:#8a8a8a;">· ${email}</span></td><td align="right" style="font-family:${S};font-size:12px;color:#8a8a8a;padding:5px 0;">${extra}</td></tr>`;
+  const head = (t, c = '#b80101') => `<div style="font-family:${S};font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:${c};font-weight:bold;margin:26px 0 8px;">${t}</div>`;
+
+  const html = `
+    <h2 style="font-family:Georgia,serif;color:#161616;font-size:24px;margin:0 0 4px;">GroundUp — ${monthName}</h2>
+    <p style="font-family:${S};color:#8a8a8a;font-size:13px;margin:0 0 20px;">The month in full. Sent the 1st of every month.</p>
+    ${head('Revenue')}
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
+      ${stat('MRR at month end', money(totalMrr), `${paying.length} paying · ${ret.n} retainer${ret.n === 1 ? '' : 's'}`)}
+      ${stat('MRR gained', '+' + money(gainedMrr), `${newPaid.length} new paid`, '#1a7a3a')}
+      ${stat('MRR lost', '−' + money(lostMrr), `${lost.length} cancellation${lost.length === 1 ? '' : 's'}`, lost.length ? '#b80101' : '#161616')}
+    </tr></table>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:8px;"><tr>
+      ${stat('Total collected', oneTime ? money(oneTime.total) : '—', oneTime ? `${oneTime.count} payments (Stripe, all products)` : 'Stripe not reachable')}
+      ${stat('ARR run-rate', money(totalMrr * 12), 'MRR × 12')}
+      ${stat('Net MRR change', (gainedMrr - lostMrr >= 0 ? '+' : '−') + money(Math.abs(gainedMrr - lostMrr)), 'gained minus lost', gainedMrr - lostMrr >= 0 ? '#1a7a3a' : '#b80101')}
+    </tr></table>
+
+    ${head('New sign-ups')}
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">${row('New accounts', newSignups.length)}${row('New paying members', newPaid.length)}${row('Course-topic requests', topicReqs)}</table>
+
+    ${head('New clients above Premium', '#8a5a08')}
+    ${newOwners.length || newRetainers.length ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%">${newRetainers.map(r => person(r.name, r.email, `Senior Advisor · ${r.hours_per_month} hrs · ${money(r.monthly_amount)}/mo`)).join('')}${newOwners.map(u => person(u.name, u.email, `Owner · ${money(mrrOf(u))}/mo`)).join('')}</table>` : `<p style="font-family:${S};font-size:13px;color:#8a8a8a;margin:0;">None this month.</p>`}
+
+    ${head('Pending — waiting on the team', '#b80101')}
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">${row('Member DMs without a reply', dmPending.n)}${row('Advisory workspaces awaiting a reply', wsPending.n)}${row('Session requests pending', sessionsPending)}${row('Paid sessions not yet booked', bookingsPending)}</table>
+
+    ${head('Members by tier', '#8a8a8a')}
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">${tierCounts.map(([l, n]) => row(l, n)).join('')}</table>
+    ${lost.length ? head('Cancellations') + `<table role="presentation" cellpadding="0" cellspacing="0" width="100%">${lost.map(u => person(u.name, u.email, `was ${TIER_LABEL[u.tier] || u.tier}`)).join('')}</table>` : ''}
+    <p style="font-family:${S};color:#8a8a8a;font-size:12px;line-height:1.7;margin:28px 0 0;">Money detail: Admin → Revenue. People: Admin → Users. Pipeline: Admin → Waitlist.</p>`;
+  const subject = `GroundUp monthly — ${monthName}: ${money(totalMrr)} MRR · +${newPaid.length} paid · ${newOwners.length + newRetainers.length} above Premium`;
+  const to = opts.to || ['gmerritt@nreuv.com', 'djmj@nreuv.com'];
+  let sent = 0;
+  for (const addr of to) { if (await sendEmail(addr, (opts.preview ? '[PREVIEW] ' : '') + subject, html, { light: true })) sent++; }
+  return { sent, to, subject, mrr: totalMrr };
 }
