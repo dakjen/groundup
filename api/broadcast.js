@@ -149,6 +149,7 @@ export default async function handler(req, res) {
       const [done] = await sql`SELECT value FROM settings WHERE key = 'monthly_report_sent'`;
       if (launched && nowEt.getDate() === 1 && done?.value !== stamp) {
         monthly = await sendMonthlyReport(sql);
+        try { monthly.dakjen = await sendDakJenMonthly(sql); } catch (e) { console.error('dakjen monthly failed', e.message); }
         await sql`INSERT INTO settings (key, value) VALUES ('monthly_report_sent', ${stamp}) ON CONFLICT (key) DO UPDATE SET value = ${stamp}`;
       }
     } catch (e) { console.error('monthly report failed', e.message); }
@@ -195,6 +196,13 @@ export default async function handler(req, res) {
       const recips = String(to_email || '').split(/[,;\s]+/).map(a => a.trim()).filter(a => a.includes('@'));
       if (!recips.length) return res.status(400).json({ error: 'Recipient email required' });
       const r = await sendWeeklyDigest(sql, { to: recips, preview: true });
+      return r.sent ? res.json({ success: true, sent: r.sent }) : res.status(502).json({ error: 'Email failed to send' });
+    }
+
+    if (kind === 'dakjen_monthly_preview') {
+      const recips = String(to_email || '').split(/[,;\s]+/).map(a => a.trim()).filter(a => a.includes('@'));
+      if (!recips.length) return res.status(400).json({ error: 'Recipient email required' });
+      const r = await sendDakJenMonthly(sql, { to: recips, preview: true });
       return r.sent ? res.json({ success: true, sent: r.sent }) : res.status(502).json({ error: 'Email failed to send' });
     }
 
@@ -456,8 +464,8 @@ export async function sendMonthlyReport(sql, opts = {}) {
     <p style="font-family:${S};color:#8a8a8a;font-size:13px;margin:0 0 20px;">The month in full, from NREUV's seat. Sent the 1st of every month.</p>
     ${head('NREUV revenue')}
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
-      ${stat(monthName.split(' ')[0] + ' — paid to NREUV', nreuvMonth ? money(nreuvMonth.total) : '—', nreuvMonth ? `${nreuvMonth.count} transfer${nreuvMonth.count === 1 ? '' : 's'} to your Stripe account` : 'Stripe not reachable', '#1a7a3a')}
-      ${stat(start.getFullYear() + ' year to date', nreuvYtd ? money(nreuvYtd.total) : '—', nreuvYtd ? `${nreuvYtd.count} transfers since Jan 1` : 'Stripe not reachable', '#1a7a3a')}
+      ${stat(monthName.split(' ')[0] + ' — paid to NREUV', nreuvMonth ? money(nreuvMonth.total) : '—', nreuvMonth ? `${nreuvMonth.count} transfer${nreuvMonth.count === 1 ? '' : 's'} to your Stripe account` : 'fills in on the server (Stripe)', '#1a7a3a')}
+      ${stat(start.getFullYear() + ' year to date', nreuvYtd ? money(nreuvYtd.total) : '—', nreuvYtd ? `${nreuvYtd.count} transfers since Jan 1` : 'fills in on the server (Stripe)', '#1a7a3a')}
       ${stat('Recurring, your share', money(nreuvMrr) + '/mo', 'of ' + money(totalMrr) + ' gross MRR — 75% memberships · 90% retainers')}
     </tr></table>
     ${head('Membership base')}
@@ -467,7 +475,7 @@ export async function sendMonthlyReport(sql, opts = {}) {
       ${stat('MRR lost', '−' + money(lostMrr), `${lost.length} cancellation${lost.length === 1 ? '' : 's'}`, lost.length ? '#b80101' : '#161616')}
     </tr></table>
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:8px;"><tr>
-      ${stat('Total collected (gross)', oneTime ? money(oneTime.total) : '—', oneTime ? `${oneTime.count} payments, all products` : 'Stripe not reachable')}
+      ${stat('Total collected (gross)', oneTime ? money(oneTime.total) : '—', oneTime ? `${oneTime.count} payments, all products` : 'fills in on the server (Stripe)')}
       ${stat('ARR run-rate (gross)', money(totalMrr * 12), 'MRR × 12')}
       ${stat('Net MRR change', (gainedMrr - lostMrr >= 0 ? '+' : '−') + money(Math.abs(gainedMrr - lostMrr)), 'gained minus lost', gainedMrr - lostMrr >= 0 ? '#1a7a3a' : '#b80101')}
     </tr></table>
@@ -490,4 +498,93 @@ export async function sendMonthlyReport(sql, opts = {}) {
   let sent = 0;
   for (const addr of to) { if (await sendEmail(addr, (opts.preview ? '[PREVIEW] ' : '') + subject, html, { light: true })) sent++; }
   return { sent, to, subject, mrr: totalMrr };
+}
+
+
+// ── The DakJen monthly: Notable-branded, DakJen's side of the ledger ─────────
+// DakJen's GroundUp take = gross collected minus what transferred to NREUV
+// (the platform absorbs Stripe fees, so this is before fees). Notable revenue
+// is a slot for a second source once it's wired (QuickBooks / Notable Stripe).
+async function grossCharges(fromSec, toSec) {
+  if (!process.env.STRIPE_SECRET_KEY) return null;
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  let total = 0, fees = 0, count = 0, starting_after;
+  for (let page = 0; page < 20; page++) {
+    const res = await stripe.charges.list({ limit: 100, created: { gte: fromSec, lt: toSec }, expand: ['data.balance_transaction'], ...(starting_after ? { starting_after } : {}) });
+    for (const c of res.data) if (c.paid) { total += c.amount - (c.amount_refunded || 0); fees += (c.balance_transaction?.fee || 0); count++; }
+    if (!res.has_more) break; starting_after = res.data[res.data.length - 1].id;
+  }
+  return { total: total / 100, fees: fees / 100, count };
+}
+
+export async function sendDakJenMonthly(sql, opts = {}) {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const end = new Date(now.getFullYear(), now.getMonth(), 1);
+  const yearStart = new Date(start.getFullYear(), 0, 1);
+  const monthName = start.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const sec = (d) => Math.floor(d.getTime() / 1000);
+
+  let gM = null, gY = null, nM = null, nY = null;
+  try { gM = await grossCharges(sec(start), sec(end)); gY = await grossCharges(sec(yearStart), sec(end)); nM = await nreuvTransfers(sec(start), sec(end)); nY = await nreuvTransfers(sec(yearStart), sec(end)); } catch (e) { console.error('dakjen stripe pull failed', e.message); }
+  const djM = gM && nM ? { gross: gM.total, nreuv: nM.total, fees: gM.fees, net: gM.total - nM.total - gM.fees } : null;
+  const djY = gY && nY ? { gross: gY.total, nreuv: nY.total, fees: gY.fees, net: gY.total - nY.total - gY.fees } : null;
+
+  const users = await sql`SELECT tier, role, comped, badges, membership_status, created_at, tier_since FROM users`;
+  const active = users.filter(u => u.membership_status === 'active' && (u.role || 'member') === 'member');
+  const paying = active.filter(u => mrrOf(u) > 0);
+  const memberMrr = paying.reduce((a, u) => a + mrrOf(u), 0);
+  const [ret] = await sql`SELECT COUNT(*)::int AS n, COALESCE(SUM(monthly_amount),0)::float AS mrr FROM retainers WHERE status = 'active'`;
+  const djMrr = memberMrr * 0.25 + Number(ret.mrr || 0) * 0.10;   // DakJen's share of recurring
+  const newSignups = users.filter(u => new Date(u.created_at) >= start && new Date(u.created_at) < end && (u.role || 'member') === 'member').length;
+  const newPaid = active.filter(u => u.tier_since && new Date(u.tier_since) >= start && new Date(u.tier_since) < end && mrrOf(u) > 0).length;
+
+  // Notable revenue — wired later; shown honestly as not connected until then
+  const notable = opts.notable || null;
+
+  const NAVY = '#0c1c2c', ROSE = '#c07481', CREAM = '#f5f2ee', SAND = '#e8e3db';
+  const SER = "'Fraunces',Georgia,'Times New Roman',serif", SAN = "'Syne','DM Sans',Arial,sans-serif";
+  const stat = (label, value, sub, color = NAVY) => `<td style="padding:6px;width:33%;vertical-align:top;"><div style="background:#ffffff;border:1px solid ${SAND};border-radius:14px;padding:16px 14px;"><div style="font-family:${SAN};font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#8a8580;font-weight:bold;margin-bottom:8px;">${label}</div><div style="font-family:${SER};font-size:26px;font-weight:600;color:${color};line-height:1;">${value}</div>${sub ? `<div style="font-family:${SAN};font-size:11px;color:#8a8580;margin-top:6px;">${sub}</div>` : ''}</div></td>`;
+  const row = (label, value, strong) => `<tr><td style="font-family:${SAN};font-size:13px;color:${strong ? NAVY : '#4a4a4a'};font-weight:${strong ? 'bold' : 'normal'};padding:7px 0;border-bottom:1px solid ${SAND};">${label}</td><td align="right" style="font-family:${SAN};font-size:13px;color:${NAVY};font-weight:bold;padding:7px 0;border-bottom:1px solid ${SAND};">${value}</td></tr>`;
+  const head = (t) => `<div style="font-family:${SAN};font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:${ROSE};font-weight:bold;margin:28px 0 8px;">${t}</div>`;
+  const ledger = (L) => L ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%">${row('Gross collected (all GroundUp products)', money(L.gross))}${row('Transferred to NREUV', '− ' + money(L.nreuv))}${row('Stripe fees (absorbed by DakJen)', '− ' + money(L.fees))}${row('DakJen net from GroundUp', money(L.net), true)}</table>` : `<p style="font-family:${SAN};font-size:13px;color:#8a8580;margin:0;">Fills in on the server, where Stripe is reachable.</p>`;
+
+  const inner = `
+    <div style="font-family:${SAN};font-size:10px;letter-spacing:3px;text-transform:uppercase;color:${ROSE};font-weight:bold;margin-bottom:8px;">DakJen Creative · Monthly</div>
+    <h2 style="font-family:${SER};color:${NAVY};font-size:28px;font-weight:600;margin:0 0 4px;letter-spacing:-0.3px;">${monthName}</h2>
+    <p style="font-family:${SAN};color:#8a8580;font-size:13px;margin:0 0 22px;">DakJen's side of the ledger. Sent the 1st of every month.</p>
+
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
+      ${stat(monthName.split(' ')[0] + ' — DakJen net', djM ? money(djM.net) : '—', 'GroundUp, after NREUV & fees', ROSE)}
+      ${stat(start.getFullYear() + ' YTD — DakJen net', djY ? money(djY.net) : '—', 'GroundUp, since Jan 1', ROSE)}
+      ${stat('Recurring, DakJen share', money(djMrr) + '/mo', '25% memberships · 10% retainers')}
+    </tr></table>
+
+    ${head('GroundUp — ' + monthName.split(' ')[0])}
+    ${ledger(djM)}
+    ${head('GroundUp — ' + start.getFullYear() + ' year to date')}
+    ${ledger(djY)}
+
+    ${head('Notable')}
+    ${notable ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%">${row(monthName.split(' ')[0] + ' revenue', money(notable.month), true)}${row(start.getFullYear() + ' YTD', money(notable.ytd), true)}${notable.note ? row('Source', notable.note) : ''}</table>`
+              : `<div style="background:#ffffff;border:1px dashed ${ROSE};border-radius:12px;padding:14px 16px;font-family:${SAN};font-size:13px;color:#4a4a4a;line-height:1.7;">Notable revenue isn't connected yet — tell me where it lives (QuickBooks, a Notable Stripe account, or a sheet) and this section fills itself in every month.</div>`}
+
+    ${head('GroundUp growth')}
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">${row('New accounts', newSignups)}${row('New paying members', newPaid)}${row('Paying members now', paying.length)}${row('Active retainers', ret.n)}${row('Gross MRR (all parties)', money(memberMrr + Number(ret.mrr || 0)))}</table>
+    <p style="font-family:${SAN};color:#8a8580;font-size:12px;line-height:1.7;margin:28px 0 0;">Nothing in this email goes to NREUV. Their version carries their share only.</p>`;
+
+  const html = `
+    <div style="background:${CREAM};padding:32px 16px;font-family:${SAN};">
+      <div style="max-width:560px;margin:0 auto;background:${CREAM};">
+        <div style="font-family:${SER};font-size:22px;font-weight:600;color:${NAVY};letter-spacing:-0.3px;margin-bottom:2px;">Notable<span style="color:${ROSE};">.</span></div>
+        <div style="font-family:${SAN};font-size:9px;color:#8a8580;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:26px;">by DakJen Creative</div>
+        ${inner}
+        <div style="border-top:1px solid ${SAND};margin-top:32px;padding-top:14px;font-family:${SAN};font-size:11px;color:#9a958f;">DakJen Creative LLC · internal · gobenotable.com</div>
+      </div>
+    </div>`;
+  const subject = `DakJen monthly — ${monthName}: ${djM ? money(djM.net) : '—'} net from GroundUp · ${djY ? money(djY.net) : '—'} YTD`;
+  const to = opts.to || ['dakotah@dakjencreative.com'];
+  let sent = 0;
+  for (const addr of to) { if (await sendEmail(addr, (opts.preview ? '[PREVIEW] ' : '') + subject, html, { raw: true })) sent++; }
+  return { sent, to, subject, month: djM, ytd: djY };
 }

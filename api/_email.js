@@ -103,7 +103,7 @@ export async function sendEmail(to, subject, innerHtml, opts = {}) {
     sender: sender(),
     to: [{ email: to }],
     subject,
-    htmlContent: wrap(innerHtml, to, opts.light),
+    htmlContent: opts.raw ? innerHtml : wrap(innerHtml, to, opts.light),
   });
   return !!r;
 }

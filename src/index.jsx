@@ -6503,6 +6503,13 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
         </div>
       </div>
 
+      {/* DakJen monthly (Notable-branded) */}
+      <div style={section}>
+        <div style={heading}>DakJen Monthly — Notable-branded — the 1st</div>
+        <p style={sub}>Dakotah's side of the ledger, never sent to NREUV: DakJen's net from GroundUp for the closed month and year to date (gross collected minus NREUV transfers minus Stripe fees), DakJen's share of recurring revenue, a Notable revenue section (connects once a source is chosen), and GroundUp growth. Goes to dakotah@dakjencreative.com only.</p>
+        <button disabled={busy} onClick={() => send({ kind: "dakjen_monthly_preview", to_email: "dakotah@dakjencreative.com" }, "Send a preview of the DakJen monthly to dakotah@dakjencreative.com?")} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>Send Me the Preview</button>
+      </div>
+
       {/* Founding-member thank-you */}
       <div style={section}>
         <div style={heading}>Founding Thank-You — Insider Waitlist</div>
