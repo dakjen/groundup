@@ -1058,6 +1058,12 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
 // ─── HOME PAGE ──────────────────────────────────────────────────────────────
 
 function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
+  // The course count grows with the curriculum — published courses only
+  const [courseCount, setCourseCount] = useState(miniCourses.length);
+  useEffect(() => {
+    fetch("/api/resources?courses=1").then(r => r.ok ? r.json() : null)
+      .then(d => { const n = (d?.courses || []).filter(c => !c.hidden).length; if (n) setCourseCount(n); }).catch(() => {});
+  }, []);
   return (
     <div style={{ background: "#000", paddingTop: 64 }}>
       {/* Hero */}
@@ -1104,7 +1110,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
       {/* Stats */}
       <div style={{ borderTop: "1px solid #1a0000", borderBottom: "1px solid #1a0000", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", background: "#0c0404" }}>
         {[
-          { val: "7", label: "Courses" },
+          { val: String(courseCount), label: "Courses" },
           { val: "$6B", label: "Transactions Underwritten" },
           { val: "8,000", label: "Units Built" },
           { val: "30+", label: "Years of Experience" },
