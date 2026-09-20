@@ -554,7 +554,7 @@ export async function sendDakJenMonthly(sql, opts = {}) {
   const line = (label, value, o = {}) => `<tr>
     <td style="font-family:${S};font-size:13.5px;color:${o.strong ? '#161616' : '#555555'};font-weight:${o.strong ? '800' : '400'};padding:9px 0;border-bottom:1px solid ${o.strong ? '#161616' : '#ebe6de'};${o.indent ? 'padding-left:16px;' : ''}">${label}</td>
     <td align="right" style="font-family:${S};font-size:13.5px;color:${o.color || '#161616'};font-weight:${o.strong ? '800' : '600'};padding:9px 0;border-bottom:1px solid ${o.strong ? '#161616' : '#ebe6de'};white-space:nowrap;">${value}</td></tr>`;
-  const section = (title) => `<tr><td colspan="2" style="font-family:${S};font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#b80101;font-weight:800;padding:26px 0 6px;">${title}</td></tr>`;
+  const section = (title) => `<tr><td colspan="2" style="font-family:${S};font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#c07481;font-weight:800;padding:26px 0 6px;">${title}</td></tr>`;
   const statement = (T, label) => T
     ? line('Collected from members', money(T.gross), { indent: true }) + line('Paid to NREUV', '(' + money(T.nreuv) + ')', { indent: true }) + line('Stripe fees', '(' + money(T.fees) + ')', { indent: true }) + line('DakJen net — ' + label, money(T.net), { strong: true, color: T.net >= 0 ? '#1a7a3a' : '#b80101' })
     : line('DakJen net — ' + label, 'fills in on the server', { strong: true });
@@ -579,10 +579,20 @@ export async function sendDakJenMonthly(sql, opts = {}) {
       ${line('Active retainers', ret.n)}
     </table>
     ${notable ? '' : `<p style="font-family:${S};color:#8a8a8a;font-size:12px;line-height:1.7;margin:22px 0 0;">Notable fills in once its revenue source is connected (QuickBooks, a Notable Stripe account, or a sheet).</p>`}`;
+  // DakJen's own shell — cream ground, navy type, rose accent, DJC footer. No GroundUp marks.
+  const shell = `
+    <div style="background:#f5f2ee;padding:32px 16px;font-family:${S};">
+      <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e8e3db;border-radius:16px;padding:36px 32px;color:#333333;">
+        <div style="font-family:${S};font-size:18px;font-weight:800;color:#0c1c2c;letter-spacing:0.5px;margin-bottom:2px;">DakJen Creative</div>
+        <div style="font-family:${S};font-size:9px;color:#c07481;letter-spacing:2.5px;text-transform:uppercase;font-weight:800;margin-bottom:26px;">Internal · monthly statement</div>
+        ${html.replace('color:#161616;font-size:24px', 'color:#0c1c2c;font-size:24px')}
+        <div style="border-top:1px solid #e8e3db;margin-top:32px;padding-top:14px;font-family:${S};font-size:11px;color:#9a958f;">DakJen Creative LLC · this report is internal and is never sent to NREUV</div>
+      </div>
+    </div>`;
   const subject = `DakJen monthly — ${monthName}: ${djM ? money(djM.net) : '—'} net · ${djY ? money(djY.net) : '—'} YTD`;
   const to = opts.to || ['dakotah@dakjencreative.com'];
   let sent = 0;
-  for (const addr of to) { if (await sendEmail(addr, (opts.preview ? '[PREVIEW] ' : '') + subject, html, { light: true })) sent++; }
+  for (const addr of to) { if (await sendEmail(addr, (opts.preview ? '[PREVIEW] ' : '') + subject, shell, { raw: true })) sent++; }
   return { sent, to, subject, month: djM, ytd: djY };
 }
 
