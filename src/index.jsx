@@ -6483,6 +6483,17 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
         </div>
       </div>
 
+      {/* Pre-launch waitlist weekly */}
+      <div style={section}>
+        <div style={heading}>Waitlist Weekly — Fridays until launch</div>
+        <p style={sub}>Until November 1, Fridays send Gina and Dakotah the waitlist to date: total signed up, new this week by name, founding members, anticipated MRR and ARR (each person at their recommended plan), retainer leads, and where everyone's headed by tier. NREUV's view — no DakJen figures. After launch this hands off to the membership digest automatically.</p>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <input value={meeting.to_email} onChange={e => setMeeting({ ...meeting, to_email: e.target.value })} type="email" placeholder="djmj@nreuv.com" style={{ ...inp, maxWidth: 300, marginBottom: 0 }} />
+          <button disabled={busy} onClick={() => send({ kind: "waitlist_weekly_preview", to_email: meeting.to_email || "djmj@nreuv.com" }, `Send a preview of the waitlist weekly to ${meeting.to_email || "djmj@nreuv.com"}?`)} style={{ ...btnGhost }}>Send Me the Preview</button>
+          <button disabled={busy} onClick={() => send({ kind: "waitlist_weekly_send" }, "Send the waitlist summary to Gina and Dakotah now? This is a real send.")} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>Send to Gina & Dakotah Now</button>
+        </div>
+      </div>
+
       {/* Weekly digest */}
       <div style={section}>
         <div style={heading}>Weekly Team Digest — Fridays</div>

@@ -134,8 +134,8 @@ export default async function handler(req, res) {
       const launched = ins?.value && new Date(ins.value).getTime() <= Date.now();
       const stamp = nowEt.toISOString().slice(0, 10);
       const [done] = await sql`SELECT value FROM settings WHERE key = 'weekly_digest_sent'`;
-      if (launched && nowEt.getDay() === 5 && done?.value !== stamp) {
-        weekly = await sendWeeklyDigest(sql);
+      if (nowEt.getDay() === 5 && done?.value !== stamp) {
+        weekly = launched ? await sendWeeklyDigest(sql) : await sendWaitlistWeekly(sql);
         await sql`INSERT INTO settings (key, value) VALUES ('weekly_digest_sent', ${stamp}) ON CONFLICT (key) DO UPDATE SET value = ${stamp}`;
       }
     } catch (e) { console.error('weekly digest failed', e.message); }
@@ -192,6 +192,13 @@ export default async function handler(req, res) {
     // Founding thank-you: preview to any addresses, or the real once-only send
     // to every insider waitlister who hasn't gotten it yet.
     // Weekly digest preview — sends the real numbers to whoever asks, tagged [PREVIEW]
+    if (kind === 'waitlist_weekly_preview' || kind === 'waitlist_weekly_send') {
+      const recips = kind === 'waitlist_weekly_send' ? ['gmerritt@nreuv.com', 'djmj@nreuv.com'] : String(to_email || '').split(/[,;\s]+/).map(a => a.trim()).filter(a => a.includes('@'));
+      if (!recips.length) return res.status(400).json({ error: 'Recipient email required' });
+      const r = await sendWaitlistWeekly(sql, { to: recips, preview: kind === 'waitlist_weekly_preview' });
+      return r.sent ? res.json({ success: true, sent: r.sent }) : res.status(502).json({ error: 'Email failed to send' });
+    }
+
     if (kind === 'weekly_digest_preview') {
       const recips = String(to_email || '').split(/[,;\s]+/).map(a => a.trim()).filter(a => a.includes('@'));
       if (!recips.length) return res.status(400).json({ error: 'Recipient email required' });
@@ -587,4 +594,62 @@ export async function sendDakJenMonthly(sql, opts = {}) {
   let sent = 0;
   for (const addr of to) { if (await sendEmail(addr, (opts.preview ? '[PREVIEW] ' : '') + subject, html, { raw: true })) sent++; }
   return { sent, to, subject, month: djM, ytd: djY };
+}
+
+
+// ── Pre-launch Friday summary: the waitlist to date, NREUV's view ────────────
+// Same per-person math as the admin Waitlist tab: each entry's recommended plan
+// at the founding rate. No DakJen figures in this email.
+const REC_MRR = { Basic: 37.49, Builder: 112.49, Premium: 187.49, Elite: 374.99 };
+export async function sendWaitlistWeekly(sql, opts = {}) {
+  const entries = await sql`SELECT id, name, email, list, budget, learn, reason, founding_lnl, first10, rec_override, comped, created_at FROM waitlist ORDER BY created_at DESC`;
+  const since = new Date(Date.now() - 7 * 86400000);
+  const fresh = entries.filter(e => new Date(e.created_at) >= since);
+  const mrrFor = (e) => {
+    if (e.comped) return 0;
+    const r = recommendPlan(e);
+    if (r.oneTime) return 0;
+    if (r.tier === 'Advisor') return 3025;
+    const list = { Basic: 49.99, Builder: 149.99, Premium: 249.99, Elite: 499.99 }[r.tier] || 0;
+    return e.founding_lnl ? (REC_MRR[r.tier] || 0) : list;
+  };
+  const labelFor = (e) => { const r = recommendPlan(e); return r.tier === 'Advisor' ? 'Senior Advisor' : r.oneTime ? r.label : ({ Basic: 'Member', Builder: 'Builder', Premium: 'Premium', Elite: 'Owner' }[r.tier] || r.label); };
+  const mrr = entries.reduce((a, e) => a + mrrFor(e), 0);
+  const counts = {};
+  for (const e of entries) { const l = labelFor(e); counts[l] = (counts[l] || 0) + 1; }
+  const insiders = entries.filter(e => (e.list || 'insider') === 'insider').length;
+  const founding = entries.filter(e => e.founding_lnl).length;
+  const retainerLeads = entries.filter(e => labelFor(e) === 'Senior Advisor').length;
+  const [ins] = await sql`SELECT value FROM settings WHERE key = 'launch_insider_at'`;
+  const daysToLaunch = ins?.value ? Math.max(0, Math.ceil((new Date(ins.value).getTime() - Date.now()) / 86400000)) : null;
+
+  const S = "'DM Sans',Arial,Helvetica,sans-serif";
+  const stat = (label, value, sub, color = '#161616') => `<td style="padding:6px;width:33%;vertical-align:top;"><div style="background:#faf7f2;border:1px solid #e5dccf;border-radius:12px;padding:16px 14px;"><div style="font-family:${S};font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#8a8a8a;font-weight:bold;margin-bottom:8px;">${label}</div><div style="font-family:Georgia,serif;font-size:26px;font-weight:bold;color:${color};line-height:1;">${value}</div>${sub ? `<div style="font-family:${S};font-size:11px;color:#8a8a8a;margin-top:6px;">${sub}</div>` : ''}</div></td>`;
+  const row = (label, value) => `<tr><td style="font-family:${S};font-size:13px;color:#444444;padding:6px 0;border-bottom:1px solid #f0ece4;">${label}</td><td align="right" style="font-family:${S};font-size:13px;color:#161616;font-weight:bold;padding:6px 0;border-bottom:1px solid #f0ece4;">${value}</td></tr>`;
+  const head = (t, c = '#b80101') => `<div style="font-family:${S};font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:${c};font-weight:bold;margin:26px 0 8px;">${t}</div>`;
+  const order = ['Senior Advisor', 'Owner', 'Premium', 'Builder', 'Member'];
+  const tierRows = [...order.filter(k => counts[k]), ...Object.keys(counts).filter(k => !order.includes(k))].map(k => row(k, counts[k])).join('');
+
+  const html = `
+    <h2 style="font-family:Georgia,serif;color:#161616;font-size:24px;margin:0 0 4px;">The waitlist, to date</h2>
+    <p style="font-family:${S};color:#8a8a8a;font-size:13px;margin:0 0 20px;">${daysToLaunch !== null ? `${daysToLaunch} days to insider launch · ` : ''}${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
+      ${stat('On the waitlist', entries.length, `${insiders} insider · ${entries.length - insiders} general`)}
+      ${stat('New this week', '+' + fresh.length, fresh.length ? fresh.slice(0, 3).map(e => e.name.split(' ')[0]).join(', ') + (fresh.length > 3 ? '…' : '') : 'quiet week', '#1a7a3a')}
+      ${stat('Founding members', founding, 'locked in at founding rates')}
+    </tr></table>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:8px;"><tr>
+      ${stat('Anticipated MRR', money(mrr), 'if everyone joins their recommended plan', '#b80101')}
+      ${stat('Anticipated ARR', money(mrr * 12), 'MRR × 12', '#b80101')}
+      ${stat('Retainer leads', retainerLeads, 'Senior Advisor track', retainerLeads ? '#8a5a08' : '#161616')}
+    </tr></table>
+    ${head('Where they’re headed')}
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">${tierRows || row('No entries yet', '—')}</table>
+    ${fresh.length ? head('Joined this week', '#1a7a3a') + `<table role="presentation" cellpadding="0" cellspacing="0" width="100%">${fresh.map(e => `<tr><td style="font-family:${S};font-size:13px;color:#161616;padding:5px 0;">${e.name} <span style="color:#8a8a8a;">· ${e.email}</span></td><td align="right" style="font-family:${S};font-size:12px;color:#8a8a8a;padding:5px 0;">${labelFor(e)}${e.founding_lnl ? ' · founding' : ''}</td></tr>`).join('')}</table>` : ''}
+    <p style="font-family:${S};color:#8a8a8a;font-size:12px;line-height:1.7;margin:28px 0 0;">Every Friday until launch. After November 1 this becomes the weekly membership digest.</p>`;
+  const subject = `GroundUp waitlist — ${entries.length} signed up · ${money(mrr)} anticipated MRR${fresh.length ? ` · +${fresh.length} this week` : ''}`;
+  const to = opts.to || ['gmerritt@nreuv.com', 'djmj@nreuv.com'];
+  let sent = 0;
+  for (const addr of to) { if (await sendEmail(addr, (opts.preview ? '[PREVIEW] ' : '') + subject, html, { light: true })) sent++; }
+  return { sent, to, subject, total: entries.length, mrr };
 }
