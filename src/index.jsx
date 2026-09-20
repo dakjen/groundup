@@ -6483,6 +6483,16 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
         </div>
       </div>
 
+      {/* Weekly digest */}
+      <div style={section}>
+        <div style={heading}>Weekly Team Digest — Fridays</div>
+        <p style={sub}>Every Friday after the November 1 insider launch, Gina and Dakotah get the week in one email: MRR now, MRR gained and lost this week with names, new accounts, waitlist joins, community posts, lessons completed, RSVPs, deal leads, and members by tier. It sends itself — this button just previews it with today's real numbers.</p>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <input value={meeting.to_email} onChange={e => setMeeting({ ...meeting, to_email: e.target.value })} type="email" placeholder="djmj@nreuv.com" style={{ ...inp, maxWidth: 300, marginBottom: 0 }} />
+          <button disabled={busy} onClick={() => send({ kind: "weekly_digest_preview", to_email: meeting.to_email || "djmj@nreuv.com" }, `Send a preview of the weekly digest to ${meeting.to_email || "djmj@nreuv.com"}?`)} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>Send Me the Preview</button>
+        </div>
+      </div>
+
       {/* Founding-member thank-you */}
       <div style={section}>
         <div style={heading}>Founding Thank-You — Insider Waitlist</div>

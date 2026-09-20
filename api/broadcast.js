@@ -125,7 +125,21 @@ export default async function handler(req, res) {
         } catch (e) { console.error('pot release failed', h.charge_id, e.message); }
       }
     }
-    return res.json({ success: true, expired: rows.length, sent, drip, pot_released: released, pot_released_cents: releasedCents });
+    // Weekly team digest — Fridays, only once the insider launch has passed.
+    // Guarded by a settings flag so a re-run the same day never double-sends.
+    let weekly = null;
+    try {
+      const nowEt = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      const [ins] = await sql`SELECT value FROM settings WHERE key = 'launch_insider_at'`;
+      const launched = ins?.value && new Date(ins.value).getTime() <= Date.now();
+      const stamp = nowEt.toISOString().slice(0, 10);
+      const [done] = await sql`SELECT value FROM settings WHERE key = 'weekly_digest_sent'`;
+      if (launched && nowEt.getDay() === 5 && done?.value !== stamp) {
+        weekly = await sendWeeklyDigest(sql);
+        await sql`INSERT INTO settings (key, value) VALUES ('weekly_digest_sent', ${stamp}) ON CONFLICT (key) DO UPDATE SET value = ${stamp}`;
+      }
+    } catch (e) { console.error('weekly digest failed', e.message); }
+    return res.json({ success: true, expired: rows.length, sent, drip, pot_released: released, pot_released_cents: releasedCents, weekly });
   }
 
   if (!requireAdmin(req, res)) return;
@@ -163,6 +177,14 @@ export default async function handler(req, res) {
     // wording can be reviewed in a real inbox. Subjects are [PREVIEW]-prefixed.
     // Founding thank-you: preview to any addresses, or the real once-only send
     // to every insider waitlister who hasn't gotten it yet.
+    // Weekly digest preview — sends the real numbers to whoever asks, tagged [PREVIEW]
+    if (kind === 'weekly_digest_preview') {
+      const recips = String(to_email || '').split(/[,;\s]+/).map(a => a.trim()).filter(a => a.includes('@'));
+      if (!recips.length) return res.status(400).json({ error: 'Recipient email required' });
+      const r = await sendWeeklyDigest(sql, { to: recips, preview: true });
+      return r.sent ? res.json({ success: true, sent: r.sent }) : res.status(502).json({ error: 'Email failed to send' });
+    }
+
     if (kind === 'founding_thanks') {
       if (to_email) {
         const mail = foundingThanksEmail('Dakotah');
@@ -256,4 +278,76 @@ export default async function handler(req, res) {
     console.error(err);
     return res.status(500).json({ error: 'Server error' });
   }
+}
+
+
+// ── The Friday team digest: what happened this week, in one email ────────────
+const PRICES = { Basic: 49.99, Builder: 149.99, Premium: 249.99, Elite: 499.99 };
+const FOUNDING = { Basic: 37.49, Builder: 112.49, Premium: 187.49, Elite: 374.99 };
+const TIER_LABEL = { Basic: 'Member', Builder: 'Builder', Premium: 'Premium', Elite: 'Owner' };
+const mrrOf = (u) => (u.comped || u.role === 'admin' || !PRICES[u.tier]) ? 0 : ((Array.isArray(u.badges) ? u.badges : []).includes('founding25') ? FOUNDING[u.tier] : PRICES[u.tier]);
+const money = (n) => '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+export async function sendWeeklyDigest(sql, opts = {}) {
+  const week = "NOW() - interval '7 days'";
+  const users = await sql`SELECT id, name, email, tier, role, comped, badges, membership_status, created_at, tier_since, cancelled_at FROM users`;
+  const active = users.filter(u => u.membership_status === 'active' && (u.role || 'member') === 'member');
+  const paying = active.filter(u => mrrOf(u) > 0);
+  const mrr = paying.reduce((a, u) => a + mrrOf(u), 0);
+  const [ret] = await sql`SELECT COUNT(*)::int AS n, COALESCE(SUM(monthly_amount),0)::float AS mrr FROM retainers WHERE status = 'active'`;
+  const totalMrr = mrr + Number(ret.mrr || 0);
+
+  const since = new Date(Date.now() - 7 * 86400000);
+  const newSignups = users.filter(u => new Date(u.created_at) >= since && (u.role || 'member') === 'member');
+  const newPaid = active.filter(u => u.tier_since && new Date(u.tier_since) >= since && mrrOf(u) > 0);
+  const gainedMrr = newPaid.reduce((a, u) => a + mrrOf(u), 0);
+  const lost = users.filter(u => u.cancelled_at && new Date(u.cancelled_at) >= since);
+  const lostMrr = lost.reduce((a, u) => a + (PRICES[u.tier] || 0), 0);
+
+  const [wl] = await sql`SELECT COUNT(*)::int AS n FROM waitlist WHERE created_at >= NOW() - interval '7 days'`;
+  const [posts] = await sql`SELECT COUNT(*)::int AS n FROM messages WHERE created_at >= NOW() - interval '7 days' AND deleted = FALSE`;
+  const [dmsN] = await sql`SELECT COUNT(*)::int AS n FROM dms WHERE created_at >= NOW() - interval '7 days' AND from_admin = FALSE`;
+  const [rsvps] = await sql`SELECT COUNT(*)::int AS n FROM lnl_rsvps WHERE created_at >= NOW() - interval '7 days'`;
+  let lessonsDone = 0; try { const [l] = await sql`SELECT COUNT(*)::int AS n FROM lesson_progress WHERE completed_at >= NOW() - interval '7 days'`; lessonsDone = l.n; } catch {}
+  let leads = 0; try { const [d] = await sql`SELECT COUNT(*)::int AS n FROM deal_leads WHERE created_at >= NOW() - interval '7 days'`; leads = d.n; } catch {}
+  let tickets = 0; try { const [t] = await sql`SELECT COUNT(*)::int AS n FROM session_requests WHERE created_at >= NOW() - interval '7 days'`; tickets = t.n; } catch {}
+  const tierCounts = ['Elite', 'Premium', 'Builder', 'Basic'].map(t => [TIER_LABEL[t], active.filter(u => u.tier === t).length]);
+
+  const S = "'DM Sans',Arial,Helvetica,sans-serif";
+  const stat = (label, value, sub, color = '#161616') => `<td style="padding:6px;width:33%;vertical-align:top;"><div style="background:#faf7f2;border:1px solid #e5dccf;border-radius:12px;padding:16px 14px;"><div style="font-family:${S};font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#8a8a8a;font-weight:bold;margin-bottom:8px;">${label}</div><div style="font-family:Georgia,serif;font-size:26px;font-weight:bold;color:${color};line-height:1;">${value}</div>${sub ? `<div style="font-family:${S};font-size:11px;color:#8a8a8a;margin-top:6px;">${sub}</div>` : ''}</div></td>`;
+  const row = (label, value) => `<tr><td style="font-family:${S};font-size:13px;color:#444444;padding:6px 0;border-bottom:1px solid #f0ece4;">${label}</td><td align="right" style="font-family:${S};font-size:13px;color:#161616;font-weight:bold;padding:6px 0;border-bottom:1px solid #f0ece4;">${value}</td></tr>`;
+  const person = (u, extra) => `<tr><td style="font-family:${S};font-size:13px;color:#161616;padding:5px 0;">${u.name} <span style="color:#8a8a8a;">· ${u.email}</span></td><td align="right" style="font-family:${S};font-size:12px;color:#8a8a8a;padding:5px 0;">${extra}</td></tr>`;
+  const weekLabel = `${since.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+
+  const html = `
+    <h2 style="font-family:Georgia,serif;color:#161616;font-size:24px;margin:0 0 4px;">The week at GroundUp</h2>
+    <p style="font-family:${S};color:#8a8a8a;font-size:13px;margin:0 0 20px;">${weekLabel}</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
+      ${stat('MRR now', money(totalMrr), `${paying.length} paying · ${ret.n} retainer${ret.n === 1 ? '' : 's'}`)}
+      ${stat('Gained this week', '+' + money(gainedMrr), `${newPaid.length} new paid member${newPaid.length === 1 ? '' : 's'}`, '#1a7a3a')}
+      ${stat('Lost this week', '−' + money(lostMrr), `${lost.length} cancellation${lost.length === 1 ? '' : 's'}`, lost.length ? '#b80101' : '#161616')}
+    </tr></table>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:8px;"><tr>
+      ${stat('New accounts', newSignups.length, 'signed up this week')}
+      ${stat('Waitlist joins', wl.n, 'this week')}
+      ${stat('ARR run-rate', money(totalMrr * 12), 'MRR × 12')}
+    </tr></table>
+
+    <div style="font-family:${S};font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#b80101;font-weight:bold;margin:26px 0 8px;">Community & learning</div>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+      ${row('Community posts', posts.n)}${row('Member DMs to the team', dmsN.n)}${row('Lessons completed', lessonsDone)}${row('Event RSVPs', rsvps.n)}${row('Deal leads (send-her-your-deal)', leads)}${row('Session requests', tickets)}
+    </table>
+
+    <div style="font-family:${S};font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#b80101;font-weight:bold;margin:26px 0 8px;">Members by tier</div>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">${tierCounts.map(([l, n]) => row(l, n)).join('')}</table>
+
+    ${newPaid.length ? `<div style="font-family:${S};font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#1a7a3a;font-weight:bold;margin:26px 0 8px;">New paying members</div><table role="presentation" cellpadding="0" cellspacing="0" width="100%">${newPaid.map(u => person(u, `${TIER_LABEL[u.tier]} · ${money(mrrOf(u))}/mo`)).join('')}</table>` : ''}
+    ${lost.length ? `<div style="font-family:${S};font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#b80101;font-weight:bold;margin:26px 0 8px;">Cancellations</div><table role="presentation" cellpadding="0" cellspacing="0" width="100%">${lost.map(u => person(u, `was ${TIER_LABEL[u.tier] || u.tier}`)).join('')}</table>` : ''}
+    ${newSignups.length && newSignups.length <= 25 ? `<div style="font-family:${S};font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#8a8a8a;font-weight:bold;margin:26px 0 8px;">New accounts</div><table role="presentation" cellpadding="0" cellspacing="0" width="100%">${newSignups.map(u => person(u, TIER_LABEL[u.tier] || u.tier)).join('')}</table>` : ''}
+    <p style="font-family:${S};color:#8a8a8a;font-size:12px;line-height:1.7;margin:28px 0 0;">Full detail lives in the admin: Revenue for the money, Users for the people, Waitlist for the pipeline. This digest goes out every Friday.</p>`;
+  const subject = `GroundUp weekly — ${money(totalMrr)} MRR · +${newPaid.length} paid · ${newSignups.length} new accounts`;
+  const to = opts.to || ['gmerritt@nreuv.com', 'djmj@nreuv.com'];
+  let sent = 0;
+  for (const addr of to) { if (await sendEmail(addr, (opts.preview ? '[PREVIEW] ' : '') + subject, html, { light: true })) sent++; }
+  return { sent, to, subject, mrr: totalMrr, gained: gainedMrr, lost: lostMrr };
 }
