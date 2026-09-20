@@ -1093,10 +1093,10 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
               <div style={{ padding: "24px 28px 28px" }}>
                 <div style={{ fontSize: 11, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Dr. Gina Merritt</div>
                 <p style={{ fontSize: 13, color: "#c4a8a8", lineHeight: 1.75, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>
-                  Raised in the Bronx. Bootstrapped from public housing to $600M+ in development deals across DC, Baltimore & Cleveland.
+                  Raised in the Bronx. Bootstrapped from public housing to $390M+ portfolio of development deals across DC, Baltimore & Cleveland.
                 </p>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {["Howard Grad", "Darden MBA", "USC Doctorate", "$6B Underwritten", "8,000 Units Built"].map(t => (
+                  {["Howard Grad", "Darden MBA", "USC Doctorate", "$5B+ Underwritten", "8,000 Units Built"].map(t => (
                     <span key={t} style={{ fontSize: 10, color: "#8a7070", border: "1px solid #2a0000", borderRadius: 20, padding: "4px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{t}</span>
                   ))}
                 </div>
@@ -1111,7 +1111,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
       <div style={{ borderTop: "1px solid #1a0000", borderBottom: "1px solid #1a0000", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", background: "#0c0404" }}>
         {[
           { val: String(courseCount), label: "Courses" },
-          { val: "$6B", label: "Transactions Underwritten" },
+          { val: "$5B+", label: "Transactions Underwritten" },
           { val: "8,000", label: "Units Built" },
           { val: "30+", label: "Years of Experience" },
         ].map((s, i) => (
@@ -1653,7 +1653,7 @@ function AboutPage({ setActivePage }) {
             Today she is Principal of Northern Real Estate Urban Ventures (NREUV), a woman-owned development firm working across DC, Baltimore, Cleveland, and Prince George's County, and the founder of Project Community Capital® — a social capital platform that connects returning citizens and under-networked residents to jobs on the very projects rising in their neighborhoods.
           </p>
           <p style={{ color: "#9a8080", fontSize: 16, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", maxWidth: 700 }}>
-            She has spent 30+ years in hands-on development, finance, construction, and asset management — first two decades running other people's deals as a development manager and advisor, then, starting in 2020, owning her own. She built her ownership pipeline from nearly zero to over $600 million. GroundUp exists to hand you the playbook that took her thirty years to write.
+            She has spent 30+ years in hands-on development, finance, construction, and asset management — first two decades running other people's deals as a development manager and advisor, then, starting in 2020, owning her own. She built her ownership pipeline from nearly zero to over $390 million. GroundUp exists to hand you the playbook that took her thirty years to write.
           </p>
           </div>
           <img loading="lazy" src="/GM Headshot.jpg" alt="Dr. Gina Merritt" style={{ flex: "0 0 280px", width: 280, maxWidth: "100%", borderRadius: 16, border: "1px solid #2a0000", objectFit: "cover", alignSelf: "stretch", maxHeight: 420 }} />
@@ -1663,7 +1663,7 @@ function AboutPage({ setActivePage }) {
         <div style={{ background: "#160808", border: "1px solid #2a0000", borderRadius: 20, padding: "40px", marginBottom: 40 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 24 }}>Career & Track Record</div>
           <p style={{ color: "#a89080", fontSize: 15, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>
-            Dr. Merritt studied business at Howard University, earned her MBA from UVA's Darden School of Business, and holds a Doctorate in Social Innovation from the University of Southern California. She spent her first two decades in development management and advisory work before owning her own deals, beginning in 2020. Since George Floyd's murder, she has grown her ownership pipeline from near zero to over $600 million.
+            Dr. Merritt studied business at Howard University, earned her MBA from UVA's Darden School of Business, and holds a Doctorate in Social Innovation from the University of Southern California. She spent her first two decades in development management and advisory work before owning her own deals, beginning in 2020. Since George Floyd's murder, she has grown her ownership pipeline from near zero to over $390 million.
           </p>
           <p style={{ color: "#9a8080", fontSize: 15, lineHeight: 1.9, fontFamily: "'DM Sans', sans-serif" }}>
             Her portfolio spans DC, Baltimore, Cleveland, and Prince George's County — including 9410 Hough ($47M, 14 financing sources), Nannie Helen at 4800, Beacon Center DC, and a 12-acre senior campus redevelopment in Cleveland.
@@ -1671,8 +1671,10 @@ function AboutPage({ setActivePage }) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14, marginTop: 28 }}>
             {[
               { val: "8,000", label: "Units Developed" },
-              { val: "$6B", label: "Underwritten" },
-              { val: "$600M+", label: "Portfolio" },
+              { val: "$5B+", label: "Underwritten" },
+              { val: "$390M+", label: "Portfolio" },
+              { val: "$310M+", label: "Raised since 2021" },
+              { val: "817", label: "Units in Pipeline" },
               { val: "$310M+", label: "Raised Since 2021" },
               { val: "800+", label: "Units in Pipeline" },
               { val: "#730", label: "Inc. 5000" },
@@ -3397,7 +3399,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
         <div className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, marginBottom: 24 }}><GULogo size={72} /></div>
         <h1 className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, fontFamily: serif, fontWeight: 700, fontSize: "clamp(44px,8vw,84px)", color: "#f5e8e8", lineHeight: 1.05, letterSpacing: "-1px", marginBottom: 10 }}>{insider ? "Get access first." : "Something is coming."}</h1>
         <p className="gu-up gu-d2" style={{ position: "relative", zIndex: 1, color: "#c8b0b0", fontSize: "clamp(14px,1.8vw,17px)", lineHeight: 1.9, maxWidth: 580, fontFamily: font, marginBottom: 40 }}>
-          Our mission is simple: <span style={{ color: "#e0c4c4", fontWeight: 700 }}>help you get your deals done and build a legacy.</span> Something new is coming for underrepresented developers — built on 30+ years and $600M+ of real deals.
+          Our mission is simple: <span style={{ color: "#e0c4c4", fontWeight: 700 }}>help you get your deals done and build a legacy.</span> Something new is coming for underrepresented developers — built on 30+ years and billions in real deals.
         </p>
         {cd && (
           <div className="gu-up gu-d3" style={{ position: "relative", zIndex: 1, display: "flex", gap: "clamp(16px,4vw,36px)", marginBottom: 44 }}>
@@ -3423,7 +3425,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 14 }}>The Real Value</div>
             <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4vw,44px)", color: "#f5e8e8", lineHeight: 1.15, marginBottom: 18 }}>You're not just buying courses.<br />You're buying expertise.</h2>
             <p style={{ color: "#a89080", fontSize: 15, lineHeight: 1.9, fontFamily: font, marginBottom: 22 }}>
-              This is bigger than one person. GroundUp runs through Dr. Merritt — Bronx-raised, public housing to $600M+ in deals — but it exists for you: the knowledge, the community, and the resources to build wealth from the ground up. What she fought to learn alone, you get handed with people in your corner.
+              This is bigger than one person. GroundUp runs through Dr. Merritt — Bronx-raised, public housing to $390M+ in deals — but it exists for you: the knowledge, the community, and the resources to build wealth from the ground up. What she fought to learn alone, you get handed with people in your corner.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
@@ -3811,7 +3813,7 @@ function PartnerPage({ slug, onSignIn, onExplore }) {
           {partner.logo_url && <img src={partner.logo_url} alt={partner.name} style={{ maxHeight: 84, maxWidth: 280, objectFit: "contain", marginBottom: 22 }} />}
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>{partner.name} × GroundUp</div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(34px,5vw,52px)", color: "#f5e8e8", lineHeight: 1.15, marginBottom: 14 }}>Your development curriculum,<br />sponsored by {partner.name}.</h1>
-          <p style={{ color: "#8a7070", fontSize: 15, maxWidth: 560, margin: "0 auto", lineHeight: 1.8, fontFamily: font }}>These courses were selected for your cohort and taught by Dr. Gina Merritt — 30+ years of real development, $600M+ active pipeline. Sign in with the account your program set up for you.</p>
+          <p style={{ color: "#8a7070", fontSize: 15, maxWidth: 560, margin: "0 auto", lineHeight: 1.8, fontFamily: font }}>These courses were selected for your cohort and taught by Dr. Gina Merritt — 30+ years of real development, $390M+ active pipeline. Sign in with the account your program set up for you.</p>
           <button onClick={onSignIn} style={{ marginTop: 24, background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "14px 32px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Sign In to Start Learning →</button>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18 }}>
@@ -6755,10 +6757,10 @@ export default function App() {
   // SEO: each public page carries its own title + description
   useEffect(() => {
     const SEO = {
-      home: ["GroundUp by Dr. Gina Merritt — Affordable Housing Development Courses & Community", "Learn affordable housing development from Dr. Gina Merritt — 30+ years and $600M+ of real deals. Courses, community, and direct access for underrepresented developers."],
+      home: ["GroundUp by Dr. Gina Merritt — Affordable Housing Development Courses & Community", "Learn affordable housing development from Dr. Gina Merritt — 30+ years and billions in real deals. Courses, community, and direct access for underrepresented developers."],
       courses: ["The Curriculum — GroundUp", "Seven courses across the full development lifecycle: predevelopment, teams & JVs, financing & LIHTC, zoning, design & construction, and after opening day — taught from deals that closed."],
       pricing: ["Plans & Pricing — GroundUp", "Member $49.99, Builder $149.99, Premium $249.99, Owner $499.99 — plus one-time course passes and Lunch & Learn access. Every plan includes the full course library."],
-      about: ["About Dr. Gina Merritt — GroundUp", "From public housing in the Bronx to $600M+ in real estate development. The story behind GroundUp and Northern Real Estate Urban Ventures."],
+      about: ["About Dr. Gina Merritt — GroundUp", "From public housing in the Bronx to $390M+ portfolio in real estate development. The story behind GroundUp and Northern Real Estate Urban Ventures."],
       lunchlearn: ["Lunch & Learns — GroundUp", "Live monthly sessions with Dr. Gina Merritt — real deals, real numbers, live Q&A, plus a recording library."],
       contact: ["Book a 1:1 Session — GroundUp", "Work directly with Dr. Gina Merritt: deal review, strategy, capital stack review and community development sessions."],
       terms: ["Terms of Use — GroundUp", "The GroundUp Terms of Use: content license, memberships, billing, refunds, and community rules."],
