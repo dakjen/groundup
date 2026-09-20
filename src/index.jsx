@@ -6116,6 +6116,12 @@ function SystemStatusTab() {
 
 function RetainerTab({ btnRed, btnGhost, inp, lbl }) {
   const [data, setData] = useState(null);
+  const [openWs, setOpenWs] = useState(null);   // which client's workspace is expanded
+  const [reply, setReply] = useState({});
+  const sendReply = async (rid) => {
+    const body = (reply[rid] || "").trim(); if (!body) return;
+    try { await call("POST", { action: "message", id: rid, body }); setReply({ ...reply, [rid]: "" }); flash(true, "Sent — they'll get an email."); await load(); } catch (e) { flash(false, e.message); }
+  };
   const [users, setUsers] = useState([]);
   const [form, setForm] = useState({ user_id: "", hours_per_month: 10, monthly_amount: 5500, notes: "", status: "offered" });
   const [logForm, setLogForm] = useState({});
@@ -6293,6 +6299,54 @@ function RetainerTab({ btnRed, btnGhost, inp, lbl }) {
                 )}
               </>
             )}
+            {/* The client's workspace, from our side: their messages, our replies, the hours log */}
+            {(() => {
+              const msgs = r.messages || [];
+              const lastClient = msgs.filter(m => !m.from_admin).slice(-1)[0];
+              const lastAdmin = msgs.filter(m => m.from_admin).slice(-1)[0];
+              const awaiting = lastClient && (!lastAdmin || new Date(lastClient.created_at) > new Date(lastAdmin.created_at));
+              const open = openWs === r.id;
+              return (
+                <div style={{ marginTop: 16, borderTop: "1px solid #eeebe4", paddingTop: 12 }}>
+                  <button onClick={() => setOpenWs(open ? null : r.id)} style={{ background: awaiting ? "#b8010110" : "transparent", color: awaiting ? "#b80101" : "#333333", border: "1px solid " + (awaiting ? "#b8010140" : "#d8d4cc"), borderRadius: 8, padding: "8px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                    {open ? "▾" : "▸"} Workspace · {msgs.length} message{msgs.length === 1 ? "" : "s"} · {(r.log || []).length} hours entr{(r.log || []).length === 1 ? "y" : "ies"}
+                    {awaiting && <span style={{ background: "#b80101", color: "#fff", borderRadius: 99, padding: "1px 8px", fontSize: 9.5, letterSpacing: "1px" }}>AWAITING REPLY</span>}
+                  </button>
+                  {open && (
+                    <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 3fr) minmax(220px, 2fr)", gap: 18, marginTop: 14 }}>
+                      <div>
+                        <div style={{ fontSize: 10, color: "#666666", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Messages</div>
+                        <div style={{ maxHeight: 360, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, padding: "4px 2px" }}>
+                          {msgs.length === 0 && <div style={{ color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No messages yet.</div>}
+                          {msgs.map(m => (
+                            <div key={m.id} style={{ alignSelf: m.from_admin ? "flex-end" : "flex-start", maxWidth: "85%", background: m.from_admin ? "#b80101" : "#f3efe8", color: m.from_admin ? "#fff" : "#222222", borderRadius: m.from_admin ? "14px 14px 4px 14px" : "14px 14px 14px 4px", padding: "9px 13px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+                              {!m.from_admin && <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", color: "#8a5a5a", marginBottom: 3 }}>{r.name}</div>}
+                              {m.body}
+                              <div style={{ fontSize: 10, opacity: 0.7, marginTop: 4, textAlign: "right" }}>{new Date(m.created_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                          <textarea value={reply[r.id] || ""} onChange={e => setReply({ ...reply, [r.id]: e.target.value })} rows={2} placeholder={`Reply to ${r.name.split(" ")[0]}…`} style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1, resize: "vertical" }} />
+                          <button onClick={() => sendReply(r.id)} style={{ ...btnRed, alignSelf: "flex-end" }}>Send</button>
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 10, color: "#666666", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Hours log</div>
+                        {(r.log || []).length === 0 && <div style={{ color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>Nothing logged yet.</div>}
+                        {(r.log || []).map(l => (
+                          <div key={l.id} style={{ borderBottom: "1px solid #f0ece4", padding: "7px 0", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif" }}>
+                            <span style={{ color: "#161616", fontWeight: 800 }}>{Number(l.hours)} hrs</span>
+                            <span style={{ color: "#9a9a9a", marginLeft: 8 }}>{new Date(l.logged_on).toLocaleDateString()}</span>
+                            {l.note && <div style={{ color: "#555555", marginTop: 2 }}>{l.note}</div>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
             <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
               {r.status !== "active" && <button onClick={() => setStatus(r.id, "active")} style={{ ...btnGhost, fontSize: 11, padding: "6px 14px" }}>Mark active</button>}
               {r.status === "active" && <button onClick={() => setStatus(r.id, "paused")} style={{ ...btnGhost, fontSize: 11, padding: "6px 14px" }}>Pause</button>}
