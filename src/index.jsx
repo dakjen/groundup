@@ -944,6 +944,12 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
   ];
   const ADMIN_TOOLS = ADMIN_GROUPS.flatMap(g => g.items).filter(([id]) => id.startsWith("admin-"));
   const [adminOpen, setAdminOpen] = useState(false);
+  useEffect(() => {
+    if (!adminOpen) return;
+    const close = (e) => { if (!e.target.closest || !e.target.closest("[data-admin-menu]")) setAdminOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [adminOpen]);
   const lightNav = member?.role === "admin";
   const navInactive = lightNav ? "#5a5a5a" : "#6a6b69";
   const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", officehours: "Office Hours", contact: "Book with Dr. Gina", support: "Contact Us", glossary: "Glossary", community: "Community", library: "The Library", membership: "Membership", resources: "Resources", advisory: "Advisory", cohort: "My Cohort" };
@@ -983,17 +989,17 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
               const open = adminOpen === g.label;
               const go = (id) => { setAdminOpen(false); setActivePage(id); };
               return (
-                <div key={g.label} style={{ position: "relative" }} onMouseLeave={() => open && setAdminOpen(false)}>
+                <div key={g.label} style={{ position: "relative" }} data-admin-menu="1">
                   <button onClick={() => single ? go(ids[0]) : setAdminOpen(open ? false : g.label)}
                     style={{ background: active ? "#b8010112" : "transparent", color: active ? "#b80101" : "#3a3a3a", border: active ? "1px solid #b8010130" : "1px solid transparent", borderRadius: 7, padding: "7px 12px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>
                     {g.label}{!single && <span style={{ marginLeft: 5, fontSize: 9, opacity: 0.6 }}>▾</span>}
                   </button>
                   {open && !single && (
-                    <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 12, padding: 6, minWidth: 190, boxShadow: "0 12px 40px rgba(0,0,0,0.18)", zIndex: 200 }}>
+                    <div style={{ position: "absolute", top: "100%", left: 0, paddingTop: 6, zIndex: 200 }}><div style={{ background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 12, padding: 6, minWidth: 190, boxShadow: "0 12px 40px rgba(0,0,0,0.18)" }}>
                       {g.items.map(([id, label]) => (
                         <button key={id} onClick={() => go(id)} style={{ display: "block", width: "100%", textAlign: "left", background: activePage === id ? "#b8010112" : "transparent", color: activePage === id ? "#b80101" : "#333333", border: "none", borderRadius: 8, padding: "9px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>{label}</button>
                       ))}
-                    </div>
+                    </div></div>
                   )}
                 </div>
               );
