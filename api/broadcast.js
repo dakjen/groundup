@@ -125,6 +125,26 @@ export default async function handler(req, res) {
         } catch (e) { console.error('pot release failed', h.charge_id, e.message); }
       }
     }
+    // Founding email — fires itself the day the insider waitlist reaches 25
+    // non-comped signups. Once only (founding_thanked stamps each recipient);
+    // anyone who joins the list later gets it on the next daily run.
+    let founding = null;
+    try {
+      const [c] = await sql`SELECT COUNT(*) FILTER (WHERE NOT COALESCE(comped, FALSE))::int AS paying FROM waitlist WHERE COALESCE(list, 'insider') = 'insider'`;
+      if (c.paying >= 25) {
+        await sql`ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS founding_thanked TIMESTAMPTZ`;
+        const rows = await sql`SELECT id, name, email FROM waitlist WHERE COALESCE(list, 'insider') = 'insider' AND founding_thanked IS NULL`;
+        let fsent = 0;
+        for (const r of rows) {
+          const mail = foundingThanksEmail(r.name);
+          const ok = await sendEmail(r.email, mail.subject, mail.html, { marketing: true, light: true });
+          if (ok) { await sql`UPDATE waitlist SET founding_thanked = NOW() WHERE id = ${r.id}`; fsent++; }
+        }
+        founding = { threshold_met: true, paying: c.paying, sent: fsent };
+        if (fsent) await sendEmail(process.env.ADMIN_EMAIL || 'djmj@nreuv.com', `Founding email went out to ${fsent} insider${fsent === 1 ? '' : 's'}`, `<p style="color:#a89080;font-size:14px;line-height:1.8;">The insider waitlist hit ${c.paying} paying signups, so the founding email sent itself to ${fsent} ${fsent === 1 ? 'person' : 'people'} who hadn't received it yet.</p>`);
+      } else founding = { threshold_met: false, paying: c.paying, needed: 25 - c.paying };
+    } catch (e) { console.error('founding auto-send failed', e.message); }
+
     // Weekly team digest — Fridays, only once the insider launch has passed.
     // Guarded by a settings flag so a re-run the same day never double-sends.
     let weekly = null;
@@ -153,7 +173,7 @@ export default async function handler(req, res) {
         await sql`INSERT INTO settings (key, value) VALUES ('monthly_report_sent', ${stamp}) ON CONFLICT (key) DO UPDATE SET value = ${stamp}`;
       }
     } catch (e) { console.error('monthly report failed', e.message); }
-    return res.json({ success: true, expired: rows.length, sent, drip, pot_released: released, pot_released_cents: releasedCents, weekly, monthly });
+    return res.json({ success: true, expired: rows.length, sent, drip, pot_released: released, pot_released_cents: releasedCents, weekly, monthly, founding });
   }
 
   if (!requireAdmin(req, res)) return;
