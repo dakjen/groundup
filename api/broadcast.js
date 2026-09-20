@@ -373,6 +373,20 @@ export async function sendWeeklyDigest(sql, opts = {}) {
 }
 
 
+// NREUV's actual revenue = Stripe transfers to their connected account (the
+// 75/90/100 splits, including refund-pot releases). Summed for a window.
+async function nreuvTransfers(fromSec, toSec) {
+  if (!process.env.STRIPE_SECRET_KEY || !process.env.NREUV_CONNECT_ACCOUNT) return null;
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  let total = 0, count = 0, starting_after;
+  for (let page = 0; page < 20; page++) {
+    const res = await stripe.transfers.list({ limit: 100, destination: process.env.NREUV_CONNECT_ACCOUNT, created: { gte: fromSec, lt: toSec }, ...(starting_after ? { starting_after } : {}) });
+    for (const t of res.data) { total += t.amount - (t.amount_reversed || 0); count++; }
+    if (!res.has_more) break; starting_after = res.data[res.data.length - 1].id;
+  }
+  return { total: total / 100, count };
+}
+
 // ── The monthly report: the 1st of the month, the month that just closed ─────
 export async function sendMonthlyReport(sql, opts = {}) {
   const now = new Date();
@@ -421,6 +435,16 @@ export async function sendMonthlyReport(sql, opts = {}) {
   } catch (e) { console.error('monthly stripe pull failed', e.message); }
 
   const tierCounts = ['Elite', 'Premium', 'Builder', 'Basic'].map(t => [TIER_LABEL[t], active.filter(u => u.tier === t).length]);
+  // NREUV's take — what actually moved to their Stripe account: last month and year to date
+  const yearStart = new Date(start.getFullYear(), 0, 1);
+  let nreuvMonth = null, nreuvYtd = null;
+  try {
+    nreuvMonth = await nreuvTransfers(Math.floor(start.getTime() / 1000), Math.floor(end.getTime() / 1000));
+    nreuvYtd = await nreuvTransfers(Math.floor(yearStart.getTime() / 1000), Math.floor(end.getTime() / 1000));
+  } catch (e) { console.error('nreuv transfer pull failed', e.message); }
+  // NREUV's share of the recurring base (memberships 75%, retainers 90%)
+  const nreuvMrr = memberMrr * 0.75 + Number(ret.mrr || 0) * 0.90;
+
   const S = "'DM Sans',Arial,Helvetica,sans-serif";
   const stat = (label, value, sub, color = '#161616') => `<td style="padding:6px;width:33%;vertical-align:top;"><div style="background:#faf7f2;border:1px solid #e5dccf;border-radius:12px;padding:16px 14px;"><div style="font-family:${S};font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#8a8a8a;font-weight:bold;margin-bottom:8px;">${label}</div><div style="font-family:Georgia,serif;font-size:26px;font-weight:bold;color:${color};line-height:1;">${value}</div>${sub ? `<div style="font-family:${S};font-size:11px;color:#8a8a8a;margin-top:6px;">${sub}</div>` : ''}</div></td>`;
   const row = (label, value) => `<tr><td style="font-family:${S};font-size:13px;color:#444444;padding:6px 0;border-bottom:1px solid #f0ece4;">${label}</td><td align="right" style="font-family:${S};font-size:13px;color:#161616;font-weight:bold;padding:6px 0;border-bottom:1px solid #f0ece4;">${value}</td></tr>`;
@@ -429,16 +453,22 @@ export async function sendMonthlyReport(sql, opts = {}) {
 
   const html = `
     <h2 style="font-family:Georgia,serif;color:#161616;font-size:24px;margin:0 0 4px;">GroundUp — ${monthName}</h2>
-    <p style="font-family:${S};color:#8a8a8a;font-size:13px;margin:0 0 20px;">The month in full. Sent the 1st of every month.</p>
-    ${head('Revenue')}
+    <p style="font-family:${S};color:#8a8a8a;font-size:13px;margin:0 0 20px;">The month in full, from NREUV's seat. Sent the 1st of every month.</p>
+    ${head('NREUV revenue')}
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
-      ${stat('MRR at month end', money(totalMrr), `${paying.length} paying · ${ret.n} retainer${ret.n === 1 ? '' : 's'}`)}
+      ${stat(monthName.split(' ')[0] + ' — paid to NREUV', nreuvMonth ? money(nreuvMonth.total) : '—', nreuvMonth ? `${nreuvMonth.count} transfer${nreuvMonth.count === 1 ? '' : 's'} to your Stripe account` : 'Stripe not reachable', '#1a7a3a')}
+      ${stat(start.getFullYear() + ' year to date', nreuvYtd ? money(nreuvYtd.total) : '—', nreuvYtd ? `${nreuvYtd.count} transfers since Jan 1` : 'Stripe not reachable', '#1a7a3a')}
+      ${stat('Recurring, your share', money(nreuvMrr) + '/mo', 'of ' + money(totalMrr) + ' gross MRR — 75% memberships · 90% retainers')}
+    </tr></table>
+    ${head('Membership base')}
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
+      ${stat('Gross MRR at month end', money(totalMrr), `${paying.length} paying · ${ret.n} retainer${ret.n === 1 ? '' : 's'}`)}
       ${stat('MRR gained', '+' + money(gainedMrr), `${newPaid.length} new paid`, '#1a7a3a')}
       ${stat('MRR lost', '−' + money(lostMrr), `${lost.length} cancellation${lost.length === 1 ? '' : 's'}`, lost.length ? '#b80101' : '#161616')}
     </tr></table>
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:8px;"><tr>
-      ${stat('Total collected', oneTime ? money(oneTime.total) : '—', oneTime ? `${oneTime.count} payments (Stripe, all products)` : 'Stripe not reachable')}
-      ${stat('ARR run-rate', money(totalMrr * 12), 'MRR × 12')}
+      ${stat('Total collected (gross)', oneTime ? money(oneTime.total) : '—', oneTime ? `${oneTime.count} payments, all products` : 'Stripe not reachable')}
+      ${stat('ARR run-rate (gross)', money(totalMrr * 12), 'MRR × 12')}
       ${stat('Net MRR change', (gainedMrr - lostMrr >= 0 ? '+' : '−') + money(Math.abs(gainedMrr - lostMrr)), 'gained minus lost', gainedMrr - lostMrr >= 0 ? '#1a7a3a' : '#b80101')}
     </tr></table>
 
