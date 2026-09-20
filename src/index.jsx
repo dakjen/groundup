@@ -3224,7 +3224,11 @@ function OfficeHoursPage({ member, onSignIn, setActivePage }) {
                 {oh.events.map(ev => (
                   <div key={ev.id || ev.date} style={{ background: "#0d0404", border: ev.my_rsvp ? "1px solid #22c55e50" : "1px solid #b8010140", borderRadius: 16, padding: "24px 28px", display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
                     <div style={{ flex: 1, minWidth: 240 }}>
-                      <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 21, color: "#f0d8d8", marginBottom: 4 }}>{ev.title}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 4 }}>
+                        <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 21, color: "#f0d8d8" }}>{ev.title}</div>
+                        {(ev.audience || "all").startsWith("cohort:") && <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, color: "#e6c766", background: "#c9a22718", border: "1px solid #c9a22745", borderRadius: 4, padding: "2px 8px" }}>Your cohort</span>}
+                        {ev.audience === "elite" && <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, color: "#e0a0a0", background: "#57040430", border: "1px solid #b8010140", borderRadius: 4, padding: "2px 8px" }}>Owner only</span>}
+                      </div>
                       <div style={{ color: "#e0c4c4", fontSize: 13.5, fontFamily: font, fontWeight: 700 }}>{new Date(ev.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}{ev.time ? ` · ${ev.time}` : ""}</div>
                       {ev.description && <div style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginTop: 6 }}>{ev.description}</div>}
                     </div>
@@ -3252,7 +3256,13 @@ function OfficeHoursPage({ member, onSignIn, setActivePage }) {
 // Admin: drop office-hours batches, watch the RSVP lists
 function OfficeHoursAdmin({ btnRed, btnGhost, inp, lbl }) {
   const [data, setData] = useState(null);
-  const [form, setForm] = useState({ title: "", date: "", time: "", description: "" });
+  const [form, setForm] = useState({ title: "", date: "", time: "", description: "", audience: "all" });
+  // Cohorts available for cohort-only sessions
+  const [partners, setPartners] = useState([]);
+  useEffect(() => {
+    fetch("/api/resources?partners=1", { headers: { Authorization: "Bearer " + sessionStorage.getItem("adminToken") } })
+      .then(r => r.ok ? r.json() : { partners: [] }).then(d => setPartners((d.partners || []).filter(p => p.active !== false))).catch(() => {});
+  }, []);
   const [msg, setMsg] = useState(null);
   const authHeaders = () => ({ Authorization: "Bearer " + sessionStorage.getItem("adminToken") });
   const call = async (method, body) => {
@@ -3275,10 +3285,18 @@ function OfficeHoursAdmin({ btnRed, btnGhost, inp, lbl }) {
         <p style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 14 }}>Add each session in the batch (e.g. the next six months at once). Premium members can book 2 a year, Owner 6 — enforced automatically, RSVP lists below tell you who's coming.</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", columnGap: 20, rowGap: 16, marginBottom: 14 }}>
           <div><label style={lbl}>Title</label><input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Office Hours — Q1" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
+          <div><label style={lbl}>Who it's for</label>
+            <select value={form.audience} onChange={e => setForm({ ...form, audience: e.target.value })} style={{ ...inp, maxWidth: "none", marginBottom: 0, cursor: "pointer" }}>
+              <option value="all">General office hours — Premium & Owner</option>
+              <option value="elite">Owner members only</option>
+              {partners.map(p => <option key={p.slug} value={"cohort:" + p.slug}>Cohort — {p.name}</option>)}
+            </select>
+            {partners.length === 0 && <div style={{ fontSize: 11, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>Cohort options appear once a partner page exists (Admin → All Courses → Partner Pages).</div>}
+          </div>
           <div><label style={lbl}>Date &amp; time (your local time)</label><input type="datetime-local" value={toLocalInput(form.date)} onChange={e => setForm({ ...form, date: e.target.value ? new Date(e.target.value).toISOString() : "" })} style={{ ...inp, maxWidth: "none", marginBottom: 0, colorScheme: "light" }} /></div>
           <div><label style={lbl}>Time label (e.g. 12–2 PM ET)</label><input value={form.time} onChange={e => setForm({ ...form, time: e.target.value })} placeholder="12–2 PM ET" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
         </div>
-        <button onClick={async () => { try { await call("POST", { action: "add_event", kind: "office", ...form }); setForm({ title: "", date: "", time: "", description: "" }); flash(true, "Office hours added to the drop."); await load(); } catch (e) { flash(false, e.message); } }} style={btnRed}>Add to Drop</button>
+        <button onClick={async () => { try { await call("POST", { action: "add_event", kind: "office", ...form }); setForm({ title: "", date: "", time: "", description: "", audience: "all" }); flash(true, "Office hours added to the drop."); await load(); } catch (e) { flash(false, e.message); } }} style={btnRed}>Add to Drop</button>
       </div>
       <div style={section}>
         <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Scheduled ({officeEvents.filter(e => new Date(e.date) > Date.now()).length} upcoming)</div>
@@ -3291,6 +3309,7 @@ function OfficeHoursAdmin({ btnRed, btnGhost, inp, lbl }) {
               <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
                 <div style={{ flex: 1, minWidth: 220 }}>
                   <span style={{ color: "#222222", fontSize: 13.5, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{ev.title}</span>
+                  {(() => { const a = ev.audience || "all"; const label = a === "elite" ? "Owner only" : a.startsWith("cohort:") ? "Cohort — " + (partners.find(p => p.slug === a.slice(7))?.name || a.slice(7)) : "General"; const cohort = a.startsWith("cohort:"); return <span style={{ marginLeft: 8, fontSize: 9.5, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", color: cohort ? "#8a5a08" : a === "elite" ? "#570404" : "#1a7a3a", background: cohort ? "#8a5a0814" : a === "elite" ? "#57040414" : "#1a7a3a14", borderRadius: 4, padding: "2px 7px" }}>{label}</span>; })()}
                   <span style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 10 }}>{new Date(ev.date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}{ev.time ? ` · ${ev.time}` : ""}{past ? " · past" : ""}</span>
                 </div>
                 <span style={{ color: "#6b6259", fontSize: 12, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>{rsvps.length} RSVP{rsvps.length === 1 ? "" : "s"}</span>

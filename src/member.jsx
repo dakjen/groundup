@@ -1460,8 +1460,10 @@ export function WaitlistForm({ list = "insider" }) {
 export function MyCohortPage({ member, onNav, onCourse }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
+  const [cohortSessions, setCohortSessions] = useState([]);
   useEffect(() => {
     if (!member?.partner_slug) return;
+    api("/api/lunchlearn").then(d => setCohortSessions((d?.office_hours?.events || []).filter(e => e.audience === "cohort:" + member.partner_slug && new Date(e.date) > new Date()))).catch(() => {});
     fetch(`/api/resources?partner=${encodeURIComponent(member.partner_slug)}`)
       .then(r => r.ok ? r.json() : Promise.reject(new Error("Couldn't load your cohort")))
       .then(setData).catch(e => setError(e.message));
@@ -1499,6 +1501,23 @@ export function MyCohortPage({ member, onNav, onCourse }) {
               <span style={{ color: "#b80101", fontWeight: 800, fontSize: 14, fontFamily: font }}>Open →</span>
             </div>
 
+            {cohortSessions.length > 0 && (
+              <div style={{ marginBottom: 40 }}>
+                <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 26, color: "var(--gu-text2)", marginBottom: 6 }}>Cohort office hours</h2>
+                <p style={{ color: "var(--gu-muted2)", fontSize: 13, fontFamily: font, marginBottom: 14 }}>Sessions with Dr. Merritt reserved for your group. RSVP from the Office Hours page.</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {cohortSessions.map(ev => (
+                    <div key={ev.id || ev.date} onClick={() => onNav("officehours")} style={{ background: "var(--gu-card)", border: "1px solid #c9a22745", borderRadius: 12, padding: "16px 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+                      <div style={{ flex: 1, minWidth: 200 }}>
+                        <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15, fontFamily: font }}>{ev.title}</div>
+                        <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginTop: 3 }}>{new Date(ev.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}{ev.time ? ` · ${ev.time}` : ""}</div>
+                      </div>
+                      <span style={{ color: ev.my_rsvp ? "#4ade80" : "#e6c766", fontWeight: 800, fontSize: 12, fontFamily: font }}>{ev.my_rsvp ? "✓ You're in" : "RSVP →"}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 26, color: "var(--gu-text2)", marginBottom: 6 }}>Your curriculum</h2>
             <p style={{ color: "var(--gu-muted2)", fontSize: 13, fontFamily: font, marginBottom: 18 }}>Selected for your cohort and taught by Dr. Gina Merritt.</p>
             {data.courses.length === 0 ? (

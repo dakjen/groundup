@@ -8,6 +8,17 @@ import { sendEmail, lnlAccessEmail, addLnlContact } from './_email.js';
 
 const SIX_MONTHS = "interval '6 months'";
 
+// Per-session audience for office hours. audience: 'all' (every eligible
+// tier) | 'elite' (Owner only) | 'cohort:<partner_slug>' (one partner cohort).
+// Cohort sessions ignore the tier line — the cohort was invited, full stop.
+function audienceFits(ev, me, rank) {
+  const a = ev.audience || 'all';
+  if (a === 'all') return rank >= 3;
+  if (a === 'elite') return rank >= 4;
+  if (a.startsWith('cohort:')) return !!me?.partner_slug && me.partner_slug === a.slice(7);
+  return rank >= 3;
+}
+
 // The schedule lives in settings.lnl_events (array). settings.lnl_event (single)
 // is legacy — read once for back-compat, never written again.
 async function getEvents(sql) {
@@ -143,11 +154,13 @@ export default async function handler(req, res) {
       // Office hours: Premium+ benefit with a yearly RSVP allowance per tier
       let office_hours = null;
       {
-        const [me] = await sql`SELECT tier, role, comped, tier_since FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
+        const [me] = await sql`SELECT tier, role, comped, tier_since, partner_slug FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
         const rank = admin ? 4 : (TIER_RANK[me?.tier] ?? 0);
         const gate = { active: false }; // office hours are not gated — only advisory calls & networking are
         const [lifetime] = await sql`SELECT id FROM entitlements WHERE user_id = ${session.uid} AND course_id = 'officehours' AND source = 'lifetime' AND expires_at > NOW() LIMIT 1`;
-        if (rank >= 3 || lifetime) {
+        // Cohort members see their cohort's sessions even below Premium
+        const cohortSessions = officeEvents.filter(e => (e.audience || '').startsWith('cohort:') && me?.partner_slug && e.audience === 'cohort:' + me.partner_slug);
+        if (rank >= 3 || lifetime || cohortSessions.length) {
           const [pRow] = await sql`SELECT value FROM settings WHERE key = ${rank >= 4 ? 'office_allow_elite' : 'office_allow_premium'}`;
           const limit = parseInt(pRow?.value, 10) || (rank >= 4 ? 6 : 3);
           const officeKeys = allEvents.filter(e => (e.kind || 'lnl') === 'office').map(e => e.date);
@@ -156,7 +169,7 @@ export default async function handler(req, res) {
           office_hours = {
             eligible: true, gate,
             allowance: { limit, used: usedRows[0]?.n || 0, remaining: Math.max(0, limit - (usedRows[0]?.n || 0)) },
-            events: officeEvents.map(e => ({ ...e, my_rsvp: myRsvpKeys.includes(e.date) })),
+            events: officeEvents.filter(e => admin || audienceFits(e, me, rank >= 3 || lifetime ? Math.max(rank, 3) : rank)).map(e => ({ ...e, my_rsvp: myRsvpKeys.includes(e.date) })),
           };
         } else {
           office_hours = { eligible: false, events: [] };
@@ -187,7 +200,9 @@ export default async function handler(req, res) {
       if (!title || !date) return res.status(400).json({ error: 'Title and date required' });
       if (isNaN(Date.parse(date))) return res.status(400).json({ error: 'Invalid date' });
       const events = await getEvents(sql);
-      events.push({ id: String(Date.now()), kind: kind === 'office' ? 'office' : 'lnl', title: String(title).slice(0, 200), date, time: (time || '').slice(0, 50), description: (description || '').slice(0, 500) });
+      const aud = String(req.body.audience || 'all');
+      const audience = aud === 'elite' || /^cohort:[a-z0-9-]+$/.test(aud) ? aud : 'all';
+      events.push({ id: String(Date.now()), kind: kind === 'office' ? 'office' : 'lnl', title: String(title).slice(0, 200), date, time: (time || '').slice(0, 50), description: (description || '').slice(0, 500), ...(kind === 'office' ? { audience } : {}) });
       await saveEvents(sql, events);
       return res.json({ success: true, events });
     }
@@ -292,11 +307,17 @@ export default async function handler(req, res) {
       if ((target.kind || 'lnl') === 'office') {
         // Office hours: Premium+ only, behind the new-member gate, within the yearly allowance
         if (!admin) {
-          const [me] = await sql`SELECT tier, role, comped, tier_since FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
+          const [me] = await sql`SELECT tier, role, comped, tier_since, partner_slug FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
           const rank = TIER_RANK[me?.tier] ?? 0;
           const [lifetime] = await sql`SELECT id FROM entitlements WHERE user_id = ${session.uid} AND course_id = 'officehours' AND source = 'lifetime' AND expires_at > NOW() LIMIT 1`;
-          if (rank < 3 && !lifetime) return res.status(403).json({ error: 'Office hours come with Premium and Elite — or the Lifetime Pass' });
-          if (req.body.going) {
+          const effRank = lifetime ? Math.max(rank, 3) : rank;
+          const isCohortSession = (target.audience || '').startsWith('cohort:');
+          if (!audienceFits(target, me, effRank)) {
+            if (isCohortSession) return res.status(403).json({ error: 'This session is reserved for a specific cohort.' });
+            if ((target.audience || 'all') === 'elite') return res.status(403).json({ error: 'This session is for Owner members.' });
+            return res.status(403).json({ error: 'Office hours come with Premium and Owner — or the Lifetime Pass' });
+          }
+          if (req.body.going && !isCohortSession) {
             const [pRow] = await sql`SELECT value FROM settings WHERE key = ${rank >= 4 ? 'office_allow_elite' : 'office_allow_premium'}`;
             const limit = parseInt(pRow?.value, 10) || (rank >= 4 ? 6 : 3);
             const officeKeys = events.filter(e => (e.kind || 'lnl') === 'office').map(e => e.date);
