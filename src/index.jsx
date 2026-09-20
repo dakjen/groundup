@@ -1104,7 +1104,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
       {/* Stats */}
       <div style={{ borderTop: "1px solid #1a0000", borderBottom: "1px solid #1a0000", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", background: "#0c0404" }}>
         {[
-          { val: "4", label: "Courses" },
+          { val: "7", label: "Courses" },
           { val: "$6B", label: "Transactions Underwritten" },
           { val: "8,000", label: "Units Built" },
           { val: "30+", label: "Years of Experience" },
