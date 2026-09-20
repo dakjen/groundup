@@ -17,14 +17,43 @@
 - After opening day: operations, lease-up, and the long game
 - New expertise added every quarter
 
-## Membership
-- Member ($49.99/mo): every course, written lessons, case studies, worksheets, free live Lunch & Learn invites, community (read)
-- Builder ($149.99/mo): everything in Member + posting in the community, the Lunch & Learn recording library, view-only digital products
-- Premium ($249.99/mo): + 3 product downloads/month, the Opportunity Board (RFPs & funding windows), JV & Partnerships channel, group office hours with Dr. Merritt, 10% off 1:1 sessions
-- Elite ($499.99/mo, limited seats): + direct messages to Dr. Merritt & team, 3 one-on-one advisory calls/year, unlimited downloads including the Developer's Playbook, 30% off 1:1 sessions, private Elite Lounge, networking events
-- Also: one-time course passes, Lunch & Learn seats ($39.99 per session, $105 for a one-year pass, or a $350 Lifetime Pass), 1:1 paid sessions
-  (deal review, strategy, capital stack, community development, BIPOC developer),
-  and Senior Advisor retainers for project-embedded consulting
+## Pricing — the full fee structure
+All prices in USD. Memberships bill monthly (or annually at roughly 10% off). No coupon codes exist; every discount is applied automatically by the account.
+
+### Memberships
+- Free ($0): browse every course outline (lesson content locked), one free live Lunch & Learn, a community profile. Can buy passes and sessions.
+- Member ($49.99/mo · $599.88/yr): every course and lesson, case studies, worksheets, read access to the community, resource lists
+- Builder ($149.99/mo · $1,799.88/yr): + post and network in the community, the Lunch & Learn recording library, view-only templates and guides. Most popular.
+- Premium ($249.99/mo · $2,999.88/yr): + 3 template downloads/month, the Opportunity Board (RFPs and funding windows), the JV & Partnerships channel, group office hours with Dr. Merritt (3/yr), 10% off 1:1 sessions, 1 included 1:1 session per year (after 4 months, no rollover). Best value.
+- Owner ($499.99/mo · $5,999.88/yr, limited seats): + direct messages to Dr. Merritt and team, 3 included 1:1 advisory sessions per year (after 4 months, no rollover), group office hours (6/yr), unlimited downloads including the Developer's Playbook, 30% off 1:1 sessions, the private Owner Lounge, NREUV partner-network referral codes
+
+### Founding members (insider waitlist, first year only)
+- 25% off any membership tier for the entire first year: Member $37.49, Builder $112.49, Premium $187.49, Owner $374.99 per month
+- First year of live Lunch & Learns free, a permanent founding badge, 15% off the first three retainer months
+- Applied automatically at signup — no codes
+
+### Course passes (one-time)
+- Single Course Pass $100 (one course, 60 days)
+- All-Access Pass $275 (every course, 30 days)
+- Lifetime Pass $5,000 (every course forever, one year of Builder free, group office hours for 5 years, every Lunch & Learn for life; numbered, limited run)
+
+### Lunch & Learn
+- One live session $39.99 · one-year pass $105 · Lifetime Pass $350. Free members get one live session free.
+
+### 1:1 sessions with Dr. Merritt (45 minutes, specialized)
+- Deal Review $500 · Strategy Session $425 · Capital Stack Review $550 · Community Development $375
+- Premium members 10% off, Owner members 30% off (rounded down to the nearest $5)
+
+### Senior Advisor retainers (Dr. Merritt embedded on your project, month to month)
+- Advisor 5: $3,025/mo (5 hrs) · Advisor 10: $5,500/mo (10 hrs) · Advisor 15: $7,700/mo (15 hrs). All include everything in Owner.
+- Path in: free discovery call → optional $1,500 Full Project Intake (credited against the first retainer month) → retainer
+- Intake refunds are discretionary; if a session happened with no real deal on the table, any refund is reduced by $550
+
+### Referral program
+- Members and partners get custom referral links. People who join through one get $5 / $15 / $20 / $25 off per month (by tier) for 24 months. Referrers earn 25% off at 15 referrals, 50% at 25, a comped membership at 50.
+
+### Organizations (Partner)
+- Agencies, CDFIs, and nonprofit developer programs sponsor a cohort's first year at a negotiated group rate with a branded partner page, a private cohort channel, and cohort-only office hours. No fixed price — see /partner-interest.
 
 ## Key pages
 - [Home](https://community.drginamerritt.net/): what GroundUp is
@@ -62,9 +91,9 @@ community development training, underwriting a project budget.
 ## Ways in
 - Free account: browse every course curriculum + one free live Lunch & Learn session
 - Course passes: $100 (one course, 60 days) or $275 (all courses, 30 days) — written lessons
-- Memberships from $49.99/mo (see Pricing)
+- Memberships from $49.99/mo — see Pricing above for the full structure
 - Deep-dive series (e.g. The Underwriting Series) added over time
-- Deal-specific support: the Elite membership, 1:1 sessions with Dr. Merritt,
+- Deal-specific support: the Owner membership, 1:1 sessions with Dr. Merritt,
   a $1,500 Full Project Intake (credited toward the retainer), and Senior
   Advisor retainers for whole-deal involvement
 - Organizations (agencies, CDFIs, nonprofit developer programs) can sponsor a
