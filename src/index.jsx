@@ -1096,7 +1096,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
                   Raised in the Bronx. Bootstrapped from public housing to $390M+ portfolio of development deals across DC, Baltimore & Cleveland.
                 </p>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {["Howard Grad", "Darden MBA", "USC Doctorate", "$5B+ Underwritten", "8,000 Units Built"].map(t => (
+                  {["Howard Grad", "Darden MBA", "USC Doctorate", "$6B+ Underwritten", "8,000 Units Built"].map(t => (
                     <span key={t} style={{ fontSize: 10, color: "#8a7070", border: "1px solid #2a0000", borderRadius: 20, padding: "4px 10px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{t}</span>
                   ))}
                 </div>
@@ -1111,7 +1111,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
       <div style={{ borderTop: "1px solid #1a0000", borderBottom: "1px solid #1a0000", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", background: "#0c0404" }}>
         {[
           { val: String(courseCount), label: "Courses" },
-          { val: "$5B+", label: "Transactions Underwritten" },
+          { val: "$6B+", label: "Transactions Underwritten" },
           { val: "8,000", label: "Units Built" },
           { val: "30+", label: "Years of Experience" },
         ].map((s, i) => (
@@ -1671,7 +1671,7 @@ function AboutPage({ setActivePage }) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14, marginTop: 28 }}>
             {[
               { val: "8,000+", label: "Units Built" },
-              { val: "$5B+", label: "Underwritten" },
+              { val: "$6B+", label: "Underwritten" },
               { val: "$390M+", label: "Portfolio" },
               { val: "$310M+", label: "Raised Since 2021" },
               { val: "817", label: "Units in Pipeline" },
