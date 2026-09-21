@@ -2327,7 +2327,7 @@ function ContactPage({ setActivePage, advisorLink }) {
         </div>
 
         <div style={{ borderRadius: 16, overflow: "hidden", position: "relative", border: "1px solid #2a0000", margin: "28px 0 8px" }}>
-          <img loading="lazy" src="/opt/DCREC2022-still4.jpg" alt="Dr. Merritt on an industry panel" style={{ width: "100%", height: 260, objectFit: "cover", objectPosition: "center 20%", display: "block" }} />
+          <img loading="lazy" src="/opt/gina-dcre-2026.jpg" alt="Dr. Gina Merritt on stage at the 2026 DCRE Conference" style={{ width: "100%", height: 260, objectFit: "cover", objectPosition: "center 22%", display: "block" }} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.8) 100%)" }} />
           <div style={{ position: "absolute", bottom: 16, left: 24 }}>
             <div style={{ color: "#f0d8d8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>45 minutes, one-on-one, with the person other developers ask for advice.</div>
