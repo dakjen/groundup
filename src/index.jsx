@@ -1189,7 +1189,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
             </p>
           </div>
           <div style={{ width: "clamp(260px,35%,360px)", flexShrink: 0, borderRadius: 16, overflow: "hidden", border: "1px solid #2a0000" }}>
-            <img loading="lazy" src="/opt/LIIF-Stills3.jpg" alt="Dr. Merritt on site" style={{ width: "100%", height: 320, objectFit: "cover", display: "block" }} />
+            <img loading="lazy" src="/opt/gina-conversation.jpg" alt="Dr. Merritt in conversation" style={{ width: "100%", height: 320, objectFit: "cover", objectPosition: "center 30%", display: "block" }} />
           </div>
         </div>
 
@@ -2327,7 +2327,7 @@ function ContactPage({ setActivePage, advisorLink }) {
         </div>
 
         <div style={{ borderRadius: 16, overflow: "hidden", position: "relative", border: "1px solid #2a0000", margin: "28px 0 8px" }}>
-          <img loading="lazy" src="/opt/gina-conversation.jpg" alt="Dr. Gina Merritt in conversation" style={{ width: "100%", height: 260, objectFit: "cover", objectPosition: "center 30%", display: "block" }} />
+          <img loading="lazy" src="/opt/LIIF-Stills3.jpg" alt="Dr. Gina Merritt in a one-on-one session" style={{ width: "100%", height: 260, objectFit: "cover", objectPosition: "center 40%", display: "block" }} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.8) 100%)" }} />
           <div style={{ position: "absolute", bottom: 16, left: 24 }}>
             <div style={{ color: "#f0d8d8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>45 minutes, one-on-one, with the person other developers ask for advice.</div>
