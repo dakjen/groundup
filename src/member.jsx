@@ -641,6 +641,15 @@ function MeetingCard({ b, onChange, link }) {
         )}
       </div>
 
+      {/* Say once, plainly, that the confirmation exists and what to do if the
+          calendar doesn't work out — otherwise someone who has paid and can't
+          find a slot has no idea who to tell. */}
+      <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border2)", borderRadius: 10, padding: "12px 14px", marginBottom: 16, color: "var(--gu-body)", fontSize: 12.5, fontFamily: font, lineHeight: 1.7 }}>
+        {b.scheduled_at
+          ? <>We&rsquo;ve emailed you a confirmation for this session. Need to move it? Reply to that email and we&rsquo;ll sort it out.</>
+          : <>We&rsquo;ve emailed you a confirmation with your booking link. <strong style={{ color: "var(--gu-text2)" }}>If nothing on the calendar works</strong>, just reply to that email and we&rsquo;ll find a time with you.</>}
+      </div>
+
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 14, marginBottom: 16 }}>
         <div>
           <label style={lbl}>When is it?</label>
