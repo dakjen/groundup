@@ -42,10 +42,21 @@ async function startCheckout(item, extra = {}) {
     if (res.status === 401) { alert("Sign in first, then purchase."); return false; }
     // Elite sold out between page load and checkout — don't fall through to the mailto
     if (res.status === 409 && d.elite_full) { alert(d.message || "The Owner tier is full right now."); return false; }
-    if (!res.ok) throw new Error(d.error || "Checkout failed");
+    // A refused checkout has to SAY so. This used to fall through to the mailto
+    // below, which does nothing visible when no mail client is bound to mailto: —
+    // the person clicked "secure payment" and watched the page sit there.
+    if (!res.ok || !d.url) {
+      console.error("checkout failed", res.status, d);
+      alert((d.error || "We couldn't start checkout just now.") + "\n\nIf this keeps happening, email groundup@drginamerritt.net and we'll take the payment directly.");
+      return false;
+    }
     window.location.href = d.url;
     return true;
   } catch (e) {
+    // Only a genuine network/parse failure lands here — payments may be off
+    // entirely, so the mailto is still the right fallback. Say so first.
+    console.error("checkout error", e);
+    alert("We couldn't reach the payment system. Opening an email to the team instead.");
     window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("GroundUp purchase: " + item);
     return false;
   }
