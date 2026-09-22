@@ -5,6 +5,20 @@ import { sendEmail, siteUrl, addLnlContact, dealSupportBlock, firstName } from '
 
 export const config = { api: { bodyParser: false } };
 
+// Stripe's Managed Payments makes Stripe the merchant of record and has it
+// calculate and remit sales tax, which means it refuses any line item it can't
+// classify. It is off on the live account and on by default in a new sandbox,
+// so checkout worked in production and died in staging.
+//
+// This code is inert unless Stripe is actually calculating tax — it changes
+// nothing about what anyone is charged today — but carrying it means checkout
+// keeps working if that default ever reaches the live account.
+//
+// txcd_10000000 is Stripe's general "electronically supplied services" code,
+// the right default for memberships and digital course access. Override it per
+// environment with STRIPE_TAX_CODE if an accountant picks something narrower.
+const TAX_CODE = process.env.STRIPE_TAX_CODE || 'txcd_10000000';
+
 // Everything purchasable, priced in one place (cents)
 const CATALOG = {
   sub_Basic:   { mode: 'subscription', name: 'GroundUp Member',            amount: 4999,  tier: 'Basic' },
@@ -641,7 +655,7 @@ export default async function handler(req, res) {
       const checkout = await stripe.checkout.sessions.create({
         mode: 'payment',
         customer_email: user.email,
-        line_items: [{ quantity: 1, price_data: { currency: 'usd', unit_amount: p.price_cents, product_data: { name: p.title } } }],
+        line_items: [{ quantity: 1, price_data: { currency: 'usd', unit_amount: p.price_cents, product_data: { name: p.title, tax_code: TAX_CODE } } }],
         metadata: { user_id: String(user.id), item: 'product', product_id: String(p.id) },
         success_url: `${siteUrl()}/shop?purchased=1`,
         cancel_url: `${siteUrl()}/shop`,
@@ -723,7 +737,7 @@ export default async function handler(req, res) {
         price_data: {
           currency: 'usd',
           unit_amount: unitAmount,
-          product_data: { name: productName },
+          product_data: { name: productName, tax_code: TAX_CODE },
           ...(product.mode === 'subscription' ? { recurring: { interval: product.annual ? 'year' : 'month' } } : {}),
         },
       }],
