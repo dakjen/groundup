@@ -173,25 +173,24 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
               <input style={{ ...inp, fontSize: 20, letterSpacing: "8px", textAlign: "center" }} value={mfaCode} onChange={e => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoFocus placeholder="000000" />
             </div>
           )}
+          {/* No plan grid here any more. Someone who arrived from a specific tier
+              gets that choice confirmed; everyone else picks a plan in onboarding,
+              right after the account exists, where the tiers can be compared
+              properly instead of as five cramped buttons. */}
           {mode === "signup" && (
             <div style={{ marginBottom: 20 }}>
-              <label style={lbl}>Plan</label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                {["Free", "Basic", "Builder", "Premium", "Elite"].map(t => (
-                  <button type="button" key={t} onClick={() => setTier(t)} style={{ background: tier === t ? "#b8010118" : "transparent", border: tier === t ? "1px solid #b80101" : "1px solid #2a0000", borderRadius: 8, padding: "10px 12px", cursor: "pointer", textAlign: "left" }}>
-                    <div style={{ color: tier === t ? "#f0d8d8" : "#8a7070", fontWeight: 800, fontSize: 13, fontFamily: font }}>{TIER_LABELS[t]}</div>
-                    <div style={{ color: "#8f7070", fontSize: 11, fontFamily: font }}>{{ Free: "$0", Basic: "$49.99/mo", Builder: "$149.99/mo", Premium: "$249.99/mo", Elite: "$499.99/mo" }[t]}</div>
-                  </button>
-                ))}
-              </div>
-              {localStorage.getItem("guGift") && mode === "signup" && (
+              {localStorage.getItem("guGift") && (
                 <div style={{ background: "#22c55e12", border: "1px solid #22c55e50", borderRadius: 8, padding: "10px 14px", marginBottom: 14, color: "#22c55e", fontSize: 13, fontFamily: font, fontWeight: 700 }}>
                   A gift is attached to your invitation — your first month is free. It works with the email your link was sent to.
                 </div>
               )}
-              {tier !== "Free" && (
-                <div style={{ marginTop: 10, background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 8, padding: "10px 14px", color: "#b8a060", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>
-                  After you create your account, you&rsquo;ll go straight to secure checkout for {TIER_LABELS[tier] || tier}. Your plan activates the moment payment clears.
+              {tier !== "Free" ? (
+                <div style={{ background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 8, padding: "10px 14px", color: "#b8a060", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>
+                  You picked <strong style={{ color: "#f0d8d8" }}>{TIER_LABELS[tier] || tier}</strong>. After you create your account you&rsquo;ll go straight to secure checkout — your plan activates the moment payment clears.
+                </div>
+              ) : (
+                <div style={{ background: "#0a0505", border: "1px solid #2a0000", borderRadius: 8, padding: "10px 14px", color: "#8a7070", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>
+                  Next we&rsquo;ll ask what you&rsquo;re working on and show you every plan side by side. Nothing is charged until you choose one.
                 </div>
               )}
             </div>
