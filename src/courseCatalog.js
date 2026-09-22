@@ -31,7 +31,7 @@ export default [
   {
     "id": "mc2",
     "title": "Building Your Team: JVs, Partners & Keeping the Lights On",
-    "description": "You can't do this alone. Every deal in Dr. Merritt's $600M pipeline except one is a joint venture. This course covers what value you actually bring to a partnership as an emerging developer, how to structure JVs that protect you, what goes wrong and how to prevent it, and how to keep your business solvent between closings.",
+    "description": "You can't do this alone. Every deal in Dr. Merritt's $390M pipeline except one is a joint venture. This course covers what value you actually bring to a partnership as an emerging developer, how to structure JVs that protect you, what goes wrong and how to prevent it, and how to keep your business solvent between closings.",
     "stage": "Stage 2 of 7",
     "stageColor": "#6a6b69",
     "duration": "~65 min",
