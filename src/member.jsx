@@ -129,7 +129,9 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
       // Team accounts get a second step: the emailed 6-digit sign-in code
       if (data.mfa) { setMfa(true); setBusy(false); return; }
       saveMember(data.user, data.token);
-      onAuthed(data.user);
+      // A signup with no plan already picked hands off to onboarding; someone
+      // who clicked "Choose Premium" has already chosen and goes to checkout.
+      onAuthed(data.user, mode === "signup" && tier === "Free" ? "onboard" : mode);
       if (mode === "signup" && tier !== "Free" && window.startCheckout) {
         // straight to secure payment — carrying any stretch-offer promo with them
         window.startCheckout("sub_" + tier + (localStorage.getItem("guAnnual") === "1" ? "_annual" : ""), { promo: localStorage.getItem("guPromo") || undefined, gift: localStorage.getItem("guGift") || undefined });
@@ -211,6 +213,150 @@ I agree to the <a href="/terms" target="_blank" style={{ color: "#b80101", fontW
             : mode === "forgot" ? <button onClick={() => { setMode("login"); setError(""); setNotice(""); }} style={{ background: "none", border: "none", color: "#b80101", cursor: "pointer", fontWeight: 700, fontFamily: font, fontSize: 13 }}>← Back to sign in</button>
             : <>{allowSignup && <>New here? <button onClick={() => { setMode("signup"); setError(""); }} style={{ background: "none", border: "none", color: "#b80101", cursor: "pointer", fontWeight: 700, fontFamily: font, fontSize: 13 }}>Create an account</button><span style={{ margin: "0 8px", color: "#8a7575" }}>·</span></>}<button onClick={() => { setMode("forgot"); setError(""); }} style={{ background: "none", border: "none", color: "#8a7070", cursor: "pointer", fontWeight: 600, fontFamily: font, fontSize: 13 }}>Forgot password?</button></>}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── FIRST-RUN ONBOARDING ───────────────────────────────────────────────────
+//
+// Shown once, right after an account is created. Two screens: the questions the
+// waitlist already asks (so someone who never joined the list still gets a real
+// recommendation), then the plan comparison.
+//
+// Every question is optional and says so — the ONLY required step is choosing a
+// plan, and Free counts as a choice. Skipping the questions still lands on the
+// comparison; it just arrives without a match badge.
+
+const ONB_PLANS = ["Free", "Basic", "Builder", "Premium", "Elite"];
+const ONB_PRICE = { Free: "$0", Basic: "$49.99/mo", Builder: "$149.99/mo", Premium: "$249.99/mo", Elite: "$499.99/mo" };
+
+export function OnboardingFlow({ member, onDone }) {
+  const [step, setStep] = useState(0);
+  const [learn, setLearn] = useState("");
+  const [pain, setPain] = useState("");
+  const [budget, setBudget] = useState("");
+  const [source, setSource] = useState("");
+  const [rec, setRec] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const sel = { ...inp, appearance: "auto", cursor: "pointer" };
+
+  // Saves whatever was answered (possibly nothing) and moves to the plans.
+  const toPlans = async () => {
+    setBusy(true);
+    try {
+      const d = await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "onboarding", learn, pain, budget, source }) });
+      setRec(d.recommendation || null);
+    } catch { /* a failed save must not trap anyone before the plan step */ }
+    setBusy(false);
+    setStep(1);
+  };
+
+  const choose = (t) => {
+    if (t === "Free") { onDone(); return; }
+    if (window.startCheckout) window.startCheckout("sub_" + t + (localStorage.getItem("guAnnual") === "1" ? "_annual" : ""), { promo: localStorage.getItem("guPromo") || undefined });
+    onDone();
+  };
+
+  // recommendPlan speaks in tier keys; Advisor and the passes aren't rows here.
+  const recTier = rec && ONB_PLANS.includes(rec.tier) ? rec.tier : null;
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 320, background: "rgba(0,0,0,0.9)", backdropFilter: "blur(6px)", overflowY: "auto", padding: "24px 16px" }}>
+      <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "32px clamp(20px,4vw,38px)", width: "100%", maxWidth: step === 0 ? 520 : 1040, margin: "0 auto" }}>
+        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>
+          {step === 0 ? "Step 1 of 2" : "Step 2 of 2"}
+        </div>
+
+        {step === 0 ? (
+          <>
+            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>Welcome, {firstName(member?.name) || "there"}.</h2>
+            <p style={{ color: "#a89080", fontSize: 14, lineHeight: 1.7, fontFamily: font, marginBottom: 24 }}>
+              Four quick questions so we can point you at the right plan instead of making you guess. Every one is optional — skip any that don't fit.
+            </p>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={lbl}>What do you hope to learn?</label>
+              <select style={sel} value={learn} onChange={e => setLearn(e.target.value)}>
+                <option value="">No preference yet</option>
+                {WL_LEARN.filter(o => o !== "Other").map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={lbl}>What's in your way right now?</label>
+              <select style={sel} value={pain} onChange={e => setPain(e.target.value)}>
+                <option value="">Rather not say</option>
+                {WL_PAIN.filter(o => o !== "Other").map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={lbl}>What can you invest each month?</label>
+              <select style={sel} value={budget} onChange={e => setBudget(e.target.value)}>
+                <option value="">Not sure yet</option>
+                {WL_BUDGETS.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: 26 }}>
+              <label style={lbl}>How did you find us?</label>
+              <select style={sel} value={source} onChange={e => setSource(e.target.value)}>
+                <option value="">Prefer not to say</option>
+                {WL_SOURCE.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+
+            <button onClick={toPlans} disabled={busy} style={{ ...btnRed, width: "100%", opacity: busy ? 0.6 : 1 }}>
+              {busy ? "One moment…" : "See the plans →"}
+            </button>
+            <button onClick={toPlans} disabled={busy} style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", color: "#8a7070", fontFamily: font, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              Skip the questions
+            </button>
+          </>
+        ) : (
+          <>
+            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>Choose your plan</h2>
+            <p style={{ color: "#a89080", fontSize: 14, lineHeight: 1.7, fontFamily: font, marginBottom: 8 }}>
+              {recTier
+                ? <>Based on your answers we'd start you at <strong style={{ color: "#f0d8d8" }}>{TIER_LABELS[recTier]}</strong> — but every plan is here, and you can change or cancel any time.</>
+                : <>Every plan, side by side. You can change or cancel any time.</>}
+            </p>
+            {rec && !recTier && (
+              <p style={{ color: "#c8a8a8", fontSize: 13, lineHeight: 1.7, fontFamily: font, marginBottom: 8 }}>
+                Your answers point at <strong style={{ color: "#f0d8d8" }}>{rec.label}</strong> ({rec.price}) — reach out and we'll set that up directly.
+              </p>
+            )}
+            <p style={{ color: "#8a7070", fontSize: 12, fontFamily: font, marginBottom: 22 }}>Starting free is a real choice — you keep the account and can upgrade whenever.</p>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 14 }}>
+              {ONB_PLANS.map(t => {
+                const match = t === recTier;
+                return (
+                  <div key={t} style={{ background: match ? "#150707" : "#0a0505", border: `1px solid ${match ? "#b80101" : "#2a0000"}`, borderRadius: 14, padding: "20px 18px", display: "flex", flexDirection: "column" }}>
+                    {match && <div style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>Your match</div>}
+                    <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, color: "#f5e8e8" }}>{TIER_LABELS[t]}</div>
+                    <div style={{ color: "#b80101", fontWeight: 800, fontSize: 15, fontFamily: font, margin: "2px 0 14px" }}>{ONB_PRICE[t]}</div>
+                    <ul style={{ listStyle: "none", padding: 0, margin: "0 0 18px", flex: 1 }}>
+                      {(BENEFITS[t] || []).map((f, i) => (
+                        <li key={i} style={{ color: "#a89080", fontSize: 12.5, lineHeight: 1.6, fontFamily: font, marginBottom: 7, paddingLeft: 14, position: "relative" }}>
+                          <span style={{ position: "absolute", left: 0, color: "#b80101" }}>·</span>{f}
+                        </li>
+                      ))}
+                    </ul>
+                    <button onClick={() => choose(t)} style={{ ...btnRed, width: "100%", background: match ? "#b80101" : "transparent", border: match ? "none" : "1px solid #2a0000", color: match ? "#fff" : "#f0d8d8" }}>
+                      {t === "Free" ? "Start free" : `Choose ${TIER_LABELS[t]} →`}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <button onClick={() => setStep(0)} style={{ display: "block", margin: "20px auto 0", background: "none", border: "none", color: "#8a7070", fontFamily: font, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              ← Back to the questions
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

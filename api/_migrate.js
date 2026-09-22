@@ -155,6 +155,15 @@ const STATEMENTS = [
   `ALTER TABLE partner_codes ADD COLUMN IF NOT EXISTS company TEXT`,
   `ALTER TABLE partner_codes ADD COLUMN IF NOT EXISTS tier_alerted INTEGER DEFAULT 0`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS referred_by TEXT`,
+  // First-run onboarding: the same questions the waitlist asks, so a member who
+  // never joined the list still gets a real recommendation. Every answer is
+  // optional; only the plan choice is required, and onboarded_at records that
+  // they reached the end rather than that they answered anything.
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarded_at TIMESTAMPTZ`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS onb_learn TEXT`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS onb_pain TEXT`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS onb_budget TEXT`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS onb_source TEXT`,
   `CREATE TABLE IF NOT EXISTS resource_clicks (
     id SERIAL PRIMARY KEY, resource_id INTEGER NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
     user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,

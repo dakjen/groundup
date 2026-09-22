@@ -30,7 +30,7 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const session = getSession(req);
       if (!session || !session.uid) return res.status(401).json({ error: 'Not signed in' });
-      const [user] = await sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, comped, badges, referral_code, referred_by, tier_since, ip_agreed_at, avatar_url, headline, bio, company, title, location, partner_slug, created_at FROM users WHERE id = ${session.uid}`;
+      const [user] = await sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, comped, badges, referral_code, referred_by, tier_since, ip_agreed_at, avatar_url, headline, bio, company, title, location, partner_slug, onboarded_at, created_at FROM users WHERE id = ${session.uid}`;
       if (!user) return res.status(401).json({ error: 'Account not found' });
       // Active one-time passes: course_id 'all' or 'mc1'..'mc7', unexpired
       user.entitlements = await sql`SELECT course_id, expires_at, source FROM entitlements WHERE user_id = ${user.id} AND (expires_at IS NULL OR expires_at > NOW())`;
@@ -453,6 +453,27 @@ export default async function handler(req, res) {
       const location = String(req.body.location ?? '').trim().slice(0, 120) || null;
       await sql`UPDATE users SET headline = ${headline}, bio = ${bio}, company = ${company}, title = ${title}, location = ${location} WHERE id = ${session.uid}`;
       return res.json({ success: true, headline, bio, company, title, location });
+    }
+
+    // First-run onboarding. Saves whatever they chose to answer and hands back
+    // the recommendation, so a member who never joined the waitlist still gets
+    // one. Every answer is optional — an empty run still returns a plan (Member,
+    // the floor), because the plan step is the only required part of the flow.
+    if (action === 'onboarding') {
+      const session = getSession(req);
+      if (!session || !session.uid) return res.status(401).json({ error: 'Not signed in' });
+      const clip = (v) => { const s = String(v ?? '').trim().slice(0, 160); return s || null; };
+      const learn = clip(req.body.learn), pain = clip(req.body.pain);
+      const budget = clip(req.body.budget), source = clip(req.body.source);
+      await sql`UPDATE users SET onb_learn = ${learn}, onb_pain = ${pain},
+        onb_budget = ${budget}, onb_source = ${source},
+        onboarded_at = COALESCE(onboarded_at, NOW()) WHERE id = ${session.uid}`;
+      // Founding pricing widens the budget bands, so tell the engine whether
+      // this person is actually holding a seat before it recommends.
+      const [u] = await sql`SELECT badges FROM users WHERE id = ${session.uid}`;
+      const founding = Array.isArray(u?.badges) && u.badges.includes('founding25');
+      const { recommendPlan } = await import('./waitlist.js');
+      return res.json({ success: true, recommendation: recommendPlan({ learn, reason: pain, budget, founding_lnl: founding }) });
     }
 
     // A deal-specific ask is a qualified lead — log who raised their hand, where
