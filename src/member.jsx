@@ -582,44 +582,21 @@ export function MeetingsPanel({ member }) {
           <div style={{ color: "var(--gu-body)", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, marginBottom: 14 }}>
             We&rsquo;ve emailed you a confirmation with your booking link &mdash; book from there and you&rsquo;ll get a calendar invite. <strong style={{ color: "var(--gu-text2)" }}>If nothing on the calendar works</strong>, reply to that email and we&rsquo;ll find a time with you.
           </div>
-          {member.booking_link && <Scheduler link={member.booking_link} />}
+
         </div>
       )}
-      {rows.map(b => <MeetingCard key={b.id} b={b} onChange={load} />)}
+      {rows.map(b => <MeetingCard key={b.id} b={b} onChange={load} link={member.booking_link} />)}
     </div>
   );
 }
 
-// Google's appointment schedule embeds directly with ?gv=true, so the calendar
-// opens inside GroundUp rather than throwing people out to a Google page mid-flow.
-// It still doesn't tell us what was booked — Google doesn't expose that to an
-// embed — so the optional "when is it" field stays until the Calendar API work.
-function Scheduler({ link }) {
-  // Open by default: if a session is unbooked, picking a time is the whole
-  // reason this block is on screen — no reason to make someone click for it.
-  const [open, setOpen] = useState(true);
-  const src = link.includes("gv=true") ? link : link + (link.includes("?") ? "&" : "?") + "gv=true";
-  return (
-    <div>
-      <button onClick={() => setOpen(o => !o)} style={{ ...btnRed, marginRight: 10 }}>
-        {open ? "Hide the calendar" : "Show the calendar →"}
-      </button>
-      <a href={src} target="_blank" rel="noreferrer" style={{ color: "var(--gu-muted)", fontFamily: font, fontSize: 12.5, fontWeight: 600, textDecoration: "none" }}>open in a new tab</a>
-      {open && (
-        <div style={{ marginTop: 14, borderRadius: 12, overflow: "hidden", border: "1px solid var(--gu-border)", background: "#ffffff" }}>
-          <iframe src={src} title="Book a time with Dr. Merritt" width="100%" height="600" frameBorder="0" style={{ display: "block", border: 0 }} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function MeetingCard({ b, onChange }) {
+function MeetingCard({ b, onChange, link }) {
   const [brief, setBrief] = useState(b.brief || "");
   const [when, setWhen] = useState(b.scheduled_at ? new Date(b.scheduled_at).toISOString().slice(0, 16) : "");
   const [files, setFiles] = useState(b.files || []);
   const [busy, setBusy] = useState("");
   const [note, setNote] = useState(null);
+  const [cal, setCal] = useState(false);
   const [linkTitle, setLinkTitle] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const flash = (ok, text) => { setNote({ ok, text }); setTimeout(() => setNote(null), 4500); };
@@ -678,7 +655,19 @@ function MeetingCard({ b, onChange }) {
                 : `Paid${b.created_at ? " · " + new Date(b.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""}`}
           </div>
         </div>
+        {!b.scheduled_at && link && (
+          <button onClick={() => setCal(c => !c)} style={cal ? btnGhost : btnRed}>{cal ? "Hide calendar" : "Book your time →"}</button>
+        )}
       </div>
+
+      {/* The calendar belongs to this session, opened from this session's own
+          button — one prompt per thing to book, rather than one for the page. */}
+      {cal && link && (
+        <div style={{ marginBottom: 16, borderRadius: 12, overflow: "hidden", border: "1px solid var(--gu-border)", background: "#ffffff" }}>
+          <iframe src={link.includes("gv=true") ? link : link + (link.includes("?") ? "&" : "?") + "gv=true"}
+            title="Book a time with Dr. Merritt" width="100%" height="600" frameBorder="0" style={{ display: "block", border: 0 }} />
+        </div>
+      )}
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 14, marginBottom: 16 }}>
         <div>
