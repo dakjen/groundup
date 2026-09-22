@@ -465,6 +465,7 @@ export default async function handler(req, res) {
       const clip = (v, n = 160) => { const s = String(v ?? '').trim().slice(0, n); return s || null; };
       const learn = clip(req.body.learn), pain = clip(req.body.pain);
       const budget = clip(req.body.budget), source = clip(req.body.source);
+      const role = clip(req.body.role);
       const phase = clip(req.body.phase), experience = clip(req.body.experience);
       const focus = clip(req.body.focus), goal = clip(req.body.goal, 400);
       // Profile fields double as onboarding answers — write them where the
@@ -472,7 +473,7 @@ export default async function handler(req, res) {
       const company = clip(req.body.company, 120), title = clip(req.body.title, 120);
       const location = clip(req.body.location, 120);
       await sql`UPDATE users SET onb_learn = ${learn}, onb_pain = ${pain},
-        onb_budget = ${budget}, onb_source = ${source}, onb_phase = ${phase},
+        onb_budget = ${budget}, onb_source = ${source}, onb_role = ${role}, onb_phase = ${phase},
         onb_experience = ${experience}, onb_focus = ${focus}, onb_goal = ${goal},
         company = COALESCE(${company}, company), title = COALESCE(${title}, title),
         location = COALESCE(${location}, location),

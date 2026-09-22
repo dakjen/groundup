@@ -229,6 +229,21 @@ I agree to the <a href="/terms" target="_blank" style={{ color: "#b80101", fontW
 
 const ONB_PLANS = ["Free", "Basic", "Builder", "Premium", "Elite"];
 const ONB_PRICE = { Free: "$0", Basic: "$49.99/mo", Builder: "$149.99/mo", Premium: "$249.99/mo", Elite: "$499.99/mo" };
+// Not everyone signing up is a developer — consultants, nonprofit and agency
+// staff, lenders, architects and students all belong here, and the questions
+// shouldn't assume otherwise.
+const ONB_ROLE = [
+  "Developer, or working toward it",
+  "Consultant or advisor",
+  "Nonprofit or community organization",
+  "Government or public agency",
+  "Lender, investor or funder",
+  "Architect, engineer or contractor",
+  "Property or asset management",
+  "Student or researcher",
+  "Something else",
+];
+
 // Each option has to make sense read on its own in a dropdown — "I've closed
 // several" only parsed next to the line above it, and "closed" means reaching
 // financial closing, which is exactly the jargon an emerging developer may not
@@ -249,6 +264,7 @@ export function OnboardingFlow({ member, onDone }) {
   const [pain, setPain] = useState("");
   const [source, setSource] = useState("");
   const [phase, setPhase] = useState("");
+  const [role, setRole] = useState("");
   const [experience, setExperience] = useState("");
   const [focus, setFocus] = useState("");
   const [goal, setGoal] = useState("");
@@ -264,7 +280,7 @@ export function OnboardingFlow({ member, onDone }) {
   const toPlans = async () => {
     setBusy(true);
     try {
-      const d = await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "onboarding", learn, pain, source, phase, experience, focus, goal, company, title, location }) });
+      const d = await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "onboarding", learn, pain, source, role, phase, experience, focus, goal, company, title, location }) });
       setRec(d.recommendation || null);
     } catch { /* a failed save must not trap anyone before the plan step */ }
     setBusy(false);
@@ -306,8 +322,15 @@ export function OnboardingFlow({ member, onDone }) {
               <label style={lbl}>Where do you work?</label>
               <input style={inp} value={location} onChange={e => setLocation(e.target.value)} maxLength={120} placeholder="e.g. Washington DC · Cleveland" />
             </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={lbl}>Which best describes you?</label>
+              <select style={sel} value={role} onChange={e => setRole(e.target.value)}>
+                <option value="">Rather not say</option>
+                {ONB_ROLE.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
             <div style={{ marginBottom: 26 }}>
-              <label style={lbl}>How much development have you done?</label>
+              <label style={lbl}>Any hands-on development experience?</label>
               <select style={sel} value={experience} onChange={e => setExperience(e.target.value)}>
                 <option value="">Rather not say</option>
                 {ONB_EXPERIENCE.map(o => <option key={o} value={o}>{o}</option>)}
