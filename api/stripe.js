@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 import { neon } from '@neondatabase/serverless';
-import { getSession } from './_utils.js';
+import { getSession, getAdmin } from './_utils.js';
 import { sendEmail, siteUrl, addLnlContact, dealSupportBlock, firstName } from './_email.js';
 
 export const config = { api: { bodyParser: false } };
@@ -45,6 +45,76 @@ const CATALOG = {
   retainer_10: { mode: 'subscription', name: 'Senior Advisor Retainer — 10 hrs/month', amount: 550000, retainerHours: 10 },
   retainer_15: { mode: 'subscription', name: 'Senior Advisor Retainer — 15 hrs/month', amount: 770000, retainerHours: 15 },
 };
+
+// What each product actually is, in Stripe's own catalog — shown on checkout,
+// on the receipt, and in Stripe's product reporting.
+const DESCRIPTIONS = {
+  sub_Basic: 'Every GroundUp course and written lesson, free invites to every live Lunch & Learn, and read access to the community.',
+  sub_Builder: 'Everything in Member, plus posting in the community, the Lunch & Learn recording library, and view-only access to every guide and template.',
+  sub_Premium: 'Everything in Builder, plus 3 downloads a month, the Opportunity Board, group office hours with Dr. Merritt, and 10% off 1:1 sessions.',
+  sub_Elite: 'Everything in Premium, plus deal support in your advisory calls, 3 one-on-one calls a year with Dr. Merritt, direct messages, unlimited downloads, and 30% off 1:1 sessions.',
+  pass_single: 'Sixty days of access to one GroundUp course — written lessons and lesson videos.',
+  pass_all: 'Thirty days of access to every GroundUp course — written lessons and lesson videos.',
+  pass_lifetime: 'Every GroundUp course in perpetuity, one year of Builder membership, group office hours for five years, and every Lunch & Learn — live and recorded — for life.',
+  lnl: 'A seat at the next live Lunch & Learn with Dr. Merritt, recording included.',
+  lnl_year: 'Every live Lunch & Learn and recording for twelve months.',
+  lnl_life: 'Every Lunch & Learn session and recording, forever.',
+  session_deal: 'A 45-minute one-to-one deal review with Dr. Gina Merritt.',
+  session_strategy: 'A 45-minute one-to-one strategy session with Dr. Gina Merritt.',
+  session_capital: 'A 45-minute one-to-one capital stack review with Dr. Gina Merritt.',
+  session_community: 'A 45-minute one-to-one community development session with Dr. Gina Merritt.',
+  retainer_onboarding: 'A full project intake with Dr. Merritt, credited against your first retainer month.',
+  retainer_5: 'Dr. Merritt embedded on your project — five hours a month of senior advisory.',
+  retainer_10: 'Dr. Merritt embedded on your project — ten hours a month of senior advisory.',
+  retainer_15: 'Dr. Merritt embedded on your project — fifteen hours a month of senior advisory.',
+};
+const describe = (item) => DESCRIPTIONS[item] || DESCRIPTIONS[item.replace(/_annual$/, '')] || null;
+
+// Create each catalog item once in Stripe and remember its Price, instead of
+// inventing a throwaway product per checkout. Idempotent: an item already synced
+// at the same amount is left alone. Stripe Prices are immutable, so a changed
+// amount means a NEW Price — the old one keeps serving existing subscriptions,
+// which is exactly what you want.
+export async function syncStripeCatalog(stripe, sql) {
+  const existing = await sql`SELECT item, product_id, price_id, amount_cents FROM stripe_prices`;
+  const have = Object.fromEntries(existing.map(r => [r.item, r]));
+  const created = [], updated = [], unchanged = [];
+  for (const [item, spec] of Object.entries(CATALOG)) {
+    const interval = spec.mode === 'subscription' ? (spec.annual ? 'year' : 'month') : null;
+    const row = have[item];
+    if (row && row.amount_cents === spec.amount) { unchanged.push(item); continue; }
+    let productId = row?.product_id;
+    if (productId) {
+      // Keep the name, description and tax code current on the existing product.
+      try { await stripe.products.update(productId, { name: spec.name, description: describe(item) || undefined, tax_code: TAX_CODE }); }
+      catch { productId = null; }
+    }
+    if (!productId) {
+      const p = await stripe.products.create({ name: spec.name, description: describe(item) || undefined, tax_code: TAX_CODE, metadata: { item } });
+      productId = p.id;
+    }
+    const price = await stripe.prices.create({
+      product: productId, currency: 'usd', unit_amount: spec.amount,
+      ...(interval ? { recurring: { interval } } : {}), metadata: { item },
+    });
+    await sql`INSERT INTO stripe_prices (item, product_id, price_id, amount_cents, interval, livemode, synced_at)
+      VALUES (${item}, ${productId}, ${price.id}, ${spec.amount}, ${interval}, ${!!price.livemode}, NOW())
+      ON CONFLICT (item) DO UPDATE SET product_id = ${productId}, price_id = ${price.id},
+        amount_cents = ${spec.amount}, interval = ${interval}, livemode = ${!!price.livemode}, synced_at = NOW()`;
+    (row ? updated : created).push(item);
+  }
+  return { created, updated, unchanged };
+}
+
+// The stored Price for an item, but ONLY when the amount matches the sticker.
+// Anything discounted server-side (member session rates) still needs a one-off
+// amount, so it keeps the inline path rather than charging the wrong price.
+async function storedPrice(sql, item, unitAmount) {
+  try {
+    const [row] = await sql`SELECT price_id, amount_cents FROM stripe_prices WHERE item = ${item}`;
+    return row && row.amount_cents === unitAmount ? row.price_id : null;
+  } catch { return null; }
+}
 
 // NREUV's share of net revenue, per product. Everything not listed uses DEFAULT.
 // 1.00 = NREUV keeps all of it; 0.75 = NREUV 75% / platform 25%.
@@ -476,6 +546,15 @@ export default async function handler(req, res) {
   const sql = neon(process.env.DATABASE_URL);
 
   try {
+    // ── Admin: define every catalog item in Stripe as a real Product ──
+    // Run once per environment (and again after a price change). Idempotent.
+    if (req.query.sync_catalog === '1') {
+      const admin = getAdmin(req);
+      if (!admin || admin.viewer) return res.status(403).json({ error: 'Admin only' });
+      const out = await syncStripeCatalog(stripe, sql);
+      return res.json({ success: true, ...out });
+    }
+
     // ── Webhook (raw body + signature) ──
     if (req.query.webhook === '1') {
       const raw = await readRawBody(req);
@@ -729,10 +808,16 @@ export default async function handler(req, res) {
         : product.name;
 
     const base = siteUrl();
+    // Charge the Product defined once in Stripe wherever one exists at this
+    // amount. Stripe then reports real products instead of a new throwaway per
+    // sale, and the product's own description and tax code come with it. Only a
+    // server-discounted amount (member session rates) still needs a one-off
+    // price, and that keeps the inline path rather than charging the wrong one.
+    const priceId = await storedPrice(sql, item, unitAmount);
     const params = {
       mode: product.mode,
       customer_email: user.email,
-      line_items: [{
+      line_items: [priceId ? { quantity: 1, price: priceId } : {
         quantity: 1,
         price_data: {
           currency: 'usd',

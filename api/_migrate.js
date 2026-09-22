@@ -199,6 +199,15 @@ const STATEMENTS = [
     booked_at TIMESTAMP, nudges INTEGER DEFAULT 0, last_nudge_at TIMESTAMP,
     charge_id TEXT, created_at TIMESTAMP DEFAULT NOW())`,
   `CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)`,
+  // Stripe Products and Prices, created once and reused, instead of inventing a
+  // throwaway product on every checkout. Keyed by catalog item. This lives in
+  // the database rather than in code because test and live mode have different
+  // IDs — and staging and production already have separate databases, so each
+  // holds its own without any chance of crossing them.
+  `CREATE TABLE IF NOT EXISTS stripe_prices (
+    item TEXT PRIMARY KEY, product_id TEXT NOT NULL, price_id TEXT NOT NULL,
+    amount_cents INTEGER NOT NULL, interval TEXT,
+    livemode BOOLEAN, synced_at TIMESTAMPTZ DEFAULT NOW())`,
   `CREATE TABLE IF NOT EXISTS courses (
     id TEXT PRIMARY KEY, title TEXT NOT NULL, description TEXT,
     stage TEXT, stage_color TEXT, duration TEXT, position INTEGER DEFAULT 0,
