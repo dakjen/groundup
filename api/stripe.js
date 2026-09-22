@@ -90,11 +90,13 @@ const describe = (item) => DESCRIPTIONS[item] || DESCRIPTIONS[item.replace(/_ann
 // at the same amount is left alone. Stripe Prices are immutable, so a changed
 // amount means a NEW Price — the old one keeps serving existing subscriptions,
 // which is exactly what you want.
-export async function syncStripeCatalog(stripe, sql) {
+export async function syncStripeCatalog(stripe, sql, onlyItem = null) {
   const existing = await sql`SELECT item, product_id, price_id, amount_cents FROM stripe_prices`;
   const have = Object.fromEntries(existing.map(r => [r.item, r]));
   const created = [], updated = [], unchanged = [];
-  for (const [item, spec] of Object.entries(CATALOG)) {
+  let last = {};
+  const entries = onlyItem ? (CATALOG[onlyItem] ? [[onlyItem, CATALOG[onlyItem]]] : []) : Object.entries(CATALOG);
+  for (const [item, spec] of entries) {
     const interval = spec.mode === 'subscription' ? (spec.annual ? 'year' : 'month') : null;
     const row = have[item];
     if (row && row.amount_cents === spec.amount) { unchanged.push(item); continue; }
@@ -116,19 +118,34 @@ export async function syncStripeCatalog(stripe, sql) {
       VALUES (${item}, ${productId}, ${price.id}, ${spec.amount}, ${interval}, ${!!price.livemode}, NOW())
       ON CONFLICT (item) DO UPDATE SET product_id = ${productId}, price_id = ${price.id},
         amount_cents = ${spec.amount}, interval = ${interval}, livemode = ${!!price.livemode}, synced_at = NOW()`;
+    last = { item, product_id: productId, price_id: price.id };
     (row ? updated : created).push(item);
   }
-  return { created, updated, unchanged };
+  return { created, updated, unchanged, ...last };
 }
 
 // The stored Price for an item, but ONLY when the amount matches the sticker.
 // Anything discounted server-side (member session rates) still needs a one-off
 // amount, so it keeps the inline path rather than charging the wrong price.
-async function storedPrice(sql, item, unitAmount) {
+// Creates the Product and Price on first use if they don't exist yet, so the
+// catalog fills itself in as things are bought rather than depending on someone
+// remembering to run a sync. Only the first purchase of an item pays the extra
+// round trip. Any failure falls back to the old inline path, so a checkout is
+// never blocked by this.
+async function storedPrice(sql, stripe, item, unitAmount) {
+  const spec = CATALOG[item];
   try {
     const [row] = await sql`SELECT price_id, amount_cents FROM stripe_prices WHERE item = ${item}`;
-    return row && row.amount_cents === unitAmount ? row.price_id : null;
-  } catch { return null; }
+    if (row && row.amount_cents === unitAmount) return row.price_id;
+    // Only self-create at the sticker price. A server-discounted amount is
+    // specific to this person and must never become the catalog's price.
+    if (!spec || spec.amount !== unitAmount) return null;
+    const one = await syncStripeCatalog(stripe, sql, item);
+    return one.price_id || null;
+  } catch (e) {
+    console.error('storedPrice failed, using inline price', e.message);
+    return null;
+  }
 }
 
 // NREUV's share of net revenue, per product. Everything not listed uses DEFAULT.
@@ -828,7 +845,7 @@ export default async function handler(req, res) {
     // sale, and the product's own description and tax code come with it. Only a
     // server-discounted amount (member session rates) still needs a one-off
     // price, and that keeps the inline path rather than charging the wrong one.
-    const priceId = await storedPrice(sql, item, unitAmount);
+    const priceId = await storedPrice(sql, stripe, item, unitAmount);
     const params = {
       mode: product.mode,
       customer_email: user.email,
