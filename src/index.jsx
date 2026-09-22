@@ -2366,11 +2366,17 @@ function ContactPage({ setActivePage, advisorLink }) {
       <div style={{ background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 16, padding: 48, textAlign: "center", maxWidth: 520 }}>
           <div style={{ fontSize: 48, marginBottom: 20 }}>✓</div>
-          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "#f5e8e8", fontWeight: 700, marginBottom: 12 }}>Request Received</div>
+          {/* Someone who has paid still has to book a time. Sending them "back to
+              home" at this point is the one thing they must not do. */}
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "#f5e8e8", fontWeight: 700, marginBottom: 12 }}>{hasPaid ? "Brief received" : "Request Received"}</div>
           <div style={{ color: "#8a7070", fontSize: 14, lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif", marginBottom: 24 }}>
-            Dr. Merritt reviews requests personally and will follow up within 2 business days.
+            {hasPaid
+              ? "Dr. Merritt has what you're working on. If you haven't picked a time yet, do that now — your session isn't scheduled until you do."
+              : "Dr. Merritt reviews requests personally and will follow up within 2 business days."}
           </div>
-          <button onClick={() => setActivePage("home")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Back to Home</button>
+          {hasPaid && advisorLink
+            ? <a href={advisorLink} target="_blank" rel="noreferrer" style={{ display: "inline-block", background: "#22c55e", color: "#04140a", borderRadius: 10, padding: "13px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13.5, textDecoration: "none" }}>Pick your time →</a>
+            : <button onClick={() => setActivePage("home")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Back to Home</button>}
         </div>
       </div>
     );
@@ -2495,6 +2501,18 @@ function ContactPage({ setActivePage, advisorLink }) {
             {!hasPaid && !selected.advisor && (
               <div style={{ background: "#160a0a", border: "1px dashed #5a2122", borderRadius: 14, padding: "18px 22px", marginBottom: 16, color: "#d9b8b8", fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
                 <strong style={{ color: "#f0d8d8" }}>Reserve your spot first.</strong> Once your payment goes through you&rsquo;ll come straight back here and this form opens, so Dr. Merritt has your brief before the session.
+              </div>
+            )}
+            {hasPaid && (
+              <div style={{ background: "#0d2a14", border: "1px solid #22c55e55", borderRadius: 14, padding: "22px 26px", marginBottom: 18 }}>
+                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 24, color: "#f5e8e8", marginBottom: 6 }}>You&rsquo;re paid for {selected.title}. Two things left.</div>
+                <div style={{ color: "#a7d9b5", fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 16 }}>
+                  Pick a time on Dr. Merritt&rsquo;s calendar, and tell her what you&rsquo;re working on so she can prepare. Do both now &mdash; the brief is what makes the 45 minutes worth it.
+                </div>
+                {advisorLink
+                  ? <a href={advisorLink} target="_blank" rel="noreferrer" style={{ display: "inline-block", background: "#22c55e", color: "#04140a", borderRadius: 10, padding: "13px 26px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13.5, textDecoration: "none" }}>1 &middot; Pick your time &rarr;</a>
+                  : <div style={{ color: "#a7d9b5", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>Your booking link is in the confirmation email &mdash; check your inbox for &ldquo;payment received&rdquo;.</div>}
+                <div style={{ color: "#7fba92", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", marginTop: 12 }}>2 &middot; Then fill in the brief below.</div>
               </div>
             )}
             <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 14, padding: 32, opacity: hasPaid || selected.advisor ? 1 : 0.45, pointerEvents: hasPaid || selected.advisor ? "auto" : "none" }} aria-disabled={!hasPaid && !selected.advisor}>
@@ -7217,7 +7235,7 @@ export default function App() {
           <button onClick={() => navigateTo("membership")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 6, padding: "6px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12, cursor: "pointer" }}>Fix Payment</button>
         </div>
       )}
-      {checkoutMsg && (
+      {checkoutMsg && !boughtSession && (
         <div style={{ position: "fixed", top: 64, left: 0, right: 0, zIndex: 96, background: checkoutMsg === "success" ? "#0d2a14" : "#2a1408", color: checkoutMsg === "success" ? "#4ade80" : "#e0c4c4", padding: "10px clamp(16px,4vw,48px)", display: "flex", alignItems: "center", gap: 14, borderBottom: "1px solid #ffffff15" }}>
           <div style={{ flex: 1, fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 700 }}>
             {/* A session isn't finished at payment — the next step is booking a
