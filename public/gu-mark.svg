@@ -1,0 +1,8 @@
+<svg width="256" height="256" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="GroundUp">
+  <!-- Secondary mark: a GU monogram drawn to the same rule as the brownstone —
+       square corners, mitered joins, one clean weight. Black G, red U. -->
+  <g stroke-width="6.5" fill="none" stroke-linejoin="miter" stroke-linecap="butt" shape-rendering="geometricPrecision">
+    <path d="M29 18 H12 V46 H29 V33 H21" stroke="#161616"/>
+    <path d="M35 18 V46 H52 V18" stroke="#b80101"/>
+  </g>
+</svg>

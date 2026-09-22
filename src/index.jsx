@@ -6899,6 +6899,19 @@ export default function App() {
     const p = new URLSearchParams(window.location.search).get("checkout");
     return p === "success" ? "success" : p === "cancelled" ? "cancelled" : null;
   });
+  // Coming back from Stripe with no session is a real case, not an edge one: a
+  // different device, cleared storage, or — on staging — returning to a
+  // different hostname than the one you started on, since localStorage is per
+  // origin. Dropping someone on the signed-out homepage seconds after they paid
+  // is the worst possible moment to say nothing, so ask them to sign in and
+  // tell them the payment landed.
+  useEffect(() => {
+    if (checkoutMsg !== "success") return;
+    if (getMember()) return;
+    setAuthMode("login");
+    setShowSignup(true);
+  }, [checkoutMsg]);
+
   const [launchAt, setLaunchAt] = useState(null);
   const [insiderAt, setInsiderAt] = useState(null);
   const [eliteSpots, setEliteSpots] = useState(null); // { cap, claimed, left }
@@ -7160,7 +7173,11 @@ export default function App() {
       {checkoutMsg && (
         <div style={{ position: "fixed", top: 64, left: 0, right: 0, zIndex: 96, background: checkoutMsg === "success" ? "#0d2a14" : "#2a1408", color: checkoutMsg === "success" ? "#4ade80" : "#e0c4c4", padding: "10px clamp(16px,4vw,48px)", display: "flex", alignItems: "center", gap: 14, borderBottom: "1px solid #ffffff15" }}>
           <div style={{ flex: 1, fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 700 }}>
-            {checkoutMsg === "success" ? "Payment received — your access is activating now. Refresh in a few seconds if you don't see it yet." : "Checkout cancelled — no charge was made."}
+            {checkoutMsg === "success"
+              ? (getMember()
+                  ? "Payment received — your access is activating now. Refresh in a few seconds if you don't see it yet."
+                  : "Payment received. Sign in with the email you just paid with and everything will be waiting.")
+              : "Checkout cancelled — no charge was made."}
           </div>
           <button onClick={() => { setCheckoutMsg(null); window.history.replaceState({}, "", window.location.pathname); }} style={{ background: "transparent", color: "inherit", border: "none", fontSize: 16, cursor: "pointer" }}>✕</button>
         </div>
