@@ -2298,6 +2298,19 @@ function ContactPage({ setActivePage, advisorLink }) {
   ];
 
   const [selected, setSelected] = useState(null);
+  // Coming back from Stripe having paid: select that session so step 3 is open
+  // and they land on the thing they still have to do, rather than at step 1
+  // wondering whether the payment worked.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("checkout") !== "success") return;
+    const id = (q.get("item") || "").replace(/^session_/, "");
+    const match = SESSION_TYPES.find(t => t.id === id);
+    if (match) {
+      setSelected(match);
+      setTimeout(() => document.getElementById("gu-booking-step3")?.scrollIntoView({ behavior: "smooth", block: "start" }), 250);
+    }
+  }, []);
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
@@ -2477,7 +2490,7 @@ function ContactPage({ setActivePage, advisorLink }) {
 
         {/* Step 3 */}
         {selected && (
-          <div style={{ marginBottom: 40 }}>
+          <div id="gu-booking-step3" style={{ marginBottom: 40 }}>
             <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>Step 3 — Tell Dr. Merritt What You're Working On</div>
             {!hasPaid && !selected.advisor && (
               <div style={{ background: "#160a0a", border: "1px dashed #5a2122", borderRadius: 14, padding: "18px 22px", marginBottom: 16, color: "#d9b8b8", fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
@@ -6924,6 +6937,11 @@ export default function App() {
       .then(() => loadNotif()).catch(() => {});
   };
   const [showWaitlist, setShowWaitlist] = useState(false);
+  // What they just bought, so the confirmation can say something true about it.
+  const boughtSession = (() => {
+    const q = new URLSearchParams(window.location.search);
+    return q.get("checkout") === "success" && (q.get("item") || "").startsWith("session_");
+  })();
   const [checkoutMsg, setCheckoutMsg] = useState(() => {
     const p = new URLSearchParams(window.location.search).get("checkout");
     return p === "success" ? "success" : p === "cancelled" ? "cancelled" : null;
@@ -7202,10 +7220,14 @@ export default function App() {
       {checkoutMsg && (
         <div style={{ position: "fixed", top: 64, left: 0, right: 0, zIndex: 96, background: checkoutMsg === "success" ? "#0d2a14" : "#2a1408", color: checkoutMsg === "success" ? "#4ade80" : "#e0c4c4", padding: "10px clamp(16px,4vw,48px)", display: "flex", alignItems: "center", gap: 14, borderBottom: "1px solid #ffffff15" }}>
           <div style={{ flex: 1, fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 700 }}>
+            {/* A session isn't finished at payment — the next step is booking a
+                time, so say that instead of promising access that doesn't exist. */}
             {checkoutMsg === "success"
-              ? (getMember()
-                  ? "Payment received — your access is activating now. Refresh in a few seconds if you don't see it yet."
-                  : "Payment received. Sign in with the email you just paid with and everything will be waiting.")
+              ? (boughtSession
+                  ? <>Payment received — now pick your time with Dr. Merritt.{advisorLink ? <> <a href={advisorLink} target="_blank" rel="noreferrer" style={{ color: "#4ade80", fontWeight: 800 }}>Book your session →</a></> : " Check your email for the booking link."}</>
+                  : getMember()
+                    ? "Payment received — your access is activating now. Refresh in a few seconds if you don't see it yet."
+                    : "Payment received. Sign in with the email you just paid with and everything will be waiting.")
               : "Checkout cancelled — no charge was made."}
           </div>
           <button onClick={() => { setCheckoutMsg(null); window.history.replaceState({}, "", window.location.pathname); }} style={{ background: "transparent", color: "inherit", border: "none", fontSize: 16, cursor: "pointer" }}>✕</button>

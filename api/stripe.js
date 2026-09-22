@@ -868,7 +868,12 @@ export default async function handler(req, res) {
       }],
       metadata: { user_id: String(user.id), item, course_id: body.course_id || '' },
       ...(product.mode === 'subscription' ? { subscription_data: { metadata: { user_id: String(user.id), item } } } : {}),
-      success_url: `${base}/?checkout=success&item=${encodeURIComponent(item)}`,
+      // A session purchase isn't finished at payment — they still have to pick a
+      // time. Send them back to the booking page rather than the homepage, so the
+      // next step is in front of them instead of in an email.
+      success_url: item.startsWith('session_')
+        ? `${base}/contact?checkout=success&item=${encodeURIComponent(item)}`
+        : `${base}/?checkout=success&item=${encodeURIComponent(item)}`,
       cancel_url: `${base}/?checkout=cancelled`,
     };
 
