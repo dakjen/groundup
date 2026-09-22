@@ -207,6 +207,15 @@ const STATEMENTS = [
   // entered by the member after they book (or set by the team), which is still
   // far better than nobody on either side having it written down.
   `ALTER TABLE bookings ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMPTZ`,
+  // One reaction per person per message per kind — the primary key enforces it,
+  // so clicking twice removes rather than stacking.
+  `CREATE TABLE IF NOT EXISTS message_reactions (
+    message_id INTEGER NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY (message_id, user_id, kind))`,
+  `CREATE INDEX IF NOT EXISTS message_reactions_msg ON message_reactions (message_id)`,
   `CREATE TABLE IF NOT EXISTS booking_files (
     id SERIAL PRIMARY KEY,
     booking_id INTEGER NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,

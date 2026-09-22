@@ -871,8 +871,11 @@ export default async function handler(req, res) {
       // A session purchase isn't finished at payment — they still have to pick a
       // time. Send them back to the booking page rather than the homepage, so the
       // next step is in front of them instead of in an email.
+      // A session isn't finished at payment — there's a time to pick, a brief to
+      // write and documents to attach, and all of that now lives on the member
+      // page. Land them on it, in the meetings section.
       success_url: item.startsWith('session_')
-        ? `${base}/contact?checkout=success&item=${encodeURIComponent(item)}`
+        ? `${base}/membership?checkout=success&item=${encodeURIComponent(item)}#meetings`
         : `${base}/?checkout=success&item=${encodeURIComponent(item)}`,
       cancel_url: `${base}/?checkout=cancelled`,
     };

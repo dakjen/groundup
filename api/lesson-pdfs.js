@@ -8,9 +8,12 @@ export const config = {
 
 export default async function handler(req, res) {
   // Members may upload exactly one thing: their own profile picture.
+  // Members may upload their own profile picture, and documents for a session
+  // they have paid for. Everything else is team-only.
   const isAvatar = req.query.kind === 'avatar';
-  const session = isAvatar ? getSession(req) : null;
-  if (!getAdmin(req) && !(isAvatar && session?.uid)) {
+  const isPrep = req.query.kind === 'prep';
+  const session = (isAvatar || isPrep) ? getSession(req) : null;
+  if (!getAdmin(req) && !((isAvatar || isPrep) && session?.uid)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -29,7 +32,7 @@ export default async function handler(req, res) {
 
       // kind=file (shop deliverable PDF), kind=cover (shop image), kind=avatar
       // (member profile picture), default: lesson PDF
-      const kind = ['cover', 'file', 'avatar'].includes(req.query.kind) ? req.query.kind : 'lesson';
+      const kind = ['cover', 'file', 'avatar', 'prep'].includes(req.query.kind) ? req.query.kind : 'lesson';
       const lower = filePart.filename.toLowerCase();
       const IMG = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp' };
       const imgExt = Object.keys(IMG).find(e => lower.endsWith(e));
@@ -38,6 +41,14 @@ export default async function handler(req, res) {
         if (!imgExt) return res.status(400).json({ error: 'Profile pictures must be PNG, JPG, or WEBP' });
         if (filePart.data.length > 4 * 1024 * 1024) return res.status(400).json({ error: 'Keep profile pictures under 4MB' });
         folder = 'avatars'; contentType = IMG[imgExt];
+      } else if (kind === 'prep') {
+        // Whatever she needs to read before a session: a pro forma, a rent roll,
+        // a term sheet, a site plan. Documents, spreadsheets and images.
+        const PREP = { '.pdf': 'application/pdf', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.doc': 'application/msword', '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', '.xls': 'application/vnd.ms-excel', '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation', '.csv': 'text/csv', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg' };
+        const ext = Object.keys(PREP).find(e => lower.endsWith(e));
+        if (!ext) return res.status(400).json({ error: 'Send a PDF, Word, Excel, PowerPoint, CSV or image.' });
+        if (filePart.data.length > 25 * 1024 * 1024) return res.status(400).json({ error: 'Keep files under 25MB — for anything larger, share a link instead.' });
+        folder = 'session-prep'; contentType = PREP[ext];
       } else if (kind === 'cover') {
         if (!imgExt) return res.status(400).json({ error: 'Covers must be PNG, JPG, or WEBP' });
         folder = 'shop-covers'; contentType = IMG[imgExt];
@@ -53,9 +64,16 @@ export default async function handler(req, res) {
         }
       }
 
-      const blob = await put(`${folder}/${Date.now()}-${filePart.filename}`, filePart.data, {
+      // A filename straight off a phone or a Mac can carry spaces, quotes,
+      // emoji or non-Latin characters, and it is being pasted into a URL path.
+      // Reduce it to something safe and keep the extension.
+      const safeName = String(filePart.filename)
+        .normalize('NFKD').replace(/[^\w.\-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+        .slice(-80) || 'upload';
+      const blob = await put(`${folder}/${Date.now()}-${safeName}`, filePart.data, {
         access: 'public',
         contentType,
+        addRandomSuffix: true,
       });
 
       if (kind === 'avatar' && session?.uid) {
@@ -65,8 +83,16 @@ export default async function handler(req, res) {
 
       return res.status(200).json({ url: blob.url, filename: filePart.filename });
     } catch (err) {
+      // Every failure used to come back as the same three words, which made a
+      // misconfigured blob store look identical to a bad file.
       console.error('Upload error:', err);
-      return res.status(500).json({ error: 'Upload failed' });
+      const detail = String(err?.message || '').slice(0, 160);
+      const missingStore = /BLOB_READ_WRITE_TOKEN|No token|store.*not.*found/i.test(detail);
+      return res.status(500).json({
+        error: missingStore
+          ? 'File storage isn\'t configured on this environment yet.'
+          : `Upload failed — ${detail || 'the server hit an unexpected error'}`,
+      });
     }
   }
 

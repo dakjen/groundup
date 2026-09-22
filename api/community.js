@@ -123,6 +123,20 @@ export default async function handler(req, res) {
             FROM messages m LEFT JOIN users u ON u.id = m.user_id
             WHERE m.channel_id = ${channelId} AND m.parent_id IS NULL AND m.deleted = FALSE
             ORDER BY m.created_at ASC LIMIT 200`;
+      // Reactions: totals per kind, plus which ones are yours.
+      if (rows.length) {
+        try {
+          const ids = rows.map(r => r.id);
+          const rx = await sql`SELECT message_id, kind, COUNT(*)::int AS n,
+              BOOL_OR(user_id = ${user.id}) AS mine
+            FROM message_reactions WHERE message_id = ANY(${ids})
+            GROUP BY message_id, kind`;
+          const byMsg = {};
+          for (const r of rx) (byMsg[r.message_id] ||= []).push({ kind: r.kind, n: r.n, mine: r.mine });
+          for (const m of rows) m.reactions = byMsg[m.id] || [];
+        } catch { for (const m of rows) m.reactions = []; }
+      }
+
       // Attach poll results (counts, your vote; voter names for the team)
       const pollMsgs = rows.filter(r => r.poll);
       if (pollMsgs.length) {
@@ -209,6 +223,26 @@ export default async function handler(req, res) {
     }
 
     // Edit a message: the author for up to 1 HOUR after sending, the team anytime.
+    // React to a message. One per person per kind — clicking the same one again
+    // takes it off, which is what everyone expects a reaction to do.
+    if (req.method === 'POST' && req.body && req.body.action === 'react') {
+      const KINDS = ['up', 'heart', 'idea', 'fire', 'celebrate', 'eyes'];
+      const kind = String(req.body.kind || '');
+      const messageId = Number(req.body.message_id);
+      if (!KINDS.includes(kind) || !messageId) return res.status(400).json({ error: 'Bad reaction' });
+      const [msg] = await sql`SELECT id, channel_id FROM messages WHERE id = ${messageId} AND deleted = FALSE`;
+      if (!msg) return res.status(404).json({ error: 'Message not found' });
+      const [ch] = await sql`SELECT * FROM channels WHERE id = ${msg.channel_id}`;
+      if (!ch || !canSeeChannel(ch, user)) return res.status(403).json({ error: 'Not your channel' });
+      const [existing] = await sql`SELECT 1 AS x FROM message_reactions
+        WHERE message_id = ${messageId} AND user_id = ${user.id} AND kind = ${kind}`;
+      if (existing) await sql`DELETE FROM message_reactions WHERE message_id = ${messageId} AND user_id = ${user.id} AND kind = ${kind}`;
+      else await sql`INSERT INTO message_reactions (message_id, user_id, kind) VALUES (${messageId}, ${user.id}, ${kind}) ON CONFLICT DO NOTHING`;
+      const rx = await sql`SELECT kind, COUNT(*)::int AS n, BOOL_OR(user_id = ${user.id}) AS mine
+        FROM message_reactions WHERE message_id = ${messageId} GROUP BY kind`;
+      return res.json({ success: true, reactions: rx });
+    }
+
     if (req.method === 'POST' && req.body && req.body.action === 'edit_message') {
       const body = String(req.body.body || '').trim().slice(0, 4000);
       if (!body) return res.status(400).json({ error: 'Message required' });

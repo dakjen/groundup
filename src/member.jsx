@@ -1,4 +1,4 @@
-import { BookOpen, MessagesSquare, Video, Handshake, Lock, Mail, Megaphone, Menu, X as XIcon, Eye, Calendar } from "lucide-react";
+import { BookOpen, MessagesSquare, Video, Handshake, Lock, Mail, Megaphone, Menu, X as XIcon, Eye, Calendar, ThumbsUp, Heart, Lightbulb, Flame, PartyPopper, SmilePlus } from "lucide-react";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { pollVisible } from "./poll.js";
 
@@ -557,6 +557,139 @@ export function OnboardingFlow({ pending, onDone }) {
   );
 }
 
+// ─── MEETINGS: a paid 1:1 is a small engagement, not a receipt ───────────────
+// Everything about one session in one place: when it is, what Dr. Merritt should
+// read first, and the documents to read it from. The brief used to go into
+// browser storage, so she never actually received it.
+export function MeetingsPanel({ member }) {
+  const [rows, setRows] = useState(null);
+  const [err, setErr] = useState("");
+  const load = useCallback(() => api("/api/bookings").then(d => setRows(d.bookings || [])).catch(e => { setErr(e.message); setRows([]); }), []);
+  useEffect(() => { load(); }, [load]);
+
+  if (rows === null) return <div style={{ color: "var(--gu-muted)", fontFamily: font, fontSize: 13.5, padding: "18px 0" }}>Loading your meetings…</div>;
+  if (err) return <div style={{ color: "#ff8a8a", fontFamily: font, fontSize: 13.5 }}>{err}</div>;
+  if (!rows.length) return null;
+
+  return <div style={{ marginBottom: 22 }}>{rows.map(b => <MeetingCard key={b.id} b={b} onChange={load} link={member.booking_link} />)}</div>;
+}
+
+function MeetingCard({ b, onChange, link }) {
+  const [brief, setBrief] = useState(b.brief || "");
+  const [when, setWhen] = useState(b.scheduled_at ? new Date(b.scheduled_at).toISOString().slice(0, 16) : "");
+  const [files, setFiles] = useState(b.files || []);
+  const [busy, setBusy] = useState("");
+  const [note, setNote] = useState(null);
+  const [linkTitle, setLinkTitle] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
+  const flash = (ok, text) => { setNote({ ok, text }); setTimeout(() => setNote(null), 4500); };
+  const post = (body) => api("/api/bookings", { method: "POST", body: JSON.stringify({ id: b.id, ...body }) });
+
+  const saveBrief = async () => {
+    setBusy("brief");
+    try { await post({ action: "save_brief", brief }); flash(true, "Saved — Dr. Merritt sees this before your session."); }
+    catch (e) { flash(false, e.message); } finally { setBusy(""); }
+  };
+  const saveWhen = async () => {
+    setBusy("when");
+    try { await post({ action: "set_scheduled", scheduled_at: when ? new Date(when).toISOString() : null }); flash(true, "Time saved."); onChange(); }
+    catch (e) { flash(false, e.message); } finally { setBusy(""); }
+  };
+  const addLink = async () => {
+    if (!linkTitle.trim() || !linkUrl.trim()) { flash(false, "Give the link a name and a URL."); return; }
+    setBusy("link");
+    try {
+      const f = await post({ action: "add_file", title: linkTitle, url: linkUrl, kind: "link" });
+      setFiles([...files, f]); setLinkTitle(""); setLinkUrl(""); flash(true, "Link added.");
+    } catch (e) { flash(false, e.message); } finally { setBusy(""); }
+  };
+  const upload = async (file) => {
+    if (!file) return;
+    setBusy("file");
+    try {
+      const fd = new FormData(); fd.append("file", file);
+      const res = await fetch("/api/lesson-pdfs?kind=prep", { method: "POST", headers: { Authorization: "Bearer " + (localStorage.getItem("guToken") || "") }, body: fd });
+      const raw = await res.text();
+      let d = {}; try { d = raw ? JSON.parse(raw) : {}; } catch {}
+      if (!res.ok || !d.url) throw new Error(d.error || `Upload failed (${res.status})`);
+      const f = await post({ action: "add_file", title: file.name, url: d.url, kind: "file" });
+      setFiles([...files, f]); flash(true, "Uploaded — she'll have it before your session.");
+    } catch (e) { flash(false, e.message); } finally { setBusy(""); }
+  };
+  const removeFile = async (id) => {
+    try { await post({ action: "remove_file", file_id: id }); setFiles(files.filter(f => f.id !== id)); }
+    catch (e) { flash(false, e.message); }
+  };
+
+  const soon = b.scheduled_at && new Date(b.scheduled_at) > new Date();
+  const lbl = { display: "block", fontSize: 9, color: "var(--gu-muted)", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 };
+  const box = { width: "100%", boxSizing: "border-box", background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 9, padding: "10px 13px", color: "var(--gu-text)", fontFamily: font, fontSize: 13.5, outline: "none" };
+
+  return (
+    <div style={{ background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "22px 24px", marginBottom: 14 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14, flexWrap: "wrap", marginBottom: 16 }}>
+        <div>
+          <div style={{ color: "var(--gu-text)", fontWeight: 800, fontSize: 16, fontFamily: font }}>{b.label || b.item}</div>
+          <div style={{ color: soon ? "#4ade80" : "#e0a0a0", fontSize: 12.5, fontFamily: font, fontWeight: 700, marginTop: 4 }}>
+            {soon
+              ? `${new Date(b.scheduled_at).toLocaleString(undefined, { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })}`
+              : b.scheduled_at ? "This session has passed" : "Paid — not scheduled yet"}
+          </div>
+        </div>
+        {!b.scheduled_at && link && (
+          <a href={link} target="_blank" rel="noreferrer" style={{ ...btnRed, textDecoration: "none", display: "inline-block" }}>Pick your time →</a>
+        )}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 14, marginBottom: 16 }}>
+        <div>
+          <label style={lbl}>When is it?</label>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input type="datetime-local" value={when} onChange={e => setWhen(e.target.value)} style={box} />
+            <button onClick={saveWhen} disabled={busy === "when"} style={{ ...btnGhost, whiteSpace: "nowrap" }}>{busy === "when" ? "…" : "Save"}</button>
+          </div>
+          <div style={{ color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font, marginTop: 6 }}>After you book on the calendar, put the time here so it shows on both sides.</div>
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <label style={lbl}>What do you want to cover?</label>
+        <textarea value={brief} onChange={e => setBrief(e.target.value)} maxLength={5000} placeholder="Your deal, your question, the decision you're stuck on — as much detail as you can. She reads this before you meet."
+          style={{ ...box, minHeight: 110, resize: "vertical", lineHeight: 1.6 }} />
+        <button onClick={saveBrief} disabled={busy === "brief"} style={{ ...btnRed, marginTop: 8 }}>{busy === "brief" ? "Saving…" : b.brief ? "Update brief" : "Save brief"}</button>
+      </div>
+
+      <div>
+        <label style={lbl}>Documents &amp; links for her to review</label>
+        {files.length > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            {files.map(f => (
+              <div key={f.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--gu-border2)" }}>
+                <a href={f.url} target="_blank" rel="noreferrer" style={{ color: "#e0a0a0", fontSize: 13.5, fontFamily: font, fontWeight: 700, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {f.kind === "file" ? "📄" : "🔗"} {f.title}
+                </a>
+                <button onClick={() => removeFile(f.id)} style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 12, fontFamily: font }}>Remove</button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+          <input value={linkTitle} onChange={e => setLinkTitle(e.target.value)} placeholder="Name it — e.g. Pro forma" style={{ ...box, flex: "1 1 180px" }} />
+          <input value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="https://…" style={{ ...box, flex: "1 1 220px" }} />
+          <button onClick={addLink} disabled={busy === "link"} style={btnGhost}>{busy === "link" ? "…" : "🔗 Submit link"}</button>
+        </div>
+        <label style={{ ...btnGhost, display: "inline-block", cursor: busy === "file" ? "default" : "pointer", opacity: busy === "file" ? 0.6 : 1 }}>
+          {busy === "file" ? "Uploading…" : "📎 Upload project documents"}
+          <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.pptx,.csv,.png,.jpg,.jpeg" onChange={e => upload(e.target.files?.[0])} style={{ display: "none" }} disabled={busy === "file"} />
+        </label>
+        <div style={{ color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font, marginTop: 8 }}>PDF, Word, Excel, PowerPoint, CSV or images, up to 25MB. Anything bigger, add it as a link.</div>
+      </div>
+
+      {note && <div style={{ color: note.ok ? "#4ade80" : "#ff8a8a", fontSize: 12.5, fontFamily: font, fontWeight: 700, marginTop: 12 }}>{note.text}</div>}
+    </div>
+  );
+}
+
 // ─── MEMBERSHIP PAGE (dashboard) ────────────────────────────────────────────
 
 const BENEFITS = {
@@ -979,7 +1112,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
             <h2 style={H}>Your meetings</h2>
             <p style={SUB}>Your one-on-one time with Dr. Merritt — what you have, when it is, and what she should read first.</p>
             <SessionCreditsCard member={member} />
-            <BookingsCard member={member} />
+            <MeetingsPanel member={member} />
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 14, padding: "18px 24px" }}>
               <div style={{ color: "var(--gu-body)", fontSize: 13.5, fontFamily: font, fontWeight: 600 }}>Need her on something specific? Book a single session any time.</div>
               <button style={btnRed} onClick={() => setActivePage("contact")}>Book a session →</button>
@@ -1117,6 +1250,73 @@ function ProfileHover({ m }) {
   );
 }
 
+const REACTIONS = [
+  ["up", ThumbsUp, "Agree"],
+  ["heart", Heart, "Love this"],
+  ["idea", Lightbulb, "Useful"],
+  ["fire", Flame, "Strong"],
+  ["celebrate", PartyPopper, "Congrats"],
+  ["eyes", Eye, "Watching"],
+];
+
+// Reactions let a busy channel respond without adding a message to read.
+function Reactions({ m, hover }) {
+  const [rx, setRx] = useState(m.reactions || []);
+  const [open, setOpen] = useState(false);
+  const react = async (kind) => {
+    const before = rx;
+    // Move first, reconcile after — a reaction that lags feels broken.
+    setRx(prev => {
+      const hit = prev.find(r => r.kind === kind);
+      if (!hit) return [...prev, { kind, n: 1, mine: true }];
+      const n = hit.mine ? hit.n - 1 : hit.n + 1;
+      return n <= 0 ? prev.filter(r => r.kind !== kind) : prev.map(r => r.kind === kind ? { ...r, n, mine: !hit.mine } : r);
+    });
+    setOpen(false);
+    try {
+      const d = await api("/api/community", { method: "POST", body: JSON.stringify({ action: "react", message_id: m.id, kind }) });
+      if (d.reactions) setRx(d.reactions);
+    } catch { setRx(before); }
+  };
+  const chip = (active) => ({
+    display: "inline-flex", alignItems: "center", gap: 4,
+    background: active ? "#b8010128" : "transparent",
+    border: `1px solid ${active ? "#b8010170" : "var(--gu-border2)"}`,
+    color: active ? "#f0b8b8" : "var(--gu-muted)",
+    borderRadius: 99, padding: "2px 8px", cursor: "pointer",
+    fontSize: 11.5, fontFamily: font, fontWeight: 700, lineHeight: 1.6,
+  });
+  const has = rx.filter(r => r.n > 0);
+  if (!has.length && !hover && !open) return null;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 6, flexWrap: "wrap", position: "relative" }}>
+      {has.map(r => {
+        const def = REACTIONS.find(x => x[0] === r.kind);
+        const Icon = def ? def[1] : SmilePlus;
+        return (
+          <button key={r.kind} onClick={() => react(r.kind)} title={def ? def[2] : ""} style={chip(r.mine)}>
+            <Icon size={12} /> {r.n}
+          </button>
+        );
+      })}
+      {(hover || open) && (
+        <button onClick={() => setOpen(o => !o)} title="Add a reaction" style={{ ...chip(false), padding: "3px 7px" }}>
+          <SmilePlus size={13} />
+        </button>
+      )}
+      {open && (
+        <div style={{ position: "absolute", bottom: "calc(100% + 4px)", left: 0, display: "flex", gap: 2, background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 10, padding: 4, zIndex: 40, boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
+          {REACTIONS.map(([kind, Icon, label]) => (
+            <button key={kind} onClick={() => react(kind)} title={label} style={{ background: "transparent", border: "none", color: "var(--gu-body)", cursor: "pointer", padding: 6, borderRadius: 7, display: "flex" }}>
+              <Icon size={16} />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdit, meId, isAdmin }) {
   const [showProfile, setShowProfile] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -1208,6 +1408,7 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdi
           <span style={{ color: "var(--gu-faint)", fontSize: 11, fontFamily: font }}>{m.poll_results.total} vote{m.poll_results.total === 1 ? "" : "s"} — tap to vote or change your vote</span>
         </div>
       )}
+      <Reactions m={m} hover={hover} />
       {/* A reply count is worth showing always; an invitation to reply only
           when the pointer is on the message. It used to sit under every post
           as a bordered pill, which is why one word of text filled a card. */}
