@@ -198,6 +198,21 @@ const STATEMENTS = [
     status TEXT DEFAULT 'awaiting_booking',
     booked_at TIMESTAMP, nudges INTEGER DEFAULT 0, last_nudge_at TIMESTAMP,
     charge_id TEXT, created_at TIMESTAMP DEFAULT NOW())`,
+  // A paid 1:1 is a small engagement, not just a receipt: it has a brief and
+  // documents attached to it. The brief used to live in browser storage on the
+  // admin's own machine, which meant it was not really stored at all.
+  `ALTER TABLE bookings ADD COLUMN IF NOT EXISTS brief TEXT`,
+  `ALTER TABLE bookings ADD COLUMN IF NOT EXISTS brief_at TIMESTAMPTZ`,
+  // When the meeting actually is. Google Calendar isn't integrated, so this is
+  // entered by the member after they book (or set by the team), which is still
+  // far better than nobody on either side having it written down.
+  `ALTER TABLE bookings ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMPTZ`,
+  `CREATE TABLE IF NOT EXISTS booking_files (
+    id SERIAL PRIMARY KEY,
+    booking_id INTEGER NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+    title TEXT NOT NULL, url TEXT, kind TEXT DEFAULT 'link',
+    uploaded_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW())`,
   `CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)`,
   // Stripe Products and Prices, created once and reused, instead of inventing a
   // throwaway product on every checkout. Keyed by catalog item. This lives in

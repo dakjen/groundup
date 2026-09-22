@@ -30,7 +30,21 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const session = getSession(req);
       if (!session || !session.uid) return res.status(401).json({ error: 'Not signed in' });
-      const [user] = await sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, comped, badges, referral_code, referred_by, tier_since, ip_agreed_at, avatar_url, headline, bio, company, title, location, partner_slug, onboarded_at, created_at FROM users WHERE id = ${session.uid}`;
+      // This query runs on every page load, so a column that exists in the code
+      // but not yet in the database doesn't degrade anything — it signs everyone
+      // out. That happened: a new column was selected here before its migration
+      // had run, and every member was logged out on refresh. Run the migrations
+      // and retry once rather than dropping the session on the floor.
+      const loadUser = () => sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, comped, badges, referral_code, referred_by, tier_since, ip_agreed_at, avatar_url, headline, bio, company, title, location, partner_slug, onboarded_at, created_at FROM users WHERE id = ${session.uid}`;
+      let user;
+      try {
+        [user] = await loadUser();
+      } catch (e) {
+        if (!/does not exist/i.test(e.message || '')) throw e;
+        console.error('/me failed on a missing column — running migrations and retrying', e.message);
+        try { const { ensureSchema } = await import('./_migrate.js'); await ensureSchema(); } catch (m) { console.error('migration failed', m); }
+        [user] = await loadUser();
+      }
       if (!user) return res.status(401).json({ error: 'Account not found' });
       // Active one-time passes: course_id 'all' or 'mc1'..'mc7', unexpired
       user.entitlements = await sql`SELECT course_id, expires_at, source FROM entitlements WHERE user_id = ${user.id} AND (expires_at IS NULL OR expires_at > NOW())`;

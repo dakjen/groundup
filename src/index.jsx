@@ -962,6 +962,17 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
   // and cohort members get their own tab.
   const SESSION_PAGES = [["lunchlearn", "Lunch & Learns"], ["officehours", "Office Hours"], ["contact", "Book with Dr. Gina"]];
   const [sessionsOpen, setSessionsOpen] = useState(false);
+  // The menu had no way to close except picking something or clicking the button
+  // again, so it followed you around the page. Close on a click outside, on
+  // Escape, and when the pointer leaves it.
+  useEffect(() => {
+    if (!sessionsOpen) return;
+    const away = (e) => { if (!e.target.closest?.("[data-gina-menu]")) setSessionsOpen(false); };
+    const esc = (e) => { if (e.key === "Escape") setSessionsOpen(false); };
+    document.addEventListener("mousedown", away);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("mousedown", away); document.removeEventListener("keydown", esc); };
+  }, [sessionsOpen]);
   const pages = isTeam
     ? []
     : member
@@ -1007,7 +1018,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
             <button key={page} onClick={() => setActivePage(page)} style={{ background: activePage === page ? "#57040418" : "transparent", color: activePage === page ? "#b80101" : navInactive, border: activePage === page ? "1px solid #b8010130" : "1px solid transparent", borderRadius: 7, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }}>{pageLabels[page] || page}</button>
           ))}
           {member && !isTeam && (
-            <div style={{ position: "relative" }}>
+            <div data-gina-menu style={{ position: "relative" }} onMouseLeave={() => setSessionsOpen(false)}>
               <button onClick={() => setSessionsOpen(!sessionsOpen)} style={{ background: SESSION_PAGES.some(([id]) => id === activePage) ? "#57040418" : "transparent", color: SESSION_PAGES.some(([id]) => id === activePage) ? "#b80101" : navInactive, border: SESSION_PAGES.some(([id]) => id === activePage) ? "1px solid #b8010130" : "1px solid transparent", borderRadius: 7, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>With Dr. Gina ▾</button>
               {sessionsOpen && (
                 <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, background: "#0d0404", border: "1px solid #2a0000", borderRadius: 12, padding: 6, minWidth: 180, boxShadow: "0 12px 40px rgba(0,0,0,0.5)", zIndex: 200 }}>
@@ -3469,7 +3480,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
   return (
     <div style={{ background: insider ? "#000" : "#210909", minHeight: "100vh" }}>
       <style>{`
-        :root { --gu-bg: #000000; --gu-panel: #070303; --gu-card: #0d0404; --gu-card2: #0a0808; --gu-card3: #140808; --gu-red-tint: #12060a; --gu-border: #2a0000; --gu-border2: #1a0000; --gu-text: #f5e8e8; --gu-text2: #f0d8d8; --gu-body: #c8a8a8; --gu-muted: #8a7070; --gu-muted2: #8f7070; --gu-faint: #9a7878; }
+        :root { --gu-bg: #0a0506; --gu-panel: #12090a; --gu-card: #14090a; --gu-card2: #180d0e; --gu-card3: #1e1011; --gu-red-tint: #1d0b10; --gu-border: #3a1618; --gu-border2: #2a1012; --gu-text: #fbf1f1; --gu-text2: #f7e6e6; --gu-body: #e2cfcf; --gu-muted: #bda4a4; --gu-muted2: #c0a7a7; --gu-faint: #c8afaf; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #000; color: #f5e8e8; font-family: 'DM Sans', sans-serif; }
         @keyframes guFadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
@@ -7010,10 +7021,10 @@ export default function App() {
       "--gu-text": "#161616", "--gu-text2": "#222222", "--gu-body": "#333333", "--gu-muted": "#666666",
       "--gu-muted2": "#8a8a8a", "--gu-faint": "#9a9a9a",
     } : {
-      "--gu-bg": "#000000", "--gu-panel": "#070303", "--gu-card": "#0d0404", "--gu-card2": "#0a0808",
+      "--gu-bg": "#0a0506", "--gu-panel": "#12090a", "--gu-card": "#14090a", "--gu-card2": "#180d0e",
       "--gu-card3": "#140808", "--gu-red-tint": "#12060a", "--gu-border": "#2a0000", "--gu-border2": "#1a0000",
-      "--gu-text": "#f5e8e8", "--gu-text2": "#f0d8d8", "--gu-body": "#c8a8a8", "--gu-muted": "#8a7070",
-      "--gu-muted2": "#8f7070", "--gu-faint": "#9a7878",
+      "--gu-text": "#fbf1f1", "--gu-text2": "#f7e6e6", "--gu-body": "#e2cfcf", "--gu-muted": "#bda4a4",
+      "--gu-muted2": "#c0a7a7", "--gu-faint": "#c8afaf",
     };
     for (const [k, v] of Object.entries(V)) document.documentElement.style.setProperty(k, v);
   }, [member?.role, activePage]);
@@ -7088,6 +7099,17 @@ export default function App() {
     setSignupTier(tier); setShowSignup(true);
   };
 
+  // Admin pages render only for the team, so a member who lands on one — a
+  // stale tab, a bookmarked URL, a shared link — got a blank black page and no
+  // way out. Send them somewhere real instead of leaving them staring at it.
+  // The API refuses them regardless; this is about not dead-ending a person.
+  useEffect(() => {
+    if (!String(activePage).startsWith("admin-")) return;
+    if (member?.role === "admin") return;
+    setActivePage(member ? "membership" : "home");
+    try { window.history.replaceState({}, "", "/"); } catch {}
+  }, [activePage, member?.role]);
+
   // IP agreement is now collected at signup — no popup gate
   const navigateTo = (page) => { setActivePage(page); };
   const handleAgree = () => {
@@ -7129,7 +7151,7 @@ export default function App() {
   return (
     <>
       <style>{`
-        :root { --gu-bg: #000000; --gu-panel: #070303; --gu-card: #0d0404; --gu-card2: #0a0808; --gu-card3: #140808; --gu-red-tint: #12060a; --gu-border: #2a0000; --gu-border2: #1a0000; --gu-text: #f5e8e8; --gu-text2: #f0d8d8; --gu-body: #c8a8a8; --gu-muted: #8a7070; --gu-muted2: #8f7070; --gu-faint: #9a7878; }
+        :root { --gu-bg: #0a0506; --gu-panel: #12090a; --gu-card: #14090a; --gu-card2: #180d0e; --gu-card3: #1e1011; --gu-red-tint: #1d0b10; --gu-border: #3a1618; --gu-border2: #2a1012; --gu-text: #fbf1f1; --gu-text2: #f7e6e6; --gu-body: #e2cfcf; --gu-muted: #bda4a4; --gu-muted2: #c0a7a7; --gu-faint: #c8afaf; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #000; color: #f5e8e8; font-family: 'DM Sans', sans-serif; }
         ::-webkit-scrollbar { width: 5px; }
