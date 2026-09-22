@@ -188,10 +188,30 @@ export default async function handler(req, res) {
     }
 
     if (action === 'signup') {
-      // Pre-launch: no signups until the launch moment passes (waitlist only)
-      const [launchRow] = await sql`SELECT value FROM settings WHERE key = 'launch_at'`;
-      if (!launchRow?.value || new Date(launchRow.value).getTime() > Date.now()) {
-        return res.status(403).json({ error: "We haven't launched yet — join the waitlist to be first in." });
+      // Two doors. Insiders walk in at the insider launch (Nov 1) — a month
+      // before anyone else — and that early month is how founding seats get
+      // claimed. Everyone else waits for the public launch (Dec 1).
+      {
+        const rows = await sql`SELECT key, value FROM settings WHERE key IN ('launch_at', 'launch_insider_at')`;
+        const at = (k) => rows.find(r => r.key === k)?.value;
+        const passed = (v) => !!v && new Date(v).getTime() <= Date.now();
+        const publicOpen = passed(at('launch_at'));
+        const insiderOpen = passed(at('launch_insider_at'));
+        if (!publicOpen) {
+          const tryEmail = String(req.body.email || '').trim().toLowerCase();
+          let isInsider = false;
+          if (insiderOpen && tryEmail) {
+            const [wl] = await sql`SELECT id FROM waitlist WHERE LOWER(email) = LOWER(${tryEmail}) AND COALESCE(list, 'insider') = 'insider' LIMIT 1`;
+            isInsider = !!wl;
+          }
+          if (!isInsider) {
+            return res.status(403).json({
+              error: insiderOpen
+                ? "Doors are open to insiders first. GroundUp opens to everyone December 1 — join the waitlist and we'll email you the moment it does."
+                : "We haven't launched yet — join the waitlist to be first in.",
+            });
+          }
+        }
       }
       const { name, email, password } = req.body;
       if (!name || !email || !password) return res.status(400).json({ error: 'Name, email, and password are required' });

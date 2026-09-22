@@ -130,8 +130,11 @@ export default async function handler(req, res) {
     // anyone who joins the list later gets it on the next daily run.
     let founding = null;
     try {
-      const [c] = await sql`SELECT COUNT(*) FILTER (WHERE NOT COALESCE(comped, FALSE))::int AS paying FROM waitlist WHERE COALESCE(list, 'insider') = 'insider'`;
-      if (c.paying >= 25) {
+      // Founding is claimed by paying after the insider launch, so the email
+      // goes out 7 days BEFORE that launch — it's the heads-up that starts the race.
+      const [insRow] = await sql`SELECT value FROM settings WHERE key = 'launch_insider_at'`;
+      const msToLaunch = insRow?.value ? new Date(insRow.value).getTime() - Date.now() : Infinity;
+      if (msToLaunch <= 7 * 86400000) {
         await sql`ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS founding_thanked TIMESTAMPTZ`;
         const rows = await sql`SELECT id, name, email FROM waitlist WHERE COALESCE(list, 'insider') = 'insider' AND founding_thanked IS NULL`;
         let fsent = 0;
@@ -140,9 +143,9 @@ export default async function handler(req, res) {
           const ok = await sendEmail(r.email, mail.subject, mail.html, { marketing: true, light: true });
           if (ok) { await sql`UPDATE waitlist SET founding_thanked = NOW() WHERE id = ${r.id}`; fsent++; }
         }
-        founding = { threshold_met: true, paying: c.paying, sent: fsent };
-        if (fsent) await sendEmail(process.env.ADMIN_EMAIL || 'djmj@nreuv.com', `Founding email went out to ${fsent} insider${fsent === 1 ? '' : 's'}`, `<p style="color:#a89080;font-size:14px;line-height:1.8;">The insider waitlist hit ${c.paying} paying signups, so the founding email sent itself to ${fsent} ${fsent === 1 ? 'person' : 'people'} who hadn't received it yet.</p>`);
-      } else founding = { threshold_met: false, paying: c.paying, needed: 25 - c.paying };
+        founding = { window_open: true, sent: fsent };
+        if (fsent) await sendEmail(process.env.ADMIN_EMAIL || 'djmj@nreuv.com', `Founding email went out to ${fsent} insider${fsent === 1 ? '' : 's'}`, `<p style="color:#a89080;font-size:14px;line-height:1.8;">The insider launch is a week out, so the founding email sent itself to ${fsent} ${fsent === 1 ? 'person' : 'people'} who hadn't received it yet — the first 25 who join from November 1 claim the seats.</p>`);
+      } else founding = { window_open: false, days_to_launch: Math.ceil(msToLaunch / 86400000) };
     } catch (e) { console.error('founding auto-send failed', e.message); }
 
     // Weekly team digest — Fridays, only once the insider launch has passed.

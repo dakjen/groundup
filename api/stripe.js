@@ -68,6 +68,51 @@ export function memberPrice(item, tier) {
 // can change it without a deploy; ELITE_CAP_DEFAULT is the fallback.
 const ELITE_CAP_DEFAULT = 20;
 
+// Founding members are a RACE, not a list: the first 25 people to actually pay
+// after the insider launch. A seat is taken when someone holds the founding25
+// badge and is a real paying member (comped and team accounts never count).
+// The cap lives in settings.founding_cap so it can move without a deploy.
+export async function foundingSeats(sql) {
+  let cap = 25;
+  try {
+    const [row] = await sql`SELECT value FROM settings WHERE key = 'founding_cap'`;
+    const parsed = parseInt(row?.value, 10);
+    if (Number.isFinite(parsed) && parsed >= 0) cap = parsed;
+  } catch { /* default */ }
+  let taken = 0;
+  try {
+    const [row] = await sql`SELECT COUNT(*)::int AS n FROM users
+      WHERE badges @> '["founding25"]'::jsonb AND membership_status = 'active'
+        AND COALESCE(role, 'member') = 'member' AND NOT COALESCE(comped, FALSE)
+        AND tier IS DISTINCT FROM 'Free'`;
+    taken = row?.n || 0;
+  } catch { /* table shape older than the badge */ }
+  // The window: opens at the insider launch and runs 15 days. Founding is
+  // whichever comes first — 25 seats claimed, or the clock running out. The
+  // team can override the close with settings.founding_deadline.
+  let opensAt = null, closesAt = null;
+  try {
+    const rows = await sql`SELECT key, value FROM settings WHERE key IN ('launch_insider_at', 'founding_deadline')`;
+    const ins = rows.find(r => r.key === 'launch_insider_at')?.value;
+    const override = rows.find(r => r.key === 'founding_deadline')?.value;
+    if (ins) {
+      opensAt = new Date(ins);
+      closesAt = override ? new Date(override) : new Date(opensAt.getTime() + 15 * 86400000);
+    }
+  } catch { /* closed */ }
+  const now = Date.now();
+  const started = !!opensAt && now >= opensAt.getTime();
+  const expired = !!closesAt && now > closesAt.getTime();
+  const full = taken >= cap;
+  return {
+    cap, taken, remaining: Math.max(0, cap - taken), full, expired,
+    open: started && !expired && !full,
+    opens_at: opensAt ? opensAt.toISOString() : null,
+    closes_at: closesAt ? closesAt.toISOString() : null,
+    days_left: closesAt && !expired ? Math.max(0, Math.ceil((closesAt.getTime() - now) / 86400000)) : 0,
+  };
+}
+
 export async function eliteSeats(sql) {
   let cap = ELITE_CAP_DEFAULT;
   try {
@@ -253,6 +298,26 @@ async function fulfill(sql, session) {
        <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${c?.name}</strong> (${c?.email}) started a <strong style="color:#f0d8d8;">${spec.retainerHours} hours/month</strong> retainer at $${(spec.amount / 100).toLocaleString()}/mo. They're on the Retainer Clients roster now.</p>`);
   } else if (item.startsWith('sub_')) {
     const tier = CATALOG[item]?.tier;
+    // Claim a founding seat: paying is what earns it, so the grant happens here
+    // and not at signup. First 25 after the insider launch, once each.
+    if (tier && tier !== 'Free') {
+      try {
+        const seats = await foundingSeats(sql);
+        const [u] = await sql`SELECT badges, comped, role FROM users WHERE id = ${userId}`;
+        const has = (Array.isArray(u?.badges) ? u.badges : []).includes('founding25');
+        const eligible = seats.open && !has && !u?.comped && (u?.role || 'member') === 'member';
+        if (eligible) {
+          await sql`UPDATE users SET badges = COALESCE(badges, '[]'::jsonb) || '["founding25"]'::jsonb WHERE id = ${userId}`;
+          // Founding members get their first year of LIVE Lunch & Learns free
+          await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at)
+            VALUES (${userId}, 'lunchlearn', 'founding25', NOW() + interval '1 year', NOW())`;
+          const left = Math.max(0, seats.remaining - 1);
+          await sendEmail(process.env.ADMIN_EMAIL || 'djmj@nreuv.com',
+            `Founding seat ${seats.taken + 1} of ${seats.cap} claimed`,
+            `<p style="color:#a89080;font-size:14px;line-height:1.8;">A founding seat was just claimed at checkout. <strong style="color:#f0d8d8;">${left} of ${seats.cap} remain.</strong></p>`);
+        }
+      } catch (e) { console.error('founding seat grant failed', e.message); }
+    }
     if (tier) {
       // cancelled_at = NULL stops the 15-day deletion clock for members who rejoin
       await sql`UPDATE users SET tier_since = CASE WHEN tier IS DISTINCT FROM ${tier} THEN NOW() ELSE tier_since END, tier = ${tier}, membership_status = 'active', cancelled_at = NULL, stripe_customer_id = ${session.customer || null} WHERE id = ${userId}`;
@@ -628,11 +693,14 @@ export default async function handler(req, res) {
     };
     let foundingSpec = null;
     if (FOUNDING[item] || item.startsWith('retainer_')) {
-      const [wl] = await sql`SELECT id FROM waitlist WHERE LOWER(email) = LOWER(${user.email}) AND COALESCE(list, 'insider') = 'insider' AND founding_lnl = TRUE LIMIT 1`;
-      if (wl && FOUNDING[item]) foundingSpec = FOUNDING[item];
-      // Founding members: 15% off the FIRST retainer month — unless an unused
-      // intake credit exists ($1,500 beats 15%, and the intake coupon applies later)
-      if (wl && item.startsWith('retainer_')) {
+      const seats = await foundingSeats(sql);
+      const alreadyFounding = (Array.isArray(user.badges) ? user.badges : []).includes('founding25');
+      // A membership earns founding status by being one of the first 25 paid
+      // after the insider launch. Someone who already holds a seat keeps it.
+      if (FOUNDING[item] && (seats.open || alreadyFounding)) foundingSpec = FOUNDING[item];
+      // Founding members also get 15% off their first three retainer months —
+      // unless an unused intake credit exists ($1,500 beats 15%).
+      if (item.startsWith('retainer_') && alreadyFounding) {
         const [intake] = await sql`SELECT id FROM entitlements WHERE user_id = ${user.id} AND course_id = 'intake' AND source = 'intake_paid' LIMIT 1`;
         if (!intake) foundingSpec = { id: 'FOUNDRET15X3', percent_off: 15, duration: 'repeating', months: 3 };
       }

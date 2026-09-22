@@ -535,6 +535,7 @@ export function foundingThanksEmail(name, opts = {}) {
   const marks = {
     [todayKey]: { bg: '#161616', fg: '#ffffff' },
     '2026-11-01': { bg: '#b80101', fg: '#ffffff' },
+    '2026-11-15': { border: '#b80101' },
     '2026-12-01': { bg: '#a08560', fg: '#ffffff' },
     '2026-12-05': { border: '#b80101' },
   };
@@ -546,12 +547,12 @@ export function foundingThanksEmail(name, opts = {}) {
 
       <h1 style="font-family:${SERIF};color:#161616;font-size:34px;line-height:1.15;font-weight:700;margin:0 0 10px;">You were here first.</h1>
       <p style="font-family:${SANS};color:#161616;font-size:16px;line-height:1.7;margin:0 0 18px;">Thank you, ${first}, for joining the GroundUp waitlist.</p>
-      <p style="font-family:${SANS};color:#444444;font-size:15px;line-height:1.85;margin:0 0 24px;">We are so excited \u2014 and so close. What Dr.\u00A0Gina Merritt has been building is almost ready to open its doors. And because you believed in this before anyone else, you\u2019re not just an early signup. <strong style="color:#b80101;">You are a founding member.</strong></p>
+      <p style="font-family:${SANS};color:#444444;font-size:15px;line-height:1.85;margin:0 0 24px;">We are so excited \u2014 and so close. What Dr.\u00A0Gina Merritt has been building is almost ready to open its doors. And because you believed in this before anyone else, your doors open <strong style="color:#b80101;">November 1 \u2014 a full month before the public</strong>, and you get first claim on founding membership.</p>
 
       <div style="border-left:4px solid #b80101;background:#faf7f7;border-radius:0 12px 12px 0;padding:22px 26px;margin:0 0 26px;">
         <div style="font-family:${SANS};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;">What founding member means</div>
-        <p style="font-family:${SANS};color:#333333;font-size:14px;line-height:1.85;margin:0 0 10px;">You walk in on <strong style="color:#b80101;">November 1 \u2014 a full month before the public</strong> \u2014 with the courses, the community, all of it. And your account carries a permanent <strong style="color:#b80101;">founding badge</strong> in the community, so everyone knows you were part of the original circle.</p>
-        <p style="font-family:${SANS};color:#333333;font-size:14px;line-height:1.85;margin:0 0 12px;">And founding members lock in <strong style="color:#b80101;">25% off any membership for their entire first year</strong> \u2014 a rate that will never be offered again after launch:</p>
+        <p style="font-family:${SANS};color:#333333;font-size:14px;line-height:1.85;margin:0 0 10px;">On November 1 the doors open to you and nobody else \u2014 the courses, the community, all of it. From that moment, <strong style="color:#b80101;">the first 25 people who join become the founding members</strong>, and the window closes <strong style="color:#b80101;">November 15</strong>. Whichever comes first: 25 seats, or the 15th. Founding members carry a permanent badge in the community \u2014 and the rate below for a full year.</p>
+        <p style="font-family:${SANS};color:#333333;font-size:14px;line-height:1.85;margin:0 0 12px;">Claim a seat and you lock <strong style="color:#b80101;">25% off any membership for your entire first year</strong> \u2014 a rate that will never be offered again:</p>
         <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 12px;">
           <tr><td style="font-family:${SANS};font-size:14px;color:#161616;font-weight:bold;padding:5px 12px 5px 0;white-space:nowrap;">Member</td><td style="font-family:${SANS};font-size:14px;color:#444444;padding:5px 0;"><s style="color:#999999;">$49.99</s> &nbsp;<strong style="color:#b80101;">$37.49/mo</strong> your first year</td></tr>
           <tr><td style="font-family:${SANS};font-size:14px;color:#161616;font-weight:bold;padding:5px 12px 5px 0;white-space:nowrap;">Builder</td><td style="font-family:${SANS};font-size:14px;color:#444444;padding:5px 0;"><s style="color:#999999;">$149.99</s> &nbsp;<strong style="color:#b80101;">$112.49/mo</strong> your first year</td></tr>
@@ -575,7 +576,8 @@ export function foundingThanksEmail(name, opts = {}) {
       </table>
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 26px;">
         <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#161616;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">Today</strong> \u2014 you\u2019re on the list</td></tr>
-        <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#b80101;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">November 1</strong> \u2014 insider access opens. Founding members walk in a full month before the public: courses, community, all of it.</td></tr>
+        <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#b80101;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">November 1</strong> \u2014 your doors open, a full month before the public. The founding race starts: first 25 to join.</td></tr>
+        <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;border:2px solid #b80101;box-sizing:border-box;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">November 15</strong> \u2014 founding closes. After this the rate is gone, even if seats remain.</td></tr>
         <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#a08560;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">December 1</strong> \u2014 full public launch. You\u2019ll already be a month ahead.</td></tr>
         <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;border:2px solid #b80101;box-sizing:border-box;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">December 5 \u2014 The Launch Party.</strong> Every founding member is invited \u2014 save the date; your invitation is coming soon.</td></tr>
       </table>

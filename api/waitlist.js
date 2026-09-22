@@ -287,7 +287,10 @@ export default async function handler(req, res) {
         const rows = await sql`SELECT code, owner_name, company FROM partner_codes ORDER BY owner_name`;
         partners = rows.map(r => ({ code: r.code, label: r.company || r.owner_name }));
       } catch { /* table appears after first migrate */ }
-      return res.json({ launch_at: launchRow?.value || null, launch_insider_at: insiderRow?.value || null, advisor_call_link: callRow?.value || null, elite, partners });
+      // Founding seats: the live race — 25 seats, 15 days from the insider launch
+      let founding = null;
+      try { const { foundingSeats } = await import('./stripe.js'); founding = await foundingSeats(sql); } catch (e) { console.error('founding seats failed', e.message); }
+      return res.json({ launch_at: launchRow?.value || null, launch_insider_at: insiderRow?.value || null, advisor_call_link: callRow?.value || null, elite, founding, partners });
     }
 
     // Admin: full list + launch date + revenue rollup
