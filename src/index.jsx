@@ -2385,9 +2385,7 @@ function ContactPage({ setActivePage, advisorLink }) {
               ? "Dr. Merritt has what you're working on. If you haven't picked a time yet, do that now — your session isn't scheduled until you do."
               : "Dr. Merritt reviews requests personally and will follow up within 2 business days."}
           </div>
-          {hasPaid && advisorLink
-            ? <a href={advisorLink} target="_blank" rel="noreferrer" style={{ display: "inline-block", background: "#22c55e", color: "#04140a", borderRadius: 10, padding: "13px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13.5, textDecoration: "none" }}>Pick your time →</a>
-            : <button onClick={() => setActivePage("home")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Back to Home</button>}
+          <button onClick={() => setActivePage(hasPaid ? "membership" : "home")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>{hasPaid ? "Go to your meetings →" : "Back to Home"}</button>
         </div>
       </div>
     );
@@ -2514,16 +2512,16 @@ function ContactPage({ setActivePage, advisorLink }) {
                 <strong style={{ color: "#f0d8d8" }}>Reserve your spot first.</strong> Once your payment goes through you&rsquo;ll come straight back here and this form opens, so Dr. Merritt has your brief before the session.
               </div>
             )}
+            {/* Everything after payment — the time, the brief, the documents —
+                lives in one place on the member page. Say so once and send them
+                there, rather than asking for a time again here. */}
             {hasPaid && (
               <div style={{ background: "#0d2a14", border: "1px solid #22c55e55", borderRadius: 14, padding: "22px 26px", marginBottom: 18 }}>
-                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 24, color: "#f5e8e8", marginBottom: 6 }}>You&rsquo;re paid for {selected.title}. Two things left.</div>
+                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 24, color: "#f5e8e8", marginBottom: 6 }}>You&rsquo;re paid for {selected.title}.</div>
                 <div style={{ color: "#a7d9b5", fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 16 }}>
-                  Pick a time on Dr. Merritt&rsquo;s calendar, and tell her what you&rsquo;re working on so she can prepare. Do both now &mdash; the brief is what makes the 45 minutes worth it.
+                  Your session is under <strong style={{ color: "#f5e8e8" }}>Your meetings</strong> — pick your time, write your brief, and attach anything Dr. Merritt should read first, all in one place.
                 </div>
-                {advisorLink
-                  ? <a href={advisorLink} target="_blank" rel="noreferrer" style={{ display: "inline-block", background: "#22c55e", color: "#04140a", borderRadius: 10, padding: "13px 26px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13.5, textDecoration: "none" }}>1 &middot; Pick your time &rarr;</a>
-                  : <div style={{ color: "#a7d9b5", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>Your booking link is in the confirmation email &mdash; check your inbox for &ldquo;payment received&rdquo;.</div>}
-                <div style={{ color: "#7fba92", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", marginTop: 12 }}>2 &middot; Then fill in the brief below.</div>
+                <button onClick={() => setActivePage("membership")} style={{ background: "#22c55e", color: "#04140a", border: "none", borderRadius: 10, padding: "13px 26px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13.5, cursor: "pointer" }}>Go to your meetings →</button>
               </div>
             )}
             <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 14, padding: 32, opacity: hasPaid || selected.advisor ? 1 : 0.45, pointerEvents: hasPaid || selected.advisor ? "auto" : "none" }} aria-disabled={!hasPaid && !selected.advisor}>
