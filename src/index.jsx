@@ -1018,10 +1018,10 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
             <button key={page} onClick={() => setActivePage(page)} style={{ background: activePage === page ? "#57040418" : "transparent", color: activePage === page ? "#b80101" : navInactive, border: activePage === page ? "1px solid #b8010130" : "1px solid transparent", borderRadius: 7, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }}>{pageLabels[page] || page}</button>
           ))}
           {member && !isTeam && (
-            <div data-gina-menu style={{ position: "relative" }} onMouseLeave={() => setSessionsOpen(false)}>
+            <div data-gina-menu style={{ position: "relative" }}>
               <button onClick={() => setSessionsOpen(!sessionsOpen)} style={{ background: SESSION_PAGES.some(([id]) => id === activePage) ? "#57040418" : "transparent", color: SESSION_PAGES.some(([id]) => id === activePage) ? "#b80101" : navInactive, border: SESSION_PAGES.some(([id]) => id === activePage) ? "1px solid #b8010130" : "1px solid transparent", borderRadius: 7, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>With Dr. Gina ▾</button>
               {sessionsOpen && (
-                <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, background: "#0d0404", border: "1px solid #2a0000", borderRadius: 12, padding: 6, minWidth: 180, boxShadow: "0 12px 40px rgba(0,0,0,0.5)", zIndex: 200 }}>
+                <div style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 12, padding: 6, minWidth: 190, boxShadow: "0 12px 40px rgba(0,0,0,0.5)", zIndex: 200 }}>
                   {SESSION_PAGES.map(([id, label]) => (
                     <button key={id} onClick={() => { setSessionsOpen(false); setActivePage(id); }} style={{ display: "block", width: "100%", textAlign: "left", background: activePage === id ? "#57040430" : "transparent", color: activePage === id ? "#b80101" : "#c8a0a0", border: "none", borderRadius: 8, padding: "10px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>{label}</button>
                   ))}
