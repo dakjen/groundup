@@ -595,17 +595,19 @@ export function MeetingsPanel({ member }) {
 // It still doesn't tell us what was booked — Google doesn't expose that to an
 // embed — so the optional "when is it" field stays until the Calendar API work.
 function Scheduler({ link }) {
-  const [open, setOpen] = useState(false);
+  // Open by default: if a session is unbooked, picking a time is the whole
+  // reason this block is on screen — no reason to make someone click for it.
+  const [open, setOpen] = useState(true);
   const src = link.includes("gv=true") ? link : link + (link.includes("?") ? "&" : "?") + "gv=true";
   return (
     <div>
       <button onClick={() => setOpen(o => !o)} style={{ ...btnRed, marginRight: 10 }}>
-        {open ? "Hide the calendar" : "Book your time →"}
+        {open ? "Hide the calendar" : "Show the calendar →"}
       </button>
       <a href={src} target="_blank" rel="noreferrer" style={{ color: "var(--gu-muted)", fontFamily: font, fontSize: 12.5, fontWeight: 600, textDecoration: "none" }}>open in a new tab</a>
       {open && (
         <div style={{ marginTop: 14, borderRadius: 12, overflow: "hidden", border: "1px solid var(--gu-border)", background: "#ffffff" }}>
-          <iframe src={src} title="Book a time with Dr. Merritt" width="100%" height="640" frameBorder="0" style={{ display: "block", border: 0 }} />
+          <iframe src={src} title="Book a time with Dr. Merritt" width="100%" height="600" frameBorder="0" style={{ display: "block", border: 0 }} />
         </div>
       )}
     </div>
