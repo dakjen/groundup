@@ -29,8 +29,32 @@ const IMG_SITEWORK = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABA
 const miniCourses = [...COURSE_CATALOG];
 
 
+// Creating a Checkout Session is a round trip to our API and then to Stripe, and
+// the browser only navigates once it comes back. Without something on screen the
+// page just sits there — or worse, shows whatever was behind the modal — so hold
+// a full-screen state until the redirect actually happens. Plain DOM, because
+// startCheckout is called from outside React too.
+function redirectOverlay(show) {
+  const ID = "gu-redirecting";
+  const existing = document.getElementById(ID);
+  if (!show) { existing?.remove(); return; }
+  if (existing) return;
+  const el = document.createElement("div");
+  el.id = ID;
+  el.setAttribute("role", "status");
+  el.setAttribute("aria-live", "polite");
+  el.style.cssText = "position:fixed;inset:0;z-index:9999;background:rgba(10,2,3,0.94);backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;font-family:'DM Sans',sans-serif;text-align:center;padding:24px;";
+  el.innerHTML =
+    '<div style="width:38px;height:38px;border:3px solid #5a2122;border-top-color:#ff3b3b;border-radius:50%;animation:gu-spin .8s linear infinite"></div>' +
+    '<div style="color:#f7e6e6;font-size:17px;font-weight:700">Taking you to secure checkout…</div>' +
+    '<div style="color:#b59a9a;font-size:13px;max-width:320px;line-height:1.6">Stripe handles the payment. Don’t refresh — this can take a few seconds.</div>' +
+    '<style>@keyframes gu-spin{to{transform:rotate(360deg)}}</style>';
+  document.body.appendChild(el);
+}
+
 // Start a Stripe Checkout for any purchasable item; falls back to email if payments are off
 async function startCheckout(item, extra = {}) {
+  redirectOverlay(true);
   // exposed on window so member-side pages can trigger checkout
   try {
     const res = await fetch("/api/stripe", {
@@ -39,13 +63,14 @@ async function startCheckout(item, extra = {}) {
       body: JSON.stringify({ item, ...extra }),
     });
     const d = await res.json();
-    if (res.status === 401) { alert("Sign in first, then purchase."); return false; }
+    if (res.status === 401) { redirectOverlay(false); alert("Sign in first, then purchase."); return false; }
     // Elite sold out between page load and checkout — don't fall through to the mailto
-    if (res.status === 409 && d.elite_full) { alert(d.message || "The Owner tier is full right now."); return false; }
+    if (res.status === 409 && d.elite_full) { redirectOverlay(false); alert(d.message || "The Owner tier is full right now."); return false; }
     // A refused checkout has to SAY so. This used to fall through to the mailto
     // below, which does nothing visible when no mail client is bound to mailto: —
     // the person clicked "secure payment" and watched the page sit there.
     if (!res.ok || !d.url) {
+      redirectOverlay(false);
       console.error("checkout failed", res.status, d);
       alert((d.error || "We couldn't start checkout just now.") + "\n\nIf this keeps happening, email groundup@drginamerritt.net and we'll take the payment directly.");
       return false;
@@ -55,6 +80,7 @@ async function startCheckout(item, extra = {}) {
   } catch (e) {
     // Only a genuine network/parse failure lands here — payments may be off
     // entirely, so the mailto is still the right fallback. Say so first.
+    redirectOverlay(false);
     console.error("checkout error", e);
     alert("We couldn't reach the payment system. Opening an email to the team instead.");
     window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("GroundUp purchase: " + item);

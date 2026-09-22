@@ -363,10 +363,18 @@ export function OnboardingFlow({ pending, onDone }) {
         onboarding: { learn, pain, source, role, phase, experience, focus, goal, company, location },
       }) });
       saveMember(data.user, data.token);
-      onDone(data.user);
+      // Order matters. Closing the flow first revealed the member portal behind
+      // it while the Checkout Session was still being created — someone picking
+      // a paid plan briefly saw the site as though they were already in. Start
+      // the redirect first and leave this on screen until the browser leaves.
       if (t !== "Free" && window.startCheckout) {
-        window.startCheckout("sub_" + t + (localStorage.getItem("guAnnual") === "1" ? "_annual" : ""), { promo: localStorage.getItem("guPromo") || undefined, gift: localStorage.getItem("guGift") || undefined });
+        const ok = await window.startCheckout("sub_" + t + (localStorage.getItem("guAnnual") === "1" ? "_annual" : ""), { promo: localStorage.getItem("guPromo") || undefined, gift: localStorage.getItem("guGift") || undefined });
+        if (ok) return; // navigating away — keep the flow up behind the overlay
+        setError("Your account is ready, but we couldn't open checkout. You can upgrade any time from Membership.");
+        setBusy(false);
+        return;
       }
+      onDone(data.user);
     } catch (e) {
       setError(e.message || "We couldn't create your account just now.");
       setBusy(false);
