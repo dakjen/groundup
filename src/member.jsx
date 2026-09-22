@@ -571,10 +571,28 @@ export function MeetingsPanel({ member }) {
   if (err) return <div style={{ color: "#ff8a8a", fontFamily: font, fontSize: 13.5 }}>{err}</div>;
   if (!rows.length) return null;
 
-  return <div style={{ marginBottom: 22 }}>{rows.map(b => <MeetingCard key={b.id} b={b} onChange={load} link={member.booking_link} />)}</div>;
+  const unscheduled = rows.filter(b => !b.scheduled_at);
+  return (
+    <div style={{ marginBottom: 22 }}>
+      {/* Asking for a time on every card meant someone with four sessions was
+          told to book four times. Ask once, for all of them. */}
+      {unscheduled.length > 0 && (
+        <div style={{ background: "var(--gu-card2)", border: "1px solid #b8010140", borderRadius: 14, padding: "18px 22px", marginBottom: 16 }}>
+          <div style={{ color: "var(--gu-text)", fontWeight: 800, fontSize: 15, fontFamily: font, marginBottom: 6 }}>Booking your time</div>
+          <div style={{ color: "var(--gu-body)", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, marginBottom: 14 }}>
+            We&rsquo;ve emailed you a confirmation with your booking link &mdash; book from there and you&rsquo;ll get a calendar invite. <strong style={{ color: "var(--gu-text2)" }}>If nothing on the calendar works</strong>, reply to that email and we&rsquo;ll find a time with you.
+          </div>
+          {member.booking_link && (
+            <a href={member.booking_link} target="_blank" rel="noreferrer" style={{ ...btnGhost, textDecoration: "none", display: "inline-block" }}>Didn&rsquo;t book a time yet? →</a>
+          )}
+        </div>
+      )}
+      {rows.map(b => <MeetingCard key={b.id} b={b} onChange={load} />)}
+    </div>
+  );
 }
 
-function MeetingCard({ b, onChange, link }) {
+function MeetingCard({ b, onChange }) {
   const [brief, setBrief] = useState(b.brief || "");
   const [when, setWhen] = useState(b.scheduled_at ? new Date(b.scheduled_at).toISOString().slice(0, 16) : "");
   const [files, setFiles] = useState(b.files || []);
@@ -630,24 +648,14 @@ function MeetingCard({ b, onChange, link }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14, flexWrap: "wrap", marginBottom: 16 }}>
         <div>
           <div style={{ color: "var(--gu-text)", fontWeight: 800, fontSize: 16, fontFamily: font }}>{b.label || b.item}</div>
-          <div style={{ color: soon ? "#4ade80" : "#e0a0a0", fontSize: 12.5, fontFamily: font, fontWeight: 700, marginTop: 4 }}>
+          <div style={{ color: soon ? "#4ade80" : "var(--gu-muted)", fontSize: 12.5, fontFamily: font, fontWeight: 700, marginTop: 4 }}>
             {soon
-              ? `${new Date(b.scheduled_at).toLocaleString(undefined, { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })}`
-              : b.scheduled_at ? "This session has passed" : "Paid — not scheduled yet"}
+              ? new Date(b.scheduled_at).toLocaleString(undefined, { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })
+              : b.scheduled_at
+                ? "This session has passed"
+                : `Paid${b.created_at ? " · " + new Date(b.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""}`}
           </div>
         </div>
-        {!b.scheduled_at && link && (
-          <a href={link} target="_blank" rel="noreferrer" style={{ ...btnRed, textDecoration: "none", display: "inline-block" }}>Pick your time →</a>
-        )}
-      </div>
-
-      {/* Say once, plainly, that the confirmation exists and what to do if the
-          calendar doesn't work out — otherwise someone who has paid and can't
-          find a slot has no idea who to tell. */}
-      <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border2)", borderRadius: 10, padding: "12px 14px", marginBottom: 16, color: "var(--gu-body)", fontSize: 12.5, fontFamily: font, lineHeight: 1.7 }}>
-        {b.scheduled_at
-          ? <>We&rsquo;ve emailed you a confirmation for this session. Need to move it? Reply to that email and we&rsquo;ll sort it out.</>
-          : <>We&rsquo;ve emailed you a confirmation with your booking link. <strong style={{ color: "var(--gu-text2)" }}>If nothing on the calendar works</strong>, just reply to that email and we&rsquo;ll find a time with you.</>}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 14, marginBottom: 16 }}>
@@ -657,7 +665,7 @@ function MeetingCard({ b, onChange, link }) {
             <input type="datetime-local" value={when} onChange={e => setWhen(e.target.value)} style={box} />
             <button onClick={saveWhen} disabled={busy === "when"} style={{ ...btnGhost, whiteSpace: "nowrap" }}>{busy === "when" ? "…" : "Save"}</button>
           </div>
-          <div style={{ color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font, marginTop: 6 }}>After you book on the calendar, put the time here so it shows on both sides.</div>
+          <div style={{ color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font, marginTop: 6 }}>Optional — if you add the time you booked, it shows here and on Dr. Merritt&rsquo;s side.</div>
         </div>
       </div>
 
