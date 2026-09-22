@@ -93,7 +93,7 @@ export function TierBadge({ tier, small }) {
 
 // ─── AUTH MODAL (login / create account) ────────────────────────────────────
 
-export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode = "signup", allowSignup = true }) {
+export function AuthModal({ onClose, onAuthed, onSignupIntent, defaultTier = "Free", startMode = "signup", allowSignup = true }) {
   const [mode, setMode] = useState(startMode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -119,6 +119,16 @@ export function AuthModal({ onClose, onAuthed, defaultTier = "Free", startMode =
       if (mode === "forgot") {
         await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "forgot_password", email }) });
         setNotice("If that email has an account, a reset link is on its way. It works for one hour.");
+        return;
+      }
+      // A plain signup hands off to onboarding WITHOUT creating anything yet —
+      // the account is written at the end of that flow, so abandoning it leaves
+      // no orphan account. Check the email is free first, so nobody fills in
+      // three screens and is told at the end that it's taken.
+      if (mode === "signup" && tier === "Free" && onSignupIntent) {
+        await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "check_email", email }) });
+        onSignupIntent({ name, email, password });
+        setBusy(false);
         return;
       }
       // Accounts are always created Free — a paid tier only comes from Stripe
@@ -258,7 +268,21 @@ const ONB_EXPERIENCE = [
 ];
 const ONB_FOCUS = ["Affordable housing (LIHTC)", "Workforce / missing middle", "Market-rate multifamily", "Mixed-use", "Single-family / small infill", "Commercial or retail", "Community facilities", "Still deciding"];
 
-export function OnboardingFlow({ member, onDone }) {
+// A real building behind each step — these are Dr. Merritt's own projects, which
+// is the point: this is what the curriculum is drawn from.
+const ONB_BANNER = [
+  { src: "/opt/nannie-helen.jpg", caption: "Nannie Helen at 4800 — Washington, DC" },
+  { src: "/opt/hough-blue-hero.jpg", caption: "9410 Hough — Cleveland, Ohio" },
+  { src: "/opt/beacon-center.jpg", caption: "The Beacon Center — Washington, DC" },
+];
+
+// Brighter than the rest of the member UI on purpose: this is someone's first
+// minute inside GroundUp. Reds, blacks, whites and greys only.
+const onbInp = { width: "100%", background: "#2a1416", border: "1px solid #5a2122", borderRadius: 9, padding: "12px 14px", color: "#fff5f5", fontFamily: font, fontSize: 14, outline: "none", boxSizing: "border-box" };
+const onbLbl = { display: "block", fontSize: 10, color: "#e0aaaa", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 };
+const onbBtn = { background: "#e01818", color: "#fff", border: "none", borderRadius: 9, padding: "13px 22px", fontFamily: font, fontWeight: 800, fontSize: 13.5, cursor: "pointer" };
+
+export function OnboardingFlow({ pending, onDone }) {
   const [step, setStep] = useState(0);
   const [learn, setLearn] = useState("");
   const [pain, setPain] = useState("");
@@ -273,160 +297,190 @@ export function OnboardingFlow({ member, onDone }) {
   const [location, setLocation] = useState("");
   const [rec, setRec] = useState(null);
   const [busy, setBusy] = useState(false);
-  const sel = { ...inp, appearance: "auto", cursor: "pointer" };
+  const [error, setError] = useState("");
+  // Developer-specific questions are hidden from everyone else — a city planner
+  // or a lender has no honest answer to "where are you in the process?"
+  const isDev = role === "Developer, or working toward it";
+  const sel = { ...onbInp, appearance: "auto", cursor: "pointer" };
+  const inp2 = onbInp, lbl2 = onbLbl;
 
   // Saves whatever was answered (possibly nothing) and moves to the plans.
   // Budget is deliberately NOT asked — the engine recommends from need alone.
   const toPlans = async () => {
     setBusy(true);
     try {
-      const d = await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "onboarding", learn, pain, source, role, phase, experience, focus, goal, company, title, location }) });
+      const d = await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "recommend", learn, pain }) });
       setRec(d.recommendation || null);
-    } catch { /* a failed save must not trap anyone before the plan step */ }
+    } catch { /* a failed recommendation must not trap anyone before the plans */ }
     setBusy(false);
     setStep(2);
   };
 
-  const choose = (t) => {
-    if (t === "Free") { onDone(); return; }
-    if (window.startCheckout) window.startCheckout("sub_" + t + (localStorage.getItem("guAnnual") === "1" ? "_annual" : ""), { promo: localStorage.getItem("guPromo") || undefined });
-    onDone();
+  // The account is created HERE, at the end, with every answer attached.
+  const choose = async (t) => {
+    setBusy(true); setError("");
+    try {
+      const data = await api("/api/auth", { method: "POST", body: JSON.stringify({
+        action: "signup", name: pending.name, email: pending.email, password: pending.password,
+        ref: localStorage.getItem("guRef") || undefined,
+        onboarding: { learn, pain, source, role, phase, experience, focus, goal, company, location },
+      }) });
+      saveMember(data.user, data.token);
+      onDone(data.user);
+      if (t !== "Free" && window.startCheckout) {
+        window.startCheckout("sub_" + t + (localStorage.getItem("guAnnual") === "1" ? "_annual" : ""), { promo: localStorage.getItem("guPromo") || undefined, gift: localStorage.getItem("guGift") || undefined });
+      }
+    } catch (e) {
+      setError(e.message || "We couldn't create your account just now.");
+      setBusy(false);
+    }
   };
 
   // recommendPlan speaks in tier keys; Advisor and the passes aren't rows here.
   const recTier = rec && ONB_PLANS.includes(rec.tier) ? rec.tier : null;
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 320, background: "rgba(0,0,0,0.9)", backdropFilter: "blur(6px)", overflowY: "auto", padding: "24px 16px" }}>
-      <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "32px clamp(20px,4vw,38px)", width: "100%", maxWidth: step === 0 ? 520 : 1040, margin: "0 auto" }}>
-        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 320, background: "rgba(10,2,3,0.92)", backdropFilter: "blur(6px)", overflowY: "auto", padding: "24px 16px" }}>
+      <div style={{ background: "#1a0d0e", border: "1px solid #46191a", borderRadius: 20, padding: "32px clamp(20px,4vw,38px)", width: "100%", maxWidth: step === 0 ? 520 : 1040, margin: "0 auto" }}>
+        <div style={{ position: "relative", borderRadius: 14, overflow: "hidden", marginBottom: 22, height: step === 2 ? 110 : 150 }}>
+          <img src={ONB_BANNER[step].src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(20,4,6,0.25) 0%, rgba(20,4,6,0.85) 100%)" }} />
+          <div style={{ position: "absolute", left: 16, right: 16, bottom: 12, display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 12 }}>
+            <div style={{ color: "#ffd9d9", fontSize: 11.5, fontFamily: font, fontWeight: 600, textShadow: "0 1px 4px rgba(0,0,0,0.7)" }}>{ONB_BANNER[step].caption}</div>
+            <div style={{ display: "flex", gap: 5 }}>
+              {[0, 1, 2].map(i => (
+                <span key={i} style={{ width: i === step ? 20 : 7, height: 7, borderRadius: 4, background: i === step ? "#ff3b3b" : "#ffffff55", transition: "width .2s" }} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ fontSize: 10, color: "#ff5c5c", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>
           Step {step + 1} of 3
         </div>
 
         {step === 0 ? (
           <>
-            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>Welcome, {firstName(member?.name) || "there"}.</h2>
-            <p style={{ color: "#a89080", fontSize: 14, lineHeight: 1.7, fontFamily: font, marginBottom: 24 }}>
+            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>Welcome, {firstName(pending?.name) || "there"}.</h2>
+            <p style={{ color: "#d9c2c2", fontSize: 14, lineHeight: 1.7, fontFamily: font, marginBottom: 24 }}>
               Tell us a little about you, so Dr. Merritt and the community know who they're talking to. All of it is optional and you can change it later.
             </p>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={lbl}>Company or organization</label>
-              <input style={inp} value={company} onChange={e => setCompany(e.target.value)} maxLength={120} placeholder="Your company, or none yet" />
+              <label style={lbl2}>Company or organization</label>
+              <input style={inp2} value={company} onChange={e => setCompany(e.target.value)} maxLength={120} placeholder="Your company, or none yet" />
+            </div>
+            
+            <div style={{ marginBottom: 16 }}>
+              <label style={lbl2}>Where do you work?</label>
+              <input style={inp2} value={location} onChange={e => setLocation(e.target.value)} maxLength={120} placeholder="e.g. Washington DC · Cleveland" />
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={lbl}>Your role</label>
-              <input style={inp} value={title} onChange={e => setTitle(e.target.value)} maxLength={120} placeholder="Developer, consultant, ED, student…" />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={lbl}>Where do you work?</label>
-              <input style={inp} value={location} onChange={e => setLocation(e.target.value)} maxLength={120} placeholder="e.g. Washington DC · Cleveland" />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={lbl}>Which best describes you?</label>
+              <label style={lbl2}>Which best describes you?</label>
               <select style={sel} value={role} onChange={e => setRole(e.target.value)}>
                 <option value="">Rather not say</option>
                 {ONB_ROLE.map(o => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
-            <div style={{ marginBottom: 26 }}>
-              <label style={lbl}>Any hands-on development experience?</label>
+            {isDev && <div style={{ marginBottom: 26 }}>
+              <label style={lbl2}>Any hands-on development experience?</label>
               <select style={sel} value={experience} onChange={e => setExperience(e.target.value)}>
                 <option value="">Rather not say</option>
                 {ONB_EXPERIENCE.map(o => <option key={o} value={o}>{o}</option>)}
               </select>
-            </div>
+            </div>}
 
-            <button onClick={() => setStep(1)} style={{ ...btnRed, width: "100%" }}>Continue →</button>
-            <button onClick={toPlans} disabled={busy} style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", color: "#8a7070", fontFamily: font, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            <button onClick={() => setStep(1)} style={{ ...onbBtn, width: "100%" }}>Continue →</button>
+            <button onClick={toPlans} disabled={busy} style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", color: "#c2a5a5", fontFamily: font, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
               Skip to the plans
             </button>
           </>
         ) : step === 1 ? (
           <>
             <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>What are you working on?</h2>
-            <p style={{ color: "#a89080", fontSize: 14, lineHeight: 1.7, fontFamily: font, marginBottom: 24 }}>
+            <p style={{ color: "#d9c2c2", fontSize: 14, lineHeight: 1.7, fontFamily: font, marginBottom: 24 }}>
               This is what we use to point you at the right courses, channels and plan — instead of making you guess. Still optional.
             </p>
 
-            <div style={{ marginBottom: 16 }}>
-              <label style={lbl}>What kind of development?</label>
+            {isDev && <div style={{ marginBottom: 16 }}>
+              <label style={lbl2}>What kind of development?</label>
               <select style={sel} value={focus} onChange={e => setFocus(e.target.value)}>
                 <option value="">Not sure yet</option>
                 {ONB_FOCUS.map(o => <option key={o} value={o}>{o}</option>)}
               </select>
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={lbl}>Where are you in the process?</label>
+            </div>}
+            {isDev && <div style={{ marginBottom: 16 }}>
+              <label style={lbl2}>Where are you in the process?</label>
               <select style={sel} value={phase} onChange={e => setPhase(e.target.value)}>
                 <option value="">Not on a project right now</option>
                 {DEV_PHASES.map(o => <option key={o} value={o}>{o}</option>)}
               </select>
-            </div>
+            </div>}
             <div style={{ marginBottom: 16 }}>
-              <label style={lbl}>What do you hope to learn?</label>
+              <label style={lbl2}>What do you hope to learn?</label>
               <select style={sel} value={learn} onChange={e => setLearn(e.target.value)}>
                 <option value="">No preference yet</option>
                 {WL_LEARN.filter(o => o !== "Other").map(o => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={lbl}>What's in your way right now?</label>
+              <label style={lbl2}>What's in your way right now?</label>
               <select style={sel} value={pain} onChange={e => setPain(e.target.value)}>
                 <option value="">Rather not say</option>
                 {WL_PAIN.filter(o => o !== "Other").map(o => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={lbl}>What would make this year a win?</label>
-              <textarea style={{ ...inp, minHeight: 74, resize: "vertical" }} value={goal} onChange={e => setGoal(e.target.value)} maxLength={400} placeholder="In your own words — Dr. Merritt reads these." />
+              <label style={lbl2}>What would make this year a win?</label>
+              <textarea style={{ ...inp2, minHeight: 74, resize: "vertical" }} value={goal} onChange={e => setGoal(e.target.value)} maxLength={400} placeholder="In your own words — Dr. Merritt reads these." />
             </div>
             <div style={{ marginBottom: 26 }}>
-              <label style={lbl}>How did you find us?</label>
+              <label style={lbl2}>How did you find us?</label>
               <select style={sel} value={source} onChange={e => setSource(e.target.value)}>
                 <option value="">Prefer not to say</option>
                 {WL_SOURCE.map(o => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
 
-            <button onClick={toPlans} disabled={busy} style={{ ...btnRed, width: "100%", opacity: busy ? 0.6 : 1 }}>
+            <button onClick={toPlans} disabled={busy} style={{ ...onbBtn, width: "100%", opacity: busy ? 0.6 : 1 }}>
               {busy ? "One moment…" : "See the plans →"}
             </button>
-            <button onClick={() => setStep(0)} style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", color: "#8a7070", fontFamily: font, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            <button onClick={() => setStep(0)} style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", color: "#c2a5a5", fontFamily: font, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
               ← Back
             </button>
           </>
         ) : (
           <>
             <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>Choose your plan</h2>
-            <p style={{ color: "#a89080", fontSize: 14, lineHeight: 1.7, fontFamily: font, marginBottom: 8 }}>
+            <p style={{ color: "#d9c2c2", fontSize: 14, lineHeight: 1.7, fontFamily: font, marginBottom: 8 }}>
               {recTier
                 ? <>Based on your answers we'd start you at <strong style={{ color: "#f0d8d8" }}>{TIER_LABELS[recTier]}</strong> — but every plan is here, and you can change or cancel any time.</>
                 : <>Every plan, side by side. You can change or cancel any time.</>}
             </p>
             {rec && !recTier && (
-              <p style={{ color: "#c8a8a8", fontSize: 13, lineHeight: 1.7, fontFamily: font, marginBottom: 8 }}>
+              <p style={{ color: "#e5cccc", fontSize: 13, lineHeight: 1.7, fontFamily: font, marginBottom: 8 }}>
                 Your answers point at <strong style={{ color: "#f0d8d8" }}>{rec.label}</strong> ({rec.price}) — reach out and we'll set that up directly.
               </p>
             )}
-            <p style={{ color: "#8a7070", fontSize: 12, fontFamily: font, marginBottom: 22 }}>Starting free is a real choice — you keep the account and can upgrade whenever.</p>
+            <p style={{ color: "#b59a9a", fontSize: 12, fontFamily: font, marginBottom: 22 }}>Starting free is a real choice — you keep the account and can upgrade whenever.</p>
 
+            {error && <div style={{ background: "#3a1010", border: "1px solid #ef2b2b", borderRadius: 9, padding: "10px 14px", color: "#ffc9c9", fontSize: 13, fontFamily: font, marginBottom: 16 }}>{error}</div>}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 14 }}>
               {ONB_PLANS.map(t => {
                 const match = t === recTier;
                 return (
-                  <div key={t} style={{ background: match ? "#150707" : "#0a0505", border: `1px solid ${match ? "#b80101" : "#2a0000"}`, borderRadius: 14, padding: "20px 18px", display: "flex", flexDirection: "column" }}>
-                    {match && <div style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>Your match</div>}
+                  <div key={t} style={{ background: match ? "#2a1012" : "#22100f", border: `1px solid ${match ? "#ef2b2b" : "#46191a"}`, borderRadius: 14, padding: "20px 18px", display: "flex", flexDirection: "column" }}>
+                    {match && <div style={{ fontSize: 9, color: "#ff5c5c", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>Your match</div>}
                     <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, color: "#f5e8e8" }}>{TIER_LABELS[t]}</div>
-                    <div style={{ color: "#b80101", fontWeight: 800, fontSize: 15, fontFamily: font, margin: "2px 0 14px" }}>{ONB_PRICE[t]}</div>
+                    <div style={{ color: "#ff4d4d", fontWeight: 800, fontSize: 15, fontFamily: font, margin: "2px 0 14px" }}>{ONB_PRICE[t]}</div>
                     <ul style={{ listStyle: "none", padding: 0, margin: "0 0 18px", flex: 1 }}>
                       {(BENEFITS[t] || []).map((f, i) => (
-                        <li key={i} style={{ color: "#a89080", fontSize: 12.5, lineHeight: 1.6, fontFamily: font, marginBottom: 7, paddingLeft: 14, position: "relative" }}>
-                          <span style={{ position: "absolute", left: 0, color: "#b80101" }}>·</span>{f}
+                        <li key={i} style={{ color: "#dcc6c6", fontSize: 12.5, lineHeight: 1.6, fontFamily: font, marginBottom: 7, paddingLeft: 14, position: "relative" }}>
+                          <span style={{ position: "absolute", left: 0, color: "#ef2b2b" }}>·</span>{f}
                         </li>
                       ))}
                     </ul>
-                    <button onClick={() => choose(t)} style={{ ...btnRed, width: "100%", background: match ? "#b80101" : "transparent", border: match ? "none" : "1px solid #2a0000", color: match ? "#fff" : "#f0d8d8" }}>
+                    <button onClick={() => choose(t)} disabled={busy} style={{ ...onbBtn, width: "100%", background: match ? "#e01818" : "transparent", border: match ? "none" : "1px solid #5a2122", color: match ? "#fff" : "#f7e6e6" }}>
                       {t === "Free" ? "Start free" : `Choose ${TIER_LABELS[t]} →`}
                     </button>
                   </div>
@@ -434,7 +488,7 @@ export function OnboardingFlow({ member, onDone }) {
               })}
             </div>
 
-            <button onClick={() => setStep(1)} style={{ display: "block", margin: "20px auto 0", background: "none", border: "none", color: "#8a7070", fontFamily: font, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            <button onClick={() => setStep(1)} style={{ display: "block", margin: "20px auto 0", background: "none", border: "none", color: "#c2a5a5", fontFamily: font, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
               ← Back to the questions
             </button>
           </>

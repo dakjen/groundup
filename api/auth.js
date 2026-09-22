@@ -187,6 +187,23 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Wrong password' });
     }
 
+    // Onboarding runs before an account exists, so these two are deliberately
+    // unauthenticated. Neither writes anything.
+    if (action === 'recommend') {
+      const clip = (v) => { const s = String(v ?? '').trim().slice(0, 160); return s || null; };
+      const { recommendPlan } = await import('./waitlist.js');
+      return res.json({ recommendation: recommendPlan({ learn: clip(req.body.learn), reason: clip(req.body.pain) }) });
+    }
+    // Checked before the questions, so nobody fills in three screens only to be
+    // told at the end that the email is taken.
+    if (action === 'check_email') {
+      const e = String(req.body.email || '').trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) return res.status(400).json({ error: 'That email doesn\'t look right.' });
+      const [row] = await sql`SELECT 1 AS x FROM users WHERE email = ${e}`;
+      if (row) return res.status(409).json({ error: 'An account with that email already exists' });
+      return res.json({ available: true });
+    }
+
     if (action === 'signup') {
       // Two doors. Insiders walk in at the insider launch (Nov 1) — a month
       // before anyone else — and that early month is how founding seats get
@@ -228,6 +245,21 @@ export default async function handler(req, res) {
         RETURNING id, name, email, tier, role, membership_status, free_lesson_key, created_at
       `;
       if (!user) return res.status(409).json({ error: 'An account with that email already exists' });
+      // Onboarding runs BEFORE the account exists, so its answers arrive with the
+      // signup and are written in the same breath. Anyone who abandons the flow
+      // leaves nothing behind — there is no half-made account to clean up.
+      if (req.body.onboarding && typeof req.body.onboarding === 'object') {
+        const o = req.body.onboarding;
+        const clip = (v, n = 160) => { const s = String(v ?? '').trim().slice(0, n); return s || null; };
+        try {
+          await sql`UPDATE users SET
+            onb_learn = ${clip(o.learn)}, onb_pain = ${clip(o.pain)}, onb_source = ${clip(o.source)},
+            onb_role = ${clip(o.role)}, onb_phase = ${clip(o.phase)}, onb_experience = ${clip(o.experience)},
+            onb_focus = ${clip(o.focus)}, onb_goal = ${clip(o.goal, 400)},
+            company = ${clip(o.company, 120)}, location = ${clip(o.location, 120)},
+            onboarded_at = NOW() WHERE id = ${user.id}`;
+        } catch (e) { console.error('onboarding save failed', e.message); }
+      }
       const token = signToken({ uid: user.id, role: 'member' });
       // Founding 25 (first 25 on the Elite Insider waitlist): a free first YEAR of
       // Lunch & Learns attaches to the account the moment it's created — any plan,
