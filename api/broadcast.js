@@ -130,11 +130,16 @@ export default async function handler(req, res) {
     // anyone who joins the list later gets it on the next daily run.
     let founding = null;
     try {
-      // Founding is claimed by paying after the insider launch, so the email
-      // goes out 7 days BEFORE that launch — it's the heads-up that starts the race.
+      // Two ways in, whichever lands first: the list reaching 25 non-comped
+      // signups (the original trigger), or the insider launch coming within 7
+      // days — founding is claimed by paying once that launch opens, so the
+      // email is the heads-up that starts the race and must not be missed.
+      const [c] = await sql`SELECT COUNT(*) FILTER (WHERE NOT COALESCE(comped, FALSE))::int AS paying
+        FROM waitlist WHERE COALESCE(list, 'insider') = 'insider'`;
       const [insRow] = await sql`SELECT value FROM settings WHERE key = 'launch_insider_at'`;
       const msToLaunch = insRow?.value ? new Date(insRow.value).getTime() - Date.now() : Infinity;
-      if (msToLaunch <= 7 * 86400000) {
+      const launchClose = msToLaunch <= 7 * 86400000;
+      if (c.paying >= 25 || launchClose) {
         await sql`ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS founding_thanked TIMESTAMPTZ`;
         const rows = await sql`SELECT id, name, email FROM waitlist WHERE COALESCE(list, 'insider') = 'insider' AND founding_thanked IS NULL`;
         let fsent = 0;
@@ -143,9 +148,12 @@ export default async function handler(req, res) {
           const ok = await sendEmail(r.email, mail.subject, mail.html, { marketing: true, light: true });
           if (ok) { await sql`UPDATE waitlist SET founding_thanked = NOW() WHERE id = ${r.id}`; fsent++; }
         }
-        founding = { window_open: true, sent: fsent };
-        if (fsent) await sendEmail(process.env.ADMIN_EMAIL || 'djmj@nreuv.com', `Founding email went out to ${fsent} insider${fsent === 1 ? '' : 's'}`, `<p style="color:#a89080;font-size:14px;line-height:1.8;">The insider launch is a week out, so the founding email sent itself to ${fsent} ${fsent === 1 ? 'person' : 'people'} who hadn't received it yet — the first 25 who join from November 1 claim the seats.</p>`);
-      } else founding = { window_open: false, days_to_launch: Math.ceil(msToLaunch / 86400000) };
+        const why = c.paying >= 25
+          ? `The insider waitlist reached ${c.paying} non-comped signups`
+          : 'The insider launch is a week out';
+        founding = { window_open: true, sent: fsent, paying: c.paying, reason: c.paying >= 25 ? 'count' : 'launch_close' };
+        if (fsent) await sendEmail(process.env.ADMIN_EMAIL || 'djmj@nreuv.com', `Founding email went out to ${fsent} insider${fsent === 1 ? '' : 's'}`, `<p style="color:#a89080;font-size:14px;line-height:1.8;">${why}, so the founding email sent itself to ${fsent} ${fsent === 1 ? 'person' : 'people'} who hadn't received it yet — the first 25 who pay from November 1 claim the seats.</p>`);
+      } else founding = { window_open: false, paying: c.paying, needed: 25 - c.paying, days_to_launch: Math.ceil(msToLaunch / 86400000) };
     } catch (e) { console.error('founding auto-send failed', e.message); }
 
     // Weekly team digest — Fridays, only once the insider launch has passed.
