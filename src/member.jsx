@@ -242,6 +242,10 @@ I agree to the <a href="/terms" target="_blank" style={{ color: "#b80101", fontW
 // text, it is what it actually is — an honest way out for someone not ready.
 const ONB_PLANS = ["Basic", "Builder", "Premium", "Elite"];
 const ONB_PRICE = { Free: "$0", Basic: "$49.99/mo", Builder: "$149.99/mo", Premium: "$249.99/mo", Elite: "$499.99/mo" };
+// Standing tags, independent of whatever the engine recommended. Premium is the
+// plan we most want people on; Owner is the exceptional one and is capped, so it
+// is tagged on access and scarcity rather than value.
+const ONB_TAG = { Premium: "Best value", Elite: "Most access · 15 seats" };
 // Not everyone signing up is a developer — consultants, nonprofit and agency
 // staff, lenders, architects and students all belong here, and the questions
 // shouldn't assume otherwise.
@@ -475,7 +479,14 @@ export function OnboardingFlow({ pending, onDone }) {
                 const match = t === recTier;
                 return (
                   <div key={t} style={{ background: match ? "#2a1012" : "#22100f", border: `1px solid ${match ? "#ef2b2b" : "#46191a"}`, borderRadius: 14, padding: "18px 15px", display: "flex", flexDirection: "column" }}>
-                    {match && <div style={{ fontSize: 9, color: "#ff5c5c", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>Your match</div>}
+                    {/* A tier can be both their match and the best value — show both
+                        rather than letting one quietly hide the other. */}
+                    {(match || ONB_TAG[t]) && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 8, minHeight: 18 }}>
+                        {match && <span style={{ fontSize: 9, color: "#fff", background: "#e01818", borderRadius: 4, padding: "3px 6px", fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: font }}>Your match</span>}
+                        {ONB_TAG[t] && <span style={{ fontSize: 9, color: "#ffb3b3", border: "1px solid #7a2a2b", borderRadius: 4, padding: "3px 6px", fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: font }}>{ONB_TAG[t]}</span>}
+                      </div>
+                    )}
                     <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, color: "#f5e8e8" }}>{TIER_LABELS[t]}</div>
                     <div style={{ color: "#ff4d4d", fontWeight: 800, fontSize: 15, fontFamily: font, margin: "2px 0 14px" }}>{ONB_PRICE[t]}</div>
                     <ul style={{ listStyle: "none", padding: 0, margin: "0 0 18px", flex: 1 }}>
