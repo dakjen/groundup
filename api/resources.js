@@ -168,7 +168,7 @@ export default async function handler(req, res) {
       if (!p || !p.delivery_url) return res.status(404).json({ error: 'Product not found' });
       const [bought] = await sql`SELECT id FROM entitlements WHERE user_id = ${session.uid} AND course_id = ${'prod:' + p.id} LIMIT 1`;
       if (bought || rank >= 4) return res.json({ url: p.delivery_url }); // owners & Elite: unlimited
-      if (rank !== 3) return res.status(403).json({ error: 'Downloads are a Premium and Elite benefit' });
+      if (rank !== 3) return res.status(403).json({ error: 'Downloads are a Premium and Owner benefit' });
       if (p.is_playbook) return res.status(403).json({ error: "The Developer's Playbook is view-only on Premium — Elite members can download it" });
       const anchor = u?.tier_since ? new Date(u.tier_since) : new Date();
       const now = new Date();

@@ -1271,12 +1271,20 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
     setDmMsgs(data.messages);
   }, []);
 
+  // Moving to another channel, thread or view starts clean — an error from
+  // wherever you just were is not about where you are now.
+  useEffect(() => { setError(""); }, [active, thread, dmOpen]);
+
   useEffect(() => {
     if (!dmOpen) return;
     api("/api/community", { method: "POST", body: JSON.stringify({ action: "mark_seen", what: "dm" }) }).catch(() => {});
     const target = isAdmin ? dmTarget?.id : null;
     if (isAdmin && !target) return;
-    loadDm(target).catch(e => setError(e.message));
+    // A member without direct messages gets a 403 here. That is not an error
+    // worth showing — and it was being written into the shared error state,
+    // which renders on every channel and every thread, so "Direct messages are
+    // an Owner benefit" followed people around a page they never asked for.
+    loadDm(target).catch(e => { if (!/benefit|403/i.test(e.message || "")) setError(e.message); });
     return pollVisible(() => loadDm(target).catch(() => {}), 30000);
   }, [dmOpen, dmTarget, isAdmin, loadDm]);
 

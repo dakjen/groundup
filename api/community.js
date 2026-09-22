@@ -162,7 +162,7 @@ export default async function handler(req, res) {
     if (req.method === 'GET' && req.query.resource === 'dm') {
       let targetId = user.id;
       if (isAdminReq && req.query.user) targetId = Number(req.query.user);
-      else if (!isAdminReq && user.rank < TIER_RANK.Elite) return res.status(403).json({ error: 'Direct messages are an Elite benefit' });
+      else if (!isAdminReq && user.rank < TIER_RANK.Elite) return res.status(403).json({ error: 'Direct messages are an Owner benefit' });
       if (!targetId) return res.status(400).json({ error: 'No thread' });
       const msgs = await sql`SELECT * FROM dms WHERE user_id = ${targetId} ORDER BY created_at ASC LIMIT 200`;
       return res.json({ messages: msgs });
@@ -178,7 +178,7 @@ export default async function handler(req, res) {
         targetId = Number(req.body.user_id);
         if (!targetId) return res.status(400).json({ error: 'user_id required' });
       } else {
-        if (user.rank < TIER_RANK.Elite) return res.status(403).json({ error: 'Direct messages are an Elite benefit' });
+        if (user.rank < TIER_RANK.Elite) return res.status(403).json({ error: 'Direct messages are an Owner benefit' });
         targetId = user.id;
       }
       const [msg] = await sql`
