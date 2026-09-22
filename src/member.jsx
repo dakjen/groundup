@@ -594,9 +594,17 @@ function ProfileCard({ member }) {
     setBusy(true);
     try {
       const fd = new FormData(); fd.append("file", file);
+      // Say what actually went wrong. "Upload failed" was the fallback whenever
+      // the response wasn't JSON — a 413 from the platform on a large photo, or
+      // a crash — so every different failure looked identical and told us nothing.
+      if (file.size > 4 * 1024 * 1024) throw new Error(`That photo is ${(file.size / 1048576).toFixed(1)}MB — please keep it under 4MB.`);
+      if (!/\.(png|jpe?g|webp)$/i.test(file.name || "")) throw new Error("Profile pictures need to be a PNG, JPG or WEBP. iPhone photos are often HEIC — in Photos, Share → Options → Most Compatible, or take a screenshot of it.");
       const res = await fetch("/api/lesson-pdfs?kind=avatar", { method: "POST", headers: { Authorization: "Bearer " + (localStorage.getItem("guToken") || "") }, body: fd });
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.error || "Upload failed");
+      const raw = await res.text();
+      let d = {};
+      try { d = raw ? JSON.parse(raw) : {}; } catch { /* not JSON — surface the status */ }
+      if (!res.ok) throw new Error(d.error || `Upload failed (${res.status}${raw && !d.error ? " · " + raw.slice(0, 80) : ""})`);
+      if (!d.url) throw new Error("The upload came back without a picture — please try again.");
       setAvatar(d.url);
       const me = getMember(); if (me) saveMember({ ...me, avatar_url: d.url });
       flash(true, "Profile picture updated.");
@@ -1123,23 +1131,25 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdi
   const [hover, setHover] = useState(false);
   return (
     <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      style={{ padding: isGina ? "16px 20px" : "14px 18px", borderRadius: 12,
-        // Your own messages sit on the right in your own colour, everyone else
-        // on the left — so a channel reads like a conversation you are in
-        // rather than a list you are looking at.
-        background: isGina ? "linear-gradient(135deg, #1a0808 0%, #12060a 100%)" : mine ? "#2a1012" : "var(--gu-card, #0d0404)",
-        border: isGina ? "1px solid #b8010170" : "1px solid " + (mine ? (hover ? "#6d2528" : "#4d1c1f") : (hover ? "#3a1515" : "#1e0a0a")),
-        boxShadow: isGina ? "0 0 24px rgba(184,1,1,0.12)" : "none",
-        marginBottom: 10, maxWidth: 720, width: "fit-content", minWidth: 260,
-        marginLeft: mine ? "auto" : 0, marginRight: mine ? 0 : "auto",
-        transition: "border-color 0.15s" }}>
+      style={{
+        // A message is a line of talk, not a filing card. Everyone else's sits
+        // flat on the page with no box at all; only your own and Dr. Merritt's
+        // carry a surface, because those two are worth picking out at a glance.
+        padding: isGina ? "14px 18px" : mine ? "9px 14px" : "5px 8px",
+        borderRadius: 12,
+        background: isGina ? "linear-gradient(135deg, #1a0808 0%, #12060a 100%)" : mine ? "#2c1214" : hover ? "#1a0e0f" : "transparent",
+        border: isGina ? "1px solid #b8010170" : "1px solid transparent",
+        boxShadow: isGina ? "0 0 20px rgba(184,1,1,0.10)" : "none",
+        marginBottom: 2, maxWidth: 680, width: "fit-content", minWidth: 0,
+        marginLeft: mine ? "auto" : 0,
+        transition: "background-color 0.12s" }}>
       {isGina && <div style={{ height: 2, background: "linear-gradient(90deg, transparent, #b80101, transparent)", margin: "-16px -20px 12px", borderRadius: "10px 10px 0 0" }} />}
-      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
       <span style={{ position: "relative", flexShrink: 0, cursor: "default", marginTop: 2 }}
         onMouseEnter={() => !m.is_admin && setShowProfile(true)} onMouseLeave={() => setShowProfile(false)}>
         {m.is_admin && !isGina && !m.author_avatar
           ? <span style={{ width: 36, height: 36, borderRadius: "50%", background: "#160404", border: "1px solid #b8010150", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}><img src="/icon-192.png" alt="GroundUp" width="26" height="26" style={{ borderRadius: 6 }} /></span>
-          : <Avatar url={m.author_avatar} name={m.is_admin ? (isGina ? "Gina Merritt" : "GroundUp Team") : m.author_name} size={36} />}
+          : <Avatar url={m.author_avatar} name={m.is_admin ? (isGina ? "Gina Merritt" : "GroundUp Team") : m.author_name} size={30} />}
         {showProfile && !m.is_admin && <ProfileHover m={m} />}
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -1198,9 +1208,12 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdi
           <span style={{ color: "var(--gu-faint)", fontSize: 11, fontFamily: font }}>{m.poll_results.total} vote{m.poll_results.total === 1 ? "" : "s"} — tap to vote or change your vote</span>
         </div>
       )}
-      {!inThread && (
-        <button onClick={() => onOpenThread(m)} style={{ background: Number(m.reply_count) > 0 ? "#b8010114" : "transparent", border: "1px solid " + (Number(m.reply_count) > 0 ? "#b8010140" : "#2a1010"), color: Number(m.reply_count) > 0 ? "#e0a0a0" : "var(--gu-muted)", cursor: "pointer", fontSize: 11.5, fontFamily: font, fontWeight: 700, padding: "4px 11px", borderRadius: 99, marginTop: 10 }}>
-          {Number(m.reply_count) > 0 ? `${m.reply_count} repl${Number(m.reply_count) === 1 ? "y" : "ies"}` : "Reply in thread"}
+      {/* A reply count is worth showing always; an invitation to reply only
+          when the pointer is on the message. It used to sit under every post
+          as a bordered pill, which is why one word of text filled a card. */}
+      {!inThread && (Number(m.reply_count) > 0 || hover) && (
+        <button onClick={() => onOpenThread(m)} style={{ background: "transparent", border: "none", padding: 0, marginTop: 4, color: Number(m.reply_count) > 0 ? "#e08a8a" : "var(--gu-muted)", cursor: "pointer", fontSize: 12, fontFamily: font, fontWeight: 700 }}>
+          {Number(m.reply_count) > 0 ? `${m.reply_count} repl${Number(m.reply_count) === 1 ? "y" : "ies"} →` : "Reply"}
         </button>
       )}
       </div>
