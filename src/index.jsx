@@ -6100,6 +6100,24 @@ function SystemStatusTab() {
   useEffect(() => {
     fetch("/api/stripe").then(r => r.ok ? r.json() : null).then(d => { if (d?.lifetime) { setLt(d.lifetime); setCapDraft(String(d.lifetime.cap)); } }).catch(() => {});
   }, []);
+  const [syncMsg, setSyncMsg] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  // Defines every catalog item in Stripe as a real Product with its description
+  // and price, so checkout charges those instead of inventing one per sale.
+  const syncCatalog = async () => {
+    setSyncing(true); setSyncMsg(null);
+    try {
+      const res = await fetch("/api/stripe?sync_catalog=1", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + sessionStorage.getItem("adminToken") } });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Sync failed");
+      const bits = [];
+      if (d.created?.length) bits.push(`${d.created.length} created`);
+      if (d.updated?.length) bits.push(`${d.updated.length} repriced`);
+      if (d.unchanged?.length) bits.push(`${d.unchanged.length} already current`);
+      setSyncMsg({ ok: true, text: bits.join(" · ") || "Nothing to do." });
+    } catch (e) { setSyncMsg({ ok: false, text: e.message }); }
+    setSyncing(false);
+  };
   const saveCap = async () => {
     try {
       const res = await fetch("/api/resources", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + sessionStorage.getItem("adminToken") }, body: JSON.stringify({ action: "set_lifetime_cap", cap: Number(capDraft) }) });
@@ -6119,6 +6137,19 @@ function SystemStatusTab() {
       <div style={{ background: missing.length ? "#fdf0f0" : "#eef7ee", border: `1px solid ${missing.length ? "#b8010140" : "#22c55e40"}`, color: missing.length ? "#b80101" : "#1a7a3a", borderRadius: 10, padding: "14px 18px", fontSize: 13.5, fontFamily: F, fontWeight: 700, marginBottom: 20 }}>
         {missing.length ? `${missing.length} setting${missing.length > 1 ? "s" : ""} missing — ${missing.map(m => m.label).join(", ")}` : "Everything is configured. Payments, splits, and email are all live."}
       </div>
+      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: "22px 24px", marginBottom: 20 }}>
+        <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: F, marginBottom: 6 }}>Stripe product catalog</div>
+        <p style={{ color: "#666666", fontSize: 12, fontFamily: F, marginBottom: 12, lineHeight: 1.6 }}>
+          Defines every plan, pass, session and retainer in Stripe as a real product — name, description and price — so checkout charges those instead of creating a throwaway product on every sale. Safe to run again at any time: anything already correct is left alone. Run it after changing a price; Stripe prices can&rsquo;t be edited, so a new one is created and existing subscribers keep the price they signed up at.
+        </p>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <button onClick={syncCatalog} disabled={syncing} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontFamily: F, fontWeight: 800, fontSize: 13, cursor: syncing ? "default" : "pointer", opacity: syncing ? 0.6 : 1 }}>
+            {syncing ? "Syncing…" : "Sync Stripe catalog"}
+          </button>
+          {syncMsg && <span style={{ color: syncMsg.ok ? "#1a7a3a" : "#b80101", fontSize: 12.5, fontFamily: F, fontWeight: 700 }}>{syncMsg.text}</span>}
+        </div>
+      </div>
+
       <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: "22px 24px", marginBottom: 20 }}>
         <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: F, marginBottom: 6 }}>Lifetime Pass — total sellable</div>
         <p style={{ color: "#666666", fontSize: 12, fontFamily: F, marginBottom: 12 }}>The $5,000 pass is a numbered run. Set the total that may ever be sold; 0 takes it off sale (the card vanishes from the pricing page). Sold so far: <strong>{lt ? lt.sold : "…"}</strong>{lt && lt.cap > 0 ? ` · ${lt.remaining} remaining` : ""}</p>
