@@ -1,4 +1,4 @@
-import { BookOpen, MessagesSquare, Video, Handshake, Lock, Mail, Megaphone, Menu, X as XIcon, Eye } from "lucide-react";
+import { BookOpen, MessagesSquare, Video, Handshake, Lock, Mail, Megaphone, Menu, X as XIcon, Eye, Calendar } from "lucide-react";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { pollVisible } from "./poll.js";
 
@@ -868,97 +868,195 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
     );
   }
   const rank = TIER_RANK[member.tier] ?? 0;
+  // One page, read top to bottom, with the sidebar as jump links rather than
+  // tabs — so nothing is hidden behind a click and you can still get straight
+  // to the part you came for.
+  const SECTIONS = [
+    ["start", "Jump back in"],
+    ["meetings", "Your meetings"],
+    ["benefits", "Your benefits"],
+    ["advisory", "Advisory"],
+    ["account", "Profile & billing"],
+  ];
+  const [active, setActive] = useState("start");
+  const jump = (id) => {
+    setActive(id);
+    document.getElementById("gu-" + id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  // Highlight whichever section is actually on screen as you scroll.
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const seen = entries.filter(e => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (seen) setActive(seen.target.id.replace("gu-", ""));
+      },
+      { rootMargin: "-100px 0px -60% 0px" }
+    );
+    SECTIONS.forEach(([id]) => { const el = document.getElementById("gu-" + id); if (el) obs.observe(el); });
+    return () => obs.disconnect();
+  }, []);
+
+  const hasAdvisory = (member.entitlements || []).some(e => e.course_id === "intake");
+  const H = { fontFamily: serif, fontWeight: 700, fontSize: "clamp(24px,3vw,32px)", color: "var(--gu-text)", marginBottom: 6 };
+  const SUB = { color: "var(--gu-body)", fontSize: 14, fontFamily: font, lineHeight: 1.7, marginBottom: 20 };
+  const tile = (onClick, locked) => ({
+    background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16,
+    padding: "22px 22px", cursor: locked ? "default" : "pointer", opacity: locked ? 0.55 : 1,
+  });
+
   return (
-    <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16, marginBottom: 40 }}>
-          <div>
-            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Your Membership</div>
-            <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "var(--gu-text)", lineHeight: 1.1, marginBottom: 10 }}>Welcome, {firstName(member.name)}.</h1>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <TierBadge tier={member.tier} />
+    <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(16px,4vw,48px) 80px" }}>
+      <style>{`@media (max-width: 900px) { .gu-member-grid { grid-template-columns: minmax(0,1fr) !important; } .gu-member-side { position: static !important; } }`}</style>
+      <div className="gu-member-grid" style={{ maxWidth: 1180, margin: "0 auto", display: "grid", gridTemplateColumns: "218px minmax(0,1fr)", gap: 30, alignItems: "start" }}>
+
+        <aside className="gu-member-side" style={{ position: "sticky", top: 96, background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "18px 10px 14px" }}>
+          <div style={{ padding: "0 10px 14px", borderBottom: "1px solid var(--gu-border2)", marginBottom: 12 }}>
+            <div style={{ color: "var(--gu-text)", fontWeight: 800, fontSize: 15, fontFamily: font, marginBottom: 8 }}>{firstName(member.name)}</div>
+            <TierBadge tier={member.tier} />
+          </div>
+          {SECTIONS.map(([id, label]) => (
+            <button key={id} onClick={() => jump(id)} style={{
+              display: "block", width: "100%", textAlign: "left",
+              background: active === id ? "#3a1618" : "transparent",
+              color: active === id ? "#fbf1f1" : "var(--gu-body)",
+              border: "none", borderLeft: `3px solid ${active === id ? "#e01818" : "transparent"}`,
+              borderRadius: "0 8px 8px 0", padding: "10px 13px", marginBottom: 2,
+              fontFamily: font, fontWeight: active === id ? 800 : 600, fontSize: 13.5, cursor: "pointer",
+            }}>{label}</button>
+          ))}
+          <div style={{ borderTop: "1px solid var(--gu-border2)", marginTop: 12, paddingTop: 10 }}>
+            <button onClick={() => setActivePage("pricing")} style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", color: "var(--gu-body)", border: "none", padding: "9px 13px", fontFamily: font, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Plans &amp; pricing</button>
+            <button onClick={onSignOut} style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", color: "var(--gu-muted)", border: "none", padding: "9px 13px", fontFamily: font, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Sign out</button>
+          </div>
+        </aside>
+
+        <div style={{ minWidth: 0 }}>
+          <div style={{ marginBottom: 34 }}>
+            <div style={{ fontSize: 10, color: "#e01818", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>Your Membership</div>
+            <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4.5vw,44px)", color: "var(--gu-text)", lineHeight: 1.1, marginBottom: 10 }}>Welcome, {firstName(member.name)}.</h1>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               <BadgeChips badges={member.badges} small />
               <span style={{ color: "var(--gu-muted2)", fontSize: 13, fontFamily: font }}>{member.email}</span>
             </div>
           </div>
-          <button style={btnGhost} onClick={onSignOut}>Sign out</button>
-        </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, marginBottom: 40 }}>
-          <div onClick={() => setActivePage("courses")} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: "pointer" }}>
-            <div style={{ marginBottom: 12 }}><BookOpen size={24} color="#b80101" /></div>
-            <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Your Courses</div>
-            <p style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 1 ? "Full access to every course and every lesson." : member.free_lesson_key ? "Your claimed free lesson stays open. Upgrade for the full curriculum." : "Browse every curriculum. Lessons open with a membership or course pass."}</p>
-          </div>
-          <div onClick={() => rank >= 1 && setActivePage("community")} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: rank >= 1 ? "pointer" : "default", opacity: rank >= 1 ? 1 : 0.55 }}>
-            <div style={{ marginBottom: 12 }}><MessagesSquare size={24} color="#b80101" /></div>
-            <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Community {rank < 1 && <Lock size={13} style={{ display: "inline", verticalAlign: "middle" }} />}</div>
-            <p style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 2 ? "Post, reply, and network with fellow developers." : rank >= 1 ? "Read every channel. Upgrade to Builder to post and reply." : "Members-only. Upgrade to a membership to join the conversation."}</p>
-          </div>
-          <div onClick={() => setActivePage("lunchlearn")} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: "pointer", opacity: rank >= 2 ? 1 : 0.55 }}>
-            <div style={{ marginBottom: 12 }}><Video size={24} color="#b80101" /></div>
-            <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Lunch & Learns {rank < 2 && <Lock size={13} style={{ display: "inline", verticalAlign: "middle" }} />}</div>
-            <p style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 2 ? "Live sessions and recordings included in your plan — free." : rank >= 1 ? "Live sessions are free on your plan. Recordings unlock at Builder." : "Members get free live sessions; recordings come with Builder and up."}</p>
-          </div>
-          <div onClick={() => setActivePage("contact")} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", cursor: "pointer", opacity: rank >= 3 ? 1 : 0.55 }}>
-            <div style={{ marginBottom: 12 }}><Handshake size={24} color="#b80101" /></div>
-            <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 6 }}>Advisory Access {rank < 3 && <Lock size={13} style={{ display: "inline", verticalAlign: "middle" }} />}</div>
-            <p style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rank >= 3 ? "Your Owner advisory calls and priority Q&A with Dr. Merritt." : "One-on-one time with Dr. Merritt is an Owner benefit. Book single sessions anytime."}</p>
-          </div>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: NEXT_TIER[member.tier] ? "repeat(auto-fit, minmax(300px, 1fr))" : "1fr", gap: 16, marginBottom: 28 }}>
-          <div style={{ background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 16, padding: "28px 32px" }}>
-            <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Your {TIER_LABELS[member.tier] || member.tier} benefits</div>
-            <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 16 }}>Everything your plan opens up — use all of it.</div>
-            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              {(BENEFITS[member.tier] || []).map((b, i) => (
-                <li key={i} style={{ display: "flex", gap: 12, marginBottom: 10, color: "var(--gu-body)", fontSize: 14, lineHeight: 1.7, fontFamily: font, fontWeight: 600 }}>
-                  <span style={{ color: "#22c55e", flexShrink: 0 }}>✓</span><span>{b}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          {NEXT_TIER[member.tier] && (
-            <div style={{ background: "var(--gu-red-tint)", border: "1px solid #b8010135", borderRadius: 16, padding: "28px 32px", display: "flex", flexDirection: "column" }}>
-              <div style={{ fontSize: 9, color: "#e0c4c4", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>One step up: {TIER_LABELS[NEXT_TIER[member.tier].tier] || NEXT_TIER[member.tier].tier} · {NEXT_TIER[member.tier].price}</div>
-              <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 16 }}>When you're ready for more, here's what it adds:</div>
-              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 18px" }}>
-                {NEXT_TIER[member.tier].adds.map((b, i) => (
-                  <li key={i} style={{ display: "flex", gap: 12, marginBottom: 10, color: "var(--gu-body)", fontSize: 14, lineHeight: 1.7, fontFamily: font, fontWeight: 600 }}>
-                    <span style={{ color: "#b80101", flexShrink: 0 }}>+</span><span>{b}</span>
-                  </li>
-                ))}
-              </ul>
-              <button style={{ ...btnRed, marginTop: "auto", alignSelf: "flex-start" }} onClick={() => setActivePage("pricing")}>Upgrade to {TIER_LABELS[NEXT_TIER[member.tier].tier] || NEXT_TIER[member.tier].tier} →</button>
+          {/* 1 — four ways back in */}
+          <section id="gu-start" style={{ scrollMarginTop: 96, marginBottom: 40 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 14 }}>
+              <div onClick={() => setActivePage("courses")} style={tile(null, false)}>
+                <div style={{ marginBottom: 10 }}><BookOpen size={22} color="#e01818" /></div>
+                <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15, fontFamily: font, marginBottom: 5 }}>Your Courses</div>
+                <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, lineHeight: 1.6 }}>{rank >= 1 ? "Every course, every lesson." : "Browse the curriculum."}</p>
+              </div>
+              <div onClick={() => rank >= 1 && setActivePage("community")} style={tile(null, rank < 1)}>
+                <div style={{ marginBottom: 10 }}><MessagesSquare size={22} color="#e01818" /></div>
+                <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15, fontFamily: font, marginBottom: 5 }}>Community {rank < 1 && <Lock size={12} style={{ display: "inline", verticalAlign: "middle" }} />}</div>
+                <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, lineHeight: 1.6 }}>{rank >= 2 ? "Post, reply and network." : rank >= 1 ? "Read every channel." : "Members only."}</p>
+              </div>
+              <div onClick={() => setActivePage("lunchlearn")} style={tile(null, rank < 1)}>
+                <div style={{ marginBottom: 10 }}><Video size={22} color="#e01818" /></div>
+                <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15, fontFamily: font, marginBottom: 5 }}>Lunch &amp; Learns</div>
+                <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, lineHeight: 1.6 }}>{rank >= 2 ? "Live sessions and the recording library." : "Live sessions are free on your plan."}</p>
+              </div>
+              <div onClick={() => setActivePage("officehours")} style={tile(null, rank < 3)}>
+                <div style={{ marginBottom: 10 }}><Calendar size={22} color="#e01818" /></div>
+                <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15, fontFamily: font, marginBottom: 5 }}>Office Hours {rank < 3 && <Lock size={12} style={{ display: "inline", verticalAlign: "middle" }} />}</div>
+                <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, lineHeight: 1.6 }}>{rank >= 3 ? "Group sessions with Dr. Merritt." : "Opens at Premium."}</p>
+              </div>
             </div>
-          )}
-        </div>
+          </section>
 
-        <ProfileCard member={member} />
-        <BenefitGateNotice member={member} />
-        <BookingsCard member={member} />
-        <SessionCreditsCard member={member} />
-        <ReferralCard member={member} />
-        <ChangePasswordCard />
-        <ManageMembershipCard member={member} rank={rank} />
-
-        {rank < 1 && member.lnl_discount_until && new Date(member.lnl_discount_until) > new Date() && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, background: "var(--gu-card2)", border: "1px solid #e0c4c440", borderRadius: 14, padding: "20px 26px", marginBottom: 16 }}>
-            <div>
-              <div style={{ color: "#b80101", fontWeight: 800, fontSize: 15, fontFamily: font, marginBottom: 4 }}>Your Lunch & Learn perk: 25% off your first month</div>
-              <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>Become a member by {new Date(member.lnl_discount_until).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })} and mention it when you sign up.</div>
+          {/* 2 — everything about meetings, in one place */}
+          <section id="gu-meetings" style={{ scrollMarginTop: 96, marginBottom: 40 }}>
+            <h2 style={H}>Your meetings</h2>
+            <p style={SUB}>Your one-on-one time with Dr. Merritt — what you have, when it is, and what she should read first.</p>
+            <SessionCreditsCard member={member} />
+            <BookingsCard member={member} />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 14, padding: "18px 24px" }}>
+              <div style={{ color: "var(--gu-body)", fontSize: 13.5, fontFamily: font, fontWeight: 600 }}>Need her on something specific? Book a single session any time.</div>
+              <button style={btnRed} onClick={() => setActivePage("contact")}>Book a session →</button>
             </div>
-            <button style={btnRed} onClick={() => setActivePage("pricing")}>See Memberships →</button>
-          </div>
-        )}
+          </section>
 
-        {rank < 3 && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, background: "var(--gu-card2)", border: "1px solid #2a2000", borderRadius: 14, padding: "20px 26px" }}>
-            <div style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, fontWeight: 600 }}>Want more access? Compare plans and upgrade anytime.</div>
-            <button style={btnRed} onClick={() => setActivePage("pricing")}>View Plans →</button>
-          </div>
-        )}
+          {/* 3 — what the plan opens up */}
+          <section id="gu-benefits" style={{ scrollMarginTop: 96, marginBottom: 40 }}>
+            <h2 style={H}>Your benefits</h2>
+            <p style={SUB}>Everything your {TIER_LABELS[member.tier] || member.tier} plan opens up — use all of it.</p>
+            <BenefitGateNotice member={member} />
+            <div style={{ display: "grid", gridTemplateColumns: NEXT_TIER[member.tier] ? "repeat(auto-fit, minmax(290px, 1fr))" : "1fr", gap: 16 }}>
+              <div style={{ background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "26px 30px" }}>
+                <div style={{ fontSize: 9, color: "#e01818", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 14 }}>Included in {TIER_LABELS[member.tier] || member.tier}</div>
+                <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                  {(BENEFITS[member.tier] || []).map((b, i) => (
+                    <li key={i} style={{ display: "flex", gap: 12, marginBottom: 10, color: "var(--gu-body)", fontSize: 14, lineHeight: 1.7, fontFamily: font, fontWeight: 600 }}>
+                      <span style={{ color: "#22c55e", flexShrink: 0 }}>✓</span><span>{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              {NEXT_TIER[member.tier] && (
+                <div style={{ background: "var(--gu-red-tint)", border: "1px solid #b8010145", borderRadius: 16, padding: "26px 30px", display: "flex", flexDirection: "column" }}>
+                  <div style={{ fontSize: 9, color: "#f0d0d0", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 14 }}>One step up: {TIER_LABELS[NEXT_TIER[member.tier].tier] || NEXT_TIER[member.tier].tier} · {NEXT_TIER[member.tier].price}</div>
+                  <ul style={{ listStyle: "none", padding: 0, margin: "0 0 18px" }}>
+                    {NEXT_TIER[member.tier].adds.map((b, i) => (
+                      <li key={i} style={{ display: "flex", gap: 12, marginBottom: 10, color: "var(--gu-body)", fontSize: 14, lineHeight: 1.7, fontFamily: font, fontWeight: 600 }}>
+                        <span style={{ color: "#e01818", flexShrink: 0 }}>+</span><span>{b}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button style={{ ...btnRed, marginTop: "auto", alignSelf: "flex-start" }} onClick={() => setActivePage("pricing")}>Upgrade to {TIER_LABELS[NEXT_TIER[member.tier].tier] || NEXT_TIER[member.tier].tier} →</button>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* 4 — what advisory is, and how to start */}
+          <section id="gu-advisory" style={{ scrollMarginTop: 96, marginBottom: 40 }}>
+            <h2 style={H}>Advisory</h2>
+            <p style={SUB}>{hasAdvisory
+              ? "Your project is with Dr. Merritt. Your workspace has the documents, the messages and the hours logged."
+              : "A membership teaches you the work. Advisory is Dr. Merritt doing it with you, on your actual deal."}</p>
+            <div style={{ background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "26px 30px" }}>
+              {hasAdvisory ? (
+                <button style={btnRed} onClick={() => setActivePage("advisory")}>Open your advisory workspace →</button>
+              ) : (<>
+                <ul style={{ listStyle: "none", padding: 0, margin: "0 0 20px" }}>
+                  {["She takes in your whole project — pro forma, capital stack, site, timeline — and finds what you missed",
+                    "You get it back as a written read, not a conversation you have to remember",
+                    "If you continue on retainer, she's on your project month over month, and the $1,500 intake credits against your first month",
+                    "A private workspace: your documents, your messages, and every hour logged"].map((t, i) => (
+                    <li key={i} style={{ display: "flex", gap: 12, marginBottom: 10, color: "var(--gu-body)", fontSize: 14, lineHeight: 1.7, fontFamily: font, fontWeight: 600 }}>
+                      <span style={{ color: "#e01818", flexShrink: 0 }}>·</span><span>{t}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+                  <button style={btnRed} onClick={() => window.startCheckout && window.startCheckout("retainer_onboarding")}>Start your intake — $1,500 →</button>
+                  <button style={btnGhost} onClick={() => setActivePage("contact")}>See how it works</button>
+                </div>
+              </>)}
+            </div>
+          </section>
+
+          {/* 5 — the account itself */}
+          <section id="gu-account" style={{ scrollMarginTop: 96 }}>
+            <h2 style={H}>Profile &amp; billing</h2>
+            <p style={SUB}>How you appear in the community, your referral link, and your plan.</p>
+            <ProfileCard member={member} />
+            <ReferralCard member={member} />
+            <ChangePasswordCard />
+            <ManageMembershipCard member={member} rank={rank} />
+            {rank < 1 && member.lnl_discount_until && new Date(member.lnl_discount_until) > new Date() && (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, background: "var(--gu-card2)", border: "1px solid #e0c4c440", borderRadius: 14, padding: "20px 26px", marginTop: 16 }}>
+                <div>
+                  <div style={{ color: "#e01818", fontWeight: 800, fontSize: 15, fontFamily: font, marginBottom: 4 }}>Your Lunch &amp; Learn perk: 25% off your first month</div>
+                  <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>Become a member by {new Date(member.lnl_discount_until).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}.</div>
+                </div>
+                <button style={btnRed} onClick={() => setActivePage("pricing")}>See Memberships →</button>
+              </div>
+            )}
+          </section>
+        </div>
       </div>
     </div>
   );
