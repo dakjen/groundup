@@ -246,6 +246,34 @@ const ONB_PRICE = { Free: "$0", Basic: "$49.99/mo", Builder: "$149.99/mo", Premi
 // plan we most want people on; Owner is the exceptional one and is capped, so it
 // is tagged on access and scarcity rather than value.
 const ONB_TAG = { Premium: "Best value", Elite: "Most access · 15 seats" };
+
+// The things people actually buy a plan for. Four bullet lists in a row all read
+// at the same weight, so the reasons to move up a tier disappear into them —
+// these get bolded wherever they appear. Longest first, so "1:1 sessions with
+// Dr. Merritt" wins before the bare "1:1 sessions" can match inside it.
+const ONB_HIGHLIGHT = [
+  "3 one-on-one advisory calls/yr with Dr. Merritt",
+  "Direct messages to Dr. Merritt & her team",
+  "Group office hours with Dr. Merritt",
+  "The Lunch & Learn recording library",
+  "Free invites to every live Lunch & Learn",
+  "10% off 1:1 sessions with Dr. Merritt",
+  "30% off 1:1 sessions with Dr. Merritt",
+  "The Opportunity Board",
+  "Post, reply & network in the community",
+  "Community access",
+  "office hours",
+];
+const ONB_HL_RE = new RegExp("(" + ONB_HIGHLIGHT.map(p => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")", "i");
+
+function onbBold(text) {
+  const parts = String(text).split(ONB_HL_RE);
+  return parts.map((part, i) =>
+    ONB_HL_RE.test(part) && i % 2 === 1
+      ? <strong key={i} style={{ color: "#fff", fontWeight: 800 }}>{part}</strong>
+      : <span key={i}>{part}</span>
+  );
+}
 // Not everyone signing up is a developer — consultants, nonprofit and agency
 // staff, lenders, architects and students all belong here, and the questions
 // shouldn't assume otherwise.
@@ -492,7 +520,7 @@ export function OnboardingFlow({ pending, onDone }) {
                     <ul style={{ listStyle: "none", padding: 0, margin: "0 0 18px", flex: 1 }}>
                       {(BENEFITS[t] || []).map((f, i) => (
                         <li key={i} style={{ color: "#dcc6c6", fontSize: 12, lineHeight: 1.55, fontFamily: font, marginBottom: 7, paddingLeft: 14, position: "relative" }}>
-                          <span style={{ position: "absolute", left: 0, color: "#ef2b2b" }}>·</span>{f}
+                          <span style={{ position: "absolute", left: 0, color: "#ef2b2b" }}>·</span>{onbBold(f)}
                         </li>
                       ))}
                     </ul>
