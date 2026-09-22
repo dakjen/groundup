@@ -237,7 +237,10 @@ I agree to the <a href="/terms" target="_blank" style={{ color: "#b80101", fontW
 // plan, and Free counts as a choice. Skipping the questions still lands on the
 // comparison; it just arrives without a match badge.
 
-const ONB_PLANS = ["Free", "Basic", "Builder", "Premium", "Elite"];
+// Free is deliberately NOT a card. Sat beside the paid tiers it competed as a
+// product and made the row read as five choices; underneath, as a plain line of
+// text, it is what it actually is — an honest way out for someone not ready.
+const ONB_PLANS = ["Basic", "Builder", "Premium", "Elite"];
 const ONB_PRICE = { Free: "$0", Basic: "$49.99/mo", Builder: "$149.99/mo", Premium: "$249.99/mo", Elite: "$499.99/mo" };
 // Not everyone signing up is a developer — consultants, nonprofit and agency
 // staff, lenders, architects and students all belong here, and the questions
@@ -301,6 +304,8 @@ export function OnboardingFlow({ pending, onDone }) {
   // Developer-specific questions are hidden from everyone else — a city planner
   // or a lender has no honest answer to "where are you in the process?"
   const isDev = role === "Developer, or working toward it";
+  // Five tiers belong on one line; only a genuinely narrow screen may wrap them.
+  const wide5 = typeof window !== "undefined" && window.innerWidth >= 860;
   const sel = { ...onbInp, appearance: "auto", cursor: "pointer" };
   const inp2 = onbInp, lbl2 = onbLbl;
 
@@ -341,7 +346,7 @@ export function OnboardingFlow({ pending, onDone }) {
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 320, background: "rgba(10,2,3,0.92)", backdropFilter: "blur(6px)", overflowY: "auto", padding: "24px 16px" }}>
-      <div style={{ background: "#1a0d0e", border: "1px solid #46191a", borderRadius: 20, padding: "32px clamp(20px,4vw,38px)", width: "100%", maxWidth: step === 0 ? 520 : 1040, margin: "0 auto" }}>
+      <div style={{ background: "#1a0d0e", border: "1px solid #46191a", borderRadius: 20, padding: "32px clamp(20px,4vw,38px)", width: "100%", maxWidth: step === 2 ? 1100 : 520, margin: "0 auto" }}>
         <div style={{ position: "relative", borderRadius: 14, overflow: "hidden", marginBottom: 22, height: step === 2 ? 110 : 150 }}>
           <img src={ONB_BANNER[step].src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(20,4,6,0.25) 0%, rgba(20,4,6,0.85) 100%)" }} />
@@ -462,33 +467,40 @@ export function OnboardingFlow({ pending, onDone }) {
                 Your answers point at <strong style={{ color: "#f0d8d8" }}>{rec.label}</strong> ({rec.price}) — reach out and we'll set that up directly.
               </p>
             )}
-            <p style={{ color: "#b59a9a", fontSize: 12, fontFamily: font, marginBottom: 22 }}>Starting free is a real choice — you keep the account and can upgrade whenever.</p>
+            <p style={{ color: "#b59a9a", fontSize: 12, fontFamily: font, marginBottom: 22 }}>Cancel any time, in one click — no emails, no phone calls.</p>
 
             {error && <div style={{ background: "#3a1010", border: "1px solid #ef2b2b", borderRadius: 9, padding: "10px 14px", color: "#ffc9c9", fontSize: 13, fontFamily: font, marginBottom: 16 }}>{error}</div>}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 14 }}>
+            <div style={{ display: "grid", gridTemplateColumns: wide5 ? "repeat(4,minmax(0,1fr))" : "repeat(auto-fit,minmax(180px,1fr))", gap: 12, alignItems: "stretch" }}>
               {ONB_PLANS.map(t => {
                 const match = t === recTier;
                 return (
-                  <div key={t} style={{ background: match ? "#2a1012" : "#22100f", border: `1px solid ${match ? "#ef2b2b" : "#46191a"}`, borderRadius: 14, padding: "20px 18px", display: "flex", flexDirection: "column" }}>
+                  <div key={t} style={{ background: match ? "#2a1012" : "#22100f", border: `1px solid ${match ? "#ef2b2b" : "#46191a"}`, borderRadius: 14, padding: "18px 15px", display: "flex", flexDirection: "column" }}>
                     {match && <div style={{ fontSize: 9, color: "#ff5c5c", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>Your match</div>}
-                    <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, color: "#f5e8e8" }}>{TIER_LABELS[t]}</div>
+                    <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, color: "#f5e8e8" }}>{TIER_LABELS[t]}</div>
                     <div style={{ color: "#ff4d4d", fontWeight: 800, fontSize: 15, fontFamily: font, margin: "2px 0 14px" }}>{ONB_PRICE[t]}</div>
                     <ul style={{ listStyle: "none", padding: 0, margin: "0 0 18px", flex: 1 }}>
                       {(BENEFITS[t] || []).map((f, i) => (
-                        <li key={i} style={{ color: "#dcc6c6", fontSize: 12.5, lineHeight: 1.6, fontFamily: font, marginBottom: 7, paddingLeft: 14, position: "relative" }}>
+                        <li key={i} style={{ color: "#dcc6c6", fontSize: 12, lineHeight: 1.55, fontFamily: font, marginBottom: 7, paddingLeft: 14, position: "relative" }}>
                           <span style={{ position: "absolute", left: 0, color: "#ef2b2b" }}>·</span>{f}
                         </li>
                       ))}
                     </ul>
                     <button onClick={() => choose(t)} disabled={busy} style={{ ...onbBtn, width: "100%", background: match ? "#e01818" : "transparent", border: match ? "none" : "1px solid #5a2122", color: match ? "#fff" : "#f7e6e6" }}>
-                      {t === "Free" ? "Start free" : `Choose ${TIER_LABELS[t]} →`}
+                      {`Choose ${TIER_LABELS[t]} →`}
                     </button>
                   </div>
                 );
               })}
             </div>
 
-            <button onClick={() => setStep(1)} style={{ display: "block", margin: "20px auto 0", background: "none", border: "none", color: "#c2a5a5", fontFamily: font, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            <button onClick={() => choose("Free")} disabled={busy} style={{ display: "block", width: "100%", marginTop: 14, background: "transparent", border: "1px dashed #5a2122", borderRadius: 11, padding: "15px 18px", color: "#e0bcbc", fontFamily: font, fontSize: 13.5, fontWeight: 700, cursor: "pointer", opacity: busy ? 0.6 : 1 }}>
+              Free — I&rsquo;m not ready to invest yet
+              <span style={{ display: "block", marginTop: 4, color: "#b59a9a", fontSize: 12, fontWeight: 500 }}>
+                Keep your account, preview every curriculum, and upgrade whenever you are.
+              </span>
+            </button>
+
+            <button onClick={() => setStep(1)} style={{ display: "block", margin: "18px auto 0", background: "none", border: "none", color: "#c2a5a5", fontFamily: font, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
               ← Back to the questions
             </button>
           </>
