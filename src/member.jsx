@@ -229,7 +229,18 @@ I agree to the <a href="/terms" target="_blank" style={{ color: "#b80101", fontW
 
 const ONB_PLANS = ["Free", "Basic", "Builder", "Premium", "Elite"];
 const ONB_PRICE = { Free: "$0", Basic: "$49.99/mo", Builder: "$149.99/mo", Premium: "$249.99/mo", Elite: "$499.99/mo" };
-const ONB_EXPERIENCE = ["Brand new — I haven't done a project yet", "I've worked on someone else's projects", "I've closed one deal of my own", "I've closed several", "I develop full time"];
+// Each option has to make sense read on its own in a dropdown — "I've closed
+// several" only parsed next to the line above it, and "closed" means reaching
+// financial closing, which is exactly the jargon an emerging developer may not
+// have yet.
+const ONB_EXPERIENCE = [
+  "I haven't worked on a development project yet",
+  "I've worked on projects, but not my own",
+  "I have a project in progress, nothing finished",
+  "I've financed and closed one project of my own",
+  "I've financed and closed more than one",
+  "I develop full time",
+];
 const ONB_FOCUS = ["Affordable housing (LIHTC)", "Workforce / missing middle", "Market-rate multifamily", "Mixed-use", "Single-family / small infill", "Commercial or retail", "Community facilities", "Still deciding"];
 
 export function OnboardingFlow({ member, onDone }) {
