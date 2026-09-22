@@ -229,26 +229,35 @@ I agree to the <a href="/terms" target="_blank" style={{ color: "#b80101", fontW
 
 const ONB_PLANS = ["Free", "Basic", "Builder", "Premium", "Elite"];
 const ONB_PRICE = { Free: "$0", Basic: "$49.99/mo", Builder: "$149.99/mo", Premium: "$249.99/mo", Elite: "$499.99/mo" };
+const ONB_EXPERIENCE = ["Brand new — I haven't done a project yet", "I've worked on someone else's projects", "I've closed one deal of my own", "I've closed several", "I develop full time"];
+const ONB_FOCUS = ["Affordable housing (LIHTC)", "Workforce / missing middle", "Market-rate multifamily", "Mixed-use", "Single-family / small infill", "Commercial or retail", "Community facilities", "Still deciding"];
 
 export function OnboardingFlow({ member, onDone }) {
   const [step, setStep] = useState(0);
   const [learn, setLearn] = useState("");
   const [pain, setPain] = useState("");
-  const [budget, setBudget] = useState("");
   const [source, setSource] = useState("");
+  const [phase, setPhase] = useState("");
+  const [experience, setExperience] = useState("");
+  const [focus, setFocus] = useState("");
+  const [goal, setGoal] = useState("");
+  const [company, setCompany] = useState("");
+  const [title, setTitle] = useState("");
+  const [location, setLocation] = useState("");
   const [rec, setRec] = useState(null);
   const [busy, setBusy] = useState(false);
   const sel = { ...inp, appearance: "auto", cursor: "pointer" };
 
   // Saves whatever was answered (possibly nothing) and moves to the plans.
+  // Budget is deliberately NOT asked — the engine recommends from need alone.
   const toPlans = async () => {
     setBusy(true);
     try {
-      const d = await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "onboarding", learn, pain, budget, source }) });
+      const d = await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "onboarding", learn, pain, source, phase, experience, focus, goal, company, title, location }) });
       setRec(d.recommendation || null);
     } catch { /* a failed save must not trap anyone before the plan step */ }
     setBusy(false);
-    setStep(1);
+    setStep(2);
   };
 
   const choose = (t) => {
@@ -264,16 +273,62 @@ export function OnboardingFlow({ member, onDone }) {
     <div style={{ position: "fixed", inset: 0, zIndex: 320, background: "rgba(0,0,0,0.9)", backdropFilter: "blur(6px)", overflowY: "auto", padding: "24px 16px" }}>
       <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "32px clamp(20px,4vw,38px)", width: "100%", maxWidth: step === 0 ? 520 : 1040, margin: "0 auto" }}>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>
-          {step === 0 ? "Step 1 of 2" : "Step 2 of 2"}
+          Step {step + 1} of 3
         </div>
 
         {step === 0 ? (
           <>
             <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>Welcome, {firstName(member?.name) || "there"}.</h2>
             <p style={{ color: "#a89080", fontSize: 14, lineHeight: 1.7, fontFamily: font, marginBottom: 24 }}>
-              Four quick questions so we can point you at the right plan instead of making you guess. Every one is optional — skip any that don't fit.
+              Tell us a little about you, so Dr. Merritt and the community know who they're talking to. All of it is optional and you can change it later.
             </p>
 
+            <div style={{ marginBottom: 16 }}>
+              <label style={lbl}>Company or organization</label>
+              <input style={inp} value={company} onChange={e => setCompany(e.target.value)} maxLength={120} placeholder="Your company, or none yet" />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={lbl}>Your role</label>
+              <input style={inp} value={title} onChange={e => setTitle(e.target.value)} maxLength={120} placeholder="Developer, consultant, ED, student…" />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={lbl}>Where do you work?</label>
+              <input style={inp} value={location} onChange={e => setLocation(e.target.value)} maxLength={120} placeholder="e.g. Washington DC · Cleveland" />
+            </div>
+            <div style={{ marginBottom: 26 }}>
+              <label style={lbl}>How much development have you done?</label>
+              <select style={sel} value={experience} onChange={e => setExperience(e.target.value)}>
+                <option value="">Rather not say</option>
+                {ONB_EXPERIENCE.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+
+            <button onClick={() => setStep(1)} style={{ ...btnRed, width: "100%" }}>Continue →</button>
+            <button onClick={toPlans} disabled={busy} style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", color: "#8a7070", fontFamily: font, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              Skip to the plans
+            </button>
+          </>
+        ) : step === 1 ? (
+          <>
+            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>What are you working on?</h2>
+            <p style={{ color: "#a89080", fontSize: 14, lineHeight: 1.7, fontFamily: font, marginBottom: 24 }}>
+              This is what we use to point you at the right courses, channels and plan — instead of making you guess. Still optional.
+            </p>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={lbl}>What kind of development?</label>
+              <select style={sel} value={focus} onChange={e => setFocus(e.target.value)}>
+                <option value="">Not sure yet</option>
+                {ONB_FOCUS.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={lbl}>Where are you in the process?</label>
+              <select style={sel} value={phase} onChange={e => setPhase(e.target.value)}>
+                <option value="">Not on a project right now</option>
+                {DEV_PHASES.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
             <div style={{ marginBottom: 16 }}>
               <label style={lbl}>What do you hope to learn?</label>
               <select style={sel} value={learn} onChange={e => setLearn(e.target.value)}>
@@ -281,7 +336,6 @@ export function OnboardingFlow({ member, onDone }) {
                 {WL_LEARN.filter(o => o !== "Other").map(o => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
-
             <div style={{ marginBottom: 16 }}>
               <label style={lbl}>What's in your way right now?</label>
               <select style={sel} value={pain} onChange={e => setPain(e.target.value)}>
@@ -289,15 +343,10 @@ export function OnboardingFlow({ member, onDone }) {
                 {WL_PAIN.filter(o => o !== "Other").map(o => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
-
             <div style={{ marginBottom: 16 }}>
-              <label style={lbl}>What can you invest each month?</label>
-              <select style={sel} value={budget} onChange={e => setBudget(e.target.value)}>
-                <option value="">Not sure yet</option>
-                {WL_BUDGETS.map(o => <option key={o} value={o}>{o}</option>)}
-              </select>
+              <label style={lbl}>What would make this year a win?</label>
+              <textarea style={{ ...inp, minHeight: 74, resize: "vertical" }} value={goal} onChange={e => setGoal(e.target.value)} maxLength={400} placeholder="In your own words — Dr. Merritt reads these." />
             </div>
-
             <div style={{ marginBottom: 26 }}>
               <label style={lbl}>How did you find us?</label>
               <select style={sel} value={source} onChange={e => setSource(e.target.value)}>
@@ -309,8 +358,8 @@ export function OnboardingFlow({ member, onDone }) {
             <button onClick={toPlans} disabled={busy} style={{ ...btnRed, width: "100%", opacity: busy ? 0.6 : 1 }}>
               {busy ? "One moment…" : "See the plans →"}
             </button>
-            <button onClick={toPlans} disabled={busy} style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", color: "#8a7070", fontFamily: font, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-              Skip the questions
+            <button onClick={() => setStep(0)} style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", color: "#8a7070", fontFamily: font, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              ← Back
             </button>
           </>
         ) : (
@@ -351,7 +400,7 @@ export function OnboardingFlow({ member, onDone }) {
               })}
             </div>
 
-            <button onClick={() => setStep(0)} style={{ display: "block", margin: "20px auto 0", background: "none", border: "none", color: "#8a7070", fontFamily: font, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            <button onClick={() => setStep(1)} style={{ display: "block", margin: "20px auto 0", background: "none", border: "none", color: "#8a7070", fontFamily: font, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
               ← Back to the questions
             </button>
           </>

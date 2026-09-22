@@ -127,6 +127,20 @@ export function recommendPlan(e) {
     const r = map[wanted[1]];
     return { ...{ 1: PLANS.Basic, 2: PLANS.Builder, 3: PLANS.Premium, 4: PLANS.Elite }[r], next: r < 4 ? { 1: PLANS.Builder, 2: PLANS.Premium, 3: PLANS.Elite }[r] : null };
   }
+  // No budget stated at all — onboarding deliberately doesn't ask, because
+  // asking what someone can spend immediately before showing them prices reads
+  // as a qualifier. Recommend from what they actually need instead, and stay
+  // conservative: their answers set the floor, not the ceiling.
+  if (!e.budget) {
+    const byNeed = wantsDealSupport ? 4 : { 1: 1, 2: 2, 3: 3 }[need] || 1;
+    const LADDER0 = { 1: PLANS.Basic, 2: PLANS.Builder, 3: PLANS.Premium, 4: PLANS.Elite };
+    let r0 = LADDER0[byNeed];
+    if (founding) {
+      const FP0 = { Basic: '$37.49/mo', Builder: '$112.49/mo', Premium: '$187.49/mo', Elite: '$374.99/mo' };
+      if (FP0[r0.tier]) r0 = { ...r0, price: `${FP0[r0.tier]} founding rate, first year` };
+    }
+    return { ...r0, next: byNeed < 4 ? LADDER0[byNeed + 1] : null };
+  }
   const rank = wantsDealSupport ? 4
     : e.budget === 'I want to learn the industry' ? 1
     : e.budget === 'I want to become an expert' ? 2
