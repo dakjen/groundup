@@ -173,7 +173,13 @@ export async function sendBulk(recipients, subject, innerHtml) {
 }
 
 export function siteUrl() {
-  return process.env.SITE_URL || 'https://community.drginamerritt.net';
+  const raw = String(process.env.SITE_URL || '').trim().replace(/\/+$/, '');
+  if (!raw) return 'https://community.drginamerritt.net';
+  // A bare hostname is the easy mistake to make when setting this per
+  // environment, and Stripe rejects a URL with no scheme outright ("an explicit
+  // scheme must be provided") — which surfaces as a dead checkout button rather
+  // than anything that names the real cause. Assume https when it's missing.
+  return /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
 }
 
 export function resetEmail(name, link) {
