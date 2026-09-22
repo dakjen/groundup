@@ -6531,7 +6531,7 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
       {/* Founding-member thank-you */}
       <div style={section}>
         <div style={heading}>Founding Thank-You — Insider Waitlist</div>
-        <p style={sub}>Sends itself <strong>7 days before the insider launch</strong> — the heads-up that starts the founding race: doors open November 1 to insiders only, the first 25 who pay become founding members, and the window shuts November 15. Everyone on the list gets it once; later joiners get it on the next daily run. The buttons below preview it, or send it early by hand.</p>
+        <p style={sub}>Sends itself <strong>7 days before the insider launch</strong> — the heads-up that starts the founding race: doors open November 1 to insiders only, and the first 25 who pay become founding members — insiders get all of November to claim a seat, and on December 1 whatever's left goes to the general waitlist. Everyone on the list gets it once; later joiners get it on the next daily run. The buttons below preview it, or send it early by hand.</p>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <input value={meeting.to_email} onChange={e => setMeeting({ ...meeting, to_email: e.target.value })} type="email" placeholder="djmj@nreuv.com" style={{ ...inp, maxWidth: 300, marginBottom: 0 }} />
           <button disabled={busy} onClick={() => send({ kind: "founding_thanks", to_email: meeting.to_email || "djmj@nreuv.com" }, `Send the founding thank-you PREVIEW to ${meeting.to_email || "djmj@nreuv.com"}?`)} style={{ ...btnGhost }}>Send Me the Preview</button>

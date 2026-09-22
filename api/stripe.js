@@ -87,18 +87,18 @@ export async function foundingSeats(sql) {
         AND tier IS DISTINCT FROM 'Free'`;
     taken = row?.n || 0;
   } catch { /* table shape older than the badge */ }
-  // The window: opens at the insider launch and runs 15 days. Founding is
-  // whichever comes first — 25 seats claimed, or the clock running out. The
-  // team can override the close with settings.founding_deadline.
+  // The window opens at the insider launch and stays open until the 25th seat
+  // is claimed — scarcity is the cap, not a clock. Insiders get November alone
+  // to claim (the signup gate keeps everyone else out until the public launch);
+  // whatever they leave on the table is up for grabs when the doors open wide.
+  // The team can still force an end date with settings.founding_deadline.
   let opensAt = null, closesAt = null;
   try {
     const rows = await sql`SELECT key, value FROM settings WHERE key IN ('launch_insider_at', 'founding_deadline')`;
     const ins = rows.find(r => r.key === 'launch_insider_at')?.value;
     const override = rows.find(r => r.key === 'founding_deadline')?.value;
-    if (ins) {
-      opensAt = new Date(ins);
-      closesAt = override ? new Date(override) : new Date(opensAt.getTime() + 15 * 86400000);
-    }
+    if (ins) opensAt = new Date(ins);
+    if (override) closesAt = new Date(override);
   } catch { /* closed */ }
   const now = Date.now();
   const started = !!opensAt && now >= opensAt.getTime();
