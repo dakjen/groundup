@@ -2312,6 +2312,16 @@ function ContactPage({ setActivePage, advisorLink }) {
       .catch(() => {});
   }, []);
 
+  // Stripe sends people back with ?checkout=success&item=session_x. Until that
+  // arrives, the brief below is locked: it used to be fillable and submittable
+  // by anyone, so Dr. Merritt could receive a detailed deal brief for a session
+  // nobody had paid for.
+  const paidItem = (() => {
+    const q = new URLSearchParams(window.location.search);
+    return q.get("checkout") === "success" ? q.get("item") : null;
+  })();
+  const hasPaid = !!selected && !selected.advisor && paidItem === "session_" + selected.id;
+
   const usd = (cents) => "$" + (cents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 });
   // Returns { list, price, discounted } for a session card, or null for the advisor card
   const rateFor = (s) => {
@@ -2322,6 +2332,7 @@ function ContactPage({ setActivePage, advisorLink }) {
   };
 
   const handleSubmit = async () => {
+    if (!hasPaid && !selected?.advisor) { setError("Please reserve your spot first — the brief opens as soon as payment goes through."); return; }
     if (!form.name || !form.email || !form.message) { setError("All fields are required."); return; }
     try {
       const existing = await window.storage.get("admin:inbox").catch(() => null);
@@ -2432,7 +2443,20 @@ function ContactPage({ setActivePage, advisorLink }) {
                 <div style={{ fontSize: 13, color: "#8f7070", fontFamily: "'DM Sans', sans-serif" }}>{selected.advisor ? "Monthly retainer · starts with a 30-min engagement call" : "45 min · Dr. Gina Merritt · Zoom"}</div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#b80101" }}>{selected.price}</div>
+                {/* Show what they will actually be charged. This used to print the
+                    sticker price while the cards above and Stripe both showed the
+                    member rate — the one number on the page that was wrong, sitting
+                    right next to the Pay button. */}
+                {(() => {
+                  const r = rateFor(selected);
+                  if (!r || !r.discounted) return <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#b80101" }}>{r ? r.price : selected.price}</div>;
+                  return (
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+                      <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "#8f7070", textDecoration: "line-through" }}>{r.list}</span>
+                      <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#b80101" }}>{r.price}</span>
+                    </div>
+                  );
+                })()}
                 {selected.advisor ? (
                   <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
                     <button onClick={() => startCheckout("retainer_onboarding")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "13px 24px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Buy the Intake — $1,500 →</button>
@@ -2455,7 +2479,12 @@ function ContactPage({ setActivePage, advisorLink }) {
         {selected && (
           <div style={{ marginBottom: 40 }}>
             <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>Step 3 — Tell Dr. Merritt What You're Working On</div>
-            <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 14, padding: 32 }}>
+            {!hasPaid && !selected.advisor && (
+              <div style={{ background: "#160a0a", border: "1px dashed #5a2122", borderRadius: 14, padding: "18px 22px", marginBottom: 16, color: "#d9b8b8", fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
+                <strong style={{ color: "#f0d8d8" }}>Reserve your spot first.</strong> Once your payment goes through you&rsquo;ll come straight back here and this form opens, so Dr. Merritt has your brief before the session.
+              </div>
+            )}
+            <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 14, padding: 32, opacity: hasPaid || selected.advisor ? 1 : 0.45, pointerEvents: hasPaid || selected.advisor ? "auto" : "none" }} aria-disabled={!hasPaid && !selected.advisor}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <div>
                   <label style={labelStyle}>Your Name</label>

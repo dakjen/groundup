@@ -162,6 +162,10 @@ const splitRate = (item) => (item && SPLIT[item] !== undefined ? SPLIT[item] : S
 
 // Member perk: paid tiers get a standing discount on 1:1 sessions with Dr. Merritt.
 // Priced off the sticker price and applied server-side — the client never sends an amount.
+// The top tier is "Owner" everywhere a customer can see it; Elite is the
+// internal key only. A Stripe receipt is somewhere a customer can see it.
+const TIER_LABELS_SRV = { Basic: 'Member', Builder: 'Builder', Premium: 'Premium', Elite: 'Owner' };
+
 const SESSION_DISCOUNT = { Premium: 0.10, Elite: 0.30 };
 export const sessionDiscountRate = (tier) => SESSION_DISCOUNT[tier] || 0;
 
@@ -836,7 +840,11 @@ export default async function handler(req, res) {
     const productName = grandfathered
       ? `${product.name} — Founding Member`
       : saved > 0
-        ? `${product.name} — ${user.tier} member rate (${Math.round((saved / product.amount) * 100)}% off)`
+        // State the advertised rate, not the effective one. Prices round DOWN to
+        // the nearest $5 in the member's favour, so a 10% discount off $425 lands
+        // at $380 — an effective 10.6%, which printed as "11% off" on the receipt
+        // while the site promised 10%. Both were true and it read like an error.
+        ? `${product.name} — ${TIER_LABELS_SRV[user.tier] || user.tier} member rate (${Math.round(sessionDiscountRate(user.tier) * 100)}% off)`
         : product.name;
 
     const base = siteUrl();
