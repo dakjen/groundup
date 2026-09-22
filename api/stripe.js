@@ -23,8 +23,16 @@ export const config = { api: { bodyParser: false } };
 // STRIPE_TAX_CODE forces a specific code when a particular environment needs one
 // — for instance a sandbox with Managed Payments left on, which refuses any line
 // item it cannot classify and does not fall back to the preset.
-const TAX_CODE = process.env.STRIPE_TAX_CODE || null;
-const taxCodeField = TAX_CODE ? { tax_code: TAX_CODE } : {};
+// Managed Payments is staying ON — Stripe is merchant of record and carries the
+// sales tax liability — so a code has to be sent: it refuses any line item it
+// cannot classify and does not fall back to the account preset.
+//
+// txcd_10103001 is "Digital products > Online courses and training", matching
+// the preset category set in Stripe. Set STRIPE_TAX_CODE to override without a
+// deploy; the persistent Products the sync creates can also have their category
+// changed directly in the Stripe dashboard, which now sticks.
+const TAX_CODE = process.env.STRIPE_TAX_CODE || 'txcd_10103001';
+const taxCodeField = { tax_code: TAX_CODE };
 
 // Everything purchasable, priced in one place (cents)
 const CATALOG = {
