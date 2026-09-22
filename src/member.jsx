@@ -238,7 +238,7 @@ const ONB_EXPERIENCE = [
   "I've worked on projects, but not my own",
   "I have a project in progress, nothing finished",
   "I've financed and closed one project of my own",
-  "I've financed and closed more than one",
+  "I've closed several projects",
   "I develop full time",
 ];
 const ONB_FOCUS = ["Affordable housing (LIHTC)", "Workforce / missing middle", "Market-rate multifamily", "Mixed-use", "Single-family / small infill", "Commercial or retail", "Community facilities", "Still deciding"];
