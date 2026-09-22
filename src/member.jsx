@@ -662,10 +662,14 @@ function MeetingCard({ b, onChange, link }) {
 
       {/* The calendar belongs to this session, opened from this session's own
           button — one prompt per thing to book, rather than one for the page. */}
+      {/* A cross-origin iframe can't report its own height, so Google's scheduler
+          scrolls inside a short box. Give it enough room that the month and the
+          time slots both fit without a scrollbar of its own. */}
       {cal && link && (
         <div style={{ marginBottom: 16, borderRadius: 12, overflow: "hidden", border: "1px solid var(--gu-border)", background: "#ffffff" }}>
-          <iframe src={link.includes("gv=true") ? link : link + (link.includes("?") ? "&" : "?") + "gv=true"}
-            title="Book a time with Dr. Merritt" width="100%" height="600" frameBorder="0" style={{ display: "block", border: 0 }} />
+          <style>{`.gu-cal { height: 820px; } @media (max-width: 760px) { .gu-cal { height: 680px; } }`}</style>
+          <iframe className="gu-cal" src={link.includes("gv=true") ? link : link + (link.includes("?") ? "&" : "?") + "gv=true"}
+            title="Book a time with Dr. Merritt" width="100%" frameBorder="0" scrolling="no" style={{ display: "block", border: 0, width: "100%" }} />
         </div>
       )}
 
