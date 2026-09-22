@@ -74,7 +74,7 @@ export default async function handler(req, res) {
       const [u] = await sql`SELECT name, email FROM users WHERE id = ${booking.user_id}`;
       sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
         `${u?.name || 'A member'} added a document for their ${booking.label || 'session'}`,
-        `<p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${u?.name || 'A member'}</strong> (${u?.email || ''}) attached <strong style="color:#f0d8d8;">${title}</strong> ahead of their <strong style="color:#f0d8d8;">${booking.label || 'session'}</strong>.</p>`
+        `<p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u?.name || 'A member'}</strong> (${u?.email || ''}) attached <strong style="color:#161616;">${title}</strong> ahead of their <strong style="color:#161616;">${booking.label || 'session'}</strong>.</p>`
       ).catch(() => {});
       return res.status(201).json(f);
     }

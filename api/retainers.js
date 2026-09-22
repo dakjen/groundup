@@ -44,8 +44,8 @@ export default async function handler(req, res) {
               AND (b.last_nudge_at IS NULL OR b.last_nudge_at < NOW() - interval '72 hours')`;
           for (const b of stale) {
             await sendEmail(b.email, `Reminder: book your ${b.label}`,
-              `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">You haven't picked a time yet</h2>
-               <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${firstName(b.name)} — your <strong style="color:#f0d8d8;">${b.label}</strong> is paid and waiting. Grab a slot on Dr. Merritt's calendar so she can prepare for you.</p>
+              `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">You haven't picked a time yet</h2>
+               <p style="color:#444444;font-size:14px;line-height:1.8;">Hi ${firstName(b.name)} — your <strong style="color:#161616;">${b.label}</strong> is paid and waiting. Grab a slot on Dr. Merritt's calendar so she can prepare for you.</p>
                <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Book Your Time →</a>`);
             await sql`UPDATE bookings SET nudges = COALESCE(nudges,0) + 1, last_nudge_at = NOW() WHERE id = ${b.id}`;
           }
@@ -76,9 +76,9 @@ export default async function handler(req, res) {
       const note = String(req.body.note || '').trim().slice(0, 2000);
       await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
         `Retainer time request — ${u.name}`,
-        `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Retainer client needs time</h2>
-         <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${u.name}</strong> (${u.email}) — ${r.hours_per_month} hrs/mo retainer, ${await monthUsed(r.id)} used this month.</p>
-         ${note ? `<p style="color:#a89080;font-size:14px;line-height:1.8;">${note}</p>` : ''}`);
+        `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Retainer client needs time</h2>
+         <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u.name}</strong> (${u.email}) — ${r.hours_per_month} hrs/mo retainer, ${await monthUsed(r.id)} used this month.</p>
+         ${note ? `<p style="color:#444444;font-size:14px;line-height:1.8;">${note}</p>` : ''}`);
       return res.json({ success: true });
     }
 
@@ -102,16 +102,16 @@ export default async function handler(req, res) {
         const [r] = await sql`SELECT r.user_id, u.name, u.email FROM retainers r JOIN users u ON u.id = r.user_id WHERE r.id = ${rid}`;
         if (admin && r) {
           await sendEmail(r.email, 'Dr. Merritt replied in your advisory workspace',
-            `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">New message in your workspace</h2>
-             <p style="color:#a89080;font-size:14px;line-height:1.8;">Sign in to read it and reply.</p>`);
+            `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New message in your workspace</h2>
+             <p style="color:#444444;font-size:14px;line-height:1.8;">Sign in to read it and reply.</p>`);
         } else if (r) {
           // Dr. Merritt is on this deal — she gets the message directly, not just the team inbox
           const [gina] = await sql`SELECT email FROM users WHERE badge = 'drmerritt' LIMIT 1`;
           const to = [...new Set([process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net', gina?.email].filter(Boolean))];
           for (const addr of to) await sendEmail(addr,
             `Advisory workspace — ${r.name}`,
-            `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">${r.name} posted in their advisory workspace</h2>
-             <p style="color:#c8a8a8;font-size:14px;line-height:1.8;background:#12060a;border:1px solid #b8010140;border-radius:10px;padding:14px 18px;">${body.slice(0, 500)}</p>
+            `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${r.name} posted in their advisory workspace</h2>
+             <p style="color:#444444;font-size:14px;line-height:1.8;background:#12060a;border:1px solid #b8010140;border-radius:10px;padding:14px 18px;">${body.slice(0, 500)}</p>
              <p style="color:#7a5050;font-size:12px;line-height:1.7;">Reply from the admin Retainers tab — the client is emailed when you do.</p>`);
         }
         return res.status(201).json(m);
@@ -147,8 +147,8 @@ export default async function handler(req, res) {
       if (!b) return res.status(404).json({ error: 'Not found' });
       const [linkRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
       await sendEmail(b.email, `Reminder: book your ${b.label}`,
-        `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">You haven't picked a time yet</h2>
-         <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${firstName(b.name)} — your <strong style="color:#f0d8d8;">${b.label}</strong> is paid and waiting. Grab a slot so Dr. Merritt can prepare for you.</p>
+        `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">You haven't picked a time yet</h2>
+         <p style="color:#444444;font-size:14px;line-height:1.8;">Hi ${firstName(b.name)} — your <strong style="color:#161616;">${b.label}</strong> is paid and waiting. Grab a slot so Dr. Merritt can prepare for you.</p>
          ${linkRow?.value ? `<a href="${linkRow.value}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Book Your Time →</a>` : ''}`);
       await sql`UPDATE bookings SET nudges = COALESCE(nudges,0) + 1, last_nudge_at = NOW() WHERE id = ${b.id}`;
       return res.json({ success: true });
@@ -173,8 +173,8 @@ export default async function handler(req, res) {
       if (st === 'offered') {
         const [u] = await sql`SELECT name, email FROM users WHERE id = ${Number(user_id)}`;
         if (u) await sendEmail(u.email, 'Your Senior Advisor retainer — choose your hours',
-          `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Ready when you are, ${firstName(u.name)}.</h2>
-           <p style="color:#a89080;font-size:14px;line-height:1.8;">Following your call with Dr. Merritt — your Senior Advisor retainer is ready to start. Sign in and pick the hour block that fits, and your advisory workspace opens immediately.</p>
+          `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Ready when you are, ${firstName(u.name)}.</h2>
+           <p style="color:#444444;font-size:14px;line-height:1.8;">Following your call with Dr. Merritt — your Senior Advisor retainer is ready to start. Sign in and pick the hour block that fits, and your advisory workspace opens immediately.</p>
            <a href="https://community.drginamerritt.net/advisory" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Choose Your Plan</a>`);
       }
       return res.status(201).json(r);

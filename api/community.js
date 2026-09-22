@@ -212,9 +212,9 @@ export default async function handler(req, res) {
         try {
           const [gina] = await sql`SELECT email FROM users WHERE badge = 'drmerritt' LIMIT 1`;
           const to = [...new Set([process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net', gina?.email].filter(Boolean))];
-          const html = `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">New direct message</h2>
-             <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${user.name}</strong> (${user.email}, ${user.tier}) sent a DM:</p>
-             <p style="color:#c8a8a8;font-size:14px;line-height:1.8;background:#12060a;border:1px solid #b8010140;border-radius:10px;padding:14px 18px;">${text.slice(0, 500)}</p>
+          const html = `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New direct message</h2>
+             <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${user.name}</strong> (${user.email}, ${user.tier}) sent a DM:</p>
+             <p style="color:#444444;font-size:14px;line-height:1.8;background:#12060a;border:1px solid #b8010140;border-radius:10px;padding:14px 18px;">${text.slice(0, 500)}</p>
              <p style="color:#7a5050;font-size:12px;line-height:1.7;">The promise is a reply within 2 business days (Mon–Fri). Reply from the admin Community tab.</p>`;
           for (const addr of to) await sendEmail(addr, `DM from ${user.name} (${user.tier})`, html);
         } catch (e) { console.error('dm notify failed', e); }
@@ -345,8 +345,8 @@ export default async function handler(req, res) {
           if (gina?.email) {
             const snippet = text.length > 300 ? text.slice(0, 300) + '…' : text;
             const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const html = `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">New post in #${esc(channel.slug || channel.name)}</h2>
-              <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${esc(user.name)}</strong> (${esc(user.tier)}) ${parent_id ? 'replied in a thread' : 'posted'}:</p>
+            const html = `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New post in #${esc(channel.slug || channel.name)}</h2>
+              <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${esc(user.name)}</strong> (${esc(user.tier)}) ${parent_id ? 'replied in a thread' : 'posted'}:</p>
               <p style="color:#e8e0da;font-size:14px;line-height:1.8;border-left:3px solid #b80101;padding-left:14px;">${esc(snippet)}</p>
               <p style="margin-top:18px;"><a href="https://community.drginamerritt.net/community" style="color:#c9a227;font-weight:700;">Open the community →</a></p>`;
             await sendEmail(gina.email, `💬 ${user.name} posted in #${channel.slug || channel.name}`, html);

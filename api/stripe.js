@@ -387,15 +387,15 @@ async function fulfill(sql, session) {
       const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
       if (u) {
         await sendEmail(u.email, 'Your Full Project Intake is booked in',
-          `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Send it all, ${firstName(u.name)}.</h2>
-           <p style="color:#a89080;font-size:14px;line-height:1.8;">Your Full Project Intake with Dr. Merritt is paid. Your advisory workspace is open now \u2014 book your intake call from it (button below), and come ready to share the whole deal — pro forma, capital stack, site, timeline. This is the session where the thing you missed gets found.</p>
+          `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Send it all, ${firstName(u.name)}.</h2>
+           <p style="color:#444444;font-size:14px;line-height:1.8;">Your Full Project Intake with Dr. Merritt is paid. Your advisory workspace is open now \u2014 book your intake call from it (button below), and come ready to share the whole deal — pro forma, capital stack, site, timeline. This is the session where the thing you missed gets found.</p>
            <p style="color:#7a5050;font-size:12px;line-height:1.7;">A note on the fee: the \$1,500 intake buys Dr. Merritt\u2019s full review of your project and is refundable only at our discretion. If the session happens without a genuine deal on the table, any refund is reduced by \$550 \u2014 the rate of a 1:1 session with her. With a real deal, the full \$1,500 credits against your first retainer month.</p>
-           <p style="color:#a89080;font-size:14px;line-height:1.8;">And if you continue into the Senior Advisor retainer, <strong style="color:#f0d8d8;">your \$1,500 is credited against your first month</strong> — the intake is never wasted money.</p>
+           <p style="color:#444444;font-size:14px;line-height:1.8;">And if you continue into the Senior Advisor retainer, <strong style="color:#161616;">your \$1,500 is credited against your first month</strong> — the intake is never wasted money.</p>
            <a href="${siteUrl()}/advisory" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Book your intake call</a>`);
         await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
           `INTAKE PAID: ${u.name} — \$1,500 Full Project Intake`,
-          `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">New project intake</h2>
-           <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${u.name}</strong> (${u.email}) paid for the Full Project Intake. When they book, ask for the full deal package up front. If they continue to a retainer, their first month checkout auto-credits the \$1,500.</p>`);
+          `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New project intake</h2>
+           <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u.name}</strong> (${u.email}) paid for the Full Project Intake. When they book, ask for the full deal package up front. If they continue to a retainer, their first month checkout auto-credits the \$1,500.</p>`);
       }
     } catch (e) { console.error('intake email failed', e.message); }
   } else if (item.startsWith('retainer_')) {
@@ -414,8 +414,8 @@ async function fulfill(sql, session) {
     const [c] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
     await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
       `NEW RETAINER CLIENT: ${c?.name} — ${spec.retainerHours} hrs/mo`,
-      `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">New Senior Advisor retainer</h2>
-       <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${c?.name}</strong> (${c?.email}) started a <strong style="color:#f0d8d8;">${spec.retainerHours} hours/month</strong> retainer at $${(spec.amount / 100).toLocaleString()}/mo. They're on the Retainer Clients roster now.</p>`);
+      `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New Senior Advisor retainer</h2>
+       <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${c?.name}</strong> (${c?.email}) started a <strong style="color:#161616;">${spec.retainerHours} hours/month</strong> retainer at $${(spec.amount / 100).toLocaleString()}/mo. They're on the Retainer Clients roster now.</p>`);
   } else if (item.startsWith('sub_')) {
     const tier = CATALOG[item]?.tier;
     // Claim a founding seat: paying is what earns it, so the grant happens here
@@ -434,7 +434,7 @@ async function fulfill(sql, session) {
           const left = Math.max(0, seats.remaining - 1);
           await sendEmail(process.env.ADMIN_EMAIL || 'djmj@nreuv.com',
             `Founding seat ${seats.taken + 1} of ${seats.cap} claimed`,
-            `<p style="color:#a89080;font-size:14px;line-height:1.8;">A founding seat was just claimed at checkout. <strong style="color:#f0d8d8;">${left} of ${seats.cap} remain.</strong></p>`);
+            `<p style="color:#444444;font-size:14px;line-height:1.8;">A founding seat was just claimed at checkout. <strong style="color:#161616;">${left} of ${seats.cap} remain.</strong></p>`);
         }
       } catch (e) { console.error('founding seat grant failed', e.message); }
     }
@@ -453,8 +453,8 @@ async function fulfill(sql, session) {
         const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
         await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
           `ELITE OVER CAP: ${seats.taken} of ${seats.cap} seats`,
-          `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Elite went over cap</h2>
-           <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${u?.name}</strong> (${u?.email}) completed Elite checkout at the same moment as someone else, putting Elite at <strong style="color:#f0d8d8;">${seats.taken} of ${seats.cap}</strong>. Their payment went through and their access is live. Either raise the cap in Admin, or reach out to arrange a refund.</p>`);
+          `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Elite went over cap</h2>
+           <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u?.name}</strong> (${u?.email}) completed Elite checkout at the same moment as someone else, putting Elite at <strong style="color:#161616;">${seats.taken} of ${seats.cap}</strong>. Their payment went through and their access is live. Either raise the cap in Admin, or reach out to arrange a refund.</p>`);
       }
     }
   } else if (item === 'product') {
@@ -468,9 +468,9 @@ async function fulfill(sql, session) {
         const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
         const [p] = await sql`SELECT title FROM products WHERE id = ${pid}`;
         if (u) await sendEmail(u.email, `Your download is ready: ${p?.title || 'your purchase'}`,
-          `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">It's yours, ${firstName(u.name)}.</h2>
-           <p style="color:#a89080;font-size:14px;line-height:1.8;">Your purchase of <strong style="color:#f0d8d8;">${p?.title || 'your document'}</strong> is complete. It now lives in your account permanently — download it any time from the shop or your member page.</p>
-           <p style="color:#a89080;font-size:13px;line-height:1.7;">Reminder: this document is for your personal use — reselling or replicating it isn't permitted.</p>
+          `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">It's yours, ${firstName(u.name)}.</h2>
+           <p style="color:#444444;font-size:14px;line-height:1.8;">Your purchase of <strong style="color:#161616;">${p?.title || 'your document'}</strong> is complete. It now lives in your account permanently — download it any time from the shop or your member page.</p>
+           <p style="color:#444444;font-size:13px;line-height:1.7;">Reminder: this document is for your personal use — reselling or replicating it isn't permitted.</p>
            <a href="${siteUrl()}/shop" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Open Your Downloads</a>${dealSupportBlock()}`);
       } catch (e) { console.error('product email failed', e.message); }
     }
@@ -519,14 +519,14 @@ async function fulfill(sql, session) {
       const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
       if (u) {
         await sendEmail(u.email, 'Welcome to GroundUp, for life',
-          `<h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">You're in for good, ${firstName(u.name)}.</h2>
-           <p style="color:#a89080;font-size:14px;line-height:1.8;">Your Lifetime Pass is active: <strong style="color:#f0d8d8;">every course, forever</strong> — including each new one we add — plus <strong style="color:#f0d8d8;">a full year of Builder membership on us</strong>, <strong style="color:#f0d8d8;">office hours with Dr. Merritt through your first five years</strong>, and <strong style="color:#f0d8d8;">every Lunch & Learn — live and recorded — for life</strong>.</p>
+          `<h2 style="color:#161616;font-size:24px;margin:0 0 16px;">You're in for good, ${firstName(u.name)}.</h2>
+           <p style="color:#444444;font-size:14px;line-height:1.8;">Your Lifetime Pass is active: <strong style="color:#161616;">every course, forever</strong> — including each new one we add — plus <strong style="color:#161616;">a full year of Builder membership on us</strong>, <strong style="color:#161616;">office hours with Dr. Merritt through your first five years</strong>, and <strong style="color:#161616;">every Lunch & Learn — live and recorded — for life</strong>.</p>
            <p style="color:#7a5050;font-size:12px;line-height:1.7;">When your Builder year ends, your courses and Lunch & Learns continue forever and office hours run through year five; community access continues with any membership.</p>
            <a href="${siteUrl()}/courses" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Start Learning</a>`);
         await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
           `LIFETIME PASS: ${u.name} — \$5,000`,
-          `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Lifetime Pass sold</h2>
-           <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${u.name}</strong> (${u.email}) bought the \$5,000 Lifetime Pass — courses in perpetuity, Builder free for a year (auto-reverts after), office hours for 5 years at the Premium allowance, Lunch & Learns for life.</p>`);
+          `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Lifetime Pass sold</h2>
+           <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u.name}</strong> (${u.email}) bought the \$5,000 Lifetime Pass — courses in perpetuity, Builder free for a year (auto-reverts after), office hours for 5 years at the Premium allowance, Lunch & Learns for life.</p>`);
       }
     } catch (e) { console.error('lifetime email failed', e.message); }
   } else if (item === 'lnl_life') {
@@ -557,8 +557,8 @@ async function fulfill(sql, session) {
     await sendEmail(
       process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
       `PAID: ${CATALOG[item]?.name || item} — ${u?.name || 'member'}`,
-      `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">New paid session</h2>
-       <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${u?.name}</strong> (${u?.email}) paid for <strong style="color:#f0d8d8;">${CATALOG[item]?.name}</strong>. Reach out to schedule, then send the meeting email from the back office.</p>`
+      `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New paid session</h2>
+       <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u?.name}</strong> (${u?.email}) paid for <strong style="color:#161616;">${CATALOG[item]?.name}</strong>. Reach out to schedule, then send the meeting email from the back office.</p>`
     );
   }
 
@@ -567,11 +567,27 @@ async function fulfill(sql, session) {
   const bookingLink = linkRow?.value || '';
   const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
   if (u) {
-    await sendEmail(u.email, 'GroundUp — payment received',
-      `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">You're all set, ${firstName(u.name)}.</h2>
-       <p style="color:#a89080;font-size:14px;line-height:1.8;">Your payment for <strong style="color:#f0d8d8;">${CATALOG[item]?.name || 'your purchase'}</strong> went through. ${item.startsWith('session_') ? "<strong style=\"color:#f0d8d8;\">One more step — pick your time on Dr. Merritt's calendar.</strong>" : 'Your access is live — sign in and dive in.'}</p>
-       ${item.startsWith('session_') && bookingLink ? `<a href="${bookingLink}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin:6px 0 14px;">Book Your Time →</a>` : ''}
-       <a href="${siteUrl()}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Open GroundUp</a>`);
+    const isSession = item.startsWith('session_');
+    const label = CATALOG[item]?.name || 'your purchase';
+    const btn = (href, text, primary) => `<a href="${href}" style="display:inline-block;background:${primary ? '#b80101' : '#ffffff'};color:${primary ? '#ffffff' : '#b80101'};border:1px solid #b80101;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin:0 8px 10px 0;">${text}</a>`;
+    // A session isn't finished at payment, so this email is the thing that has
+    // to get someone booked — and it's the only place to turn if the calendar
+    // doesn't have a slot that works. A membership just needs a way in.
+    await sendEmail(u.email, isSession ? `Your ${label} — book your time` : 'GroundUp — payment received',
+      isSession ? `
+       <h2 style="color:#161616;font-size:23px;margin:0 0 14px;">Thanks, ${firstName(u.name)} — now let's get it in the diary.</h2>
+       <p style="color:#444444;font-size:14px;line-height:1.8;margin:0 0 18px;">Your payment for <strong style="color:#161616;">${label}</strong> went through. Two things left, and the first one is booking your time.</p>
+       ${bookingLink ? btn(bookingLink, 'Pick your time →', true) : ''}
+       ${btn(siteUrl() + '/membership#meetings', 'Your meetings', false)}
+       <p style="color:#444444;font-size:14px;line-height:1.8;margin:22px 0 0;"><strong style="color:#161616;">Nothing on the calendar work for you?</strong> Just reply to this email and we'll find a time that does.</p>
+       <div style="border-top:1px solid #eeeeee;margin:22px 0 0;padding-top:18px;">
+         <p style="color:#444444;font-size:14px;line-height:1.8;margin:0 0 8px;"><strong style="color:#161616;">Then tell her what you're working on.</strong> Under <em>Your meetings</em> you can write a brief and attach documents or links — your pro forma, a term sheet, a site plan, whatever she should see.</p>
+         <p style="color:#666666;font-size:13px;line-height:1.7;margin:0;">Dr. Merritt reads it before you meet. Forty-five minutes goes a lot further when she arrives knowing your deal.</p>
+       </div>` : `
+       <h2 style="color:#161616;font-size:23px;margin:0 0 14px;">You're all set, ${firstName(u.name)}.</h2>
+       <p style="color:#444444;font-size:14px;line-height:1.8;margin:0 0 18px;">Your payment for <strong style="color:#161616;">${label}</strong> went through and your access is live.</p>
+       ${btn(siteUrl(), 'Open GroundUp →', true)}
+       <p style="color:#666666;font-size:13px;line-height:1.7;margin:18px 0 0;">Start anywhere — the curriculum runs in order, but most people begin with whatever is in front of them right now.</p>`);
   }
 }
 
@@ -634,13 +650,13 @@ export default async function handler(req, res) {
           const [u] = await sql`SELECT name, email FROM users WHERE id = ${uid}`;
           if (u) {
             await sendEmail(u.email, 'Action needed — your GroundUp payment didn\u2019t go through',
-              `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">We couldn\u2019t process your payment</h2>
-               <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${firstName(u.name)} — your card was declined, so your access is paused until it's sorted. Update your card and everything comes right back on.</p>
+              `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">We couldn\u2019t process your payment</h2>
+               <p style="color:#444444;font-size:14px;line-height:1.8;">Hi ${firstName(u.name)} — your card was declined, so your access is paused until it's sorted. Update your card and everything comes right back on.</p>
                <a href="${siteUrl()}/membership" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Fix My Payment</a>`);
             await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
               `PAYMENT FAILED: ${u.name}`,
-              `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Payment failed</h2>
-               <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${u.name}</strong> (${u.email}) — ${failItem || 'subscription'} declined. Access suspended automatically.</p>`);
+              `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Payment failed</h2>
+               <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u.name}</strong> (${u.email}) — ${failItem || 'subscription'} declined. Access suspended automatically.</p>`);
           }
         }
       } else if (event.type === 'charge.refunded') {
@@ -652,8 +668,8 @@ export default async function handler(req, res) {
           const [u] = await sql`SELECT name, email FROM users WHERE id = ${b.user_id}`;
           await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
             `REFUNDED — remove calendar booking for ${u?.name || 'client'}`,
-            `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Payment refunded — cancel their slot</h2>
-             <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${u?.name}</strong> (${u?.email}) was refunded for <strong style="color:#f0d8d8;">${b.label}</strong>. If they already booked on the calendar, remove that appointment.</p>`);
+            `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Payment refunded — cancel their slot</h2>
+             <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u?.name}</strong> (${u?.email}) was refunded for <strong style="color:#161616;">${b.label}</strong>. If they already booked on the calendar, remove that appointment.</p>`);
         }
       } else if (event.type === 'customer.subscription.deleted') {
         const sub = event.data.object;
@@ -687,17 +703,17 @@ export default async function handler(req, res) {
               }
               const reverse = Math.max(0, Math.round((refund - held) * (rate / 100)));
               const d = (c) => '$' + (c / 100).toFixed(2);
-              money = `<p style="color:#a89080;font-size:14px;line-height:1.8;">The math, done for you:</p>
-               <ul style="color:#a89080;font-size:14px;line-height:1.9;">
-                 <li>They paid <strong style="color:#f0d8d8;">${d(paid)}</strong> — refund them <strong style="color:#f0d8d8;">${d(refund)}</strong>${isAnnual ? ' (half the annual payment)' : ''}.</li>
-                 <li>${held > 0 ? `The refund pot was still holding <strong style="color:#f0d8d8;">${d(held)}</strong> of this payment — it has been kept automatically (it will never transfer to NREUV) and funds that much of the refund.` : 'The pot slice for this payment had already been released, so the pot covers none of it.'}</li>
-                 <li>Reverse <strong style="color:#f0d8d8;">${d(reverse)}</strong> of the NREUV transfer on this payment (their ${rate}% share of the refund beyond what the pot covers).</li>
+              money = `<p style="color:#444444;font-size:14px;line-height:1.8;">The math, done for you:</p>
+               <ul style="color:#444444;font-size:14px;line-height:1.9;">
+                 <li>They paid <strong style="color:#161616;">${d(paid)}</strong> — refund them <strong style="color:#161616;">${d(refund)}</strong>${isAnnual ? ' (half the annual payment)' : ''}.</li>
+                 <li>${held > 0 ? `The refund pot was still holding <strong style="color:#161616;">${d(held)}</strong> of this payment — it has been kept automatically (it will never transfer to NREUV) and funds that much of the refund.` : 'The pot slice for this payment had already been released, so the pot covers none of it.'}</li>
+                 <li>Reverse <strong style="color:#161616;">${d(reverse)}</strong> of the NREUV transfer on this payment (their ${rate}% share of the refund beyond what the pot covers).</li>
                </ul>`;
             } catch (e) { console.error('refund math failed', e.message); }
             if (ru) await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
               isAnnual ? `REFUND DUE: ${ru.name} cancelled an annual plan inside 6 months` : `REFUND DUE: ${ru.name} cancelled before the 5th`,
-              `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Refund to process</h2>
-               <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${ru.name}</strong> (${ru.email}, ${ru.tier}) ${isAnnual ? `cancelled an ANNUAL membership about ${monthsIn.toFixed(1)} months in — inside the 6-month window (10-day grace included), so HALF the annual payment (6 months) is refundable per the Terms.` : 'cancelled before the 5th of the month, so this month\'s payment is refundable per the Terms.'} In Stripe: process the ${isAnnual ? 'partial (50%) refund on their annual invoice payment' : 'refund on their latest subscription invoice payment'} AND <strong style="color:#f0d8d8;">reverse the stated share of the NREUV transfer</strong> so the split doesn't come out of the platform's pocket.</p>${money}`);
+              `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Refund to process</h2>
+               <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${ru.name}</strong> (${ru.email}, ${ru.tier}) ${isAnnual ? `cancelled an ANNUAL membership about ${monthsIn.toFixed(1)} months in — inside the 6-month window (10-day grace included), so HALF the annual payment (6 months) is refundable per the Terms.` : 'cancelled before the 5th of the month, so this month\'s payment is refundable per the Terms.'} In Stripe: process the ${isAnnual ? 'partial (50%) refund on their annual invoice payment' : 'refund on their latest subscription invoice payment'} AND <strong style="color:#161616;">reverse the stated share of the NREUV transfer</strong> so the split doesn't come out of the platform's pocket.</p>${money}`);
           } catch (e) { console.error('refund alert failed', e.message); }
         }
         // Stamp when the membership ended — the 15-day data-retention clock runs from here
@@ -709,8 +725,8 @@ export default async function handler(req, res) {
             ? (refundEligible ? ' Because you cancelled within the first six months of your annual plan (the 10-day grace period included), 6 months — half your annual payment — will be refunded to your card.' : ' Annual plans cancelled more than 10 days into their second half aren\'t refunded, so your access continues through the end of the year you paid for.')
             : (refundEligible ? ' Because you cancelled before the 5th, this month\'s payment will be refunded to your card.' : ' Cancellations on or after the 5th aren\'t refunded for the current month, so your access continues through the period you paid for.');
           await sendEmail(u.email, 'Your GroundUp membership is cancelled',
-            `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">You're all set, ${firstName(u.name)}.</h2>
-             <p style="color:#a89080;font-size:14px;line-height:1.8;">Your membership is cancelled and you won't be charged again.${refundNote} <strong style="color:#f0d8d8;">Your account data — community posts, messages, and progress — will be permanently removed after 15 days.</strong> Rejoin before then and everything picks up right where you left it.</p>
+            `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">You're all set, ${firstName(u.name)}.</h2>
+             <p style="color:#444444;font-size:14px;line-height:1.8;">Your membership is cancelled and you won't be charged again.${refundNote} <strong style="color:#161616;">Your account data — community posts, messages, and progress — will be permanently removed after 15 days.</strong> Rejoin before then and everything picks up right where you left it.</p>
              <a href="${siteUrl()}/pricing" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Rejoin GroundUp</a>`);
         }
       }

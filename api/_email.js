@@ -41,13 +41,15 @@ export function unsubToken(email) {
 }
 const unsubLink = (email) => `${siteUrl()}/api/auth?unsubscribe=${encodeURIComponent(String(email).trim().toLowerCase())}&t=${unsubToken(email)}`;
 
-// Two shells: the dark brand wrap (default), and a light cream one for
-// utility emails like sign-in codes where a wall of black reads heavy.
+// Three shells. The default is the card: a black GroundUp header over a white
+// body, which keeps the brand at the top without making every email a wall of
+// black to read. 'light' is the cream variant, and 'dark' is the original
+// all-black wrap, kept for the few places that deliberately want it.
 const FONT_LINK = '<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">';
 const SERIF = "'Cormorant Garamond',Georgia,'Times New Roman',serif";
 const SANS  = "'DM Sans',Arial,Helvetica,sans-serif";
 
-const wrap = (inner, toEmail, light) => light === 'card' ? `
+const wrap = (inner, toEmail, light) => (light !== 'dark' && light !== true) ? `
   ${FONT_LINK}
   <div style="background:#000000;padding:32px 16px;font-family:${SANS};">
     <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;color:#333333;">
@@ -64,7 +66,7 @@ const wrap = (inner, toEmail, light) => light === 'card' ? `
         Northern Real Estate Urban Ventures · 825 10th St NW, Suite 981, Washington, DC 20001${toEmail ? ` · <a href="${unsubLink(toEmail)}" style="color:#a08560;">Unsubscribe</a>` : ''}
       </div>
     </div>
-  </div>` : light ? `
+  </div>` : light === true ? `
   <div style="background:#f3ede4;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;">
     <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e5dccf;border-radius:16px;padding:36px 32px;color:#333333;">
       <img src="${siteUrl()}/icon-192.png" alt="" width="42" height="42" style="display:block;border-radius:10px;margin-bottom:10px;" />
@@ -152,9 +154,9 @@ export function welcomeEmail(name, tier) {
   return {
     subject: 'Welcome to GroundUp',
     html: `
-      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">Welcome, ${firstName(name)}.</h2>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">Your GroundUp account is ready on the <strong style="color:#b80101;">${tier === 'Basic' ? 'Member' : tier}</strong> plan. Decades of affordable-housing deal experience, distilled into a curriculum built for developers like you.</p>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">Sign in anytime to pick up where you left off — your courses, the community, and your membership all live in one place.</p>
+      <h2 style="color:#161616;font-size:24px;margin:0 0 16px;">Welcome, ${firstName(name)}.</h2>
+      <p style="color:#444444;font-size:14px;line-height:1.8;">Your GroundUp account is ready on the <strong style="color:#b80101;">${tier === 'Basic' ? 'Member' : tier}</strong> plan. Decades of affordable-housing deal experience, distilled into a curriculum built for developers like you.</p>
+      <p style="color:#444444;font-size:14px;line-height:1.8;">Sign in anytime to pick up where you left off — your courses, the community, and your membership all live in one place.</p>
       <a href="https://community.drginamerritt.net" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Go to GroundUp</a>`,
   };
 }
@@ -186,8 +188,8 @@ export function resetEmail(name, link) {
   return {
     subject: 'Reset your GroundUp password',
     html: `
-      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">Password reset</h2>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${firstName(name)} — we received a request to reset your GroundUp password. This link works for one hour:</p>
+      <h2 style="color:#161616;font-size:24px;margin:0 0 16px;">Password reset</h2>
+      <p style="color:#444444;font-size:14px;line-height:1.8;">Hi ${firstName(name)} — we received a request to reset your GroundUp password. This link works for one hour:</p>
       <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin:8px 0;">Reset Password</a>
       <p style="color:#7a6060;font-size:12px;line-height:1.7;">If you didn't request this, you can safely ignore this email — your password won't change.</p>`,
   };
@@ -197,9 +199,9 @@ export function inviteEmail(name, link) {
   return {
     subject: "You're invited to GroundUp",
     html: `
-      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">You're invited, ${firstName(name)}.</h2>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">Dr. Gina Merritt's team invited you to GroundUp — a curriculum and community for aspiring and emerging affordable-housing developers, built on 30+ years of real deals.</p>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">Your invite includes a free trial week — it's live for the next 7 days.</p>
+      <h2 style="color:#161616;font-size:24px;margin:0 0 16px;">You're invited, ${firstName(name)}.</h2>
+      <p style="color:#444444;font-size:14px;line-height:1.8;">Dr. Gina Merritt's team invited you to GroundUp — a curriculum and community for aspiring and emerging affordable-housing developers, built on 30+ years of real deals.</p>
+      <p style="color:#444444;font-size:14px;line-height:1.8;">Your invite includes a free trial week — it's live for the next 7 days.</p>
       <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Accept Your Invite</a>`,
   };
 }
@@ -210,13 +212,13 @@ export function giftEmail(name, link, personalMessage) {
     subject: `${firstName(name)}, your first month of GroundUp is on Dr. Merritt`,
     html: `
       <div style="font-size:10px;color:#b80101;letter-spacing:3px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">A personal gift</div>
-      <h2 style="color:#f5e8e8;font-size:26px;margin:0 0 14px;">This one's on us, ${firstName(name)}.</h2>
+      <h2 style="color:#161616;font-size:26px;margin:0 0 14px;">This one's on us, ${firstName(name)}.</h2>
       ${personalMessage ? `<div style="background:#12060a;border-left:3px solid #b80101;padding:14px 20px;margin:0 0 16px;">
-        <p style="color:#e0c4c4;font-size:14px;line-height:1.9;margin:0;font-style:italic;">${String(personalMessage).replace(/</g, '&lt;').replace(/\n/g, '<br/>')}</p>
-        <p style="color:#8a7070;font-size:12px;margin:8px 0 0;">— Dr. Gina Merritt &amp; the GroundUp team</p>
+        <p style="color:#444444;font-size:14px;line-height:1.9;margin:0;font-style:italic;">${String(personalMessage).replace(/</g, '&lt;').replace(/\n/g, '<br/>')}</p>
+        <p style="color:#666666;font-size:12px;margin:8px 0 0;">— Dr. Gina Merritt &amp; the GroundUp team</p>
       </div>` : ''}
-      <p style="color:#a89080;font-size:14px;line-height:1.9;">Dr. Gina Merritt wants you inside GroundUp — her full development curriculum, the community, and everything she fought 30+ years to learn. So your <strong style="color:#f0d8d8;">first month is free</strong>, with her compliments.</p>
-      <p style="color:#a89080;font-size:14px;line-height:1.9;">This link is <strong style="color:#f0d8d8;">yours alone</strong> — it works once, only with this email address, so hold onto it.</p>
+      <p style="color:#444444;font-size:14px;line-height:1.9;">Dr. Gina Merritt wants you inside GroundUp — her full development curriculum, the community, and everything she fought 30+ years to learn. So your <strong style="color:#161616;">first month is free</strong>, with her compliments.</p>
+      <p style="color:#444444;font-size:14px;line-height:1.9;">This link is <strong style="color:#161616;">yours alone</strong> — it works once, only with this email address, so hold onto it.</p>
       <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:14px 30px;font-weight:bold;font-size:15px;text-decoration:none;margin:6px 0;">Claim your free month →</a>
       <p style="color:#7a6060;font-size:12px;line-height:1.7;">Pick any membership at checkout — the first month comes off automatically.</p>`,
   };
@@ -226,8 +228,8 @@ export function dmReplyEmail(name) {
   return {
     subject: 'Dr. Merritt\\u2019s team replied to your message',
     html: `
-      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">You have a reply.</h2>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${firstName(name)} — Dr. Merritt's team responded to your direct message. Sign in to read it in your private thread.</p>
+      <h2 style="color:#161616;font-size:24px;margin:0 0 16px;">You have a reply.</h2>
+      <p style="color:#444444;font-size:14px;line-height:1.8;">Hi ${firstName(name)} — Dr. Merritt's team responded to your direct message. Sign in to read it in your private thread.</p>
       <a href="${siteUrl()}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Read the Reply</a>`,
   };
 }
@@ -237,10 +239,10 @@ export function eventEmail(title, date, time, description, audienceHasAccess) {
     subject: `Upcoming: ${title}`,
     html: `
       <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Upcoming Session</div>
-      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 10px;">${title}</h2>
+      <h2 style="color:#161616;font-size:24px;margin:0 0 10px;">${title}</h2>
       <p style="color:#c9a227;font-size:14px;font-weight:bold;margin:0 0 16px;">${date}${time ? ' · ' + time : ''}</p>
-      ${description ? `<p style="color:#a89080;font-size:14px;line-height:1.8;">${description}</p>` : ''}
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">${audienceHasAccess ? 'Your join link is on your Lunch & Learn page — see you there.' : 'Grab a seat to join live — $39.99 per session.'}</p>
+      ${description ? `<p style="color:#444444;font-size:14px;line-height:1.8;">${description}</p>` : ''}
+      <p style="color:#444444;font-size:14px;line-height:1.8;">${audienceHasAccess ? 'Your join link is on your Lunch & Learn page — see you there.' : 'Grab a seat to join live — $39.99 per session.'}</p>
       <a href="${siteUrl()}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">${audienceHasAccess ? 'Open Lunch & Learn' : 'Get Access'}</a>`,
   };
 }
@@ -250,9 +252,9 @@ export function lnlReminderEmail(title, date, time, link) {
     subject: `Reminder: ${title || 'Lunch & Learn'} — ${date}${time ? ' at ' + time : ''}`,
     html: `
       <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Session Reminder</div>
-      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 10px;">${title || 'Lunch & Learn with Dr. Merritt'}</h2>
+      <h2 style="color:#161616;font-size:24px;margin:0 0 10px;">${title || 'Lunch & Learn with Dr. Merritt'}</h2>
       <p style="color:#c9a227;font-size:14px;font-weight:bold;margin:0 0 16px;">${date}${time ? ' · ' + time : ''}</p>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi {{FIRSTNAME}} — your session is coming up. Join with the link below:</p>
+      <p style="color:#444444;font-size:14px;line-height:1.8;">Hi {{FIRSTNAME}} — your session is coming up. Join with the link below:</p>
       <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Join the Session</a>
       <p style="color:#7a6060;font-size:12px;line-height:1.7;margin-top:14px;">This link is for you — please don't forward it.</p>`,
   };
@@ -263,9 +265,9 @@ export function meetingEmail(name, title, date, time, link) {
     subject: `Your session with Dr. Merritt — ${date}${time ? ' at ' + time : ''}`,
     html: `
       <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Your 1-on-1 Session</div>
-      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 10px;">${title || 'Session with Dr. Merritt'}</h2>
+      <h2 style="color:#161616;font-size:24px;margin:0 0 10px;">${title || 'Session with Dr. Merritt'}</h2>
       <p style="color:#c9a227;font-size:14px;font-weight:bold;margin:0 0 16px;">${date}${time ? ' · ' + time : ''}</p>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi ${firstName(name)} — your session is coming up. Join with the link below:</p>
+      <p style="color:#444444;font-size:14px;line-height:1.8;">Hi ${firstName(name)} — your session is coming up. Join with the link below:</p>
       ${link ? `<a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Join the Meeting</a>` : ''}
       <p style="color:#7a6060;font-size:12px;line-height:1.7;margin-top:14px;">Need to reschedule? Reply to this email and the team will take care of it.</p>`,
   };
@@ -278,19 +280,19 @@ export function dealSupportNudgeEmail() {
   return {
     subject: 'When you\'re ready for help on YOUR deal',
     html: `
-      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">Hi {{FIRSTNAME}} — got a deal that needs more than a course?</h2>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">The curriculum, the community, and the Lunch & Learns build your foundation. But "I can't solve the gap on MY deal" isn't a lesson — it's deal work, and there are three ways to get Dr. Merritt on it:</p>
+      <h2 style="color:#161616;font-size:24px;margin:0 0 16px;">Hi {{FIRSTNAME}} — got a deal that needs more than a course?</h2>
+      <p style="color:#444444;font-size:14px;line-height:1.8;">The curriculum, the community, and the Lunch & Learns build your foundation. But "I can't solve the gap on MY deal" isn't a lesson — it's deal work, and there are three ways to get Dr. Merritt on it:</p>
       <div style="margin:18px 0;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
-        <p style="color:#f0d8d8;font-size:14px;font-weight:bold;margin:0 0 6px;">1 · Upgrade to Owner — \$499.99/mo</p>
-        <p style="color:#a89080;font-size:13px;line-height:1.7;margin:0;">Bring YOUR deal to your one-on-one advisory calls with Dr. Merritt, plus direct messages, unlimited downloads, and the Owner Lounge. <a href="${siteUrl()}/pricing" style="color:#b80101;font-weight:bold;">Upgrade here →</a></p>
+        <p style="color:#161616;font-size:14px;font-weight:bold;margin:0 0 6px;">1 · Upgrade to Owner — \$499.99/mo</p>
+        <p style="color:#444444;font-size:13px;line-height:1.7;margin:0;">Bring YOUR deal to your one-on-one advisory calls with Dr. Merritt, plus direct messages, unlimited downloads, and the Owner Lounge. <a href="${siteUrl()}/pricing" style="color:#b80101;font-weight:bold;">Upgrade here →</a></p>
       </div>
       <div style="margin:18px 0;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
-        <p style="color:#f0d8d8;font-size:14px;font-weight:bold;margin:0 0 6px;">2 · Book a free discovery call — Senior Advisor retainer</p>
-        <p style="color:#a89080;font-size:13px;line-height:1.7;margin:0;">For whole-deal involvement, Dr. Merritt works month over month on your project — deal review, capital strategy, negotiation prep. The discovery call is free and there's no obligation. <a href="mailto:groundup@drginamerritt.net?subject=Senior%20Advisor%20%E2%80%94%20discovery%20call" style="color:#b80101;font-weight:bold;">Book your discovery call →</a></p>
+        <p style="color:#161616;font-size:14px;font-weight:bold;margin:0 0 6px;">2 · Book a free discovery call — Senior Advisor retainer</p>
+        <p style="color:#444444;font-size:13px;line-height:1.7;margin:0;">For whole-deal involvement, Dr. Merritt works month over month on your project — deal review, capital strategy, negotiation prep. The discovery call is free and there's no obligation. <a href="mailto:groundup@drginamerritt.net?subject=Senior%20Advisor%20%E2%80%94%20discovery%20call" style="color:#b80101;font-weight:bold;">Book your discovery call →</a></p>
       </div>
       <div style="margin:18px 0;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
-        <p style="color:#f0d8d8;font-size:14px;font-weight:bold;margin:0 0 6px;">3 · Start with the \$1,500 Full Project Intake</p>
-        <p style="color:#a89080;font-size:13px;line-height:1.7;margin:0;">Send her the whole thing — pro forma, capital stack, site, timeline — and she finds what you missed. If you continue into the retainer, the \$1,500 is credited against your first month. <a href="${siteUrl()}/contact" style="color:#b80101;font-weight:bold;">Buy the intake →</a></p>
+        <p style="color:#161616;font-size:14px;font-weight:bold;margin:0 0 6px;">3 · Start with the \$1,500 Full Project Intake</p>
+        <p style="color:#444444;font-size:13px;line-height:1.7;margin:0;">Send her the whole thing — pro forma, capital stack, site, timeline — and she finds what you missed. If you continue into the retainer, the \$1,500 is credited against your first month. <a href="${siteUrl()}/contact" style="color:#b80101;font-weight:bold;">Buy the intake →</a></p>
       </div>
       <p style="color:#7a5050;font-size:13px;line-height:1.7;">Not there yet? Keep building — the courses and community aren't going anywhere. When your deal heats up, this email is the map.</p>`,
   };
@@ -303,15 +305,15 @@ export function passExpiryEmail(name, single) {
   return {
     subject: `${first}, your course pass has ended — you have 7 days to extend`,
     html: `
-      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">Your ${single ? 'course pass' : 'All-Access Pass'} just wrapped, ${first}.</h2>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">We hope the material moved you forward. For the next <strong style="color:#f0d8d8;">7 days</strong>, here are your ways to keep going:</p>
+      <h2 style="color:#161616;font-size:24px;margin:0 0 16px;">Your ${single ? 'course pass' : 'All-Access Pass'} just wrapped, ${first}.</h2>
+      <p style="color:#444444;font-size:14px;line-height:1.8;">We hope the material moved you forward. For the next <strong style="color:#161616;">7 days</strong>, here are your ways to keep going:</p>
       <div style="margin:18px 0;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
-        <p style="color:#f0d8d8;font-size:14px;font-weight:bold;margin:0 0 6px;">Extend your access</p>
-        <p style="color:#a89080;font-size:13px;line-height:1.7;margin:0;">Grab another pass — 60 days of one course (\$100) or 30 days of everything (\$275). <a href="https://community.drginamerritt.net/pricing" style="color:#b80101;font-weight:bold;">Get a pass →</a></p>
+        <p style="color:#161616;font-size:14px;font-weight:bold;margin:0 0 6px;">Extend your access</p>
+        <p style="color:#444444;font-size:13px;line-height:1.7;margin:0;">Grab another pass — 60 days of one course (\$100) or 30 days of everything (\$275). <a href="https://community.drginamerritt.net/pricing" style="color:#b80101;font-weight:bold;">Get a pass →</a></p>
       </div>
       <div style="margin:18px 0;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
-        <p style="color:#f0d8d8;font-size:14px;font-weight:bold;margin:0 0 6px;">Or go all in: an annual membership at 15% off</p>
-        <p style="color:#a89080;font-size:13px;line-height:1.7;margin:0;">Membership means every course, always — plus the community, from \$49.99/mo. Pay for the year within your 7-day window and <strong style="color:#f0d8d8;">15% comes off automatically at checkout</strong> — instead of the usual 10% annual discount. <a href="https://community.drginamerritt.net/pricing?annual=1" style="color:#b80101;font-weight:bold;">Become a member →</a></p>
+        <p style="color:#161616;font-size:14px;font-weight:bold;margin:0 0 6px;">Or go all in: an annual membership at 15% off</p>
+        <p style="color:#444444;font-size:13px;line-height:1.7;margin:0;">Membership means every course, always — plus the community, from \$49.99/mo. Pay for the year within your 7-day window and <strong style="color:#161616;">15% comes off automatically at checkout</strong> — instead of the usual 10% annual discount. <a href="https://community.drginamerritt.net/pricing?annual=1" style="color:#b80101;font-weight:bold;">Become a member →</a></p>
       </div>
       ${dealSupportBlock()}`,
   };
@@ -326,21 +328,21 @@ export function retainerInterestEmail(name, callLink) {
     subject: `${first} — let's talk about your project`,
     html: `
       <div style="font-size:10px;color:#b80101;letter-spacing:3px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Senior Advisor Retainer</div>
-      <h2 style="color:#f5e8e8;font-size:26px;margin:0 0 14px;">Thank you for your interest, ${first}.</h2>
-      <p style="color:#a89080;font-size:14px;line-height:1.9;">You told us you're looking at the <strong style="color:#f0d8d8;">Senior Advisor level</strong> — Dr. Merritt working your project with you, month over month. That conversation doesn't start with a checkout page; it starts with a call.</p>
-      <p style="color:#a89080;font-size:14px;line-height:1.9;">Set up a <strong style="color:#f0d8d8;">free discovery call with Dr. Gina Merritt</strong> to walk through your project and your needs — where the deal stands, what's in the way, and how a partnership could work. No obligation; you'll leave the call knowing your next step either way.</p>
+      <h2 style="color:#161616;font-size:26px;margin:0 0 14px;">Thank you for your interest, ${first}.</h2>
+      <p style="color:#444444;font-size:14px;line-height:1.9;">You told us you're looking at the <strong style="color:#161616;">Senior Advisor level</strong> — Dr. Merritt working your project with you, month over month. That conversation doesn't start with a checkout page; it starts with a call.</p>
+      <p style="color:#444444;font-size:14px;line-height:1.9;">Set up a <strong style="color:#161616;">free discovery call with Dr. Gina Merritt</strong> to walk through your project and your needs — where the deal stands, what's in the way, and how a partnership could work. No obligation; you'll leave the call knowing your next step either way.</p>
       <a href="${href}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:14px 30px;font-weight:bold;font-size:14px;text-decoration:none;margin:10px 0 18px;">Set Up Your Discovery Call →</a>
-      <p style="color:#7a5050;font-size:12.5px;line-height:1.8;">Have a live deal and want to go deeper right away? The <strong style="color:#c8a8a8;">$1,500 Full Project Intake</strong> is the front door: Dr. Merritt takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. If you continue into the retainer, the $1,500 credits against your first month.</p>`,
+      <p style="color:#7a5050;font-size:12.5px;line-height:1.8;">Have a live deal and want to go deeper right away? The <strong style="color:#444444;">$1,500 Full Project Intake</strong> is the front door: Dr. Merritt takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. If you continue into the retainer, the $1,500 credits against your first month.</p>`,
   };
 }
 
 export function broadcastEmail(subject, message) {
   const paragraphs = message.split(/\\n{2,}/).map(p =>
-    `<p style="color:#a89080;font-size:14px;line-height:1.8;">${p.replace(/\\n/g, '<br/>')}</p>`).join('');
+    `<p style="color:#444444;font-size:14px;line-height:1.8;">${p.replace(/\\n/g, '<br/>')}</p>`).join('');
   return {
     subject,
     html: `
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi {{FIRSTNAME}},</p>
+      <p style="color:#444444;font-size:14px;line-height:1.8;">Hi {{FIRSTNAME}},</p>
       ${paragraphs}
       <a href="${siteUrl()}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Open GroundUp</a>`,
   };
@@ -351,36 +353,36 @@ export function waitlistConfirmEmail(name, founding, first10, list = 'insider') 
   const perks = `
       ${founding ? `<div style="background:#12060a;border:1px solid #b8010140;border-radius:12px;padding:16px 20px;margin:14px 0;">
         <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">✦ Founding 25</div>
-        <p style="color:#e0c4c4;font-size:14px;line-height:1.8;margin:0;">Your first <strong style="color:#f5e8e8;">YEAR of LIVE Lunch & Learn sessions with Dr. Merritt is on us</strong> — free, on any plan. It attaches to your account automatically the moment you create it at launch.</p>
+        <p style="color:#444444;font-size:14px;line-height:1.8;margin:0;">Your first <strong style="color:#161616;">YEAR of LIVE Lunch & Learn sessions with Dr. Merritt is on us</strong> — free, on any plan. It attaches to your account automatically the moment you create it at launch.</p>
       </div>` : ''}
       ${first10 ? `<div style="background:#12060a;border:1px solid #b8010140;border-radius:12px;padding:16px 20px;margin:14px 0;">
         <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">✦ First 10</div>
-        <p style="color:#e0c4c4;font-size:14px;line-height:1.8;margin:0;">Your special treat: a <strong style="color:#f5e8e8;">14-day trial of any one course</strong>, plus your own personal referral link — friends who join through it get the same trial. Both unlock when you create your account at launch.</p>
+        <p style="color:#444444;font-size:14px;line-height:1.8;margin:0;">Your special treat: a <strong style="color:#161616;">14-day trial of any one course</strong>, plus your own personal referral link — friends who join through it get the same trial. Both unlock when you create your account at launch.</p>
       </div>` : ''}`;
   // What GroundUp IS — shared by both emails: why it exists, what it teaches, the value
   const about = `
       <div style="border-top:1px solid #2a0000;margin-top:20px;padding-top:18px;">
         <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:10px;">What GroundUp is</div>
-        <p style="color:#a89080;font-size:14px;line-height:1.9;">Dr. Gina Merritt went from public housing in the Bronx to <strong style="color:#f0d8d8;">billions of dollars in real estate deals</strong> — and she had to fight for every piece of knowledge alone. She built GroundUp so you don't have to. It's the full development playbook, taught from deals that actually closed, plus a community of developers building alongside you and direct access to her and her team.</p>
-        <p style="color:#c8a8a8;font-size:13px;line-height:2;margin:10px 0;">
+        <p style="color:#444444;font-size:14px;line-height:1.9;">Dr. Gina Merritt went from public housing in the Bronx to <strong style="color:#161616;">billions of dollars in real estate deals</strong> — and she had to fight for every piece of knowledge alone. She built GroundUp so you don't have to. It's the full development playbook, taught from deals that actually closed, plus a community of developers building alongside you and direct access to her and her team.</p>
+        <p style="color:#444444;font-size:13px;line-height:2;margin:10px 0;">
           <span style="color:#b80101;">→</span> Predevelopment — finding, evaluating &amp; controlling a deal<br/>
           <span style="color:#b80101;">→</span> Building your team, JV partnerships &amp; structuring<br/>
           <span style="color:#b80101;">→</span> Financing — capital stacks, LIHTC &amp; closing the gap<br/>
           <span style="color:#b80101;">→</span> Why affordable housing doesn't pencil (and how to close anyway)<br/>
           <span style="color:#b80101;">→</span> Zoning, entitlements, design &amp; construction, and life after opening day<br/>
           <span style="color:#b80101;">→</span> Live Lunch &amp; Learns, work sessions &amp; the Opportunity Board</p>
-        <p style="color:#a89080;font-size:14px;line-height:1.9;">Every membership includes all-access to the full course library — and each tier up adds more of Dr. Merritt herself: her community, her tools, and at the top, a direct line to her and one of only 15 Owner seats. New expertise is added every quarter.</p>
+        <p style="color:#444444;font-size:14px;line-height:1.9;">Every membership includes all-access to the full course library — and each tier up adds more of Dr. Merritt herself: her community, her tools, and at the top, a direct line to her and one of only 15 Owner seats. New expertise is added every quarter.</p>
       </div>`;
   if (list === 'insider') {
     return {
       subject: founding ? "Dr. Merritt invited you — and you're one of the first 25" : first10 ? "Dr. Merritt invited you — and you're one of the first 10" : "Dr. Merritt invited you inside",
       html: `
       <div style="font-size:10px;color:#b80101;letter-spacing:3px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Insider Waitlist</div>
-      <h2 style="color:#f5e8e8;font-size:26px;margin:0 0 14px;">Welcome inside, ${first}.</h2>
-      <p style="color:#a89080;font-size:14px;line-height:1.9;"><strong style="color:#f0d8d8;">Dr. Gina Merritt invited you herself.</strong> This list isn't public — it's the people she wants in the room first. That means <strong style="color:#f0d8d8;">the doors open for you before they open for anyone else</strong>: you get access at the insider launch, ahead of the public, with a personal plan recommendation built from exactly what you told us.</p>
+      <h2 style="color:#161616;font-size:26px;margin:0 0 14px;">Welcome inside, ${first}.</h2>
+      <p style="color:#444444;font-size:14px;line-height:1.9;"><strong style="color:#161616;">Dr. Gina Merritt invited you herself.</strong> This list isn't public — it's the people she wants in the room first. That means <strong style="color:#161616;">the doors open for you before they open for anyone else</strong>: you get access at the insider launch, ahead of the public, with a personal plan recommendation built from exactly what you told us.</p>
       ${perks}
       ${about}
-      <p style="color:#a89080;font-size:14px;line-height:1.9;margin-top:16px;">We read every answer — what you want to learn, what's standing in your way — and we're building for exactly that. Keep this between us for now.</p>
+      <p style="color:#444444;font-size:14px;line-height:1.9;margin-top:16px;">We read every answer — what you want to learn, what's standing in your way — and we're building for exactly that. Keep this between us for now.</p>
       <p style="color:#7a6060;font-size:12px;line-height:1.7;">Nothing to do yet. Watch your inbox — insiders hear from us first.</p>`,
     };
   }
@@ -388,11 +390,11 @@ export function waitlistConfirmEmail(name, founding, first10, list = 'insider') 
     subject: "You're on the GroundUp waitlist",
     html: `
       <div style="font-size:10px;color:#b80101;letter-spacing:3px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">GroundUp Waitlist</div>
-      <h2 style="color:#f5e8e8;font-size:26px;margin:0 0 14px;">Your spot is saved, ${first}.</h2>
+      <h2 style="color:#161616;font-size:26px;margin:0 0 14px;">Your spot is saved, ${first}.</h2>
       ${perks}
-      <p style="color:#a89080;font-size:14px;line-height:1.9;">We read every answer you gave — what you want to learn, what's in your way — and we're building for exactly that. When GroundUp opens, you'll get a personal recommendation for the plan that fits you, with your own link to claim it.</p>
+      <p style="color:#444444;font-size:14px;line-height:1.9;">We read every answer you gave — what you want to learn, what's in your way — and we're building for exactly that. When GroundUp opens, you'll get a personal recommendation for the plan that fits you, with your own link to claim it.</p>
       ${about}
-      <p style="color:#a89080;font-size:14px;line-height:1.9;margin-top:16px;">It's almost time.</p>`,
+      <p style="color:#444444;font-size:14px;line-height:1.9;margin-top:16px;">It's almost time.</p>`,
   };
 }
 
@@ -401,10 +403,10 @@ export function countdownEmail(stage, launchText) {
     subject: `${stage} until GroundUp launches`,
     html: `
       <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Launch Countdown</div>
-      <h2 style="color:#f5e8e8;font-size:28px;margin:0 0 10px;">${stage} to go.</h2>
-      ${launchText ? `<p style="color:#e0c4c4;font-size:14px;font-weight:bold;margin:0 0 16px;">Doors open ${launchText}</p>` : ''}
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">Hi {{FIRSTNAME}} — GroundUp is almost here. You're on the waitlist, which means you get first notice and a personal link to claim your plan the moment we open.</p>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">Keep an eye on your inbox.</p>`,
+      <h2 style="color:#161616;font-size:28px;margin:0 0 10px;">${stage} to go.</h2>
+      ${launchText ? `<p style="color:#444444;font-size:14px;font-weight:bold;margin:0 0 16px;">Doors open ${launchText}</p>` : ''}
+      <p style="color:#444444;font-size:14px;line-height:1.8;">Hi {{FIRSTNAME}} — GroundUp is almost here. You're on the waitlist, which means you get first notice and a personal link to claim your plan the moment we open.</p>
+      <p style="color:#444444;font-size:14px;line-height:1.8;">Keep an eye on your inbox.</p>`,
   };
 }
 
@@ -416,25 +418,25 @@ export function recommendEmail(name, rec, launchAt, painPoint) {
     subject: `${firstName(name)}, here's the plan we'd pick for you`,
     html: `
       <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Launch is almost here</div>
-      <h2 style="color:#f5e8e8;font-size:28px;margin:0 0 16px;">We read your answers, ${firstName(name)}.</h2>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">Doors open <strong style="color:#f0d8d8;">${dateText}</strong>. We went through what you told us${painPoint ? " — what you want to learn, and what's been standing in your way" : ""} — and based on your goals and budget, this is the plan we'd put you on:</p>
+      <h2 style="color:#161616;font-size:28px;margin:0 0 16px;">We read your answers, ${firstName(name)}.</h2>
+      <p style="color:#444444;font-size:14px;line-height:1.8;">Doors open <strong style="color:#161616;">${dateText}</strong>. We went through what you told us${painPoint ? " — what you want to learn, and what's been standing in your way" : ""} — and based on your goals and budget, this is the plan we'd put you on:</p>
       <div style="background:#12060a;border:1px solid #b8010130;border-radius:12px;padding:20px 24px;margin:16px 0;">
         <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">Our recommendation for you</div>
-        <div style="color:#f5e8e8;font-size:22px;font-weight:bold;">${rec.label} <span style="color:#8a7070;font-size:14px;font-weight:normal;">· ${rec.price}</span></div>
-        ${rec.features?.length ? `<div style="margin-top:12px;">${rec.features.map(f => `<div style="color:#c8a8a8;font-size:13px;line-height:2;"><span style="color:#b80101;">→</span> ${f}</div>`).join('')}</div>` : ''}
+        <div style="color:#161616;font-size:22px;font-weight:bold;">${rec.label} <span style="color:#666666;font-size:14px;font-weight:normal;">· ${rec.price}</span></div>
+        ${rec.features?.length ? `<div style="margin-top:12px;">${rec.features.map(f => `<div style="color:#444444;font-size:13px;line-height:2;"><span style="color:#b80101;">→</span> ${f}</div>`).join('')}</div>` : ''}
       </div>
       ${rec.stretch ? `<div style="background:#12060a;border:1px solid #c9a22745;border-radius:12px;padding:18px 22px;margin:16px 0;">
         <div style="font-size:10px;color:#c9a227;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">✦ A special offer, just for you</div>
-        <div style="color:#a89080;font-size:13px;line-height:1.8;margin-bottom:8px;">Based on what you're working through, we think <strong style="color:#f0d8d8;">${rec.stretch.label}</strong> would serve you better — so we're offering it to you at <strong style="color:#c9a227;">${rec.stretch.offer}</strong>.</div>
-        <div style="color:#e0c4c4;font-size:15px;font-weight:bold;">${rec.stretch.label} · ${rec.stretch.price} <span style="color:#c9a227;font-size:13px;">→ ${rec.stretch.offer}</span></div>
-        <div style="margin-top:8px;">${rec.stretch.extras.map(f => `<div style="color:#a89080;font-size:12.5px;line-height:1.9;"><span style="color:#c9a227;">+</span> ${f}</div>`).join('')}</div>
+        <div style="color:#444444;font-size:13px;line-height:1.8;margin-bottom:8px;">Based on what you're working through, we think <strong style="color:#161616;">${rec.stretch.label}</strong> would serve you better — so we're offering it to you at <strong style="color:#c9a227;">${rec.stretch.offer}</strong>.</div>
+        <div style="color:#444444;font-size:15px;font-weight:bold;">${rec.stretch.label} · ${rec.stretch.price} <span style="color:#c9a227;font-size:13px;">→ ${rec.stretch.offer}</span></div>
+        <div style="margin-top:8px;">${rec.stretch.extras.map(f => `<div style="color:#444444;font-size:12.5px;line-height:1.9;"><span style="color:#c9a227;">+</span> ${f}</div>`).join('')}</div>
       </div>` : ''}
       ${rec.next ? `<div style="background:#0d0a04;border:1px solid #2a200030;border-radius:12px;padding:16px 22px;margin:16px 0;">
-        <div style="font-size:10px;color:#8a7070;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">One step up, if you want it</div>
-        <div style="color:#e0c4c4;font-size:15px;font-weight:bold;">${rec.next.label} · ${rec.next.delta}</div>
-        <div style="margin-top:8px;">${rec.next.extras.map(f => `<div style="color:#a89080;font-size:12.5px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}</div>
+        <div style="font-size:10px;color:#666666;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">One step up, if you want it</div>
+        <div style="color:#444444;font-size:15px;font-weight:bold;">${rec.next.label} · ${rec.next.delta}</div>
+        <div style="margin-top:8px;">${rec.next.extras.map(f => `<div style="color:#444444;font-size:12.5px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}</div>
       </div>` : ''}
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">Nothing to do yet — on launch day you'll get one more email with your personal checkout link. Keep an eye out.</p>`,
+      <p style="color:#444444;font-size:14px;line-height:1.8;">Nothing to do yet — on launch day you'll get one more email with your personal checkout link. Keep an eye out.</p>`,
   };
 }
 
@@ -443,24 +445,24 @@ export function launchEmail(name, rec, link, painPoint, stretchLink) {
     subject: "We're live \u2014 here's the plan we recommend for you",
     html: `
       <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">We're Live</div>
-      <h2 style="color:#f5e8e8;font-size:28px;margin:0 0 16px;">GroundUp is open, ${firstName(name)}.</h2>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">You're getting this first because you're an insider. We read what you told us${painPoint ? " \u2014 including what's been standing in your way" : ""} \u2014 and based on your goals and your budget, here's our recommendation:</p>
+      <h2 style="color:#161616;font-size:28px;margin:0 0 16px;">GroundUp is open, ${firstName(name)}.</h2>
+      <p style="color:#444444;font-size:14px;line-height:1.8;">You're getting this first because you're an insider. We read what you told us${painPoint ? " \u2014 including what's been standing in your way" : ""} \u2014 and based on your goals and your budget, here's our recommendation:</p>
       <div style="background:#12060a;border:1px solid #b8010130;border-radius:12px;padding:20px 24px;margin:16px 0;">
         <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">Recommended for you</div>
-        <div style="color:#f5e8e8;font-size:22px;font-weight:bold;">${rec.label} <span style="color:#8a7070;font-size:14px;font-weight:normal;">\u00b7 ${rec.price}</span></div>
-        ${rec.features?.length ? `<div style="margin-top:12px;">${rec.features.map(f => `<div style="color:#c8a8a8;font-size:13px;line-height:2;"><span style="color:#b80101;">\u2192</span> ${f}</div>`).join('')}</div>` : ''}
+        <div style="color:#161616;font-size:22px;font-weight:bold;">${rec.label} <span style="color:#666666;font-size:14px;font-weight:normal;">\u00b7 ${rec.price}</span></div>
+        ${rec.features?.length ? `<div style="margin-top:12px;">${rec.features.map(f => `<div style="color:#444444;font-size:13px;line-height:2;"><span style="color:#b80101;">\u2192</span> ${f}</div>`).join('')}</div>` : ''}
       </div>
       <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:14px 30px;font-weight:bold;font-size:15px;text-decoration:none;margin:6px 0;">${rec.ctaLabel || `Join as ${rec.label} \u2014 secure checkout \u2192`}</a>
       ${rec.stretch && stretchLink ? `<div style="background:#12060a;border:1px solid #c9a22745;border-radius:12px;padding:18px 22px;margin:16px 0;">
         <div style="font-size:10px;color:#c9a227;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">\u2726 Your special offer is live</div>
-        <div style="color:#a89080;font-size:13px;line-height:1.8;margin-bottom:8px;">Based on what you're working through, <strong style="color:#f0d8d8;">${rec.stretch.label}</strong> would serve you better \u2014 and your <strong style="color:#c9a227;">${rec.stretch.offer}</strong> is attached to this link:</div>
-        <div style="margin-bottom:10px;">${rec.stretch.extras.map(f => `<div style="color:#a89080;font-size:12.5px;line-height:1.9;"><span style="color:#c9a227;">+</span> ${f}</div>`).join('')}</div>
+        <div style="color:#444444;font-size:13px;line-height:1.8;margin-bottom:8px;">Based on what you're working through, <strong style="color:#161616;">${rec.stretch.label}</strong> would serve you better \u2014 and your <strong style="color:#c9a227;">${rec.stretch.offer}</strong> is attached to this link:</div>
+        <div style="margin-bottom:10px;">${rec.stretch.extras.map(f => `<div style="color:#444444;font-size:12.5px;line-height:1.9;"><span style="color:#c9a227;">+</span> ${f}</div>`).join('')}</div>
         <a href="${stretchLink}" style="display:inline-block;background:transparent;color:#c9a227;border:1px solid #c9a22760;border-radius:8px;padding:12px 24px;font-weight:bold;font-size:14px;text-decoration:none;">Claim ${rec.stretch.label} at 10% off \u2192</a>
       </div>` : ''}
       ${rec.next ? `<div style="background:#0d0a04;border:1px solid #2a200030;border-radius:12px;padding:16px 22px;margin:16px 0;">
-        <div style="font-size:10px;color:#8a7070;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">One step up, if you want it</div>
-        <div style="color:#e0c4c4;font-size:15px;font-weight:bold;">${rec.next.label} \u00b7 ${rec.next.delta}</div>
-        <div style="margin-top:8px;">${rec.next.extras.map(f => `<div style="color:#a89080;font-size:12.5px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}</div>
+        <div style="font-size:10px;color:#666666;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">One step up, if you want it</div>
+        <div style="color:#444444;font-size:15px;font-weight:bold;">${rec.next.label} \u00b7 ${rec.next.delta}</div>
+        <div style="margin-top:8px;">${rec.next.extras.map(f => `<div style="color:#444444;font-size:12.5px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}</div>
       </div>` : ''}
       <p style="color:#7a6060;font-size:12px;line-height:1.7;">Not the right fit? Every plan is on the pricing page \u2014 and you can change anytime.</p>`,
   };
@@ -470,7 +472,7 @@ export function launchEmail(name, rec, link, painPoint, stretchLink) {
 // reminds people that deal-specific support has a doorway: Premium/Elite, or just ask.
 export function dealSupportBlock() {
   return `<div style="margin-top:22px;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
-    <p style="color:#c8a8a8;font-size:13px;line-height:1.7;margin:0;">Working on a specific deal? The courses and community build your foundation — <strong style="color:#f0d8d8;">deal-specific support</strong> comes with the Premium and Owner memberships, or you can send Dr. Merritt your whole project with the <strong style="color:#f0d8d8;">\$1,500 Full Project Intake</strong> (credited to your first retainer month if you continue). <a href="https://community.drginamerritt.net/contact" style="color:#b80101;font-weight:bold;">Send it to us →</a></p>
+    <p style="color:#444444;font-size:13px;line-height:1.7;margin:0;">Working on a specific deal? The courses and community build your foundation — <strong style="color:#161616;">deal-specific support</strong> comes with the Premium and Owner memberships, or you can send Dr. Merritt your whole project with the <strong style="color:#161616;">\$1,500 Full Project Intake</strong> (credited to your first retainer month if you continue). <a href="https://community.drginamerritt.net/contact" style="color:#b80101;font-weight:bold;">Send it to us →</a></p>
   </div>`;
 }
 
@@ -479,11 +481,11 @@ export function lnlAccessEmail(name, expiresAt, hasLink) {
   return {
     subject: "You're in — Lunch & Learn access confirmed",
     html: `
-      <h2 style="color:#f5e8e8;font-size:24px;margin:0 0 16px;">You're in, ${firstName(name)}.</h2>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">Your seat is reserved${through ? ` — your access runs through <strong style="color:#f0d8d8;">${through}</strong>` : ''} for the next live session with Dr. Merritt, its recording included.</p>
-      <p style="color:#a89080;font-size:14px;line-height:1.8;">${hasLink ? 'The join link for the next session is waiting on your Lunch & Learn page.' : 'The join link for each session appears on your Lunch & Learn page closer to the date.'} While you're there, tell us what you want to learn about — Dr. Merritt's team reads every submission.</p>
+      <h2 style="color:#161616;font-size:24px;margin:0 0 16px;">You're in, ${firstName(name)}.</h2>
+      <p style="color:#444444;font-size:14px;line-height:1.8;">Your seat is reserved${through ? ` — your access runs through <strong style="color:#161616;">${through}</strong>` : ''} for the next live session with Dr. Merritt, its recording included.</p>
+      <p style="color:#444444;font-size:14px;line-height:1.8;">${hasLink ? 'The join link for the next session is waiting on your Lunch & Learn page.' : 'The join link for each session appears on your Lunch & Learn page closer to the date.'} While you're there, tell us what you want to learn about — Dr. Merritt's team reads every submission.</p>
       <p style="color:#c9a227;font-size:14px;line-height:1.8;font-weight:bold;">Your attendee perk: 25% off your first month of membership if you join within two months.</p>
-      <p style="color:#a89080;font-size:13px;line-height:1.7;">Every recording you have access to lives on your <a href="https://community.drginamerritt.net/lunchlearn" style="color:#b80101;font-weight:bold;">Lunch & Learn page</a> — catch up on any session you missed.</p>
+      <p style="color:#444444;font-size:13px;line-height:1.7;">Every recording you have access to lives on your <a href="https://community.drginamerritt.net/lunchlearn" style="color:#b80101;font-weight:bold;">Lunch & Learn page</a> — catch up on any session you missed.</p>
       <a href="https://community.drginamerritt.net" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Open Lunch & Learn</a>
       ${dealSupportBlock()}`,
   };

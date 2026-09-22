@@ -19,7 +19,7 @@ export default async function handler(req, res) {
       const email = String(req.query.unsubscribe).trim().toLowerCase();
       const page = (title, body) => {
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        return res.send(`<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title} — GroundUp</title></head><body style="background:#000;color:#e8d8d8;font-family:Arial,Helvetica,sans-serif;margin:0;padding:60px 20px;text-align:center;"><div style="max-width:480px;margin:0 auto;background:#0d0404;border:1px solid #2a0000;border-radius:16px;padding:40px 32px;"><div style="font-size:20px;font-weight:bold;color:#fff;letter-spacing:1px;">GROUNDUP</div><div style="font-size:10px;color:#7a6151;letter-spacing:2px;text-transform:uppercase;margin-bottom:24px;">for underrepresented developers</div><h1 style="font-size:22px;color:#f5e8e8;margin:0 0 12px;">${title}</h1><p style="color:#a89080;font-size:14px;line-height:1.8;">${body}</p><a href="/" style="color:#b80101;font-weight:bold;font-size:13px;">← Back to GroundUp</a></div></body></html>`);
+        return res.send(`<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title} — GroundUp</title></head><body style="background:#000;color:#e8d8d8;font-family:Arial,Helvetica,sans-serif;margin:0;padding:60px 20px;text-align:center;"><div style="max-width:480px;margin:0 auto;background:#0d0404;border:1px solid #2a0000;border-radius:16px;padding:40px 32px;"><div style="font-size:20px;font-weight:bold;color:#fff;letter-spacing:1px;">GROUNDUP</div><div style="font-size:10px;color:#7a6151;letter-spacing:2px;text-transform:uppercase;margin-bottom:24px;">for underrepresented developers</div><h1 style="font-size:22px;color:#161616;margin:0 0 12px;">${title}</h1><p style="color:#444444;font-size:14px;line-height:1.8;">${body}</p><a href="/" style="color:#b80101;font-weight:bold;font-size:13px;">← Back to GroundUp</a></div></body></html>`);
       };
       if (!email || req.query.t !== unsubToken(email)) return page('That link didn’t work', 'The unsubscribe link looks incomplete — try the link from a newer email, or write to groundup@drginamerritt.net and we’ll take you off by hand.');
       await sql`INSERT INTO email_optouts (email, created_at) VALUES (${email}, NOW()) ON CONFLICT (email) DO NOTHING`;
@@ -418,10 +418,10 @@ export default async function handler(req, res) {
       await sendEmail(
         process.env.ADMIN_EMAIL || 'info@nreuv.com',
         `Session request from ${u.name} (${u.tier})`,
-        `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">1-on-1 session request</h2>
-         <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${u.name}</strong> (${u.email}, ${u.tier}) requested one of their included sessions.</p>
-         ${note ? `<p style="color:#a89080;font-size:14px;line-height:1.8;">What they want to cover: ${note}</p>` : ''}
-         <p style="color:#a89080;font-size:14px;line-height:1.8;">Reply to them directly or send a meeting email from the back office.</p>`
+        `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">1-on-1 session request</h2>
+         <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u.name}</strong> (${u.email}, ${u.tier}) requested one of their included sessions.</p>
+         ${note ? `<p style="color:#444444;font-size:14px;line-height:1.8;">What they want to cover: ${note}</p>` : ''}
+         <p style="color:#444444;font-size:14px;line-height:1.8;">Reply to them directly or send a meeting email from the back office.</p>`
       );
       return res.status(201).json({ success: true });
     }
@@ -457,12 +457,12 @@ export default async function handler(req, res) {
       const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       const ok = await sendEmail('groundup@dakjencreative.com',
         `🎫 TICKET [${topic}] — ${name}`,
-        `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Support ticket</h2>
-         <p style="color:#a89080;font-size:14px;line-height:1.9;">
-           <strong style="color:#f0d8d8;">${esc(name)}</strong> — ${esc(from)}${u ? ` · ${u.tier} member (${u.membership_status})` : ' · no account found'}<br/>
-           Topic: <strong style="color:#f0d8d8;">${esc(topic)}</strong>
+        `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Support ticket</h2>
+         <p style="color:#444444;font-size:14px;line-height:1.9;">
+           <strong style="color:#161616;">${esc(name)}</strong> — ${esc(from)}${u ? ` · ${u.tier} member (${u.membership_status})` : ' · no account found'}<br/>
+           Topic: <strong style="color:#161616;">${esc(topic)}</strong>
          </p>
-         <div style="background:#12060a;border:1px solid #2a0000;border-radius:10px;padding:16px 20px;color:#c8a8a8;font-size:14px;line-height:1.8;white-space:pre-wrap;">${esc(message)}</div>
+         <div style="background:#12060a;border:1px solid #2a0000;border-radius:10px;padding:16px 20px;color:#444444;font-size:14px;line-height:1.8;white-space:pre-wrap;">${esc(message)}</div>
          <p style="color:#7a5050;font-size:12px;margin-top:14px;">Reply directly to this email's sender address? No — reply to ${esc(from)}.</p>`);
       return ok ? res.json({ success: true }) : res.status(502).json({ error: 'Ticket failed to send — email the team at groundup@dakjencreative.com' });
     }
@@ -479,8 +479,8 @@ export default async function handler(req, res) {
           const [u] = await sql`SELECT name, email, tier FROM users WHERE id = ${session.uid}`;
           if (u) await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
             `CONTENT CAPTURE SIGNAL: ${u.name} (${kind})`,
-            `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Possible content capture</h2>
-             <p style="color:#a89080;font-size:14px;line-height:1.8;"><strong style="color:#f0d8d8;">${u.name}</strong> (${u.email}, ${u.tier}) triggered a capture signal — <strong style="color:#f0d8d8;">${kind}</strong>${where ? ` on ${where}` : ''}. Their lesson view carries their email watermarked across the content, so any leaked screenshot traces back to this account. Further signals from them today are logged silently (capture_log table).</p>
+            `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Possible content capture</h2>
+             <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u.name}</strong> (${u.email}, ${u.tier}) triggered a capture signal — <strong style="color:#161616;">${kind}</strong>${where ? ` on ${where}` : ''}. Their lesson view carries their email watermarked across the content, so any leaked screenshot traces back to this account. Further signals from them today are logged silently (capture_log table).</p>
              <p style="color:#7a5050;font-size:12px;line-height:1.7;">Caveat: browsers can only see PrintScreen keys and blocked copy/print attempts — macOS and phone screenshots are invisible to any website, which is why the watermark is the real protection.</p>`);
         } catch (e) { console.error('capture alert failed', e.message); }
       }

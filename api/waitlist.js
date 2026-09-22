@@ -343,15 +343,15 @@ export default async function handler(req, res) {
       const needs = String(req.body.needs || '').trim().slice(0, 2000);
       if (!org || !contact || !email) return res.status(400).json({ error: 'Organization, contact name, and email are required' });
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'That email doesn\'t look right' });
-      const html = `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Partner interest — ${org}</h2>
-        <p style="color:#a89080;font-size:14px;line-height:1.9;">
-          <strong style="color:#f0d8d8;">Organization:</strong> ${org}<br/>
-          <strong style="color:#f0d8d8;">Contact:</strong> ${contact}<br/>
-          <strong style="color:#f0d8d8;">Email:</strong> ${email}<br/>
-          ${phone ? `<strong style="color:#f0d8d8;">Phone:</strong> ${phone}<br/>` : ''}
-          ${size ? `<strong style="color:#f0d8d8;">Cohort size:</strong> ${size}<br/>` : ''}
+      const html = `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Partner interest — ${org}</h2>
+        <p style="color:#444444;font-size:14px;line-height:1.9;">
+          <strong style="color:#161616;">Organization:</strong> ${org}<br/>
+          <strong style="color:#161616;">Contact:</strong> ${contact}<br/>
+          <strong style="color:#161616;">Email:</strong> ${email}<br/>
+          ${phone ? `<strong style="color:#161616;">Phone:</strong> ${phone}<br/>` : ''}
+          ${size ? `<strong style="color:#161616;">Cohort size:</strong> ${size}<br/>` : ''}
         </p>
-        ${needs ? `<p style="color:#c8a8a8;font-size:14px;line-height:1.8;background:#12060a;border:1px solid #b8010140;border-radius:10px;padding:14px 18px;">${needs}</p>` : ''}
+        ${needs ? `<p style="color:#444444;font-size:14px;line-height:1.8;background:#12060a;border:1px solid #b8010140;border-radius:10px;padding:14px 18px;">${needs}</p>` : ''}
         <p style="color:#7a5050;font-size:12px;line-height:1.7;">The partner model: they sponsor their cohort's first year at a group discount, developers continue as individual members after. A branded /partner page can be set up from Admin → Courses.</p>`;
       for (const addr of ['djmj@nreuv.com', 'bhardie@nreuv.com']) {
         await sendEmail(addr, `PARTNER INTEREST: ${org} (${contact})`, html);
@@ -448,8 +448,8 @@ export default async function handler(req, res) {
               const [, reward] = LADDER[rung - 1];
               await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
                 `🎉 REFERRAL TIER REACHED: ${pc.owner_name} (${pc.code}) — ${reward}`,
-                `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">${pc.owner_name} reached ${reward.split(' — ')[0]}</h2>
-                 <p style="color:#a89080;font-size:14px;line-height:1.9;">Their code <strong style="color:#f0d8d8;">${pc.code}</strong> just brought in referral <strong style="color:#f0d8d8;">#${n}</strong>. Per the referral program ladder they've earned: <strong style="color:#f0d8d8;">${reward}</strong>. Apply it from Admin → Users${pc.owner_email ? ' (' + pc.owner_email + ')' : ''}.</p>`);
+                `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${pc.owner_name} reached ${reward.split(' — ')[0]}</h2>
+                 <p style="color:#444444;font-size:14px;line-height:1.9;">Their code <strong style="color:#161616;">${pc.code}</strong> just brought in referral <strong style="color:#161616;">#${n}</strong>. Per the referral program ladder they've earned: <strong style="color:#161616;">${reward}</strong>. Apply it from Admin → Users${pc.owner_email ? ' (' + pc.owner_email + ')' : ''}.</p>`);
             }
           }
         } catch (e) { console.error('partner code check failed', e.message); }
@@ -469,15 +469,15 @@ export default async function handler(req, res) {
         addContact(entry.email, entry.name, { WAITLIST_BUDGET: budget, SMS: cleanPhone }),
         sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
           `${isNew ? 'WAITLIST +1' : 'Waitlist update'}: ${entry.name} (${entry.list === 'insider' ? 'Insider' : 'General'})${isRetainerLead ? ' · 🔥 RETAINER LEAD' : ''}${founding ? ' · FOUNDING 25' : ''} — ${total} total`,
-          `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">${isNew ? 'New waitlist signup' : 'Waitlist entry updated'}</h2>
-           <p style="color:#a89080;font-size:14px;line-height:1.9;">
-             <strong style="color:#f0d8d8;">${entry.name}</strong> — ${entry.email}${entry.phone ? ' · ' + entry.phone : ''}<br/>
-             List: <strong style="color:#f0d8d8;">${entry.list === 'insider' ? 'Insider' : 'General'}</strong> · Budget: <strong style="color:#f0d8d8;">${entry.budget || '—'}</strong><br/>
+          `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${isNew ? 'New waitlist signup' : 'Waitlist entry updated'}</h2>
+           <p style="color:#444444;font-size:14px;line-height:1.9;">
+             <strong style="color:#161616;">${entry.name}</strong> — ${entry.email}${entry.phone ? ' · ' + entry.phone : ''}<br/>
+             List: <strong style="color:#161616;">${entry.list === 'insider' ? 'Insider' : 'General'}</strong> · Budget: <strong style="color:#161616;">${entry.budget || '—'}</strong><br/>
              Wants to learn: ${entry.learn || '—'}<br/>
              Pain point: ${entry.reason || '—'}<br/>
              Heard about us: ${entry.source || '—'}
            </p>
-           <p style="color:#a89080;font-size:13px;">That's <strong style="color:#f0d8d8;">${total}</strong> on the waitlist. Full sheet is in Admin → Waitlist.</p>`),
+           <p style="color:#444444;font-size:13px;">That's <strong style="color:#161616;">${total}</strong> on the waitlist. Full sheet is in Admin → Waitlist.</p>`),
       ]);
       return res.status(201).json({ success: true });
     }

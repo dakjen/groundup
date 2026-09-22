@@ -59,8 +59,8 @@ export default async function handler(req, res) {
       await sql`UPDATE users SET tier = 'Free' WHERE id = ${b.id}`;
       await sql`UPDATE entitlements SET source = 'lifetime_done' WHERE user_id = ${b.id} AND course_id = 'builder_year' AND source = 'lifetime'`;
       await sendEmail(b.email, 'Your Lifetime Pass — the year of Builder has wrapped',
-        `<h2 style="color:#f5e8e8;font-size:22px;margin:0 0 14px;">Your courses are yours forever, ${firstName(b.name)}.</h2>
-         <p style="color:#a89080;font-size:14px;line-height:1.8;">The free year of Builder that came with your Lifetime Pass has ended. Nothing changes about the heart of it: <strong style="color:#f0d8d8;">every course and every Lunch & Learn stays yours in perpetuity</strong>, and office hours run through your first five years. Want the community back — posting, live Lunch & Learns, the recording library? Any membership picks it right back up.</p>
+        `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Your courses are yours forever, ${firstName(b.name)}.</h2>
+         <p style="color:#444444;font-size:14px;line-height:1.8;">The free year of Builder that came with your Lifetime Pass has ended. Nothing changes about the heart of it: <strong style="color:#161616;">every course and every Lunch & Learn stays yours in perpetuity</strong>, and office hours run through your first five years. Want the community back — posting, live Lunch & Learns, the recording library? Any membership picks it right back up.</p>
          <a href="https://community.drginamerritt.net/pricing" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">See Memberships</a>`);
     }
 
@@ -152,7 +152,7 @@ export default async function handler(req, res) {
           ? `The insider waitlist reached ${c.paying} non-comped signups`
           : 'The insider launch is a week out';
         founding = { window_open: true, sent: fsent, paying: c.paying, reason: c.paying >= 25 ? 'count' : 'launch_close' };
-        if (fsent) await sendEmail(process.env.ADMIN_EMAIL || 'djmj@nreuv.com', `Founding email went out to ${fsent} insider${fsent === 1 ? '' : 's'}`, `<p style="color:#a89080;font-size:14px;line-height:1.8;">${why}, so the founding email sent itself to ${fsent} ${fsent === 1 ? 'person' : 'people'} who hadn't received it yet — the first 25 who pay from November 1 claim the seats.</p>`);
+        if (fsent) await sendEmail(process.env.ADMIN_EMAIL || 'djmj@nreuv.com', `Founding email went out to ${fsent} insider${fsent === 1 ? '' : 's'}`, `<p style="color:#444444;font-size:14px;line-height:1.8;">${why}, so the founding email sent itself to ${fsent} ${fsent === 1 ? 'person' : 'people'} who hadn't received it yet — the first 25 who pay from November 1 claim the seats.</p>`);
       } else founding = { window_open: false, paying: c.paying, needed: 25 - c.paying, days_to_launch: Math.ceil(msToLaunch / 86400000) };
     } catch (e) { console.error('founding auto-send failed', e.message); }
 
