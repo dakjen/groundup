@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { FileText, Send, Hourglass, FolderOpen, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2, BadgePercent } from "lucide-react";
 import COURSE_CATALOG from "./courseCatalog.js";
+import { pollVisible } from "./poll.js";
 import { AuthModal, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
@@ -6816,8 +6817,7 @@ export default function App() {
   useEffect(() => {
     if (!member) return;
     loadNotif();
-    const t = setInterval(loadNotif, 30000);
-    return () => clearInterval(t);
+    return pollVisible(loadNotif, 30000);
   }, [member?.id]);
   const markSeen = (what, id) => {
     fetch("/api/community", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "mark_seen", what, id }) })

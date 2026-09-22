@@ -1,5 +1,6 @@
 import { BookOpen, MessagesSquare, Video, Handshake, Lock, Mail, Megaphone, Menu, X as XIcon, Eye } from "lucide-react";
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { pollVisible } from "./poll.js";
 
 // ─── MEMBER SESSION HELPERS ─────────────────────────────────────────────────
 
@@ -837,8 +838,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
     const target = isAdmin ? dmTarget?.id : null;
     if (isAdmin && !target) return;
     loadDm(target).catch(e => setError(e.message));
-    const t = setInterval(() => loadDm(target).catch(() => {}), 8000);
-    return () => clearInterval(t);
+    return pollVisible(() => loadDm(target).catch(() => {}), 30000);
   }, [dmOpen, dmTarget, isAdmin, loadDm]);
 
   const sendDm = async (e) => {
@@ -861,15 +861,13 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
       const tid = pendingThread.current; pendingThread.current = null;
       if (tid) api(`/api/community?resource=messages&channel=${active.id}`).then(d => { const parent = (d.messages || []).find(m => m.id === tid); if (parent) setThread(parent); }).catch(() => {});
     }).catch(e => setError(e.message));
-    const t = setInterval(() => loadMessages(active.id).catch(() => {}), 8000);
-    return () => clearInterval(t);
+    return pollVisible(() => loadMessages(active.id).catch(() => {}), 30000);
   }, [active, loadMessages]);
 
   useEffect(() => {
     if (!thread || !active) return;
     loadMessages(active.id, thread.id).catch(() => {});
-    const t = setInterval(() => loadMessages(active.id, thread.id).catch(() => {}), 8000);
-    return () => clearInterval(t);
+    return pollVisible(() => loadMessages(active.id, thread.id).catch(() => {}), 30000);
   }, [thread, active, loadMessages]);
 
   useEffect(() => { if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight; }, [messages.length, active]);
@@ -1769,7 +1767,7 @@ export function RetainerPage({ member, setActivePage }) {
   const feedRef = useRef(null);
 
   const load = () => api("/api/retainers").then(d => setData(d.retainer)).catch(() => setData(null));
-  useEffect(() => { load(); const t = setInterval(load, 15000); return () => clearInterval(t); }, [member?.id]);
+  useEffect(() => { load(); return pollVisible(load, 30000); }, [member?.id]);
   useEffect(() => { if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight; }, [data?.messages?.length]);
 
   const send = async (e) => {
