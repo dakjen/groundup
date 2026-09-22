@@ -1123,7 +1123,16 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdi
   const [hover, setHover] = useState(false);
   return (
     <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      style={{ padding: isGina ? "16px 20px" : "14px 18px", borderRadius: 12, background: isGina ? "linear-gradient(135deg, #1a0808 0%, #12060a 100%)" : "var(--gu-card, #0d0404)", border: isGina ? "1px solid #b8010170" : "1px solid " + (hover ? "#3a1515" : "#1e0a0a"), boxShadow: isGina ? "0 0 24px rgba(184,1,1,0.12)" : "none", marginBottom: 10, maxWidth: 820, transition: "border-color 0.15s" }}>
+      style={{ padding: isGina ? "16px 20px" : "14px 18px", borderRadius: 12,
+        // Your own messages sit on the right in your own colour, everyone else
+        // on the left — so a channel reads like a conversation you are in
+        // rather than a list you are looking at.
+        background: isGina ? "linear-gradient(135deg, #1a0808 0%, #12060a 100%)" : mine ? "#2a1012" : "var(--gu-card, #0d0404)",
+        border: isGina ? "1px solid #b8010170" : "1px solid " + (mine ? (hover ? "#6d2528" : "#4d1c1f") : (hover ? "#3a1515" : "#1e0a0a")),
+        boxShadow: isGina ? "0 0 24px rgba(184,1,1,0.12)" : "none",
+        marginBottom: 10, maxWidth: 720, width: "fit-content", minWidth: 260,
+        marginLeft: mine ? "auto" : 0, marginRight: mine ? 0 : "auto",
+        transition: "border-color 0.15s" }}>
       {isGina && <div style={{ height: 2, background: "linear-gradient(90deg, transparent, #b80101, transparent)", margin: "-16px -20px 12px", borderRadius: "10px 10px 0 0" }} />}
       <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
       <span style={{ position: "relative", flexShrink: 0, cursor: "default", marginTop: 2 }}
