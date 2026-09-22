@@ -14,10 +14,17 @@ export const config = { api: { bodyParser: false } };
 // nothing about what anyone is charged today — but carrying it means checkout
 // keeps working if that default ever reaches the live account.
 //
-// txcd_10000000 is Stripe's general "electronically supplied services" code,
-// the right default for memberships and digital course access. Override it per
-// environment with STRIPE_TAX_CODE if an accountant picks something narrower.
-const TAX_CODE = process.env.STRIPE_TAX_CODE || 'txcd_10000000';
+// By default we send NO tax code and let Stripe apply the account's preset tax
+// category — set once in Stripe (Tax settings → Preset tax category, currently
+// "Digital products > Online courses and training"). One place to manage it, and
+// the right category for GroundUp, rather than a generic code hardcoded here
+// silently overriding the one that was chosen deliberately.
+//
+// STRIPE_TAX_CODE forces a specific code when a particular environment needs one
+// — for instance a sandbox with Managed Payments left on, which refuses any line
+// item it cannot classify and does not fall back to the preset.
+const TAX_CODE = process.env.STRIPE_TAX_CODE || null;
+const taxCodeField = TAX_CODE ? { tax_code: TAX_CODE } : {};
 
 // Everything purchasable, priced in one place (cents)
 const CATALOG = {
@@ -86,11 +93,11 @@ export async function syncStripeCatalog(stripe, sql) {
     let productId = row?.product_id;
     if (productId) {
       // Keep the name, description and tax code current on the existing product.
-      try { await stripe.products.update(productId, { name: spec.name, description: describe(item) || undefined, tax_code: TAX_CODE }); }
+      try { await stripe.products.update(productId, { name: spec.name, description: describe(item) || undefined, ...taxCodeField }); }
       catch { productId = null; }
     }
     if (!productId) {
-      const p = await stripe.products.create({ name: spec.name, description: describe(item) || undefined, tax_code: TAX_CODE, metadata: { item } });
+      const p = await stripe.products.create({ name: spec.name, description: describe(item) || undefined, ...taxCodeField, metadata: { item } });
       productId = p.id;
     }
     const price = await stripe.prices.create({
@@ -734,7 +741,7 @@ export default async function handler(req, res) {
       const checkout = await stripe.checkout.sessions.create({
         mode: 'payment',
         customer_email: user.email,
-        line_items: [{ quantity: 1, price_data: { currency: 'usd', unit_amount: p.price_cents, product_data: { name: p.title, tax_code: TAX_CODE } } }],
+        line_items: [{ quantity: 1, price_data: { currency: 'usd', unit_amount: p.price_cents, product_data: { name: p.title, ...taxCodeField } } }],
         metadata: { user_id: String(user.id), item: 'product', product_id: String(p.id) },
         success_url: `${siteUrl()}/shop?purchased=1`,
         cancel_url: `${siteUrl()}/shop`,
@@ -822,7 +829,7 @@ export default async function handler(req, res) {
         price_data: {
           currency: 'usd',
           unit_amount: unitAmount,
-          product_data: { name: productName, tax_code: TAX_CODE },
+          product_data: { name: productName, ...taxCodeField },
           ...(product.mode === 'subscription' ? { recurring: { interval: product.annual ? 'year' : 'month' } } : {}),
         },
       }],
