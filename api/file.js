@@ -15,10 +15,19 @@ import { getSession, getAdmin } from './_utils.js';
 export default async function handler(req, res) {
   const session = getSession(req);
   const admin = getAdmin(req);
-  if (!session?.uid && !admin) return res.status(401).json({ error: 'Not signed in' });
 
   const pathname = String(req.query.p || '').replace(/^\/+/, '');
   if (!pathname || pathname.includes('..')) return res.status(400).json({ error: 'Bad path' });
+
+  // A browser rendering an <img> cannot attach a bearer token, so profile
+  // pictures and shop covers are served without one. They are meant to be seen
+  // — an avatar appears beside every message — and they sit at random,
+  // unguessable paths in a private store, so nothing is listable or reachable
+  // by guessing. Everything else still needs a session, and documents need
+  // ownership on top of that.
+  const OPEN = ['avatars/', 'shop-covers/'];
+  const isImage = OPEN.some(f => pathname.startsWith(f));
+  if (!isImage && !session?.uid && !admin) return res.status(401).json({ error: 'Not signed in' });
 
   // Session prep documents are somebody's pro forma, term sheet or rent roll.
   // Those belong to the person who sent them and to Dr. Merritt — not to every
