@@ -5743,13 +5743,21 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
 
   // Download everything as a CSV — respects the current list filter
   const exportCsv = (rows) => {
+    // Founding is 25% off whatever the tier costs — not a separate price list.
+    // These were hardcoded from an older model, so Builder and Premium exported
+    // at $99.99 and $149.99, and Member and Owner exported at full price even
+    // for founding members. Derived now, so it can't drift from the tiers again.
+    const MONTHLY = { Member: 49.99, Builder: 149.99, Premium: 249.99, Owner: 499.99 };
+    const FOUNDING_OFF = 0.25;
+    const perMonth = (n) => "$" + n.toFixed(2) + "/mo";
     const csvValue = (e) => {
       if (e.comped) return "$0 (comped)";
       const r = recFor(e);
-      if (r.startsWith("Builder")) return e.founding_lnl ? "$99.99/mo" : "$149.99/mo";
-      if (r.startsWith("Premium")) return e.founding_lnl ? "$149.99/mo" : "$249.99/mo";
-      if (r.startsWith("Member")) return "$49.99/mo";
-      if (r.startsWith("Owner")) return "$499.99/mo";
+      const tier = Object.keys(MONTHLY).find(t => r.startsWith(t));
+      if (tier) {
+        const list = MONTHLY[tier];
+        return e.founding_lnl ? `${perMonth(list * (1 - FOUNDING_OFF))} founding (list ${perMonth(list)})` : perMonth(list);
+      }
       if (r.startsWith("Senior")) return "$3,025/mo";
       if (r.startsWith("Single Course Pass")) return "$100 once";
       if (r.startsWith("All-Access Pass")) return "$275 once";
