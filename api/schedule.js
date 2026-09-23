@@ -69,6 +69,30 @@ export default async function handler(req, res) {
   const session = getSession(req);
   const admin = getAdmin(req);
   if (!session?.uid && !admin) return res.status(401).json({ error: 'Not signed in' });
+
+  // Admin-only check of the calendar connection. Reports what is set and what
+  // Google says, without ever returning a credential — a 500 on this endpoint
+  // is otherwise indistinguishable between a missing key, a malformed one and
+  // delegation that was never authorised.
+  if (req.query.diagnose === '1' && admin) {
+    const out = {
+      GOOGLE_SA_EMAIL: process.env.GOOGLE_SA_EMAIL || null,
+      GOOGLE_CALENDAR_ID: process.env.GOOGLE_CALENDAR_ID ? 'set' : null,
+      GOOGLE_SUBJECT: process.env.GOOGLE_SUBJECT || 'gmerritt@nreuv.com (default)',
+      key_present: !!process.env.GOOGLE_SA_KEY,
+      key_length: (process.env.GOOGLE_SA_KEY || '').length,
+      key_looks_like_pem: /BEGIN PRIVATE KEY/.test(process.env.GOOGLE_SA_KEY || ''),
+      key_has_escaped_newlines: /\\n/.test(process.env.GOOGLE_SA_KEY || ''),
+      key_has_real_newlines: /\n/.test(process.env.GOOGLE_SA_KEY || ''),
+      key_wrapped_in_quotes: /^["']|["']$/.test((process.env.GOOGLE_SA_KEY || '').trim()),
+    };
+    try {
+      const busy = await freeBusy(new Date().toISOString(), new Date(Date.now() + 7 * 864e5).toISOString());
+      out.calendar = `ok — ${busy.length} busy blocks in the next 7 days`;
+    } catch (e) { out.calendar = 'FAILED — ' + e.message; }
+    return res.json(out);
+  }
+
   if (!gcalConfigured()) return res.status(503).json({ error: 'Scheduling is not connected yet.', unconfigured: true });
 
   try {
