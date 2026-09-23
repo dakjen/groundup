@@ -2196,7 +2196,15 @@ function PricingPage({ onSignUp }) {
             </div>
           );
         })()}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(215px, 1fr))", gap: 14, alignItems: "start", overflowX: "auto", paddingBottom: 6 }}>
+        <div className="gu-plan-row" style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 12, alignItems: "stretch" }}>
+          {/* Five plans forced onto one line pushed the last card off the edge and
+              made the row scroll sideways — people simply never saw Senior Advisor.
+              They wrap into legible rows instead of hiding behind a scrollbar. */}
+          <style>{`
+            @media (max-width: 1180px) { .gu-plan-row { grid-template-columns: repeat(3, minmax(0,1fr)) !important; } }
+            @media (max-width: 820px)  { .gu-plan-row { grid-template-columns: repeat(2, minmax(0,1fr)) !important; } }
+            @media (max-width: 560px)  { .gu-plan-row { grid-template-columns: minmax(0,1fr) !important; } }
+          `}</style>
           {plans.filter(p => p.tier !== "Partner" && p.tier !== "Free").map((raw, i) => {
             const plan = annual && ANNUAL_PRICES[raw.tier] ? { ...raw, price: ANNUAL_PRICES[raw.tier], period: "/yr" } : raw;
             return (

@@ -600,7 +600,7 @@ export function MeetingsPanel({ member }) {
               <button onClick={() => setUseCredit(v => !v)} style={useCredit ? btnGhost : btnRed}>
                 {useCredit ? "Never mind" : "Schedule an advisory call →"}
               </button>
-              {useCredit && <div style={{ marginTop: 14 }}><SlotPicker included onBooked={() => { setUseCredit(false); load(); }} /></div>}
+              {useCredit && <SlotPicker included title="Advisory call — included in Owner" onClose={() => setUseCredit(false)} onBooked={() => { setUseCredit(false); load(); }} />}
             </>
           )}
         </div>
@@ -622,61 +622,163 @@ export function MeetingsPanel({ member }) {
 }
 
 
-// Slots come from Dr. Merritt's real calendar, and booking one goes through our
-// server — which checks the session was paid for before it writes anything. No
-// public link, so nothing can be forwarded to someone who hasn't paid.
-function SlotPicker({ bookingId, included, onBooked }) {
+// Booking runs through our server, which checks the session was paid for before
+// it writes anything to her calendar — there is no public link to forward.
+//
+// Presented as a white modal on purpose: a calendar is a dense, functional grid
+// and reads far better on white, the way every calendar people already use does.
+function SlotPicker({ bookingId, included, title, onClose, onBooked }) {
   const [data, setData] = useState(null);
   const [err, setErr] = useState("");
   const [day, setDay] = useState(null);
-  const [busy, setBusy] = useState("");
-  useEffect(() => {
-    api("/api/schedule").then(d => { setData(d); setDay(d.days?.[0]?.date || null); })
-      .catch(e => setErr(e.message));
-  }, []);
+  const [picked, setPicked] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [month, setMonth] = useState(null);   // first of the displayed month
 
-  const book = async (start) => {
-    setBusy(start); setErr("");
+  useEffect(() => {
+    api("/api/schedule").then(d => {
+      setData(d);
+      const first = d.days?.[0]?.date;
+      if (first) { setDay(first); const [y, m] = first.split("-").map(Number); setMonth(new Date(y, m - 1, 1)); }
+    }).catch(e => setErr(e.message));
+  }, []);
+  useEffect(() => {
+    const esc = (e) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", esc);
+    return () => document.removeEventListener("keydown", esc);
+  }, [onClose]);
+
+  const confirm = async () => {
+    setBusy(true); setErr("");
     try {
-      const d = await api("/api/schedule", { method: "POST", body: JSON.stringify({ action: "book", ...(included ? { included: true } : { booking_id: bookingId }), start }) });
+      const d = await api("/api/schedule", { method: "POST", body: JSON.stringify({ action: "book", ...(included ? { included: true } : { booking_id: bookingId }), start: picked }) });
       onBooked(d);
-    } catch (e) { setErr(e.message); setBusy(""); }
+    } catch (e) { setErr(e.message); setBusy(false); }
   };
 
-  if (err && !data) return <div style={{ color: "#ff8a8a", fontSize: 13, fontFamily: font, padding: "10px 0" }}>{err}</div>;
-  if (!data) return <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, padding: "10px 0" }}>Looking at Dr. Merritt's calendar…</div>;
-  if (!data.days?.length) return <div style={{ color: "var(--gu-body)", fontSize: 13, fontFamily: font, padding: "10px 0" }}>Nothing open in the next {Math.round((new Date(data.earliest) - Date.now()) / 864e5) + 60} days. Reply to your confirmation email and we'll find you a time.</div>;
+  const F = font;
+  const overlay = { position: "fixed", inset: 0, zIndex: 400, background: "rgba(8,2,3,0.7)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 18, overflowY: "auto" };
+  const card = { background: "#ffffff", borderRadius: 18, width: "100%", maxWidth: 760, color: "#1a1a1a", boxShadow: "0 24px 70px rgba(0,0,0,0.5)", overflow: "hidden" };
 
-  const chosen = data.days.find(d => d.date === day) || data.days[0];
-  const fmtDay = (iso) => new Date(iso + "T12:00:00Z").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
-  const fmtTime = (iso) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-
-  return (
-    <div style={{ marginBottom: 16 }}>
-      <div style={{ color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font, marginBottom: 10 }}>
-        {data.duration} minutes · times shown in your own time zone · soonest {new Date(data.earliest).toLocaleDateString(undefined, { month: "long", day: "numeric" })}
+  const body = (inner) => (
+    <div style={overlay} onClick={onClose}>
+      <div style={card} onClick={(e) => e.stopPropagation()}>
+        <div style={{ background: "#0d0404", padding: "18px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <div style={{ fontSize: 9, color: "#ff5c5c", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: F }}>Book with Dr. Merritt</div>
+            <div style={{ fontFamily: serif, fontSize: 21, fontWeight: 700, color: "#fff", marginTop: 2 }}>{title || "Your session"}</div>
+          </div>
+          <button onClick={onClose} aria-label="Close" style={{ background: "transparent", border: "none", color: "#c2a5a5", fontSize: 24, lineHeight: 1, cursor: "pointer", padding: 4 }}>×</button>
+        </div>
+        <div style={{ padding: "22px 24px 24px" }}>{inner}</div>
       </div>
-      <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, marginBottom: 12 }}>
-        {data.days.slice(0, 30).map(d => (
-          <button key={d.date} onClick={() => setDay(d.date)} style={{
-            flexShrink: 0, background: d.date === chosen.date ? "#b80101" : "var(--gu-card)",
-            color: d.date === chosen.date ? "#fff" : "var(--gu-body)",
-            border: `1px solid ${d.date === chosen.date ? "#b80101" : "var(--gu-border)"}`,
-            borderRadius: 9, padding: "8px 12px", fontFamily: font, fontSize: 12.5, fontWeight: 700, cursor: "pointer",
-          }}>{fmtDay(d.date)}</button>
-        ))}
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(104px,1fr))", gap: 8 }}>
-        {chosen.slots.map(s => (
-          <button key={s.start} onClick={() => book(s.start)} disabled={!!busy} style={{
-            background: busy === s.start ? "#b80101" : "var(--gu-card)", color: busy === s.start ? "#fff" : "var(--gu-text2)",
-            border: "1px solid var(--gu-border)", borderRadius: 9, padding: "11px 8px",
-            fontFamily: font, fontSize: 13, fontWeight: 700, cursor: busy ? "default" : "pointer", opacity: busy && busy !== s.start ? 0.5 : 1,
-          }}>{busy === s.start ? "Booking…" : fmtTime(s.start)}</button>
-        ))}
-      </div>
-      {err && <div style={{ color: "#ff8a8a", fontSize: 12.5, fontFamily: font, marginTop: 10 }}>{err}</div>}
     </div>
+  );
+
+  if (err && !data) return body(<div style={{ color: "#b80101", fontSize: 14, fontFamily: F }}>{err}</div>);
+  if (!data) return body(
+    <div style={{ display: "flex", alignItems: "center", gap: 10, color: "#666", fontSize: 14, fontFamily: F, padding: "20px 0" }}>
+      <span style={{ width: 15, height: 15, border: "2px solid #e3d9d9", borderTopColor: "#b80101", borderRadius: "50%", display: "inline-block", animation: "gu-spin .8s linear infinite" }} />
+      Checking Dr. Merritt&rsquo;s calendar…
+      <style>{`@keyframes gu-spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
+  if (!data.days?.length) return body(
+    <div style={{ color: "#444", fontSize: 14, fontFamily: F, lineHeight: 1.7, padding: "8px 0" }}>
+      Nothing open in the next two months. Reply to your confirmation email and we&rsquo;ll find you a time.
+    </div>
+  );
+
+  const open = Object.fromEntries(data.days.map(d => [d.date, d.slots]));
+  const chosen = day && open[day] ? { date: day, slots: open[day] } : null;
+  const fmtTime = (iso) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  const key = (dt) => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+
+  // A real month grid, Sunday-first, so it reads like every calendar people use.
+  const firstOfMonth = month || new Date();
+  const gridStart = new Date(firstOfMonth); gridStart.setDate(1 - firstOfMonth.getDay());
+  const cells = Array.from({ length: 42 }, (_, i) => { const dt = new Date(gridStart); dt.setDate(gridStart.getDate() + i); return dt; });
+  const monthsAvailable = [...new Set(data.days.map(d => d.date.slice(0, 7)))];
+  const thisMonthKey = `${firstOfMonth.getFullYear()}-${String(firstOfMonth.getMonth() + 1).padStart(2, "0")}`;
+  const idx = monthsAvailable.indexOf(thisMonthKey);
+  const stepMonth = (n) => { const m = new Date(firstOfMonth); m.setMonth(m.getMonth() + n); setMonth(m); };
+
+  return body(
+    <>
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.15fr) minmax(0,1fr)", gap: 22, alignItems: "start" }}>
+        <div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <button onClick={() => stepMonth(-1)} disabled={idx <= 0} style={{ background: "transparent", border: "1px solid #e3ddd5", borderRadius: 8, width: 30, height: 30, cursor: idx <= 0 ? "default" : "pointer", opacity: idx <= 0 ? 0.35 : 1, color: "#333", fontSize: 15 }}>‹</button>
+            <div style={{ fontFamily: F, fontWeight: 800, fontSize: 14.5, color: "#1a1a1a" }}>
+              {firstOfMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+            </div>
+            <button onClick={() => stepMonth(1)} disabled={idx >= monthsAvailable.length - 1} style={{ background: "transparent", border: "1px solid #e3ddd5", borderRadius: 8, width: 30, height: 30, cursor: idx >= monthsAvailable.length - 1 ? "default" : "pointer", opacity: idx >= monthsAvailable.length - 1 ? 0.35 : 1, color: "#333", fontSize: 15 }}>›</button>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3, marginBottom: 4 }}>
+            {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
+              <div key={i} style={{ textAlign: "center", fontSize: 10, color: "#9a9285", fontWeight: 700, fontFamily: F, padding: "4px 0" }}>{d}</div>
+            ))}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3 }}>
+            {cells.map((dt, i) => {
+              const k = key(dt);
+              const inMonth = dt.getMonth() === firstOfMonth.getMonth();
+              const has = !!open[k];
+              const on = k === day;
+              return (
+                <button key={i} onClick={() => has && (setDay(k), setPicked(null))} disabled={!has}
+                  style={{
+                    aspectRatio: "1", borderRadius: 9, fontFamily: F, fontSize: 13.5, fontWeight: has ? 800 : 500,
+                    background: on ? "#b80101" : has ? "#fdeced" : "transparent",
+                    color: on ? "#fff" : !inMonth ? "#cfc9c0" : has ? "#b80101" : "#bdb6ac",
+                    border: `1px solid ${on ? "#b80101" : has ? "#f6d2d4" : "transparent"}`,
+                    cursor: has ? "pointer" : "default", transition: "all .12s", position: "relative",
+                  }}>{dt.getDate()}</button>
+              );
+            })}
+          </div>
+          <div style={{ color: "#9a9285", fontSize: 11, fontFamily: F, marginTop: 10, lineHeight: 1.6 }}>
+            Highlighted days have openings. {data.duration}-minute sessions, shown in your local time.
+          </div>
+        </div>
+
+        <div>
+          <div style={{ fontFamily: F, fontWeight: 800, fontSize: 13, color: "#1a1a1a", marginBottom: 10 }}>
+            {chosen ? new Date(chosen.date + "T12:00:00Z").toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }) : "Pick a day"}
+          </div>
+          <div style={{ display: "grid", gap: 7, maxHeight: 268, overflowY: "auto", paddingRight: 2 }}>
+            {(chosen?.slots || []).map(s => {
+              const on = picked === s.start;
+              return (
+                <button key={s.start} onClick={() => setPicked(on ? null : s.start)} style={{
+                  background: on ? "#b80101" : "#ffffff", color: on ? "#fff" : "#1a1a1a",
+                  border: `1px solid ${on ? "#b80101" : "#e3ddd5"}`, borderRadius: 10,
+                  padding: "12px 14px", fontFamily: F, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "left", transition: "all .12s",
+                }}>{fmtTime(s.start)}</button>
+              );
+            })}
+            {!chosen && <div style={{ color: "#9a9285", fontSize: 13, fontFamily: F }}>Choose a highlighted day to see times.</div>}
+          </div>
+        </div>
+      </div>
+
+      {/* Confirm before anything is written to her calendar. */}
+      <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid #eee8e0", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
+        <div style={{ color: "#444", fontSize: 13.5, fontFamily: F, lineHeight: 1.6 }}>
+          {picked
+            ? <><strong style={{ color: "#1a1a1a" }}>{new Date(picked).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} at {fmtTime(picked)}</strong>
+                <div style={{ color: "#777", fontSize: 12, marginTop: 3 }}>A calendar invite and Google Meet link follow straight away.</div></>
+            : <span style={{ color: "#9a9285" }}>Pick a day, then a time.</span>}
+        </div>
+        <button onClick={confirm} disabled={!picked || busy} style={{
+          background: picked ? "#b80101" : "#e8e2da", color: picked ? "#fff" : "#a9a298", border: "none",
+          borderRadius: 10, padding: "13px 26px", fontFamily: F, fontWeight: 800, fontSize: 13.5,
+          cursor: picked && !busy ? "pointer" : "default", opacity: busy ? 0.6 : 1,
+        }}>{busy ? "Booking…" : "Confirm booking →"}</button>
+      </div>
+
+      {err && <div style={{ color: "#b80101", fontSize: 13, fontFamily: F, marginTop: 12 }}>{err}</div>}
+    </>
   );
 }
 
@@ -757,7 +859,7 @@ function MeetingCard({ b, onChange, link }) {
 
       {/* The calendar belongs to this session, opened from this session's own
           button — one prompt per thing to book, rather than one for the page. */}
-      {cal && <SlotPicker bookingId={b.id} onBooked={() => { setCal(false); onChange(); }} />}
+      {cal && <SlotPicker bookingId={b.id} title={b.label || "Your session"} onClose={() => setCal(false)} onBooked={() => { setCal(false); onChange(); }} />}
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 14, marginBottom: 16 }}>
         <div>
