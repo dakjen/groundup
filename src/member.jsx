@@ -564,6 +564,7 @@ export function OnboardingFlow({ pending, onDone }) {
 export function MeetingsPanel({ member }) {
   const [rows, setRows] = useState(null);
   const [credits, setCredits] = useState(null);
+  const [useCredit, setUseCredit] = useState(false);
   const [gate, setGate] = useState(null);
   const [err, setErr] = useState("");
   const load = useCallback(() => api("/api/bookings")
@@ -584,13 +585,24 @@ export function MeetingsPanel({ member }) {
           <div style={{ color: "var(--gu-text)", fontWeight: 800, fontSize: 17, fontFamily: font }}>
             {credits.remaining} of {credits.total} advisory call{credits.total === 1 ? "" : "s"} available
           </div>
-          <div style={{ color: "var(--gu-body)", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginTop: 6 }}>
+          <div style={{ color: "var(--gu-body)", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginTop: 6, marginBottom: gate?.active || !credits.remaining ? 0 : 14 }}>
             {gate?.active
               ? <>Advisory calls open on {new Date(gate.until).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })} — four months from when your membership started.</>
               : credits.remaining > 0
-                ? <>Bring your own deal. Request one and Dr. Merritt&rsquo;s team will set it up.</>
+                ? <>Bring your own deal. Pick a time and it comes straight off your allowance.</>
                 : <>You&rsquo;ve used this year&rsquo;s calls. You can still book a single session any time.</>}
           </div>
+          {/* An included call books exactly like a paid one — same calendar,
+              same real availability. It used to be a request someone answered
+              by hand, which made the benefit feel like asking a favour. */}
+          {!gate?.active && credits.remaining > 0 && (
+            <>
+              <button onClick={() => setUseCredit(v => !v)} style={useCredit ? btnGhost : btnRed}>
+                {useCredit ? "Never mind" : "Schedule an advisory call →"}
+              </button>
+              {useCredit && <div style={{ marginTop: 14 }}><SlotPicker included onBooked={() => { setUseCredit(false); load(); }} /></div>}
+            </>
+          )}
         </div>
       )}
       {/* Asking for a time on every card meant someone with four sessions was
@@ -613,7 +625,7 @@ export function MeetingsPanel({ member }) {
 // Slots come from Dr. Merritt's real calendar, and booking one goes through our
 // server — which checks the session was paid for before it writes anything. No
 // public link, so nothing can be forwarded to someone who hasn't paid.
-function SlotPicker({ bookingId, onBooked }) {
+function SlotPicker({ bookingId, included, onBooked }) {
   const [data, setData] = useState(null);
   const [err, setErr] = useState("");
   const [day, setDay] = useState(null);
@@ -626,7 +638,7 @@ function SlotPicker({ bookingId, onBooked }) {
   const book = async (start) => {
     setBusy(start); setErr("");
     try {
-      const d = await api("/api/schedule", { method: "POST", body: JSON.stringify({ action: "book", booking_id: bookingId, start }) });
+      const d = await api("/api/schedule", { method: "POST", body: JSON.stringify({ action: "book", ...(included ? { included: true } : { booking_id: bookingId }), start }) });
       onBooked(d);
     } catch (e) { setErr(e.message); setBusy(""); }
   };

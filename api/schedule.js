@@ -1,5 +1,5 @@
 import { neon } from '@neondatabase/serverless';
-import { getSession, getAdmin } from './_utils.js';
+import { getSession, getAdmin, benefitGate } from './_utils.js';
 import { sendEmail, siteUrl, firstName } from './_email.js';
 import { gcalConfigured, freeBusy, createEvent, deleteEvent, wallToUtc, partsIn } from './_gcal.js';
 
@@ -95,15 +95,36 @@ export default async function handler(req, res) {
 
     // ── Take a slot ──
     if (req.body?.action === 'book') {
-      const bookingId = Number(req.body.booking_id);
       const startIso = String(req.body.start || '');
-      if (!bookingId || isNaN(Date.parse(startIso))) return res.status(400).json({ error: 'Pick a time first.' });
+      if (isNaN(Date.parse(startIso))) return res.status(400).json({ error: 'Pick a time first.' });
 
-      // The whole reason this runs on our server: the slot must belong to a
-      // session this person actually paid for.
-      const [b] = await sql`SELECT * FROM bookings WHERE id = ${bookingId} AND user_id = ${session.uid}`;
-      if (!b) return res.status(404).json({ error: 'We couldn\'t find that session on your account.' });
-      if (b.scheduled_at) return res.status(409).json({ error: 'That session already has a time. Cancel it first to move it.' });
+      let b;
+      if (req.body.included) {
+        // An advisory call the plan already includes. It schedules exactly like
+        // a paid one — the allowance is what gets checked instead of a payment.
+        const [me] = await sql`SELECT tier, role, comped, tier_since FROM users WHERE id = ${session.uid}`;
+        const allowance = me?.tier === 'Elite' ? 3 : 0;
+        if (!allowance) return res.status(403).json({ error: 'Advisory calls are included with the Owner plan.' });
+        const gate = await benefitGate(sql, { ...me, id: session.uid });
+        if (gate.active) return res.status(403).json({ error: `Advisory calls open on ${new Date(gate.until).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.` });
+        const [{ used }] = await sql`SELECT COUNT(*)::int AS used FROM session_requests WHERE user_id = ${session.uid} AND status != 'declined'`;
+        if (used >= allowance) return res.status(403).json({ error: "You've used this year's advisory calls. You can still book a single session any time." });
+        // Draw the call down and give it a booking of its own, so it sits beside
+        // paid sessions with the same brief and the same documents.
+        await sql`INSERT INTO session_requests (user_id, note, status, created_at)
+          VALUES (${session.uid}, 'Scheduled from GroundUp', 'scheduled', NOW())`;
+        [b] = await sql`INSERT INTO bookings (user_id, item, label, amount, status, created_at)
+          VALUES (${session.uid}, 'advisory_included', 'Advisory Call (included in Owner)', 0, 'awaiting_booking', NOW())
+          RETURNING *`;
+      } else {
+        const bookingId = Number(req.body.booking_id);
+        if (!bookingId) return res.status(400).json({ error: 'Pick a session first.' });
+        // The whole reason this runs on our server: the slot must belong to a
+        // session this person actually paid for.
+        [b] = await sql`SELECT * FROM bookings WHERE id = ${bookingId} AND user_id = ${session.uid}`;
+        if (!b) return res.status(404).json({ error: "We couldn't find that session on your account." });
+        if (b.scheduled_at) return res.status(409).json({ error: 'That session already has a time. Cancel it first to move it.' });
+      }
 
       const start = new Date(startIso);
       const end = new Date(start.getTime() + R.duration * 60000);
@@ -168,6 +189,14 @@ export default async function handler(req, res) {
       const [b] = await sql`SELECT * FROM bookings WHERE id = ${Number(req.body.booking_id)} AND user_id = ${session.uid}`;
       if (!b) return res.status(404).json({ error: 'Session not found' });
       await deleteEvent(b.calendar_event_id);
+      if (b.item === 'advisory_included') {
+        // Hand the allowance back rather than charging someone a call for a
+        // meeting that never happened.
+        await sql`DELETE FROM session_requests WHERE id = (
+          SELECT id FROM session_requests WHERE user_id = ${session.uid} AND status = 'scheduled' ORDER BY id DESC LIMIT 1)`;
+        await sql`DELETE FROM bookings WHERE id = ${b.id}`;
+        return res.json({ success: true, released: true });
+      }
       await sql`UPDATE bookings SET scheduled_at = NULL, calendar_event_id = NULL, status = 'awaiting_booking' WHERE id = ${b.id}`;
       return res.json({ success: true });
     }
