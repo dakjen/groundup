@@ -590,6 +590,65 @@ export function MeetingsPanel({ member }) {
   );
 }
 
+
+// Slots come from Dr. Merritt's real calendar, and booking one goes through our
+// server — which checks the session was paid for before it writes anything. No
+// public link, so nothing can be forwarded to someone who hasn't paid.
+function SlotPicker({ bookingId, onBooked }) {
+  const [data, setData] = useState(null);
+  const [err, setErr] = useState("");
+  const [day, setDay] = useState(null);
+  const [busy, setBusy] = useState("");
+  useEffect(() => {
+    api("/api/schedule").then(d => { setData(d); setDay(d.days?.[0]?.date || null); })
+      .catch(e => setErr(e.message));
+  }, []);
+
+  const book = async (start) => {
+    setBusy(start); setErr("");
+    try {
+      const d = await api("/api/schedule", { method: "POST", body: JSON.stringify({ action: "book", booking_id: bookingId, start }) });
+      onBooked(d);
+    } catch (e) { setErr(e.message); setBusy(""); }
+  };
+
+  if (err && !data) return <div style={{ color: "#ff8a8a", fontSize: 13, fontFamily: font, padding: "10px 0" }}>{err}</div>;
+  if (!data) return <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, padding: "10px 0" }}>Looking at Dr. Merritt's calendar…</div>;
+  if (!data.days?.length) return <div style={{ color: "var(--gu-body)", fontSize: 13, fontFamily: font, padding: "10px 0" }}>Nothing open in the next {Math.round((new Date(data.earliest) - Date.now()) / 864e5) + 60} days. Reply to your confirmation email and we'll find you a time.</div>;
+
+  const chosen = data.days.find(d => d.date === day) || data.days[0];
+  const fmtDay = (iso) => new Date(iso + "T12:00:00Z").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  const fmtTime = (iso) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font, marginBottom: 10 }}>
+        {data.duration} minutes · times shown in your own time zone · soonest {new Date(data.earliest).toLocaleDateString(undefined, { month: "long", day: "numeric" })}
+      </div>
+      <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, marginBottom: 12 }}>
+        {data.days.slice(0, 30).map(d => (
+          <button key={d.date} onClick={() => setDay(d.date)} style={{
+            flexShrink: 0, background: d.date === chosen.date ? "#b80101" : "var(--gu-card)",
+            color: d.date === chosen.date ? "#fff" : "var(--gu-body)",
+            border: `1px solid ${d.date === chosen.date ? "#b80101" : "var(--gu-border)"}`,
+            borderRadius: 9, padding: "8px 12px", fontFamily: font, fontSize: 12.5, fontWeight: 700, cursor: "pointer",
+          }}>{fmtDay(d.date)}</button>
+        ))}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(104px,1fr))", gap: 8 }}>
+        {chosen.slots.map(s => (
+          <button key={s.start} onClick={() => book(s.start)} disabled={!!busy} style={{
+            background: busy === s.start ? "#b80101" : "var(--gu-card)", color: busy === s.start ? "#fff" : "var(--gu-text2)",
+            border: "1px solid var(--gu-border)", borderRadius: 9, padding: "11px 8px",
+            fontFamily: font, fontSize: 13, fontWeight: 700, cursor: busy ? "default" : "pointer", opacity: busy && busy !== s.start ? 0.5 : 1,
+          }}>{busy === s.start ? "Booking…" : fmtTime(s.start)}</button>
+        ))}
+      </div>
+      {err && <div style={{ color: "#ff8a8a", fontSize: 12.5, fontFamily: font, marginTop: 10 }}>{err}</div>}
+    </div>
+  );
+}
+
 function MeetingCard({ b, onChange, link }) {
   const [brief, setBrief] = useState(b.brief || "");
   const [when, setWhen] = useState(b.scheduled_at ? new Date(b.scheduled_at).toISOString().slice(0, 16) : "");
@@ -655,23 +714,19 @@ function MeetingCard({ b, onChange, link }) {
                 : `Paid${b.created_at ? " · " + new Date(b.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""}`}
           </div>
         </div>
-        {!b.scheduled_at && link && (
-          <button onClick={() => setCal(c => !c)} style={cal ? btnGhost : btnRed}>{cal ? "Hide calendar" : "Book your time →"}</button>
-        )}
+        {!b.scheduled_at
+          ? <button onClick={() => setCal(c => !c)} style={cal ? btnGhost : btnRed}>{cal ? "Never mind" : "Book your time →"}</button>
+          : (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {b.meet_link && <a href={b.meet_link} target="_blank" rel="noreferrer" style={{ ...btnRed, textDecoration: "none", display: "inline-block" }}>Join the meeting</a>}
+              {b.event_link && <a href={b.event_link} target="_blank" rel="noreferrer" style={{ ...btnGhost, textDecoration: "none", display: "inline-block" }}>Add to calendar</a>}
+            </div>
+          )}
       </div>
 
       {/* The calendar belongs to this session, opened from this session's own
           button — one prompt per thing to book, rather than one for the page. */}
-      {/* A cross-origin iframe can't report its own height, so Google's scheduler
-          scrolls inside a short box. Give it enough room that the month and the
-          time slots both fit without a scrollbar of its own. */}
-      {cal && link && (
-        <div style={{ marginBottom: 16, borderRadius: 12, overflow: "hidden", border: "1px solid var(--gu-border)", background: "#ffffff" }}>
-          <style>{`.gu-cal { height: 820px; } @media (max-width: 760px) { .gu-cal { height: 680px; } }`}</style>
-          <iframe className="gu-cal" src={link.includes("gv=true") ? link : link + (link.includes("?") ? "&" : "?") + "gv=true"}
-            title="Book a time with Dr. Merritt" width="100%" frameBorder="0" scrolling="no" style={{ display: "block", border: 0, width: "100%" }} />
-        </div>
-      )}
+      {cal && <SlotPicker bookingId={b.id} onBooked={() => { setCal(false); onChange(); }} />}
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 14, marginBottom: 16 }}>
         <div>
