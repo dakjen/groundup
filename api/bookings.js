@@ -1,5 +1,5 @@
 import { neon } from '@neondatabase/serverless';
-import { getSession, getAdmin } from './_utils.js';
+import { getSession, getAdmin, benefitGate } from './_utils.js';
 import { sendEmail } from './_email.js';
 
 // A paid 1:1 with Dr. Merritt is a small engagement, not a receipt. It carries a
@@ -35,8 +35,17 @@ export default async function handler(req, res) {
         ? await sql`SELECT id, booking_id, title, url, kind, created_at FROM booking_files
             WHERE booking_id = ANY(${rows.map(r => r.id)}) ORDER BY created_at`
         : [];
+      // Included advisory calls come back here too. They were read from the
+      // member object cached in the browser at sign-in, which never contains
+      // them — so an Owner with three calls saw nothing at all.
+      const [me] = await sql`SELECT tier, role, comped, tier_since FROM users WHERE id = ${uid}`;
+      const allowance = me?.tier === 'Elite' ? 3 : 0;
+      const [{ used }] = await sql`SELECT COUNT(*)::int AS used FROM session_requests
+        WHERE user_id = ${uid} AND status != 'declined'`;
       return res.json({
         bookings: rows.map(b => ({ ...b, files: files.filter(f => f.booking_id === b.id) })),
+        credits: { total: allowance, used, remaining: Math.max(0, allowance - used) },
+        gate: await benefitGate(sql, me ? { ...me, id: uid } : null),
       });
     }
 

@@ -563,17 +563,36 @@ export function OnboardingFlow({ pending, onDone }) {
 // browser storage, so she never actually received it.
 export function MeetingsPanel({ member }) {
   const [rows, setRows] = useState(null);
+  const [credits, setCredits] = useState(null);
+  const [gate, setGate] = useState(null);
   const [err, setErr] = useState("");
-  const load = useCallback(() => api("/api/bookings").then(d => setRows(d.bookings || [])).catch(e => { setErr(e.message); setRows([]); }), []);
+  const load = useCallback(() => api("/api/bookings")
+    .then(d => { setRows(d.bookings || []); setCredits(d.credits || null); setGate(d.gate || null); })
+    .catch(e => { setErr(e.message); setRows([]); }), []);
   useEffect(() => { load(); }, [load]);
 
   if (rows === null) return <div style={{ color: "var(--gu-muted)", fontFamily: font, fontSize: 13.5, padding: "18px 0" }}>Loading your meetings…</div>;
   if (err) return <div style={{ color: "#ff8a8a", fontFamily: font, fontSize: 13.5 }}>{err}</div>;
-  if (!rows.length) return null;
 
   const unscheduled = rows.filter(b => !b.scheduled_at);
   return (
     <div style={{ marginBottom: 22 }}>
+      {/* What the plan already includes, before anything bought separately. */}
+      {credits && credits.total > 0 && (
+        <div style={{ background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "22px 26px", marginBottom: 14 }}>
+          <div style={{ fontSize: 9, color: "#e01818", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>Included with your plan</div>
+          <div style={{ color: "var(--gu-text)", fontWeight: 800, fontSize: 17, fontFamily: font }}>
+            {credits.remaining} of {credits.total} advisory call{credits.total === 1 ? "" : "s"} available
+          </div>
+          <div style={{ color: "var(--gu-body)", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginTop: 6 }}>
+            {gate?.active
+              ? <>Advisory calls open on {new Date(gate.until).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })} — four months from when your membership started.</>
+              : credits.remaining > 0
+                ? <>Bring your own deal. Request one and Dr. Merritt&rsquo;s team will set it up.</>
+                : <>You&rsquo;ve used this year&rsquo;s calls. You can still book a single session any time.</>}
+          </div>
+        </div>
+      )}
       {/* Asking for a time on every card meant someone with four sessions was
           told to book four times. Ask once, for all of them. */}
       {unscheduled.length > 0 && (
@@ -1170,7 +1189,6 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
           <section id="gu-meetings" style={{ scrollMarginTop: 96, marginBottom: 40 }}>
             <h2 style={H}>Your meetings</h2>
             <p style={SUB}>Your one-on-one time with Dr. Merritt — what you have, when it is, and what she should read first.</p>
-            <SessionCreditsCard member={member} />
             <MeetingsPanel member={member} />
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 14, padding: "18px 24px" }}>
               <div style={{ color: "var(--gu-body)", fontSize: 13.5, fontFamily: font, fontWeight: 600 }}>Need her on something specific? Book a single session any time.</div>
