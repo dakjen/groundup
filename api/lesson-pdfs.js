@@ -80,9 +80,13 @@ export default async function handler(req, res) {
       });
       const served = `/api/file?p=${encodeURIComponent(blob.pathname)}`;
 
-      if (kind === 'avatar' && session?.uid) {
+      // A team account signed in through the portal carries no uid, so the photo
+      // uploaded fine and then attached to nobody. Fall back to the admin's own
+      // id when the token has one.
+      const ownerId = session?.uid || getAdmin(req)?.uid || null;
+      if (kind === 'avatar' && ownerId) {
         const sql = neon(process.env.DATABASE_URL);
-        await sql`UPDATE users SET avatar_url = ${served} WHERE id = ${session.uid}`;
+        await sql`UPDATE users SET avatar_url = ${served} WHERE id = ${ownerId}`;
       }
 
       return res.status(200).json({ url: served, pathname: blob.pathname, filename: filePart.filename });

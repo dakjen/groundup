@@ -1197,7 +1197,11 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
             </div>
             <button style={btnGhost} onClick={onSignOut}>Sign out</button>
           </div>
-          <p style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.8, marginBottom: 28 }}>Your tools live in the nav: the Community (you post as the team), Resources and Lunch & Learns are your editors, and everything else is under GroundUp Admin.</p>
+          <p style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.8, marginBottom: 28 }}>Your tools live in the nav: the Community (you post as the team), Resources and Lunch &amp; Learns are your editors, and everything else is under GroundUp Admin.</p>
+          {/* The team had no profile editor at all, so Dr. Merritt could not set
+              a photo and her posts fell back to the generic GroundUp mark —
+              on the channels where her presence matters most. */}
+          <ProfileCard member={member} />
           <ChangePasswordCard />
         </div>
       </div>
