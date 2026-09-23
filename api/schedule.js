@@ -46,7 +46,12 @@ function afterBusinessDays(from, n) {
     const dow = partsIn(at, TZ).dow;
     if (dow !== 0 && dow !== 6) left--;
   }
-  return at;
+  // Land on the START of that day, not the same time of day. Carrying the
+  // current clock time forward threw away the whole of day five — every slot
+  // runs midday to four, all of it before a cutoff set at whatever time the
+  // page happened to load — so "five business days" quietly meant six.
+  const { y, m, d } = partsIn(at, TZ);
+  return wallToUtc(y, m, d, 0, 0, TZ);
 }
 
 function slotsFor(dayStartUtc, R, busy, notBefore, now) {
