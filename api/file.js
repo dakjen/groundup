@@ -47,7 +47,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    const found = await get(pathname, { token: process.env.BLOB_READ_WRITE_TOKEN });
+    // `access` is required, and the store is private — omitting it threw, which
+    // surfaced as a 500 on every file including avatars.
+    const found = await get(pathname, { access: 'private', token: process.env.BLOB_READ_WRITE_TOKEN });
     if (!found) return res.status(404).json({ error: 'Not found' });
 
     const { blob, stream } = found;
@@ -59,6 +61,8 @@ export default async function handler(req, res) {
       const name = pathname.split('/').pop() || 'download';
       res.setHeader('Content-Disposition', `attachment; filename="${name.replace(/"/g, '')}"`);
     }
+
+    if (found.statusCode === 304) return res.status(304).end();
 
     if (stream) {
       const reader = stream.getReader();
@@ -72,6 +76,7 @@ export default async function handler(req, res) {
     return res.status(404).json({ error: 'Not found' });
   } catch (e) {
     console.error('file serve failed', pathname, e.message);
-    return res.status(500).json({ error: 'Could not read that file' });
+    if (/not found|does not exist/i.test(e.message || '')) return res.status(404).json({ error: 'That file is no longer there' });
+    return res.status(500).json({ error: `Could not read that file — ${String(e.message || '').slice(0, 120)}` });
   }
 }
