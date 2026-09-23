@@ -2439,6 +2439,12 @@ function ContactPage({ setActivePage, advisorLink }) {
         {/* Step 1 */}
         <div style={{ marginBottom: 40 }}>
           <div style={{ fontSize: 10, color: "#7a6151", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>Step 1 — Choose a Session Type</div>
+          {/* Terms carry the full language; this is the short version said where
+              the advice is actually bought, so nobody meets it for the first time
+              in a footer link. */}
+          <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 12, padding: "14px 18px", marginBottom: 20, color: "#8f7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
+            Sessions are experienced guidance, not legal, tax, accounting or investment advice, and Dr.&nbsp;Merritt is not acting as your attorney, accountant or adviser. Verify anything you act on with your own professionals &mdash; the decisions on your deal remain yours. Full terms apply.
+          </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 14 }}>
             {SESSION_TYPES.map(s => (
               <div key={s.id} onClick={() => setSelected(s)}
@@ -3180,16 +3186,24 @@ function TermsPage() {
       <h2 style={S.h2}>5. Community & conduct</h2>
       <p style={S.p}>Be professional. No harassment, hate, spam, solicitation of members for competing offerings, or posting content you don't have rights to. Deal information other members share in the community or group sessions is <strong style={S.strong}>confidential to this community</strong> — don't use or disclose it outside GroundUp. We may remove content or suspend accounts that break these rules.</p>
 
-      <h2 style={S.h2}>6. Sessions, office hours & DMs</h2>
+      <h2 style={S.h2}>6. Education, not professional advice</h2>
+      <p style={S.p}>Everything on GroundUp — courses, lessons, templates, worksheets, the Developer&rsquo;s Playbook, community discussion, office hours, Lunch &amp; Learns, 1:1 sessions and advisory engagements — is <strong style={S.strong}>educational and informational only</strong>. It is not legal, tax, accounting, financial, investment, brokerage, appraisal, engineering or architectural advice, and it is not a substitute for any of them. Dr. Merritt is an experienced developer sharing how she works; she is not acting as your attorney, accountant, broker, financial adviser or fiduciary. Nothing here creates an attorney-client, advisory or fiduciary relationship, and no professional-client privilege attaches to anything you tell us.</p>
+      <p style={S.p}><strong style={S.strong}>Get your own advisers, and verify everything before you act.</strong> Development decisions turn on facts we do not know and rules that vary by state, city and program. Tax credit, zoning, subsidy, lending and compliance requirements differ by jurisdiction and change over time, and examples, figures and documents here reflect particular deals at particular moments &mdash; not current conditions in your market. Before you rely on anything you learn here, have it reviewed by your own qualified attorney, accountant and lender for your specific project.</p>
+      <p style={S.p}><strong style={S.strong}>No outcome is promised.</strong> Real estate development carries substantial risk, including total loss of the money and time you put into it. We make no representation or guarantee that any site will pencil, any application will be awarded, any deal will close, any project will be profitable, or that you will earn anything at all. Past projects, case studies and results &mdash; Dr. Merritt&rsquo;s or any member&rsquo;s &mdash; are illustrations, not predictions, and are not typical.</p>
+      <p style={S.p}><strong style={S.strong}>The decisions are yours.</strong> You are solely responsible for how you use what you learn here and for every decision you make about your own projects, partners, financing and property. To the fullest extent permitted by law, NREUV, Dr. Merritt and their affiliates are not liable for any loss, cost, damage or missed opportunity arising from your reliance on GroundUp content, sessions or advisory work, and Section 9 applies to any such claim. Content shared by other members is theirs, not ours, and we do not verify it.</p>
+
+      <p style={S.p}><strong style={S.strong}>You accept the risk, and you cover us for your own deals.</strong> You acknowledge that you are a sophisticated party pursuing your own business, that you have the opportunity to consult your own advisers, and that you accept all risk of your projects. You agree to indemnify, defend and hold harmless NREUV, Dr.&nbsp;Merritt, DakJen Creative and their officers, employees and contractors from any claim, loss, liability, cost or expense (including reasonable legal fees) brought by you or by any third party &mdash; partner, investor, lender, buyer, tenant or public body &mdash; arising out of your projects, your transactions, your use of anything learned here, or your breach of these Terms. This survives the end of your membership.</p>
+
+      <h2 style={S.h2}>7. Sessions, office hours &amp; DMs</h2>
       <p style={S.p}>Live sessions and recordings are provided for education. Direct messages (Owner) are for quick questions, answered within 2 business days, Monday–Friday; substantive review belongs in booked sessions. Member, Builder, and Premium cover the industry essentials — general education, community, and tools; <strong style={S.strong}>deal-specific analysis and support</strong> (your project's numbers, structure, or strategy) is an Owner benefit delivered through advisory calls, and is otherwise available through paid 1:1 sessions and Senior Advisor retainers, where Dr. Merritt can be engaged on the whole deal. The team may redirect deal-specific requests accordingly. Nothing on GroundUp — including 1:1 sessions and advisory calls — is legal, tax, investment, accounting, or brokerage advice, and no guarantee is made that any deal, financing, or approach will succeed. Engage your own licensed professionals.</p>
 
-      <h2 style={S.h2}>7. Your account & data</h2>
+      <h2 style={S.h2}>8. Your account &amp; data</h2>
       <p style={S.p}>Keep your credentials secure; you're responsible for activity on your account. If you cancel, your account data (posts, messages, progress) is permanently deleted 15 days after your membership ends, as described in the Privacy Policy — rejoin before then and nothing is lost. Financial records are retained as required by law.</p>
 
-      <h2 style={S.h2}>8. The service</h2>
+      <h2 style={S.h2}>9. The service</h2>
       <p style={S.p}>GroundUp is provided “as is.” We work hard to keep it available and accurate but don't warrant uninterrupted or error-free operation, and we may add, change, or retire features. To the fullest extent permitted by law, NREUV's total liability for any claim is limited to the amounts you paid us in the 12 months before the claim; we are not liable for indirect, incidental, or consequential damages. Nothing here limits liability that cannot be limited by law.</p>
 
-      <h2 style={S.h2}>9. Changes & contact</h2>
+      <h2 style={S.h2}>10. Changes &amp; contact</h2>
       <p style={S.p}>We may update these Terms; material changes will be announced on the site or by email, and continued use after the effective date is acceptance. Questions: <strong style={S.strong}>groundup@drginamerritt.net</strong> · Northern Real Estate Urban Ventures, 825 10th St NW, Suite 981, Washington, DC 20001.</p>
     </div></div>
   );
