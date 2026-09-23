@@ -50,6 +50,13 @@ export function normalizeKey(raw) {
       k = `-----BEGIN ${m[1]}-----\n${body}\n-----END ${m[1]}-----\n`;
     }
   }
+  // A copy that stopped at the last \n leaves the footer behind, which is
+  // invalid PEM and fails identically to every other paste problem. If the
+  // header is there and the footer isn't, put it back.
+  const head = k.match(/-----BEGIN ([A-Z ]*PRIVATE KEY)-----/);
+  if (head && !new RegExp(`-----END ${head[1]}-----`).test(k)) {
+    k = k.replace(/[\s-]*$/, '') + `\n-----END ${head[1]}-----`;
+  }
   if (!k.endsWith('\n')) k += '\n';
   return k;
 }
