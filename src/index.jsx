@@ -6187,6 +6187,18 @@ function SystemStatusTab() {
     } catch (e) { setSyncMsg({ ok: false, text: e.message }); }
     setSyncing(false);
   };
+  const [calDiag, setCalDiag] = useState(null);
+  const [calBusy, setCalBusy] = useState(false);
+  // Visiting the diagnose URL directly returns "Not signed in" — the admin token
+  // travels in a header, not a cookie — so it has to be asked for from in here.
+  const checkCalendar = async () => {
+    setCalBusy(true); setCalDiag(null);
+    try {
+      const res = await fetch("/api/schedule?diagnose=1", { headers: { Authorization: "Bearer " + sessionStorage.getItem("adminToken") } });
+      setCalDiag(await res.json());
+    } catch (e) { setCalDiag({ calendar: "FAILED — " + e.message }); }
+    setCalBusy(false);
+  };
   const saveCap = async () => {
     try {
       const res = await fetch("/api/resources", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + sessionStorage.getItem("adminToken") }, body: JSON.stringify({ action: "set_lifetime_cap", cap: Number(capDraft) }) });
@@ -6206,6 +6218,23 @@ function SystemStatusTab() {
       <div style={{ background: missing.length ? "#fdf0f0" : "#eef7ee", border: `1px solid ${missing.length ? "#b8010140" : "#22c55e40"}`, color: missing.length ? "#b80101" : "#1a7a3a", borderRadius: 10, padding: "14px 18px", fontSize: 13.5, fontFamily: F, fontWeight: 700, marginBottom: 20 }}>
         {missing.length ? `${missing.length} setting${missing.length > 1 ? "s" : ""} missing — ${missing.map(m => m.label).join(", ")}` : "Everything is configured. Payments, splits, and email are all live."}
       </div>
+      <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: "22px 24px", marginBottom: 20 }}>
+        <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: F, marginBottom: 6 }}>Session scheduling — Google Calendar</div>
+        <p style={{ color: "#666666", fontSize: 12, fontFamily: F, marginBottom: 12, lineHeight: 1.6 }}>
+          Checks that the service account can read Dr. Merritt&rsquo;s availability and write to the GroundUp Sessions calendar. Reports the shape of the key without ever showing it.
+        </p>
+        <button onClick={checkCalendar} disabled={calBusy} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontFamily: F, fontWeight: 800, fontSize: 13, cursor: calBusy ? "default" : "pointer", opacity: calBusy ? 0.6 : 1 }}>
+          {calBusy ? "Checking…" : "Check the calendar connection"}
+        </button>
+        {calDiag && (
+          <div style={{ marginTop: 14, background: "#faf8f5", border: "1px solid #e6e2da", borderRadius: 10, padding: "14px 16px", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 12, lineHeight: 1.8, color: "#333333", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+            {Object.entries(calDiag).map(([k, v]) => (
+              <div key={k}><span style={{ color: "#666666" }}>{k}:</span> <strong style={{ color: String(v).startsWith("FAILED") ? "#b80101" : "#1a7a3a" }}>{String(v)}</strong></div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: "22px 24px", marginBottom: 20 }}>
         <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: F, marginBottom: 6 }}>Stripe product catalog</div>
         <p style={{ color: "#666666", fontSize: 12, fontFamily: F, marginBottom: 12, lineHeight: 1.6 }}>
