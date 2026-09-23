@@ -28,9 +28,13 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const uid = admin && req.query.user_id ? Number(req.query.user_id) : session?.uid;
       if (!uid) return res.json({ bookings: [] });
+      // Refunded sessions stay in the table as a record but are not bookable,
+      // so they should not appear as something waiting to be scheduled.
       const rows = await sql`SELECT id, item, label, amount, status, booked_at, scheduled_at,
         brief, brief_at, meet_link, event_link, calendar_event_id, created_at
-        FROM bookings WHERE user_id = ${uid} ORDER BY created_at DESC`;
+        FROM bookings WHERE user_id = ${uid}
+          AND COALESCE(status, '') NOT IN ('refunded', 'cancelled', 'void')
+        ORDER BY created_at DESC`;
       const files = rows.length
         ? await sql`SELECT id, booking_id, title, url, kind, created_at FROM booking_files
             WHERE booking_id = ANY(${rows.map(r => r.id)}) ORDER BY created_at`

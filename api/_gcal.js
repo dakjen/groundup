@@ -97,13 +97,48 @@ const api = async (path, init = {}) => {
   return d;
 };
 
-export async function freeBusy(fromIso, toIso) {
-  const d = await api('/freeBusy', {
-    method: 'POST',
-    body: JSON.stringify({ timeMin: fromIso, timeMax: toIso, items: busyCalendars().map(id => ({ id })) }),
-  });
+// What actually blocks a slot.
+//
+// Google's freeBusy call treats every all-day entry as solid busy time, so a
+// week marked "Conference" or a multi-day trip removed every opening that week
+// — far more than Dr. Merritt would consider unavailable. Reading the events
+// themselves lets us skip the ones that shouldn't block a 45-minute call:
+// all-day markers, events she has declined, and anything she set to Free.
+//
+// Set scheduling_rules.allDayBlocks = true to have all-day entries block again.
+export async function freeBusy(fromIso, toIso, opts = {}) {
   const blocks = [];
-  for (const cal of Object.values(d.calendars || {})) for (const b of cal.busy || []) blocks.push([Date.parse(b.start), Date.parse(b.end)]);
+  for (const id of busyCalendars()) {
+    try {
+      const d = await api(`/calendars/${encodeURIComponent(id)}/events?singleEvents=true&orderBy=startTime&maxResults=2500`
+        + `&timeMin=${encodeURIComponent(fromIso)}&timeMax=${encodeURIComponent(toIso)}`);
+      for (const ev of d.items || []) {
+        if (ev.status === 'cancelled') continue;
+        if (ev.transparency === 'transparent') continue;              // marked Free
+        const me = (ev.attendees || []).find(a => a.self);
+        if (me && me.responseStatus === 'declined') continue;          // she said no
+        const isAllDay = !!ev.start?.date && !ev.start?.dateTime;
+        if (isAllDay && !opts.allDayBlocks) continue;                  // a trip marker, not a meeting
+        const start = Date.parse(ev.start?.dateTime || ev.start?.date);
+        const end = Date.parse(ev.end?.dateTime || ev.end?.date);
+        if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) continue;
+        // Multi-day entries put in with times — travel, a conference, a week
+        // marked out — are not meetings either, and they were erasing entire
+        // weeks. Nothing longer than half a day is treated as a commitment
+        // that blocks a 45-minute call.
+        const hours = (end - start) / 3600000;
+        if (!opts.allDayBlocks && hours > (opts.maxBlockHours ?? 12)) continue;
+        blocks.push([start, end]);
+      }
+    } catch (e) {
+      // A calendar we can't read must not silently open her whole diary, so fall
+      // back to freeBusy for that one rather than treating it as empty.
+      try {
+        const fb = await api('/freeBusy', { method: 'POST', body: JSON.stringify({ timeMin: fromIso, timeMax: toIso, items: [{ id }] }) });
+        for (const cal of Object.values(fb.calendars || {})) for (const b of cal.busy || []) blocks.push([Date.parse(b.start), Date.parse(b.end)]);
+      } catch { console.error('calendar unreadable:', id, e.message); }
+    }
+  }
   return blocks.sort((a, b) => a[0] - b[0]);
 }
 

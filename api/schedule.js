@@ -20,6 +20,8 @@ const DEFAULTS = {
   buffer: 15,                 // gap kept either side of an existing commitment
   windowDays: 60,             // how far ahead the calendar opens
   minBusinessDays: 5,         // nothing bookable inside five business days
+  allDayBlocks: false,        // all-day entries (trips, OOO markers) don't block a call
+  maxBlockHours: 12,          // nothing longer than half a day counts as a meeting
   hours: {                    // weekday → [startHour, endHour] in her time
     0: null,                  // Sunday
     1: [12, 16], 2: [12, 16], 3: [12, 16], 4: [12, 16], 5: [12, 16],
@@ -103,7 +105,7 @@ export default async function handler(req, res) {
 
     // ── Open slots ──
     if (req.method === 'GET') {
-      const busy = await freeBusy(notBefore.toISOString(), until.toISOString());
+      const busy = await freeBusy(notBefore.toISOString(), until.toISOString(), { allDayBlocks: R.allDayBlocks, maxBlockHours: R.maxBlockHours });
       const days = [];
       for (let cursor = new Date(notBefore); cursor < until; cursor = new Date(cursor.getTime() + 864e5)) {
         const slots = slotsFor(cursor, R, busy, notBefore, now);
@@ -147,6 +149,11 @@ export default async function handler(req, res) {
         // session this person actually paid for.
         [b] = await sql`SELECT * FROM bookings WHERE id = ${bookingId} AND user_id = ${session.uid}`;
         if (!b) return res.status(404).json({ error: "We couldn't find that session on your account." });
+        // A refunded session is no longer paid for, and the row stays behind as
+        // a record — without this, a refund left someone able to take her time.
+        if (['refunded', 'cancelled', 'void'].includes(String(b.status || ''))) {
+          return res.status(403).json({ error: 'That session was refunded, so it can no longer be booked. Purchase another any time.' });
+        }
         if (b.scheduled_at) return res.status(409).json({ error: 'That session already has a time. Cancel it first to move it.' });
       }
 
@@ -156,7 +163,7 @@ export default async function handler(req, res) {
 
       // Re-check against the live calendar — someone else may have taken it
       // between the page loading and this request.
-      const busy = await freeBusy(new Date(start.getTime() - 3600e3).toISOString(), new Date(end.getTime() + 3600e3).toISOString());
+      const busy = await freeBusy(new Date(start.getTime() - 3600e3).toISOString(), new Date(end.getTime() + 3600e3).toISOString(), { allDayBlocks: R.allDayBlocks, maxBlockHours: R.maxBlockHours });
       const bufMs = R.buffer * 60000;
       if (busy.some(([bs, be]) => start.getTime() < be + bufMs && end.getTime() > bs - bufMs)) {
         return res.status(409).json({ error: 'That time was just taken — please pick another.' });
