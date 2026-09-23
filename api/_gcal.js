@@ -22,11 +22,43 @@ export const busyCalendars = () => {
   return [...new Set([SUBJECT(), SESSION_CALENDAR(), ...extra])].filter(Boolean);
 };
 
+// The private key is copied out of a JSON file and pasted into a dashboard,
+// which mangles it in predictable ways: the surrounding quotes come along, the
+// \n escapes survive as literal backslash-n, or the whole thing arrives
+// base64-encoded. OpenSSL rejects all of those with the same opaque
+// "DECODER routines::unsupported", so normalise rather than expecting a
+// perfect paste.
+export function normalizeKey(raw) {
+  let k = String(raw || '').trim();
+  if (!k) return '';
+  // Someone pasted the JSON value including its quotes.
+  k = k.replace(/^["']|["']$/g, '').trim();
+  // Whole key base64-encoded (a common way to dodge newline trouble).
+  if (!/BEGIN [A-Z ]*PRIVATE KEY/.test(k) && /^[A-Za-z0-9+/=\s]+$/.test(k) && k.length > 200) {
+    try {
+      const decoded = Buffer.from(k.replace(/\s+/g, ''), 'base64').toString('utf8');
+      if (/BEGIN [A-Z ]*PRIVATE KEY/.test(decoded)) k = decoded;
+    } catch { /* leave it be */ }
+  }
+  // Escaped newlines, single or double escaped, and Windows line endings.
+  k = k.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n').replace(/\r\n/g, '\n');
+  // A key flattened onto one line: rebuild the 64-character body lines.
+  if (/BEGIN [A-Z ]*PRIVATE KEY/.test(k) && !k.includes('\n')) {
+    const m = k.match(/-----BEGIN ([A-Z ]*PRIVATE KEY)-----(.*)-----END \1-----/);
+    if (m) {
+      const body = m[2].replace(/\s+/g, '').match(/.{1,64}/g)?.join('\n') || '';
+      k = `-----BEGIN ${m[1]}-----\n${body}\n-----END ${m[1]}-----\n`;
+    }
+  }
+  if (!k.endsWith('\n')) k += '\n';
+  return k;
+}
+
 let cached = { token: null, exp: 0 };
 
 async function token() {
   if (cached.token && Date.now() < cached.exp - 60_000) return cached.token;
-  const key = String(process.env.GOOGLE_SA_KEY || '').replace(/\\n/g, '\n');
+  const key = normalizeKey(process.env.GOOGLE_SA_KEY);
   const b64 = (o) => Buffer.from(typeof o === 'string' ? o : JSON.stringify(o)).toString('base64url');
   const now = Math.floor(Date.now() / 1000);
   const unsigned = `${b64({ alg: 'RS256', typ: 'JWT' })}.${b64({
