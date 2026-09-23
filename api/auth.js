@@ -350,8 +350,25 @@ export default async function handler(req, res) {
         return res.status(401).json({ error: 'Invalid email or password' });
       }
       await clearFails(`login:${cleanEmail}`); // a good login resets the account's counter
-      // Admin-role accounts (the team, Dr. Merritt) need the emailed code too
-      if (user.role === 'admin') {
+      // Every account signs in with an emailed code, not just the team. A member
+      // account holds their deal briefs, the documents they sent Dr. Merritt and
+      // a payment method — a stolen password should not be enough to reach any
+      // of it. Set two_factor = 'admin' in settings to narrow it back to the
+      // team, or 'off' to disable it, without a deploy.
+      let scope = 'all';
+      try {
+        const [row] = await sql`SELECT value FROM settings WHERE key = 'two_factor'`;
+        if (row?.value && ['all', 'admin', 'off'].includes(row.value)) scope = row.value;
+      } catch { /* default to all */ }
+      let needsCode = scope === 'all' || (scope === 'admin' && user.role === 'admin');
+      // A code on every single sign-in is punishing, and people cope with that
+      // by never signing out — which is worse. Once a device has passed the
+      // code it's trusted for 12 hours, the way a bank app does it.
+      if (needsCode && req.body.mfa_token) {
+        const t = verifyToken(req.body.mfa_token);
+        if (t?.mfa === cleanEmail) needsCode = false;
+      }
+      if (needsCode) {
         const code = req.body.code;
         if (!code) {
           const ok = await issueLoginCode(cleanEmail);
@@ -365,7 +382,10 @@ export default async function handler(req, res) {
       const token = signToken({ uid: user.id, role: user.role === 'admin' ? 'admin' : 'member', viewer: user.role === 'admin' && user.badge === 'drmerritt' ? true : undefined });
       const { password_hash, ...safe } = user;
       safe.entitlements = await sql`SELECT course_id, expires_at FROM entitlements WHERE user_id = ${user.id} AND (expires_at IS NULL OR expires_at > NOW())`;
-      return res.json({ user: safe, token });
+      // Signed, tied to this address, and good for 12 hours — so the next
+      // sign-in on this device goes straight through.
+      const mfaToken = signToken({ mfa: cleanEmail }, 12 * 60 * 60 * 1000);
+      return res.json({ user: safe, token, mfa_token: mfaToken });
     }
 
     // Forgot password: always succeed (no account enumeration); email a 1-hour reset link

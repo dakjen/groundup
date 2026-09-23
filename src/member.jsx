@@ -104,7 +104,7 @@ export function AuthModal({ onClose, onAuthed, onSignupIntent, defaultTier = "Fr
   const [agreed, setAgreed] = useState(false);
 
   const [notice, setNotice] = useState("");
-  const [mfa, setMfa] = useState(false); // admin accounts: emailed code step
+  const [mfa, setMfa] = useState(false); // emailed sign-in code step
   const [mfaCode, setMfaCode] = useState("");
 
   const submit = async (e) => {
@@ -135,9 +135,11 @@ export function AuthModal({ onClose, onAuthed, onSignupIntent, defaultTier = "Fr
       // checkout (below) or an admin. The picker records intent, nothing more.
       const data = mode === "signup"
         ? await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "signup", name, email, password, ref: localStorage.getItem("guRef") || undefined }) })
-        : await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "login", email, password, ...(mfa ? { code: mfaCode } : {}) }) });
+        : await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "login", email, password, ...(mfa ? { code: mfaCode } : {}), mfa_token: localStorage.getItem("guMfa") || undefined }) });
       // Team accounts get a second step: the emailed 6-digit sign-in code
       if (data.mfa) { setMfa(true); setBusy(false); return; }
+      // Remember this device so the code isn't asked for again for 12 hours.
+      if (data.mfa_token) { try { localStorage.setItem("guMfa", data.mfa_token); } catch {} }
       saveMember(data.user, data.token);
       // A signup with no plan already picked hands off to onboarding; someone
       // who clicked "Choose Premium" has already chosen and goes to checkout.
@@ -178,7 +180,7 @@ export function AuthModal({ onClose, onAuthed, onSignupIntent, defaultTier = "Fr
           )}
           {mfa && mode === "login" && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ color: "#a89080", fontSize: 12.5, fontFamily: font, lineHeight: 1.6, marginBottom: 10 }}>Team accounts need one more step — a 6-digit code just landed in <strong style={{ color: "#f0d8d8" }}>{email}</strong>. It's good for 10 minutes.</div>
+              <div style={{ color: "var(--gu-body)", fontSize: 12.5, fontFamily: font, lineHeight: 1.6, marginBottom: 10 }}>One more step — a 6-digit code just landed in <strong style={{ color: "var(--gu-text2)" }}>{email}</strong>. It&rsquo;s good for 10 minutes, and we won&rsquo;t ask again on this device for 12 hours.</div>
               <label style={lbl}>Sign-in code</label>
               <input style={{ ...inp, fontSize: 20, letterSpacing: "8px", textAlign: "center" }} value={mfaCode} onChange={e => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoFocus placeholder="000000" />
             </div>
