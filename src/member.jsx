@@ -904,7 +904,17 @@ function MeetingCard({ b, onChange, link }) {
           {busy === "file" ? "Uploading…" : "📎 Upload project documents"}
           <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.pptx,.csv,.png,.jpg,.jpeg" onChange={e => upload(e.target.files?.[0])} style={{ display: "none" }} disabled={busy === "file"} />
         </label>
-        <div style={{ color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font, marginTop: 8 }}>PDF, Word, Excel, PowerPoint, CSV or images, up to 25MB. Anything bigger, add it as a link.</div>
+        <div style={{ color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font, marginTop: 8, lineHeight: 1.7 }}>
+          PDF, Word, Excel, PowerPoint, CSV or images, up to 25MB. Anything bigger, add it as a link.
+        </div>
+        {/* People are sending their pro forma and their capital stack. Saying
+            plainly who can open it is part of earning that. */}
+        <div style={{ display: "flex", gap: 9, alignItems: "flex-start", background: "var(--gu-card)", border: "1px solid var(--gu-border2)", borderRadius: 10, padding: "11px 13px", marginTop: 10 }}>
+          <Lock size={13} style={{ color: "#4ade80", flexShrink: 0, marginTop: 2 }} />
+          <div style={{ color: "var(--gu-body)", fontSize: 11.5, fontFamily: font, lineHeight: 1.7 }}>
+            <strong style={{ color: "var(--gu-text2)" }}>Only you and Dr. Merritt can open these.</strong> Files are stored privately, never on a public link, and can&rsquo;t be reached without signing in as you. Remove one any time and it&rsquo;s gone.
+          </div>
+        </div>
       </div>
 
       {note && <div style={{ color: note.ok ? "#4ade80" : "#ff8a8a", fontSize: 12.5, fontFamily: font, fontWeight: 700, marginTop: 12 }}>{note.text}</div>}

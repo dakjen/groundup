@@ -70,18 +70,22 @@ export default async function handler(req, res) {
       const safeName = String(filePart.filename)
         .normalize('NFKD').replace(/[^\w.\-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
         .slice(-80) || 'upload';
+      // The store is PRIVATE, so nothing here is reachable by URL alone. Files
+      // are served back through /api/file, which requires a session and checks
+      // ownership for session documents.
       const blob = await put(`${folder}/${Date.now()}-${safeName}`, filePart.data, {
-        access: 'public',
+        access: 'private',
         contentType,
         addRandomSuffix: true,
       });
+      const served = `/api/file?p=${encodeURIComponent(blob.pathname)}`;
 
       if (kind === 'avatar' && session?.uid) {
         const sql = neon(process.env.DATABASE_URL);
-        await sql`UPDATE users SET avatar_url = ${blob.url} WHERE id = ${session.uid}`;
+        await sql`UPDATE users SET avatar_url = ${served} WHERE id = ${session.uid}`;
       }
 
-      return res.status(200).json({ url: blob.url, filename: filePart.filename });
+      return res.status(200).json({ url: served, pathname: blob.pathname, filename: filePart.filename });
     } catch (err) {
       // Every failure used to come back as the same three words, which made a
       // misconfigured blob store look identical to a bad file.
