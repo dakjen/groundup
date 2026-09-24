@@ -1466,7 +1466,10 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
             {!seriesGroups["The Underwriting Series"] && (
               <span title="Underwriting the Project Budget & The Closing Draw — Dr. Merritt's own method, line by line." style={{ display: "inline-flex", alignItems: "stretch", borderRadius: 3, overflow: "hidden", border: "1px solid #b8010155", whiteSpace: "nowrap", alignSelf: "center", marginLeft: "auto" }}>
                 <span style={{ background: "#b80101", color: "#ffffff", fontSize: 9, fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", padding: "6px 10px", display: "flex", alignItems: "center" }}>Coming soon</span>
-                <span style={{ background: "#150000", color: "#f0d8d8", fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 15.5, padding: "5px 12px", display: "flex", alignItems: "center" }}>The Underwriting Series</span>
+                <span style={{ background: "#150000", padding: "5px 12px", display: "flex", alignItems: "baseline", gap: 8 }}>
+                  <span style={{ color: "#f0d8d8", fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 15.5 }}>The Underwriting Series</span>
+                  <span style={{ color: "#8a7070", fontFamily: "'DM Sans', sans-serif", fontSize: 11.5 }}>her own method, line by line</span>
+                </span>
               </span>
             )}
           </div>
