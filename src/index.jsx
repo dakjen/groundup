@@ -1009,7 +1009,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
           <GULogo size={38} light={lightNav} />
           <div>
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 20, color: lightNav ? "#161616" : "#fff", lineHeight: 1, letterSpacing: "1px" }}>GROUNDUP</div>
-            <div style={{ fontSize: 9, color: lightNav ? "#9a9a9a" : "#7a6151", letterSpacing: "2px", textTransform: "uppercase", fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>for underrepresented developers</div>
+            {activePage === "home" && <div style={{ fontSize: 9, color: lightNav ? "#9a9a9a" : "#7a6151", letterSpacing: "2px", textTransform: "uppercase", fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>for underrepresented developers</div>}
           </div>
         </div>
         {/* Desktop nav */}
