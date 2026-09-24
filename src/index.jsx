@@ -1459,7 +1459,17 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
         {/* ── The learning home: welcome + main resources before the courses ── */}
         <div style={{ marginBottom: 40 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Your learning home</div>
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(38px,5vw,52px)", color: "#f5e8e8", margin: "0 0 12px", lineHeight: 1.1 }}>Welcome back{member?.name ? `, ${firstName(member.name)}` : ""}.</h1>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap", margin: "0 0 12px" }}>
+            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(38px,5vw,52px)", color: "#f5e8e8", margin: 0, lineHeight: 1.1 }}>Welcome back{member?.name ? `, ${firstName(member.name)}` : ""}.</h1>
+            {/* The Underwriting Series is still unpublished — announce it here, next to
+                their name, rather than interrupting the curriculum further down. */}
+            {!seriesGroups["The Underwriting Series"] && (
+              <span title="Underwriting the Project Budget & The Closing Draw — Dr. Merritt's own method, line by line." style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#10100f", border: "1px dashed #b9bec740", borderRadius: 999, padding: "5px 13px", whiteSpace: "nowrap" }}>
+                <span style={{ fontSize: 8.5, color: "#b9bec7", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>Coming Soon</span>
+                <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 15, color: "#d8dce2" }}>The Underwriting Series</span>
+              </span>
+            )}
+          </div>
           <p style={{ color: "#8a7070", fontSize: 15, maxWidth: 620, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif", margin: 0 }}>Everything you learn with lives here — the courses, the library, the glossary, and the rooms where your questions get answered.</p>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 64 }}>
@@ -1484,16 +1494,6 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
           <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(32px,4.5vw,46px)", color: "#f5e8e8", margin: "0 0 14px" }}>The Curriculum</h2>
           <p style={{ color: "#8a7070", fontSize: 15, maxWidth: 580, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif" }}>Individual courses built from Dr. Gina Merritt's actual deal experience — with deeper, more specific courses launching as the community grows.</p>
         </div>
-        {/* Coming soon: the Underwriting Series teaser (remove when published) */}
-        {!seriesGroups["The Underwriting Series"] && (
-          <div style={{ marginBottom: 28, background: "linear-gradient(135deg, #10100f, #0d0404)", border: "1px dashed #b9bec740", borderRadius: 14, padding: "16px 24px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-            <span style={{ display: "inline-flex", alignItems: "baseline", gap: 9, flexShrink: 0 }}>
-              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(18px,2.4vw,24px)", color: "#d8dce2" }}>The Underwriting Series</span>
-              <span style={{ fontSize: 8.5, color: "#b9bec7", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", border: "1px solid #b9bec740", borderRadius: 4, padding: "2px 7px", whiteSpace: "nowrap" }}>Coming Soon</span>
-            </span>
-            <span style={{ color: "#9a9ba2", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, flex: 1, minWidth: 220 }}>Underwriting the Project Budget & The Closing Draw — Dr. Merritt's own method, line by line.</span>
-          </div>
-        )}
         {!catalog && !catalogFailed && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[0,1,2,3].map(i => <div key={i} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, height: 76, opacity: 0.6 }} />)}
