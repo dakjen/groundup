@@ -521,7 +521,7 @@ export async function sendMonthlyReport(sql, opts = {}) {
     ${head('New sign-ups')}
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%">${row('New accounts', newSignups.length)}${row('New paying members', newPaid.length)}${row('Course-topic requests', topicReqs)}</table>
 
-    ${head('New clients above Premium', '#8a5a08')}
+    ${head('New clients above Premium', '#7d6d6d')}
     ${newOwners.length || newRetainers.length ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%">${newRetainers.map(r => person(r.name, r.email, `Senior Advisor · ${r.hours_per_month} hrs · ${money(r.monthly_amount)}/mo`)).join('')}${newOwners.map(u => person(u.name, u.email, `Owner · ${money(mrrOf(u))}/mo`)).join('')}</table>` : `<p style="font-family:${S};font-size:13px;color:#8a8a8a;margin:0;">None this month.</p>`}
 
     ${head('Pending — waiting on the team', '#b80101')}
@@ -683,7 +683,7 @@ export async function sendWaitlistWeekly(sql, opts = {}) {
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:8px;"><tr>
       ${stat('Anticipated MRR', money(mrr), 'if everyone joins their recommended plan', '#b80101')}
       ${stat('Anticipated ARR', money(mrr * 12), 'MRR × 12', '#b80101')}
-      ${stat('Retainer leads', retainerLeads, 'Senior Advisor track', retainerLeads ? '#8a5a08' : '#161616')}
+      ${stat('Retainer leads', retainerLeads, 'Senior Advisor track', retainerLeads ? '#7d6d6d' : '#161616')}
     </tr></table>
     ${head('Where they’re headed')}
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%">${tierRows || row('No entries yet', '—')}</table>

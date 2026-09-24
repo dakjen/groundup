@@ -197,7 +197,7 @@ export function AuthModal({ onClose, onAuthed, onSignupIntent, defaultTier = "Fr
                 </div>
               )}
               {tier !== "Free" ? (
-                <div style={{ background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 8, padding: "10px 14px", color: "#b8a060", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>
+                <div style={{ background: "#0d0d0f", border: "1px solid #24242a", borderRadius: 8, padding: "10px 14px", color: "#9a9ba2", fontSize: 12, fontFamily: font, lineHeight: 1.6 }}>
                   You picked <strong style={{ color: "#f0d8d8" }}>{TIER_LABELS[tier] || tier}</strong>. After you create your account you&rsquo;ll go straight to secure checkout — your plan activates the moment payment clears.
                 </div>
               ) : (
@@ -2413,12 +2413,12 @@ export function MyCohortPage({ member, onNav, onCourse }) {
                 <p style={{ color: "var(--gu-muted2)", fontSize: 13, fontFamily: font, marginBottom: 14 }}>Sessions with Dr. Merritt reserved for your group. RSVP from the Office Hours page.</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {cohortSessions.map(ev => (
-                    <div key={ev.id || ev.date} onClick={() => onNav("officehours")} style={{ background: "var(--gu-card)", border: "1px solid #c9a22745", borderRadius: 12, padding: "16px 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+                    <div key={ev.id || ev.date} onClick={() => onNav("officehours")} style={{ background: "var(--gu-card)", border: "1px solid #b9bec745", borderRadius: 12, padding: "16px 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
                       <div style={{ flex: 1, minWidth: 200 }}>
                         <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15, fontFamily: font }}>{ev.title}</div>
                         <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginTop: 3 }}>{new Date(ev.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}{ev.time ? ` · ${ev.time}` : ""}</div>
                       </div>
-                      <span style={{ color: ev.my_rsvp ? "#4ade80" : "#e6c766", fontWeight: 800, fontSize: 12, fontFamily: font }}>{ev.my_rsvp ? "✓ You're in" : "RSVP →"}</span>
+                      <span style={{ color: ev.my_rsvp ? "#4ade80" : "#d8dce2", fontWeight: 800, fontSize: 12, fontFamily: font }}>{ev.my_rsvp ? "✓ You're in" : "RSVP →"}</span>
                     </div>
                   ))}
                 </div>
@@ -2506,12 +2506,12 @@ export function LibraryPage({ member, onUpgrade }) {
                         <div key={r.id} onClick={open} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 14, padding: "18px 20px", cursor: r.url ? "pointer" : "default", display: "flex", gap: 14, alignItems: "flex-start", transition: "all 0.2s" }}
                           onMouseEnter={e => { if (r.url) { e.currentTarget.style.borderColor = "#b8010150"; e.currentTarget.style.transform = "translateY(-2px)"; } }}
                           onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a0000"; e.currentTarget.style.transform = "none"; }}>
-                          <div style={{ width: 38, height: 38, borderRadius: 10, background: isTemplate ? "#c9a22718" : "#b8010115", border: "1px solid " + (isTemplate ? "#c9a22740" : "#b8010130"), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>{isTemplate ? "📄" : "🔗"}</div>
+                          <div style={{ width: 38, height: 38, borderRadius: 10, background: isTemplate ? "#b9bec718" : "#b8010115", border: "1px solid " + (isTemplate ? "#b9bec740" : "#b8010130"), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>{isTemplate ? "📄" : "🔗"}</div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 14.5, fontFamily: font, lineHeight: 1.35, marginBottom: 4 }}>{r.title}</div>
                             {r.description && <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font, lineHeight: 1.6, marginBottom: 8, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{r.description}</div>}
                             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                              <span style={{ fontSize: 9, color: isTemplate ? "#c9a227" : "#8f7070", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font }}>{isTemplate ? "Template" : "Resource"}</span>
+                              <span style={{ fontSize: 9, color: isTemplate ? "#b9bec7" : "#8f7070", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font }}>{isTemplate ? "Template" : "Resource"}</span>
                               {r.url && <span style={{ color: "#b80101", fontWeight: 800, fontSize: 12, fontFamily: font, marginLeft: "auto" }}>Open →</span>}
                             </div>
                           </div>
@@ -2795,8 +2795,8 @@ export function RetainerPage({ member, setActivePage }) {
                 </div>
               );
               return (<>
-              <div style={{ background: "linear-gradient(135deg, #171004, var(--gu-card))", border: "1px solid #4a3a1060", borderRadius: 16, padding: "26px 28px", marginBottom: 18 }}>
-                <div style={{ fontSize: 9, color: "#c9a227", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Engagement Documents</div>
+              <div style={{ background: "linear-gradient(135deg, #111114, var(--gu-card))", border: "1px solid #b9bec740", borderRadius: 16, padding: "26px 28px", marginBottom: 18 }}>
+                <div style={{ fontSize: 9, color: "#b9bec7", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Engagement Documents</div>
                 <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: engagement.length ? 14 : 0 }}>The paperwork of the engagement itself — your agreement, scope, and anything the team formalizes. Both sides see everything here.</p>
                 {engagement.length ? engagement.map(row) : <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font, marginTop: 10 }}>No engagement documents yet — the team adds them here as they're executed.</div>}
               </div>

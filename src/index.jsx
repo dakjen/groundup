@@ -364,7 +364,7 @@ function LessonCalc({ kind, color }) {
     result = (
       <div style={{ textAlign: "center" }}>
         <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Debt service coverage</div>
-        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 44, color: dscr >= 1.15 ? "#22c55e" : dscr >= 1.0 ? "#c9a227" : "#b80101", lineHeight: 1 }}>{dscr.toFixed(2)}x</div>
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 44, color: dscr >= 1.15 ? "#22c55e" : dscr >= 1.0 ? "#9a8f8f" : "#b80101", lineHeight: 1 }}>{dscr.toFixed(2)}x</div>
         <div style={{ color: "#7a5c50", fontSize: 12, fontFamily: font, marginTop: 10, lineHeight: 1.7 }}>Annual debt service {money(ads)}. Most lenders want 1.15x–1.20x. Below 1.0x the property can't pay its own mortgage — watch how fast a rate change moves this.</div>
       </div>
     );
@@ -674,9 +674,9 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
             </div>
           )}
           {lesson.actionItem && (
-            <div style={{ background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 14, padding: "20px 24px" }}>
-              <div style={{ fontSize: 9, color: "#a08030", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Action Item</div>
-              <p style={{ color: "#b8a060", fontSize: 14, lineHeight: 1.75, fontFamily: "'DM Sans', sans-serif" }}>{lesson.actionItem}</p>
+            <div style={{ background: "#0d0d0f", border: "1px solid #24242a", borderRadius: 14, padding: "20px 24px" }}>
+              <div style={{ fontSize: 9, color: "#b9bec7", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Action Item</div>
+              <p style={{ color: "#9a9ba2", fontSize: 14, lineHeight: 1.75, fontFamily: "'DM Sans', sans-serif" }}>{lesson.actionItem}</p>
             </div>
           )}
           {/* Progress: mark it done and move on */}
@@ -804,8 +804,8 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
           ))}
         </div>
         {!fullAccess && (
-          <div style={{ marginTop: 28, background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 14, padding: "20px 26px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
-            <div style={{ color: "#b8a060", fontSize: 14, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{freeKey ? "Your claimed free lesson stays open. Upgrade to unlock every course." : "Browse every course's full curriculum here — lessons open with a membership (from \$49.99/mo) or a course pass."}</div>
+          <div style={{ marginTop: 28, background: "#0d0d0f", border: "1px solid #24242a", borderRadius: 14, padding: "20px 26px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
+            <div style={{ color: "#9a9ba2", fontSize: 14, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{freeKey ? "Your claimed free lesson stays open. Upgrade to unlock every course." : "Browse every course's full curriculum here — lessons open with a membership (from \$49.99/mo) or a course pass."}</div>
             <button onClick={onUpgrade} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>View Plans →</button>
           </div>
         )}
@@ -1465,9 +1465,9 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 64 }}>
           {[
             { Icon: FolderOpen, title: "The Library", desc: "Templates & tools, filed by development phase", go: () => onNav("library"), color: "#b80101" },
-            { Icon: FileText, title: "The Glossary", desc: "Every term, explained", go: onGlossary, color: "#c9a227" },
+            { Icon: FileText, title: "The Glossary", desc: "Every term, explained", go: onGlossary, color: "#b9bec7" },
             { Icon: MessagesSquare, title: "The Community", desc: "Ask, answer, connect", go: () => onNav("community"), color: "#b80101" },
-            { Icon: Calendar, title: "Office Hours", desc: "Group sessions with Dr. Gina", go: () => onNav("officehours"), color: "#c9a227" },
+            { Icon: Calendar, title: "Office Hours", desc: "Group sessions with Dr. Gina", go: () => onNav("officehours"), color: "#b9bec7" },
           ].map(t => (
             <div key={t.title} onClick={t.go}
               style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "22px 20px", cursor: "pointer", transition: "all 0.25s" }}
@@ -1486,10 +1486,12 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
         </div>
         {/* Coming soon: the Underwriting Series teaser (remove when published) */}
         {!seriesGroups["The Underwriting Series"] && (
-          <div style={{ marginBottom: 28, background: "linear-gradient(135deg, #171004, #0d0404)", border: "1px dashed #c9a22755", borderRadius: 14, padding: "16px 24px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 9.5, color: "#c9a227", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>Coming Soon</span>
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(18px,2.4vw,24px)", color: "#e6c766", flexShrink: 0 }}>The Underwriting Series</span>
-            <span style={{ color: "#a89070", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, flex: 1, minWidth: 220 }}>Underwriting the Project Budget & The Closing Draw — Dr. Merritt's own method, line by line.</span>
+          <div style={{ marginBottom: 28, background: "linear-gradient(135deg, #10100f, #0d0404)", border: "1px dashed #b9bec740", borderRadius: 14, padding: "16px 24px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+            <span style={{ display: "inline-flex", alignItems: "baseline", gap: 9, flexShrink: 0 }}>
+              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(18px,2.4vw,24px)", color: "#d8dce2" }}>The Underwriting Series</span>
+              <span style={{ fontSize: 8.5, color: "#b9bec7", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", border: "1px solid #b9bec740", borderRadius: 4, padding: "2px 7px", whiteSpace: "nowrap" }}>Coming Soon</span>
+            </span>
+            <span style={{ color: "#9a9ba2", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, flex: 1, minWidth: 220 }}>Underwriting the Project Budget & The Closing Draw — Dr. Merritt's own method, line by line.</span>
           </div>
         )}
         {!catalog && !catalogFailed && (
@@ -1526,22 +1528,22 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
         {Object.entries(seriesGroups).map(([name, list]) => (
           <div key={name} style={{ marginTop: 72 }}>
             <div style={{ borderTop: "1px solid #2c2214", paddingTop: 48 }}>
-              <div style={{ fontSize: 10, color: "#c9a227", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>✦ Deep-Dive Series</div>
+              <div style={{ fontSize: 10, color: "#b9bec7", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>✦ Deep-Dive Series</div>
               <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(30px,4vw,42px)", color: "#f0e6c8", marginBottom: 10, lineHeight: 1.15 }}>{name}</h2>
-              <p style={{ color: "#8a8060", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8, maxWidth: 560, marginBottom: 26 }}>Taught as a set and built to go deeper than the curriculum — take the parts in order.</p>
+              <p style={{ color: "#9a9ba2", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8, maxWidth: 560, marginBottom: 26 }}>Taught as a set and built to go deeper than the curriculum — take the parts in order.</p>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 18 }}>
                 {list.map((course, i) => (
                   <div key={course.id} onClick={() => setActiveMiniCourse(course)}
-                    style={{ background: "linear-gradient(160deg, #14100a 0%, #0d0a06 100%)", border: "1px solid #c9a22740", borderRadius: 20, padding: "28px 30px", cursor: "pointer", transition: "all 0.25s" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#c9a22790"; e.currentTarget.style.transform = "translateY(-3px)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "#c9a22740"; e.currentTarget.style.transform = "none"; }}>
+                    style={{ background: "linear-gradient(160deg, #101011 0%, #0a0a0b 100%)", border: "1px solid #b9bec740", borderRadius: 20, padding: "28px 30px", cursor: "pointer", transition: "all 0.25s" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#b9bec790"; e.currentTarget.style.transform = "translateY(-3px)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "#b9bec740"; e.currentTarget.style.transform = "none"; }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                      <span style={{ background: "#c9a22718", color: "#c9a227", border: "1px solid #c9a22745", borderRadius: 4, padding: "3px 10px", fontSize: 10, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "1px" }}>{course.stage}</span>
+                      <span style={{ background: "#b9bec718", color: "#b9bec7", border: "1px solid #b9bec745", borderRadius: 4, padding: "3px 10px", fontSize: 10, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "1px" }}>{course.stage}</span>
                       <span style={{ color: "#7a7050", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{(course.lessons || []).length} modules · {course.duration}</span>
                     </div>
                     <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(20px,2.2vw,26px)", color: "#f0e6c8", marginBottom: 10, lineHeight: 1.2 }}>{course.title}</h3>
-                    <p style={{ fontSize: 13.5, color: "#8a8060", lineHeight: 1.75, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{course.description}</p>
-                    <button style={{ background: "#c9a227", color: "#141008", border: "none", borderRadius: 8, padding: "10px 22px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Begin →</button>
+                    <p style={{ fontSize: 13.5, color: "#9a9ba2", lineHeight: 1.75, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{course.description}</p>
+                    <button style={{ background: "#b9bec7", color: "#141414", border: "none", borderRadius: 8, padding: "10px 22px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Begin →</button>
                   </div>
                 ))}
               </div>
@@ -1972,7 +1974,7 @@ function PlanCard({ plan, onSelect, seats, compact }) {
     <div style={{ background: plan.popular ? "#0d0404" : "#080404", border: "1px solid " + (plan.popular ? "#b8010130" : "#150000"), borderRadius: 20, padding: "40px 32px", position: "relative", boxShadow: plan.popular ? "0 0 60px rgba(184,1,1,0.08)" : "none" }}>
       {plan.popular && <div style={{ position: "absolute", top: -1, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, transparent, #b80101, transparent)", borderRadius: "20px 20px 0 0" }} />}
       {plan.popular && <div style={{ position: "absolute", top: 16, right: 16, background: "#b8010115", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "3px 10px", fontSize: 9, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase" }}>POPULAR</div>}
-      {plan.best && <div style={{ position: "absolute", top: 16, right: 16, background: "#c9a22715", color: "#c9a227", border: "1px solid #c9a22735", borderRadius: 4, padding: "3px 10px", fontSize: 9, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase" }}>BEST VALUE</div>}
+      {plan.best && <div style={{ position: "absolute", top: 16, right: 16, background: "#b9bec715", color: "#b9bec7", border: "1px solid #b9bec735", borderRadius: 4, padding: "3px 10px", fontSize: 9, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase" }}>BEST VALUE</div>}
 
       <Chip text={plan.name} color={plan.accent} />
 
@@ -2119,22 +2121,22 @@ function PricingPage({ onSignUp }) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, alignItems: "stretch", maxWidth: 1080, margin: "0 auto" }}>
             {passPlans.map((plan, i) => <PlanCard key={i} plan={plan} onSelect={() => startCheckout(plan.name.includes("Single") ? "pass_single" : "pass_all")} />)}
             {lifetime?.cap > 0 && (
-            <div style={{ background: "linear-gradient(160deg, #14100a 0%, #0d0a06 100%)", border: "1px solid #c9a22750", borderRadius: 20, padding: "30px 32px", display: "flex", flexDirection: "column" }}>
+            <div style={{ background: "linear-gradient(160deg, #101011 0%, #0a0a0b 100%)", border: "1px solid #b9bec750", borderRadius: 20, padding: "30px 32px", display: "flex", flexDirection: "column" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 10, color: "#c9a227", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>✦ Lifetime Pass</span>
-                <span style={{ fontSize: 10, color: lifetime.remaining > 0 ? "#8a8060" : "#b80101", fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", border: "1px solid " + (lifetime.remaining > 0 ? "#c9a22740" : "#b8010150"), borderRadius: 4, padding: "2px 8px" }}>{lifetime.remaining > 0 ? `${lifetime.remaining} of ${lifetime.cap} remaining` : "Sold out"}</span>
+                <span style={{ fontSize: 10, color: "#b9bec7", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>✦ Lifetime Pass</span>
+                <span style={{ fontSize: 10, color: lifetime.remaining > 0 ? "#9a9ba2" : "#b80101", fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", border: "1px solid " + (lifetime.remaining > 0 ? "#b9bec740" : "#b8010150"), borderRadius: 4, padding: "2px 8px" }}>{lifetime.remaining > 0 ? `${lifetime.remaining} of ${lifetime.cap} remaining` : "Sold out"}</span>
               </div>
               <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 10 }}>
                 <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(30px,3vw,44px)", color: "#f0e6c8", lineHeight: 1.1 }}>$5,000</span>
-                <span style={{ color: "#8a8060", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>one-time</span>
+                <span style={{ color: "#9a9ba2", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>one-time</span>
               </div>
-              <p style={{ color: "#8a8060", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 14 }}>Every course, in perpetuity — including each new one we ever add.</p>
+              <p style={{ color: "#9a9ba2", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 14 }}>Every course, in perpetuity — including each new one we ever add.</p>
               <ul style={{ listStyle: "none", padding: 0, margin: "0 0 18px" }}>
                 {["Every course forever — new ones included", "One full year of Builder membership, free", "Group office hours with Dr. Merritt — your first 5 years", "Every Lunch & Learn, live & recorded — for life"].map((f, i) => (
-                  <li key={i} style={{ display: "flex", gap: 10, marginBottom: 8, color: "#c8bc9a", fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}><span style={{ color: "#c9a227" }}>✦</span><span>{f}</span></li>
+                  <li key={i} style={{ display: "flex", gap: 10, marginBottom: 8, color: "#c4c7cd", fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}><span style={{ color: "#b9bec7" }}>✦</span><span>{f}</span></li>
                 ))}
               </ul>
-              <button disabled={lifetime.remaining === 0} onClick={() => { if (getMember()) { startCheckout("pass_lifetime"); } else { onSignUp && onSignUp("Free"); } }} style={{ marginTop: "auto", background: lifetime.remaining > 0 ? "#c9a227" : "#3a3428", color: lifetime.remaining > 0 ? "#141008" : "#8a8060", border: "none", borderRadius: 10, padding: "13px 26px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: lifetime.remaining > 0 ? "pointer" : "default" }}>{lifetime.remaining > 0 ? "Own It Forever →" : "This Run Is Sold Out"}</button>
+              <button disabled={lifetime.remaining === 0} onClick={() => { if (getMember()) { startCheckout("pass_lifetime"); } else { onSignUp && onSignUp("Free"); } }} style={{ marginTop: "auto", background: lifetime.remaining > 0 ? "#b9bec7" : "#2e2e33", color: lifetime.remaining > 0 ? "#141414" : "#9a9ba2", border: "none", borderRadius: 10, padding: "13px 26px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: lifetime.remaining > 0 ? "pointer" : "default" }}>{lifetime.remaining > 0 ? "Own It Forever →" : "This Run Is Sold Out"}</button>
             </div>
             )}
           </div>
@@ -2383,7 +2385,7 @@ function ContactPage({ setActivePage, advisorLink }) {
   if (submitted) {
     return (
       <div style={{ background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 16, padding: 48, textAlign: "center", maxWidth: 520 }}>
+        <div style={{ background: "#0d0d0f", border: "1px solid #24242a", borderRadius: 16, padding: 48, textAlign: "center", maxWidth: 520 }}>
           <div style={{ fontSize: 48, marginBottom: 20 }}>✓</div>
           {/* Someone who has paid still has to book a time. Sending them "back to
               home" at this point is the one thing they must not do. */}
@@ -2508,7 +2510,7 @@ function ContactPage({ setActivePage, advisorLink }) {
               </div>
             </div>
             {selected.advisor ? (
-              <div style={{ marginTop: 12, background: "#0d0a04", border: "1px solid #2a2000", borderRadius: 10, padding: "14px 18px", color: "#b8a060", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
+              <div style={{ marginTop: 12, background: "#0d0d0f", border: "1px solid #24242a", borderRadius: 10, padding: "14px 18px", color: "#9a9ba2", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
                 The Full Project Intake stands on its own: Dr. Merritt takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. Retainer pricing: <strong style={{ color: "#e0c4c4" }}>5 hrs/mo — $3,025 · 10 hrs/mo — $5,500 · 15 hrs/mo — $7,700</strong>, everything in Owner included. If you continue into the retainer, <strong style={{ color: "#e0c4c4" }}>the $1,500 is credited against your first month</strong> — it's never wasted money. The intake buys Dr. Merritt's full review of your project — not a conversation. Refunds are at our discretion, and if the call took place without a real deal on the table, <strong style={{ color: "#e0c4c4" }}>$550 — the rate of a 1:1 session with her — is deducted from any refund</strong>. Prefer to talk first? The engagement call is free.
               </div>
             ) : (
@@ -2720,7 +2722,7 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
                 <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
                   <button onClick={() => startCheckout("lnl")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "14px 32px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>One Session — $39.99</button>
                   <button onClick={() => startCheckout("lnl_year")} style={{ background: "transparent", color: "#e0c4c4", border: "1px solid #e0c4c460", borderRadius: 10, padding: "14px 32px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Full Year — $105</button>
-                  <button onClick={() => startCheckout("lnl_life")} style={{ background: "linear-gradient(135deg, #1a1408, #0d0a04)", color: "#c9a227", border: "1px solid #c9a22760", borderRadius: 10, padding: "14px 32px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>✦ Lifetime — $350</button>
+                  <button onClick={() => startCheckout("lnl_life")} style={{ background: "linear-gradient(135deg, #16161a, #0d0d0f)", color: "#b9bec7", border: "1px solid #b9bec760", borderRadius: 10, padding: "14px 32px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer" }}>✦ Lifetime — $350</button>
                 </div>
                 <div style={{ color: "#8f7070", fontSize: 12, fontFamily: font, marginTop: 10 }}>The year pass covers every live session for 12 months — all four quarterly sessions for less than the price of three. The Lifetime Pass is every session and recording, forever.</div>
                 <form onSubmit={redeem} style={{ marginTop: 22, display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
@@ -2791,7 +2793,7 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
 
         {/* Membership discount window */}
         {member && status?.discount_until && new Date(status.discount_until) > new Date() && memberRank < 1 && (
-          <div style={{ background: "#0d0a04", border: "1px solid #e0c4c440", borderRadius: 14, padding: "20px 26px", marginBottom: 36, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
+          <div style={{ background: "#0d0d0f", border: "1px solid #e0c4c440", borderRadius: 14, padding: "20px 26px", marginBottom: 36, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
             <div>
               <div style={{ color: "#e0c4c4", fontWeight: 800, fontSize: 15, fontFamily: font, marginBottom: 4 }}>25% off your first month of membership</div>
               <div style={{ color: "#8a7070", fontSize: 13, fontFamily: font }}>Your Lunch & Learn perk — join by {fmt(status.discount_until)} and mention it when you sign up.</div>
@@ -3363,7 +3365,7 @@ function OfficeHoursPage({ member, onSignIn, setActivePage }) {
                     <div style={{ flex: 1, minWidth: 240 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 4 }}>
                         <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 21, color: "#f0d8d8" }}>{ev.title}</div>
-                        {(ev.audience || "all").startsWith("cohort:") && <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, color: "#e6c766", background: "#c9a22718", border: "1px solid #c9a22745", borderRadius: 4, padding: "2px 8px" }}>Your cohort</span>}
+                        {(ev.audience || "all").startsWith("cohort:") && <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, color: "#d8dce2", background: "#b9bec718", border: "1px solid #b9bec745", borderRadius: 4, padding: "2px 8px" }}>Your cohort</span>}
                         {ev.audience === "elite" && <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, color: "#e0a0a0", background: "#57040430", border: "1px solid #b8010140", borderRadius: 4, padding: "2px 8px" }}>Owner only</span>}
                       </div>
                       <div style={{ color: "#e0c4c4", fontSize: 13.5, fontFamily: font, fontWeight: 700 }}>{new Date(ev.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}{ev.time ? ` · ${ev.time}` : ""}</div>
@@ -3446,7 +3448,7 @@ function OfficeHoursAdmin({ btnRed, btnGhost, inp, lbl }) {
               <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
                 <div style={{ flex: 1, minWidth: 220 }}>
                   <span style={{ color: "#222222", fontSize: 13.5, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{ev.title}</span>
-                  {(() => { const a = ev.audience || "all"; const label = a === "elite" ? "Owner only" : a.startsWith("cohort:") ? "Cohort — " + (partners.find(p => p.slug === a.slice(7))?.name || a.slice(7)) : "General"; const cohort = a.startsWith("cohort:"); return <span style={{ marginLeft: 8, fontSize: 9.5, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", color: cohort ? "#8a5a08" : a === "elite" ? "#570404" : "#1a7a3a", background: cohort ? "#8a5a0814" : a === "elite" ? "#57040414" : "#1a7a3a14", borderRadius: 4, padding: "2px 7px" }}>{label}</span>; })()}
+                  {(() => { const a = ev.audience || "all"; const label = a === "elite" ? "Owner only" : a.startsWith("cohort:") ? "Cohort — " + (partners.find(p => p.slug === a.slice(7))?.name || a.slice(7)) : "General"; const cohort = a.startsWith("cohort:"); return <span style={{ marginLeft: 8, fontSize: 9.5, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", color: cohort ? "#7d6d6d" : a === "elite" ? "#570404" : "#1a7a3a", background: cohort ? "#7d6d6d14" : a === "elite" ? "#57040414" : "#1a7a3a14", borderRadius: 4, padding: "2px 7px" }}>{label}</span>; })()}
                   <span style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 10 }}>{new Date(ev.date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}{ev.time ? ` · ${ev.time}` : ""}{past ? " · past" : ""}</span>
                 </div>
                 <span style={{ color: "#6b6259", fontSize: 12, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>{rsvps.length} RSVP{rsvps.length === 1 ? "" : "s"}</span>
@@ -3661,9 +3663,9 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
         )}
         {(() => {
           const CARD = (p, i) => (
-            <div key={i} style={{ background: p.popular || p.best ? "#0d0404" : "#080404", border: "1px solid " + (p.popular ? "#b8010140" : p.best ? "#c9a22745" : "#150000"), borderRadius: 16, padding: "26px 24px", textAlign: "center", position: "relative" }}>
+            <div key={i} style={{ background: p.popular || p.best ? "#0d0404" : "#080404", border: "1px solid " + (p.popular ? "#b8010140" : p.best ? "#b9bec745" : "#150000"), borderRadius: 16, padding: "26px 24px", textAlign: "center", position: "relative" }}>
               {p.popular && <div style={{ position: "absolute", top: 12, right: 12, background: "#b8010115", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "2px 8px", fontSize: 8, fontFamily: font, fontWeight: 800, letterSpacing: "1.5px" }}>POPULAR</div>}
-              {p.best && <div style={{ position: "absolute", top: 12, right: 12, background: "#c9a22715", color: "#c9a227", border: "1px solid #c9a22735", borderRadius: 4, padding: "2px 8px", fontSize: 8, fontFamily: font, fontWeight: 800, letterSpacing: "1.5px" }}>BEST VALUE</div>}
+              {p.best && <div style={{ position: "absolute", top: 12, right: 12, background: "#b9bec715", color: "#b9bec7", border: "1px solid #b9bec735", borderRadius: 4, padding: "2px 8px", fontSize: 8, fontFamily: font, fontWeight: 800, letterSpacing: "1.5px" }}>BEST VALUE</div>}
               <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>{p.name}</div>
               <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", lineHeight: 1 }}>{p.price}<span style={{ fontSize: 14, color: "#8f7070", fontFamily: font, fontWeight: 400 }}> {p.period}</span></div>
               <p style={{ fontSize: 12.5, color: "#8a7070", lineHeight: 1.7, fontFamily: font, marginTop: 10 }}>{p.desc}</p>
@@ -4713,7 +4715,7 @@ function AdminPanel({ onLogout, onExit }) {
                             <div style={{ color: "#666666", fontSize: 12 }}>{inv.email}</div>
                             {inv.eventTitle && <div style={{ color: "#666666", fontSize: 11, marginTop: 2 }}>{inv.eventTitle}</div>}
                           </div>
-                          <span style={{ fontSize: 10, fontWeight: 700, color: inv.used ? "#22c55e" : "#a08030", letterSpacing: "1px", textTransform: "uppercase", flexShrink: 0 }}>{inv.used ? "Used" : "Pending"}</span>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: inv.used ? "#22c55e" : "#7d6d6d", letterSpacing: "1px", textTransform: "uppercase", flexShrink: 0 }}>{inv.used ? "Used" : "Pending"}</span>
                           <button onClick={() => { navigator.clipboard.writeText(link); setEventInvCopied(inv.id); setTimeout(() => setEventInvCopied(null), 2000); }} style={{ ...btnGhost, flexShrink: 0 }}>{eventInvCopied === inv.id ? "✓ Copied" : "Copy Link"}</button>
                         </div>
                       );
@@ -4741,7 +4743,7 @@ function AdminPanel({ onLogout, onExit }) {
                       </div>
                       <div style={{ color: "#777777", fontSize: 12 }}>{msg.email}</div>
                     </div>
-                    <span style={{ background: msg.status === "responded" ? "#0f3020" : msg.status === "read" ? "#1a1a0a" : "#f0f0f0", color: msg.status === "responded" ? "#22c55e" : msg.status === "read" ? "#a0a020" : "#b80101", borderRadius: 4, padding: "2px 10px", fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>{msg.status}</span>
+                    <span style={{ background: msg.status === "responded" ? "#0f3020" : msg.status === "read" ? "#1a1a0a" : "#f0f0f0", color: msg.status === "responded" ? "#22c55e" : msg.status === "read" ? "#7d6d6d" : "#b80101", borderRadius: 4, padding: "2px 10px", fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>{msg.status}</span>
                   </div>
                   <div style={{ color: "#9a8080", fontSize: 14, lineHeight: 1.75, background: "#ececec", borderRadius: 8, padding: "12px 16px", marginBottom: 14 }}>{msg.message}</div>
                   <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -5061,7 +5063,7 @@ function RevenueTab() {
           );
         })()}
         {statCard("Total Members", users.length, `${tierCounts.Free} on free tier`, "#8a8a8a")}
-        {statCard("Trial Conversions", trialConversions, `${trialPending} invites pending`, "#a08030")}
+        {statCard("Trial Conversions", trialConversions, `${trialPending} invites pending`, "#7d6d6d")}
       </div>
 
       {/* The split: NREUV's share of the MRR vs what stays with the platform.
@@ -5090,7 +5092,7 @@ function RevenueTab() {
             </div>
             <div style={{ height: 10, background: "#efe9e2", borderRadius: 99, overflow: "hidden", display: "flex", marginBottom: 8 }}>
               <div style={{ width: `${pct}%`, background: "linear-gradient(90deg, #570404, #7a1010)" }} />
-              <div style={{ flex: 1, background: "#c9a227" }} />
+              <div style={{ flex: 1, background: "#7d6d6d" }} />
             </div>
             <div style={{ fontSize: 12, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>Memberships split <strong>75% to NREUV</strong> · retainers, 1:1s & intakes <strong>90%</strong> · Lunch & Learn <strong>100%</strong> (one-time revenue like L&L and passes isn't in MRR, so it isn't shown here). Shares are of gross — the platform absorbs Stripe's fees.</div>
           </div>
@@ -5123,7 +5125,7 @@ function RevenueTab() {
               <span style={{ fontSize: 13, color: "#222222", fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>${retainers.retainer_mrr.toFixed(2)}/mo</span>
             </div>
             <div style={{ height: 8, background: "#dcdcdc", borderRadius: 99, overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${mrr > 0 ? (retainers.retainer_mrr / mrr) * 100 : 0}%`, background: "linear-gradient(90deg, #c9a227, #c9a227aa)", borderRadius: 99 }} />
+              <div style={{ height: "100%", width: `${mrr > 0 ? (retainers.retainer_mrr / mrr) * 100 : 0}%`, background: "linear-gradient(90deg, #7d6d6d, #7d6d6daa)", borderRadius: 99 }} />
             </div>
           </div>
         )}
@@ -5151,7 +5153,7 @@ function RevenueTab() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
           {[
             { label: "Sent", value: referrals.length, color: "#8a8a8a" },
-            { label: "Activated", value: trialConversions, color: "#a08030" },
+            { label: "Activated", value: trialConversions, color: "#7d6d6d" },
             { label: "Conversion Rate", value: referrals.length > 0 ? `${Math.round((trialConversions / referrals.length) * 100)}%` : "—", color: "#b80101" },
           ].map((s, i) => (
             <div key={i} style={{ background: "#ececec", border: "1px solid #2a1010", borderRadius: 10, padding: "16px 14px", textAlign: "center" }}>
@@ -5366,7 +5368,7 @@ function UsersTab({ btnRed, btnGhost, inp, lbl, teamOnly = false }) {
                     value={user.partner_slug || ""}
                     onChange={e => patchUser(user.id, { partner_slug: e.target.value || null })}
                     title="Cohort — which partner program this member belongs to"
-                    style={{ background: user.partner_slug ? "#8a5a0815" : "transparent", color: user.partner_slug ? "#8a5a08" : "#9a9a9a", border: "1px solid " + (user.partner_slug ? "#8a5a0850" : "#d8d4cc"), borderRadius: 6, padding: "6px 8px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 11, cursor: "pointer", outline: "none", maxWidth: 140 }}
+                    style={{ background: user.partner_slug ? "#7d6d6d15" : "transparent", color: user.partner_slug ? "#7d6d6d" : "#9a9a9a", border: "1px solid " + (user.partner_slug ? "#7d6d6d50" : "#d8d4cc"), borderRadius: 6, padding: "6px 8px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 11, cursor: "pointer", outline: "none", maxWidth: 140 }}
                   >
                     <option value="" style={{ background: "#ffffff", color: "#222222" }}>No cohort</option>
                     {partners.map(p => <option key={p.slug} value={p.slug} style={{ background: "#ffffff", color: "#222222" }}>{p.name}</option>)}
@@ -5433,7 +5435,7 @@ function ContactsTab({ btnRed, btnGhost, inp, lbl }) {
     a.click();
     URL.revokeObjectURL(a.href);
   };
-  const chipColor = (s) => s.includes("DEAL") ? "#b80101" : s.includes("Insider") ? "#b80101" : s.includes("Member") ? "#1a7a3a" : s.includes("Team") ? "#555555" : s.includes("Gift") ? "#7a4a9a" : s.includes("Lunch") ? "#a06010" : "#888888";
+  const chipColor = (s) => s.includes("DEAL") ? "#b80101" : s.includes("Insider") ? "#b80101" : s.includes("Member") ? "#1a7a3a" : s.includes("Team") ? "#555555" : s.includes("Gift") ? "#7a4a9a" : s.includes("Lunch") ? "#7d6d6d" : "#888888";
   return (
     <div style={{ maxWidth: 820 }}>
       <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#161616", marginBottom: 8 }}>Contacts</h2>
@@ -6290,7 +6292,7 @@ function SystemStatusTab() {
 
       {stripeInfo && (
         <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: "22px 24px", marginBottom: 20 }}>
-          <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: F, marginBottom: 10 }}>Where the money goes — Stripe {!stripeInfo.error && <span style={{ color: stripeInfo.mode === "LIVE" ? "#1a7a3a" : "#b87a08" }}>({stripeInfo.mode})</span>}</div>
+          <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: F, marginBottom: 10 }}>Where the money goes — Stripe {!stripeInfo.error && <span style={{ color: stripeInfo.mode === "LIVE" ? "#1a7a3a" : "#7d6d6d" }}>({stripeInfo.mode})</span>}</div>
           {stripeInfo.error ? (
             <div style={{ fontSize: 13, fontFamily: F, color: "#b80101", lineHeight: 1.7 }}>Couldn't reach Stripe from the server: {stripeInfo.error}</div>
           ) : (
@@ -6428,7 +6430,7 @@ function RetainerTab({ btnRed, btnGhost, inp, lbl }) {
           <div style={{ fontSize: 10, color: "#8a8a8a", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>Paid Sessions & Bookings</div>
           <p style={{ color: "#8a8a8a", fontSize: 12, marginBottom: 16, fontFamily: "'DM Sans', sans-serif" }}>Everyone who paid for a 1:1. Reminders go out automatically after 48 hours if they haven't booked.</p>
           {data.bookings.map(b => {
-            const c = b.status === "booked" ? "#1a7a3a" : b.status === "refunded" ? "#b80101" : "#b8860b";
+            const c = b.status === "booked" ? "#1a7a3a" : b.status === "refunded" ? "#b80101" : "#7d6d6d";
             return (
               <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderBottom: "1px solid #eeebe4", flexWrap: "wrap" }}>
                 <div style={{ flex: 1, minWidth: 190 }}>
@@ -6454,7 +6456,7 @@ function RetainerTab({ btnRed, btnGhost, inp, lbl }) {
       ) : data.retainers.map(r => {
         const used = Number(r.used_this_month || 0);
         const pct = Math.min(100, Math.round((used / Number(r.hours_per_month)) * 100));
-        const color = r.status === "active" ? "#1a7a3a" : r.status === "offered" ? "#b8860b" : "#8a8a8a";
+        const color = r.status === "active" ? "#1a7a3a" : r.status === "offered" ? "#7d6d6d" : "#8a8a8a";
         return (
           <div key={r.id} style={{ ...section, marginBottom: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
@@ -6494,7 +6496,7 @@ function RetainerTab({ btnRed, btnGhost, inp, lbl }) {
                   <div style={{ marginTop: 10 }}>
                     {r.files.map(f => (
                       <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", padding: "4px 0" }}>
-                        {f.kind === "engagement" && <span style={{ background: "#c9a22720", color: "#8a6a10", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, letterSpacing: "1px" }}>ENGAGEMENT</span>}
+                        {f.kind === "engagement" && <span style={{ background: "#6a6a6a18", color: "#5a5a5a", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, letterSpacing: "1px" }}>ENGAGEMENT</span>}
                         <span style={{ color: "#333333", fontWeight: 600 }}>{f.title}</span>
                         {f.url && <a href={f.url} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontWeight: 800, textDecoration: "none" }}>Open ↗</a>}
                       </div>
@@ -6649,7 +6651,7 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
         <p style={sub}>Straight from Brevo: what was delivered, opened, and clicked. Search an address to see one person's history (e.g. did an insider open their welcome?). Opens undercount Apple Mail users; clicks are exact.</p>
         {engage?.stats ? (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 10, marginBottom: 16 }}>
-            {[["Sent", engage.stats.sent, "#666666"], ["Delivered", engage.stats.delivered, "#1a7a3a"], ["Opened", engage.stats.opened, "#a08030"], ["Clicked", engage.stats.clicked, "#b80101"], ["Bounced", engage.stats.bounced, "#8a2020"]].map(([l, v, c]) => (
+            {[["Sent", engage.stats.sent, "#666666"], ["Delivered", engage.stats.delivered, "#1a7a3a"], ["Opened", engage.stats.opened, "#7d6d6d"], ["Clicked", engage.stats.clicked, "#b80101"], ["Bounced", engage.stats.bounced, "#8a2020"]].map(([l, v, c]) => (
               <div key={l} style={{ background: "#faf8f5", border: "1px solid #e0dbd2", borderRadius: 10, padding: "12px 14px", textAlign: "center" }}>
                 <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 26, color: c, lineHeight: 1 }}>{v}</div>
                 <div style={{ fontSize: 9, color: "#8a8a8a", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 5 }}>{l}</div>
@@ -6666,7 +6668,7 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
           <div style={{ maxHeight: 300, overflowY: "auto", border: "1px solid #eeebe4", borderRadius: 10 }}>
             {engage.events.map((e, i) => (
               <div key={i} style={{ display: "flex", gap: 12, alignItems: "baseline", padding: "9px 14px", borderBottom: "1px solid #f2efe8", flexWrap: "wrap" }}>
-                <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", color: e.event === "clicks" || e.event === "click" ? "#b80101" : e.event === "opened" || e.event === "opens" ? "#a08030" : e.event === "delivered" ? "#1a7a3a" : "#8a8a8a", minWidth: 70 }}>{e.event}</span>
+                <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", color: e.event === "clicks" || e.event === "click" ? "#b80101" : e.event === "opened" || e.event === "opens" ? "#7d6d6d" : e.event === "delivered" ? "#1a7a3a" : "#8a8a8a", minWidth: 70 }}>{e.event}</span>
                 <span style={{ fontSize: 12.5, color: "#333333", fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{e.email}</span>
                 <span style={{ fontSize: 12, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif", flex: 1, minWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.subject}</span>
                 <span style={{ fontSize: 11, color: "#b0b0b0", fontFamily: "'DM Sans', sans-serif" }}>{new Date(e.date).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
@@ -7288,7 +7290,7 @@ export default function App() {
       {onboarding && <OnboardingFlow pending={onboarding} onDone={(user) => { setOnboarding(null); setMember(user); sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); }} />}
       {showSignup && <AuthModal allowSignup={!prelaunch} startMode={authMode} onClose={() => { setShowSignup(false); setAuthMode("signup"); }} defaultTier={signupTier} onSignupIntent={(creds) => { setShowSignup(false); setOnboarding(creds); }} onAuthed={(user, how) => { setMember(user); setShowSignup(false); if (user.role === "admin") sessionStorage.setItem("adminToken", localStorage.getItem("guToken") || ""); sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); }} />}
       {trialBanner && (
-        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "#0d0a04", border: "1px solid #b8010140", borderRadius: 14, padding: "18px 28px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 8px 40px rgba(184,1,1,0.2)", maxWidth: 520, width: "calc(100% - 48px)" }}>
+        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "#0d0d0f", border: "1px solid #b8010140", borderRadius: 14, padding: "18px 28px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 8px 40px rgba(184,1,1,0.2)", maxWidth: 520, width: "calc(100% - 48px)" }}>
           <span style={{ flexShrink: 0, display: "flex" }}><Gift size={26} color="#e0c4c4" /></span>
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, color: "#f0d8d8", marginBottom: 3 }}>You've been invited — 7 days of Basic, free.</div>
@@ -7298,7 +7300,7 @@ export default function App() {
         </div>
       )}
       {eventInviteBanner && (
-        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "#0d0a04", border: "1px solid #b8010140", borderRadius: 14, padding: "18px 28px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 8px 40px rgba(184,1,1,0.2)", maxWidth: 520, width: "calc(100% - 48px)" }}>
+        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "#0d0d0f", border: "1px solid #b8010140", borderRadius: 14, padding: "18px 28px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 8px 40px rgba(184,1,1,0.2)", maxWidth: 520, width: "calc(100% - 48px)" }}>
           <span style={{ flexShrink: 0, display: "flex" }}><Ticket size={26} color="#e0c4c4" /></span>
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, color: "#f0d8d8", marginBottom: 3 }}>You've been invited to RSVP!</div>

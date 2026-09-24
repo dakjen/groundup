@@ -56,14 +56,14 @@ const wrap = (inner, toEmail, light) => (light !== 'dark' && light !== true) ? `
       <div style="background:#000000;padding:26px 32px 22px;">
         <img src="${siteUrl()}/icon-192.png" alt="" width="42" height="42" style="display:block;border-radius:10px;margin-bottom:10px;" />
         <div style="font-family:${SANS};font-size:20px;font-weight:bold;color:#ffffff;letter-spacing:1px;margin-bottom:4px;">GROUNDUP</div>
-        <div style="font-family:${SANS};font-size:10px;color:#a08560;letter-spacing:2px;text-transform:uppercase;">for underrepresented developers</div>
+        <div style="font-family:${SANS};font-size:10px;color:#8a8a8a;letter-spacing:2px;text-transform:uppercase;">for underrepresented developers</div>
       </div>
       <div style="height:4px;background:#b80101;font-size:0;line-height:0;">&nbsp;</div>
       <div style="padding:32px 32px 28px;">
         ${inner}
       </div>
       <div style="background:#000000;padding:16px 32px;font-family:${SANS};font-size:11px;color:#7a6151;">
-        Northern Real Estate Urban Ventures · 825 10th St NW, Suite 981, Washington, DC 20001${toEmail ? ` · <a href="${unsubLink(toEmail)}" style="color:#a08560;">Unsubscribe</a>` : ''}
+        Northern Real Estate Urban Ventures · 825 10th St NW, Suite 981, Washington, DC 20001${toEmail ? ` · <a href="${unsubLink(toEmail)}" style="color:#8a8a8a;">Unsubscribe</a>` : ''}
       </div>
     </div>
   </div>` : light === true ? `
@@ -71,10 +71,10 @@ const wrap = (inner, toEmail, light) => (light !== 'dark' && light !== true) ? `
     <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e5dccf;border-radius:16px;padding:36px 32px;color:#333333;">
       <img src="${siteUrl()}/icon-192.png" alt="" width="42" height="42" style="display:block;border-radius:10px;margin-bottom:10px;" />
       <div style="font-size:20px;font-weight:bold;color:#161616;letter-spacing:1px;margin-bottom:4px;">GROUNDUP</div>
-      <div style="font-size:10px;color:#a08560;letter-spacing:2px;text-transform:uppercase;margin-bottom:28px;">for underrepresented developers</div>
+      <div style="font-size:10px;color:#8a8a8a;letter-spacing:2px;text-transform:uppercase;margin-bottom:28px;">for underrepresented developers</div>
       ${inner}
       <div style="border-top:1px solid #efe8db;margin-top:32px;padding-top:16px;font-size:11px;color:#9a9285;">
-        Northern Real Estate Urban Ventures · 825 10th St NW, Suite 981, Washington, DC 20001${toEmail ? ` · <a href="${unsubLink(toEmail)}" style="color:#a08560;">Unsubscribe</a>` : ''}
+        Northern Real Estate Urban Ventures · 825 10th St NW, Suite 981, Washington, DC 20001${toEmail ? ` · <a href="${unsubLink(toEmail)}" style="color:#8a8a8a;">Unsubscribe</a>` : ''}
       </div>
     </div>
   </div>` : `
@@ -240,7 +240,7 @@ export function eventEmail(title, date, time, description, audienceHasAccess) {
     html: `
       <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Upcoming Session</div>
       <h2 style="color:#161616;font-size:24px;margin:0 0 10px;">${title}</h2>
-      <p style="color:#c9a227;font-size:14px;font-weight:bold;margin:0 0 16px;">${date}${time ? ' · ' + time : ''}</p>
+      <p style="color:#b80101;font-size:14px;font-weight:bold;margin:0 0 16px;">${date}${time ? ' · ' + time : ''}</p>
       ${description ? `<p style="color:#444444;font-size:14px;line-height:1.8;">${description}</p>` : ''}
       <p style="color:#444444;font-size:14px;line-height:1.8;">${audienceHasAccess ? 'Your join link is on your Lunch & Learn page — see you there.' : 'Grab a seat to join live — $39.99 per session.'}</p>
       <a href="${siteUrl()}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">${audienceHasAccess ? 'Open Lunch & Learn' : 'Get Access'}</a>`,
@@ -253,7 +253,7 @@ export function lnlReminderEmail(title, date, time, link) {
     html: `
       <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Session Reminder</div>
       <h2 style="color:#161616;font-size:24px;margin:0 0 10px;">${title || 'Lunch & Learn with Dr. Merritt'}</h2>
-      <p style="color:#c9a227;font-size:14px;font-weight:bold;margin:0 0 16px;">${date}${time ? ' · ' + time : ''}</p>
+      <p style="color:#b80101;font-size:14px;font-weight:bold;margin:0 0 16px;">${date}${time ? ' · ' + time : ''}</p>
       <p style="color:#444444;font-size:14px;line-height:1.8;">Hi {{FIRSTNAME}} — your session is coming up. Join with the link below:</p>
       <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Join the Session</a>
       <p style="color:#7a6060;font-size:12px;line-height:1.7;margin-top:14px;">This link is for you — please don't forward it.</p>`,
@@ -266,7 +266,7 @@ export function meetingEmail(name, title, date, time, link) {
     html: `
       <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Your 1-on-1 Session</div>
       <h2 style="color:#161616;font-size:24px;margin:0 0 10px;">${title || 'Session with Dr. Merritt'}</h2>
-      <p style="color:#c9a227;font-size:14px;font-weight:bold;margin:0 0 16px;">${date}${time ? ' · ' + time : ''}</p>
+      <p style="color:#b80101;font-size:14px;font-weight:bold;margin:0 0 16px;">${date}${time ? ' · ' + time : ''}</p>
       <p style="color:#444444;font-size:14px;line-height:1.8;">Hi ${firstName(name)} — your session is coming up. Join with the link below:</p>
       ${link ? `<a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Join the Meeting</a>` : ''}
       <p style="color:#7a6060;font-size:12px;line-height:1.7;margin-top:14px;">Need to reschedule? Reply to this email and the team will take care of it.</p>`,
@@ -425,11 +425,11 @@ export function recommendEmail(name, rec, launchAt, painPoint) {
         <div style="color:#161616;font-size:22px;font-weight:bold;">${rec.label} <span style="color:#666666;font-size:14px;font-weight:normal;">· ${rec.price}</span></div>
         ${rec.features?.length ? `<div style="margin-top:12px;">${rec.features.map(f => `<div style="color:#444444;font-size:13px;line-height:2;"><span style="color:#b80101;">→</span> ${f}</div>`).join('')}</div>` : ''}
       </div>
-      ${rec.stretch ? `<div style="background:#12060a;border:1px solid #c9a22745;border-radius:12px;padding:18px 22px;margin:16px 0;">
-        <div style="font-size:10px;color:#c9a227;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">✦ A special offer, just for you</div>
-        <div style="color:#444444;font-size:13px;line-height:1.8;margin-bottom:8px;">Based on what you're working through, we think <strong style="color:#161616;">${rec.stretch.label}</strong> would serve you better — so we're offering it to you at <strong style="color:#c9a227;">${rec.stretch.offer}</strong>.</div>
-        <div style="color:#444444;font-size:15px;font-weight:bold;">${rec.stretch.label} · ${rec.stretch.price} <span style="color:#c9a227;font-size:13px;">→ ${rec.stretch.offer}</span></div>
-        <div style="margin-top:8px;">${rec.stretch.extras.map(f => `<div style="color:#444444;font-size:12.5px;line-height:1.9;"><span style="color:#c9a227;">+</span> ${f}</div>`).join('')}</div>
+      ${rec.stretch ? `<div style="background:#12060a;border:1px solid #b8010145;border-radius:12px;padding:18px 22px;margin:16px 0;">
+        <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">✦ A special offer, just for you</div>
+        <div style="color:#444444;font-size:13px;line-height:1.8;margin-bottom:8px;">Based on what you're working through, we think <strong style="color:#161616;">${rec.stretch.label}</strong> would serve you better — so we're offering it to you at <strong style="color:#b80101;">${rec.stretch.offer}</strong>.</div>
+        <div style="color:#444444;font-size:15px;font-weight:bold;">${rec.stretch.label} · ${rec.stretch.price} <span style="color:#b80101;font-size:13px;">→ ${rec.stretch.offer}</span></div>
+        <div style="margin-top:8px;">${rec.stretch.extras.map(f => `<div style="color:#444444;font-size:12.5px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}</div>
       </div>` : ''}
       ${rec.next ? `<div style="background:#0d0a04;border:1px solid #2a200030;border-radius:12px;padding:16px 22px;margin:16px 0;">
         <div style="font-size:10px;color:#666666;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">One step up, if you want it</div>
@@ -453,11 +453,11 @@ export function launchEmail(name, rec, link, painPoint, stretchLink) {
         ${rec.features?.length ? `<div style="margin-top:12px;">${rec.features.map(f => `<div style="color:#444444;font-size:13px;line-height:2;"><span style="color:#b80101;">\u2192</span> ${f}</div>`).join('')}</div>` : ''}
       </div>
       <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:14px 30px;font-weight:bold;font-size:15px;text-decoration:none;margin:6px 0;">${rec.ctaLabel || `Join as ${rec.label} \u2014 secure checkout \u2192`}</a>
-      ${rec.stretch && stretchLink ? `<div style="background:#12060a;border:1px solid #c9a22745;border-radius:12px;padding:18px 22px;margin:16px 0;">
-        <div style="font-size:10px;color:#c9a227;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">\u2726 Your special offer is live</div>
-        <div style="color:#444444;font-size:13px;line-height:1.8;margin-bottom:8px;">Based on what you're working through, <strong style="color:#161616;">${rec.stretch.label}</strong> would serve you better \u2014 and your <strong style="color:#c9a227;">${rec.stretch.offer}</strong> is attached to this link:</div>
-        <div style="margin-bottom:10px;">${rec.stretch.extras.map(f => `<div style="color:#444444;font-size:12.5px;line-height:1.9;"><span style="color:#c9a227;">+</span> ${f}</div>`).join('')}</div>
-        <a href="${stretchLink}" style="display:inline-block;background:transparent;color:#c9a227;border:1px solid #c9a22760;border-radius:8px;padding:12px 24px;font-weight:bold;font-size:14px;text-decoration:none;">Claim ${rec.stretch.label} at 10% off \u2192</a>
+      ${rec.stretch && stretchLink ? `<div style="background:#12060a;border:1px solid #b8010145;border-radius:12px;padding:18px 22px;margin:16px 0;">
+        <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">\u2726 Your special offer is live</div>
+        <div style="color:#444444;font-size:13px;line-height:1.8;margin-bottom:8px;">Based on what you're working through, <strong style="color:#161616;">${rec.stretch.label}</strong> would serve you better \u2014 and your <strong style="color:#b80101;">${rec.stretch.offer}</strong> is attached to this link:</div>
+        <div style="margin-bottom:10px;">${rec.stretch.extras.map(f => `<div style="color:#444444;font-size:12.5px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}</div>
+        <a href="${stretchLink}" style="display:inline-block;background:transparent;color:#b80101;border:1px solid #b8010160;border-radius:8px;padding:12px 24px;font-weight:bold;font-size:14px;text-decoration:none;">Claim ${rec.stretch.label} at 10% off \u2192</a>
       </div>` : ''}
       ${rec.next ? `<div style="background:#0d0a04;border:1px solid #2a200030;border-radius:12px;padding:16px 22px;margin:16px 0;">
         <div style="font-size:10px;color:#666666;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">One step up, if you want it</div>
@@ -484,7 +484,7 @@ export function lnlAccessEmail(name, expiresAt, hasLink) {
       <h2 style="color:#161616;font-size:24px;margin:0 0 16px;">You're in, ${firstName(name)}.</h2>
       <p style="color:#444444;font-size:14px;line-height:1.8;">Your seat is reserved${through ? ` — your access runs through <strong style="color:#161616;">${through}</strong>` : ''} for the next live session with Dr. Merritt, its recording included.</p>
       <p style="color:#444444;font-size:14px;line-height:1.8;">${hasLink ? 'The join link for the next session is waiting on your Lunch & Learn page.' : 'The join link for each session appears on your Lunch & Learn page closer to the date.'} While you're there, tell us what you want to learn about — Dr. Merritt's team reads every submission.</p>
-      <p style="color:#c9a227;font-size:14px;line-height:1.8;font-weight:bold;">Your attendee perk: 25% off your first month of membership if you join within two months.</p>
+      <p style="color:#b80101;font-size:14px;line-height:1.8;font-weight:bold;">Your attendee perk: 25% off your first month of membership if you join within two months.</p>
       <p style="color:#444444;font-size:13px;line-height:1.7;">Every recording you have access to lives on your <a href="https://community.drginamerritt.net/lunchlearn" style="color:#b80101;font-weight:bold;">Lunch & Learn page</a> — catch up on any session you missed.</p>
       <a href="https://community.drginamerritt.net" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Open Lunch & Learn</a>
       ${dealSupportBlock()}`,
@@ -543,7 +543,7 @@ export function foundingThanksEmail(name, opts = {}) {
   const marks = {
     [todayKey]: { bg: '#161616', fg: '#ffffff' },
     '2026-11-01': { bg: '#b80101', fg: '#ffffff' },
-    '2026-12-01': { bg: '#a08560', fg: '#ffffff' },
+    '2026-12-01': { bg: '#8a8a8a', fg: '#ffffff' },
     '2026-12-05': { border: '#b80101' },
   };
 
@@ -584,7 +584,7 @@ export function foundingThanksEmail(name, opts = {}) {
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 26px;">
         <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#161616;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">Today</strong> \u2014 you\u2019re on the list</td></tr>
         <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#b80101;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">November 1</strong> \u2014 your account opens, a month before the public. The first 25 who pay become founding members. Claim yours.</td></tr>
-                <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#a08560;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">December 1</strong> \u2014 the doors open to everyone, including every name that found the waitlist this fall. Any founding seats still open are up for grabs.</td></tr>
+                <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#8a8a8a;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">December 1</strong> \u2014 the doors open to everyone, including every name that found the waitlist this fall. Any founding seats still open are up for grabs.</td></tr>
         <tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;border:2px solid #b80101;box-sizing:border-box;vertical-align:middle;margin-right:8px;"></span><strong style="color:#161616;">December 5 \u2014 The Launch Party.</strong> Every founding member is invited \u2014 save the date; your invitation is coming soon.</td></tr>
       </table>
 

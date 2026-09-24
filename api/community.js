@@ -348,7 +348,7 @@ export default async function handler(req, res) {
             const html = `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New post in #${esc(channel.slug || channel.name)}</h2>
               <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${esc(user.name)}</strong> (${esc(user.tier)}) ${parent_id ? 'replied in a thread' : 'posted'}:</p>
               <p style="color:#e8e0da;font-size:14px;line-height:1.8;border-left:3px solid #b80101;padding-left:14px;">${esc(snippet)}</p>
-              <p style="margin-top:18px;"><a href="https://community.drginamerritt.net/community" style="color:#c9a227;font-weight:700;">Open the community →</a></p>`;
+              <p style="margin-top:18px;"><a href="https://community.drginamerritt.net/community" style="color:#b80101;font-weight:700;">Open the community →</a></p>`;
             await sendEmail(gina.email, `💬 ${user.name} posted in #${channel.slug || channel.name}`, html);
           }
         } catch (e) { console.error('channel notify failed', e); }
