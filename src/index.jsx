@@ -2897,7 +2897,7 @@ function ShopPage({ member, onSignIn }) {
   const usd = (c) => "$" + (c / 100).toLocaleString(undefined, { minimumFractionDigits: c % 100 ? 2 : 0 });
 
   const meteredDownload = async (p) => {
-    if (!window.confirm(`Use one of your monthly downloads on "${p.title}"?\n\nPremium includes 3 downloads per month (${data.dl ? data.dl.remaining : 3} left this month). Downloads are final — no refunds once a product has been viewed or downloaded.`)) return;
+    if (!window.confirm(`Use one of your monthly downloads on "${p.title}"?\n\nPremium includes 3 downloads per month (${data.dl ? data.dl.remaining : 3} left this month). Downloads are final — no refunds once a product has been viewed or downloaded.\n\nLicensed for your personal use only: no sharing, reselling, or uploading to AI tools. Your copy may be watermarked and traceable to your account.`)) return;
     try {
       const res = await fetch("/api/resources", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "product_download", id: p.id }) });
       const d = await res.json();
@@ -3032,10 +3032,25 @@ function ShopPage({ member, onSignIn }) {
             <div onClick={e => e.stopPropagation()} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 18, padding: "32px 34px", maxWidth: 460, width: "100%" }}>
               <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "#f5e8e8", marginBottom: 8 }}>{confirmBuy.title}</div>
               <div style={{ color: "#b80101", fontFamily: serif, fontWeight: 700, fontSize: 22, marginBottom: 16 }}>{usd(confirmBuy.price_cents)}</div>
+              <div style={{ background: "#150000", border: "1px solid #2a0000", borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
+                <div style={{ fontSize: 9.5, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>Your license</div>
+                <div style={{ color: "#c8a8a8", fontSize: 12.5, fontFamily: font, lineHeight: 1.75 }}>
+                  This document is the exclusive intellectual property of Dr. Gina Merritt and NREUV. Buying it gives you a <strong style={{ color: "#f0d8d8" }}>personal, non-transferable license</strong> to use it in your own work. You may not:
+                </div>
+                <ul style={{ color: "#c8a8a8", fontSize: 12.5, fontFamily: font, lineHeight: 1.75, margin: "8px 0 0", paddingLeft: 18 }}>
+                  <li>share, forward, or post it, publicly or privately</li>
+                  <li>sell, resell, license, or otherwise commercialize it</li>
+                  <li><strong style={{ color: "#f0d8d8" }}>upload it to any AI tool or use it to train an AI system</strong></li>
+                  <li>copy it into your own materials or resell it as your own work</li>
+                </ul>
+                <div style={{ color: "#8a7070", fontSize: 11.5, fontFamily: font, lineHeight: 1.7, marginTop: 10 }}>
+                  Your copy may be watermarked and traceable to your account. Breaking these terms ends your access without refund and leaves NREUV free to pursue any remedy available to it.
+                </div>
+              </div>
               <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", marginBottom: 18 }}>
                 <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 3 }} />
                 <span style={{ color: "#c8a8a8", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>
-                  I agree this document is the exclusive intellectual property of Dr. Gina Merritt, licensed for my personal use only — I will not sell, share, replicate, or redistribute it in any form. I understand all sales are final once a product has been viewed or downloaded.
+                  I have read the license above and agree to it. I understand all sales are final once a product has been viewed or downloaded.
                 </span>
               </label>
               <div style={{ display: "flex", gap: 10 }}>

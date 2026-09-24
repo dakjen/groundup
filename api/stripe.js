@@ -470,7 +470,11 @@ async function fulfill(sql, session) {
         if (u) await sendEmail(u.email, `Your download is ready: ${p?.title || 'your purchase'}`,
           `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">It's yours, ${firstName(u.name)}.</h2>
            <p style="color:#444444;font-size:14px;line-height:1.8;">Your purchase of <strong style="color:#161616;">${p?.title || 'your document'}</strong> is complete. It now lives in your account permanently — download it any time from the shop or your member page.</p>
-           <p style="color:#444444;font-size:13px;line-height:1.7;">Reminder: this document is for your personal use — reselling or replicating it isn't permitted.</p>
+           <div style="background:#faf7f4;border:1px solid #e8e0d8;border-radius:10px;padding:16px 18px;margin:16px 0;">
+             <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:8px;">Your license</div>
+             <p style="color:#444444;font-size:12.5px;line-height:1.7;margin:0 0 8px;">This document is the exclusive intellectual property of Dr. Gina Merritt and NREUV. Your purchase gives you a <strong style="color:#161616;">personal, non-transferable license</strong> to use it in your own work. You may not share, forward or post it; sell, resell or otherwise commercialize it; <strong style="color:#161616;">upload it to any AI tool or use it to train an AI system</strong>; or copy it into your own materials.</p>
+             <p style="color:#666666;font-size:11.5px;line-height:1.7;margin:0;">Your copy may be watermarked and traceable to your account. Breaking these terms ends your access without refund.</p>
+           </div>
            <a href="${siteUrl()}/shop" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Open Your Downloads</a>${dealSupportBlock()}`);
       } catch (e) { console.error('product email failed', e.message); }
     }
