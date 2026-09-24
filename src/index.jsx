@@ -5922,7 +5922,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
         const advisorRec = allEntries.filter(e => recFor(e).startsWith("Senior")).length;
         const money = (n) => "$" + n.toLocaleString(undefined, { minimumFractionDigits: 2 });
         return (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 20 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 20, alignItems: "stretch" }}>
             {statCard("On the waitlist", allEntries.length, "both lists")}
             {statCard("Anticipated MRR", money(mrrFit), "each joins the plan their budget fits")}
             {(() => {
@@ -5930,17 +5930,17 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
               const arrFit = mrrFit * 12;
               const pct = Math.min(100, (arrFit / GOAL) * 100);
               return (
-                <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: "22px 24px" }}>
+                <div style={{ gridColumn: "span 2", background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: "24px 28px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
                   <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Anticipated ARR</div>
-                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 36, color: "#b80101", lineHeight: 1, marginBottom: 8 }}>{money(arrFit)}</div>
+                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(38px,4.4vw,52px)", color: "#b80101", lineHeight: 1, marginBottom: 10, whiteSpace: "nowrap" }}>{money(arrFit)}</div>
                   <div style={{ height: 7, background: "#efe9e2", borderRadius: 99, overflow: "hidden", marginBottom: 6 }}>
                     <div style={{ height: "100%", width: `${pct}%`, background: pct >= 100 ? "#1a7a3a" : "linear-gradient(90deg, #b80101, #570404)", borderRadius: 99, transition: "width 0.6s ease" }} />
                   </div>
-                  <div style={{ fontSize: 12, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif" }}>{pct >= 100 ? "🎉 Goal hit — $150K ARR" : `${pct.toFixed(1)}% of the $150K goal · ${money(GOAL - arrFit)} to go`}</div>
+                  <div style={{ fontSize: 12, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif" }}>{pct >= 100 ? "🎉 Goal hit — $150K ARR" : <><span style={{ whiteSpace: "nowrap" }}>{pct.toFixed(1)}% of the $150K goal</span>{" · "}<span style={{ whiteSpace: "nowrap" }}>{money(GOAL - arrFit)} to go</span></>}</div>
                 </div>
               );
             })()}
-            {statCard("Retainer leads", advisorRec, `${eliteRec} Owner · ${premiumRec} Premium recommended`)}
+            {statCard("Retainer leads", advisorRec, `${eliteRec} Owner · ${premiumRec} Premium`)}
           </div>
         );
       })()}
