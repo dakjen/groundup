@@ -31,15 +31,20 @@ export default async function handler(req, res) {
         tierRank = TIER_RANK[u?.tier] ?? 0;
         var gate = { active: false }; // shop perks are metered by the monthly cap, not the time gate
       }
-      const rows = await sql`SELECT id, title, description, price_cents, value_cents, cover_url, delivery_url, is_playbook FROM products WHERE active ORDER BY position, id`;
+      const rows = await sql`SELECT id, title, description, price_cents, value_cents, cover_url, delivery_url, is_playbook, page_urls, page_count FROM products WHERE active ORDER BY position, id`;
       // The shelf rules:
-      //   Elite (4)  → unlimited downloads, Playbook included
-      //   Premium (3)→ 3 downloads per billing month (guides & templates);
-      //                the Developer's Playbook stays view-only
-      //   Builder (2)→ view-only across everything
+      //   Owner (4)  → 5 downloads per billing month, Playbook included
+      //   Premium (3)→ read everything, download nothing
+      //   Builder (2)→ read everything, download nothing
       //   below      → buy (a purchase is always a full, permanent download)
+      //
+      // "View" means the PDF is never sent. Those members are served rendered
+      // page images instead, so there is no document to save — only pictures of
+      // one, watermarked and logged. Anything that renders can be screenshotted;
+      // this removes the file, not the screen.
+      const DL_LIMIT = 5;
       let dl = null;
-      if (tierRank === 3 && session?.uid) {
+      if (tierRank >= 4 && session?.uid) {
         const [me2] = await sql`SELECT tier_since FROM users WHERE id = ${session.uid}`;
         const anchor = me2?.tier_since ? new Date(me2.tier_since) : new Date();
         // current billing period start = latest monthly anniversary of tier_since
@@ -47,24 +52,28 @@ export default async function handler(req, res) {
         const periodStart = new Date(anchor);
         periodStart.setFullYear(now.getFullYear(), now.getMonth(), anchor.getDate());
         if (periodStart > now) periodStart.setMonth(periodStart.getMonth() - 1);
-        const [used] = await sql`SELECT COUNT(*)::int AS n FROM download_log WHERE user_id = ${session.uid} AND created_at >= ${periodStart.toISOString()}`;
+        const [used] = await sql`SELECT COUNT(*)::int AS n FROM download_log WHERE user_id = ${session.uid} AND created_at >= ${periodStart.toISOString()} AND COALESCE(kind, 'download') = 'download'`;
         const resetAt = new Date(periodStart); resetAt.setMonth(resetAt.getMonth() + 1);
-        dl = { limit: 3, used: used?.n || 0, remaining: Math.max(0, 3 - (used?.n || 0)), resets_at: resetAt.toISOString() };
+        dl = { limit: DL_LIMIT, used: used?.n || 0, remaining: Math.max(0, DL_LIMIT - (used?.n || 0)), resets_at: resetAt.toISOString() };
       }
       const products = rows.map(p => {
         const bought = owned.includes(p.id);
         let access = 'buy';
-        if (bought || tierRank >= 4) access = 'download';
-        else if (tierRank === 3) access = p.is_playbook ? 'view' : 'metered';
-        else if (tierRank === 2) access = 'view';
+        if (bought) access = 'download';          // they own it outright
+        else if (tierRank >= 4) access = 'metered'; // 5 a month, through the logged action
+        else if (tierRank >= 2) access = 'view';    // Builder and Premium read only
         return {
           id: p.id, title: p.title, description: p.description,
           price_cents: p.price_cents, value_cents: p.value_cents, cover_url: p.cover_url,
           is_playbook: !!p.is_playbook,
           owned: bought, access,
           via: bought ? 'purchase' : tierRank >= 4 ? 'elite' : tierRank >= 2 ? 'premium' : null,
-          // metered downloads go through the product_download action, never a bare URL
-          delivery_url: access === 'download' || access === 'view' ? p.delivery_url : undefined,
+          page_count: p.page_count || (Array.isArray(p.page_urls) ? p.page_urls.length : 0),
+          // The PDF URL goes out only to someone who bought it. Owners collect it
+          // from product_download so the slot is spent and logged; view-only
+          // members get page images and never see the document's address at all.
+          delivery_url: access === 'download' ? p.delivery_url : undefined,
+          page_urls: access === 'view' && Array.isArray(p.page_urls) ? p.page_urls : undefined,
         };
       });
       return res.json({ live: true, tier_rank: tierRank, dl, gate: typeof gate !== "undefined" ? gate : { active: false }, products });
@@ -138,7 +147,8 @@ export default async function handler(req, res) {
 
     if (req.method === 'POST' && req.body && req.body.action === 'product_save') {
       if (!admin) return res.status(401).json({ error: 'Unauthorized' });
-      const { id, title, description, price_cents, value_cents, cover_url, delivery_url, active, position, is_playbook } = req.body;
+      const { id, title, description, price_cents, value_cents, cover_url, delivery_url, active, position, is_playbook, page_urls } = req.body;
+      const pages = Array.isArray(page_urls) ? page_urls.filter(u => typeof u === 'string' && u).slice(0, 500) : null;
       if (!title || !Number.isFinite(Number(price_cents)) || Number(price_cents) < 100) {
         return res.status(400).json({ error: 'Title and a price of at least $1 required' });
       }
@@ -149,12 +159,14 @@ export default async function handler(req, res) {
           title = ${String(title).slice(0, 200)}, description = ${description || null},
           price_cents = ${price}, value_cents = ${value},
           cover_url = ${cover_url || null}, delivery_url = ${delivery_url || null}, is_playbook = ${!!is_playbook},
+          page_urls = COALESCE(${pages ? JSON.stringify(pages) : null}::jsonb, page_urls),
+          page_count = COALESCE(${pages ? pages.length : null}, page_count),
           active = ${active !== false}, position = ${Number(position) || 0}
           WHERE id = ${Number(id)} RETURNING *`;
         return res.json({ product: row });
       }
-      const [row] = await sql`INSERT INTO products (title, description, price_cents, value_cents, cover_url, delivery_url, is_playbook, active, position, created_at)
-        VALUES (${String(title).slice(0, 200)}, ${description || null}, ${price}, ${value}, ${cover_url || null}, ${delivery_url || null}, ${!!is_playbook}, ${active !== false}, ${Number(position) || 0}, NOW()) RETURNING *`;
+      const [row] = await sql`INSERT INTO products (title, description, price_cents, value_cents, cover_url, delivery_url, is_playbook, page_urls, page_count, active, position, created_at)
+        VALUES (${String(title).slice(0, 200)}, ${description || null}, ${price}, ${value}, ${cover_url || null}, ${delivery_url || null}, ${!!is_playbook}, ${pages ? JSON.stringify(pages) : null}::jsonb, ${pages ? pages.length : 0}, ${active !== false}, ${Number(position) || 0}, NOW()) RETURNING *`;
       return res.status(201).json({ product: row });
     }
 
@@ -206,20 +218,19 @@ export default async function handler(req, res) {
       const [p] = await sql`SELECT id, delivery_url, is_playbook FROM products WHERE id = ${Number(req.body.id)} AND active`;
       if (!p || !p.delivery_url) return res.status(404).json({ error: 'Product not found' });
       const [bought] = await sql`SELECT id FROM entitlements WHERE user_id = ${session.uid} AND course_id = ${'prod:' + p.id} LIMIT 1`;
-      if (bought || rank >= 4) return res.json({ url: p.delivery_url }); // owners & Elite: unlimited
-      if (rank !== 3) return res.status(403).json({ error: 'Downloads are a Premium and Owner benefit' });
-      if (p.is_playbook) return res.status(403).json({ error: "The Developer's Playbook is view-only on Premium — Elite members can download it" });
+      if (bought) return res.json({ url: p.delivery_url }); // they bought it; it's theirs
+      if (rank < 4) return res.status(403).json({ error: 'Downloading is an Owner benefit — your plan reads everything in the viewer.' });
       const anchor = u?.tier_since ? new Date(u.tier_since) : new Date();
       const now = new Date();
       const periodStart = new Date(anchor);
       periodStart.setFullYear(now.getFullYear(), now.getMonth(), anchor.getDate());
       if (periodStart > now) periodStart.setMonth(periodStart.getMonth() - 1);
-      const [used] = await sql`SELECT COUNT(*)::int AS n FROM download_log WHERE user_id = ${session.uid} AND created_at >= ${periodStart.toISOString()}`;
-      if ((used?.n || 0) >= 3) {
+      const [used] = await sql`SELECT COUNT(*)::int AS n FROM download_log WHERE user_id = ${session.uid} AND created_at >= ${periodStart.toISOString()} AND COALESCE(kind, 'download') = 'download'`;
+      if ((used?.n || 0) >= 5) {
         const resetAt = new Date(periodStart); resetAt.setMonth(resetAt.getMonth() + 1);
-        return res.status(403).json({ error: `You've used your 3 downloads this month — they reset on ${resetAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}.` });
+        return res.status(403).json({ error: `You've used your 5 downloads this month — they reset on ${resetAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}.` });
       }
-      await sql`INSERT INTO download_log (user_id, product_id, created_at) VALUES (${session.uid}, ${p.id}, NOW())`;
+      await sql`INSERT INTO download_log (user_id, product_id, kind, created_at) VALUES (${session.uid}, ${p.id}, 'download', NOW())`;
       return res.json({ url: p.delivery_url });
     }
 

@@ -32,7 +32,7 @@ export default async function handler(req, res) {
 
       // kind=file (shop deliverable PDF), kind=cover (shop image), kind=avatar
       // (member profile picture), default: lesson PDF
-      const kind = ['cover', 'file', 'avatar', 'prep'].includes(req.query.kind) ? req.query.kind : 'lesson';
+      const kind = ['cover', 'file', 'avatar', 'prep', 'page'].includes(req.query.kind) ? req.query.kind : 'lesson';
       const lower = filePart.filename.toLowerCase();
       const IMG = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp' };
       const imgExt = Object.keys(IMG).find(e => lower.endsWith(e));
@@ -49,6 +49,12 @@ export default async function handler(req, res) {
         if (!ext) return res.status(400).json({ error: 'Send a PDF, Word, Excel, PowerPoint, CSV or image.' });
         if (filePart.data.length > 25 * 1024 * 1024) return res.status(400).json({ error: 'Keep files under 25MB — for anything larger, share a link instead.' });
         folder = 'session-prep'; contentType = PREP[ext];
+      } else if (kind === 'page') {
+        // A rendered page of a shop document — the only thing a view-only member
+        // is ever sent. Images, never the source PDF.
+        if (!imgExt) return res.status(400).json({ error: 'Rendered pages must be PNG, JPG or WEBP' });
+        if (filePart.data.length > 6 * 1024 * 1024) return res.status(400).json({ error: 'Rendered page too large' });
+        folder = 'shop-pages'; contentType = IMG[imgExt];
       } else if (kind === 'cover') {
         if (!imgExt) return res.status(400).json({ error: 'Covers must be PNG, JPG, or WEBP' });
         folder = 'shop-covers'; contentType = IMG[imgExt];

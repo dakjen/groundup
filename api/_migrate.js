@@ -115,6 +115,11 @@ const STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS download_log (
     id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     product_id INTEGER NOT NULL, created_at TIMESTAMP DEFAULT NOW())`,
+  `ALTER TABLE download_log ADD COLUMN IF NOT EXISTS kind TEXT DEFAULT 'download'`,
+  // View-only members are served rendered page images; the PDF itself never
+  // leaves the server for them.
+  `ALTER TABLE products ADD COLUMN IF NOT EXISTS page_urls JSONB`,
+  `ALTER TABLE products ADD COLUMN IF NOT EXISTS page_count INTEGER DEFAULT 0`,
   `ALTER TABLE lnl_rsvps ADD COLUMN IF NOT EXISTS question TEXT`,
   `CREATE TABLE IF NOT EXISTS auth_attempts (
     id SERIAL PRIMARY KEY, key TEXT NOT NULL, created_at TIMESTAMP DEFAULT NOW())`,

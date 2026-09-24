@@ -1867,7 +1867,7 @@ const plans = [
       "The Lunch & Learn recording library",
       "View-only: every guide, template & the Developer's Playbook",
     ],
-    locked: ["Product downloads (Premium gets 3/mo)", "The Opportunity Board & office hours", "Deal-specific support — an Owner benefit"],
+    locked: ["Reading the guides & templates (Builder and up)", "The Opportunity Board & office hours", "Deal-specific support — an Owner benefit"],
   },
   {
     name: "Premium",
@@ -1882,7 +1882,7 @@ const plans = [
     cta: "Go Premium",
     features: [
       "Everything in Builder",
-      "Download 3 guides or templates every month",
+      "Read every guide and template in the library",
       "The Opportunity Board — RFPs, funding windows & deals",
       "JV & Partnerships channel",
       "Lunch & Learn recordings",
@@ -1912,7 +1912,7 @@ const plans = [
       "Deal support — bring YOUR deal to your advisory calls",
       "3 one-on-one advisory calls/yr with Dr. Merritt — unlock after 4 months",
       "30% off 1:1 sessions with Dr. Merritt",
-      "Unlimited downloads — including the Developer's Playbook",
+      "Download 5 guides or templates a month — the Playbook included",
       "Priority Q&A submissions",
       "1–2 small group advisory sessions/yr",
       "1 invite to exclusive networking event — after 4 months",
@@ -2246,7 +2246,7 @@ function PricingPage({ onSignUp }) {
                   ["Live Lunch & Learns with Dr. Merritt", "1 free, ever", "✓", "✓", "✓", "✓"],
                   ["Lunch & Learn recording library", "—", "—", "✓", "✓", "✓"],
                   ["Community", "—", "Read", "Post & network", "Post & network", "Priority"],
-                  ["Guides, templates & the Playbook", "—", "—", "View only", "3 downloads/mo", "Unlimited"],
+                  ["Guides, templates & the Playbook", "—", "—", "Read only", "Read only", "5 downloads/mo"],
                   ["The Opportunity Board — RFPs & funding windows", "—", "—", "—", "✓", "✓"],
                   ["Group office hours with Dr. Merritt", "—", "—", "—", "✓", "✓"],
                   ["Discount on paid 1:1 sessions", "—", "—", "—", "10%", "30%"],
@@ -2897,7 +2897,7 @@ function ShopPage({ member, onSignIn }) {
   const usd = (c) => "$" + (c / 100).toLocaleString(undefined, { minimumFractionDigits: c % 100 ? 2 : 0 });
 
   const meteredDownload = async (p) => {
-    if (!window.confirm(`Use one of your monthly downloads on "${p.title}"?\n\nPremium includes 3 downloads per month (${data.dl ? data.dl.remaining : 3} left this month). Downloads are final — no refunds once a product has been viewed or downloaded.\n\nLicensed for your personal use only: no sharing, reselling, or uploading to AI tools. Your copy may be watermarked and traceable to your account.`)) return;
+    if (!window.confirm(`Use one of your monthly downloads on "${p.title}"?\n\nOwner includes 5 downloads per month (${data.dl ? data.dl.remaining : 5} left this month). Downloads are final — no refunds once a product has been viewed or downloaded.\n\nLicensed for your personal use only: no sharing, reselling, or uploading to AI tools. Your copy may be watermarked and traceable to your account.`)) return;
     try {
       const res = await fetch("/api/resources", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "product_download", id: p.id }) });
       const d = await res.json();
@@ -2972,14 +2972,14 @@ function ShopPage({ member, onSignIn }) {
                   ) : p.access === "metered" ? (
                     <div>
                       <button onClick={() => requireAgreement(() => meteredDownload(p))} disabled={data.dl && data.dl.remaining <= 0} style={{ width: "100%", background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer", opacity: data.dl && data.dl.remaining <= 0 ? 0.5 : 1 }}>
-                        {data.dl && data.dl.remaining <= 0 ? "Monthly downloads used" : `Download — ${data.dl ? data.dl.remaining : 3} of 3 left this month`}
+                        {data.dl && data.dl.remaining <= 0 ? "Monthly downloads used" : `Download — ${data.dl ? data.dl.remaining : 5} of 5 left this month`}
                       </button>
-                      <div style={{ color: "#6a5050", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 6 }}>Included with Premium · Owner gets unlimited</div>
+                      <div style={{ color: "#6a5050", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 6 }}>Included with Owner · 5 a month · or buy it to own it</div>
                     </div>
                   ) : p.access === "view" ? (
                     <div>
-                      <button onClick={() => requireAgreement(() => setViewing(p))} style={{ width: "100%", background: "transparent", color: "#e0c4c4", border: "1px solid #e0c4c455", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>{p.is_playbook ? "View the Playbook — download is Owner-only" : "View — included with your plan"}</button>
-                      <div style={{ color: "#6a5050", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 6 }}>Owner includes unlimited downloads · or buy it to own it</div>
+                      <button onClick={() => requireAgreement(() => setViewing(p))} style={{ width: "100%", background: "transparent", color: "#e0c4c4", border: "1px solid #e0c4c455", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Read it{p.page_count ? ` — ${p.page_count} page${p.page_count === 1 ? "" : "s"}` : ""}</button>
+                      <div style={{ color: "#6a5050", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 6 }}>Read-only on your plan · Owner downloads 5 a month · or buy it to own it</div>
                     </div>
                   ) : (
                     <button onClick={() => { setConfirmBuy(p); setAgreed(false); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Buy — {usd(p.price_cents)}</button>
@@ -2996,12 +2996,29 @@ function ShopPage({ member, onSignIn }) {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, maxWidth: 900, width: "100%", margin: "0 auto 12px" }}>
               <div>
                 <div style={{ color: "#f0d8d8", fontFamily: serif, fontWeight: 700, fontSize: 20 }}>{viewing.title}</div>
-                <div style={{ color: "#8a7070", fontSize: 12, fontFamily: font }}>View-only with Premium — Dr. Merritt's IP, please don't copy or share. Owner members and buyers can download.</div>
+                <div style={{ color: "#8a7070", fontSize: 12, fontFamily: font }}>Read-only on your plan — Dr. Merritt's IP. This copy is watermarked to your account. Owner members and buyers can download the file.</div>
               </div>
               <button onClick={() => setViewing(null)} style={{ background: "#1a0808", color: "#c8a8a8", border: "1px solid #2a0000", borderRadius: 8, padding: "10px 18px", fontFamily: font, fontWeight: 700, fontSize: 13, cursor: "pointer", flexShrink: 0 }}>Close ×</button>
             </div>
-            <div style={{ flex: 1, maxWidth: 900, width: "100%", margin: "0 auto", background: "#0d0404", border: "1px solid #2a0000", borderRadius: 12, overflow: "hidden" }}>
-              <iframe src={`${viewing.delivery_url}#toolbar=0&navpanes=0`} title={viewing.title} style={{ width: "100%", height: "100%", border: "none" }} />
+            <div style={{ flex: 1, maxWidth: 900, width: "100%", margin: "0 auto", background: "#0d0404", border: "1px solid #2a0000", borderRadius: 12, overflow: "auto", padding: 14 }}>
+              {(viewing.page_urls || []).length === 0 ? (
+                <div style={{ color: "#8a7070", fontFamily: font, fontSize: 13, textAlign: "center", padding: "60px 20px", lineHeight: 1.8 }}>
+                  This document hasn't been prepared for reading yet.<br />We've been told — it'll be here shortly.
+                </div>
+              ) : (viewing.page_urls || []).map((u, i) => (
+                <div key={i} style={{ position: "relative", marginBottom: 14 }}>
+                  <img src={u} alt={`Page ${i + 1}`} draggable={false}
+                    onContextMenu={e => e.preventDefault()}
+                    style={{ width: "100%", display: "block", borderRadius: 6, userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none", pointerEvents: "none" }} />
+                  {/* Whose copy this is, on every page. */}
+                  <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", overflow: "hidden" }}>
+                    <div style={{ transform: "rotate(-28deg)", color: "rgba(184,1,1,0.13)", fontFamily: font, fontWeight: 800, fontSize: "clamp(13px,2.4vw,22px)", letterSpacing: "2px", whiteSpace: "nowrap", textAlign: "center", lineHeight: 2 }}>
+                      {member?.email || "GroundUp"} · not for distribution<br />{member?.email || "GroundUp"} · not for distribution
+                    </div>
+                  </div>
+                  <div style={{ position: "absolute", left: 10, bottom: 8, color: "rgba(240,216,216,0.45)", fontSize: 10, fontFamily: font, pointerEvents: "none" }}>Page {i + 1} of {viewing.page_urls.length}</div>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -3072,6 +3089,7 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
   const [msg, setMsg] = useState(null);
   const [busy, setBusy] = useState(false);
   const [csv, setCsv] = useState(null); // { name, rows, bad }
+  const [pages, setPages] = useState(null); // { done, total, urls } while rendering
   const authHeaders = () => ({ Authorization: "Bearer " + sessionStorage.getItem("adminToken") });
   const load = () => fetch("/api/resources?products=1", { headers: authHeaders() }).then(r => r.json()).then(setData).catch(() => {});
   useEffect(() => { load(); }, []);
@@ -3171,13 +3189,56 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Upload failed");
       set(d.url);
-      flash(true, kind === "cover" ? "Cover uploaded." : "PDF uploaded — attach it by saving the product.");
+      if (kind === "file") {
+        // Render the pages here, in this browser, while we still have the file.
+        // Members below Owner are never sent the PDF — they read these images —
+        // so a product without them has nothing to show.
+        await renderPages(file);
+      } else {
+        flash(true, "Cover uploaded.");
+      }
     } catch (e) { flash(false, e.message); } finally { setBusy(false); }
+  };
+
+  // PDF → one image per page, uploaded as the view-only copy of the document.
+  const renderPages = async (file) => {
+    try {
+      setPages({ done: 0, total: 0, urls: [] });
+      const pdfjs = await import("pdfjs-dist");
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.mjs", import.meta.url).toString();
+      const doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+      const total = doc.numPages;
+      setPages({ done: 0, total, urls: [] });
+      const urls = [];
+      for (let n = 1; n <= total; n++) {
+        const page = await doc.getPage(n);
+        // ~1500px wide: sharp enough to read on a laptop, not a print master.
+        const base = page.getViewport({ scale: 1 });
+        const viewport = page.getViewport({ scale: Math.min(2.2, 1500 / base.width) });
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.ceil(viewport.width); canvas.height = Math.ceil(viewport.height);
+        await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+        const blob = await new Promise(r => canvas.toBlob(r, "image/webp", 0.82));
+        const fd = new FormData();
+        fd.append("file", new File([blob], `p${String(n).padStart(3, "0")}.webp`, { type: "image/webp" }));
+        const res = await fetch("/api/lesson-pdfs?kind=page", { method: "POST", headers: authHeaders(), body: fd });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || `Page ${n} failed to upload`);
+        urls.push(d.url);
+        setPages({ done: n, total, urls: [...urls] });
+      }
+      setForm(f => ({ ...f, page_urls: urls }));
+      flash(true, `PDF uploaded and ${total} page${total === 1 ? "" : "s"} rendered for view-only members. Save the product to attach them.`);
+    } catch (e) {
+      setPages(null);
+      flash(false, "The PDF uploaded, but its pages could not be rendered: " + e.message + ". Members below Owner would have nothing to read, so re-upload before publishing.");
+    }
   };
   const save = async () => {
     try {
-      await api2({ action: "product_save", title: form.title, description: form.description, price_cents: Math.round(parseFloat(form.price || "0") * 100), value_cents: form.value ? Math.round(parseFloat(form.value) * 100) : null, delivery_url: form.delivery_url, cover_url: form.cover_url, is_playbook: form.is_playbook });
-      setForm({ title: "", description: "", price: "", value: "", delivery_url: "", cover_url: "", is_playbook: false });
+      await api2({ action: "product_save", title: form.title, description: form.description, price_cents: Math.round(parseFloat(form.price || "0") * 100), value_cents: form.value ? Math.round(parseFloat(form.value) * 100) : null, delivery_url: form.delivery_url, cover_url: form.cover_url, is_playbook: form.is_playbook, page_urls: form.page_urls || null });
+      setForm({ title: "", description: "", price: "", value: "", delivery_url: "", cover_url: "", is_playbook: false, page_urls: null });
+      setPages(null);
       flash(true, "Product added to the shop.");
       await load();
     } catch (e) { flash(false, e.message); }
@@ -3221,6 +3282,16 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
         </label>
         <button onClick={save} disabled={busy || !form.title || !form.price || !form.delivery_url} style={{ ...btnRed, opacity: busy || !form.title || !form.price || !form.delivery_url ? 0.5 : 1 }}>Add to Shop</button>
         {!form.delivery_url && <span style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 12 }}>Upload the PDF first — that's what buyers receive.</span>}
+        {pages && pages.total > 0 && (
+          <div style={{ marginTop: 14 }}>
+            <div style={{ fontSize: 12, color: "#444444", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>
+              {pages.done < pages.total ? `Rendering page ${pages.done + 1} of ${pages.total} for view-only members…` : `${pages.total} page${pages.total === 1 ? "" : "s"} rendered — members below Owner read these, never the PDF.`}
+            </div>
+            <div style={{ height: 6, background: "#efe9e2", borderRadius: 99, overflow: "hidden", maxWidth: 320 }}>
+              <div style={{ height: "100%", width: `${(pages.done / pages.total) * 100}%`, background: pages.done < pages.total ? "#b80101" : "#1a7a3a", borderRadius: 99, transition: "width 0.3s ease" }} />
+            </div>
+          </div>
+        )}
       </div>
 
       <div style={section}>
@@ -3323,7 +3394,7 @@ function TermsPage() {
 
       <h2 style={S.h2}>3. Memberships & billing</h2>
       <p style={S.p}>Plans: Member $49.99/mo · Builder $149.99/mo · Premium $249.99/mo · Owner $499.99/mo (limited seats), plus one-time course passes, Lunch &amp; Learn access, digital products, 1:1 sessions, and advisory retainers. Subscriptions <strong style={S.strong}>renew automatically each month</strong> on your billing date and are charged to your card by Stripe until you cancel. You can <strong style={S.strong}>cancel anytime, self-service</strong>, from Membership &amp; Billing on your member page — access continues through the period you've paid for. Prices may change with advance notice; changes apply from your next billing cycle.</p>
-      <p style={S.p}>Some benefits unlock with tenure: advisory calls, Premium's included yearly session, and networking events open after 4 months of continuous membership. Included one-on-one sessions are use-them-or-lose-them — unused sessions do not roll over or accumulate across years. Premium includes 3 product downloads per billing month (unused downloads don't roll over); the Developer's Playbook is view-only below Owner. Owner seats are limited and offered while available.</p>
+      <p style={S.p}>Some benefits unlock with tenure: advisory calls, Premium's included yearly session, and networking events open after 4 months of continuous membership. Included one-on-one sessions are use-them-or-lose-them — unused sessions do not roll over or accumulate across years. Member, Builder and Premium read the guides, templates and the Developer’s Playbook in the on-site reader; the files themselves are not provided at those tiers. Owner includes 5 downloads per billing month (unused downloads don’t roll over). Anything you buy outright is yours to download permanently. Owner seats are limited and offered while available.</p>
 
       <h2 style={S.h2}>4. Refunds</h2>
       <p style={S.p}><strong style={S.strong}>All sales are final once content has been viewed or downloaded.</strong> For subscriptions: if you cancel <strong style={S.strong}>before the 5th day of the month</strong>, your payment for that month is refunded; cancellations on or after the 5th are not refunded for the current month, and your access continues through the period you paid for. For <strong style={S.strong}>annual subscriptions</strong> (billed once for the year): cancel within the first 6 months — a 10-day grace period past the 6-month mark is honored — and half of your annual payment (6 months) is refunded; more than 10 days into the second half, the refund is forfeited and your access continues through the end of the paid year. Where a statutory cooling-off or refund right applies in your jurisdiction, that right is honored to the extent required by law.</p>
@@ -3783,7 +3854,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
                     ["Live Lunch & Learns with Dr. Merritt", "1 free, ever", "✓", "✓", "✓", "✓"],
                     ["Lunch & Learn recording library", "—", "—", "✓", "✓", "✓"],
                     ["Community", "—", "Read", "Post & network", "Post & network", "Priority"],
-                    ["Guides, templates & the Playbook", "—", "—", "View only", "3 downloads/mo", "Unlimited"],
+                    ["Guides, templates & the Playbook", "—", "—", "Read only", "Read only", "5 downloads/mo"],
                     ["The Opportunity Board — RFPs & funding windows", "—", "—", "—", "✓", "✓"],
                     ["Group office hours with Dr. Merritt", "—", "—", "—", "✓", "✓"],
                     ["Discount on paid 1:1 sessions", "—", "—", "—", "10%", "30%"],

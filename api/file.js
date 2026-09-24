@@ -46,6 +46,33 @@ export default async function handler(req, res) {
     }
   }
 
+  // The shop deliverable is the product itself. A session alone is not enough to
+  // read it — that is what "view only" means here — so it is gated on having
+  // bought it or on Owner tier, matching the shelf rules exactly. Page images
+  // (shop-pages/) are the view-only rendering and open to any reading member.
+  if (!admin && (pathname.startsWith('shop-files/') || pathname.startsWith('shop-pages/'))) {
+    try {
+      const { neon } = await import('@neondatabase/serverless');
+      const sql = neon(process.env.DATABASE_URL);
+      const RANK = { Basic: 1, Builder: 2, Premium: 3, Elite: 4 };
+      const [u] = await sql`SELECT tier FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
+      const rank = RANK[u?.tier] ?? 0;
+
+      if (pathname.startsWith('shop-pages/')) {
+        if (rank < 2) return res.status(403).json({ error: 'Reading the shop is a Builder benefit' });
+      } else {
+        const [p2] = await sql`SELECT id FROM products WHERE delivery_url LIKE ${'%' + pathname} LIMIT 1`;
+        const [own] = p2
+          ? await sql`SELECT 1 AS x FROM entitlements WHERE user_id = ${session.uid} AND course_id = ${'prod:' + p2.id} LIMIT 1`
+          : [null];
+        if (!own && rank < 4) return res.status(403).json({ error: 'That document is view-only on your plan' });
+      }
+    } catch (e) {
+      console.error('shop file gate failed', e.message);
+      return res.status(403).json({ error: 'Could not verify access to that file' });
+    }
+  }
+
   try {
     // `access` is required, and the store is private — omitting it threw, which
     // surfaced as a 500 on every file including avatars.

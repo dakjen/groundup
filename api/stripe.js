@@ -66,8 +66,8 @@ const CATALOG = {
 const DESCRIPTIONS = {
   sub_Basic: 'Every GroundUp course and written lesson, free invites to every live Lunch & Learn, and read access to the community.',
   sub_Builder: 'Everything in Member, plus posting in the community, the Lunch & Learn recording library, and view-only access to every guide and template.',
-  sub_Premium: 'Everything in Builder, plus 3 downloads a month, the Opportunity Board, group office hours with Dr. Merritt, and 10% off 1:1 sessions.',
-  sub_Elite: 'Everything in Premium, plus deal support in your advisory calls, 3 one-on-one calls a year with Dr. Merritt, direct messages, unlimited downloads, and 30% off 1:1 sessions.',
+  sub_Premium: 'Everything in Builder, plus the full guide and template library to read, the Opportunity Board, group office hours with Dr. Merritt, and 10% off 1:1 sessions.',
+  sub_Elite: 'Everything in Premium, plus deal support in your advisory calls, 3 one-on-one calls a year with Dr. Merritt, direct messages, 5 downloads a month, and 30% off 1:1 sessions.',
   pass_single: 'Sixty days of access to one GroundUp course — written lessons and lesson videos.',
   pass_all: 'Thirty days of access to every GroundUp course — written lessons and lesson videos.',
   pass_lifetime: 'Every GroundUp course in perpetuity, one year of Builder membership, group office hours for five years, and every Lunch & Learn — live and recorded — for life.',
