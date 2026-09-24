@@ -158,6 +158,45 @@ export default async function handler(req, res) {
       return res.status(201).json({ product: row });
     }
 
+    // Bulk import from a spreadsheet. Everything lands INACTIVE: a row carries a
+    // title, price, value and description but no document, and a product with
+    // nothing to deliver must never be buyable. Attach each PDF, then publish.
+    if (req.method === 'POST' && req.body && req.body.action === 'product_import') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const rows = Array.isArray(req.body.rows) ? req.body.rows : [];
+      if (!rows.length) return res.status(400).json({ error: 'Nothing to import' });
+      if (rows.length > 200) return res.status(400).json({ error: 'That is more than 200 rows — split the file' });
+
+      const [mx] = await sql`SELECT COALESCE(MAX(position), 0) AS p FROM products`;
+      let pos = Number(mx?.p || 0);
+      const created = [], skipped = [];
+
+      for (let i = 0; i < rows.length; i++) {
+        const line = Number(rows[i]?.line) || i + 1; // nth data row, not the file line
+        const title = String(rows[i]?.title || '').trim().slice(0, 200);
+        if (!title) { skipped.push({ line, title: '', reason: 'No title' }); continue; }
+
+        const price = Math.round(Number(rows[i]?.price_cents));
+        if (!Number.isFinite(price) || price < 100) {
+          skipped.push({ line, title, reason: 'Price must be at least $1' });
+          continue;
+        }
+        const rawValue = Number(rows[i]?.value_cents);
+        const value = Number.isFinite(rawValue) && rawValue > 0 ? Math.round(rawValue) : null;
+
+        // Re-importing the same sheet shouldn't double the shelf.
+        const [dupe] = await sql`SELECT id FROM products WHERE lower(title) = lower(${title}) LIMIT 1`;
+        if (dupe) { skipped.push({ line, title, reason: 'Already in the shop' }); continue; }
+
+        pos++;
+        const [row] = await sql`INSERT INTO products (title, description, price_cents, value_cents, cover_url, delivery_url, is_playbook, active, position, created_at)
+          VALUES (${title}, ${String(rows[i]?.description || '').trim() || null}, ${price}, ${value}, NULL, NULL, FALSE, FALSE, ${pos}, NOW())
+          RETURNING id, title, price_cents, value_cents`;
+        created.push(row);
+      }
+      return res.json({ created: created.length, skipped, products: created });
+    }
+
     // Premium's metered download: burns one of the 3 monthly slots, returns the file
     if (req.method === 'POST' && req.body && req.body.action === 'product_download') {
       const session = getSession(req);

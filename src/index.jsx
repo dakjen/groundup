@@ -3071,6 +3071,7 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
   const [form, setForm] = useState({ title: "", description: "", price: "", value: "", delivery_url: "", cover_url: "", is_playbook: false });
   const [msg, setMsg] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [csv, setCsv] = useState(null); // { name, rows, bad }
   const authHeaders = () => ({ Authorization: "Bearer " + sessionStorage.getItem("adminToken") });
   const load = () => fetch("/api/resources?products=1", { headers: authHeaders() }).then(r => r.json()).then(setData).catch(() => {});
   useEffect(() => { load(); }, []);
@@ -3080,6 +3081,85 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
     const d = await res.json();
     if (!res.ok) throw new Error(d.error || "Failed");
     return d;
+  };
+
+  // A spreadsheet dialect, not RFC 4180 lawyering: quoted fields, doubled quotes
+  // inside them, commas and newlines inside quotes, and CRLF endings.
+  const parseCsv = (text) => {
+    const out = [];
+    let row = [], field = "", quoted = false;
+    const src = String(text).replace(/^\uFEFF/, "");
+    for (let i = 0; i < src.length; i++) {
+      const c = src[i];
+      if (quoted) {
+        if (c === '"') {
+          if (src[i + 1] === '"') { field += '"'; i++; }
+          else quoted = false;
+        } else field += c;
+      } else if (c === '"') quoted = true;
+      else if (c === ",") { row.push(field); field = ""; }
+      else if (c === "\n" || c === "\r") {
+        if (c === "\r" && src[i + 1] === "\n") i++;
+        row.push(field); field = "";
+        if (row.some(v => v.trim() !== "")) out.push(row);
+        row = [];
+      } else field += c;
+    }
+    row.push(field);
+    if (row.some(v => v.trim() !== "")) out.push(row);
+    return out;
+  };
+
+  // "$1,299.00" and "1299" both mean the same thing to someone filling in a sheet.
+  const toCents = (raw) => {
+    const n = Number(String(raw == null ? "" : raw).replace(/[^0-9.\-]/g, ""));
+    return Number.isFinite(n) && n > 0 ? Math.round(n * 100) : null;
+  };
+
+  const readCsv = async (file) => {
+    if (!file) return;
+    try {
+      const table = parseCsv(await file.text());
+      if (table.length < 2) throw new Error("That file has a header but no rows.");
+      const head = table[0].map(h => h.trim().toLowerCase());
+      const find = (...names) => head.findIndex(h => names.includes(h));
+      const iTitle = find("name", "title", "product", "product name");
+      const iPrice = find("price", "cost", "amount");
+      const iValue = find("value", "worth", "retail", "list price");
+      const iDesc  = find("description", "desc", "details", "summary");
+      if (iTitle < 0 || iPrice < 0) {
+        throw new Error("Needs a name column and a price column. Found: " + head.join(", "));
+      }
+      const rows = [], bad = [];
+      table.slice(1).forEach((r, n) => {
+        const line = n + 1; // nth data row; blank lines are dropped, so this is not the file line
+        const title = (r[iTitle] || "").trim();
+        const price_cents = toCents(r[iPrice]);
+        const entry = {
+          line, title, price_cents,
+          value_cents: iValue >= 0 ? toCents(r[iValue]) : null,
+          description: iDesc >= 0 ? (r[iDesc] || "").trim() : "",
+        };
+        if (!title) bad.push({ line, title: "", reason: "No name" });
+        else if (!price_cents || price_cents < 100) bad.push({ line, title, reason: "Price must be at least $1" });
+        else rows.push(entry);
+      });
+      setCsv({ name: file.name, rows, bad });
+      flash(true, `Read ${rows.length} product${rows.length === 1 ? "" : "s"} from ${file.name}${bad.length ? ` — ${bad.length} row(s) can't be used` : ""}. Nothing imported yet.`);
+    } catch (e) { setCsv(null); flash(false, e.message); }
+  };
+
+  const importCsv = async () => {
+    if (!csv?.rows?.length) return;
+    setBusy(true);
+    try {
+      const d = await api2({ action: "product_import", rows: csv.rows });
+      const skipped = (d.skipped || []).length;
+      flash(true, `Added ${d.created} product${d.created === 1 ? "" : "s"} as drafts${skipped ? `, skipped ${skipped}` : ""}. Upload each PDF, then publish.`);
+      setCsv(null);
+      await load();
+    } catch (e) { flash(false, e.message); }
+    setBusy(false);
   };
   const upload = async (file, kind, set) => {
     if (!file) return;
@@ -3141,6 +3221,52 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
         </label>
         <button onClick={save} disabled={busy || !form.title || !form.price || !form.delivery_url} style={{ ...btnRed, opacity: busy || !form.title || !form.price || !form.delivery_url ? 0.5 : 1 }}>Add to Shop</button>
         {!form.delivery_url && <span style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 12 }}>Upload the PDF first — that's what buyers receive.</span>}
+      </div>
+
+      <div style={section}>
+        <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Import from a spreadsheet</div>
+        <p style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", margin: "0 0 14px", lineHeight: 1.7 }}>
+          A CSV with columns for <strong>name</strong>, <strong>price</strong>, <strong>value</strong> and <strong>description</strong>. Name and price are required; the other two are optional. Prices can be written as <em>49.99</em> or <em>$1,299.00</em>.
+          Everything imports as a <strong>draft</strong> — a product with no document attached can't be sold, so you'll add each PDF and publish it afterwards.
+        </p>
+        <label style={{ background: "#b80101", color: "#fff", borderRadius: 8, padding: "9px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer", display: "inline-block" }}>
+          Choose CSV<input type="file" accept=".csv,text/csv" onChange={e => { readCsv(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} />
+        </label>
+
+        {csv && (
+          <div style={{ marginTop: 18 }}>
+            <div style={{ fontSize: 12, color: "#444444", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, marginBottom: 10 }}>{csv.name} — {csv.rows.length} ready{csv.bad.length ? `, ${csv.bad.length} unusable` : ""}</div>
+            {csv.rows.length > 0 && (
+              <div style={{ border: "1px solid #e8e2d8", borderRadius: 10, overflow: "hidden", marginBottom: 12 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "2fr 90px 90px 3fr", gap: 10, padding: "9px 14px", background: "#faf7f2", fontSize: 10, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", color: "#666666", fontFamily: "'DM Sans', sans-serif" }}>
+                  <span>Name</span><span>Price</span><span>Value</span><span>Description</span>
+                </div>
+                {csv.rows.slice(0, 12).map(r => (
+                  <div key={r.line} style={{ display: "grid", gridTemplateColumns: "2fr 90px 90px 3fr", gap: 10, padding: "9px 14px", borderTop: "1px solid #f2efe8", fontSize: 12, fontFamily: "'DM Sans', sans-serif", color: "#444444" }}>
+                    <span style={{ fontWeight: 700, color: "#161616" }}>{r.title}</span>
+                    <span>${(r.price_cents / 100).toFixed(2)}</span>
+                    <span style={{ color: "#8d847a" }}>{r.value_cents ? "$" + (r.value_cents / 100).toFixed(2) : "—"}</span>
+                    <span style={{ color: "#8d847a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.description || "—"}</span>
+                  </div>
+                ))}
+                {csv.rows.length > 12 && <div style={{ padding: "9px 14px", borderTop: "1px solid #f2efe8", fontSize: 12, color: "#8d847a", fontFamily: "'DM Sans', sans-serif" }}>…and {csv.rows.length - 12} more</div>}
+              </div>
+            )}
+            {csv.bad.length > 0 && (
+              <div style={{ background: "#fdf0f0", border: "1px solid #b8010130", borderRadius: 10, padding: "12px 16px", marginBottom: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: "#b80101", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>These rows won't import</div>
+                {csv.bad.slice(0, 8).map(b => (
+                  <div key={b.line} style={{ fontSize: 12, color: "#8a3a3a", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>Row {b.line}{b.title ? ` — ${b.title}` : ""}: {b.reason}</div>
+                ))}
+                {csv.bad.length > 8 && <div style={{ fontSize: 12, color: "#8a3a3a", fontFamily: "'DM Sans', sans-serif" }}>…and {csv.bad.length - 8} more</div>}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button onClick={importCsv} disabled={busy || !csv.rows.length} style={{ ...btnRed, opacity: busy || !csv.rows.length ? 0.5 : 1 }}>{busy ? "Importing…" : `Import ${csv.rows.length} as drafts`}</button>
+              <button onClick={() => setCsv(null)} style={btnGhost}>Cancel</button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div style={section}>
