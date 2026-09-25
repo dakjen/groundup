@@ -1161,7 +1161,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited }) {
         {[
           { val: String(courseCount), label: "Courses" },
           { val: "$6B+", label: "Transactions Underwritten" },
-          { val: "8,000", label: "Units Built" },
+          { val: "8,000+", label: "Units Built" },
           { val: "30+", label: "Years of Experience" },
         ].map((s, i) => (
           <div key={i} style={{ padding: "28px 20px", textAlign: "center", borderRight: i < 3 ? "1px solid #1a0000" : "none" }}>
