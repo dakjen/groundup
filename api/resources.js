@@ -367,9 +367,20 @@ export default async function handler(req, res) {
       const courseIds = (Array.isArray(req.body.course_ids) ? req.body.course_ids : []).map(String).slice(0, 50);
       const logo = req.body.logo_url ? String(req.body.logo_url) : null;
       const active = req.body.active !== false;
-      const [row] = await sql`INSERT INTO partners (slug, name, logo_url, course_ids, active, created_at)
-        VALUES (${slug}, ${name}, ${logo}, ${JSON.stringify(courseIds)}, ${active}, NOW())
-        ON CONFLICT (slug) DO UPDATE SET name = ${name}, logo_url = ${logo}, course_ids = ${JSON.stringify(courseIds)}, active = ${active}
+      // The program itself: how often it meets, between which dates, how many
+      // seats, and the room it meets in.
+      const cadence = ['weekly', 'biweekly', 'custom'].includes(req.body.cadence) ? req.body.cadence : null;
+      const okDate = (d) => (d && !isNaN(Date.parse(d)) ? String(d).slice(0, 10) : null);
+      const startsOn = okDate(req.body.starts_on);
+      const endsOn = okDate(req.body.ends_on);
+      const seats = Number.isFinite(Number(req.body.seats)) && Number(req.body.seats) > 0 ? Math.round(Number(req.body.seats)) : null;
+      const meetingLink = req.body.meeting_link ? String(req.body.meeting_link).slice(0, 500) : null;
+      const program = req.body.program ? String(req.body.program).slice(0, 4000) : null;
+      const [row] = await sql`INSERT INTO partners (slug, name, logo_url, course_ids, active, cadence, starts_on, ends_on, seats, meeting_link, program, created_at)
+        VALUES (${slug}, ${name}, ${logo}, ${JSON.stringify(courseIds)}, ${active}, ${cadence}, ${startsOn}, ${endsOn}, ${seats}, ${meetingLink}, ${program}, NOW())
+        ON CONFLICT (slug) DO UPDATE SET name = ${name}, logo_url = ${logo}, course_ids = ${JSON.stringify(courseIds)}, active = ${active},
+          cadence = ${cadence}, starts_on = ${startsOn}, ends_on = ${endsOn}, seats = ${seats},
+          meeting_link = ${meetingLink}, program = ${program}
         RETURNING *`;
       // Every cohort gets its own private channel — visible only to members
       // whose account carries this partner_slug (and the team).

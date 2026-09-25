@@ -1,6 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 import { getSession, getAdmin, TIER_RANK, benefitGate } from './_utils.js';
 import { sendEmail, lnlAccessEmail, addLnlContact } from './_email.js';
+import { wallToUtc, partsIn } from './_gcal.js';
 
 // Lunch & Learn onboarding: $69.99 buys 6 months of access (entitlement
 // course_id 'lunchlearn'); comp coupons grant the same. Access also starts a
@@ -8,8 +9,8 @@ import { sendEmail, lnlAccessEmail, addLnlContact } from './_email.js';
 
 const SIX_MONTHS = "interval '6 months'";
 
-// Per-session audience for office hours. audience: 'all' (every eligible
-// tier) | 'elite' (Owner only) | 'cohort:<partner_slug>' (one partner cohort).
+// Per-session audience for office hours and classes. audience: 'all' (every
+// eligible tier) | 'elite' (Owner only) | 'cohort:<partner_slug>' (one cohort).
 // Cohort sessions ignore the tier line — the cohort was invited, full stop.
 function audienceFits(ev, me, rank) {
   const a = ev.audience || 'all';
@@ -202,9 +203,81 @@ export default async function handler(req, res) {
       const events = await getEvents(sql);
       const aud = String(req.body.audience || 'all');
       const audience = aud === 'elite' || /^cohort:[a-z0-9-]+$/.test(aud) ? aud : 'all';
-      events.push({ id: String(Date.now()), kind: kind === 'office' ? 'office' : 'lnl', title: String(title).slice(0, 200), date, time: (time || '').slice(0, 50), description: (description || '').slice(0, 500), ...(kind === 'office' ? { audience } : {}) });
+      const k = kind === 'office' ? 'office' : kind === 'class' ? 'class' : 'lnl';
+      // A class is taught to one cohort, so it must name one — otherwise it
+      // would fall through to 'all' and appear as a general office hour.
+      if (k === 'class' && !/^cohort:[a-z0-9-]+$/.test(audience)) {
+        return res.status(400).json({ error: 'A class has to belong to a cohort' });
+      }
+      events.push({ id: String(Date.now()), kind: k, title: String(title).slice(0, 200), date, time: (time || '').slice(0, 50), description: (description || '').slice(0, 500),
+        ...(k === 'office' || k === 'class' ? { audience } : {}),
+        ...(req.body.link ? { link: String(req.body.link).slice(0, 500) } : {}) });
       await saveEvents(sql, events);
       return res.json({ success: true, events });
+    }
+
+    // Build a whole term of synchronous classes in one go. A 12-week program is
+    // 12 sessions; typing them one at a time invites gaps and typos, and the
+    // cadence is the thing being sold, so it is generated rather than entered.
+    if (action === 'add_class_series') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const slug = String(req.body.slug || '').toLowerCase().trim();
+      if (!/^[a-z0-9-]+$/.test(slug)) return res.status(400).json({ error: 'Which cohort?' });
+      const [cohort] = await sql`SELECT slug, name, meeting_link FROM partners WHERE slug = ${slug}`;
+      if (!cohort) return res.status(404).json({ error: 'No cohort with that slug' });
+
+      const first = String(req.body.first_date || '');
+      if (isNaN(Date.parse(first))) return res.status(400).json({ error: 'Give the first class a valid date' });
+      const count = Math.min(52, Math.max(1, Number(req.body.count) || 0));
+      if (!count) return res.status(400).json({ error: 'How many classes?' });
+      const cadence = req.body.cadence === 'biweekly' ? 'biweekly' : 'weekly';
+      const step = cadence === 'biweekly' ? 14 : 7;
+      const time = String(req.body.time || '').slice(0, 50);
+      const link = String(req.body.link || cohort.meeting_link || '').slice(0, 500);
+      // Titles are optional; anything not named becomes "Class N" and can be
+      // renamed later through update_event.
+      const titles = Array.isArray(req.body.titles) ? req.body.titles : [];
+      const base = String(req.body.title || 'Class').slice(0, 120);
+
+      const events = await getEvents(sql);
+      const made = [];
+      // Step the series in Eastern wall-clock, not in UTC. A term that crosses
+      // the November change would otherwise slide an hour partway through —
+      // 11am ET becomes 10am ET — because the server runs on UTC and adding
+      // seven days there keeps the UTC time, not the class time.
+      const TZ = 'America/New_York';
+      const at = partsIn(new Date(first), TZ);
+      for (let i = 0; i < count; i++) {
+        const shifted = new Date(Date.UTC(at.y, at.m - 1, at.d + i * step, 12, 0, 0));
+        const d = wallToUtc(shifted.getUTCFullYear(), shifted.getUTCMonth() + 1, shifted.getUTCDate(), at.hh, at.mm, TZ);
+        const ev = {
+          id: String(Date.now()) + '-' + i,
+          kind: 'class',
+          title: (titles[i] && String(titles[i]).slice(0, 200)) || `${base} ${i + 1}`,
+          date: d.toISOString(),
+          time,
+          description: String(req.body.description || '').slice(0, 500),
+          audience: 'cohort:' + slug,
+          ...(link ? { link } : {}),
+        };
+        events.push(ev);
+        made.push(ev);
+      }
+      await saveEvents(sql, events);
+      return res.json({ success: true, created: made.length, cadence, events: made });
+    }
+
+    // Drop a whole cohort's classes at once — rescheduling a term usually means
+    // rebuilding it, and removing 12 sessions by hand is where mistakes happen.
+    if (action === 'clear_class_series') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const slug = String(req.body.slug || '').toLowerCase().trim();
+      if (!/^[a-z0-9-]+$/.test(slug)) return res.status(400).json({ error: 'Which cohort?' });
+      const events = await getEvents(sql);
+      const keep = events.filter(e => !(e.kind === 'class' && e.audience === 'cohort:' + slug));
+      const removed = events.length - keep.length;
+      await saveEvents(sql, keep);
+      return res.json({ success: true, removed });
     }
 
     // Rename / relabel a scheduled session (past or upcoming)

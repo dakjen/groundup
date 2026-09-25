@@ -120,6 +120,14 @@ const STATEMENTS = [
   // leaves the server for them.
   `ALTER TABLE products ADD COLUMN IF NOT EXISTS page_urls JSONB`,
   `ALTER TABLE products ADD COLUMN IF NOT EXISTS page_count INTEGER DEFAULT 0`,
+  // A cohort is a taught program, not a bulk licence: it runs on a cadence,
+  // between two dates, in a room of its own.
+  `ALTER TABLE partners ADD COLUMN IF NOT EXISTS cadence TEXT`,
+  `ALTER TABLE partners ADD COLUMN IF NOT EXISTS starts_on DATE`,
+  `ALTER TABLE partners ADD COLUMN IF NOT EXISTS ends_on DATE`,
+  `ALTER TABLE partners ADD COLUMN IF NOT EXISTS seats INTEGER`,
+  `ALTER TABLE partners ADD COLUMN IF NOT EXISTS meeting_link TEXT`,
+  `ALTER TABLE partners ADD COLUMN IF NOT EXISTS program TEXT`,
   `ALTER TABLE lnl_rsvps ADD COLUMN IF NOT EXISTS question TEXT`,
   `CREATE TABLE IF NOT EXISTS auth_attempts (
     id SERIAL PRIMARY KEY, key TEXT NOT NULL, created_at TIMESTAMP DEFAULT NOW())`,
