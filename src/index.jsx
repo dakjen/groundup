@@ -3085,7 +3085,7 @@ function ShopPage({ member, onSignIn }) {
 // Admin: create and manage shop products — uploads, prices, value framing, visibility
 function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
   const [data, setData] = useState(null);
-  const [form, setForm] = useState({ title: "", description: "", price: "", value: "", delivery_url: "", cover_url: "", is_playbook: false });
+  const [form, setForm] = useState({ id: null, title: "", description: "", price: "", value: "", delivery_url: "", cover_url: "", is_playbook: false, page_urls: null, active: true });
   const [msg, setMsg] = useState(null);
   const [busy, setBusy] = useState(false);
   const [csv, setCsv] = useState(null); // { name, rows, bad }
@@ -3234,12 +3234,37 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
       flash(false, "The PDF uploaded, but its pages could not be rendered: " + e.message + ". Members below Owner would have nothing to read, so re-upload before publishing.");
     }
   };
+  const blankForm = { id: null, title: "", description: "", price: "", value: "", delivery_url: "", cover_url: "", is_playbook: false, page_urls: null, active: true };
+
+  const edit = (p) => {
+    setForm({
+      id: p.id, title: p.title || "", description: p.description || "",
+      price: p.price_cents ? (p.price_cents / 100).toFixed(2) : "",
+      value: p.value_cents ? (p.value_cents / 100).toFixed(2) : "",
+      delivery_url: p.delivery_url || "", cover_url: p.cover_url || "",
+      is_playbook: !!p.is_playbook, page_urls: null, active: p.active !== false,
+    });
+    setPages(null);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const save = async () => {
     try {
-      await api2({ action: "product_save", title: form.title, description: form.description, price_cents: Math.round(parseFloat(form.price || "0") * 100), value_cents: form.value ? Math.round(parseFloat(form.value) * 100) : null, delivery_url: form.delivery_url, cover_url: form.cover_url, is_playbook: form.is_playbook, page_urls: form.page_urls || null });
-      setForm({ title: "", description: "", price: "", value: "", delivery_url: "", cover_url: "", is_playbook: false, page_urls: null });
+      await api2({
+        action: "product_save", id: form.id || undefined,
+        title: form.title, description: form.description,
+        price_cents: Math.round(parseFloat(form.price || "0") * 100),
+        value_cents: form.value ? Math.round(parseFloat(form.value) * 100) : null,
+        delivery_url: form.delivery_url, cover_url: form.cover_url,
+        is_playbook: form.is_playbook, page_urls: form.page_urls || null,
+        // Carried explicitly: a saved edit must not publish something that was
+        // sitting as a draft, and product_save treats a missing flag as visible.
+        active: form.id ? form.active : true,
+      });
+      const editing = !!form.id;
+      setForm(blankForm);
       setPages(null);
-      flash(true, "Product added to the shop.");
+      flash(true, editing ? "Product updated." : "Product added to the shop.");
       await load();
     } catch (e) { flash(false, e.message); }
   };
@@ -3259,7 +3284,11 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
       </div>
 
       <div style={section}>
-        <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Add a product</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
+          <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{form.id ? `Editing — ${form.title || "product"}` : "Add a product"}</div>
+          {form.id && <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", color: form.active ? "#1a7a3a" : "#8d847a", border: "1px solid " + (form.active ? "#1a7a3a40" : "#d8d4cc"), borderRadius: 4, padding: "2px 8px" }}>{form.active ? "Visible" : "Draft"}</span>}
+          {form.id && <button onClick={() => { setForm(blankForm); setPages(null); }} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Cancel edit</button>}
+        </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", columnGap: 20, rowGap: 16, marginBottom: 14 }}>
           <div><label style={lbl}>Title</label><input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Development Budget Template" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
           <div><label style={lbl}>Price ($)</label><input type="number" min="1" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} placeholder="49.99" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
@@ -3280,8 +3309,8 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
           <input type="checkbox" checked={!!form.is_playbook} onChange={e => setForm({ ...form, is_playbook: e.target.checked })} />
           This is the Developer's Playbook — view-only for everyone below Owner
         </label>
-        <button onClick={save} disabled={busy || !form.title || !form.price || !form.delivery_url} style={{ ...btnRed, opacity: busy || !form.title || !form.price || !form.delivery_url ? 0.5 : 1 }}>Add to Shop</button>
-        {!form.delivery_url && <span style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 12 }}>Upload the PDF first — that's what buyers receive.</span>}
+        <button onClick={save} disabled={busy || !form.title || !form.price || (!form.id && !form.delivery_url)} style={{ ...btnRed, opacity: busy || !form.title || !form.price || (!form.id && !form.delivery_url) ? 0.5 : 1 }}>{form.id ? "Save changes" : "Add to Shop"}</button>
+        {!form.delivery_url && <span style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 12 }}>{form.id ? "No document attached yet — upload one before making this visible." : "Upload the PDF first — that's what buyers receive."}</span>}
         {pages && pages.total > 0 && (
           <div style={{ marginTop: 14 }}>
             <div style={{ fontSize: 12, color: "#444444", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>
@@ -3353,6 +3382,7 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
             </div>
             <button onClick={async () => { try { await api2({ action: "product_save", ...p, active: !(p.active !== false) }); flash(true, p.active !== false ? "Hidden from the shop." : "Visible in the shop."); await load(); } catch (e) { flash(false, e.message); } }}
               style={{ ...btnGhost, fontSize: 11, padding: "5px 12px", color: p.active !== false ? "#1a7a3a" : "#9a9a9a" }}>{p.active !== false ? "Visible ✓" : "Hidden"}</button>
+            <button onClick={() => edit(p)} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Edit</button>
             <button onClick={async () => { if (!window.confirm(`Delete "${p.title}"? Buyers keep their copies.`)) return; try { await api2({ action: "product_delete", id: p.id }); flash(true, "Deleted."); await load(); } catch (e) { flash(false, e.message); } }}
               style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Delete</button>
           </div>
