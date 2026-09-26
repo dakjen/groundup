@@ -1679,7 +1679,7 @@ function AboutPage({ setActivePage }) {
               {
                 img: "/opt/beacon-center.jpg", name: "The Beacon Center", where: "Washington, DC",
                 story: "A full city block transformed — housing, community space, and services woven into one campus. The kind of mixed-use complexity the curriculum walks through piece by piece: stacking uses, stacking capital, and making it all pencil.",
-                taught: "Taught in: Mixed-Use & the Fifteen Years After Opening Day",
+                taught: "Taught in: Predevelopment · After Opening Day",
               },
             ].map(p => (
               <div key={p.name} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, overflow: "hidden" }}>

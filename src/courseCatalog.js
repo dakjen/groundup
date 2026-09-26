@@ -8,7 +8,7 @@ export default [
     "description": "Everything that happens before you spend real money — and how to avoid spending it on the wrong deal. This course covers Dr. Merritt's full predevelopment process: how she reads a market, evaluates a site, values land, navigates due diligence, and manages sellers who want to close before you're ready.",
     "stage": "Stage 1 of 7",
     "stageColor": "#d43d3d",
-    "duration": "~60 min",
+    "duration": "~90 min",
     "lessons": [
       {
         "id": 1,
@@ -25,6 +25,14 @@ export default [
       {
         "id": 4,
         "title": "Managing Sellers: The Hardest Part Nobody Talks About"
+      },
+      {
+        "id": 5,
+        "title": "Why Retail Under Affordable Housing Is So Hard"
+      },
+      {
+        "id": 6,
+        "title": "How Developers Actually Solve It"
       }
     ]
   },
@@ -156,26 +164,18 @@ export default [
   },
   {
     "id": "mc7",
-    "title": "After Opening Day: Mixed-Use, Compliance & the Fifteen Years Nobody Warns You About",
-    "description": "The building opened — now the real test starts. Mixed-use structures, LIHTC compliance, and running the asset so it stays funded, occupied, and yours for the long haul.",
+    "title": "After Opening Day: Compliance & the Fifteen Years Nobody Warns You About",
+    "description": "The building opened — now the real test starts. LIHTC compliance, and running the asset so it stays funded, occupied, and yours for the long haul.",
     "stage": "Stage 7 of 7",
     "stageColor": "#570404",
-    "duration": "~55 min",
+    "duration": "~30 min",
     "lessons": [
       {
         "id": 1,
-        "title": "Why Retail Under Affordable Housing Is So Hard"
-      },
-      {
-        "id": 2,
-        "title": "How Developers Actually Solve It"
-      },
-      {
-        "id": 3,
         "title": "The Fifteen-Year Clock"
       },
       {
-        "id": 4,
+        "id": 2,
         "title": "Partnerships, Services & the Long Life of a Building"
       }
     ]
