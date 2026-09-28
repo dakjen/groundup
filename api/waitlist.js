@@ -279,23 +279,29 @@ export default async function handler(req, res) {
   try {
     // Public: launch dates — general drives pre-launch mode; insider drives the /waitlist countdown
     if (req.method === 'GET' && req.query.public === '1') {
-      const [launchRow] = await sql`SELECT value FROM settings WHERE key = 'launch_at'`;
-      const [insiderRow] = await sql`SELECT value FROM settings WHERE key = 'launch_insider_at'`;
-      const [callRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
+      // One trip for every setting this endpoint needs. It used to make a
+      // separate round trip per key, on a request that fires for every visitor
+      // including anonymous ones.
+      const settingRows = await sql`SELECT key, value FROM settings
+        WHERE key IN ('launch_at', 'launch_insider_at', 'advisor_call_link', 'insider_closes_at', 'elite_cap')`;
+      const setting = (k) => settingRows.find(r => r.key === k)?.value;
+      const launchRow = { value: setting('launch_at') };
+      const insiderRow = { value: setting('launch_insider_at') };
+      const callRow = { value: setting('advisor_call_link') };
       // The insider list stops taking names when the general list opens. It is
       // a separate date from the insider LAUNCH — insiders keep their early
       // access, they just stop being recruited.
-      const [insiderCloseRow] = await sql`SELECT value FROM settings WHERE key = 'insider_closes_at'`;
+      const insiderCloseRow = { value: setting('insider_closes_at') };
       // Live Elite scarcity: seats spoken for = paid Elite members + waitlisters
       // headed for Elite (budget says so, or the team marked them Elite)
       let elite = null;
       try {
-        const [capRow] = await sql`SELECT value FROM settings WHERE key = 'elite_cap'`;
-        const cap = parseInt(capRow?.value, 10) || 15;
-        const [paid] = await sql`SELECT COUNT(*)::int AS n FROM users WHERE tier='Elite' AND membership_status='active' AND COALESCE(role,'member')='member' AND NOT COALESCE(comped,FALSE)`;
-        const [intent] = await sql`SELECT COUNT(*)::int AS n FROM waitlist
-          WHERE rec_override = 'Elite' OR (rec_override IS NULL AND budget IN ('$300+','$500+'))`;
-        const claimed = Math.min(cap, (paid?.n || 0) + (intent?.n || 0));
+        const cap = parseInt(setting('elite_cap'), 10) || 15;
+        // Both counts in one query rather than two.
+        const [counts] = await sql`SELECT
+          (SELECT COUNT(*)::int FROM users WHERE tier='Elite' AND membership_status='active' AND COALESCE(role,'member')='member' AND NOT COALESCE(comped,FALSE)) AS paid,
+          (SELECT COUNT(*)::int FROM waitlist WHERE rec_override = 'Elite' OR (rec_override IS NULL AND budget IN ('$300+','$500+'))) AS intent`;
+        const claimed = Math.min(cap, (counts?.paid || 0) + (counts?.intent || 0));
         elite = { cap, claimed, left: Math.max(0, cap - claimed) };
       } catch (e) { console.error('elite spots failed', e.message); }
       // Referral partners feed the how-did-you-hear dropdown, live: add a
@@ -308,6 +314,10 @@ export default async function handler(req, res) {
       // Founding seats: the live race — 25 seats, 15 days from the insider launch
       let founding = null;
       try { const { foundingSeats } = await import('./stripe.js'); founding = await foundingSeats(sql); } catch (e) { console.error('founding seats failed', e.message); }
+      // Every visitor hits this, anonymous ones included. A minute at the CDN
+      // removes almost all of that load; nothing here changes faster than that,
+      // and the seat counts are scarcity indicators rather than a ledger.
+      res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60, stale-while-revalidate=300');
       return res.json({ launch_at: launchRow?.value || null, launch_insider_at: insiderRow?.value || null, insider_closes_at: insiderCloseRow?.value || null, advisor_call_link: callRow?.value || null, elite, founding, partners });
     }
 
