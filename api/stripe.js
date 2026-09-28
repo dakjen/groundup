@@ -766,7 +766,7 @@ export default async function handler(req, res) {
     const body = JSON.parse(raw.toString() || '{}');
     const session = getSession(req);
     if (!session?.uid) return res.status(401).json({ error: 'Sign in to purchase' });
-    const [user] = await sql`SELECT id, name, email, tier, lnl_discount_until, referred_by FROM users WHERE id = ${session.uid}`;
+    const [user] = await sql`SELECT id, name, email, tier, lnl_discount_until, referred_by, referred_code FROM users WHERE id = ${session.uid}`;
     if (!user) return res.status(401).json({ error: 'Account not found' });
 
     // ── Self-service billing portal: manage payment method or cancel ──
@@ -985,8 +985,8 @@ export default async function handler(req, res) {
     // month, rolling to list price at month 25. Dollars, not a percentage, so
     // the exposure stays capped at the top of the ladder.
     const REF_OFF = { sub_Basic: 500, sub_Builder: 1500, sub_Premium: 2000, sub_Elite: 2500 };
-    if (!discounted && product.mode === 'subscription' && REF_OFF[item] && !product.annual && user.referred_by) {
-      const [pc] = await sql`SELECT code FROM partner_codes WHERE code = ${user.referred_by}`;
+    if (!discounted && product.mode === 'subscription' && REF_OFF[item] && !product.annual && user.referred_code) {
+      const [pc] = await sql`SELECT code FROM partner_codes WHERE code = ${user.referred_code}`;
       if (pc) {
         const off = REF_OFF[item];
         const id = 'REF2Y' + off;

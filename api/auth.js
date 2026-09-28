@@ -35,7 +35,7 @@ export default async function handler(req, res) {
       // out. That happened: a new column was selected here before its migration
       // had run, and every member was logged out on refresh. Run the migrations
       // and retry once rather than dropping the session on the floor.
-      const loadUser = () => sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, comped, badges, referral_code, referred_by, tier_since, ip_agreed_at, avatar_url, headline, bio, company, title, location, partner_slug, onboarded_at, created_at FROM users WHERE id = ${session.uid}`;
+      const loadUser = () => sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, comped, badges, referral_code, referred_by, referred_code, tier_since, ip_agreed_at, avatar_url, headline, bio, company, title, location, partner_slug, onboarded_at, created_at FROM users WHERE id = ${session.uid}`;
       let user;
       try {
         [user] = await loadUser();
@@ -51,7 +51,7 @@ export default async function handler(req, res) {
       // 14-day one-course trial: earned by being first-10 on the waitlist or by
       // arriving through a member's referral link. One per account, ever.
       const badgeList = Array.isArray(user.badges) ? user.badges : [];
-      const trialEligible = badgeList.includes('first10') || !!user.referred_by;
+      const trialEligible = badgeList.includes('first10') || !!user.referred_by || !!user.referred_code;
       const [usedTrial] = await sql`SELECT course_id, expires_at FROM entitlements WHERE user_id = ${user.id} AND source = 'referral_trial' LIMIT 1`;
       user.trial = usedTrial ? { course_id: usedTrial.course_id, expires_at: usedTrial.expires_at } : null;
       user.benefit_gate = await benefitGate(sql, user);
@@ -287,7 +287,7 @@ export default async function handler(req, res) {
         // must exist in partner_codes.
         if (wl && /^ref:/.test(wl.source || '')) {
           const [pc] = await sql`SELECT code FROM partner_codes WHERE code = ${wl.source.slice(4)}`;
-          if (pc) await sql`UPDATE users SET referred_by = ${pc.code} WHERE id = ${user.id}`;
+          if (pc) await sql`UPDATE users SET referred_code = ${pc.code} WHERE id = ${user.id}`;
         }
         // Came in through the interest form on drginamerritt.net (links arrive
         // as ?source=popup:… or site:…) → the Day One badge follows them in.
@@ -592,9 +592,9 @@ export default async function handler(req, res) {
       if (!session || !session.uid) return res.status(401).json({ error: 'Not signed in' });
       const courseId = /^mc\d+$/.test(req.body.course_id || '') ? req.body.course_id : null;
       if (!courseId) return res.status(400).json({ error: 'Pick a course' });
-      const [u] = await sql`SELECT id, badges, referred_by, membership_status FROM users WHERE id = ${session.uid}`;
+      const [u] = await sql`SELECT id, badges, referred_by, referred_code, membership_status FROM users WHERE id = ${session.uid}`;
       if (!u || u.membership_status !== 'active') return res.status(401).json({ error: 'Not signed in' });
-      const eligible = (Array.isArray(u.badges) ? u.badges : []).includes('first10') || !!u.referred_by;
+      const eligible = (Array.isArray(u.badges) ? u.badges : []).includes('first10') || !!u.referred_by || !!u.referred_code;
       if (!eligible) return res.status(403).json({ error: 'No trial on this account' });
       const [prior] = await sql`SELECT id FROM entitlements WHERE user_id = ${u.id} AND source = 'referral_trial' LIMIT 1`;
       if (prior) return res.status(409).json({ error: 'Your trial has already been used' });

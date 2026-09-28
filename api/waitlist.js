@@ -430,29 +430,8 @@ export default async function handler(req, res) {
       // their discovery-call email waits for the launch send; once we're live,
       // new retainer leads get it immediately at signup.
       const isRetainerLead = recommendPlan(entry).tier === 'Advisor';
-      // Ambassador code goal check: the moment their referral count hits the
-      // goal, the team is told to comp the owner's membership.
-      if (isNew && /^ref:/.test(entry.source || '')) {
-        try {
-          // The referral ladder (per the program memo): 15 signups → Tier One
-          // (25% off their membership), 25 → Tier Two (50% off), 50 → Tier
-          // Three (fully comped). Alert the team each time a rung is crossed.
-          const LADDER = [[15, 'Tier One — 25% off their membership'], [25, 'Tier Two — 50% off their membership'], [50, 'Tier Three — fully COMPED membership']];
-          const codeSlug = entry.source.slice(4);
-          const [pc] = await sql`SELECT * FROM partner_codes WHERE code = ${codeSlug}`;
-          if (pc) {
-            const [{ n }] = await sql`SELECT COUNT(*)::int AS n FROM waitlist WHERE source = ${entry.source}`;
-            const rung = LADDER.filter(([at]) => n >= at).length;
-            if (rung > (pc.tier_alerted || 0)) {
-              await sql`UPDATE partner_codes SET tier_alerted = ${rung} WHERE id = ${pc.id}`;
-              const [, reward] = LADDER[rung - 1];
-              await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
-                `🎉 REFERRAL TIER REACHED: ${pc.owner_name} (${pc.code}) — ${reward}`,
-                `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${pc.owner_name} reached ${reward.split(' — ')[0]}</h2>
-                 <p style="color:#444444;font-size:14px;line-height:1.9;">Their code <strong style="color:#161616;">${pc.code}</strong> just brought in referral <strong style="color:#161616;">#${n}</strong>. Per the referral program ladder they've earned: <strong style="color:#161616;">${reward}</strong>. Apply it from Admin → Users${pc.owner_email ? ' (' + pc.owner_email + ')' : ''}.</p>`);
-            }
-          }
-        } catch (e) { console.error('partner code check failed', e.message); }
+      // The referral ladder is revenue-based and matures at 60 days, so a rung
+      // cannot be crossed by a waitlist signup. The daily run checks it instead.
       }
       let retainerMail = null;
       if (isRetainerLead && isNew) {

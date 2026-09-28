@@ -5850,7 +5850,7 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl, mode = 'referrals' }) {
       {/* Partner referral codes */}
       {showCodes && <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 20 }}>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Partner & Friend Referral Codes</div>
-        <p style={{ color: "#8d847a", fontSize: 12, marginBottom: 16, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>For partners, ambassadors, and friends alike: write the ending you want for their link (the code), add their name and company, and copy their custom link. People arriving through it see a you've-been-referred banner and get a two-year member discount when they join ($5/$15/$20/$25 off per month by tier). The referrer climbs the program ladder automatically: 15 referrals → 25% off their membership · 25 → 50% off · 50 → fully comped — you get an email each time a rung is crossed. Every waitlist signup counts toward the goal; hitting it emails you to comp their membership (Admin → Users → Comped).</p>
+        <p style={{ color: "#8d847a", fontSize: 12, marginBottom: 16, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>For partners, ambassadors, and friends alike: write the ending you want for their link (the code), add their name and company, and copy their custom link. People arriving through it see a you've-been-referred banner and get a two-year member discount when they join ($5/$15/$20/$25 off per month by tier).<br /><br /><strong>The ladder is revenue, not headcount.</strong> A partner qualifies on the referred revenue their code carries, counted at list price: $800/mo → Tier One, Premium at $187.49 · $1,500 → Tier Two, Premium at $125 · $2,500 → Tier Three, Premium comped · $8,500 → Tier Four, Owner comped with six advisory calls. Only paid members count, and only once they are past 60 days and still active — free accounts, waitlist joins and cancellations never count. The daily run emails you each time a rung is crossed; apply the reward from Admin → Users.</p>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 18 }}>
           <div><label style={lbl}>Owner name</label><input style={{ ...inp, marginBottom: 0 }} value={pcForm.owner_name} onChange={e => setPcForm({ ...pcForm, owner_name: e.target.value })} placeholder="Jasmine Carter" /></div>
           <div><label style={lbl}>Owner email (optional)</label><input style={{ ...inp, marginBottom: 0 }} value={pcForm.owner_email} onChange={e => setPcForm({ ...pcForm, owner_email: e.target.value })} placeholder="jasmine@…" /></div>
@@ -5867,16 +5867,19 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl, mode = 'referrals' }) {
               <span style={{ color: "#9a9a9a", fontSize: 12 }}>{c.company ? ` · ${c.company}` : ""} · code <code style={{ color: "#b80101" }}>{c.code}</code>{c.owner_email ? ` · ${c.owner_email}` : ""}</span>
             </div>
             {(() => {
-              const L = [[15, "25% off"], [25, "50% off"], [50, "comped"]];
-              const rung = L.filter(([at]) => c.signups >= at).length;
-              const next = L[rung];
-              // What they have actually earned comes first. Nobody has earned
-              // anything at zero, so it says so rather than showing the next
-              // rung as though it were on offer.
-              const earned = rung === 0 ? "0% off" : L[rung - 1][1];
+              // Qualification is referred revenue at list price, not headcount
+              // and not waitlist joins. The server does the maths.
+              const usd = (cents) => "$" + (cents / 100).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+              const earned = c.tier_name;
               return (
-                <span style={{ color: rung > 0 ? "#22c55e" : "#9a9a9a", fontSize: 12.5, fontWeight: 800, whiteSpace: "nowrap" }}>
-                  {c.signups} referral{c.signups === 1 ? "" : "s"} · {rung > 0 ? "🎉 " : ""}{earned}{next ? ` · ${next[0] - c.signups} more to ${next[1]}` : ""}
+                <span style={{ fontSize: 12.5, fontWeight: 800, whiteSpace: "nowrap", textAlign: "right" }}>
+                  <span style={{ color: "#222222" }}>{usd(c.mrr_cents || 0)}/mo</span>
+                  <span style={{ color: "#9a9a9a", fontWeight: 600 }}> · {c.paid_members || 0} paid</span>
+                  <br />
+                  <span style={{ color: earned ? "#22c55e" : "#9a9a9a", fontWeight: 800 }}>
+                    {earned ? `🎉 ${earned} — ${c.reward}` : "no discount"}
+                  </span>
+                  {c.next_name && <span style={{ color: "#9a9a9a", fontWeight: 600 }}> · {usd(c.to_next_cents)} to {c.next_name}</span>}
                 </span>
               );
             })()}

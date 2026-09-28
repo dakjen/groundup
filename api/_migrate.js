@@ -167,7 +167,12 @@ const STATEMENTS = [
     created_at TIMESTAMP DEFAULT NOW())`,
   `ALTER TABLE partner_codes ADD COLUMN IF NOT EXISTS company TEXT`,
   `ALTER TABLE partner_codes ADD COLUMN IF NOT EXISTS tier_alerted INTEGER DEFAULT 0`,
-  `ALTER TABLE users ADD COLUMN IF NOT EXISTS referred_by TEXT`,
+  // referred_by (INTEGER, above) is the member who invited them — a user id.
+  // A partner referral CODE is a different relationship and a different type,
+  // so it gets its own column. They were previously sharing one, which made
+  // partner attribution impossible to store and the referred-member discount
+  // impossible to fire.
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS referred_code TEXT`,
   // First-run onboarding: the same questions the waitlist asks, so a member who
   // never joined the list still gets a real recommendation. Every answer is
   // optional; only the plan choice is required, and onboarded_at records that

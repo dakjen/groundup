@@ -11,6 +11,56 @@ function genCode() {
   return s;
 }
 
+
+// ── The referral ladder ──────────────────────────────────────────────────────
+// Qualification is revenue, not headcount: a partner does not choose which tier
+// the people they refer sign up at, so four Premium referrals should not sit
+// below fifteen Member-tier ones.
+//
+// Revenue is counted at LIST price, not at what is collected. The referred
+// member's own discount is an acquisition cost we chose; counting net would
+// make a partner's number jump on the anniversary of every member they brought
+// in, with no action on their part.
+export const LIST_CENTS = { Basic: 4999, Builder: 14999, Premium: 24999, Elite: 49999 };
+
+export const LADDER = [
+  { at: 80000,  name: 'Tier One',   reward: 'Premium at $187.49 (25% off)' },
+  { at: 150000, name: 'Tier Two',   reward: 'Premium at $125 (50% off)' },
+  { at: 250000, name: 'Tier Three', reward: 'Premium comped' },
+  { at: 850000, name: 'Tier Four',  reward: 'Owner comped + 6 advisory calls' },
+];
+
+export function rungFor(mrrCents) {
+  let earned = null;
+  for (const r of LADDER) if (mrrCents >= r.at) earned = r;
+  const next = LADDER.find(r => mrrCents < r.at) || null;
+  return { earned, next, toNext: next ? next.at - mrrCents : 0 };
+}
+
+// What a code has actually brought in. Countable means: a paying tier, active,
+// not comped, and past the 60-day floor that stops bulk-recruiting people who
+// cancel in week two. tier_since stands in for the first-paid date.
+export async function referredRevenue(sql) {
+  return sql`
+    SELECT p.code,
+           COALESCE(SUM(CASE
+             WHEN u.tier = 'Basic'   THEN 4999
+             WHEN u.tier = 'Builder' THEN 14999
+             WHEN u.tier = 'Premium' THEN 24999
+             WHEN u.tier = 'Elite'   THEN 49999
+             ELSE 0 END), 0)::int AS mrr_cents,
+           COUNT(u.id)::int AS paid_members
+    FROM partner_codes p
+    LEFT JOIN users u
+      ON LOWER(u.referred_code) = p.code
+     AND u.membership_status = 'active'
+     AND COALESCE(u.comped, FALSE) = FALSE
+     AND u.tier IN ('Basic','Builder','Premium','Elite')
+     AND u.tier_since IS NOT NULL
+     AND u.tier_since <= NOW() - interval '60 days'
+    GROUP BY p.code`;
+}
+
 export default async function handler(req, res) {
   // Public: who referred me? Powers the you've-been-referred banner on the
   // waitlist page. Name and company only — nothing sensitive.
@@ -29,12 +79,31 @@ export default async function handler(req, res) {
     // Partner referral codes: a custom code per ambassador; signups through
     // their link count toward a goal that earns them a comped membership.
     if (req.method === 'GET' && req.query.partner_codes === '1') {
-      const codes = await sql`
-        SELECT p.*, COALESCE(w.n, 0)::int AS signups
+      const rows = await sql`
+        SELECT p.*, COALESCE(w.n, 0)::int AS waitlist_joins
         FROM partner_codes p
         LEFT JOIN (SELECT source, COUNT(*) AS n FROM waitlist GROUP BY source) w
           ON w.source = 'ref:' || p.code
         ORDER BY p.created_at DESC`;
+      const rev = await referredRevenue(sql);
+      const byCode = Object.fromEntries(rev.map(r => [r.code, r]));
+      const codes = rows.map(p => {
+        const r = byCode[p.code] || { mrr_cents: 0, paid_members: 0 };
+        const { earned, next, toNext } = rungFor(r.mrr_cents);
+        return {
+          ...p,
+          mrr_cents: r.mrr_cents,
+          paid_members: r.paid_members,
+          // Kept so the admin can see interest that has not converted yet —
+          // it no longer qualifies anyone for anything.
+          waitlist_joins: p.waitlist_joins,
+          tier_name: earned ? earned.name : null,
+          reward: earned ? earned.reward : 'no discount',
+          next_name: next ? next.name : null,
+          next_at: next ? next.at : null,
+          to_next_cents: toNext,
+        };
+      });
       return res.json({ codes });
     }
 

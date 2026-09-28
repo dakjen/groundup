@@ -3,6 +3,7 @@ import { neon } from '@neondatabase/serverless';
 import { requireAdmin } from './_utils.js';
 import { sendBulk, sendEmail, siteUrl, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail, passExpiryEmail, waitlistConfirmEmail, retainerInterestEmail, countdownEmail, recommendEmail, launchEmail, foundingThanksEmail, firstName } from './_email.js';
 import { recommendPlan, sendRecommendBatch, sendLaunchBatch } from './waitlist.js';
+import { referredRevenue, rungFor } from './referrals.js';
 
 // Team email tools: send a custom email or an event announcement to a segment.
 // Audiences: all | Free | Basic | Premium | Elite | lnl (active Lunch & Learn access)
@@ -170,6 +171,32 @@ export default async function handler(req, res) {
         await sql`INSERT INTO settings (key, value) VALUES ('weekly_digest_sent', ${stamp}) ON CONFLICT (key) DO UPDATE SET value = ${stamp}`;
       }
     } catch (e) { console.error('weekly digest failed', e.message); }
+    // Referral ladder — checked daily, because a rung is crossed when a referred
+    // member passes the 60-day floor, not when anyone signs up or pays. The
+    // reward is applied by hand in Admin → Users, so the alert is the trigger.
+    let ladder = null;
+    try {
+      const rows = await referredRevenue(sql);
+      const alerts = [];
+      for (const r of rows) {
+        const { earned } = rungFor(r.mrr_cents);
+        const rung = earned ? [80000, 150000, 250000, 850000].indexOf(earned.at) + 1 : 0;
+        const [pc] = await sql`SELECT * FROM partner_codes WHERE code = ${r.code}`;
+        if (!pc) continue;
+        if (rung > (pc.tier_alerted || 0)) {
+          await sql`UPDATE partner_codes SET tier_alerted = ${rung} WHERE id = ${pc.id}`;
+          const money = '$' + (r.mrr_cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2 });
+          await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
+            `REFERRAL TIER REACHED: ${pc.owner_name} (${pc.code}) — ${earned.name}`,
+            `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${pc.owner_name} reached ${earned.name}</h2>
+             <p style="color:#444444;font-size:14px;line-height:1.9;">Their code <strong style="color:#161616;">${pc.code}</strong> is now carrying <strong style="color:#161616;">${money}/mo</strong> in referred revenue at list price, across <strong style="color:#161616;">${r.paid_members}</strong> paid member${r.paid_members === 1 ? '' : 's'} past the 60-day mark.</p>
+             <p style="color:#444444;font-size:14px;line-height:1.9;">They have earned: <strong style="color:#161616;">${earned.reward}</strong>. Apply it from Admin → Users${pc.owner_email ? ' (' + pc.owner_email + ')' : ''}.</p>`);
+          alerts.push({ code: pc.code, tier: earned.name, mrr_cents: r.mrr_cents });
+        }
+      }
+      if (alerts.length) ladder = alerts;
+    } catch (e) { console.error('referral ladder check failed', e.message); }
+
     // Monthly report — the 1st of each month, once the insider launch has passed
     let monthly = null;
     try {
@@ -184,7 +211,7 @@ export default async function handler(req, res) {
         await sql`INSERT INTO settings (key, value) VALUES ('monthly_report_sent', ${stamp}) ON CONFLICT (key) DO UPDATE SET value = ${stamp}`;
       }
     } catch (e) { console.error('monthly report failed', e.message); }
-    return res.json({ success: true, expired: rows.length, sent, drip, pot_released: released, pot_released_cents: releasedCents, weekly, monthly, founding });
+    return res.json({ success: true, expired: rows.length, sent, drip, pot_released: released, pot_released_cents: releasedCents, weekly, monthly, founding, ladder });
   }
 
   if (!requireAdmin(req, res)) return;
