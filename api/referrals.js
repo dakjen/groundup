@@ -68,8 +68,8 @@ export default async function handler(req, res) {
     try {
       const sql = neon(process.env.DATABASE_URL);
       const code = String(req.query.partner).trim().toLowerCase();
-      const [pc] = await sql`SELECT owner_name, company FROM partner_codes WHERE code = ${code}`;
-      return res.json(pc ? { name: pc.owner_name, company: pc.company || null } : { name: null });
+      const [pc] = await sql`SELECT owner_name, company, logo_url FROM partner_codes WHERE code = ${code}`;
+      return res.json(pc ? { name: pc.owner_name, company: pc.company || null, logo: pc.logo_url || null } : { name: null });
     } catch { return res.json({ name: null }); }
   }
   if (!requireAdmin(req, res)) return;
@@ -158,13 +158,14 @@ export default async function handler(req, res) {
       const owner_name = String(req.body.owner_name || '').trim();
       const owner_email = String(req.body.owner_email || '').trim().toLowerCase() || null;
       const company = String(req.body.company || '').trim() || null;
+      const logo_url = req.body.logo_url ? String(req.body.logo_url).slice(0, 500) : null;
       const goal = Math.max(1, Number(req.body.goal) || 5);
       if (!owner_name) return res.status(400).json({ error: 'Name required' });
       const code = String(req.body.code || owner_name).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
       if (!code) return res.status(400).json({ error: 'Code required' });
       const [row] = await sql`
-        INSERT INTO partner_codes (code, owner_name, owner_email, company, goal, created_at)
-        VALUES (${code}, ${owner_name}, ${owner_email}, ${company}, ${goal}, NOW())
+        INSERT INTO partner_codes (code, owner_name, owner_email, company, goal, logo_url, created_at)
+        VALUES (${code}, ${owner_name}, ${owner_email}, ${company}, ${goal}, ${logo_url}, NOW())
         ON CONFLICT (code) DO NOTHING RETURNING *`;
       if (!row) return res.status(409).json({ error: 'That code already exists' });
       return res.status(201).json(row);

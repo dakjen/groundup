@@ -128,6 +128,8 @@ const STATEMENTS = [
   `ALTER TABLE partners ADD COLUMN IF NOT EXISTS seats INTEGER`,
   `ALTER TABLE partners ADD COLUMN IF NOT EXISTS meeting_link TEXT`,
   `ALTER TABLE partners ADD COLUMN IF NOT EXISTS program TEXT`,
+  // A referrer's own mark, shown on the page and the link preview.
+  `ALTER TABLE partner_codes ADD COLUMN IF NOT EXISTS logo_url TEXT`,
   `ALTER TABLE lnl_rsvps ADD COLUMN IF NOT EXISTS question TEXT`,
   `CREATE TABLE IF NOT EXISTS auth_attempts (
     id SERIAL PRIMARY KEY, key TEXT NOT NULL, created_at TIMESTAMP DEFAULT NOW())`,

@@ -14,12 +14,12 @@ export default async function handler(req) {
   // name, because the image is the part people actually see when a link is
   // shared; everything else on the page only appears after a click.
   const refCode = (url.searchParams.get('ref') || '').trim().toLowerCase();
-  let refBy = null;
+  let refBy = null, refLogo = null;
   if (/^[a-z0-9-]{1,64}$/.test(refCode)) {
     try {
       const sql = neon(process.env.DATABASE_URL);
-      const [pc] = await sql`SELECT owner_name, company FROM partner_codes WHERE code = ${refCode}`;
-      if (pc) refBy = pc.company || pc.owner_name;
+      const [pc] = await sql`SELECT owner_name, company, logo_url FROM partner_codes WHERE code = ${refCode}`;
+      if (pc) { refBy = pc.company || pc.owner_name; refLogo = pc.logo_url || null; }
     } catch { /* fall through to the ordinary image */ }
   }
   let days = null;
@@ -46,6 +46,9 @@ export default async function handler(req) {
       { type: 'img', props: { src: `${origin}/LIIF-Stills2.jpg`, style: { position: 'absolute', width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 } } },
       h('div', { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.85))', display: 'flex' }),
       h('div', { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 },
+        refLogo
+          ? { type: 'img', props: { src: refLogo.startsWith('http') ? refLogo : `${origin}${refLogo}`, style: { height: 84, maxWidth: 420, objectFit: 'contain', marginBottom: 14 } } }
+          : null,
         h('div', { color: '#e8b4b4', fontSize: 26, letterSpacing: 10, display: 'flex' }, kicker),
         refBy
           ? h('div', { color: '#ffffff', fontSize: 104, fontWeight: 700, display: 'flex', lineHeight: 1.05, textAlign: 'center' }, "YOU'RE INVITED.")

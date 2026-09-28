@@ -3788,6 +3788,10 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
         </div>
         <div className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, marginBottom: 24 }}><GULogo size={72} /></div>
         <h1 className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, fontFamily: serif, fontWeight: 700, fontSize: "clamp(44px,8vw,84px)", color: "#f5e8e8", lineHeight: 1.05, letterSpacing: "-1px", marginBottom: 10 }}>{refBy ? `${refBy.name.split(" ")[0]} sent you.` : insider ? "Get access first." : "Something is coming."}</h1>
+        {refBy?.logo && (
+          <img className="gu-up gu-d1" src={refBy.logo} alt={refBy.company || refBy.name}
+            style={{ position: "relative", zIndex: 1, height: "clamp(38px,6vw,62px)", maxWidth: 300, objectFit: "contain", marginBottom: 18 }} />
+        )}
         {refBy && (
           <p className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, color: "#e0c4c4", fontSize: "clamp(14px,1.8vw,17px)", fontFamily: font, fontWeight: 700, lineHeight: 1.7, maxWidth: 580, marginBottom: 6 }}>
             {refBy.name}{refBy.company ? ` of ${refBy.company}` : ""} thinks GroundUp is for you — and joining through them takes <span style={{ color: "#f5e8e8" }}>$5 to $25 off every month for two years</span>.
@@ -5783,7 +5787,20 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl, mode = 'referrals' }) {
   // ── Partner referral codes: a custom code per ambassador; hitting the
   // signup goal earns them a comped membership (the team gets an alert) ──
   const [pcodes, setPcodes] = useState([]);
-  const [pcForm, setPcForm] = useState({ owner_name: "", owner_email: "", company: "", code: "", goal: 5 });
+  const [pcForm, setPcForm] = useState({ owner_name: "", owner_email: "", company: "", code: "", goal: 5, logo_url: "" });
+  const [pcLogoBusy, setPcLogoBusy] = useState(false);
+  const uploadPcLogo = async (file) => {
+    if (!file) return;
+    setPcLogoBusy(true);
+    try {
+      const fd = new FormData(); fd.append("file", file);
+      const res = await fetch("/api/lesson-pdfs?kind=cover", { method: "POST", headers: authHeaders(), body: fd });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Upload failed");
+      setPcForm(f => ({ ...f, logo_url: d.url }));
+      flash(true, "Logo uploaded — it appears on their link and its preview.");
+    } catch (e) { flash(false, e.message); } finally { setPcLogoBusy(false); }
+  };
   const loadCodes = async () => {
     try {
       const res = await fetch("/api/referrals?partner_codes=1", { headers: { Authorization: "Bearer " + sessionStorage.getItem("adminToken") } });
@@ -5797,7 +5814,7 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl, mode = 'referrals' }) {
     try {
       await call("POST", { kind: "partner_code", ...pcForm });
       flash(true, "Code created — copy their link below.");
-      setPcForm({ owner_name: "", owner_email: "", company: "", code: "", goal: 5 });
+      setPcForm({ owner_name: "", owner_email: "", company: "", code: "", goal: 5, logo_url: "" });
       await loadCodes();
     } catch (e) { flash(false, e.message); }
   };
@@ -5897,6 +5914,13 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl, mode = 'referrals' }) {
           <div><label style={lbl}>Owner email (optional)</label><input style={{ ...inp, marginBottom: 0 }} value={pcForm.owner_email} onChange={e => setPcForm({ ...pcForm, owner_email: e.target.value })} placeholder="jasmine@…" /></div>
           <div><label style={lbl}>Company (optional)</label><input style={{ ...inp, marginBottom: 0 }} value={pcForm.company} onChange={e => setPcForm({ ...pcForm, company: e.target.value })} placeholder="Carter Development" /></div>
           <div><label style={lbl}>Code (blank = from name)</label><input style={{ ...inp, marginBottom: 0, maxWidth: 160 }} value={pcForm.code} onChange={e => setPcForm({ ...pcForm, code: e.target.value })} placeholder="jasmine" /></div>
+          <div>
+            <label style={lbl}>Their logo (optional) {pcForm.logo_url && <span style={{ color: "#1a7a3a" }}>✓</span>}</label>
+            <label style={{ background: "#b80101", color: "#fff", borderRadius: 8, padding: "9px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer", display: "inline-block" }}>
+              {pcLogoBusy ? "Uploading…" : pcForm.logo_url ? "Replace logo" : "Upload logo"}
+              <input type="file" accept=".png,.jpg,.jpeg,.webp" disabled={pcLogoBusy} onChange={e => { uploadPcLogo(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} />
+            </label>
+          </div>
           <button onClick={createCode} style={btnRed}>Create Code</button>
         </div>
         {claims.length > 0 && (
@@ -5922,6 +5946,7 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl, mode = 'referrals' }) {
           <div style={{ color: "#9a9a9a", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif" }}>No codes yet.</div>
         ) : pcodes.map(c => (
           <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", padding: "10px 0", borderBottom: "1px solid #f5f2ec", fontFamily: "'DM Sans', sans-serif" }}>
+            {c.logo_url && <img src={c.logo_url} alt="" style={{ height: 24, maxWidth: 80, objectFit: "contain" }} />}
             <div style={{ flex: 1, minWidth: 200 }}>
               <span style={{ color: "#222222", fontSize: 13, fontWeight: 800 }}>{c.owner_name}</span>
               <span style={{ color: "#9a9a9a", fontSize: 12 }}>{c.company ? ` · ${c.company}` : ""} · code <code style={{ color: "#b80101" }}>{c.code}</code>{c.owner_email ? ` · ${c.owner_email}` : ""}</span>
