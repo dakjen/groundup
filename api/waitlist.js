@@ -436,7 +436,6 @@ export default async function handler(req, res) {
       const isRetainerLead = recommendPlan(entry).tier === 'Advisor';
       // The referral ladder is revenue-based and matures at 60 days, so a rung
       // cannot be crossed by a waitlist signup. The daily run checks it instead.
-      }
       let retainerMail = null;
       if (isRetainerLead && isNew) {
         const launchKey = (entry.list || 'insider') === 'insider' ? 'launch_insider_at' : 'launch_at';
