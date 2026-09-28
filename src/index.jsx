@@ -5810,6 +5810,22 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl, mode = 'referrals' }) {
   // circulation long after that.
   const codeLink = (c) => `https://community.drginamerritt.net/waitlist?list=general&source=${encodeURIComponent("ref:" + c.code)}`;
 
+  // People who named a partner in "where did you hear about us" without
+  // arriving on their link. Credited only when someone agrees.
+  const [claims, setClaims] = useState([]);
+  const loadClaims = () => fetch("/api/referrals?claims=1", { headers: authHeaders() })
+    .then(r => r.ok ? r.json() : { claims: [] }).then(d => setClaims(d.claims || [])).catch(() => {});
+  useEffect(() => { loadClaims(); }, []);
+  const decideClaim = async (c, action) => {
+    try {
+      const res = await fetch("/api/referrals", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ action, id: c.id }) });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Failed");
+      flash(true, action === "credit_claim" ? `${c.name} credited to ${c.owner_name || c.code}.` : "Claim declined.");
+      loadClaims(); load();
+    } catch (e) { flash(false, e.message); }
+  };
+
   // ── Month-free gifts: personal single-use links, solo or by CSV ──
   const [giftForm, setGiftForm] = useState({ name: "", email: "" });
   const [csvPeople, setCsvPeople] = useState(null); // parsed [{name,email}]
@@ -5883,6 +5899,25 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl, mode = 'referrals' }) {
           <div><label style={lbl}>Code (blank = from name)</label><input style={{ ...inp, marginBottom: 0, maxWidth: 160 }} value={pcForm.code} onChange={e => setPcForm({ ...pcForm, code: e.target.value })} placeholder="jasmine" /></div>
           <button onClick={createCode} style={btnRed}>Create Code</button>
         </div>
+        {claims.length > 0 && (
+          <div style={{ background: "#fffaf0", border: "1px solid #e0c48a", borderRadius: 12, padding: "16px 18px", marginBottom: 18 }}>
+            <div style={{ fontSize: 10, color: "#8a6a10", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 4 }}>Claimed referrals — {claims.length} awaiting review</div>
+            <p style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", margin: "0 0 12px", lineHeight: 1.6 }}>
+              These people named a partner in “where did you hear about us” but did not arrive on their link, so nobody has been credited. Crediting one counts it toward that partner’s revenue from their next payment.
+            </p>
+            {claims.map(c => (
+              <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", padding: "9px 0", borderTop: "1px solid #f0e4cc", fontFamily: "'DM Sans', sans-serif" }}>
+                <div style={{ flex: 1, minWidth: 200 }}>
+                  <span style={{ color: "#222222", fontSize: 13, fontWeight: 700 }}>{c.name}</span>
+                  <span style={{ color: "#9a9a9a", fontSize: 12 }}> · {c.email}</span>
+                  <div style={{ color: "#8d847a", fontSize: 12 }}>says <strong style={{ color: "#5a5a5a" }}>{c.owner_name || c.code}</strong>{c.company ? ` · ${c.company}` : ""} sent them{c.owner_name ? "" : " — that code no longer exists"}</div>
+                </div>
+                <button onClick={() => decideClaim(c, "credit_claim")} disabled={!c.owner_name} style={{ ...btnRed, fontSize: 11, padding: "5px 12px", opacity: c.owner_name ? 1 : 0.4 }}>Credit</button>
+                <button onClick={() => decideClaim(c, "dismiss_claim")} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Decline</button>
+              </div>
+            ))}
+          </div>
+        )}
         {pcodes.length === 0 ? (
           <div style={{ color: "#9a9a9a", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif" }}>No codes yet.</div>
         ) : pcodes.map(c => (

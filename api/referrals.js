@@ -107,6 +107,48 @@ export default async function handler(req, res) {
       return res.json({ codes });
     }
 
+    // Claimed referrals awaiting review. Someone who arrived without a link but
+    // picked a partner from "where did you hear about us" is recorded as
+    // heard-ref:<code> and credited to nobody until a human agrees. The
+    // dropdown is the one place the count can be inflated, so it does not
+    // auto-credit.
+    if (req.method === 'GET' && req.query.claims === '1') {
+      const claims = await sql`
+        SELECT w.id, w.name, w.email, w.created_at, w.source,
+               REPLACE(w.source, 'heard-ref:', '') AS code,
+               p.owner_name, p.company
+        FROM waitlist w
+        LEFT JOIN partner_codes p ON p.code = REPLACE(w.source, 'heard-ref:', '')
+        WHERE w.source LIKE 'heard-ref:%'
+        ORDER BY w.created_at DESC`;
+      return res.json({ claims });
+    }
+
+    // Accept a claim: it becomes an ordinary referral from here on, and if they
+    // already hold an account their checkout starts earning the partner credit.
+    if (req.method === 'POST' && req.body.action === 'credit_claim') {
+      const id = Number(req.body.id);
+      const [wl] = await sql`SELECT id, email, source FROM waitlist WHERE id = ${id}`;
+      if (!wl || !/^heard-ref:/.test(wl.source || '')) return res.status(404).json({ error: 'No claim there' });
+      const code = wl.source.slice(10).trim().toLowerCase();
+      const [pc] = await sql`SELECT code FROM partner_codes WHERE code = ${code}`;
+      if (!pc) return res.status(400).json({ error: 'That code no longer exists' });
+      await sql`UPDATE waitlist SET source = ${'ref:' + pc.code} WHERE id = ${id}`;
+      const [u] = await sql`SELECT id FROM users WHERE LOWER(email) = ${String(wl.email).toLowerCase()}`;
+      if (u) await sql`UPDATE users SET referred_code = ${pc.code} WHERE id = ${u.id}`;
+      return res.json({ success: true, code: pc.code, account_updated: !!u });
+    }
+
+    // Decline it: the answer is kept as plain provenance so the count cannot
+    // pick it up, and nothing about the person changes.
+    if (req.method === 'POST' && req.body.action === 'dismiss_claim') {
+      const id = Number(req.body.id);
+      const [wl] = await sql`SELECT id, source FROM waitlist WHERE id = ${id}`;
+      if (!wl || !/^heard-ref:/.test(wl.source || '')) return res.status(404).json({ error: 'No claim there' });
+      await sql`UPDATE waitlist SET source = ${'heard-declined:' + wl.source.slice(10)} WHERE id = ${id}`;
+      return res.json({ success: true });
+    }
+
     if (req.method === 'GET') {
       const referrals = await sql`SELECT * FROM referrals ORDER BY created_at DESC LIMIT 200`;
       return res.json(referrals);
