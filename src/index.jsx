@@ -5867,12 +5867,16 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl, mode = 'referrals' }) {
               <span style={{ color: "#9a9a9a", fontSize: 12 }}>{c.company ? ` · ${c.company}` : ""} · code <code style={{ color: "#b80101" }}>{c.code}</code>{c.owner_email ? ` · ${c.owner_email}` : ""}</span>
             </div>
             {(() => {
-              const L = [[15, "25% off"], [25, "50% off"], [50, "Comped"]];
+              const L = [[15, "25% off"], [25, "50% off"], [50, "comped"]];
               const rung = L.filter(([at]) => c.signups >= at).length;
               const next = L[rung];
+              // What they have actually earned comes first. Nobody has earned
+              // anything at zero, so it says so rather than showing the next
+              // rung as though it were on offer.
+              const earned = rung === 0 ? "0% off" : L[rung - 1][1];
               return (
-                <span style={{ color: rung > 0 ? "#22c55e" : "#b80101", fontSize: 12.5, fontWeight: 800, whiteSpace: "nowrap" }}>
-                  {c.signups} referral{c.signups === 1 ? "" : "s"}{rung > 0 ? ` · 🎉 ${L[rung - 1][1]}` : ""}{next ? ` · ${next[0] - c.signups} to ${next[1]}` : ""}
+                <span style={{ color: rung > 0 ? "#22c55e" : "#9a9a9a", fontSize: 12.5, fontWeight: 800, whiteSpace: "nowrap" }}>
+                  {c.signups} referral{c.signups === 1 ? "" : "s"} · {rung > 0 ? "🎉 " : ""}{earned}{next ? ` · ${next[0] - c.signups} more to ${next[1]}` : ""}
                 </span>
               );
             })()}

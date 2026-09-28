@@ -2174,8 +2174,19 @@ export function WaitlistForm({ list = "insider" }) {
   const [refDismissed, setRefDismissed] = useState(false);
   useEffect(() => {
     if (!/^ref:/.test(urlSource || "")) return;
+    const original = typeof document !== "undefined" ? document.title : null;
     fetch("/api/referrals?partner=" + encodeURIComponent(urlSource.slice(4)))
-      .then(r => r.json()).then(d => { if (d?.name) setRefBy(d); }).catch(() => {});
+      .then(r => r.json()).then(d => {
+        if (!d?.name) return;
+        setRefBy(d);
+        // Someone arriving on a referral link should not land on a page titled
+        // like everyone else's. The tab, the history entry and anything that
+        // reads the title carry whoever sent them.
+        if (typeof document !== "undefined") {
+          document.title = `${d.company || d.name} invited you to GroundUp`;
+        }
+      }).catch(() => {});
+    return () => { if (original && typeof document !== "undefined") document.title = original; };
   }, []);
 
   return (
