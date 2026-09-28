@@ -5783,7 +5783,10 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl, mode = 'referrals' }) {
     if (!window.confirm(`Delete the code "${c.code}"? Its signups stay on the waitlist.`)) return;
     try { await call("DELETE", { kind: "partner_code", id: c.id }); await loadCodes(); } catch (e) { flash(false, e.message); }
   };
-  const codeLink = (c) => `https://community.drginamerritt.net/waitlist?source=${encodeURIComponent("ref:" + c.code)}`;
+  // A referral link goes to the GENERAL list, never the insider one — insider is
+  // a closed room that stops taking names on 1 October, and these links stay in
+  // circulation long after that.
+  const codeLink = (c) => `https://community.drginamerritt.net/waitlist?list=general&source=${encodeURIComponent("ref:" + c.code)}`;
 
   // ── Month-free gifts: personal single-use links, solo or by CSV ──
   const [giftForm, setGiftForm] = useState({ name: "", email: "" });
@@ -6056,7 +6059,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
     return d;
   };
 
-  const load = () => call("GET").then(d => { setData(d); if (d.launch_at) setLaunchAt(d.launch_at); if (d.launch_insider_at) setInsiderAt(d.launch_insider_at); }).catch(e => setMsg({ ok: false, text: e.message }));
+  const load = () => call("GET").then(d => { setData(d); if (d.launch_at) setLaunchAt(d.launch_at); if (d.launch_insider_at) setInsiderAt(d.launch_insider_at); if (d.insider_closes_at) setInsiderClosesAt(d.insider_closes_at); }).catch(e => setMsg({ ok: false, text: e.message }));
   useEffect(() => { load(); }, []);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
 
@@ -7301,6 +7304,7 @@ export default function App() {
 
   const [launchAt, setLaunchAt] = useState(null);
   const [insiderAt, setInsiderAt] = useState(null);
+  const [insiderClosesAt, setInsiderClosesAt] = useState(null);
   const [eliteSpots, setEliteSpots] = useState(null); // { cap, claimed, left }
   const [advisorLink, setAdvisorLink] = useState(null);
   const [launchChecked, setLaunchChecked] = useState(false);
@@ -7308,7 +7312,7 @@ export default function App() {
 
   useEffect(() => {
     fetch("/api/waitlist?public=1").then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) { if (d.launch_at) { setLaunchAt(d.launch_at); window.__guLaunchAt = d.launch_at; } if (d.launch_insider_at) setInsiderAt(d.launch_insider_at); if (d.advisor_call_link) setAdvisorLink(d.advisor_call_link); if (d.elite) setEliteSpots(d.elite); } })
+      .then(d => { if (d) { if (d.launch_at) { setLaunchAt(d.launch_at); window.__guLaunchAt = d.launch_at; } if (d.launch_insider_at) setInsiderAt(d.launch_insider_at); if (d.insider_closes_at) setInsiderClosesAt(d.insider_closes_at); if (d.advisor_call_link) setAdvisorLink(d.advisor_call_link); if (d.elite) setEliteSpots(d.elite); } })
       .catch(() => {})
       .finally(() => setLaunchChecked(true));
   }, []);
@@ -7433,8 +7437,12 @@ export default function App() {
   // Hidden, public waitlist page — shareable at /waitlist, linked from nowhere
   const isWaitlistPage = window.location.pathname.replace(/\/+$/, "") === "/waitlist" || new URLSearchParams(window.location.search).has("waitlist");
   if (isWaitlistPage && !isAdmin && !showAdminLogin) {
-    // Once insiders have access, the insider waitlist is CLOSED — the page says so
-    if (insiderAt && new Date(insiderAt).getTime() <= Date.now()) {
+    // The insider list stops taking names when the general list opens. This URL
+    // keeps working after that — referral links point at it and stay in
+    // circulation for months — it just serves the general list instead.
+    const insiderClosed = insiderClosesAt && new Date(insiderClosesAt).getTime() <= Date.now();
+    // Only once the doors are open to everyone does the page stop collecting.
+    if (launchAt && new Date(launchAt).getTime() <= Date.now()) {
       return (
         <div style={{ background: "#000", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, textAlign: "center" }}>
           <div>
@@ -7448,7 +7456,7 @@ export default function App() {
     }
     // The secret shareable link — insider list, insider countdown (first access)
     // ?list=general previews the post-launch general form on the waitlist URL
-    const wlList = new URLSearchParams(window.location.search).get("list") === "general" ? "general" : "insider";
+    const wlList = (insiderClosed || new URLSearchParams(window.location.search).get("list") === "general") ? "general" : "insider";
     return <LaunchPage launchAt={wlList === "general" ? launchAt : (insiderAt || launchAt)} list={wlList} eliteSpots={eliteSpots} onAdmin={() => setShowAdminLogin(true)} />;
   }
   // Pre-launch, the site is fully BROWSABLE — home, courses, pricing, all of it.

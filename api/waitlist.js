@@ -282,6 +282,10 @@ export default async function handler(req, res) {
       const [launchRow] = await sql`SELECT value FROM settings WHERE key = 'launch_at'`;
       const [insiderRow] = await sql`SELECT value FROM settings WHERE key = 'launch_insider_at'`;
       const [callRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
+      // The insider list stops taking names when the general list opens. It is
+      // a separate date from the insider LAUNCH — insiders keep their early
+      // access, they just stop being recruited.
+      const [insiderCloseRow] = await sql`SELECT value FROM settings WHERE key = 'insider_closes_at'`;
       // Live Elite scarcity: seats spoken for = paid Elite members + waitlisters
       // headed for Elite (budget says so, or the team marked them Elite)
       let elite = null;
@@ -304,7 +308,7 @@ export default async function handler(req, res) {
       // Founding seats: the live race — 25 seats, 15 days from the insider launch
       let founding = null;
       try { const { foundingSeats } = await import('./stripe.js'); founding = await foundingSeats(sql); } catch (e) { console.error('founding seats failed', e.message); }
-      return res.json({ launch_at: launchRow?.value || null, launch_insider_at: insiderRow?.value || null, advisor_call_link: callRow?.value || null, elite, founding, partners });
+      return res.json({ launch_at: launchRow?.value || null, launch_insider_at: insiderRow?.value || null, insider_closes_at: insiderCloseRow?.value || null, advisor_call_link: callRow?.value || null, elite, founding, partners });
     }
 
     // Admin: full list + launch date + revenue rollup
