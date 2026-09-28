@@ -3013,9 +3013,9 @@ function ShopPage({ member, onSignIn }) {
                   {/* Whose copy this is, across the whole page. Two centred lines
                       left the top and bottom of every page clean, which is exactly
                       the part someone would crop. */}
-                  <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-around", pointerEvents: "none", overflow: "hidden" }}>
-                    {[0, 1, 2, 3, 4, 5].map(n => (
-                      <div key={n} style={{ transform: "rotate(-28deg)", color: "rgba(184,1,1,0.12)", fontFamily: font, fontWeight: 800, fontSize: "clamp(11px,2vw,19px)", letterSpacing: "2px", whiteSpace: "nowrap", textAlign: "center" }}>
+                  <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-around", padding: "14% 0", pointerEvents: "none", overflow: "hidden" }}>
+                    {[0, 1].map(n => (
+                      <div key={n} style={{ transform: "rotate(-28deg)", color: "rgba(184,1,1,0.07)", fontFamily: font, fontWeight: 800, fontSize: "clamp(16px,3.4vw,32px)", letterSpacing: "3px", whiteSpace: "nowrap", textAlign: "center" }}>
                         {member?.email || "GroundUp"} · not for distribution
                       </div>
                     ))}
