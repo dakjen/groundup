@@ -687,7 +687,17 @@ export async function sendWaitlistWeekly(sql, opts = {}) {
   const counts = {};
   for (const e of entries) { const l = labelFor(e); counts[l] = (counts[l] || 0) + 1; }
   const insiders = entries.filter(e => (e.list || 'insider') === 'insider').length;
-  const founding = entries.filter(e => e.founding_lnl).length;
+  // Eligible for founding pricing, which is not the same as being a founding
+  // member — that is earned by paying. Both are reported, separately.
+  const foundingEligible = entries.filter(e => e.founding_lnl).length;
+  let foundingPaid = 0;
+  try {
+    const [row] = await sql`SELECT COUNT(*)::int AS n FROM users
+      WHERE badges @> '["founding25"]'::jsonb AND membership_status = 'active'
+        AND COALESCE(role, 'member') = 'member' AND NOT COALESCE(comped, FALSE)
+        AND tier IS DISTINCT FROM 'Free'`;
+    foundingPaid = row?.n || 0;
+  } catch { /* badge column older than the query */ }
   const retainerLeads = entries.filter(e => labelFor(e) === 'Senior Advisor').length;
   const [ins] = await sql`SELECT value FROM settings WHERE key = 'launch_insider_at'`;
   const daysToLaunch = ins?.value ? Math.max(0, Math.ceil((new Date(ins.value).getTime() - Date.now()) / 86400000)) : null;
@@ -705,7 +715,7 @@ export async function sendWaitlistWeekly(sql, opts = {}) {
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
       ${stat('On the waitlist', entries.length, `${insiders} insider · ${entries.length - insiders} general`)}
       ${stat('New this week', '+' + fresh.length, fresh.length ? fresh.slice(0, 3).map(e => e.name.split(' ')[0]).join(', ') + (fresh.length > 3 ? '…' : '') : 'quiet week', '#1a7a3a')}
-      ${stat('Founding members', founding, 'locked in at founding rates')}
+      ${stat('Founding seats claimed', foundingPaid, `${foundingEligible} eligible, none claimed until they pay`)}
     </tr></table>
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:8px;"><tr>
       ${stat('Anticipated MRR', money(mrr), 'if everyone joins their recommended plan', '#b80101')}

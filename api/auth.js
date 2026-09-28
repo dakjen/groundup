@@ -277,7 +277,7 @@ export default async function handler(req, res) {
       const token = signToken({ uid: user.id, role: 'member' });
       // Founding 25 (first 25 on the Elite Insider waitlist): a free first YEAR of
       // Lunch & Learns attaches to the account the moment it's created — any plan,
-      // including Free — plus the founding25 badge that follows them everywhere.
+      // including Free. The founding25 badge is NOT granted here — see below.
       let founding = false;
       try {
         const [wl] = await sql`SELECT id, founding_lnl, first10, source FROM waitlist WHERE email = ${cleanEmail} LIMIT 1`;
@@ -294,12 +294,16 @@ export default async function handler(req, res) {
         if (wl && /^(popup|site|gina)[:\-]/i.test(wl.source || '')) {
           await sql`UPDATE users SET badges = COALESCE(badges, '[]'::jsonb) || '["interest"]'::jsonb WHERE id = ${user.id}`;
         }
-        if (wl?.founding_lnl) {
-          founding = true;
-          await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at)
-            VALUES (${user.id}, 'lunchlearn', 'founding25', NOW() + interval '1 year', NOW())`;
-          await sql`UPDATE users SET badges = COALESCE(badges, '[]'::jsonb) || '["founding25"]'::jsonb WHERE id = ${user.id}`;
-        }
+        // Being flagged on the waitlist makes someone ELIGIBLE for founding
+        // pricing. It does not make them a founding member — that is earned by
+        // being one of the first 25 to PAY after the insider launch, and the
+        // badge is granted in the Stripe webhook at that moment.
+        //
+        // Granting it here also broke the race: checkout treats the badge as
+        // proof of a seat and applies founding pricing even when no seats are
+        // open, so every flagged signup was guaranteed the rate whether they
+        // paid first or last.
+        if (wl?.founding_lnl) founding = true;
         // First 10 on the waitlist: their own 14-day one-course trial (claimed on
         // the course of their choice) plus a personal referral link to share.
         if (wl?.first10) {
