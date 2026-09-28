@@ -1110,6 +1110,39 @@ function ManageMembershipCard({ member, rank }) {
   );
 }
 
+// Everything they have bought or hold through their plan, in the member area.
+// Before this, a purchase only existed back on the shop page — you bought a
+// document and then had to go hunting for it among everything for sale.
+function MyDocuments({ member }) {
+  const [items, setItems] = useState(null);
+  useEffect(() => {
+    const token = getMemberToken();
+    fetch("/api/resources?products=1", { headers: token ? { Authorization: "Bearer " + token } : {} })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setItems((d?.products || []).filter(p => p.owned)))
+      .catch(() => setItems([]));
+  }, []);
+  if (!items || items.length === 0) return null;
+  return (
+    <div style={{ background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 14, padding: "20px 24px", marginBottom: 16 }}>
+      <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 4 }}>Your documents</div>
+      <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, lineHeight: 1.6, margin: "0 0 14px" }}>Yours permanently — they stay here whatever happens to your plan.</p>
+      {items.map(p => (
+        <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", padding: "10px 0", borderTop: "1px solid var(--gu-border)" }}>
+          <span style={{ fontSize: 17 }}>📄</span>
+          <div style={{ flex: 1, minWidth: 180 }}>
+            <div style={{ color: "var(--gu-text2)", fontSize: 13.5, fontWeight: 700, fontFamily: font }}>{p.title}</div>
+            {p.page_count > 0 && <div style={{ color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font }}>{p.page_count} page{p.page_count === 1 ? "" : "s"}</div>}
+          </div>
+          {p.delivery_url
+            ? <a href={p.delivery_url} target="_blank" rel="noreferrer" style={{ color: "#22c55e", border: "1px solid #22c55e60", borderRadius: 8, padding: "7px 14px", fontFamily: font, fontWeight: 800, fontSize: 12, textDecoration: "none" }}>Download</a>
+            : <span style={{ color: "var(--gu-muted)", fontFamily: font, fontSize: 12 }}>Being prepared</span>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // First-10 perk: their personal referral link, plus the state of their own trial
 function ReferralCard({ member }) {
   const [copied, setCopied] = useState(false);
@@ -1391,6 +1424,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
             <h2 style={H}>Profile &amp; billing</h2>
             <p style={SUB}>How you appear in the community, your referral link, and your plan.</p>
             <ProfileCard member={member} />
+            <MyDocuments member={member} />
             <ReferralCard member={member} />
             <ChangePasswordCard />
             <ManageMembershipCard member={member} rank={rank} />
