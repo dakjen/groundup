@@ -3742,7 +3742,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
   const toForm = () => { const el = document.getElementById("insider-form"); el && el.scrollIntoView({ behavior: "smooth", block: "start" }); };
 
   const TOPICS = [
-    { num: "01", title: "Finding & Controlling the Deal", teaser: "How Dr. Merritt reads a market, values land, and locks down a site — before spending real money." },
+    { num: "01", title: "Finding & Controlling the Deal", teaser: "How Dr. Merritt reads a market, values land, locks down a site, and decides what mix of uses it can carry — before spending real money." },
     { num: "02", title: "Teams, Partners & Joint Ventures", teaser: "What you actually bring to the table, and the structures that protect you when the deal gets real." },
     { num: "03", title: "Financing the Deal", teaser: "Capital stacks, tax credits, subsidy — how deals that 'don't pencil' actually close." },
     { num: "04", title: "Why Affordable Housing Doesn't Pencil", teaser: "The economics nobody explains — and the strategies that make the numbers work anyway." },
@@ -3751,10 +3751,10 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
       { num: "06", locked: true },
       { num: "07", ghost: true },
     ] : [
-      { num: "05", title: "Zoning, Entitlements & Predevelopment", teaser: "The gauntlet before the groundbreaking — approvals, community process, and the money you spend before the money shows up." },
-      { num: "06", title: "From Construction to Operations", teaser: "Delivering the building and running it well — the part of the business that decides whether the deal was worth doing." },
-      { num: "07", ghost: true },
-      { num: "08", locked: true },
+      { num: "05", title: "Zoning, Entitlements & What You're Allowed to Build", teaser: "The gauntlet before the groundbreaking — what the zoning permits, and what a rezoning costs you in time and community benefit." },
+      { num: "06", title: "Design, Construction & Getting to Opening Day", teaser: "Choosing an architect and a contractor, holding the budget through the field, and delivering the building." },
+      { num: "07", title: "After Opening Day", teaser: "Compliance, the fifteen-year clock, and running the asset so it stays funded, occupied and yours." },
+      { num: "08", ghost: true },
       { num: "09", locked: true },
     ]),
   ];
