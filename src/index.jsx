@@ -1912,7 +1912,7 @@ const plans = [
       "Deal support — bring YOUR deal to your advisory calls",
       "3 one-on-one advisory calls/yr with Dr. Merritt — unlock after 4 months",
       "30% off 1:1 sessions with Dr. Merritt",
-      "Download 5 guides or templates a month — the Playbook included",
+      "Download 3 guides or templates a month — the Playbook included, unlocks after 4 months",
       "Priority Q&A submissions",
       "1–2 small group advisory sessions/yr",
       "1 invite to exclusive networking event — after 4 months",
@@ -2246,7 +2246,7 @@ function PricingPage({ onSignUp }) {
                   ["Live Lunch & Learns with Dr. Merritt", "1 free, ever", "✓", "✓", "✓", "✓"],
                   ["Lunch & Learn recording library", "—", "—", "✓", "✓", "✓"],
                   ["Community", "—", "Read", "Post & network", "Post & network", "Priority"],
-                  ["Guides, templates & the Playbook", "—", "—", "Read only", "Read only", "5 downloads/mo"],
+                  ["Guides, templates & the Playbook", "—", "—", "Read only", "Read only", "3 downloads/mo"],
                   ["The Opportunity Board — RFPs & funding windows", "—", "—", "—", "✓", "✓"],
                   ["Group office hours with Dr. Merritt", "—", "—", "—", "✓", "✓"],
                   ["Discount on paid 1:1 sessions", "—", "—", "—", "10%", "30%"],
@@ -2897,7 +2897,7 @@ function ShopPage({ member, onSignIn }) {
   const usd = (c) => "$" + (c / 100).toLocaleString(undefined, { minimumFractionDigits: c % 100 ? 2 : 0 });
 
   const meteredDownload = async (p) => {
-    if (!window.confirm(`Use one of your monthly downloads on "${p.title}"?\n\nOwner includes 5 downloads per month (${data.dl ? data.dl.remaining : 5} left this month). Downloads are final — no refunds once a product has been viewed or downloaded.\n\nLicensed for your personal use only: no sharing, reselling, or uploading to AI tools. Your copy may be watermarked and traceable to your account.`)) return;
+    if (!window.confirm(`Use one of your monthly downloads on "${p.title}"?\n\nOwner includes 3 downloads per month (${data.dl ? data.dl.remaining : 5} left this month). Downloads are final — no refunds once a product has been viewed or downloaded.\n\nLicensed for your personal use only: no sharing, reselling, or uploading to AI tools. Your copy may be watermarked and traceable to your account.`)) return;
     try {
       const res = await fetch("/api/resources", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "product_download", id: p.id }) });
       const d = await res.json();
@@ -2972,14 +2972,14 @@ function ShopPage({ member, onSignIn }) {
                   ) : p.access === "metered" ? (
                     <div>
                       <button onClick={() => requireAgreement(() => meteredDownload(p))} disabled={data.dl && data.dl.remaining <= 0} style={{ width: "100%", background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer", opacity: data.dl && data.dl.remaining <= 0 ? 0.5 : 1 }}>
-                        {data.dl && data.dl.remaining <= 0 ? "Monthly downloads used" : `Download — ${data.dl ? data.dl.remaining : 5} of 5 left this month`}
+                        {data.dl && data.dl.remaining <= 0 ? "Monthly downloads used" : `Download — ${data.dl ? data.dl.remaining : 3} of 3 left this month`}
                       </button>
-                      <div style={{ color: "#6a5050", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 6 }}>Included with Owner · 5 a month · or buy it to own it</div>
+                      <div style={{ color: "#6a5050", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 6 }}>Included with Owner · 3 a month · or buy it to own it</div>
                     </div>
                   ) : p.access === "view" ? (
                     <div>
                       <button onClick={() => requireAgreement(() => setViewing(p))} style={{ width: "100%", background: "transparent", color: "#e0c4c4", border: "1px solid #e0c4c455", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Read it{p.page_count ? ` — ${p.page_count} page${p.page_count === 1 ? "" : "s"}` : ""}</button>
-                      <div style={{ color: "#6a5050", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 6 }}>Read-only on your plan · Owner downloads 5 a month · or buy it to own it</div>
+                      <div style={{ color: "#6a5050", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 6 }}>Read-only on your plan · Owner downloads 3 a month · or buy it to own it</div>
                     </div>
                   ) : (
                     <button onClick={() => { setConfirmBuy(p); setAgreed(false); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Buy — {usd(p.price_cents)}</button>
@@ -3424,7 +3424,7 @@ function TermsPage() {
 
       <h2 style={S.h2}>3. Memberships & billing</h2>
       <p style={S.p}>Plans: Member $49.99/mo · Builder $149.99/mo · Premium $249.99/mo · Owner $499.99/mo (limited seats), plus one-time course passes, Lunch &amp; Learn access, digital products, 1:1 sessions, and advisory retainers. Subscriptions <strong style={S.strong}>renew automatically each month</strong> on your billing date and are charged to your card by Stripe until you cancel. You can <strong style={S.strong}>cancel anytime, self-service</strong>, from Membership &amp; Billing on your member page — access continues through the period you've paid for. Prices may change with advance notice; changes apply from your next billing cycle.</p>
-      <p style={S.p}>Some benefits unlock with tenure: advisory calls, Premium's included yearly session, and networking events open after 4 months of continuous membership. Included one-on-one sessions are use-them-or-lose-them — unused sessions do not roll over or accumulate across years. Member, Builder and Premium read the guides, templates and the Developer’s Playbook in the on-site reader; the files themselves are not provided at those tiers. Owner includes 5 downloads per billing month (unused downloads don’t roll over). Anything you buy outright is yours to download permanently. Owner seats are limited and offered while available.</p>
+      <p style={S.p}>Some benefits unlock with tenure: advisory calls, Premium's included yearly session, and networking events open after 4 months of continuous membership. Included one-on-one sessions are use-them-or-lose-them — unused sessions do not roll over or accumulate across years. Member, Builder and Premium read the guides, templates and the Developer’s Playbook in the on-site reader; the files themselves are not provided at those tiers. Owner includes 3 downloads per billing month, unlocking after 4 months of continuous membership (unused downloads don’t roll over). Anything you buy outright is yours to download permanently. Owner seats are limited and offered while available.</p>
 
       <h2 style={S.h2}>4. Refunds</h2>
       <p style={S.p}><strong style={S.strong}>All sales are final once content has been viewed or downloaded.</strong> For subscriptions: if you cancel <strong style={S.strong}>before the 5th day of the month</strong>, your payment for that month is refunded; cancellations on or after the 5th are not refunded for the current month, and your access continues through the period you paid for. For <strong style={S.strong}>annual subscriptions</strong> (billed once for the year): cancel within the first 6 months — a 10-day grace period past the 6-month mark is honored — and half of your annual payment (6 months) is refunded; more than 10 days into the second half, the refund is forfeited and your access continues through the end of the paid year. Where a statutory cooling-off or refund right applies in your jurisdiction, that right is honored to the extent required by law.</p>
@@ -3898,7 +3898,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
                     ["Live Lunch & Learns with Dr. Merritt", "1 free, ever", "✓", "✓", "✓", "✓"],
                     ["Lunch & Learn recording library", "—", "—", "✓", "✓", "✓"],
                     ["Community", "—", "Read", "Post & network", "Post & network", "Priority"],
-                    ["Guides, templates & the Playbook", "—", "—", "Read only", "Read only", "5 downloads/mo"],
+                    ["Guides, templates & the Playbook", "—", "—", "Read only", "Read only", "3 downloads/mo"],
                     ["The Opportunity Board — RFPs & funding windows", "—", "—", "—", "✓", "✓"],
                     ["Group office hours with Dr. Merritt", "—", "—", "—", "✓", "✓"],
                     ["Discount on paid 1:1 sessions", "—", "—", "—", "10%", "30%"],
@@ -3932,7 +3932,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
           );
           const passes = [
             { name: "One Course", price: "$100", period: "one-time", desc: "60 days inside one course of your choice." },
-            { name: "All-Access Pass", price: "$275", period: "one-time", desc: "30 days of the entire curriculum.", best: true },
+            { name: "All-Access Pass", price: "$275", period: "one-time", desc: "30 days of the entire curriculum." },
           ];
           let tiers = [
             { name: "Free", price: "$0", period: "", desc: "Course titles & curricula, one free live Lunch & Learn, and your community profile — no card required." },
@@ -3944,7 +3944,9 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
 
           return (<>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14, maxWidth: 620, margin: "0 auto 14px" }}>{passes.map(CARD)}</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>{tiers.map(CARD)}</div>
+            {/* Five explicit columns. auto-fit wraps the fifth card onto its own
+                row the moment the viewport tightens, and these belong on one line. */}
+            <div style={{ display: "grid", gridTemplateColumns: `repeat(${tiers.length}, minmax(0, 1fr))`, gap: 14 }}>{tiers.map(CARD)}</div>
           </>);
         })()}
       </div>

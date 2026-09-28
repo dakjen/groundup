@@ -21,7 +21,7 @@ const PLANS = {
   ] },
   Elite: { tier: 'Elite', label: 'Owner', price: '$499.99/mo', rank: 4, features: [
     'Everything in Premium', 'Direct messages to Dr. Merritt & her team (replies within 2 business days, Mon–Fri)',
-    '3 one-on-one advisory calls a year', "Download 5 guides or templates a month — the Playbook included",
+    '3 one-on-one advisory calls a year', "Download 3 guides or templates a month — the Playbook included, after 4 months",
     '30% off every 1:1 session', 'Owner Lounge — the private channel', 'Small-group advisory sessions & networking invites',
   ] },
 };

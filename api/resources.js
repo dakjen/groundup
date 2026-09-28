@@ -33,7 +33,7 @@ export default async function handler(req, res) {
       }
       const rows = await sql`SELECT id, title, description, price_cents, value_cents, cover_url, delivery_url, is_playbook, page_urls, page_count FROM products WHERE active ORDER BY position, id`;
       // The shelf rules:
-      //   Owner (4)  → 5 downloads per billing month, Playbook included
+      //   Owner (4)  → 3 downloads per billing month after 4 months, Playbook included
       //   Premium (3)→ read everything, download nothing
       //   Builder (2)→ read everything, download nothing
       //   below      → buy (a purchase is always a full, permanent download)
@@ -42,7 +42,7 @@ export default async function handler(req, res) {
       // page images instead, so there is no document to save — only pictures of
       // one, watermarked and logged. Anything that renders can be screenshotted;
       // this removes the file, not the screen.
-      const DL_LIMIT = 5;
+      const DL_LIMIT = 3;
       let dl = null;
       if (tierRank >= 4 && session?.uid) {
         const [me2] = await sql`SELECT tier_since FROM users WHERE id = ${session.uid}`;
@@ -60,7 +60,7 @@ export default async function handler(req, res) {
         const bought = owned.includes(p.id);
         let access = 'buy';
         if (bought) access = 'download';          // they own it outright
-        else if (tierRank >= 4) access = 'metered'; // 5 a month, through the logged action
+        else if (tierRank >= 4) access = 'metered'; // 3 a month, through the logged action
         else if (tierRank >= 2) access = 'view';    // Builder and Premium read only
         return {
           id: p.id, title: p.title, description: p.description,
@@ -213,22 +213,29 @@ export default async function handler(req, res) {
     if (req.method === 'POST' && req.body && req.body.action === 'product_download') {
       const session = getSession(req);
       if (!session?.uid) return res.status(401).json({ error: 'Sign in required' });
-      const [u] = await sql`SELECT tier, tier_since FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
+      const [u] = await sql`SELECT tier, tier_since, role, comped FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
       const rank = TIER_RANK[u?.tier] ?? 0;
       const [p] = await sql`SELECT id, delivery_url, is_playbook FROM products WHERE id = ${Number(req.body.id)} AND active`;
       if (!p || !p.delivery_url) return res.status(404).json({ error: 'Product not found' });
       const [bought] = await sql`SELECT id FROM entitlements WHERE user_id = ${session.uid} AND course_id = ${'prod:' + p.id} LIMIT 1`;
       if (bought) return res.json({ url: p.delivery_url }); // they bought it; it's theirs
       if (rank < 4) return res.status(403).json({ error: 'Downloading is an Owner benefit — your plan reads everything in the viewer.' });
+      // Downloads sit behind the same four-month door as advisory calls and
+      // networking: an Owner reads everything from day one and starts taking
+      // files away once they have been here a while.
+      const gate = await benefitGate(sql, u);
+      if (gate.active) {
+        return res.status(403).json({ error: `Downloads open after 4 months of membership — yours unlock on ${new Date(gate.until).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}. Everything is readable in the viewer until then.` });
+      }
       const anchor = u?.tier_since ? new Date(u.tier_since) : new Date();
       const now = new Date();
       const periodStart = new Date(anchor);
       periodStart.setFullYear(now.getFullYear(), now.getMonth(), anchor.getDate());
       if (periodStart > now) periodStart.setMonth(periodStart.getMonth() - 1);
       const [used] = await sql`SELECT COUNT(*)::int AS n FROM download_log WHERE user_id = ${session.uid} AND created_at >= ${periodStart.toISOString()} AND COALESCE(kind, 'download') = 'download'`;
-      if ((used?.n || 0) >= 5) {
+      if ((used?.n || 0) >= 3) {
         const resetAt = new Date(periodStart); resetAt.setMonth(resetAt.getMonth() + 1);
-        return res.status(403).json({ error: `You've used your 5 downloads this month — they reset on ${resetAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}.` });
+        return res.status(403).json({ error: `You've used your 3 downloads this month — they reset on ${resetAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}.` });
       }
       await sql`INSERT INTO download_log (user_id, product_id, kind, created_at) VALUES (${session.uid}, ${p.id}, 'download', NOW())`;
       return res.json({ url: p.delivery_url });

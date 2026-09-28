@@ -929,7 +929,7 @@ const BENEFITS = {
   Basic: ["Every course — all seven, plus each new one we add", "All written lessons, case studies & worksheets", "Free invites to every live Lunch & Learn", "Resource lists & reading guides", "Community access — read every channel"],
   Builder: ["Everything in Member", "Post, reply & network in the community", "The Lunch & Learn recording library", "View-only: every guide, template & the Developer's Playbook"],
   Premium: ["Everything in Builder", "Read every guide and template in the library", "The Opportunity Board — RFPs, funding windows & deals", "JV & Partnerships channel", "Development timeline templates", "Group office hours with Dr. Merritt + priority booking", "10% off 1:1 sessions with Dr. Merritt"],
-  Elite: ["Everything in Premium", "Deal support — bring YOUR deal to your advisory calls", "3 one-on-one advisory calls/yr with Dr. Merritt", "Direct messages to Dr. Merritt & her team — replies within 2 business days", "Owner Lounge — private channel", "Download 5 guides or templates a month — the Playbook included", "30% off 1:1 sessions with Dr. Merritt", "Invite to the exclusive networking event"],
+  Elite: ["Everything in Premium", "Deal support — bring YOUR deal to your advisory calls", "3 one-on-one advisory calls/yr with Dr. Merritt", "Direct messages to Dr. Merritt & her team — replies within 2 business days", "Owner Lounge — private channel", "Download 3 guides or templates a month — the Playbook included, after 4 months", "30% off 1:1 sessions with Dr. Merritt", "Invite to the exclusive networking event"],
   Partner: ["Custom organizational access", "Contact info@nreuv.com for your cohort setup"],
 };
 
@@ -938,7 +938,7 @@ const NEXT_TIER = {
   Free: { tier: "Basic", price: "$49.99/mo", adds: ["The full curriculum — every course, every lesson", "Community access"] },
   Basic: { tier: "Builder", price: "$149.99/mo", adds: ["A voice in the community — post, reply & network", "Free live Lunch & Learns + all recordings", "Every template & guide, view-only"] },
   Builder: { tier: "Premium", price: "$249.99/mo", adds: ["Read every guide and template", "The Opportunity Board", "Group office hours with Dr. Merritt", "10% off 1:1 sessions"] },
-  Premium: { tier: "Elite", price: "$499.99/mo", adds: ["Deal support — bring YOUR deal to advisory calls", "DMs to Dr. Merritt & her team", "5 downloads a month, incl. the Playbook", "30% off 1:1 sessions"] },
+  Premium: { tier: "Elite", price: "$499.99/mo", adds: ["Deal support — bring YOUR deal to advisory calls", "DMs to Dr. Merritt & her team", "3 downloads a month, incl. the Playbook", "30% off 1:1 sessions"] },
 };
 
 // Your community profile: the photo, headline and bio other members see when
