@@ -10,6 +10,18 @@ export const config = { runtime: 'edge' };
 export default async function handler(req) {
   const url = new URL(req.url);
   const to = url.searchParams.get('to') === 'insider' ? 'insider' : 'public';
+  // ?ref=<code> — the preview for a partner's referral link. It carries their
+  // name, because the image is the part people actually see when a link is
+  // shared; everything else on the page only appears after a click.
+  const refCode = (url.searchParams.get('ref') || '').trim().toLowerCase();
+  let refBy = null;
+  if (/^[a-z0-9-]{1,64}$/.test(refCode)) {
+    try {
+      const sql = neon(process.env.DATABASE_URL);
+      const [pc] = await sql`SELECT owner_name, company FROM partner_codes WHERE code = ${refCode}`;
+      if (pc) refBy = pc.company || pc.owner_name;
+    } catch { /* fall through to the ordinary image */ }
+  }
   let days = null;
   try {
     const sql = neon(process.env.DATABASE_URL);
@@ -23,8 +35,10 @@ export default async function handler(req) {
   } catch (e) { /* fall through to generic image */ }
 
   const origin = url.origin;
-  const kicker = to === 'insider' ? 'INSIDER WAITLIST' : 'GROUNDUP LAUNCH';
-  const tagline = to === 'insider' ? 'until insiders get in first — join the waitlist' : 'until the doors open to everyone';
+  const kicker = refBy ? `REFERRED BY ${String(refBy).toUpperCase()}` : to === 'insider' ? 'INSIDER WAITLIST' : 'GROUNDUP LAUNCH';
+  const tagline = refBy
+    ? 'join through them — $5 to $25 off every month, two years'
+    : to === 'insider' ? 'until insiders get in first — join the waitlist' : 'until the doors open to everyone';
   const h = (type, style, ...children) => ({ type, props: { style, children: children.length === 1 ? children[0] : children } });
 
   return new ImageResponse(
@@ -33,10 +47,12 @@ export default async function handler(req) {
       h('div', { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.85))', display: 'flex' }),
       h('div', { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 },
         h('div', { color: '#e8b4b4', fontSize: 26, letterSpacing: 10, display: 'flex' }, kicker),
-        days !== null
-          ? h('div', { color: '#ffffff', fontSize: 170, fontWeight: 700, display: 'flex', lineHeight: 1 }, `${days} DAYS`)
-          : h('div', { color: '#ffffff', fontSize: 110, fontWeight: 700, display: 'flex', lineHeight: 1.05, textAlign: 'center' }, 'GET ACCESS FIRST.'),
-        days !== null ? h('div', { color: '#f5e8e8', fontSize: 36, display: 'flex' }, tagline) : null,
+        refBy
+          ? h('div', { color: '#ffffff', fontSize: 104, fontWeight: 700, display: 'flex', lineHeight: 1.05, textAlign: 'center' }, "YOU'RE INVITED.")
+          : days !== null
+            ? h('div', { color: '#ffffff', fontSize: 170, fontWeight: 700, display: 'flex', lineHeight: 1 }, `${days} DAYS`)
+            : h('div', { color: '#ffffff', fontSize: 110, fontWeight: 700, display: 'flex', lineHeight: 1.05, textAlign: 'center' }, 'GET ACCESS FIRST.'),
+        (refBy || days !== null) ? h('div', { color: '#f5e8e8', fontSize: 34, display: 'flex' }, tagline) : null,
         h('div', { color: '#b80101', fontSize: 30, fontWeight: 700, letterSpacing: 4, display: 'flex', marginTop: 18 }, 'GROUNDUP')
       )
     ),

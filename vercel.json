@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/waitlist",
-      "destination": "/waitlist.html"
+      "destination": "/api/waitlist-page"
     },
     {
       "source": "/((?!api|assets|.*\\..*).*)",
