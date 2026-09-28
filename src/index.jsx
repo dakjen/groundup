@@ -3010,13 +3010,19 @@ function ShopPage({ member, onSignIn }) {
                   <img src={u} alt={`Page ${i + 1}`} draggable={false}
                     onContextMenu={e => e.preventDefault()}
                     style={{ width: "100%", display: "block", borderRadius: 6, userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none", pointerEvents: "none" }} />
-                  {/* Whose copy this is, on every page. */}
-                  <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", overflow: "hidden" }}>
-                    <div style={{ transform: "rotate(-28deg)", color: "rgba(184,1,1,0.13)", fontFamily: font, fontWeight: 800, fontSize: "clamp(13px,2.4vw,22px)", letterSpacing: "2px", whiteSpace: "nowrap", textAlign: "center", lineHeight: 2 }}>
-                      {member?.email || "GroundUp"} · not for distribution<br />{member?.email || "GroundUp"} · not for distribution
-                    </div>
+                  {/* Whose copy this is, across the whole page. Two centred lines
+                      left the top and bottom of every page clean, which is exactly
+                      the part someone would crop. */}
+                  <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-around", pointerEvents: "none", overflow: "hidden" }}>
+                    {[0, 1, 2, 3, 4, 5].map(n => (
+                      <div key={n} style={{ transform: "rotate(-28deg)", color: "rgba(184,1,1,0.12)", fontFamily: font, fontWeight: 800, fontSize: "clamp(11px,2vw,19px)", letterSpacing: "2px", whiteSpace: "nowrap", textAlign: "center" }}>
+                        {member?.email || "GroundUp"} · not for distribution
+                      </div>
+                    ))}
                   </div>
-                  <div style={{ position: "absolute", left: 10, bottom: 8, color: "rgba(240,216,216,0.45)", fontSize: 10, fontFamily: font, pointerEvents: "none" }}>Page {i + 1} of {viewing.page_urls.length}</div>
+                  {/* A dark chip, because the page behind it is usually white paper
+                      and pale text on white cannot be read at all. */}
+                  <div style={{ position: "absolute", left: 10, bottom: 10, background: "rgba(0,0,0,0.55)", color: "#f0d8d8", fontSize: 10, fontFamily: font, fontWeight: 700, padding: "3px 9px", borderRadius: 5, pointerEvents: "none" }}>Page {i + 1} of {viewing.page_urls.length}</div>
                 </div>
               ))}
             </div>
