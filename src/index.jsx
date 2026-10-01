@@ -3774,6 +3774,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
   const toForm = () => { const el = document.getElementById("insider-form"); el && el.scrollIntoView({ behavior: "smooth", block: "start" }); };
 
   const TOPICS = [
+    { num: "00", title: "The Development Overview", teaser: "The nine phases of a development deal in order — feasibility through compliance — so everything after it has a map to hang on." },
     { num: "01", title: "Finding & Controlling the Deal", teaser: "How Dr. Merritt reads a market, values land, locks down a site, and decides what mix of uses it can carry — before spending real money." },
     { num: "02", title: "Teams, Partners & Joint Ventures", teaser: "What you actually bring to the table, and the structures that protect you when the deal gets real." },
     { num: "03", title: "Financing the Deal", teaser: "Capital stacks, tax credits, subsidy — how deals that 'don't pencil' actually close." },
@@ -3970,8 +3971,10 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
         {(() => {
           const CARD = (p, i) => (
             <div key={i} style={{ background: p.popular || p.best ? "#0d0404" : "#080404", border: "1px solid " + (p.popular ? "#b8010140" : p.best ? "#b9bec745" : "#150000"), borderRadius: 16, padding: "26px 24px", textAlign: "center", position: "relative" }}>
-              {p.popular && <div style={{ position: "absolute", top: 12, right: 12, background: "#b8010115", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "2px 8px", fontSize: 8, fontFamily: font, fontWeight: 800, letterSpacing: "1.5px" }}>POPULAR</div>}
-              {p.best && <div style={{ position: "absolute", top: 12, right: 12, background: "#b9bec715", color: "#b9bec7", border: "1px solid #b9bec735", borderRadius: 4, padding: "2px 8px", fontSize: 8, fontFamily: font, fontWeight: 800, letterSpacing: "1.5px" }}>BEST VALUE</div>}
+              <div style={{ minHeight: 18, marginBottom: 8, display: "flex", justifyContent: "center" }}>
+                {p.popular && <span style={{ background: "#b8010115", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "2px 9px", fontSize: 8.5, fontFamily: font, fontWeight: 800, letterSpacing: "1.5px" }}>POPULAR</span>}
+                {p.best && <span style={{ background: "#b9bec715", color: "#b9bec7", border: "1px solid #b9bec735", borderRadius: 4, padding: "2px 9px", fontSize: 8.5, fontFamily: font, fontWeight: 800, letterSpacing: "1.5px" }}>BEST VALUE</span>}
+              </div>
               <div style={{ fontSize: 10, color: "#8a7070", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>{p.name}</div>
               <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", lineHeight: 1 }}>{p.price}<span style={{ fontSize: 14, color: "#8f7070", fontFamily: font, fontWeight: 400 }}> {p.period}</span></div>
               <p style={{ fontSize: 12.5, color: "#8a7070", lineHeight: 1.7, fontFamily: font, marginTop: 10 }}>{p.desc}</p>
@@ -4006,17 +4009,15 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
           <div style={{ textAlign: "center", marginBottom: 32 }}>
             <div style={{ fontSize: 10, color: "#e0c4c4", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Your Move</div>
             <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4.5vw,44px)", color: "#f5e8e8", marginBottom: 12 }}>{insider ? "Claim your insider spot." : "Claim your spot."}</h2>
-            {eliteSpots && eliteSpots.left > 0 && (
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#12060a", border: "1px solid #b8010150", borderRadius: 10, padding: "10px 20px", marginBottom: 14 }}>
-                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
-                <span style={{ color: "#e0c4c4", fontSize: 13, fontFamily: font, fontWeight: 800, letterSpacing: "0.5px" }}>
-                  Only {eliteSpots.left} of {eliteSpots.cap} Owner spots still open
-                </span>
-              </div>
-            )}
-            {eliteSpots && eliteSpots.left === 0 && (
-              <div style={{ color: "#8a7070", fontSize: 13, fontFamily: font, fontWeight: 700, marginBottom: 14 }}>All {eliteSpots.cap} Owner spots are spoken for — join the list for the next opening.</div>
-            )}
+            {/* Owner seats cannot be taken while the waitlist is the only thing
+                open, so counting them down said nothing. The founding 25 is the
+                thing that is actually at stake. */}
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#12060a", border: "1px solid #b8010150", borderRadius: 10, padding: "10px 20px", marginBottom: 18 }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
+              <span style={{ color: "#e0c4c4", fontSize: 13, fontFamily: font, fontWeight: 800, letterSpacing: "0.5px" }}>
+                The first 25 to join at launch get founding rates for a full year
+              </span>
+            </div>
             <p style={{ color: "#c8b0b0", fontSize: 15, fontFamily: font, lineHeight: 1.8, maxWidth: 520, margin: "0 auto" }}>The doors open soon — and you're early. Tell us where you're headed and we'll meet you there.</p>
           </div>
           <WaitlistForm list={list} />
