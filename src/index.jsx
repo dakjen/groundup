@@ -1152,7 +1152,6 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited, preLaunc
               {preLaunch
                 ? <a href="/waitlist" style={{ background: "#b80101", color: "#fff", borderRadius: 10, padding: "15px 36px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, letterSpacing: "0.5px", textDecoration: "none", display: "inline-block" }}>JOIN THE WAITLIST</a>
                 : <button onClick={() => setActivePage("courses")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "15px 36px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", letterSpacing: "0.5px" }}>EXPLORE COURSES</button>}
-              {preLaunch && <button onClick={() => setActivePage("courses")} style={{ background: "transparent", color: "#6a5a5a", border: "none", padding: "15px 8px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13.5, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 4 }}>or look through the curriculum</button>}
               <button onClick={() => setActivePage("about")} style={{ background: "transparent", color: "#6a6b69", border: "1px solid #2a1a1a", borderRadius: 10, padding: "15px 36px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 14, cursor: "pointer", letterSpacing: "0.5px" }}>ABOUT DR. MERRITT</button>
             </div>
           </div>
@@ -1461,13 +1460,18 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
   for (const c of allCourses) if (c.series) (seriesGroups[c.series] ||= []).push(c);
 
   // Course content requires an account — sign in (free) to preview, paid to unlock everything.
+  // Before launch no account can be created, so this wall points at the waitlist
+  // rather than inviting people to sign up for something that does not exist yet.
+  const preLaunchGate = typeof window !== "undefined" && window.__guLaunchAt && new Date(window.__guLaunchAt).getTime() > Date.now();
   if (!member) {
     return (
       <div style={{ background: "#000", minHeight: "100vh", padding: "160px 20px", textAlign: "center" }}>
         <div style={{ marginBottom: 16 }}><Lock size={36} color="#b80101" style={{ display: "inline-block" }} /></div>
         <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 44, color: "#f5e8e8", marginBottom: 14 }}>Members Only</h1>
-        <p style={{ color: "#8a7070", fontFamily: "'DM Sans', sans-serif", fontSize: 15, maxWidth: 460, margin: "0 auto 28px", lineHeight: 1.8 }}>The GroundUp curriculum is for members. Create a free account to try one lesson on us, or go Basic for the full four-course curriculum.</p>
-        <button onClick={onSignIn} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "13px 26px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Sign In / Join Free →</button>
+<p style={{ color: "#8a7070", fontFamily: "'DM Sans', sans-serif", fontSize: 15, maxWidth: 460, margin: "0 auto 28px", lineHeight: 1.8 }}>{preLaunchGate ? "The curriculum opens with the doors on December 1. Join the waitlist and you'll be invited first — with our recommendation for the plan that fits you." : "The GroundUp curriculum is for members. Create a free account to try one lesson on us, or go Basic for the full curriculum."}</p>
+        {preLaunchGate
+          ? <a href="/waitlist" style={{ background: "#b80101", color: "#fff", borderRadius: 8, padding: "13px 26px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, textDecoration: "none", display: "inline-block" }}>Join the Waitlist →</a>
+          : <button onClick={onSignIn} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "13px 26px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Sign In / Join</button>}
       </div>
     );
   }
@@ -3805,7 +3809,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
 
       {/* Hero + countdown */}
       <div style={{ minHeight: "88vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "80px 20px 60px", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: insider ? "url(/LIIF-Stills2.jpg)" : "url(/general-waitlist-hero.jpg)", backgroundSize: "cover", backgroundPosition: insider ? "center 25%" : "center 30%", opacity: insider ? 0.28 : 0.42, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", inset: 0, backgroundImage: insider ? "url(/LIIF-Stills2.jpg)" : "url(/opt/hough-exterior.jpg)", backgroundSize: "cover", backgroundPosition: insider ? "center 25%" : "center 45%", opacity: insider ? 0.28 : 0.42, pointerEvents: "none" }} />
         <div style={{ position: "absolute", inset: 0, background: insider ? "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.75) 55%, #000 100%)" : "linear-gradient(180deg, rgba(33,9,9,0.45) 0%, rgba(33,9,9,0.7) 55%, #210909 100%)", pointerEvents: "none" }} />
         <div className="gu-drift" style={{ position: "absolute", top: "0%", left: "20%", width: 700, height: 700, borderRadius: "50%", background: "radial-gradient(circle, #57040428 0%, transparent 65%)", pointerEvents: "none" }} />
         {/* This page has no nav, so without this there is no way back to the
@@ -7522,6 +7526,18 @@ export default function App() {
   const WAITLIST_OPENS = new Date("2026-10-01T00:00:00-04:00");
   const waitlistOpen = Date.now() >= WAITLIST_OPENS.getTime();
   const [showWaitlistPop, setShowWaitlistPop] = useState(false);
+  // Shown once per visitor, a beat after they land, while the waitlist is the
+  // only thing anyone can actually do. Dismissing it is remembered, so nobody
+  // is nagged twice.
+  useEffect(() => {
+    if (!prelaunch || member || isAdmin) return;
+    try { if (localStorage.getItem("guWaitlistPopSeen") === "1") return; } catch {}
+    const t = setTimeout(() => {
+      setShowWaitlistPop(true);
+      try { localStorage.setItem("guWaitlistPopSeen", "1"); } catch {}
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [prelaunch, member, isAdmin]);
   // Every join / sign-up / enrol button on the site routes through here.
   //
   // Before launch there are no accounts to create and nothing to buy, so all of
@@ -7633,37 +7649,15 @@ export default function App() {
         />
       )}
       {showWaitlistPop && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px 20px", overflowY: "auto" }} onClick={() => setShowWaitlistPop(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 720, position: "relative" }}>
-            <button onClick={() => setShowWaitlistPop(false)} style={{ position: "absolute", top: -14, right: -6, zIndex: 2, background: "#1a0808", color: "#c8a8a8", border: "1px solid #2a0000", borderRadius: "50%", width: 34, height: 34, cursor: "pointer", fontSize: 16, fontWeight: 700 }}>×</button>
-            <div style={{ textAlign: "center", marginBottom: 18 }}>
-              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#f5e8e8" }}>{waitlistOpen ? "Doors open soon." : "The waitlist opens October 1."}</div>
-              <div style={{ color: "#8a7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>{waitlistOpen ? "Get on the list and you'll be invited the moment we launch." : "Check back then to claim your spot — or reach out to Dr. Gina Merritt for early access to the insider waitlist."}</div>
-              <div style={{ color: "#e0c4c4", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, marginTop: 10 }}>✦ The first 10 on the waitlist get a special treat.</div>
-              {launchAt && new Date(launchAt) > new Date() && (() => {
-                const ms = new Date(launchAt).getTime() - Date.now();
-                const days = Math.floor(ms / 86400000);
-                const hours = Math.floor((ms % 86400000) / 3600000);
-                return (
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: 10, marginTop: 14, background: "#12060a", border: "1px solid #b8010140", borderRadius: 10, padding: "10px 20px" }}>
-                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
-                    <span style={{ color: "#e0c4c4", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "0.5px" }}>
-                      {days > 0 ? `Launching in ${days} day${days === 1 ? "" : "s"}, ${hours} hour${hours === 1 ? "" : "s"}` : `Launching in ${hours} hour${hours === 1 ? "" : "s"}`}
-                    </span>
-                    <span style={{ color: "#8f7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>
-                      · {new Date(launchAt).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}
-                    </span>
-                  </div>
-                );
-              })()}
-              {launchAt && new Date(launchAt) > new Date() && (
-                <div style={{ marginTop: 10 }}>
-                  <a href={gcalUrl("GroundUp launches — doors open", launchAt, 60, "GroundUp by Dr. Gina Merritt opens to everyone. Grab your plan: " + window.location.origin, "Online")} target="_blank" rel="noreferrer"
-                    style={{ color: "#c8a8a8", fontSize: 12, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, textDecoration: "none", border: "1px solid #2a0000", borderRadius: 8, padding: "8px 14px", display: "inline-block" }}>Mark your calendar — add to Google Calendar</a>
-                </div>
-              )}
-            </div>
-            {waitlistOpen && <WaitlistForm list="general" />}
+        <div style={{ position: "fixed", inset: 0, zIndex: 320, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setShowWaitlistPop(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ position: "relative", width: "100%", maxWidth: 480, background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "40px 36px 34px", textAlign: "center" }}>
+            <button onClick={() => setShowWaitlistPop(false)} aria-label="Close" style={{ position: "absolute", top: 12, right: 16, background: "none", border: "none", color: "#8a7070", fontSize: 24, lineHeight: 1, cursor: "pointer", padding: 4 }}>×</button>
+            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Now open</div>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(28px,5vw,36px)", color: "#f5e8e8", margin: "0 0 12px", lineHeight: 1.15 }}>Our waitlist is open.</h2>
+            <p style={{ color: "#c8a8a8", fontSize: 14.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8, margin: "0 0 10px" }}>GroundUp launches <strong style={{ color: "#f0d8d8" }}>December 1st</strong>. Get on the list now and you'll be invited first — with our recommendation for the plan that fits you.</p>
+            <p style={{ color: "#8a7070", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, margin: "0 0 24px" }}>Founding rates go to the first 25 who join at launch.</p>
+            <a href="/waitlist" style={{ display: "block", background: "#b80101", color: "#fff", borderRadius: 10, padding: "15px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 15, textDecoration: "none" }}>Join the Waitlist →</a>
+            <button onClick={() => setShowWaitlistPop(false)} style={{ marginTop: 14, background: "none", border: "none", color: "#6a5050", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}>I'll look around first</button>
           </div>
         </div>
       )}
