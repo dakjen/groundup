@@ -54,6 +54,14 @@ function redirectOverlay(show) {
 
 // Start a Stripe Checkout for any purchasable item; falls back to email if payments are off
 async function startCheckout(item, extra = {}) {
+  // Nothing is for sale before the doors open — not memberships, not passes,
+  // not sessions with Dr. Merritt. Everything on the site stays browsable; the
+  // only action available is joining the waitlist. This is the single place
+  // every purchase runs through, so it is the one place that has to hold.
+  if (typeof window !== "undefined" && window.__guLaunchAt && new Date(window.__guLaunchAt).getTime() > Date.now()) {
+    window.location.href = "/waitlist";
+    return false;
+  }
   redirectOverlay(true);
   // exposed on window so member-side pages can trigger checkout
   try {
