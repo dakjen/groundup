@@ -2165,9 +2165,20 @@ export function WaitlistForm({ list = "insider" }) {
   // pop-up opening after navigation; the dropdown hides when a link set it.
   const [urlSource] = useState(() => {
     try {
+      // A referral link is remembered so someone who clicks it, looks around
+      // and comes back later is still credited — but not forever. It used to
+      // have no expiry, so one click on a partner's link made every later
+      // visit from that browser look referred.
       const q = new URLSearchParams(window.location.search).get("source");
-      if (q) { localStorage.setItem("guWlSource", q); return q; }
-      return localStorage.getItem("guWlSource") || "";
+      if (q === "clear") { localStorage.removeItem("guWlSource"); localStorage.removeItem("guWlSourceAt"); return ""; }
+      if (q) { localStorage.setItem("guWlSource", q); localStorage.setItem("guWlSourceAt", String(Date.now())); return q; }
+      const saved = localStorage.getItem("guWlSource") || "";
+      const at = Number(localStorage.getItem("guWlSourceAt") || 0);
+      if (saved && (!at || Date.now() - at > 30 * 86400000)) {
+        localStorage.removeItem("guWlSource"); localStorage.removeItem("guWlSourceAt");
+        return "";
+      }
+      return saved;
     } catch { return ""; }
   });
   const [source, setSource] = useState(urlSource);

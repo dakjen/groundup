@@ -2268,6 +2268,10 @@ function PricingPage({ onSignUp }) {
             const plan = annual && ANNUAL_PRICES[raw.tier] ? { ...raw, price: ANNUAL_PRICES[raw.tier], period: "/yr" } : raw;
             return (
             <PlanCard key={i} plan={plan} compact seats={plan.limited ? elite : null} onSelect={() => {
+              // Before launch every one of these buttons is labelled "Join the
+              // waitlist", so that is where every one of them goes. The Senior
+              // Advisor card used to carry that label and open the booking page.
+              if (window.__guLaunchAt && new Date(window.__guLaunchAt).getTime() > Date.now()) { window.location.href = "/waitlist"; return; }
               if (plan.tier === "Advisor") { window.location.href = "/contact"; return; }
               // Elite is capped — send full-cohort visitors to the waitlist, not to checkout
               if (plan.limited && elite?.full) { window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("Owner waitlist — notify me when a seat opens"); return; }
@@ -2284,8 +2288,8 @@ function PricingPage({ onSignUp }) {
           <div style={{ padding: "22px 28px 6px" }}>
             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>What each plan includes</div>
           </div>
-          <div style={{ padding: "0 12px 18px" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "'DM Sans', sans-serif" }}>
+          <div style={{ padding: "0 12px 18px", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+            <table style={{ width: "100%", minWidth: 620, borderCollapse: "collapse", fontFamily: "'DM Sans', sans-serif" }}>
               <thead>
                 <tr>
                   <th style={{ textAlign: "left", padding: "14px 16px", color: "#8f7070", fontSize: 11, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase" }}>Benefit</th>
@@ -3831,6 +3835,13 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
         .gu-d4 { animation-delay: 0.4s; } .gu-d5 { animation-delay: 0.52s; }
         .gu-pulse { animation: guPulse 2s ease-in-out infinite; }
         .gu-drift { animation: guDrift 18s ease-in-out infinite; }
+        /* Five plan cards on one row needs a desktop. Forcing five columns at
+           every width squeezed each card to a few characters wide on a phone. */
+        .gu-tier-grid { display: grid; gap: 14px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+        @media (max-width: 1000px) { .gu-tier-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        @media (max-width: 640px) { .gu-tier-grid { grid-template-columns: 1fr; } }
+        .gu-table-hint { display: none; }
+        @media (max-width: 720px) { .gu-table-hint { display: block; } }
         button { transition: transform 0.18s ease, background 0.2s ease; }
         button:hover { transform: translateY(-1px); }
       `}</style>
@@ -3967,8 +3978,9 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
             <div style={{ padding: "22px 28px 6px" }}>
               <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font }}>What each plan includes</div>
             </div>
-            <div style={{ padding: "0 12px 18px" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: font }}>
+            <div className="gu-table-hint" style={{ padding: "0 28px 8px", color: "#8a7070", fontSize: 11.5, fontFamily: font }}>Swipe sideways to see every plan →</div>
+            <div style={{ padding: "0 12px 18px", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+              <table style={{ width: "100%", minWidth: 620, borderCollapse: "collapse", fontFamily: font }}>
                 <thead>
                   <tr>
                     <th style={{ textAlign: "left", padding: "14px 16px", color: "#8a5a5a", fontSize: 11, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase" }}>Benefit</th>
@@ -4033,7 +4045,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14, maxWidth: 620, margin: "0 auto 14px" }}>{passes.map(CARD)}</div>
             {/* Five explicit columns. auto-fit wraps the fifth card onto its own
                 row the moment the viewport tightens, and these belong on one line. */}
-            <div style={{ display: "grid", gridTemplateColumns: `repeat(${tiers.length}, minmax(0, 1fr))`, gap: 14 }}>{tiers.map(CARD)}</div>
+            <div className="gu-tier-grid">{tiers.map(CARD)}</div>
           </>);
         })()}
       </div>
