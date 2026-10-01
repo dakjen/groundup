@@ -1216,6 +1216,21 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited, preLaunc
             </div>
           ))}
         </div>
+        {/* What exists beyond the core track, named without being opened up. */}
+        <div style={{ maxWidth: 1100, margin: "26px auto 0", background: "linear-gradient(135deg, #1b0808, #120505)", border: "1px dashed #b8010140", borderRadius: 16, padding: "24px 28px" }}>
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>Also coming</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: "14px 28px" }}>
+            {[["The Underwriting Series", "The project budget and the closing draw — her method, line by line."],
+              ["Community-Led Development", "Engagement as development work, not a box to tick."],
+              ["Case Studies", "Real deals walked end to end — 9410 Hough, the Beacon Center, Mary's House."],
+              ["AI for the Working Developer", "Using the tools without letting them underwrite for you."]].map(([n, d]) => (
+              <div key={n}>
+                <div style={{ color: "#f0d8d8", fontSize: 14, fontFamily: font, fontWeight: 800, marginBottom: 3 }}>{n}</div>
+                <div style={{ color: "#8a7070", fontSize: 12.5, fontFamily: font, lineHeight: 1.6 }}>{d}</div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Quote */}
@@ -3774,22 +3789,17 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
   const toForm = () => { const el = document.getElementById("insider-form"); el && el.scrollIntoView({ behavior: "smooth", block: "start" }); };
 
   const TOPICS = [
-    { num: "00", title: "The Development Overview", teaser: "The nine phases of a development deal in order — feasibility through compliance — so everything after it has a map to hang on." },
+    { num: "00", title: "The Development Overview", teaser: "The whole arc of a deal in one course — all nine phases, feasibility through compliance, each one walked in order. The map everything else hangs on, and the longest course on the platform." },
     { num: "01", title: "Finding & Controlling the Deal", teaser: "How Dr. Merritt reads a market, values land, locks down a site, and decides what mix of uses it can carry — before spending real money." },
     { num: "02", title: "Teams, Partners & Joint Ventures", teaser: "What you actually bring to the table, and the structures that protect you when the deal gets real." },
     { num: "03", title: "Financing the Deal", teaser: "Capital stacks, tax credits, subsidy — how deals that 'don't pencil' actually close." },
     { num: "04", title: "Why Affordable Housing Doesn't Pencil", teaser: "The economics nobody explains — and the strategies that make the numbers work anyway." },
-    ...(insider ? [
-      { num: "05", locked: true },
-      { num: "06", locked: true },
-      { num: "07", ghost: true },
-    ] : [
-      { num: "05", title: "Zoning, Entitlements & What You're Allowed to Build", teaser: "The gauntlet before the groundbreaking — what the zoning permits, and what a rezoning costs you in time and community benefit." },
-      { num: "06", title: "Design, Construction & Getting to Opening Day", teaser: "Choosing an architect and a contractor, holding the budget through the field, and delivering the building." },
-      { num: "07", title: "After Opening Day", teaser: "Compliance, the fifteen-year clock, and running the asset so it stays funded, occupied and yours." },
-      { num: "08", ghost: true },
-      { num: "09", locked: true },
-    ]),
+    { num: "05", title: "Zoning, Entitlements & What You're Allowed to Build", teaser: "The gauntlet before the groundbreaking — what the zoning permits, and what a rezoning costs you in time and community benefit." },
+    // Past here the titles are withheld: blurred cards, so the shape of what is
+    // coming is visible without giving the curriculum away before launch.
+    { num: "06", blurred: true, title: "Design, Construction & Getting to Opening Day", teaser: "Choosing an architect and a contractor, holding the budget through the field, and delivering the building." },
+    { num: "07", blurred: true, title: "After Opening Day", teaser: "Compliance, the fifteen-year clock, and running the asset so it stays funded, occupied and yours." },
+    { num: "08", blurred: true, title: "The Underwriting Series", teaser: "Underwriting the project budget and the closing draw — her own method, line by line." },
   ];
 
   return (
@@ -3908,6 +3918,18 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
               <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "#241010", lineHeight: 1 }}>{t.num}</div>
               <Lock size={16} color="#3a2020" />
               <div style={{ color: "#4a3030", fontSize: 11, fontFamily: font, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>Revealed at launch</div>
+            </div>
+          ) : t.blurred ? (
+            <div key={t.num} style={{ position: "relative", background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px", overflow: "hidden" }}>
+              <div style={{ filter: "blur(5px)", opacity: 0.55, userSelect: "none", pointerEvents: "none" }}>
+                <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 40, color: "#b8010150", lineHeight: 1, marginBottom: 12 }}>{t.num}</div>
+                <h3 style={{ fontFamily: serif, fontWeight: 700, fontSize: 21, color: "#f0d8d8", marginBottom: 10, lineHeight: 1.25 }}>{t.title}</h3>
+                <p style={{ fontSize: 13, color: "#8a7070", lineHeight: 1.75, fontFamily: font }}>{t.teaser}</p>
+              </div>
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                <Lock size={14} color="#8a5050" />
+                <span style={{ color: "#a87070", fontSize: 11, fontFamily: font, fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase" }}>Revealed at launch</span>
+              </div>
             </div>
           ) : (
             <div key={t.num} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "26px 28px" }}>
