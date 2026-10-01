@@ -96,6 +96,11 @@ async function startCheckout(item, extra = {}) {
   }
 }
 if (typeof window !== "undefined") window.startCheckout = (item, extra) => startCheckout(item, extra);
+// Seed the global from the last known value so anything reading it on first
+// paint sees the right state before the API answers.
+if (typeof window !== "undefined" && !window.__guLaunchAt) {
+  try { const v = localStorage.getItem("guLaunchAt"); if (v) window.__guLaunchAt = v; } catch {}
+}
 // datetime-local inputs speak LOCAL wall-clock time; we store UTC ISO strings.
 // Always convert at the boundary — feeding an ISO string's first 16 chars back
 // into the input shifts the time by the UTC offset on every render.
@@ -3856,7 +3861,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
           </p>
         )}
         <p className="gu-up gu-d2" style={{ position: "relative", zIndex: 1, color: "#c8b0b0", fontSize: "clamp(14px,1.8vw,17px)", lineHeight: 1.9, maxWidth: 580, fontFamily: font, marginBottom: 40 }}>
-          Our mission is simple: <span style={{ color: "#e0c4c4", fontWeight: 700 }}>help you get your deals done and build a legacy.</span> Something new is coming for underrepresented developers — built on 30+ years and billions in real deals.
+          Our mission is simple: <span style={{ color: "#e0c4c4", fontWeight: 700 }}>help you get your deals done and build a legacy.</span> Something new is coming for underrepresented developers — built on 30+ years and billions in real deals. Never feel lost in the numbers again.
         </p>
         {cd && (
           <div className="gu-up gu-d3" style={{ position: "relative", zIndex: 1, display: "flex", gap: "clamp(16px,4vw,36px)", marginBottom: 44 }}>
@@ -7467,7 +7472,12 @@ export default function App() {
     setShowSignup(true);
   }, [checkoutMsg]);
 
-  const [launchAt, setLaunchAt] = useState(null);
+  // Seeded from the last answer the API gave this browser. Without it the first
+  // paint has no launch date, renders the site as though it had launched, and
+  // corrects itself a moment later — the flash of the old waitlist.
+  const [launchAt, setLaunchAt] = useState(() => {
+    try { return localStorage.getItem("guLaunchAt") || null; } catch { return null; }
+  });
   const [insiderAt, setInsiderAt] = useState(null);
   const [insiderClosesAt, setInsiderClosesAt] = useState(null);
   const [eliteSpots, setEliteSpots] = useState(null); // { cap, claimed, left }
@@ -7477,13 +7487,16 @@ export default function App() {
 
   useEffect(() => {
     fetch("/api/waitlist?public=1").then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) { if (d.launch_at) { setLaunchAt(d.launch_at); window.__guLaunchAt = d.launch_at; } if (d.launch_insider_at) setInsiderAt(d.launch_insider_at); if (d.insider_closes_at) setInsiderClosesAt(d.insider_closes_at); if (d.advisor_call_link) setAdvisorLink(d.advisor_call_link); if (d.elite) setEliteSpots(d.elite); } })
+      .then(d => { if (d) { if (d.launch_at) { setLaunchAt(d.launch_at); window.__guLaunchAt = d.launch_at; try { localStorage.setItem("guLaunchAt", d.launch_at); } catch {} } if (d.launch_insider_at) setInsiderAt(d.launch_insider_at); if (d.insider_closes_at) setInsiderClosesAt(d.insider_closes_at); if (d.advisor_call_link) setAdvisorLink(d.advisor_call_link); if (d.elite) setEliteSpots(d.elite); } })
       .catch(() => {})
       .finally(() => setLaunchChecked(true));
   }, []);
   // Re-evaluate once a minute so the site opens itself at launch time
   useEffect(() => { const t = setInterval(() => setClockTick(x => x + 1), 60000); return () => clearInterval(t); }, []);
-  const prelaunch = launchChecked && launchAt && new Date(launchAt).getTime() > Date.now();
+  // Until the API answers, assume we have NOT launched. Briefly showing the
+  // waitlist to someone who could have bought is a much smaller error than
+  // briefly showing a buyable site to someone who cannot buy anything yet.
+  const prelaunch = launchAt ? new Date(launchAt).getTime() > Date.now() : !launchChecked;
   const [contentAgreed, setContentAgreed] = useState(() => sessionStorage.getItem("contentAgreed") === "true");
   const [showAgreement, setShowAgreement] = useState(false);
   const [pendingPage, setPendingPage] = useState(null);
