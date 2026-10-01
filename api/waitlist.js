@@ -329,7 +329,6 @@ export default async function handler(req, res) {
     // Admin: full list + launch date + revenue rollup
     if (req.method === 'GET') {
       if (!admin) return res.status(401).json({ error: 'Unauthorized' });
-    if (admin.viewer) return res.status(403).json({ error: 'Your admin access is view-only — ask Dakotah to make this change.' });
       const entries = await sql`SELECT * FROM waitlist ORDER BY created_at DESC`;
       // Complete record of every campaign email sent, newest first
       let email_log = [];
@@ -481,6 +480,8 @@ export default async function handler(req, res) {
 
     // ── Admin actions ──
     if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+    // View-only admins (Dr. Merritt's account) can read the list but change nothing
+    if (admin.viewer) return res.status(403).json({ error: 'Your admin access is view-only — ask Dakotah to make this change.' });
 
     if (action === 'set_launch') {
       const at = req.body.launch_at;
