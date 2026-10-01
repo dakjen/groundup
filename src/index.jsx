@@ -3814,6 +3814,14 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
         @keyframes guPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(0.82); } }
         @keyframes guDrift { 0% { transform: translate(0,0) scale(1); } 50% { transform: translate(40px,-30px) scale(1.12); } 100% { transform: translate(0,0) scale(1); } }
         .gu-up { opacity: 0; animation: guFadeUp 0.8s cubic-bezier(0.22,1,0.36,1) forwards; }
+        /* The waitlist popup used to appear in a single frame. The backdrop
+           fades first and the card rises into it just behind. */
+        @keyframes guPopIn { from { opacity: 0; transform: translateY(16px) scale(0.975); } to { opacity: 1; transform: none; } }
+        .gu-pop-backdrop { animation: guFadeIn 0.34s ease-out both; }
+        .gu-pop-card { animation: guPopIn 0.42s cubic-bezier(0.22,1,0.36,1) 0.06s both; }
+        @media (prefers-reduced-motion: reduce) {
+          .gu-pop-backdrop, .gu-pop-card { animation-duration: 0.01s; animation-delay: 0s; }
+        }
         .gu-d1 { animation-delay: 0.08s; } .gu-d2 { animation-delay: 0.18s; } .gu-d3 { animation-delay: 0.28s; }
         .gu-d4 { animation-delay: 0.4s; } .gu-d5 { animation-delay: 0.52s; }
         .gu-pulse { animation: guPulse 2s ease-in-out infinite; }
@@ -7689,8 +7697,8 @@ export default function App() {
         />
       )}
       {showWaitlistPop && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 320, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setShowWaitlistPop(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ position: "relative", width: "100%", maxWidth: 480, background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "40px 36px 34px", textAlign: "center" }}>
+        <div className="gu-pop-backdrop" style={{ position: "fixed", inset: 0, zIndex: 320, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setShowWaitlistPop(false)}>
+          <div className="gu-pop-card" onClick={e => e.stopPropagation()} style={{ position: "relative", width: "100%", maxWidth: 480, background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "40px 36px 34px", textAlign: "center" }}>
             <button onClick={() => setShowWaitlistPop(false)} aria-label="Close" style={{ position: "absolute", top: 12, right: 16, background: "none", border: "none", color: "#8a7070", fontSize: 24, lineHeight: 1, cursor: "pointer", padding: 4 }}>×</button>
             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Now open</div>
             <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(28px,5vw,36px)", color: "#f5e8e8", margin: "0 0 12px", lineHeight: 1.15 }}>Our waitlist is open.</h2>
