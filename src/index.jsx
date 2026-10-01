@@ -6267,7 +6267,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
   );
 
   const entries = data ? data.entries.filter(e => listFilter === "all" || (e.list || "insider") === listFilter) : [];
-  if (!data) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
+  if (!data) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>{msg && !msg.ok ? `Couldn't load the waitlist — ${msg.text}` : "Loading..."}</div>;
 
   const launchMs = data.launch_at ? new Date(data.launch_at).getTime() - now : null;
   const cd = launchMs !== null && launchMs > 0 ? {
