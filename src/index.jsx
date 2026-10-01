@@ -1218,15 +1218,15 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited, preLaunc
         </div>
         {/* What exists beyond the core track, named without being opened up. */}
         <div style={{ maxWidth: 1100, margin: "26px auto 0", background: "linear-gradient(135deg, #1b0808, #120505)", border: "1px dashed #b8010140", borderRadius: 16, padding: "24px 28px" }}>
-          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>Also coming</div>
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Also coming</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: "14px 28px" }}>
             {[["The Underwriting Series", "The project budget and the closing draw — her method, line by line."],
               ["Community-Led Development", "Engagement as development work, not a box to tick."],
               ["Case Studies", "Real deals walked end to end — 9410 Hough, the Beacon Center, Mary's House."],
               ["AI for the Working Developer", "Using the tools without letting them underwrite for you."]].map(([n, d]) => (
               <div key={n}>
-                <div style={{ color: "#f0d8d8", fontSize: 14, fontFamily: font, fontWeight: 800, marginBottom: 3 }}>{n}</div>
-                <div style={{ color: "#8a7070", fontSize: 12.5, fontFamily: font, lineHeight: 1.6 }}>{d}</div>
+                <div style={{ color: "#f0d8d8", fontSize: 14, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, marginBottom: 3 }}>{n}</div>
+                <div style={{ color: "#8a7070", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>{d}</div>
               </div>
             ))}
           </div>
