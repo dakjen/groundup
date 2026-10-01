@@ -1074,7 +1074,12 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
             // sell the waitlist opened a sign-in box instead.
             launched
               ? <button onClick={onSignUp} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 7, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", marginLeft: 8, whiteSpace: "nowrap" }}>Sign In / Join</button>
-              : <a href="/waitlist" style={{ background: "#b80101", color: "#fff", borderRadius: 7, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, marginLeft: 8, whiteSpace: "nowrap", textDecoration: "none", display: "inline-block" }}>Join GroundUp</a>
+              : <span style={{ display: "inline-flex", alignItems: "center", gap: 4, marginLeft: 8 }}>
+                  <a href="/waitlist" style={{ background: "#b80101", color: "#fff", borderRadius: 7, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, whiteSpace: "nowrap", textDecoration: "none" }}>Join GroundUp</a>
+                  {/* Replacing Sign In with Join left the team, and anyone with
+                      an account, no way in at all. */}
+                  <button onClick={onSignUp} style={{ background: "transparent", border: "none", color: navInactive, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", padding: "8px 10px", whiteSpace: "nowrap" }}>Sign in</button>
+                </span>
           )}
         </div>
         {/* Mobile hamburger */}
@@ -1106,7 +1111,10 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
           ) : (
             launched
               ? <button onClick={() => { setMenuOpen(false); onSignUp(); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 15, cursor: "pointer", marginTop: 8 }}>{launched ? "Sign In / Join" : "Join the Waitlist"} →</button>
-              : <a href="/waitlist" onClick={() => setMenuOpen(false)} style={{ background: "#b80101", color: "#fff", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, textAlign: "center", textDecoration: "none", display: "block" }}>Join GroundUp</a>
+              : <>
+                  <a href="/waitlist" onClick={() => setMenuOpen(false)} style={{ background: "#b80101", color: "#fff", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, textAlign: "center", textDecoration: "none", display: "block" }}>Join GroundUp</a>
+                  <button onClick={() => { setMenuOpen(false); onSignUp(); }} style={{ background: "transparent", border: "1px solid #2a0000", color: "#8a7070", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer", marginTop: 8, width: "100%" }}>Sign in</button>
+                </>
           )}
         </div>
       )}
