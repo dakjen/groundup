@@ -1797,7 +1797,9 @@ function AboutPage({ setActivePage }) {
         </div>
 
         <div style={{ textAlign: "center" }}>
-          <button onClick={() => setActivePage("courses")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "15px 36px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Explore the Courses →</button>
+          {typeof window !== "undefined" && window.__guLaunchAt && new Date(window.__guLaunchAt).getTime() > Date.now()
+            ? <a href="/waitlist" style={{ background: "#b80101", color: "#fff", borderRadius: 10, padding: "15px 36px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, textDecoration: "none", display: "inline-block" }}>Join the Waitlist →</a>
+            : <button onClick={() => setActivePage("courses")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "15px 36px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Explore the Courses →</button>}
         </div>
       </div>
     </div>
@@ -3822,7 +3824,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
           <span style={{ color: "#7a6151", fontSize: 11, fontFamily: font, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>{refBy ? `Referred by ${refBy.company || refBy.name}` : insider ? "Insider Waitlist" : "The Waitlist"}</span>
         </div>
         <div className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, marginBottom: 24 }}><GULogo size={72} /></div>
-        <h1 className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, fontFamily: serif, fontWeight: 700, fontSize: "clamp(44px,8vw,84px)", color: "#f5e8e8", lineHeight: 1.05, letterSpacing: "-1px", marginBottom: 10 }}>{refBy ? `${refBy.name.split(" ")[0]} sent you.` : insider ? "Get access first." : "Something is coming."}</h1>
+        <h1 className="gu-up gu-d1" style={{ position: "relative", zIndex: 1, fontFamily: serif, fontWeight: 700, fontSize: "clamp(44px,8vw,84px)", color: "#f5e8e8", lineHeight: 1.05, letterSpacing: "-1px", marginBottom: 10 }}>{refBy ? `${refBy.name.split(" ")[0]} sent you.` : insider ? "Get access first." : "Learn development. Build your legacy."}</h1>
         {refBy?.logo && (
           <img className="gu-up gu-d1" src={refBy.logo} alt={refBy.company || refBy.name}
             style={{ position: "relative", zIndex: 1, height: "clamp(38px,6vw,62px)", maxWidth: 300, objectFit: "contain", marginBottom: 18 }} />
