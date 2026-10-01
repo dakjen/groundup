@@ -155,12 +155,33 @@ export function AuthModal({ onClose, onAuthed, onSignupIntent, defaultTier = "Fr
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "36px 36px 32px", width: "100%", maxWidth: 440, maxHeight: "90vh", overflowY: "auto" }}>
+      <div onClick={e => e.stopPropagation()} style={{ position: "relative", background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "36px 36px 32px", width: "100%", maxWidth: 440, maxHeight: "90vh", overflowY: "auto" }}>
+        <button onClick={onClose} aria-label="Close" style={{ position: "absolute", top: 14, right: 16, background: "none", border: "none", color: "#8a7070", fontSize: 22, lineHeight: 1, cursor: "pointer", padding: 4 }}>×</button>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>GroundUp Membership</div>
         <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>{mode === "signup" ? "Create your account" : mode === "forgot" ? "Reset your password" : "Welcome back"}</h2>
         <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginBottom: 24 }}>
           {mode === "signup" ? "One account for your courses, your community, and your membership benefits." : mode === "forgot" ? "Enter your email and we’ll send you a reset link." : "Sign in to get back to your courses and the community."}
         </p>
+        {(() => {
+          // Before launch there is no membership to create, so a sign-in box is
+          // a dead end for everyone without an account. Joining leads; signing
+          // in sits underneath it for the handful of people who already have one.
+          const preLaunch = typeof window !== "undefined" && window.__guLaunchAt && new Date(window.__guLaunchAt).getTime() > Date.now();
+          if (!preLaunch || mode === "forgot") return null;
+          return (
+            <div style={{ marginBottom: 22 }}>
+              <a href="/waitlist" style={{ display: "block", textAlign: "center", background: "#b80101", color: "#fff", borderRadius: 10, padding: "15px 24px", fontFamily: font, fontWeight: 800, fontSize: 15, textDecoration: "none" }}>Join GroundUp →</a>
+              <div style={{ color: "#8a7070", fontSize: 12, fontFamily: font, lineHeight: 1.6, textAlign: "center", marginTop: 10 }}>
+                Doors open December 1. Join the waitlist and you'll be invited first, with our recommendation for the plan that fits you.
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0 4px" }}>
+                <div style={{ flex: 1, height: 1, background: "#2a0000" }} />
+                <span style={{ color: "#6a5050", fontSize: 11, fontFamily: font, fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase" }}>Already have an account?</span>
+                <div style={{ flex: 1, height: 1, background: "#2a0000" }} />
+              </div>
+            </div>
+          );
+        })()}
         <form onSubmit={submit}>
           {mode === "signup" && (
             <div style={{ marginBottom: 16 }}>
