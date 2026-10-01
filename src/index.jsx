@@ -3811,7 +3811,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
 
       {/* Hero + countdown */}
       <div style={{ minHeight: "88vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "80px 20px 60px", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: insider ? "url(/LIIF-Stills2.jpg)" : "url(/opt/hough-exterior.jpg)", backgroundSize: "cover", backgroundPosition: insider ? "center 25%" : "center 45%", opacity: insider ? 0.28 : 0.42, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", inset: 0, backgroundImage: insider ? "url(/LIIF-Stills2.jpg)" : "url(/opt/hough-exterior.jpg)", backgroundSize: "cover", backgroundPosition: insider ? "center 25%" : "center 40%", opacity: insider ? 0.28 : 0.42, pointerEvents: "none" }} />
         <div style={{ position: "absolute", inset: 0, background: insider ? "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.75) 55%, #000 100%)" : "linear-gradient(180deg, rgba(33,9,9,0.45) 0%, rgba(33,9,9,0.7) 55%, #210909 100%)", pointerEvents: "none" }} />
         <div className="gu-drift" style={{ position: "absolute", top: "0%", left: "20%", width: 700, height: 700, borderRadius: "50%", background: "radial-gradient(circle, #57040428 0%, transparent 65%)", pointerEvents: "none" }} />
         {/* This page has no nav, so without this there is no way back to the
@@ -3855,7 +3855,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
       <div style={{ padding: "70px clamp(20px,5vw,80px)", maxWidth: 1050, margin: "0 auto" }}>
         <div style={{ display: "flex", gap: 44, alignItems: "center", flexWrap: "wrap" }}>
           <div style={{ flexShrink: 0, width: "clamp(260px,36%,400px)", borderRadius: 20, overflow: "hidden", border: "1px solid #2a0000" }}>
-            <img src={insider ? "/GM Headshot.jpg" : "/opt/gina-9410.jpg"} alt="Dr. Gina Merritt" style={{ width: "100%", display: "block" }} />
+            <img src={insider ? "/GM Headshot.jpg" : "/opt/gina-conversation.jpg"} alt="Dr. Gina Merritt" style={{ width: "100%", display: "block" }} />
           </div>
           <div style={{ flex: 1, minWidth: 300 }}>
             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 14 }}>The Real Value</div>
