@@ -7607,7 +7607,10 @@ export default function App() {
   // box instead. The team signs in through Admin in the footer, and the
   // sign-in modal still leads with Join GroundUp for anyone who reaches it.
   const openSignup = (tier = "Free") => {
-    if (prelaunch && !member) { window.location.href = "/waitlist"; return; }
+    // Before launch this opens the modal, which leads with Join GroundUp (to
+    // the waitlist) and keeps signing in underneath for the team and anyone
+    // who already has an account. Redirecting straight to /waitlist instead
+    // meant nobody could sign in at all.
     setSignupTier(tier); setShowSignup(true);
   };
 
