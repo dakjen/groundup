@@ -4018,6 +4018,19 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
                 The first 25 to join at launch get founding rates for a full year
               </span>
             </div>
+            {/* Owner is capped at 15. Nobody can buy a seat yet, so this counts
+                how many of them are still unspoken-for by people already on the
+                list — which is the thing that actually moves before launch. */}
+            {eliteSpots && eliteSpots.left > 0 && (
+              <div style={{ color: "#8a7070", fontSize: 12.5, fontFamily: font, fontWeight: 700, marginBottom: 18 }}>
+                {eliteSpots.left} of {eliteSpots.cap} Owner seats still unspoken for on the waitlist
+              </div>
+            )}
+            {eliteSpots && eliteSpots.left === 0 && (
+              <div style={{ color: "#8a7070", fontSize: 12.5, fontFamily: font, fontWeight: 700, marginBottom: 18 }}>
+                All {eliteSpots.cap} Owner seats are spoken for on the waitlist — join and we'll tell you the moment one frees up
+              </div>
+            )}
             <p style={{ color: "#c8b0b0", fontSize: 15, fontFamily: font, lineHeight: 1.8, maxWidth: 520, margin: "0 auto" }}>The doors open soon — and you're early. Tell us where you're headed and we'll meet you there.</p>
           </div>
           <WaitlistForm list={list} />
