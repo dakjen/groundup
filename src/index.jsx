@@ -6229,7 +6229,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
     return d;
   };
 
-  const load = () => call("GET").then(d => { setData(d); if (d.launch_at) setLaunchAt(d.launch_at); if (d.launch_insider_at) setInsiderAt(d.launch_insider_at); if (d.insider_closes_at) setInsiderClosesAt(d.insider_closes_at); }).catch(e => setMsg({ ok: false, text: e.message }));
+  const load = () => call("GET").then(d => { setData(d); if (d.launch_at) setLaunchAt(d.launch_at); if (d.launch_insider_at) setInsiderAt(d.launch_insider_at); if (d.insider_closes_at) { setInsiderClosesAt(d.insider_closes_at); try { localStorage.setItem("guInsiderClosesAt", d.insider_closes_at); } catch {} } }).catch(e => setMsg({ ok: false, text: e.message }));
   useEffect(() => { load(); }, []);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
 
@@ -7479,7 +7479,12 @@ export default function App() {
     try { return localStorage.getItem("guLaunchAt") || null; } catch { return null; }
   });
   const [insiderAt, setInsiderAt] = useState(null);
-  const [insiderClosesAt, setInsiderClosesAt] = useState(null);
+  // Seeded like the launch date. Without it the first paint has no close date,
+  // renders the INSIDER waitlist, then flips to the general one — which is the
+  // flash of the old waitlist on refresh.
+  const [insiderClosesAt, setInsiderClosesAt] = useState(() => {
+    try { return localStorage.getItem("guInsiderClosesAt") || null; } catch { return null; }
+  });
   const [eliteSpots, setEliteSpots] = useState(null); // { cap, claimed, left }
   const [advisorLink, setAdvisorLink] = useState(null);
   const [launchChecked, setLaunchChecked] = useState(false);
@@ -7640,7 +7645,10 @@ export default function App() {
     // The insider list stops taking names when the general list opens. This URL
     // keeps working after that — referral links point at it and stay in
     // circulation for months — it just serves the general list instead.
-    const insiderClosed = insiderClosesAt && new Date(insiderClosesAt).getTime() <= Date.now();
+    // Unknown means not-yet-answered, and the insider list has in fact closed —
+    // so default to closed rather than rendering the insider page and
+    // correcting a moment later.
+    const insiderClosed = insiderClosesAt ? new Date(insiderClosesAt).getTime() <= Date.now() : !launchChecked;
     // Only once the doors are open to everyone does the page stop collecting.
     if (launchAt && new Date(launchAt).getTime() <= Date.now()) {
       return (
