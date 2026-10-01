@@ -1020,7 +1020,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
           </div>
         </div>
         {/* Desktop nav */}
-        <div style={{ display: "flex", gap: 2, alignItems: "center", minWidth: 0, overflow: "hidden" }} className="desktop-nav">
+        <div style={{ display: "flex", gap: 2, alignItems: "center", minWidth: 0, flexShrink: 0 }} className="desktop-nav">
           {pages.map(page => (
             <button key={page} onClick={() => setActivePage(page)} style={{ background: activePage === page ? "#57040418" : "transparent", color: activePage === page ? "#b80101" : navInactive, border: activePage === page ? "1px solid #b8010130" : "1px solid transparent", borderRadius: 7, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }}>{pageLabels[page] || page}</button>
           ))}
@@ -1144,7 +1144,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited, preLaunc
             </div>
             <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(48px,8vw,88px)", lineHeight: 1.0, color: "#f5e8e8", marginBottom: 12, letterSpacing: "-1px" }} className="gu-up gu-d1">Build Wealth.</h1>
             <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(48px,8vw,88px)", lineHeight: 1.0, marginBottom: 12, letterSpacing: "-1px", background: "linear-gradient(135deg, #b80101 0%, #570404 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }} className="gu-up gu-d2">Build Legacy.</h1>
-            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontStyle: "italic", fontSize: "clamp(36px,6vw,68px)", lineHeight: 1.0, color: "#6a6b69", marginBottom: 44, letterSpacing: "-1px" }} className="gu-up gu-d3">Build it right.</h1>
+            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontStyle: "italic", fontSize: "clamp(36px,6vw,68px)", lineHeight: 1.0, color: "#6a6b69", marginBottom: 44, letterSpacing: "-1px" }} className="gu-up gu-d3">Build it Right.</h1>
             <p className="gu-up gu-d4" style={{ fontSize: "clamp(14px,1.8vw,17px)", color: "#9a9a98", lineHeight: 1.9, maxWidth: 520, marginBottom: 48, fontFamily: "'DM Sans', sans-serif" }}>
               Real development education for underrepresented developers — built from Dr. Gina Merritt's 30+ years of hands-on deal experience.
             </p>
