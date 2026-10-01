@@ -2245,7 +2245,7 @@ export function WaitlistForm({ list = "insider" }) {
   }, []);
 
   return (
-    <div style={{ background: "linear-gradient(180deg, #2a0c0c 0%, #180606 100%)", border: "1px solid #b8010145", boxShadow: "0 0 90px rgba(184,1,1,0.10)", borderRadius: 22, padding: "42px clamp(28px,5vw,52px) 38px", width: "100%", maxWidth: 720, margin: "0 auto" }}>
+    <div style={{ background: "linear-gradient(180deg, #3a0e0e 0%, #1d0606 100%)", border: "1px solid #b8010160", boxShadow: "0 0 90px rgba(184,1,1,0.14)", borderRadius: 22, padding: "42px clamp(28px,5vw,52px) 38px", width: "100%", maxWidth: 720, margin: "0 auto" }}>
         {done ? (
           <div style={{ textAlign: "center", padding: "20px 0" }}>
             <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 12 }}>{insider ? "You're an insider." : "You're on the list."}</h2>

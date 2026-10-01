@@ -297,11 +297,16 @@ export default async function handler(req, res) {
       let elite = null;
       try {
         const cap = parseInt(setting('elite_cap'), 10) || 15;
-        // Both counts in one query rather than two.
         const [counts] = await sql`SELECT
-          (SELECT COUNT(*)::int FROM users WHERE tier='Elite' AND membership_status='active' AND COALESCE(role,'member')='member' AND NOT COALESCE(comped,FALSE)) AS paid,
-          (SELECT COUNT(*)::int FROM waitlist WHERE rec_override = 'Elite' OR (rec_override IS NULL AND budget IN ('$300+','$500+'))) AS intent`;
-        const claimed = Math.min(cap, (counts?.paid || 0) + (counts?.intent || 0));
+          (SELECT COUNT(*)::int FROM users WHERE tier='Elite' AND membership_status='active' AND COALESCE(role,'member')='member' AND NOT COALESCE(comped,FALSE)) AS paid`;
+        // Owner intent used to be a SQL match on budget IN ('$300+','$500+').
+        // Neither string exists in the data any more — the budget options have
+        // changed since — so it counted nobody, including people who picked
+        // "I want Elite" outright. recommendPlan is what decides a tier
+        // everywhere else, so it decides here too and cannot drift again.
+        const wlRows = await sql`SELECT budget, learn, reason, rec_override, founding_lnl, comped FROM waitlist`;
+        const intent = wlRows.filter(e => (e.rec_override || recommendPlan(e).tier) === 'Elite').length;
+        const claimed = Math.min(cap, (counts?.paid || 0) + intent);
         elite = { cap, claimed, left: Math.max(0, cap - claimed) };
       } catch (e) { console.error('elite spots failed', e.message); }
       // Referral partners feed the how-did-you-hear dropdown, live: add a

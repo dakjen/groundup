@@ -3856,7 +3856,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
       <div style={{ padding: "70px clamp(20px,5vw,80px)", maxWidth: 1050, margin: "0 auto" }}>
         <div style={{ display: "flex", gap: 44, alignItems: "center", flexWrap: "wrap" }}>
           <div style={{ flexShrink: 0, width: "clamp(260px,36%,400px)", borderRadius: 20, overflow: "hidden", border: "1px solid #2a0000" }}>
-            <img src={insider ? "/GM Headshot.jpg" : "/opt/gina-conversation.jpg"} alt="Dr. Gina Merritt" style={{ width: "100%", display: "block" }} />
+            <img src={insider ? "/GM Headshot.jpg" : "/gina-dcre-2026.jpg"} alt="Dr. Gina Merritt" style={{ width: "100%", display: "block" }} />
           </div>
           <div style={{ flex: 1, minWidth: 300 }}>
             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 14 }}>The Real Value</div>
