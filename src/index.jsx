@@ -7608,14 +7608,16 @@ export default function App() {
   // only thing anyone can actually do. Dismissing it is remembered, so nobody
   // is nagged twice.
   useEffect(() => {
-    if (!prelaunch || member || isAdmin) return;
+    // Never over the password-reset or sign-in forms — it sat on top of the
+    // reset form and made the emailed link look like it did nothing.
+    if (!prelaunch || member || isAdmin || resetToken || showSignup) return;
     try { if (localStorage.getItem("guWaitlistPopSeen") === "1") return; } catch {}
     const t = setTimeout(() => {
       setShowWaitlistPop(true);
       try { localStorage.setItem("guWaitlistPopSeen", "1"); } catch {}
     }, 2500);
     return () => clearTimeout(t);
-  }, [prelaunch, member, isAdmin]);
+  }, [prelaunch, member, isAdmin, resetToken, showSignup]);
   // Every join / sign-up / enrol button on the site routes through here.
   //
   // Before launch there are no accounts to create and nothing to buy, so all of
@@ -7732,7 +7734,7 @@ export default function App() {
           onSignOut={() => { clearMember(); setMember(null); setShowIpGate(false); sessionStorage.removeItem("currentUser"); setCurrentUser(null); navigateTo("home"); }}
         />
       )}
-      {showWaitlistPop && (
+      {showWaitlistPop && !resetToken && !showSignup && (
         <div className="gu-pop-backdrop" style={{ position: "fixed", inset: 0, zIndex: 320, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setShowWaitlistPop(false)}>
           <div className="gu-pop-card" onClick={e => e.stopPropagation()} style={{ position: "relative", width: "100%", maxWidth: 480, background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "40px 36px 34px", textAlign: "center" }}>
             <button onClick={() => setShowWaitlistPop(false)} aria-label="Close" style={{ position: "absolute", top: 12, right: 16, background: "none", border: "none", color: "#8a7070", fontSize: 24, lineHeight: 1, cursor: "pointer", padding: 4 }}>×</button>
