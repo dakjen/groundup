@@ -10,6 +10,24 @@ export const TIER_RANK = { Free: 0, Basic: 1, Builder: 2, Premium: 3, Elite: 4 }
 // follow this array; rename here and every phase label in the app follows.
 // First name for greetings — honorifics keep their next word, so
 // "Dr. Gina Merritt" greets as "Dr. Gina", never a bare "Dr."
+// A password field with the eye: shows what the browser or a password manager
+// filled in, so a wrong autofill is visible before it fails. `style` is the
+// input's own style; the wrapper only adds the toggle.
+export function PasswordInput({ style, ...props }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div style={{ position: "relative" }}>
+      <input {...props} type={show ? "text" : "password"} style={{ ...style, paddingRight: 44 }} />
+      <button type="button" onClick={() => setShow(v => !v)} aria-label={show ? "Hide password" : "Show password"} title={show ? "Hide password" : "Show password"}
+        style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", padding: 4, cursor: "pointer", color: show ? "#f0d8d8" : "#8a7070", display: "flex" }}>
+        {show
+          ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}
+      </button>
+    </div>
+  );
+}
+
 export function firstName(full) {
   const parts = String(full || "").trim().split(/\s+/);
   if (/^(Dr|Mr|Mrs|Ms|Prof|Rev)\.?$/i.test(parts[0]) && parts[1]) return parts[0] + " " + parts[1];
@@ -191,19 +209,19 @@ export function AuthModal({ onClose, onAuthed, onSignupIntent, defaultTier = "Fr
           )}
           <div style={{ marginBottom: 16 }}>
             <label style={lbl}>Email</label>
-            <input style={inp} type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@example.com" />
+            <input style={inp} type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@example.com" autoComplete="email" name="email" />
           </div>
           {mode !== "forgot" && (
             <div style={{ marginBottom: 16 }}>
               <label style={lbl}>Password</label>
-              <input style={inp} type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} placeholder={mode === "signup" ? "At least 8 characters" : "Your password"} />
+              <PasswordInput style={inp} value={password} onChange={e => setPassword(e.target.value)} required minLength={8} placeholder={mode === "signup" ? "At least 8 characters" : "Your password"} autoComplete={mode === "signup" ? "new-password" : "current-password"} />
             </div>
           )}
           {mfa && mode === "login" && (
             <div style={{ marginBottom: 16 }}>
               <div style={{ color: "var(--gu-body)", fontSize: 12.5, fontFamily: font, lineHeight: 1.6, marginBottom: 10 }}>One more step — a 6-digit code just landed in <strong style={{ color: "var(--gu-text2)" }}>{email}</strong>. It&rsquo;s good for 10 minutes, and we won&rsquo;t ask again on this device for 12 hours.</div>
               <label style={lbl}>Sign-in code</label>
-              <input style={{ ...inp, fontSize: 20, letterSpacing: "8px", textAlign: "center" }} value={mfaCode} onChange={e => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoFocus placeholder="000000" />
+              <input style={{ ...inp, fontSize: 20, letterSpacing: "8px", textAlign: "center" }} value={mfaCode} onChange={e => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" name="one-time-code" autoFocus placeholder="000000" />
             </div>
           )}
           {/* No plan grid here any more. Someone who arrived from a specific tier
@@ -1221,11 +1239,11 @@ function ChangePasswordCard() {
       <form onSubmit={submit} style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end" }}>
         <div style={{ flex: 1, minWidth: 180 }}>
           <label style={lbl}>Current password</label>
-          <input style={inp} type="password" value={current} onChange={e => setCurrent(e.target.value)} required autoComplete="current-password" />
+          <PasswordInput style={inp} value={current} onChange={e => setCurrent(e.target.value)} required autoComplete="current-password" />
         </div>
         <div style={{ flex: 1, minWidth: 180 }}>
           <label style={lbl}>New password</label>
-          <input style={inp} type="password" value={next} onChange={e => setNext(e.target.value)} required minLength={8} autoComplete="new-password" placeholder="At least 8 characters" />
+          <PasswordInput style={inp} value={next} onChange={e => setNext(e.target.value)} required minLength={8} autoComplete="new-password" placeholder="At least 8 characters" />
         </div>
         <button type="submit" disabled={busy} style={{ ...btnRed, opacity: busy ? 0.6 : 1 }}>{busy ? "Saving…" : "Update"}</button>
       </form>
@@ -2099,7 +2117,7 @@ export function ResetPasswordModal({ token, onDone }) {
         {!done ? (
           <form onSubmit={submit}>
             <label style={lbl}>New password</label>
-            <input style={inp} type="password" value={pw} onChange={e => setPw(e.target.value)} required minLength={8} placeholder="At least 8 characters" autoComplete="new-password" />
+            <PasswordInput style={inp} value={pw} onChange={e => setPw(e.target.value)} required minLength={8} placeholder="At least 8 characters" autoComplete="new-password" />
             {msg && <div style={{ color: msg.ok ? "#22c55e" : "#ff6b6b", fontSize: 13, fontFamily: font, marginTop: 12 }}>{msg.text}</div>}
             <button type="submit" disabled={busy} style={{ ...btnRed, width: "100%", marginTop: 16, opacity: busy ? 0.6 : 1 }}>{busy ? "Saving…" : "Set New Password"}</button>
           </form>

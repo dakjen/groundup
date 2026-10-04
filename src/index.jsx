@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { FileText, Send, Hourglass, FolderOpen, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2, BadgePercent } from "lucide-react";
 import COURSE_CATALOG from "./courseCatalog.js";
 import { pollVisible } from "./poll.js";
-import { AuthModal, OnboardingFlow, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
+import { PasswordInput, AuthModal, OnboardingFlow, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -4133,7 +4133,7 @@ function SiteGatePage({ onUnlock }) {
         </div>
         <div style={{ marginBottom: 24 }}>
           <label style={{ fontSize: 11, color: "#8a7070", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", display: "block", marginBottom: 8 }}>Password</label>
-          <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="••••••••" onKeyDown={e => e.key === "Enter" && handleSubmit()} style={{ width: "100%", background: "#1a0808", border: "1px solid #2a0000", borderRadius: 8, padding: "12px 14px", color: "#f0d8d8", fontSize: 14, fontFamily: "'DM Sans', sans-serif", outline: "none" }} />
+          <PasswordInput value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" autoComplete="current-password" onKeyDown={e => e.key === "Enter" && handleSubmit()} style={{ width: "100%", background: "#1a0808", border: "1px solid #2a0000", borderRadius: 8, padding: "12px 14px", color: "#f0d8d8", fontSize: 14, fontFamily: "'DM Sans', sans-serif", outline: "none" }} />
         </div>
         {error && <div style={{ color: "#b80101", fontSize: 13, marginBottom: 16, fontFamily: "'DM Sans', sans-serif" }}>{error}</div>}
         <button onClick={handleSubmit} disabled={loading} style={{ width: "100%", background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "13px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>{loading ? "Verifying..." : "Enter"}</button>
@@ -4185,7 +4185,7 @@ function AdminLoginPage({ onLogin }) {
           <div style={{ marginBottom: 24 }}>
             <div style={{ color: "#a89080", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 14 }}>A 6-digit code just landed in <strong style={{ color: "#f0d8d8" }}>{email}</strong>. Enter it to finish signing in — it's good for 10 minutes.</div>
             <label style={{ fontSize: 11, color: "#8a7070", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", display: "block", marginBottom: 8 }}>Sign-in code</label>
-            <input value={code} onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoFocus placeholder="000000" onKeyDown={e => e.key === "Enter" && handleLogin()} style={{ width: "100%", background: "#1a0808", border: "1px solid #2a0000", borderRadius: 8, padding: "12px 14px", color: "#f0d8d8", fontSize: 22, letterSpacing: "8px", textAlign: "center", fontFamily: "'DM Sans', sans-serif", outline: "none" }} />
+            <input value={code} onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" name="one-time-code" autoFocus placeholder="000000" onKeyDown={e => e.key === "Enter" && handleLogin()} style={{ width: "100%", background: "#1a0808", border: "1px solid #2a0000", borderRadius: 8, padding: "12px 14px", color: "#f0d8d8", fontSize: 22, letterSpacing: "8px", textAlign: "center", fontFamily: "'DM Sans', sans-serif", outline: "none" }} />
           </div>
         ) : (
           <>
@@ -4195,7 +4195,7 @@ function AdminLoginPage({ onLogin }) {
         </div>
         <div style={{ marginBottom: 24 }}>
           <label style={{ fontSize: 11, color: "#8a7070", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", display: "block", marginBottom: 8 }}>Password</label>
-          <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="••••••••" onKeyDown={e => e.key === "Enter" && handleLogin()} style={{ width: "100%", background: "#1a0808", border: "1px solid #2a0000", borderRadius: 8, padding: "12px 14px", color: "#f0d8d8", fontSize: 14, fontFamily: "'DM Sans', sans-serif", outline: "none" }} />
+          <PasswordInput value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" autoComplete="current-password" onKeyDown={e => e.key === "Enter" && handleLogin()} style={{ width: "100%", background: "#1a0808", border: "1px solid #2a0000", borderRadius: 8, padding: "12px 14px", color: "#f0d8d8", fontSize: 14, fontFamily: "'DM Sans', sans-serif", outline: "none" }} />
         </div>
           </>
         )}
