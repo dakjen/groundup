@@ -1280,7 +1280,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited, preLaunc
             </p>
           </div>
           <div style={{ width: "clamp(260px,35%,360px)", flexShrink: 0, borderRadius: 16, overflow: "hidden", border: "1px solid #2a0000" }}>
-            <img loading="lazy" src="/opt/gina-conversation.jpg" alt="Dr. Merritt in conversation" style={{ width: "100%", height: 320, objectFit: "cover", objectPosition: "center 30%", display: "block" }} />
+            <img loading="lazy" src="/opt/LIIF-Stills3.jpg" alt="Dr. Merritt in conversation" style={{ width: "100%", height: 320, objectFit: "cover", objectPosition: "center 40%", display: "block" }} />
           </div>
         </div>
 
