@@ -163,7 +163,7 @@ export default async function handler(req, res) {
         const cohortSessions = officeEvents.filter(e => (e.audience || '').startsWith('cohort:') && me?.partner_slug && e.audience === 'cohort:' + me.partner_slug);
         if (rank >= 3 || lifetime || cohortSessions.length) {
           const [pRow] = await sql`SELECT value FROM settings WHERE key = ${rank >= 4 ? 'office_allow_elite' : 'office_allow_premium'}`;
-          const limit = parseInt(pRow?.value, 10) || (rank >= 4 ? 6 : 3);
+          const limit = parseInt(pRow?.value, 10) || (rank >= 4 ? 6 : 2);
           const officeKeys = allEvents.filter(e => (e.kind || 'lnl') === 'office').map(e => e.date);
           const usedRows = officeKeys.length ? await sql`SELECT COUNT(*)::int AS n FROM lnl_rsvps
             WHERE user_id = ${session.uid} AND event_key = ANY(${officeKeys}) AND created_at > NOW() - interval '365 days'` : [{ n: 0 }];
@@ -392,7 +392,7 @@ export default async function handler(req, res) {
           }
           if (req.body.going && !isCohortSession) {
             const [pRow] = await sql`SELECT value FROM settings WHERE key = ${rank >= 4 ? 'office_allow_elite' : 'office_allow_premium'}`;
-            const limit = parseInt(pRow?.value, 10) || (rank >= 4 ? 6 : 3);
+            const limit = parseInt(pRow?.value, 10) || (rank >= 4 ? 6 : 2);
             const officeKeys = events.filter(e => (e.kind || 'lnl') === 'office').map(e => e.date);
             const [used] = await sql`SELECT COUNT(*)::int AS n FROM lnl_rsvps WHERE user_id = ${session.uid} AND event_key = ANY(${officeKeys}) AND created_at > NOW() - interval '365 days'`;
             if ((used?.n || 0) >= limit) return res.status(403).json({ error: `You've used all ${limit} office-hours spots your plan includes this year.` });
