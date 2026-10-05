@@ -6359,12 +6359,12 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
         const advisorRec = allEntries.filter(e => recFor(e).startsWith("Senior")).length;
         const money = (n) => "$" + n.toLocaleString(undefined, { minimumFractionDigits: 2 });
         return (
+          <div className="gu-wl-stats">
           <style>{`
             .gu-wl-stats { display: grid; grid-template-columns: 1fr 1fr 2fr 1fr; gap: 12px; margin-bottom: 20px; align-items: stretch; }
             .gu-wl-stats > * { min-width: 0; }
-            @media (max-width: 760px) { .gu-wl-stats { grid-template-columns: 1fr 1fr; } .gu-wl-stats > :nth-child(3) { grid-column: 1 / -1; grid-row: 1; } .gu-wl-stats > :nth-child(4) { grid-column: 1 / -1; } }
+            @media (max-width: 760px) { .gu-wl-stats { grid-template-columns: 1fr 1fr; } .gu-wl-stats > div:nth-of-type(3) { grid-column: 1 / -1; grid-row: 1; } .gu-wl-stats > div:nth-of-type(4) { grid-column: 1 / -1; } }
           `}</style>
-          <div className="gu-wl-stats">
             {statCard("On the waitlist", allEntries.length, "both lists")}
             {statCard("Anticipated MRR", money(mrrFit), "each joins the plan their budget fits")}
             {(() => {
