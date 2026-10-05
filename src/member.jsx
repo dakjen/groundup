@@ -28,6 +28,28 @@ export function PasswordInput({ style, ...props }) {
   );
 }
 
+// Every file upload goes through here. Small files post to the API as before.
+// Anything over ~4MB cannot pass through a serverless function at all, so it
+// is sent straight to the private store with a one-time token from the same
+// endpoint. Returns something shaped like a fetch Response either way.
+export async function guUpload(kind, formData, headers = {}) {
+  const k = kind || "lesson";
+  const url = "/api/lesson-pdfs" + (kind ? `?kind=${kind}` : "");
+  const file = [...formData.values()].find(v => v instanceof File);
+  const DIRECT = { file: "shop-files", lesson: "lesson-pdfs", material: "lesson-pdfs", prep: "session-prep" };
+  if (!file || file.size <= 4 * 1024 * 1024 || !DIRECT[k]) return fetch(url, { method: "POST", headers, body: formData });
+  try {
+    const { upload } = await import("@vercel/blob/client");
+    const safe = String(file.name).normalize("NFKD").replace(/[^\w.\-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "").slice(-80) || "upload";
+    const blob = await upload(`${DIRECT[k]}/${Date.now()}-${safe}`, file, { access: "private", handleUploadUrl: "/api/lesson-pdfs?kind=" + k, headers, multipart: file.size > 20 * 1024 * 1024 });
+    const body = { url: `/api/file?p=${encodeURIComponent(blob.pathname)}`, pathname: blob.pathname, filename: file.name };
+    return { ok: true, status: 200, json: async () => body };
+  } catch (e) {
+    const body = { error: "Upload failed — " + String(e?.message || "the file could not be sent").slice(0, 160) };
+    return { ok: false, status: 400, json: async () => body };
+  }
+}
+
 export function firstName(full) {
   const parts = String(full || "").trim().split(/\s+/);
   if (/^(Dr|Mr|Mrs|Ms|Prof|Rev)\.?$/i.test(parts[0]) && parts[1]) return parts[0] + " " + parts[1];
@@ -858,7 +880,7 @@ function MeetingCard({ b, onChange, link }) {
     setBusy("file");
     try {
       const fd = new FormData(); fd.append("file", file);
-      const res = await fetch("/api/lesson-pdfs?kind=prep", { method: "POST", headers: { Authorization: "Bearer " + (localStorage.getItem("guToken") || "") }, body: fd });
+      const res = await guUpload("prep", fd, { Authorization: "Bearer " + (localStorage.getItem("guToken") || "") });
       const raw = await res.text();
       let d = {}; try { d = raw ? JSON.parse(raw) : {}; } catch {}
       if (!res.ok || !d.url) throw new Error(d.error || `Upload failed (${res.status})`);

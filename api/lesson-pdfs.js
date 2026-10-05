@@ -1,4 +1,5 @@
 import { put, del } from '@vercel/blob';
+import { handleUpload } from '@vercel/blob/client';
 import { getAdmin, getSession } from './_utils.js';
 import { neon } from '@neondatabase/serverless';
 
@@ -15,6 +16,44 @@ export default async function handler(req, res) {
   const session = (isAvatar || isPrep) ? getSession(req) : null;
   if (!getAdmin(req) && !((isAvatar || isPrep) && session?.uid)) {
     return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // Large files. Anything sent through this function is capped by the platform
+  // at about 4.5MB, so a big PDF never arrived — the browser got a 413 page
+  // instead of JSON. For those the browser asks here for a one-time token and
+  // then sends the file straight to the (still private) store.
+  if (req.method === 'POST' && (req.headers['content-type'] || '').includes('application/json')) {
+    try {
+      const chunks = [];
+      for await (const chunk of req) chunks.push(chunk);
+      const body = JSON.parse(Buffer.concat(chunks).toString() || '{}');
+      const kind = String(req.query.kind || 'lesson');
+      const DOCS = { '.pdf': 'application/pdf', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation' };
+      const PREP = { ...DOCS, '.doc': 'application/msword', '.xls': 'application/vnd.ms-excel', '.csv': 'text/csv', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg' };
+      const MB = 1024 * 1024;
+      const RULES = {
+        file: { folder: 'shop-files', types: { '.pdf': DOCS['.pdf'] }, max: 200 * MB },
+        lesson: { folder: 'lesson-pdfs', types: { '.pdf': DOCS['.pdf'] }, max: 200 * MB },
+        material: { folder: 'lesson-pdfs', types: DOCS, max: 200 * MB },
+        prep: { folder: 'session-prep', types: PREP, max: 25 * MB },
+      };
+      const rule = RULES[kind];
+      if (!rule) return res.status(400).json({ error: 'This kind of file can\'t be uploaded directly.' });
+      const json = await handleUpload({
+        body, request: req,
+        onBeforeGenerateToken: async (pathname) => {
+          const lower = String(pathname).toLowerCase();
+          const ext = Object.keys(rule.types).find(e => lower.endsWith(e));
+          if (!String(pathname).startsWith(rule.folder + '/') || pathname.includes('..')) throw new Error('Upload path not allowed');
+          if (!ext) throw new Error(kind === 'prep' ? 'Send a PDF, Word, Excel, PowerPoint, CSV or image.' : Object.keys(rule.types).length > 1 ? 'Materials can be PDF, Word, Excel, or PowerPoint files' : 'Only PDF files are allowed');
+          return { allowedContentTypes: [rule.types[ext]], maximumSizeInBytes: rule.max, addRandomSuffix: true };
+        },
+      });
+      return res.status(200).json(json);
+    } catch (err) {
+      console.error('Direct upload error:', err);
+      return res.status(400).json({ error: String(err?.message || 'Upload failed').slice(0, 200) });
+    }
   }
 
   if (req.method === 'POST') {

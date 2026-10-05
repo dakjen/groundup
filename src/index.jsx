@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { FileText, Send, Hourglass, FolderOpen, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2, BadgePercent } from "lucide-react";
 import COURSE_CATALOG from "./courseCatalog.js";
 import { pollVisible } from "./poll.js";
-import { PasswordInput, AuthModal, OnboardingFlow, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
+import { guUpload, PasswordInput, AuthModal, OnboardingFlow, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -3249,7 +3249,7 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch(`/api/lesson-pdfs?kind=${kind}`, { method: "POST", headers: authHeaders(), body: fd });
+      const res = await guUpload(kind, fd, authHeaders());
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Upload failed");
       set(d.url);
@@ -4440,7 +4440,7 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
     try {
       const form = new FormData();
       form.append("file", file);
-      const res = await fetch("/api/lesson-pdfs", { method: "POST", headers: authHeaders(), body: form });
+      const res = await guUpload("", form, authHeaders());
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Upload failed");
       await save({ ...attachments, [key]: { ...(attachments[key] || {}), pdf: { url: d.url, filename: d.filename, uploadedAt: new Date().toISOString() } } });
@@ -4584,7 +4584,7 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
                                 setUploading(true);
                                 try {
                                   const form = new FormData(); form.append("file", file); form.append("kind", "material");
-                                  const res = await fetch("/api/lesson-pdfs?kind=material", { method: "POST", headers: authHeaders(), body: form });
+                                  const res = await guUpload("material", form, authHeaders());
                                   const d = await res.json(); if (!res.ok) throw new Error(d.error || "Upload failed");
                                   document.getElementById("mat-url-" + dataKey).value = d.url;
                                   if (!document.getElementById("mat-title-" + dataKey).value) document.getElementById("mat-title-" + dataKey).value = d.filename.replace(/\.[a-z]+$/i, "");
@@ -5195,7 +5195,7 @@ function AdminPanel({ onLogout, onExit }) {
                         }
                         const form = new FormData();
                         form.append("file", file);
-                        const res = await fetch("/api/lesson-pdfs", { method: "POST", headers: { "Authorization": "Bearer " + sessionStorage.getItem("adminToken") }, body: form });
+                        const res = await guUpload("", form, { "Authorization": "Bearer " + sessionStorage.getItem("adminToken") });
                         if (!res.ok) throw new Error("Upload failed");
                         const data = await res.json();
                         const updated = { ...lessonPdfs, [key]: { url: data.url, filename: data.filename, uploadedAt: new Date().toISOString() } };
@@ -6532,7 +6532,7 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch("/api/lesson-pdfs", { method: "POST", headers: { Authorization: "Bearer " + sessionStorage.getItem("adminToken") }, body: fd });
+      const res = await guUpload("", fd, { Authorization: "Bearer " + sessionStorage.getItem("adminToken") });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Upload failed");
       setForm(f => ({ ...f, url: d.url }));
