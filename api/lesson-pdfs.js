@@ -1,5 +1,5 @@
 import { put, del } from '@vercel/blob';
-import { handleUpload } from '@vercel/blob/client';
+import crypto from 'crypto';
 import { getAdmin, getSession } from './_utils.js';
 import { neon } from '@neondatabase/serverless';
 
@@ -39,16 +39,25 @@ export default async function handler(req, res) {
       };
       const rule = RULES[kind];
       if (!rule) return res.status(400).json({ error: 'This kind of file can\'t be uploaded directly.' });
-      const json = await handleUpload({
-        body, request: req,
-        onBeforeGenerateToken: async (pathname) => {
-          const lower = String(pathname).toLowerCase();
-          const ext = Object.keys(rule.types).find(e => lower.endsWith(e));
-          if (!String(pathname).startsWith(rule.folder + '/') || pathname.includes('..')) throw new Error('Upload path not allowed');
-          if (!ext) throw new Error(kind === 'prep' ? 'Send a PDF, Word, Excel, PowerPoint, CSV or image.' : Object.keys(rule.types).length > 1 ? 'Materials can be PDF, Word, Excel, or PowerPoint files' : 'Only PDF files are allowed');
-          return { allowedContentTypes: [rule.types[ext]], maximumSizeInBytes: rule.max, addRandomSuffix: true };
-        },
-      });
+      if (body.type !== 'blob.generate-client-token') return res.status(400).json({ error: 'Unsupported upload step' });
+      const pathname = String(body.payload?.pathname || '');
+      const lower = pathname.toLowerCase();
+      const ext = Object.keys(rule.types).find(e => lower.endsWith(e));
+      if (!pathname.startsWith(rule.folder + '/') || pathname.includes('..')) return res.status(400).json({ error: 'Upload path not allowed' });
+      if (!ext) return res.status(400).json({ error: kind === 'prep' ? 'Send a PDF, Word, Excel, PowerPoint, CSV or image.' : Object.keys(rule.types).length > 1 ? 'Materials can be PDF, Word, Excel, or PowerPoint files' : 'Only PDF files are allowed' });
+      // A client token is the store id plus an HMAC-signed grant: this one
+      // path, this content type, this size limit, good for an hour. Built here
+      // rather than with @vercel/blob/client, which the deploy does not package
+      // for server functions.
+      const rw = process.env.BLOB_READ_WRITE_TOKEN || '';
+      const storeId = rw.split('_')[3];
+      if (!storeId) return res.status(500).json({ error: 'File storage isn\'t configured on this environment yet.' });
+      const grant = Buffer.from(JSON.stringify({
+        allowedContentTypes: [rule.types[ext]], maximumSizeInBytes: rule.max, addRandomSuffix: true,
+        pathname, validUntil: Date.now() + 60 * 60 * 1000,
+      })).toString('base64');
+      const sig = crypto.createHmac('sha256', rw).update(grant).digest('hex');
+      const json = { type: body.type, clientToken: `vercel_blob_client_${storeId}_${Buffer.from(`${sig}.${grant}`).toString('base64')}` };
       return res.status(200).json(json);
     } catch (err) {
       console.error('Direct upload error:', err);
