@@ -347,9 +347,9 @@ const ONB_FOCUS = ["Affordable housing (LIHTC)", "Workforce / missing middle", "
 // A real building behind each step — these are Dr. Merritt's own projects, which
 // is the point: this is what the curriculum is drawn from.
 const ONB_BANNER = [
-  { src: "/opt/nannie-helen.jpg", caption: "Nannie Helen at 4800 — Washington, DC" },
+  { src: "/opt/nannie-helen.webp", caption: "Nannie Helen at 4800 — Washington, DC" },
   { src: "/opt/hough-blue-hero.jpg", caption: "9410 Hough — Cleveland, Ohio" },
-  { src: "/opt/beacon-center.jpg", caption: "The Beacon Center — Washington, DC" },
+  { src: "/opt/beacon-center.webp", caption: "The Beacon Center — Washington, DC" },
 ];
 
 // Brighter than the rest of the member UI on purpose: this is someone's first
