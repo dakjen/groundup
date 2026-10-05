@@ -7608,6 +7608,14 @@ export default function App() {
   // is unaffected — insiders get in by direct link the whole time.)
   const WAITLIST_OPENS = new Date("2026-10-01T00:00:00-04:00");
   const waitlistOpen = Date.now() >= WAITLIST_OPENS.getTime();
+  // Installing GroundUp as an app is for people who are signed in. The manifest
+  // is what makes a browser offer "Install", so it is only attached then.
+  useEffect(() => {
+    const existing = document.querySelector('link[rel="manifest"]');
+    if (member || isAdmin) {
+      if (!existing) { const l = document.createElement("link"); l.rel = "manifest"; l.href = "/manifest.webmanifest"; document.head.appendChild(l); }
+    } else if (existing) existing.remove();
+  }, [member, isAdmin]);
   const [showWaitlistPop, setShowWaitlistPop] = useState(false);
   // Shown once per visitor, a beat after they land, while the waitlist is the
   // only thing anyone can actually do. Dismissing it is remembered, so nobody
