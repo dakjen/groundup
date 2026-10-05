@@ -108,9 +108,9 @@ export default async function handler(req, res) {
         ON CONFLICT (email) DO UPDATE SET code_hash = ${codeHash(code)}, expires_at = NOW() + INTERVAL '10 minutes', tries = 0`;
       const { sendEmail } = await import('./_email.js');
       const recipients = [...new Set((sendTo && sendTo.length ? sendTo : [email]).map(e => String(e).trim().toLowerCase()).filter(Boolean))];
-      const results = await Promise.all(recipients.map(to => sendEmail(to, `${code} is your GroundUp sign-in code`,
+      const results = await Promise.all(recipients.map(to => sendEmail(to, `Your GroundUp verification code is ${code}`,
         `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Your sign-in code</h2>
-         <p style="color:#5a5a5a;font-size:14px;line-height:1.8;">Someone (hopefully you) is signing in to GroundUp at community.drginamerritt.net. Enter this code to finish:</p>
+         <p style="color:#5a5a5a;font-size:14px;line-height:1.8;">Your verification code for GroundUp (community.drginamerritt.net) is ${code}. Enter it to finish signing in:</p>
          <div style="font-size:36px;font-weight:bold;letter-spacing:10px;color:#b80101;background:#faf6f0;border:1px solid #e5dccf;border-radius:12px;padding:20px 0;text-align:center;margin:18px 0;">${code}</div>
          <p style="color:#8a8a8a;font-size:12px;line-height:1.7;">It expires in 10 minutes. If this wasn't you, change your password now.</p>`, { light: true })));
       return results.some(Boolean);
