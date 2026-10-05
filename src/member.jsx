@@ -1180,7 +1180,7 @@ function MyDocuments({ member }) {
     const token = getMemberToken();
     fetch("/api/resources?products=1", { headers: token ? { Authorization: "Bearer " + token } : {} })
       .then(r => r.ok ? r.json() : null)
-      .then(d => setItems((d?.products || []).filter(p => p.owned)))
+      .then(d => setItems((d?.products || []).filter(p => p.owned && !p.is_bundle)))
       .catch(() => setItems([]));
   }, []);
   if (!items || items.length === 0) return null;

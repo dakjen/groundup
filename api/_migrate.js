@@ -82,6 +82,9 @@ const STATEMENTS = [
     price_cents INTEGER NOT NULL, delivery_url TEXT, cover_url TEXT, value_cents INTEGER,
     position INTEGER DEFAULT 0, active BOOLEAN DEFAULT TRUE, created_at TIMESTAMP DEFAULT NOW())`,
   `ALTER TABLE products ADD COLUMN IF NOT EXISTS is_playbook BOOLEAN DEFAULT FALSE`,
+  // A bundle is a product made of other products: no file of its own, and
+  // buying it grants each document inside it.
+  `ALTER TABLE products ADD COLUMN IF NOT EXISTS bundle_items JSONB`,
   `ALTER TABLE messages ADD COLUMN IF NOT EXISTS edited_at TIMESTAMP`,
   `CREATE TABLE IF NOT EXISTS partners (
     id SERIAL PRIMARY KEY,

@@ -3021,7 +3021,14 @@ function ShopPage({ member, onSignIn }) {
                     {p.value_cents > p.price_cents && <span style={{ color: "#6a5050", fontSize: 14, fontFamily: serif, fontWeight: 700, textDecoration: "line-through" }}>{usd(p.value_cents)} value</span>}
                     <span style={{ color: "#b80101", fontSize: 24, fontFamily: serif, fontWeight: 700 }}>{usd(p.price_cents)}</span>
                   </div>
-                  {p.access === "download" ? (
+                  {p.is_bundle && p.bundle?.length > 0 && (
+                    <div style={{ color: "#8a7070", fontSize: 12, fontFamily: font, lineHeight: 1.7, marginBottom: 14 }}>
+                      <strong style={{ color: "#c8a8a8" }}>Includes {p.bundle.length} documents:</strong> {p.bundle.map(b => b.title).join(" · ")}
+                    </div>
+                  )}
+                  {p.access === "bundle-owned" ? (
+                    <div style={{ textAlign: "center", color: "#22c55e", border: "1px solid #22c55e60", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13 }}>✓ Yours — every document is in your account</div>
+                  ) : p.access === "download" ? (
                     <a href={p.delivery_url} target="_blank" rel="noreferrer"
                       onClick={e => { if (!hasAgreed() && p.via === "elite") { e.preventDefault(); requireAgreement(() => window.open(p.delivery_url, "_blank")); } }}
                       style={{ display: "block", textAlign: "center", background: "transparent", color: "#22c55e", border: "1px solid #22c55e60", borderRadius: 10, padding: "12px", fontFamily: font, fontWeight: 800, fontSize: 13, textDecoration: "none" }}>
@@ -3149,7 +3156,7 @@ function ShopPage({ member, onSignIn }) {
 // Admin: create and manage shop products — uploads, prices, value framing, visibility
 function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
   const [data, setData] = useState(null);
-  const [form, setForm] = useState({ id: null, title: "", description: "", price: "", value: "", delivery_url: "", cover_url: "", is_playbook: false, page_urls: null, active: true });
+  const [form, setForm] = useState({ id: null, title: "", description: "", price: "", value: "", delivery_url: "", cover_url: "", is_playbook: false, page_urls: null, active: true, bundle_items: [] });
   const [msg, setMsg] = useState(null);
   const [busy, setBusy] = useState(false);
   const [csv, setCsv] = useState(null); // { name, rows, bad }
@@ -3298,7 +3305,7 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
       flash(false, "The PDF uploaded, but its pages could not be rendered: " + e.message + ". Members below Owner would have nothing to read, so re-upload before publishing.");
     }
   };
-  const blankForm = { id: null, title: "", description: "", price: "", value: "", delivery_url: "", cover_url: "", is_playbook: false, page_urls: null, active: true };
+  const blankForm = { id: null, title: "", description: "", price: "", value: "", delivery_url: "", cover_url: "", is_playbook: false, page_urls: null, active: true, bundle_items: [] };
 
   const edit = (p) => {
     setForm({
@@ -3307,6 +3314,7 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
       value: p.value_cents ? (p.value_cents / 100).toFixed(2) : "",
       delivery_url: p.delivery_url || "", cover_url: p.cover_url || "",
       is_playbook: !!p.is_playbook, page_urls: null, active: p.active !== false,
+      bundle_items: Array.isArray(p.bundle_items) ? p.bundle_items.map(Number) : [],
     });
     setPages(null);
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
@@ -3321,6 +3329,7 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
         value_cents: form.value ? Math.round(parseFloat(form.value) * 100) : null,
         delivery_url: form.delivery_url, cover_url: form.cover_url,
         is_playbook: form.is_playbook, page_urls: form.page_urls || null,
+        bundle_items: form.bundle_items || [],
         // Carried explicitly: a saved edit must not publish something that was
         // sitting as a draft, and product_save treats a missing flag as visible.
         active: form.id ? form.active : true,
@@ -3369,12 +3378,42 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
             <label style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "9px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer", display: "inline-block" }}>{busy ? "Uploading…" : form.cover_url ? "Replace cover image" : "Upload cover image"}<input type="file" accept=".png,.jpg,.jpeg,.webp" disabled={busy} onChange={e => upload(e.target.files[0], "cover", (u) => setForm(f => ({ ...f, cover_url: u })))} style={{ display: "none" }} /></label>
           </div>
         </div>
+        {(() => {
+          // A bundle is made of other products. Tick what is in it: buyers get
+          // each of those documents, so the bundle needs no file of its own, and
+          // its "value" is what the documents cost bought one at a time.
+          const singles = (data.products || []).filter(x => x.id !== form.id && !(Array.isArray(x.bundle_items) && x.bundle_items.length));
+          const picked = form.bundle_items || [];
+          const toggle = (id) => {
+            const next = picked.includes(id) ? picked.filter(i => i !== id) : [...picked, id];
+            const sum = singles.filter(x => next.includes(x.id)).reduce((t, x) => t + (x.price_cents || 0), 0);
+            setForm({ ...form, bundle_items: next, value: next.length ? (sum / 100).toFixed(2) : form.value });
+          };
+          const missing = singles.filter(x => picked.includes(x.id) && !x.delivery_url);
+          return (
+            <div style={{ border: "1px solid #e4dfd6", borderRadius: 10, padding: "14px 16px", marginBottom: 16, background: "#faf9f6" }}>
+              <label style={{ ...lbl, marginBottom: 4 }}>Bundle — documents included {picked.length > 0 && <span style={{ color: "#1a7a3a" }}>· {picked.length} selected</span>}</label>
+              <div style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, marginBottom: 10 }}>Leave everything unticked for a single document. Tick documents to make this a bundle: buyers receive each one, no separate file is needed, and the value fills in from their prices.</div>
+              {singles.length === 0 ? <div style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>Add the individual documents first.</div> : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "6px 16px" }}>
+                  {singles.map(x => (
+                    <label key={x.id} style={{ display: "flex", gap: 8, alignItems: "center", fontFamily: "'DM Sans', sans-serif", fontSize: 12.5, color: "#333333", cursor: "pointer" }}>
+                      <input type="checkbox" checked={picked.includes(x.id)} onChange={() => toggle(x.id)} />
+                      <span>{x.title} <span style={{ color: "#8d847a" }}>${(x.price_cents / 100).toFixed(0)}</span>{!x.delivery_url && <strong style={{ color: "#b80101", fontWeight: 800 }}> · NO FILE</strong>}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              {missing.length > 0 && <div style={{ color: "#b80101", fontSize: 12, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", marginTop: 10 }}>{missing.length} of the selected document{missing.length === 1 ? " has" : "s have"} no file yet — upload {missing.length === 1 ? "it" : "them"} before making this bundle visible.</div>}
+            </div>
+          );
+        })()}
         <label style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 14, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#444444", cursor: "pointer" }}>
           <input type="checkbox" checked={!!form.is_playbook} onChange={e => setForm({ ...form, is_playbook: e.target.checked })} />
           This is the Developer's Playbook — view-only for everyone below Owner
         </label>
-        <button onClick={save} disabled={busy || !form.title || !form.price || (!form.id && !form.delivery_url)} style={{ ...btnRed, opacity: busy || !form.title || !form.price || (!form.id && !form.delivery_url) ? 0.5 : 1 }}>{form.id ? "Save changes" : "Add to Shop"}</button>
-        {!form.delivery_url && <span style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 12 }}>{form.id ? "No document attached yet — upload one before making this visible." : "Upload the PDF first — that's what buyers receive."}</span>}
+        <button onClick={save} disabled={busy || !form.title || !form.price || (!form.id && !form.delivery_url && !(form.bundle_items || []).length)} style={{ ...btnRed, opacity: busy || !form.title || !form.price || (!form.id && !form.delivery_url && !(form.bundle_items || []).length) ? 0.5 : 1 }}>{form.id ? "Save changes" : "Add to Shop"}</button>
+        {!form.delivery_url && !(form.bundle_items || []).length && <span style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 12 }}>{form.id ? "No document attached yet — upload one before making this visible." : "Upload the PDF first — that's what buyers receive."}</span>}
         {pages && pages.total > 0 && (
           <div style={{ marginTop: 14 }}>
             <div style={{ fontSize: 12, color: "#444444", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>
@@ -3441,7 +3480,14 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
             <div style={{ flex: 1, minWidth: 180 }}>
               <span style={{ color: "#222222", fontSize: 13.5, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{p.title}</span>
               <span style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 10 }}>
-                ${(p.price_cents / 100).toFixed(2)}{p.value_cents ? ` (value $${(p.value_cents / 100).toFixed(0)})` : ""}{p.delivery_url ? "" : <> · <strong style={{ color: "#b80101", fontWeight: 800 }}>NO FILE</strong></>}
+                ${(p.price_cents / 100).toFixed(2)}{p.value_cents ? ` (value $${(p.value_cents / 100).toFixed(0)})` : ""}{(() => {
+                  const items = Array.isArray(p.bundle_items) ? p.bundle_items.map(Number) : [];
+                  if (items.length) {
+                    const gaps = (data.products || []).filter(x => items.includes(x.id) && !x.delivery_url).length;
+                    return <> · <strong style={{ color: "#444444", fontWeight: 800 }}>BUNDLE · {items.length} documents</strong>{gaps > 0 && <strong style={{ color: "#b80101", fontWeight: 800 }}> · {gaps} WITHOUT A FILE</strong>}</>;
+                  }
+                  return p.delivery_url ? "" : <> · <strong style={{ color: "#b80101", fontWeight: 800 }}>NO FILE</strong></>;
+                })()}
               </span>
             </div>
             <button onClick={async () => { try { await api2({ action: "product_save", ...p, active: !(p.active !== false) }); flash(true, p.active !== false ? "Hidden from the shop." : "Visible in the shop."); await load(); } catch (e) { flash(false, e.message); } }}

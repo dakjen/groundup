@@ -31,7 +31,8 @@ export default async function handler(req, res) {
         tierRank = TIER_RANK[u?.tier] ?? 0;
         var gate = { active: false }; // shop perks are metered by the monthly cap, not the time gate
       }
-      const rows = await sql`SELECT id, title, description, price_cents, value_cents, cover_url, delivery_url, is_playbook, page_urls, page_count FROM products WHERE active ORDER BY position, id`;
+      const rows = await sql`SELECT id, title, description, price_cents, value_cents, cover_url, delivery_url, is_playbook, page_urls, page_count, bundle_items FROM products WHERE active ORDER BY position, id`;
+      const titleOf = Object.fromEntries(rows.map(r => [r.id, r.title]));
       // The shelf rules:
       //   Owner (4)  → 3 downloads per billing month after 4 months, Playbook included
       //   Premium (3)→ read everything, download nothing
@@ -57,6 +58,18 @@ export default async function handler(req, res) {
         dl = { limit: DL_LIMIT, used: used?.n || 0, remaining: Math.max(0, DL_LIMIT - (used?.n || 0)), resets_at: resetAt.toISOString() };
       }
       const products = rows.map(p => {
+        // A bundle has no file. It is owned once every document in it is owned,
+        // which is exactly what buying it grants.
+        const items = Array.isArray(p.bundle_items) ? p.bundle_items.map(Number).filter(i => titleOf[i] && i !== p.id) : [];
+        if (items.length) {
+          const all = owned.includes(p.id) || items.every(i => owned.includes(i));
+          return {
+            id: p.id, title: p.title, description: p.description,
+            price_cents: p.price_cents, value_cents: p.value_cents, cover_url: p.cover_url,
+            is_bundle: true, bundle: items.map(i => ({ id: i, title: titleOf[i] })),
+            owned: all, access: all ? 'bundle-owned' : 'buy', via: all ? 'purchase' : null, page_count: 0,
+          };
+        }
         const bought = owned.includes(p.id);
         let access = 'buy';
         if (bought) access = 'download';          // they own it outright
@@ -147,7 +160,9 @@ export default async function handler(req, res) {
 
     if (req.method === 'POST' && req.body && req.body.action === 'product_save') {
       if (!admin) return res.status(401).json({ error: 'Unauthorized' });
-      const { id, title, description, price_cents, value_cents, cover_url, delivery_url, active, position, is_playbook, page_urls } = req.body;
+      const { id, title, description, price_cents, value_cents, cover_url, delivery_url, active, position, is_playbook, page_urls, bundle_items } = req.body;
+      // undefined = leave as is; an array (even empty) = set it
+      const bundle = Array.isArray(bundle_items) ? [...new Set(bundle_items.map(Number).filter(n => Number.isInteger(n) && n > 0 && n !== Number(id)))].slice(0, 100) : undefined;
       const pages = Array.isArray(page_urls) ? page_urls.filter(u => typeof u === 'string' && u).slice(0, 500) : null;
       if (!title || !Number.isFinite(Number(price_cents)) || Number(price_cents) < 100) {
         return res.status(400).json({ error: 'Title and a price of at least $1 required' });
@@ -161,6 +176,7 @@ export default async function handler(req, res) {
           cover_url = ${cover_url || null}, delivery_url = ${delivery_url || null}, is_playbook = ${!!is_playbook},
           page_urls = COALESCE(${pages ? JSON.stringify(pages) : null}::jsonb, page_urls),
           page_count = COALESCE(${pages ? pages.length : null}, page_count),
+          bundle_items = CASE WHEN ${bundle !== undefined} THEN ${bundle && bundle.length ? JSON.stringify(bundle) : null}::jsonb ELSE bundle_items END,
           active = ${active !== false}, position = ${Number(position) || 0}
           WHERE id = ${Number(id)} RETURNING *`;
         return res.json({ product: row });

@@ -464,6 +464,17 @@ async function fulfill(sql, session) {
       // and their account page both read it to show the download
       await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at)
         VALUES (${userId}, ${'prod:' + pid}, 'stripe_product', NULL, NOW())`;
+      // A bundle: the buyer also owns every document in it, individually, so
+      // each one downloads and shows in their account like any other purchase.
+      try {
+        const [bp] = await sql`SELECT bundle_items FROM products WHERE id = ${pid}`;
+        const items = Array.isArray(bp?.bundle_items) ? bp.bundle_items.map(Number).filter(n => n && n !== pid) : [];
+        for (const iid of items) {
+          const [has] = await sql`SELECT id FROM entitlements WHERE user_id = ${userId} AND course_id = ${'prod:' + iid} LIMIT 1`;
+          if (!has) await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at)
+            VALUES (${userId}, ${'prod:' + iid}, 'stripe_bundle', NULL, NOW())`;
+        }
+      } catch (e) { console.error('bundle grant failed', pid, e.message); }
       try {
         const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
         const [p] = await sql`SELECT title FROM products WHERE id = ${pid}`;
