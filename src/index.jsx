@@ -3441,7 +3441,7 @@ function ShopAdmin({ btnRed, btnGhost, inp, lbl }) {
             <div style={{ flex: 1, minWidth: 180 }}>
               <span style={{ color: "#222222", fontSize: 13.5, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{p.title}</span>
               <span style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 10 }}>
-                ${(p.price_cents / 100).toFixed(2)}{p.value_cents ? ` (value $${(p.value_cents / 100).toFixed(0)})` : ""}{p.delivery_url ? "" : " · NO FILE"}
+                ${(p.price_cents / 100).toFixed(2)}{p.value_cents ? ` (value $${(p.value_cents / 100).toFixed(0)})` : ""}{p.delivery_url ? "" : <> · <strong style={{ color: "#b80101", fontWeight: 800 }}>NO FILE</strong></>}
               </span>
             </div>
             <button onClick={async () => { try { await api2({ action: "product_save", ...p, active: !(p.active !== false) }); flash(true, p.active !== false ? "Hidden from the shop." : "Visible in the shop."); await load(); } catch (e) { flash(false, e.message); } }}
