@@ -281,7 +281,10 @@ export default async function handler(req, res) {
           id: c.id, title: c.title, description: c.description,
           stage: c.stage, stageColor: c.stage_color, duration: c.duration, series: c.series || null,
           hidden: admin ? !!c.hidden : undefined,
-          lessons: admin ? (c.lessons || []) : (c.lessons || []).map(l => ({ id: l.id, title: l.title })),
+          // Unpublished lessons (draft: true) exist only for the team. They are
+          // always appended after the published ones, so members' lesson indexes
+          // (and their progress) are unaffected.
+          lessons: admin ? (c.lessons || []) : (c.lessons || []).filter(l => !l.draft).map(l => ({ id: l.id, title: l.title })),
         }));
       // Progress per course for the signed-in member — powers the bars on the courses page
       let progress = {};
@@ -306,7 +309,7 @@ export default async function handler(req, res) {
       const shape = (full) => ({
         id: c.id, title: c.title, description: c.description,
         stage: c.stage, stageColor: c.stage_color, duration: c.duration, series: c.series || null,
-        lessons: (c.lessons || []).map((l, i) => full(i) ? { ...l, locked: false } : { id: l.id, title: l.title, locked: true }),
+        lessons: (c.lessons || []).filter(l => admin || !l.draft).map((l, i) => full(i) ? { ...l, locked: false } : { id: l.id, title: l.title, locked: true }),
       });
       if (admin) return res.json({ course: shape(() => true), access: 'team' });
 
