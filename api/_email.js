@@ -210,7 +210,7 @@ export function giftEmail(name, link, personalMessage) {
     html: `
       <div style="font-size:10px;color:#b80101;letter-spacing:3px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">A personal gift</div>
       <h2 style="color:#161616;font-size:26px;margin:0 0 14px;">This one's on us, ${firstName(name)}.</h2>
-      ${personalMessage ? `<div style="background:#12060a;border-left:3px solid #b80101;padding:14px 20px;margin:0 0 16px;">
+      ${personalMessage ? `<div style="background:#faf7f7;border-left:3px solid #b80101;padding:14px 20px;margin:0 0 16px;">
         <p style="color:#444444;font-size:14px;line-height:1.9;margin:0;font-style:italic;">${String(personalMessage).replace(/</g, '&lt;').replace(/\n/g, '<br/>')}</p>
         <p style="color:#666666;font-size:12px;margin:8px 0 0;">— Dr. Gina Merritt &amp; the GroundUp team</p>
       </div>` : ''}
@@ -279,15 +279,15 @@ export function dealSupportNudgeEmail() {
     html: `
       <h2 style="color:#161616;font-size:24px;margin:0 0 16px;">Hi {{FIRSTNAME}} — got a deal that needs more than a course?</h2>
       <p style="color:#444444;font-size:14px;line-height:1.8;">The curriculum, the community, and the Lunch & Learns build your foundation. But "I can't solve the gap on MY deal" isn't a lesson — it's deal work, and there are three ways to get Dr. Merritt on it:</p>
-      <div style="margin:18px 0;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
+      <div style="margin:18px 0;padding:16px 18px;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;">
         <p style="color:#161616;font-size:14px;font-weight:bold;margin:0 0 6px;">1 · Upgrade to Owner — \$499.99/mo</p>
         <p style="color:#444444;font-size:13px;line-height:1.7;margin:0;">Bring YOUR deal to your one-on-one advisory calls with Dr. Merritt, plus direct messages, 3 downloads a month, and the Owner Lounge. <a href="${siteUrl()}/pricing" style="color:#b80101;font-weight:bold;">Upgrade here →</a></p>
       </div>
-      <div style="margin:18px 0;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
+      <div style="margin:18px 0;padding:16px 18px;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;">
         <p style="color:#161616;font-size:14px;font-weight:bold;margin:0 0 6px;">2 · Book a free discovery call — Senior Advisor retainer</p>
         <p style="color:#444444;font-size:13px;line-height:1.7;margin:0;">For whole-deal involvement, Dr. Merritt works month over month on your project — deal review, capital strategy, negotiation prep. The discovery call is free and there's no obligation. <a href="mailto:groundup@drginamerritt.net?subject=Senior%20Advisor%20%E2%80%94%20discovery%20call" style="color:#b80101;font-weight:bold;">Book your discovery call →</a></p>
       </div>
-      <div style="margin:18px 0;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
+      <div style="margin:18px 0;padding:16px 18px;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;">
         <p style="color:#161616;font-size:14px;font-weight:bold;margin:0 0 6px;">3 · Start with the \$1,500 Full Project Intake</p>
         <p style="color:#444444;font-size:13px;line-height:1.7;margin:0;">Send her the whole thing — pro forma, capital stack, site, timeline — and she finds what you missed. If you continue into the retainer, the \$1,500 is credited against your first month. <a href="${siteUrl()}/contact" style="color:#b80101;font-weight:bold;">Buy the intake →</a></p>
       </div>
@@ -304,11 +304,11 @@ export function passExpiryEmail(name, single) {
     html: `
       <h2 style="color:#161616;font-size:24px;margin:0 0 16px;">Your ${single ? 'course pass' : 'All-Access Pass'} just wrapped, ${first}.</h2>
       <p style="color:#444444;font-size:14px;line-height:1.8;">We hope the material moved you forward. For the next <strong style="color:#161616;">7 days</strong>, here are your ways to keep going:</p>
-      <div style="margin:18px 0;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
+      <div style="margin:18px 0;padding:16px 18px;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;">
         <p style="color:#161616;font-size:14px;font-weight:bold;margin:0 0 6px;">Extend your access</p>
         <p style="color:#444444;font-size:13px;line-height:1.7;margin:0;">Grab another pass — 60 days of one course (\$100) or 30 days of everything (\$275). <a href="https://community.drginamerritt.net/pricing" style="color:#b80101;font-weight:bold;">Get a pass →</a></p>
       </div>
-      <div style="margin:18px 0;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
+      <div style="margin:18px 0;padding:16px 18px;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;">
         <p style="color:#161616;font-size:14px;font-weight:bold;margin:0 0 6px;">Or go all in: an annual membership at 15% off</p>
         <p style="color:#444444;font-size:13px;line-height:1.7;margin:0;">Membership means every course, always — plus the community, from \$49.99/mo. Pay for the year within your 7-day window and <strong style="color:#161616;">15% comes off automatically at checkout</strong> — instead of the usual 10% annual discount. <a href="https://community.drginamerritt.net/pricing?annual=1" style="color:#b80101;font-weight:bold;">Become a member →</a></p>
       </div>
@@ -348,11 +348,11 @@ export function broadcastEmail(subject, message) {
 export function waitlistConfirmEmail(name, founding, first10, list = 'insider') {
   const first = firstName(name);
   const perks = `
-      ${founding ? `<div style="background:#12060a;border:1px solid #b8010140;border-radius:12px;padding:16px 20px;margin:14px 0;">
+      ${founding ? `<div style="background:#faf7f7;border:1px solid #e5dccf;border-radius:12px;padding:16px 20px;margin:14px 0;">
         <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">✦ Founding 25</div>
         <p style="color:#444444;font-size:14px;line-height:1.8;margin:0;">Your first <strong style="color:#161616;">YEAR of LIVE Lunch & Learn sessions with Dr. Merritt is on us</strong> — free, on any plan. It attaches to your account automatically the moment you create it at launch.</p>
       </div>` : ''}
-      ${first10 ? `<div style="background:#12060a;border:1px solid #b8010140;border-radius:12px;padding:16px 20px;margin:14px 0;">
+      ${first10 ? `<div style="background:#faf7f7;border:1px solid #e5dccf;border-radius:12px;padding:16px 20px;margin:14px 0;">
         <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">✦ First 10</div>
         <p style="color:#444444;font-size:14px;line-height:1.8;margin:0;">Your special treat: a <strong style="color:#161616;">14-day trial of any one course</strong>, plus your own personal referral link — friends who join through it get the same trial. Both unlock when you create your account at launch.</p>
       </div>` : ''}`;
@@ -658,7 +658,7 @@ export function generalFoundingEmail(name, opts = {}) {
 // The standing invitation — appended to member-facing emails. Every touchpoint
 // reminds people that deal-specific support has a doorway: Premium/Elite, or just ask.
 export function dealSupportBlock() {
-  return `<div style="margin-top:22px;padding:16px 18px;background:#12060a;border:1px solid #b8010140;border-radius:10px;">
+  return `<div style="margin-top:22px;padding:16px 18px;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;">
     <p style="color:#444444;font-size:13px;line-height:1.7;margin:0;">Working on a specific deal? The courses and community build your foundation — <strong style="color:#161616;">deal-specific support</strong> comes with the Premium and Owner memberships, or you can send Dr. Merritt your whole project with the <strong style="color:#161616;">\$1,500 Full Project Intake</strong> (credited to your first retainer month if you continue). <a href="https://community.drginamerritt.net/contact" style="color:#b80101;font-weight:bold;">Send it to us →</a></p>
   </div>`;
 }

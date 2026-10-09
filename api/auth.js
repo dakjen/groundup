@@ -492,7 +492,7 @@ export default async function handler(req, res) {
            <strong style="color:#161616;">${esc(name)}</strong> — ${esc(from)}${u ? ` · ${u.tier} member (${u.membership_status})` : ' · no account found'}<br/>
            Topic: <strong style="color:#161616;">${esc(topic)}</strong>
          </p>
-         <div style="background:#12060a;border:1px solid #2a0000;border-radius:10px;padding:16px 20px;color:#444444;font-size:14px;line-height:1.8;white-space:pre-wrap;">${esc(message)}</div>
+         <div style="background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;padding:16px 20px;color:#444444;font-size:14px;line-height:1.8;white-space:pre-wrap;">${esc(message)}</div>
          <p style="color:#7a5050;font-size:12px;margin-top:14px;">Reply directly to this email's sender address? No — reply to ${esc(from)}.</p>`);
       return ok ? res.json({ success: true }) : res.status(502).json({ error: 'Ticket failed to send — email the team at groundup@dakjencreative.com' });
     }

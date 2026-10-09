@@ -373,7 +373,7 @@ export default async function handler(req, res) {
           ${phone ? `<strong style="color:#161616;">Phone:</strong> ${phone}<br/>` : ''}
           ${size ? `<strong style="color:#161616;">Cohort size:</strong> ${size}<br/>` : ''}
         </p>
-        ${needs ? `<p style="color:#444444;font-size:14px;line-height:1.8;background:#12060a;border:1px solid #b8010140;border-radius:10px;padding:14px 18px;">${needs}</p>` : ''}
+        ${needs ? `<p style="color:#444444;font-size:14px;line-height:1.8;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;padding:14px 18px;">${needs}</p>` : ''}
         <p style="color:#7a5050;font-size:12px;line-height:1.7;">The partner model: they sponsor their cohort's first year at a group discount, developers continue as individual members after. A branded /partner page can be set up from Admin → Courses.</p>`;
       for (const addr of ['djmj@nreuv.com', 'bhardie@nreuv.com']) {
         await sendEmail(addr, `PARTNER INTEREST: ${org} (${contact})`, html);

@@ -111,7 +111,7 @@ export default async function handler(req, res) {
           for (const addr of to) await sendEmail(addr,
             `Advisory workspace — ${r.name}`,
             `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${r.name} posted in their advisory workspace</h2>
-             <p style="color:#444444;font-size:14px;line-height:1.8;background:#12060a;border:1px solid #b8010140;border-radius:10px;padding:14px 18px;">${body.slice(0, 500)}</p>
+             <p style="color:#444444;font-size:14px;line-height:1.8;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;padding:14px 18px;">${body.slice(0, 500)}</p>
              <p style="color:#7a5050;font-size:12px;line-height:1.7;">Reply from the admin Retainers tab — the client is emailed when you do.</p>`);
         }
         return res.status(201).json(m);

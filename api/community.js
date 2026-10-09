@@ -19,13 +19,13 @@ async function resolveUser(req, sql) {
   if (!session) return null;
   if (session.role === 'admin') {
     if (session.uid) {
-      const [u] = await sql`SELECT id, name, tier, role, badge, badges, partner_slug FROM users WHERE id = ${session.uid}`;
+      const [u] = await sql`SELECT id, name, email, tier, role, badge, badges, partner_slug FROM users WHERE id = ${session.uid}`;
       if (u) return { ...u, role: 'admin', badge: u.badge || 'team', rank: TIER_RANK.Elite };
     }
     return { id: null, name: 'GroundUp Team', tier: 'Elite', role: 'admin', badge: 'team', rank: TIER_RANK.Elite };
   }
   if (!session.uid) return null;
-  const [u] = await sql`SELECT id, name, tier, role, membership_status, badge, badges, partner_slug FROM users WHERE id = ${session.uid}`;
+  const [u] = await sql`SELECT id, name, email, tier, role, membership_status, badge, badges, partner_slug FROM users WHERE id = ${session.uid}`;
   if (!u || u.membership_status !== 'active') return null;  // past_due/suspended = no access
   return { ...u, rank: TIER_RANK[u.tier] ?? 0 };
 }
@@ -214,7 +214,7 @@ export default async function handler(req, res) {
           const to = [...new Set([process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net', gina?.email].filter(Boolean))];
           const html = `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New direct message</h2>
              <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${user.name}</strong> (${user.email}, ${user.tier}) sent a DM:</p>
-             <p style="color:#444444;font-size:14px;line-height:1.8;background:#12060a;border:1px solid #b8010140;border-radius:10px;padding:14px 18px;">${text.slice(0, 500)}</p>
+             <p style="color:#444444;font-size:14px;line-height:1.8;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;padding:14px 18px;">${text.slice(0, 500)}</p>
              <p style="color:#7a5050;font-size:12px;line-height:1.7;">The promise is a reply within 2 business days (Mon–Fri). Reply from the admin Community tab.</p>`;
           for (const addr of to) await sendEmail(addr, `DM from ${user.name} (${user.tier})`, html);
         } catch (e) { console.error('dm notify failed', e); }
