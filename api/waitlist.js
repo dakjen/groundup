@@ -486,7 +486,7 @@ export default async function handler(req, res) {
     // View-only admins (Dr. Merritt's account) can read the list but change nothing
     if (admin.viewer) return res.status(403).json({ error: 'Your admin access is view-only — ask Dakotah to make this change.' });
 
-    // Launch party (Dec 5): the details and RSVP link that go into the
+    // Launch party (Washington, DC; date TBC): the details and RSVP link that go into the
     // founding-member invitation. `notify` re-sends the invitation to every
     // founding member who has already paid, so late details still reach them.
     if (action === 'set_launch_party') {

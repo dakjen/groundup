@@ -536,15 +536,15 @@ export function launchPartyInviteEmail(name, opts = {}) {
   const details = String(opts.details || '').trim();
   const rsvp = String(opts.rsvp || '').trim();
   return {
-    subject: "You're invited — the GroundUp Launch Party, December 5",
+    subject: "You're invited — the GroundUp Launch Party in Washington, DC",
     html: `
       <div style="font-family:${SANS};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 12px;">Founding members only</div>
       <h1 style="font-family:${SERIF};color:#161616;font-size:34px;line-height:1.15;font-weight:700;margin:0 0 14px;">You're invited, ${first}.</h1>
       <p style="font-family:${SANS};color:#444444;font-size:15px;line-height:1.85;margin:0 0 22px;">You are one of the first twenty-five people to join GroundUp. That comes with a seat at the table on launch night — with Dr.\u00A0Gina Merritt and the other founding members.</p>
       <div style="border-left:4px solid #b80101;background:#faf7f7;border-radius:0 12px 12px 0;padding:22px 26px;margin:0 0 24px;">
         <div style="font-family:${SERIF};color:#161616;font-size:24px;font-weight:700;margin:0 0 6px;">The GroundUp Launch Party</div>
-        <div style="font-family:${SANS};color:#b80101;font-size:14px;font-weight:bold;margin:0 0 12px;">Saturday, December 5, 2026</div>
-        ${details ? `<p style="font-family:${SANS};color:#333333;font-size:14px;line-height:1.85;margin:0;white-space:pre-line;">${details.replace(/</g, '&lt;')}</p>` : `<p style="font-family:${SANS};color:#333333;font-size:14px;line-height:1.85;margin:0;">Time and place are being finalized — you'll get them in a follow-up from us, and your spot is already held.</p>`}
+        <div style="font-family:${SANS};color:#b80101;font-size:14px;font-weight:bold;margin:0 0 12px;">Washington, DC</div>
+        ${details ? `<p style="font-family:${SANS};color:#333333;font-size:14px;line-height:1.85;margin:0;white-space:pre-line;">${details.replace(/</g, '&lt;')}</p>` : `<p style="font-family:${SANS};color:#333333;font-size:14px;line-height:1.85;margin:0;">The date and venue are being finalized — you'll get them in a follow-up from us, and your spot is already held.</p>`}
       </div>
       ${rsvp ? `<p style="margin:0 0 24px;"><a href="${rsvp}" style="display:inline-block;background:#b80101;color:#ffffff;font-family:${SANS};font-weight:bold;font-size:14px;text-decoration:none;padding:14px 28px;border-radius:10px;">RSVP →</a></p>` : ''}
       <p style="font-family:${SANS};color:#8a8a8a;font-size:12.5px;line-height:1.7;margin:0;">This invitation is tied to your founding membership and is not transferable. Questions — just reply to this email.</p>`,

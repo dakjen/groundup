@@ -6377,9 +6377,9 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
 
       {/* Launch party — Dec 5. Founding members get the invitation the moment they pay. */}
       <div style={section}>
-        <div style={heading}>Launch party — December 5</div>
-        <p style={{ color: "#666666", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, margin: "0 0 14px" }}>Every founding member gets their invitation automatically the moment their first payment goes through, with whatever is written here. Fill in the time and place, then "Save &amp; email" to send the full invitation to founding members who already paid.</p>
-        <textarea value={party.details} onChange={e => setParty({ ...party, details: e.target.value })} rows={3} placeholder={"7:00 pm · The Hough Center, 9410 Hough Ave, Cleveland\nDinner and a program with Dr. Merritt · dress to celebrate"} style={{ ...inp, maxWidth: "none", marginBottom: 10, resize: "vertical" }} />
+        <div style={heading}>Launch party — Washington, DC</div>
+        <p style={{ color: "#666666", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, margin: "0 0 14px" }}>Every founding member gets their invitation automatically the moment their first payment goes through, with whatever is written here. Fill in the date, time and venue, then "Save &amp; email" to send the full invitation to founding members who already paid.</p>
+        <textarea value={party.details} onChange={e => setParty({ ...party, details: e.target.value })} rows={3} placeholder={"Saturday, December 5 · 7:00 pm\nVenue, address · Washington, DC\nDinner and a program with Dr. Merritt"} style={{ ...inp, maxWidth: "none", marginBottom: 10, resize: "vertical" }} />
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           <input value={party.rsvp} onChange={e => setParty({ ...party, rsvp: e.target.value })} placeholder="RSVP link (optional) — https://…" style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1, minWidth: 240 }} />
           <button onClick={() => saveParty(false)} style={btnGhost}>Save</button>
