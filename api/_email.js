@@ -479,7 +479,9 @@ const seqRecCard = (rec) => `
       </div>` : ''}
       ${rec.next ? `<div style="border:1px solid #e5dccf;border-radius:12px;padding:16px 22px;margin:0 0 20px;">
         <div style="font-family:${SANS};font-size:11px;color:#666666;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:6px;">One step up, if you want it</div>
-        <div style="font-family:${SANS};color:#161616;font-size:15px;font-weight:bold;margin-bottom:6px;">${rec.next.label} · ${rec.next.delta}</div>
+        ${(() => { const pl = PLANS.find(x => x[0] === rec.next.label); return pl
+          ? `<div style="font-family:${SANS};color:#161616;font-size:15px;font-weight:bold;margin-bottom:2px;">${rec.next.label} · <span style="color:#b80101;">${usd(pl[1] * 0.75)}/mo</span> <span style="color:#8a8a8a;font-weight:normal;font-size:13px;">founding rate · ${usd(pl[1])} list</span></div><div style="font-family:${SANS};color:#666666;font-size:12.5px;margin-bottom:8px;">${rec.next.delta} than ${rec.label}</div>`
+          : `<div style="font-family:${SANS};color:#161616;font-size:15px;font-weight:bold;margin-bottom:6px;">${rec.next.label} · ${rec.next.price}</div>`; })()}
         ${rec.next.extras.map(f => `<div style="font-family:${SANS};color:#444444;font-size:13px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}
       </div>` : ''}`;
 
