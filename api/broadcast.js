@@ -205,8 +205,11 @@ export default async function handler(req, res) {
       const launched = ins?.value && new Date(ins.value).getTime() <= Date.now();
       const stamp = nowEt.toISOString().slice(0, 7);
       const [done] = await sql`SELECT value FROM settings WHERE key = 'monthly_report_sent'`;
-      if (launched && nowEt.getDate() === 1 && done?.value !== stamp) {
-        monthly = await sendMonthlyReport(sql);
+      if (nowEt.getDate() === 1 && done?.value !== stamp) {
+        // The GroundUp monthly waits for the insider launch; DakJen's own
+        // monthly runs from November 1, 2026 regardless, so Dakotah sees
+        // October's ledger before launch.
+        monthly = launched ? await sendMonthlyReport(sql) : { skipped: 'before launch' };
         try { monthly.dakjen = await sendDakJenMonthly(sql); } catch (e) { console.error('dakjen monthly failed', e.message); }
         await sql`INSERT INTO settings (key, value) VALUES ('monthly_report_sent', ${stamp}) ON CONFLICT (key) DO UPDATE SET value = ${stamp}`;
       }
