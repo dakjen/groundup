@@ -330,6 +330,8 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       if (!admin) return res.status(401).json({ error: 'Unauthorized' });
       const entries = await sql`SELECT * FROM waitlist ORDER BY created_at DESC`;
+      const partyRows = await sql`SELECT key, value FROM settings WHERE key IN ('launch_party_details', 'launch_party_rsvp')`;
+      const launch_party = { details: partyRows.find(r => r.key === 'launch_party_details')?.value || '', rsvp: partyRows.find(r => r.key === 'launch_party_rsvp')?.value || '' };
       // Complete record of every campaign email sent, newest first
       let email_log = [];
       try { email_log = await sql`SELECT * FROM email_log ORDER BY created_at DESC LIMIT 500`; } catch { /* table appears after first migrate */ }
@@ -343,7 +345,7 @@ export default async function handler(req, res) {
         if (p?.monthly) mrr += p.monthly;
         if (p?.once) oneTime += p.once;
       }
-      return res.json({ entries, launch_at: launchRow?.value || null, launch_insider_at: insiderRow?.value || null, mrr: Math.round(mrr * 100) / 100, oneTime: Math.round(oneTime * 100) / 100 });
+      return res.json({ entries, launch_party, launch_at: launchRow?.value || null, launch_insider_at: insiderRow?.value || null, mrr: Math.round(mrr * 100) / 100, oneTime: Math.round(oneTime * 100) / 100 });
     }
 
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -483,6 +485,27 @@ export default async function handler(req, res) {
     if (!admin) return res.status(401).json({ error: 'Unauthorized' });
     // View-only admins (Dr. Merritt's account) can read the list but change nothing
     if (admin.viewer) return res.status(403).json({ error: 'Your admin access is view-only — ask Dakotah to make this change.' });
+
+    // Launch party (Dec 5): the details and RSVP link that go into the
+    // founding-member invitation. `notify` re-sends the invitation to every
+    // founding member who has already paid, so late details still reach them.
+    if (action === 'set_launch_party') {
+      const details = String(req.body.details || '').slice(0, 2000);
+      const rsvp = String(req.body.rsvp || '').trim().slice(0, 500);
+      if (rsvp && !/^https?:\/\//.test(rsvp)) return res.status(400).json({ error: 'RSVP link must start with http' });
+      await sql`INSERT INTO settings (key, value) VALUES ('launch_party_details', ${details}) ON CONFLICT (key) DO UPDATE SET value = ${details}`;
+      await sql`INSERT INTO settings (key, value) VALUES ('launch_party_rsvp', ${rsvp}) ON CONFLICT (key) DO UPDATE SET value = ${rsvp}`;
+      let sent = 0;
+      if (req.body.notify) {
+        const { launchPartyInviteEmail } = await import('./_email.js');
+        const founders = await sql`SELECT id, name, email FROM users WHERE badges @> '["founding25"]'::jsonb AND membership_status = 'active'`;
+        for (const f of founders) {
+          const mail = launchPartyInviteEmail(f.name, { details, rsvp });
+          if (await sendEmail(f.email, mail.subject, mail.html)) sent++;
+        }
+      }
+      return res.json({ success: true, sent });
+    }
 
     if (action === 'set_launch') {
       const at = req.body.launch_at;

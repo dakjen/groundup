@@ -6294,6 +6294,12 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
 
   const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 6000); };
 
+  const [party, setParty] = useState({ details: "", rsvp: "" });
+  useEffect(() => { if (data?.launch_party) setParty(data.launch_party); }, [data?.launch_party?.details, data?.launch_party?.rsvp]);
+  const saveParty = async (notify) => {
+    if (notify && !window.confirm("Email the launch party invitation (with these details) to every founding member who has paid?")) return;
+    try { const r = await call("POST", { action: "set_launch_party", ...party, notify }); flash(true, notify ? `Saved — invitation sent to ${r.sent} founding member${r.sent === 1 ? "" : "s"}.` : "Launch party details saved."); } catch (e) { flash(false, e.message); }
+  };
   const saveLaunch = async (which, at) => {
     try { await call("POST", { action: "set_launch", which, launch_at: at }); flash(true, which === "insider" ? "Insider launch date saved." : "General launch date saved."); await load(); } catch (e) { flash(false, e.message); }
   };
@@ -6367,6 +6373,18 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
             </div>
           );
         })}
+      </div>
+
+      {/* Launch party — Dec 5. Founding members get the invitation the moment they pay. */}
+      <div style={section}>
+        <div style={heading}>Launch party — December 5</div>
+        <p style={{ color: "#666666", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, margin: "0 0 14px" }}>Every founding member gets their invitation automatically the moment their first payment goes through, with whatever is written here. Fill in the time and place, then "Save &amp; email" to send the full invitation to founding members who already paid.</p>
+        <textarea value={party.details} onChange={e => setParty({ ...party, details: e.target.value })} rows={3} placeholder={"7:00 pm · The Hough Center, 9410 Hough Ave, Cleveland\nDinner and a program with Dr. Merritt · dress to celebrate"} style={{ ...inp, maxWidth: "none", marginBottom: 10, resize: "vertical" }} />
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+          <input value={party.rsvp} onChange={e => setParty({ ...party, rsvp: e.target.value })} placeholder="RSVP link (optional) — https://…" style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1, minWidth: 240 }} />
+          <button onClick={() => saveParty(false)} style={btnGhost}>Save</button>
+          <button onClick={() => saveParty(true)} style={btnRed}>Save &amp; email founding members</button>
+        </div>
       </div>
 
       {/* List filter + CSV export */}

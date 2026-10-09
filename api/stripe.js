@@ -431,6 +431,16 @@ async function fulfill(sql, session) {
           // Founding members get their first year of LIVE Lunch & Learns free
           await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at)
             VALUES (${userId}, 'lunchlearn', 'founding25', NOW() + interval '1 year', NOW())`;
+          // Their invitation to the December 5 launch party goes out now — paying
+          // is what earns it. Details come from Admin → Waitlist; if they are not
+          // set yet the invite says so and the team re-sends when they are.
+          try {
+            const [fu] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
+            const prow = await sql`SELECT key, value FROM settings WHERE key IN ('launch_party_details', 'launch_party_rsvp')`;
+            const { launchPartyInviteEmail } = await import('./_email.js');
+            const mail = launchPartyInviteEmail(fu?.name, { details: prow.find(r => r.key === 'launch_party_details')?.value, rsvp: prow.find(r => r.key === 'launch_party_rsvp')?.value });
+            if (fu?.email) await sendEmail(fu.email, mail.subject, mail.html);
+          } catch (e) { console.error('launch party invite failed', e.message); }
           const left = Math.max(0, seats.remaining - 1);
           await sendEmail(process.env.ADMIN_EMAIL || 'djmj@nreuv.com',
             `Founding seat ${seats.taken + 1} of ${seats.cap} claimed`,
