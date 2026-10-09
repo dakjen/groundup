@@ -395,75 +395,209 @@ export function waitlistConfirmEmail(name, founding, first10, list = 'insider') 
   };
 }
 
-export function countdownEmail(stage, launchText) {
+// ── The launch sequence ──────────────────────────────────────────────────────
+// Six emails, one look: a photo up top, a serif headline, the cream blocks
+// with the red rule, the plan table at founding rates, the calendar of dates,
+// and Dr. Merritt's sign-off. Built for the white card shell.
+const PLANS = [
+  ['Member',  49.99, 'Every course, the community, Lunch & Learn recordings'],
+  ['Builder', 149.99, 'Everything in Member, plus the Builder channels and office hours'],
+  ['Premium', 249.99, 'Read the full document library, the Opportunity Board, group office hours with Dr. Merritt'],
+  ['Owner',   499.99, 'Direct line to Dr. Merritt, 1:1 advisory calls, downloads from the library'],
+];
+const usd = (n) => '$' + n.toFixed(2);
+const seqHero = (src, alt) => `<img src="${siteUrl()}${src}" alt="${alt}" width="496" style="width:100%;border-radius:10px;display:block;margin:0 0 26px;" />`;
+const seqKicker = (t) => `<div style="font-family:${SANS};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 12px;">${t}</div>`;
+const seqH1 = (t) => `<h1 style="font-family:${SERIF};color:#161616;font-size:34px;line-height:1.15;font-weight:700;margin:0 0 12px;">${t}</h1>`;
+const seqP = (t, o = {}) => `<p style="font-family:${SANS};color:${o.color || '#444444'};font-size:${o.size || 15}px;line-height:1.85;margin:0 0 ${o.mb ?? 18}px;">${t}</p>`;
+const seqBlock = (title, inner) => `
+      <div style="border-left:4px solid #b80101;background:#faf7f7;border-radius:0 12px 12px 0;padding:22px 26px;margin:0 0 26px;">
+        <div style="font-family:${SANS};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;">${title}</div>
+        ${inner}
+      </div>`;
+const seqBtn = (href, label) => `<p style="margin:0 0 26px;"><a href="${href}" style="display:inline-block;background:#b80101;color:#ffffff;border-radius:10px;padding:14px 32px;font-weight:bold;font-size:14px;text-decoration:none;font-family:${SANS};">${label}</a></p>`;
+const seqSign = () => `<p style="font-family:${SANS};color:#777777;font-size:13px;line-height:1.8;margin:26px 0 0;">With gratitude,<br /><strong style="color:#161616;">Dr. Gina Merritt</strong> &amp; the GroundUp team</p>`;
+const seqRow = (k, v) => `<tr><td style="font-family:${SANS};font-size:14px;color:#161616;font-weight:bold;padding:6px 12px 6px 0;white-space:nowrap;vertical-align:top;">${k}</td><td style="font-family:${SANS};font-size:14px;color:#444444;padding:6px 0;line-height:1.6;">${v}</td></tr>`;
+// The plan table — founding rate (25% off, first year) beside list price
+const seqPlanTable = (founding = true) => `
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 6px;">
+        ${PLANS.map(([n, p, d]) => `<tr>
+          <td style="font-family:${SANS};font-size:14px;color:#161616;font-weight:bold;padding:7px 12px 7px 0;white-space:nowrap;vertical-align:top;">${n}</td>
+          <td style="font-family:${SANS};font-size:13px;color:#444444;padding:7px 12px 7px 0;line-height:1.6;">${d}</td>
+          <td align="right" style="font-family:${SANS};font-size:13px;padding:7px 0;white-space:nowrap;vertical-align:top;">${founding ? `<strong style="color:#b80101;">${usd(p * 0.75)}/mo</strong><br/><span style="color:#8a8a8a;text-decoration:line-through;font-size:12px;">${usd(p)}</span>` : `<strong style="color:#161616;">${usd(p)}/mo</strong>`}</td>
+        </tr>`).join('')}
+      </table>
+      ${founding ? `<p style="font-family:${SANS};color:#666666;font-size:12.5px;line-height:1.7;margin:0;">Founding rates are 25% off list for your entire first year — then list price. Course passes ($100 single course · $275 all-access) stay as they are.</p>` : ''}`;
+const seqFoundingBlock = () => seqBlock('What a founding seat means', `
+        ${seqP('The first <strong style="color:#161616;">twenty-five people to purchase a membership</strong> become founding members. It is earned at checkout, first come first served, and it comes with:', { size: 14, mb: 12 })}
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 4px;">
+          ${seqRow('25% off', 'any membership, for your entire first year')}
+          ${seqRow('Lunch &amp; Learn', 'your first year of LIVE sessions with Dr. Merritt, included')}
+          ${seqRow('The launch party', 'an invitation to the GroundUp launch party in Washington, DC')}
+          ${seqRow('The badge', 'Founding Member on your profile, for as long as you are here')}
+        </table>`);
+const seqCurriculum = () => seqBlock('What opens', `
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0;">
+          ${seqRow('The curriculum', '15 courses and 60 lessons — the nine-phase Development Overview, Stages 1–7 of a deal from predevelopment to the fifteen-year compliance clock, the Underwriting Series, three of Dr. Merritt\'s own deals as case studies')}
+          ${seqRow('The community', 'channels by stage and by topic, direct messages, the Opportunity Board of RFPs and funding windows')}
+          ${seqRow('Lunch &amp; Learn', 'quarterly live sessions with Dr. Merritt, recorded for members')}
+          ${seqRow('The library', 'guides, action plans and working documents from real deals — read on every plan, downloadable on Owner')}
+          ${seqRow('Dr. Merritt', 'group office hours on Premium, a direct line and 1:1 advisory calls on Owner')}
+        </table>`);
+// The dates: the current month beside November, or November beside December once we are there.
+const seqDates = (opts = {}) => {
+  const now = opts.now || new Date();
+  const et = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
+  const y0 = +et.find(p => p.type === 'year').value, m0 = +et.find(p => p.type === 'month').value - 1;
+  const marks = { '2026-11-01': { bg: '#b80101', fg: '#ffffff' }, '2026-12-01': { bg: '#161616', fg: '#ffffff' } };
+  if (opts.closesKey) marks[opts.closesKey] = { border: '#b80101' };
+  const grids = (m0 === 10 || m0 === 11)
+    ? `<tr><td width="50%" valign="top" style="padding:0 6px 0 0;">${monthGrid(2026, 10, marks)}</td><td width="50%" valign="top" style="padding:0 0 0 6px;">${monthGrid(2026, 11, marks)}</td></tr>`
+    : `<tr><td width="50%" valign="top" style="padding:0 6px 0 0;">${monthGrid(y0, m0, marks)}</td><td width="50%" valign="top" style="padding:0 0 0 6px;">${monthGrid(2026, 10, marks)}</td></tr>`;
+  const legend = (color, text, border) => `<tr><td style="padding:3px 0;font-family:${SANS};font-size:12px;color:#444444;"><span style="display:inline-block;width:12px;height:12px;border-radius:6px;${border ? `border:2px solid ${color};box-sizing:border-box;` : `background:${color};`}vertical-align:middle;margin-right:8px;"></span>${text}</td></tr>`;
+  return `
+      <div style="font-family:${SANS};font-size:11px;color:#161616;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 12px;">The dates that matter</div>
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 12px;">${grids}</table>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 26px;">
+        ${legend('#b80101', '<strong style="color:#161616;">November 1</strong> — insider access opens; founding seats go first come, first served')}
+        ${opts.closesText ? legend('#b80101', `<strong style="color:#161616;">${opts.closesText}</strong> — the insider window closes; any seats left open to the whole waitlist`, true) : ''}
+        ${legend('#161616', '<strong style="color:#161616;">December 1</strong> — GroundUp opens to everyone')}
+        ${legend('#8a8a8a', '<strong style="color:#161616;">Launch party</strong> — Washington, DC; date and venue announced to founding members')}
+      </table>`;
+};
+const seqRecCard = (rec) => `
+      <div style="border:1px solid #e5dccf;border-radius:12px;padding:22px 26px;margin:0 0 20px;">
+        <div style="font-family:${SANS};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px;">Our recommendation for you</div>
+        <div style="font-family:${SERIF};color:#161616;font-size:30px;font-weight:700;line-height:1.1;">${rec.label}</div>
+        <div style="font-family:${SANS};color:#b80101;font-size:15px;font-weight:bold;margin:4px 0 12px;">${rec.price}</div>
+        ${rec.features?.length ? rec.features.map(f => `<div style="font-family:${SANS};color:#444444;font-size:14px;line-height:1.9;"><span style="color:#b80101;">→</span> ${f}</div>`).join('') : ''}
+      </div>
+      ${rec.stretch ? `<div style="border:1px solid #b8010140;background:#fdf6f6;border-radius:12px;padding:18px 22px;margin:0 0 20px;">
+        <div style="font-family:${SANS};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:6px;">✦ A special offer, just for you</div>
+        ${seqP(`Based on what you're working through, we think <strong style="color:#161616;">${rec.stretch.label}</strong> would serve you better — so we're offering it at <strong style="color:#b80101;">${rec.stretch.offer}</strong>.`, { size: 14, mb: 8 })}
+        ${rec.stretch.extras.map(f => `<div style="font-family:${SANS};color:#444444;font-size:13px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}
+      </div>` : ''}
+      ${rec.next ? `<div style="border:1px solid #e5dccf;border-radius:12px;padding:16px 22px;margin:0 0 20px;">
+        <div style="font-family:${SANS};font-size:11px;color:#666666;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:6px;">One step up, if you want it</div>
+        <div style="font-family:${SANS};color:#161616;font-size:15px;font-weight:bold;margin-bottom:6px;">${rec.next.label} · ${rec.next.delta}</div>
+        ${rec.next.extras.map(f => `<div style="font-family:${SANS};color:#444444;font-size:13px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}
+      </div>` : ''}`;
+
+// 1 & 3 — the countdowns. `list` tells insiders about founding seats; the
+// general list hears about December 1. The name is filled per recipient by sendBulk.
+export function countdownEmail(stage, launchText, list = 'insider') {
+  const insider = list !== 'general';
+  const two = /week/.test(stage);
   return {
-    subject: `${stage} until GroundUp launches`,
+    subject: insider ? `${stage} until your insider access opens` : `${stage} until GroundUp opens`,
     html: `
-      <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Launch Countdown</div>
-      <h2 style="color:#161616;font-size:28px;margin:0 0 10px;">${stage} to go.</h2>
-      ${launchText ? `<p style="color:#444444;font-size:14px;font-weight:bold;margin:0 0 16px;">Doors open ${launchText}</p>` : ''}
-      <p style="color:#444444;font-size:14px;line-height:1.8;">Hi {{FIRSTNAME}} — GroundUp is almost here. You're on the waitlist, which means you get first notice and a personal link to claim your plan the moment we open.</p>
-      <p style="color:#444444;font-size:14px;line-height:1.8;">Keep an eye on your inbox.</p>`,
+      ${seqHero(two ? '/opt/hough-exterior.jpg' : '/opt/sis-gm-speech.jpg', two ? '9410 Hough, Cleveland — a $47M development Dr. Merritt led' : 'Dr. Gina Merritt')}
+      ${seqKicker('Launch countdown')}
+      ${seqH1(`${stage} to go, {{FIRSTNAME}}.`)}
+      ${seqP(`${insider ? 'Your insider access' : 'GroundUp'} opens <strong style="color:#161616;">${launchText}</strong>. ${insider ? 'You get in a full month before the public, and the first twenty-five people to purchase a membership become founding members.' : 'The curriculum, the community and Dr. Merritt\'s time all open the same morning.'}`)}
+      ${two ? seqCurriculum() : seqBlock('Two days out — have this ready', `
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0;">
+          ${seqRow('Your plan', 'pick it from the table below, or take the one we recommended last week')}
+          ${seqRow('Your link', `on ${insider ? 'November 1' : 'December 1'} you get one more email with a personal checkout link — it carries your rate automatically`)}
+          ${insider ? seqRow('Move early', 'founding seats are earned at checkout, first come first served; when they are gone the page will say so before you pay') : ''}
+        </table>`)}
+      ${insider ? seqFoundingBlock() : ''}
+      ${seqBlock(insider ? 'Membership at founding rates' : 'Membership', seqPlanTable(insider))}
+      ${seqDates()}
+      ${seqP('Nothing to do yet — the link comes on the day. Keep an eye on your inbox.', { size: 14 })}
+      ${seqSign()}`,
   };
 }
 
-// ~14 days out: the personalized recommendation — builds anticipation, no pay
-// link yet. The launch-day email (below) carries the actual checkout link.
+// 2 — seven days out: the personalized plan, no pay link yet.
 export function recommendEmail(name, rec, launchAt, painPoint) {
-  const dateText = launchAt ? new Date(launchAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : 'soon';
+  const dateText = launchAt ? new Date(launchAt).toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric' }) : 'soon';
   return {
     subject: `${firstName(name)}, here's the plan we'd pick for you`,
     html: `
-      <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Launch is almost here</div>
-      <h2 style="color:#161616;font-size:28px;margin:0 0 16px;">We read your answers, ${firstName(name)}.</h2>
-      <p style="color:#444444;font-size:14px;line-height:1.8;">Doors open <strong style="color:#161616;">${dateText}</strong>. We went through what you told us${painPoint ? " — what you want to learn, and what's been standing in your way" : ""} — and based on your goals and budget, this is the plan we'd put you on:</p>
-      <div style="background:#12060a;border:1px solid #b8010130;border-radius:12px;padding:20px 24px;margin:16px 0;">
-        <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">Our recommendation for you</div>
-        <div style="color:#161616;font-size:22px;font-weight:bold;">${rec.label} <span style="color:#666666;font-size:14px;font-weight:normal;">· ${rec.price}</span></div>
-        ${rec.features?.length ? `<div style="margin-top:12px;">${rec.features.map(f => `<div style="color:#444444;font-size:13px;line-height:2;"><span style="color:#b80101;">→</span> ${f}</div>`).join('')}</div>` : ''}
-      </div>
-      ${rec.stretch ? `<div style="background:#12060a;border:1px solid #b8010145;border-radius:12px;padding:18px 22px;margin:16px 0;">
-        <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">✦ A special offer, just for you</div>
-        <div style="color:#444444;font-size:13px;line-height:1.8;margin-bottom:8px;">Based on what you're working through, we think <strong style="color:#161616;">${rec.stretch.label}</strong> would serve you better — so we're offering it to you at <strong style="color:#b80101;">${rec.stretch.offer}</strong>.</div>
-        <div style="color:#444444;font-size:15px;font-weight:bold;">${rec.stretch.label} · ${rec.stretch.price} <span style="color:#b80101;font-size:13px;">→ ${rec.stretch.offer}</span></div>
-        <div style="margin-top:8px;">${rec.stretch.extras.map(f => `<div style="color:#444444;font-size:12.5px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}</div>
-      </div>` : ''}
-      ${rec.next ? `<div style="background:#0d0a04;border:1px solid #2a200030;border-radius:12px;padding:16px 22px;margin:16px 0;">
-        <div style="font-size:10px;color:#666666;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">One step up, if you want it</div>
-        <div style="color:#444444;font-size:15px;font-weight:bold;">${rec.next.label} · ${rec.next.delta}</div>
-        <div style="margin-top:8px;">${rec.next.extras.map(f => `<div style="color:#444444;font-size:12.5px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}</div>
-      </div>` : ''}
-      <p style="color:#444444;font-size:14px;line-height:1.8;">Nothing to do yet — on launch day you'll get one more email with your personal checkout link. Keep an eye out.</p>`,
+      ${seqHero('/opt/LIIF-Stills1.jpg', 'Dr. Gina Merritt outside a finished development')}
+      ${seqKicker('One week out')}
+      ${seqH1(`We read your answers, ${firstName(name)}.`)}
+      ${seqP(`Doors open <strong style="color:#161616;">${dateText}</strong>. We went through what you told us when you joined the waitlist${painPoint ? ' — what you want to learn, and what has been standing in your way' : ''} — and based on your goals and your budget, this is the plan we would put you on.`)}
+      ${seqRecCard(rec)}
+      ${seqFoundingBlock()}
+      ${seqBlock('Every plan, at founding rates', seqPlanTable(true))}
+      ${seqDates()}
+      ${seqP('Nothing to do yet — on launch day you get one more email with your personal checkout link, and the founding rate applies automatically.', { size: 14 })}
+      ${seqSign()}`,
   };
 }
 
+// 4 — launch day: the personal checkout link.
 export function launchEmail(name, rec, link, painPoint, stretchLink) {
   return {
-    subject: "We're live \u2014 here's the plan we recommend for you",
+    subject: "We're live — your personal link is inside",
     html: `
-      <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">We're Live</div>
-      <h2 style="color:#161616;font-size:28px;margin:0 0 16px;">GroundUp is open, ${firstName(name)}.</h2>
-      <p style="color:#444444;font-size:14px;line-height:1.8;">You're getting this first because you're an insider. We read what you told us${painPoint ? " \u2014 including what's been standing in your way" : ""} \u2014 and based on your goals and your budget, here's our recommendation:</p>
-      <div style="background:#12060a;border:1px solid #b8010130;border-radius:12px;padding:20px 24px;margin:16px 0;">
-        <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">Recommended for you</div>
-        <div style="color:#161616;font-size:22px;font-weight:bold;">${rec.label} <span style="color:#666666;font-size:14px;font-weight:normal;">\u00b7 ${rec.price}</span></div>
-        ${rec.features?.length ? `<div style="margin-top:12px;">${rec.features.map(f => `<div style="color:#444444;font-size:13px;line-height:2;"><span style="color:#b80101;">\u2192</span> ${f}</div>`).join('')}</div>` : ''}
-      </div>
-      <a href="${link}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:14px 30px;font-weight:bold;font-size:15px;text-decoration:none;margin:6px 0;">${rec.ctaLabel || `Join as ${rec.label} \u2014 secure checkout \u2192`}</a>
-      ${rec.stretch && stretchLink ? `<div style="background:#12060a;border:1px solid #b8010145;border-radius:12px;padding:18px 22px;margin:16px 0;">
-        <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">\u2726 Your special offer is live</div>
-        <div style="color:#444444;font-size:13px;line-height:1.8;margin-bottom:8px;">Based on what you're working through, <strong style="color:#161616;">${rec.stretch.label}</strong> would serve you better \u2014 and your <strong style="color:#b80101;">${rec.stretch.offer}</strong> is attached to this link:</div>
-        <div style="margin-bottom:10px;">${rec.stretch.extras.map(f => `<div style="color:#444444;font-size:12.5px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}</div>
-        <a href="${stretchLink}" style="display:inline-block;background:transparent;color:#b80101;border:1px solid #b8010160;border-radius:8px;padding:12px 24px;font-weight:bold;font-size:14px;text-decoration:none;">Claim ${rec.stretch.label} at 10% off \u2192</a>
-      </div>` : ''}
-      ${rec.next ? `<div style="background:#0d0a04;border:1px solid #2a200030;border-radius:12px;padding:16px 22px;margin:16px 0;">
-        <div style="font-size:10px;color:#666666;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">One step up, if you want it</div>
-        <div style="color:#444444;font-size:15px;font-weight:bold;">${rec.next.label} \u00b7 ${rec.next.delta}</div>
-        <div style="margin-top:8px;">${rec.next.extras.map(f => `<div style="color:#444444;font-size:12.5px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}</div>
-      </div>` : ''}
-      <p style="color:#7a6060;font-size:12px;line-height:1.7;">Not the right fit? Every plan is on the pricing page \u2014 and you can change anytime.</p>`,
+      ${seqHero('/opt/founding-banner-v2.jpg', 'Dr. Gina Merritt at 9410 Hough')}
+      ${seqKicker("We're live")}
+      ${seqH1(`GroundUp is open, ${firstName(name)}.`)}
+      ${seqP(`You are getting this first because you were here first. Your account can be created right now, and the plan below is the one we chose for you${painPoint ? ' from what you told us about what has been standing in your way' : ''}. The founding rate is already on the link.`)}
+      ${seqBtn(link, rec.ctaLabel || `Join as ${rec.label} — secure checkout →`)}
+      ${seqRecCard(rec)}
+      ${rec.stretch && stretchLink ? seqBtn(stretchLink, `Claim ${rec.stretch.label} at 10% off →`) : ''}
+      ${seqFoundingBlock()}
+      ${seqBlock('Not the right fit? Every plan, at founding rates', seqPlanTable(true) + `<p style="font-family:${SANS};color:#666666;font-size:12.5px;line-height:1.7;margin:10px 0 0;">Choose any of them at <a href="${siteUrl()}/pricing" style="color:#b80101;">${siteUrl().replace(/^https?:\/\//, '')}/pricing</a> — and you can change plans anytime.</p>`)}
+      ${seqDates()}
+      ${seqSign()}`,
   };
 }
+
+// 5 — mid-window: insiders who have not joined yet, with the live seat count.
+export function insiderReminderEmail(name, opts = {}) {
+  const first = firstName(name);
+  const left = Number(opts.seatsLeft ?? 0);
+  const closes = opts.closesText || 'soon';
+  const link = opts.link || `${siteUrl()}/?join=1`;
+  return {
+    subject: left > 0 ? `${left} founding seat${left === 1 ? '' : 's'} left — your insider window closes ${closes}` : `Your insider window closes ${closes}`,
+    html: `
+      ${seqHero('/opt/beacon-center.jpg', 'The Beacon Center, Washington DC')}
+      ${seqKicker('Insider window')}
+      ${seqH1(`Still yours, ${first} — for now.`)}
+      ${seqP(`Your insider access is open and the founding seats are going to the first twenty-five people who join. After <strong style="color:#161616;">${closes}</strong>, whatever is left opens to the whole waitlist.`)}
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 22px;"><tr>
+        <td style="background:#161616;border-radius:12px;padding:18px 26px;text-align:center;">
+          <div style="font-family:${SERIF};color:#ffffff;font-size:44px;font-weight:700;line-height:1;">${left}</div>
+          <div style="font-family:${SANS};color:#c8a8a8;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-top:6px;">founding seats left</div>
+        </td>
+        <td style="padding-left:20px;font-family:${SANS};color:#444444;font-size:14px;line-height:1.8;">Your personal link still carries your founding rate — 25% off any membership for the whole first year.</td>
+      </tr></table>
+      ${seqBtn(link, 'Claim my seat →')}
+      ${seqFoundingBlock()}
+      ${seqBlock('Membership at founding rates', seqPlanTable(true))}
+      ${seqDates({ closesText: opts.closesShort, closesKey: opts.closesKey })}
+      ${seqP('Already joined? Then this is just a thank-you — your seat is yours.', { size: 13, color: '#8a8a8a' })}
+      ${seqSign()}`,
+  };
+}
+
+// 6 — after the window: the general list hears how many seats are left.
+export function generalFoundingEmail(name, opts = {}) {
+  const first = firstName(name);
+  const left = Number(opts.seatsLeft ?? 0);
+  const link = opts.link || `${siteUrl()}/?join=1`;
+  return {
+    subject: `${left} founding seat${left === 1 ? '' : 's'} just opened to the waitlist`,
+    html: `
+      ${seqHero('/opt/hough-exterior.jpg', '9410 Hough, Cleveland')}
+      ${seqKicker('Now open to you')}
+      ${seqH1(`${left} founding seat${left === 1 ? '' : 's'} left, ${first}.`)}
+      ${seqP(`Our insiders had the first week. ${left === 1 ? 'One seat is' : `${left} seats are`} still open, and they go to the first people on the waitlist to join — you do not have to wait for December 1. Your link below creates your account today.`)}
+      ${seqBtn(link, 'Join now →')}
+      ${seqFoundingBlock()}
+      ${seqCurriculum()}
+      ${seqBlock('Membership at founding rates', seqPlanTable(true))}
+      ${seqDates()}
+      ${seqP('When the seats are gone the page will say so before you pay — nobody is charged for a seat that is not there.', { size: 13, color: '#8a8a8a' })}
+      ${seqSign()}`,
+  };
+}
+
 
 // The standing invitation — appended to member-facing emails. Every touchpoint
 // reminds people that deal-specific support has a doorway: Premium/Elite, or just ask.
@@ -548,52 +682,6 @@ export function launchPartyInviteEmail(name, opts = {}) {
       </div>
       ${rsvp ? `<p style="margin:0 0 24px;"><a href="${rsvp}" style="display:inline-block;background:#b80101;color:#ffffff;font-family:${SANS};font-weight:bold;font-size:14px;text-decoration:none;padding:14px 28px;border-radius:10px;">RSVP →</a></p>` : ''}
       <p style="font-family:${SANS};color:#8a8a8a;font-size:12.5px;line-height:1.7;margin:0;">This invitation is tied to your founding membership and is not transferable. Questions — just reply to this email.</p>`,
-  };
-}
-
-// Step 5 of the insider sequence: a nudge mid-window to insiders who have not
-// yet claimed a founding seat. Seats left and the closing date are live.
-export function insiderReminderEmail(name, opts = {}) {
-  const first = firstName(name);
-  const left = Number(opts.seatsLeft ?? 0);
-  const closes = opts.closesText || 'soon';
-  const link = opts.link || `${siteUrl()}/?join=1`;
-  return {
-    subject: left > 0 ? `${left} founding seat${left === 1 ? '' : 's'} left — your insider window closes ${closes}` : `Your insider window closes ${closes}`,
-    html: `
-      <div style="font-family:${SANS};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 12px;">Insider window</div>
-      <h1 style="font-family:${SERIF};color:#161616;font-size:34px;line-height:1.15;font-weight:700;margin:0 0 14px;">Still yours, ${first} — for now.</h1>
-      <p style="font-family:${SANS};color:#444444;font-size:15px;line-height:1.85;margin:0 0 20px;">Your insider access is open, and the founding seats are going to the first twenty-five people who join. After <strong style="color:#161616;">${closes}</strong> whatever is left opens to the whole waitlist.</p>
-      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 22px;"><tr>
-        <td style="background:#161616;border-radius:12px;padding:18px 26px;text-align:center;">
-          <div style="font-family:${SERIF};color:#ffffff;font-size:44px;font-weight:700;line-height:1;">${left}</div>
-          <div style="font-family:${SANS};color:#c8a8a8;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-top:6px;">founding seats left</div>
-        </td>
-        <td style="padding-left:20px;font-family:${SANS};color:#444444;font-size:14px;line-height:1.8;">A founding seat locks <strong style="color:#b80101;">25% off any membership for your first year</strong>, your first year of live Lunch &amp; Learns, and an invitation to the launch party in Washington, DC.</td>
-      </tr></table>
-      <p style="margin:0 0 22px;"><a href="${link}" style="display:inline-block;background:#b80101;color:#ffffff;font-family:${SANS};font-weight:bold;font-size:14px;text-decoration:none;padding:14px 28px;border-radius:10px;">Claim my seat →</a></p>
-      <p style="font-family:${SANS};color:#8a8a8a;font-size:12.5px;line-height:1.7;margin:0;">Already joined? Then this is just a thank-you — your seat is yours.</p>`,
-  };
-}
-
-// Step 6: once the insider window closes, the general waitlist hears how many
-// founding seats are left and gets the same first-come link.
-export function generalFoundingEmail(name, opts = {}) {
-  const first = firstName(name);
-  const left = Number(opts.seatsLeft ?? 0);
-  const link = opts.link || `${siteUrl()}/?join=1`;
-  return {
-    subject: `${left} founding seat${left === 1 ? '' : 's'} just opened to the waitlist`,
-    html: `
-      <div style="font-family:${SANS};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 12px;">Now open to you</div>
-      <h1 style="font-family:${SERIF};color:#161616;font-size:34px;line-height:1.15;font-weight:700;margin:0 0 14px;">${left} founding seat${left === 1 ? '' : 's'} left, ${first}.</h1>
-      <p style="font-family:${SANS};color:#444444;font-size:15px;line-height:1.85;margin:0 0 20px;">Our insiders had the first week. ${left === 1 ? 'One seat is' : `${left} seats are`} still open, and they go to the first people on the waitlist to join — you don't have to wait for December 1.</p>
-      <div style="border-left:4px solid #b80101;background:#faf7f7;border-radius:0 12px 12px 0;padding:20px 24px;margin:0 0 22px;">
-        <div style="font-family:${SANS};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px;">A founding seat means</div>
-        <p style="font-family:${SANS};color:#333333;font-size:14px;line-height:1.85;margin:0;"><strong style="color:#161616;">25% off any membership for your entire first year</strong>, your first year of live Lunch &amp; Learns included, and an invitation to the GroundUp launch party in Washington, DC.</p>
-      </div>
-      <p style="margin:0 0 22px;"><a href="${link}" style="display:inline-block;background:#b80101;color:#ffffff;font-family:${SANS};font-weight:bold;font-size:14px;text-decoration:none;padding:14px 28px;border-radius:10px;">Join now →</a></p>
-      <p style="font-family:${SANS};color:#8a8a8a;font-size:12.5px;line-height:1.7;margin:0;">When the seats are gone the page will say so before you pay — nobody is charged for a seat that isn't there.</p>`,
   };
 }
 

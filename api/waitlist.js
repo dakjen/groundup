@@ -535,7 +535,7 @@ export default async function handler(req, res) {
         ? await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = ${target}`
         : await sql`SELECT name, email FROM waitlist`;
       if (entries.length === 0) return res.status(400).json({ error: 'That waitlist is empty' });
-      const mail = countdownEmail(stage, launchText);
+      const mail = countdownEmail(stage, launchText, target || 'insider');
       const sent = await sendBulk(entries, mail.subject, mail.html);
       await logEmails(sql, `countdown: ${stage}`, target, mail.subject, entries.map(e => ({ ...e, ok: true })));
       return res.json({ success: true, sent, total: entries.length });

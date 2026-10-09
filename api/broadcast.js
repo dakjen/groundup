@@ -86,7 +86,7 @@ export default async function handler(req, res) {
           const entries = await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = ${list} AND NOT COALESCE(comped, FALSE)`;
           if (entries.length) {
             const launchText = new Date(lr.value).toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
-            const mail = countdownEmail(stage, launchText);
+            const mail = countdownEmail(stage, launchText, list);
             drip[list + '_countdown_' + stage.replace(' ', '')] = await sendBulk(entries, mail.subject, mail.html);
           }
           await sql`INSERT INTO settings (key, value) VALUES (${flag}, 'sent') ON CONFLICT (key) DO UPDATE SET value = 'sent'`;
@@ -239,7 +239,7 @@ export default async function handler(req, res) {
             const rows = (await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = 'insider' AND NOT COALESCE(comped, FALSE)`).filter(r => !joined.has(String(r.email).toLowerCase()));
             let n = 0;
             for (const r of rows) {
-              const mail = insiderReminderEmail(r.name, { seatsLeft: seats.remaining, closesText, link: `${siteUrl()}/?join=1&email=${encodeURIComponent(r.email)}` });
+              const mail = insiderReminderEmail(r.name, { seatsLeft: seats.remaining, closesText, closesShort: new Date(closesAt).toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'long', day: 'numeric' }), closesKey: new Date(closesAt - 1).toISOString().slice(0, 10), link: `${siteUrl()}/?join=1&email=${encodeURIComponent(r.email)}` });
               if (await sendEmail(r.email, mail.subject, mail.html, { marketing: true })) n++;
             }
             drip.insider_reminder = n;
