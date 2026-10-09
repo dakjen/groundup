@@ -463,7 +463,8 @@ export default async function handler(req, res) {
         ...(retainerMail ? [sendEmail(entry.email, retainerMail.subject, retainerMail.html, { marketing: true })] : []),
         sendEmail(entry.email, mail.subject, mail.html, { marketing: true }),
         addContact(entry.email, entry.name, { WAITLIST_BUDGET: budget, SMS: cleanPhone }),
-        sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
+        // The team inbox and Dakotah both get every waitlist alert.
+        ...[process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net', 'dakotah@dakjencreative.com'].map(to => sendEmail(to,
           `${isNew ? 'WAITLIST +1' : 'Waitlist update'}: ${entry.name} (${entry.list === 'insider' ? 'Insider' : 'General'})${isRetainerLead ? ' · 🔥 RETAINER LEAD' : ''}${founding ? ' · FOUNDING 25' : ''} — ${total} total`,
           `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${isNew ? 'New waitlist signup' : 'Waitlist entry updated'}</h2>
            <p style="color:#444444;font-size:14px;line-height:1.9;">
@@ -473,7 +474,7 @@ export default async function handler(req, res) {
              Pain point: ${entry.reason || '—'}<br/>
              Heard about us: ${entry.source || '—'}
            </p>
-           <p style="color:#444444;font-size:13px;">That's <strong style="color:#161616;">${total}</strong> on the waitlist. Full sheet is in Admin → Waitlist.</p>`),
+           <p style="color:#444444;font-size:13px;">That's <strong style="color:#161616;">${total}</strong> on the waitlist. Full sheet is in Admin → Waitlist.</p>`)),
       ]);
       return res.status(201).json({ success: true });
     }
