@@ -483,6 +483,50 @@ const seqRecCard = (rec) => `
         ${rec.next.extras.map(f => `<div style="font-family:${SANS};color:#444444;font-size:13px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}
       </div>` : ''}`;
 
+// Newsletter pieces: a note from Dr. Merritt, a lesson preview with one of
+// her lines, a number from a real deal, and what is coming on the calendar.
+const seqNote = (text) => `
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 26px;"><tr>
+        <td width="64" valign="top" style="padding:0 16px 0 0;"><img src="${siteUrl()}/opt/gina-9410.jpg" alt="Dr. Gina Merritt" width="64" height="64" style="display:block;width:64px;height:64px;border-radius:32px;object-fit:cover;" /></td>
+        <td valign="top">
+          <div style="font-family:${SANS};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:6px;">A note from Dr. Merritt</div>
+          <p style="font-family:${SERIF};color:#161616;font-size:19px;line-height:1.5;font-style:italic;margin:0;">${text}</p>
+        </td>
+      </tr></table>`;
+const seqFeature = (f) => `
+      <div style="border:1px solid #e5dccf;border-radius:12px;overflow:hidden;margin:0 0 26px;">
+        ${f.photo ? `<img src="${siteUrl()}${f.photo}" alt="" width="496" style="width:100%;display:block;" />` : ''}
+        <div style="padding:20px 24px 22px;">
+          <div style="font-family:${SANS};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:6px;">From the curriculum · ${f.where}</div>
+          <div style="font-family:${SERIF};color:#161616;font-size:24px;font-weight:700;line-height:1.2;margin:0 0 10px;">${f.title}</div>
+          <p style="font-family:${SERIF};color:#b80101;font-size:18px;line-height:1.5;font-style:italic;margin:0 0 12px;">“${f.quote}”</p>
+          <p style="font-family:${SANS};color:#444444;font-size:14px;line-height:1.85;margin:0;">${f.body}</p>
+        </div>
+      </div>`;
+const seqNumber = (n, label, body) => `
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 26px;"><tr>
+        <td width="150" valign="top" style="background:#161616;border-radius:12px;padding:18px 20px;text-align:center;">
+          <div style="font-family:${SERIF};color:#ffffff;font-size:38px;font-weight:700;line-height:1;">${n}</div>
+          <div style="font-family:${SANS};color:#c8a8a8;font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-top:8px;line-height:1.4;">${label}</div>
+        </td>
+        <td valign="middle" style="padding-left:18px;font-family:${SANS};color:#444444;font-size:14px;line-height:1.8;">${body}</td>
+      </tr></table>`;
+const seqComing = () => seqBlock('Also coming', `
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0;">
+          ${seqRow('The launch party', 'Washington, DC — for founding members; date and venue to be announced')}
+          ${seqRow('Lunch &amp; Learn', 'the first live session of the year with Dr. Merritt — January 29, 11 am ET')}
+          ${seqRow('The Underwriting Series', 'two courses on proving the budget and the closing draw — opening after launch')}
+          ${seqRow('Case studies', 'Ninety-Four Ten Hough, the Beacon Center and Mary\'s House, deal by deal')}
+        </table>`);
+const FEATURES = {
+  feasibility: { where: 'Stage 0, Lesson 1', title: 'Land value is an output, not an input', quote: 'Land value is an output of your analysis, not an input from the seller.', body: 'Feasibility starts with what the finished building can support and works backward to what you can pay for the dirt. On an affordable deal the land is structurally worth close to zero — that is exactly why the subsidy exists. Two questions decide go / no-go: how big is the jurisdiction\'s subsidy pool, and how competitive is it?', photo: '/opt/hough-blue-card.jpg' },
+  gap: { where: 'Stage 4, Lesson 3', title: 'Where the gap comes from', quote: 'Identical math. One project can pay $80M for land; the other is $16.5M underwater before it starts.', body: 'The same building pencils at market rate and collapses as affordable housing, because the rents — not the construction cost — decide what you can borrow. On one three-bedroom unit, rent supports 21% of the cost. The other 79% has to come from somewhere else. That is the case for subsidy, and the whole course is about how to fill it.' },
+  predevelopment: { where: 'Stage 0, Lesson 2', title: 'The money you can lose', quote: 'You can spend $1M–$4M before a construction dollar closes, and all of it is at risk.', body: 'Predevelopment is where the deal starts costing real money: entitlement, design, financing applications, permits. Dr. Merritt sizes that budget from what she actually spent on past deals, keeps it skinny, and works out what does not have to be paid before closing — half the architect\'s fee, the permit pull.' },
+  community: { where: 'Stage 0, Lesson 5', title: 'Community first, then the city', quote: 'It is hard for a city to say no once the community has already bought in.', body: 'Most developers go to the government for subsidy and then to the neighborhood. Dr. Merritt does it in the other order: ten months of monthly meetings at Hough before she asked anyone for money. By the time the city heard the ask, the people who live there had already said yes.' },
+  guarantees: { where: 'Stage 2, Lesson 7', title: 'What you are signing', quote: 'If they are providing the guarantees, they typically control the deal.', body: 'Guarantees are required on nearly every development project — construction, financing, and operating deficits after opening. Without generational wealth behind you, you may partner for a balance sheet. Know what that costs: the guarantor usually has the final say, even with shared decision rights.' },
+  compliance: { where: 'Stage 0, Lesson 9', title: 'The fifteen years nobody warns you about', quote: 'The developer fee is generally the only money a developer earns in the first fifteen years.', body: 'Fifteen years of federal compliance, then an extended use agreement of at least fifteen more. A unit found out of compliance goes to the IRS on Form 8823. It is a difficult business and a rewarding one — and the wealth is real, a decade or more after you finish the building.' },
+};
+
 // 1 & 3 — the countdowns. `list` tells insiders about founding seats; the
 // general list hears about December 1. The name is filled per recipient by sendBulk.
 export function countdownEmail(stage, launchText, list = 'insider') {
@@ -501,9 +545,13 @@ export function countdownEmail(stage, launchText, list = 'insider') {
           ${seqRow('Your link', `on ${insider ? 'November 1' : 'December 1'} you get one more email with a personal checkout link — it carries your rate automatically`)}
           ${insider ? seqRow('Move early', 'founding seats are earned at checkout, first come first served; when they are gone the page will say so before you pay') : ''}
         </table>`)}
+      ${two ? seqNote('I built GroundUp because nobody handed me the map. Thirty years in, billions of dollars of deals, and I still remember what it felt like to not know the next step. That ends here.') : ''}
+      ${seqFeature(two ? FEATURES.feasibility : FEATURES.predevelopment)}
+      ${two ? seqNumber('$47M', '9410 Hough, Cleveland', '116 apartments on a site that sat vacant fifteen years. The project could carry only $7M of debt — the rest is the gap Dr. Merritt teaches you to close.') : seqNumber('25', 'founding seats', 'First come, first served at checkout. The page tells you when they are gone — before you pay, never after.')}
       ${insider ? seqFoundingBlock() : ''}
       ${seqBlock(insider ? 'Membership at founding rates' : 'Membership', seqPlanTable(insider))}
       ${seqDates()}
+      ${seqComing()}
       ${seqP('Nothing to do yet — the link comes on the day. Keep an eye on your inbox.', { size: 14 })}
       ${seqSign()}`,
   };
@@ -520,9 +568,12 @@ export function recommendEmail(name, rec, launchAt, painPoint) {
       ${seqH1(`We read your answers, ${firstName(name)}.`)}
       ${seqP(`Doors open <strong style="color:#161616;">${dateText}</strong>. We went through what you told us when you joined the waitlist${painPoint ? ' — what you want to learn, and what has been standing in your way' : ''} — and based on your goals and your budget, this is the plan we would put you on.`)}
       ${seqRecCard(rec)}
+      ${seqNote('Pick the plan that matches the deal in front of you, not the one you hope to have in five years. You can move up the day you need to.')}
+      ${seqFeature(FEATURES.gap)}
       ${seqFoundingBlock()}
       ${seqBlock('Every plan, at founding rates', seqPlanTable(true))}
       ${seqDates()}
+      ${seqComing()}
       ${seqP('Nothing to do yet — on launch day you get one more email with your personal checkout link, and the founding rate applies automatically.', { size: 14 })}
       ${seqSign()}`,
   };
@@ -540,6 +591,8 @@ export function launchEmail(name, rec, link, painPoint, stretchLink) {
       ${seqBtn(link, rec.ctaLabel || `Join as ${rec.label} — secure checkout →`)}
       ${seqRecCard(rec)}
       ${rec.stretch && stretchLink ? seqBtn(stretchLink, `Claim ${rec.stretch.label} at 10% off →`) : ''}
+      ${seqNote('Start with Stage 0. Nine lessons, the whole life of a deal in order. Everything after it goes deeper — but that is the map.')}
+      ${seqFeature(FEATURES.feasibility)}
       ${seqFoundingBlock()}
       ${seqBlock('Not the right fit? Every plan, at founding rates', seqPlanTable(true) + `<p style="font-family:${SANS};color:#666666;font-size:12.5px;line-height:1.7;margin:10px 0 0;">Choose any of them at <a href="${siteUrl()}/pricing" style="color:#b80101;">${siteUrl().replace(/^https?:\/\//, '')}/pricing</a> — and you can change plans anytime.</p>`)}
       ${seqDates()}
@@ -568,6 +621,7 @@ export function insiderReminderEmail(name, opts = {}) {
         <td style="padding-left:20px;font-family:${SANS};color:#444444;font-size:14px;line-height:1.8;">Your personal link still carries your founding rate — 25% off any membership for the whole first year.</td>
       </tr></table>
       ${seqBtn(link, 'Claim my seat →')}
+      ${seqFeature(FEATURES.guarantees)}
       ${seqFoundingBlock()}
       ${seqBlock('Membership at founding rates', seqPlanTable(true))}
       ${seqDates({ closesText: opts.closesShort, closesKey: opts.closesKey })}
@@ -589,6 +643,8 @@ export function generalFoundingEmail(name, opts = {}) {
       ${seqH1(`${left} founding seat${left === 1 ? '' : 's'} left, ${first}.`)}
       ${seqP(`Our insiders had the first week. ${left === 1 ? 'One seat is' : `${left} seats are`} still open, and they go to the first people on the waitlist to join — you do not have to wait for December 1. Your link below creates your account today.`)}
       ${seqBtn(link, 'Join now →')}
+      ${seqNote('Our insiders went first. If you are reading this, there is still a seat with your name on it — and I would rather it went to someone who has been waiting than sit empty.')}
+      ${seqFeature(FEATURES.community)}
       ${seqFoundingBlock()}
       ${seqCurriculum()}
       ${seqBlock('Membership at founding rates', seqPlanTable(true))}
