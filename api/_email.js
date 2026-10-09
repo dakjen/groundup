@@ -551,6 +551,52 @@ export function launchPartyInviteEmail(name, opts = {}) {
   };
 }
 
+// Step 5 of the insider sequence: a nudge mid-window to insiders who have not
+// yet claimed a founding seat. Seats left and the closing date are live.
+export function insiderReminderEmail(name, opts = {}) {
+  const first = firstName(name);
+  const left = Number(opts.seatsLeft ?? 0);
+  const closes = opts.closesText || 'soon';
+  const link = opts.link || `${siteUrl()}/?join=1`;
+  return {
+    subject: left > 0 ? `${left} founding seat${left === 1 ? '' : 's'} left — your insider window closes ${closes}` : `Your insider window closes ${closes}`,
+    html: `
+      <div style="font-family:${SANS};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 12px;">Insider window</div>
+      <h1 style="font-family:${SERIF};color:#161616;font-size:34px;line-height:1.15;font-weight:700;margin:0 0 14px;">Still yours, ${first} — for now.</h1>
+      <p style="font-family:${SANS};color:#444444;font-size:15px;line-height:1.85;margin:0 0 20px;">Your insider access is open, and the founding seats are going to the first twenty-five people who join. After <strong style="color:#161616;">${closes}</strong> whatever is left opens to the whole waitlist.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 22px;"><tr>
+        <td style="background:#161616;border-radius:12px;padding:18px 26px;text-align:center;">
+          <div style="font-family:${SERIF};color:#ffffff;font-size:44px;font-weight:700;line-height:1;">${left}</div>
+          <div style="font-family:${SANS};color:#c8a8a8;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-top:6px;">founding seats left</div>
+        </td>
+        <td style="padding-left:20px;font-family:${SANS};color:#444444;font-size:14px;line-height:1.8;">A founding seat locks <strong style="color:#b80101;">25% off any membership for your first year</strong>, your first year of live Lunch &amp; Learns, and an invitation to the launch party in Washington, DC.</td>
+      </tr></table>
+      <p style="margin:0 0 22px;"><a href="${link}" style="display:inline-block;background:#b80101;color:#ffffff;font-family:${SANS};font-weight:bold;font-size:14px;text-decoration:none;padding:14px 28px;border-radius:10px;">Claim my seat →</a></p>
+      <p style="font-family:${SANS};color:#8a8a8a;font-size:12.5px;line-height:1.7;margin:0;">Already joined? Then this is just a thank-you — your seat is yours.</p>`,
+  };
+}
+
+// Step 6: once the insider window closes, the general waitlist hears how many
+// founding seats are left and gets the same first-come link.
+export function generalFoundingEmail(name, opts = {}) {
+  const first = firstName(name);
+  const left = Number(opts.seatsLeft ?? 0);
+  const link = opts.link || `${siteUrl()}/?join=1`;
+  return {
+    subject: `${left} founding seat${left === 1 ? '' : 's'} just opened to the waitlist`,
+    html: `
+      <div style="font-family:${SANS};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 12px;">Now open to you</div>
+      <h1 style="font-family:${SERIF};color:#161616;font-size:34px;line-height:1.15;font-weight:700;margin:0 0 14px;">${left} founding seat${left === 1 ? '' : 's'} left, ${first}.</h1>
+      <p style="font-family:${SANS};color:#444444;font-size:15px;line-height:1.85;margin:0 0 20px;">Our insiders had the first week. ${left === 1 ? 'One seat is' : `${left} seats are`} still open, and they go to the first people on the waitlist to join — you don't have to wait for December 1.</p>
+      <div style="border-left:4px solid #b80101;background:#faf7f7;border-radius:0 12px 12px 0;padding:20px 24px;margin:0 0 22px;">
+        <div style="font-family:${SANS};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px;">A founding seat means</div>
+        <p style="font-family:${SANS};color:#333333;font-size:14px;line-height:1.85;margin:0;"><strong style="color:#161616;">25% off any membership for your entire first year</strong>, your first year of live Lunch &amp; Learns included, and an invitation to the GroundUp launch party in Washington, DC.</p>
+      </div>
+      <p style="margin:0 0 22px;"><a href="${link}" style="display:inline-block;background:#b80101;color:#ffffff;font-family:${SANS};font-weight:bold;font-size:14px;text-decoration:none;padding:14px 28px;border-radius:10px;">Join now →</a></p>
+      <p style="font-family:${SANS};color:#8a8a8a;font-size:12.5px;line-height:1.7;margin:0;">When the seats are gone the page will say so before you pay — nobody is charged for a seat that isn't there.</p>`,
+  };
+}
+
 export function foundingThanksEmail(name, opts = {}) {
   const first = firstName(name);
   const now = opts.now || new Date();

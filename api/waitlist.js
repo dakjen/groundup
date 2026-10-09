@@ -331,6 +331,8 @@ export default async function handler(req, res) {
       if (!admin) return res.status(401).json({ error: 'Unauthorized' });
       const entries = await sql`SELECT * FROM waitlist ORDER BY created_at DESC`;
       const partyRows = await sql`SELECT key, value FROM settings WHERE key IN ('launch_party_details', 'launch_party_rsvp')`;
+      const [wdRow] = await sql`SELECT value FROM settings WHERE key = 'insider_window_days'`;
+      const insider_window_days = parseInt(wdRow?.value, 10) || 5;
       const launch_party = { details: partyRows.find(r => r.key === 'launch_party_details')?.value || '', rsvp: partyRows.find(r => r.key === 'launch_party_rsvp')?.value || '' };
       // Complete record of every campaign email sent, newest first
       let email_log = [];
@@ -345,7 +347,7 @@ export default async function handler(req, res) {
         if (p?.monthly) mrr += p.monthly;
         if (p?.once) oneTime += p.once;
       }
-      return res.json({ entries, launch_party, launch_at: launchRow?.value || null, launch_insider_at: insiderRow?.value || null, mrr: Math.round(mrr * 100) / 100, oneTime: Math.round(oneTime * 100) / 100 });
+      return res.json({ entries, launch_party, insider_window_days, launch_at: launchRow?.value || null, launch_insider_at: insiderRow?.value || null, mrr: Math.round(mrr * 100) / 100, oneTime: Math.round(oneTime * 100) / 100 });
     }
 
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -489,6 +491,13 @@ export default async function handler(req, res) {
     // Launch party (Washington, DC; date TBC): the details and RSVP link that go into the
     // founding-member invitation. `notify` re-sends the invitation to every
     // founding member who has already paid, so late details still reach them.
+    if (action === 'set_insider_window') {
+      const days = parseInt(req.body.days, 10);
+      if (!Number.isFinite(days) || days < 1 || days > 30) return res.status(400).json({ error: 'Window must be 1–30 days' });
+      await sql`INSERT INTO settings (key, value) VALUES ('insider_window_days', ${String(days)}) ON CONFLICT (key) DO UPDATE SET value = ${String(days)}`;
+      return res.json({ success: true });
+    }
+
     if (action === 'set_launch_party') {
       const details = String(req.body.details || '').slice(0, 2000);
       const rsvp = String(req.body.rsvp || '').trim().slice(0, 500);

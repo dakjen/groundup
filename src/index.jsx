@@ -6295,6 +6295,9 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
   const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 6000); };
 
   const [party, setParty] = useState({ details: "", rsvp: "" });
+  const [windowDays, setWindowDays] = useState(5);
+  useEffect(() => { if (data?.insider_window_days) setWindowDays(data.insider_window_days); }, [data?.insider_window_days]);
+  const saveWindow = async () => { try { await call("POST", { action: "set_insider_window", days: windowDays }); flash(true, `Insider window set to ${windowDays} days.`); await load(); } catch (e) { flash(false, e.message); } };
   useEffect(() => { if (data?.launch_party) setParty(data.launch_party); }, [data?.launch_party?.details, data?.launch_party?.rsvp]);
   const saveParty = async (notify) => {
     if (notify && !window.confirm("Email the launch party invitation (with these details) to every founding member who has paid?")) return;
@@ -6373,6 +6376,17 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
             </div>
           );
         })}
+      </div>
+
+      {/* Insider window: how long insiders have founding seats to themselves */}
+      <div style={section}>
+        <div style={heading}>Insider window</div>
+        <p style={{ color: "#666666", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, margin: "0 0 14px" }}>From the insider launch, insiders have the founding seats to themselves for this many days. Midway through, insiders who haven't joined get a seats-left reminder. When it closes, any seats still open are offered to the general waitlist by email, and they can join early.{insiderAt ? ` With the current insider date that closes ${new Date(new Date(insiderAt).getTime() + windowDays * 86400000).toLocaleString("en-US", { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })}.` : ""}</p>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <input type="number" min="1" max="30" value={windowDays} onChange={e => setWindowDays(parseInt(e.target.value, 10) || 1)} style={{ ...inp, width: 90, marginBottom: 0 }} />
+          <span style={{ color: "#444444", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>days</span>
+          <button onClick={saveWindow} style={btnRed}>Save</button>
+        </div>
       </div>
 
       {/* Launch party — Dec 5. Founding members get the invitation the moment they pay. */}

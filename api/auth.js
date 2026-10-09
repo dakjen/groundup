@@ -232,7 +232,13 @@ export default async function handler(req, res) {
           const tryEmail = String(req.body.email || '').trim().toLowerCase();
           let isInsider = false;
           if (insiderOpen && tryEmail) {
-            const [wl] = await sql`SELECT id FROM waitlist WHERE LOWER(email) = LOWER(${tryEmail}) AND COALESCE(list, 'insider') = 'insider' LIMIT 1`;
+            // Once the insider window has run its course, the whole waitlist
+            // may join early for whatever founding seats remain.
+            const [wd] = await sql`SELECT value FROM settings WHERE key = 'insider_window_days'`;
+            const windowOver = Date.now() >= new Date(at('launch_insider_at')).getTime() + Math.max(1, parseInt(wd?.value, 10) || 5) * 86400000;
+            const [wl] = windowOver
+              ? await sql`SELECT id FROM waitlist WHERE LOWER(email) = LOWER(${tryEmail}) LIMIT 1`
+              : await sql`SELECT id FROM waitlist WHERE LOWER(email) = LOWER(${tryEmail}) AND COALESCE(list, 'insider') = 'insider' LIMIT 1`;
             isInsider = !!wl;
           }
           if (!isInsider) {

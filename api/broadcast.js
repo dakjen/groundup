@@ -3,6 +3,8 @@ import { neon } from '@neondatabase/serverless';
 import { requireAdmin } from './_utils.js';
 import { sendBulk, sendEmail, siteUrl, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail, passExpiryEmail, waitlistConfirmEmail, retainerInterestEmail, countdownEmail, recommendEmail, launchEmail, foundingThanksEmail, firstName } from './_email.js';
 import { recommendPlan, sendRecommendBatch, sendLaunchBatch } from './waitlist.js';
+import { foundingSeats } from './stripe.js';
+import { insiderReminderEmail, generalFoundingEmail } from './_email.js';
 import { referredRevenue, rungFor } from './referrals.js';
 
 // Team email tools: send a custom email or an event announcement to a segment.
@@ -214,6 +216,55 @@ export default async function handler(req, res) {
         await sql`INSERT INTO settings (key, value) VALUES ('monthly_report_sent', ${stamp}) ON CONFLICT (key) DO UPDATE SET value = ${stamp}`;
       }
     } catch (e) { console.error('monthly report failed', e.message); }
+    // Insider window (steps 5 and 6 of the sequence). The window runs
+    // `insider_window_days` (default 5) from the insider launch. Midway, insiders
+    // who have not joined get a seats-left reminder; when it closes, if founding
+    // seats remain, the general list is told how many and may join early.
+    try {
+      const [ins] = await sql`SELECT value FROM settings WHERE key = 'launch_insider_at'`;
+      const [wd] = await sql`SELECT value FROM settings WHERE key = 'insider_window_days'`;
+      const days = Math.max(1, parseInt(wd?.value, 10) || 5);
+      if (ins?.value && !isNaN(Date.parse(ins.value))) {
+        const DAY = 86400000;
+        const opened = new Date(ins.value).getTime();
+        const closesAt = opened + days * DAY;
+        const closesText = new Date(closesAt).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+        const now = Date.now();
+        const joined = new Set((await sql`SELECT LOWER(email) AS email FROM users WHERE membership_status = 'active' AND tier IS DISTINCT FROM 'Free'`).map(r => r.email));
+        // Step 5 — midpoint of the window
+        if (now >= opened + Math.floor(days / 2) * DAY && now < closesAt) {
+          const [done] = await sql`SELECT value FROM settings WHERE key = 'drip_insider_reminder'`;
+          if (!done?.value) {
+            const seats = await foundingSeats(sql);
+            const rows = (await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = 'insider' AND NOT COALESCE(comped, FALSE)`).filter(r => !joined.has(String(r.email).toLowerCase()));
+            let n = 0;
+            for (const r of rows) {
+              const mail = insiderReminderEmail(r.name, { seatsLeft: seats.remaining, closesText, link: `${siteUrl()}/?join=1&email=${encodeURIComponent(r.email)}` });
+              if (await sendEmail(r.email, mail.subject, mail.html, { marketing: true })) n++;
+            }
+            drip.insider_reminder = n;
+            await sql`INSERT INTO settings (key, value) VALUES ('drip_insider_reminder', 'sent') ON CONFLICT (key) DO UPDATE SET value = 'sent'`;
+          }
+        }
+        // Step 6 — window closed, seats remain → the general list
+        if (now >= closesAt) {
+          const [done] = await sql`SELECT value FROM settings WHERE key = 'drip_general_founding'`;
+          if (!done?.value) {
+            const seats = await foundingSeats(sql);
+            let n = 0;
+            if (seats.remaining > 0) {
+              const rows = (await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = 'general' AND NOT COALESCE(comped, FALSE)`).filter(r => !joined.has(String(r.email).toLowerCase()));
+              for (const r of rows) {
+                const mail = generalFoundingEmail(r.name, { seatsLeft: seats.remaining, link: `${siteUrl()}/?join=1&email=${encodeURIComponent(r.email)}` });
+                if (await sendEmail(r.email, mail.subject, mail.html, { marketing: true })) n++;
+              }
+            }
+            drip.general_founding = n;
+            await sql`INSERT INTO settings (key, value) VALUES ('drip_general_founding', ${seats.remaining > 0 ? 'sent' : 'skipped-no-seats'}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`;
+          }
+        }
+      }
+    } catch (e) { console.error('insider window drip failed', e.message); }
     return res.json({ success: true, expired: rows.length, sent, drip, pot_released: released, pot_released_cents: releasedCents, weekly, monthly, founding, ladder });
   }
 
