@@ -1006,6 +1006,7 @@ const NEXT_TIER = {
 // they hover your messages.
 function ProfileCard({ member }) {
   const [avatar, setAvatar] = useState(member.avatar_url || "");
+  const [name, setName] = useState(member.name || "");
   const [headline, setHeadline] = useState(member.headline || "");
   const [company, setCompany] = useState(member.company || "");
   const [title, setTitle] = useState(member.title || "");
@@ -1039,8 +1040,9 @@ function ProfileCard({ member }) {
   const save = async () => {
     setBusy(true);
     try {
-      await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "update_profile", headline, bio, company, title, location }) });
-      const me = getMember(); if (me) saveMember({ ...me, headline, bio, company, title, location });
+      const saved = await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "update_profile", name, headline, bio, company, title, location }) });
+      // Trust what the server says it stored, not what we sent.
+      const me = getMember(); if (me) saveMember({ ...me, name: saved.name ?? me.name, headline: saved.headline, bio: saved.bio, company: saved.company, title: saved.title, location: saved.location });
       flash(true, "Profile saved — members see it when they hover your messages.");
     } catch (e) { flash(false, e.message); } finally { setBusy(false); }
   };
@@ -1058,6 +1060,7 @@ function ProfileCard({ member }) {
           </label>
         </div>
         <div style={{ flex: 1, minWidth: 240 }}>
+          <input style={{ ...inp, marginBottom: 10 }} value={name} onChange={e => setName(e.target.value)} maxLength={120} placeholder="Your name" name="name" autoComplete="name" />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
             <input style={inp} value={title} onChange={e => setTitle(e.target.value)} maxLength={120} placeholder="Title — e.g. Principal, Developer" name="organization-title" autoComplete="organization-title" />
             <input style={inp} value={company} onChange={e => setCompany(e.target.value)} maxLength={120} placeholder="Company (optional)" name="organization" autoComplete="organization" />

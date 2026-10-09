@@ -527,8 +527,12 @@ export default async function handler(req, res) {
       const company = String(req.body.company ?? '').trim().slice(0, 120) || null;
       const title = String(req.body.title ?? '').trim().slice(0, 120) || null;
       const location = String(req.body.location ?? '').trim().slice(0, 120) || null;
-      await sql`UPDATE users SET headline = ${headline}, bio = ${bio}, company = ${company}, title = ${title}, location = ${location} WHERE id = ${session.uid}`;
-      return res.json({ success: true, headline, bio, company, title, location });
+      // Name is optional here; an empty one keeps what is on file.
+      const name = String(req.body.name ?? '').trim().slice(0, 120) || null;
+      const [row] = await sql`UPDATE users SET name = COALESCE(${name}, name), headline = ${headline}, bio = ${bio}, company = ${company}, title = ${title}, location = ${location}
+        WHERE id = ${session.uid} RETURNING name, headline, bio, company, title, location`;
+      if (!row) return res.status(404).json({ error: 'Account not found' });
+      return res.json({ success: true, ...row });
     }
 
     // First-run onboarding. Saves whatever they chose to answer and hands back
