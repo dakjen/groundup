@@ -226,7 +226,7 @@ export function AuthModal({ onClose, onAuthed, onSignupIntent, defaultTier = "Fr
           {mode === "signup" && (
             <div style={{ marginBottom: 16 }}>
               <label style={lbl}>Full name</label>
-              <input style={inp} value={name} onChange={e => setName(e.target.value)} required placeholder="Your name" />
+              <input style={inp} value={name} onChange={e => setName(e.target.value)} required placeholder="Your name" name="name" autoComplete="name" />
             </div>
           )}
           <div style={{ marginBottom: 16 }}>
@@ -476,12 +476,12 @@ export function OnboardingFlow({ pending, onDone }) {
 
             <div style={{ marginBottom: 16 }}>
               <label style={lbl2}>Company or organization</label>
-              <input style={inp2} value={company} onChange={e => setCompany(e.target.value)} maxLength={120} placeholder="Your company, or none yet" />
+              <input style={inp2} value={company} onChange={e => setCompany(e.target.value)} maxLength={120} placeholder="Your company, or none yet" name="organization" autoComplete="organization" />
             </div>
             
             <div style={{ marginBottom: 16 }}>
               <label style={lbl2}>Where do you work?</label>
-              <input style={inp2} value={location} onChange={e => setLocation(e.target.value)} maxLength={120} placeholder="e.g. Washington DC · Cleveland" />
+              <input style={inp2} value={location} onChange={e => setLocation(e.target.value)} maxLength={120} placeholder="e.g. Washington DC · Cleveland" name="city" autoComplete="address-level2" />
             </div>
             <div style={{ marginBottom: 16 }}>
               <label style={lbl2}>Which best describes you?</label>
@@ -1059,10 +1059,10 @@ function ProfileCard({ member }) {
         </div>
         <div style={{ flex: 1, minWidth: 240 }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
-            <input style={inp} value={title} onChange={e => setTitle(e.target.value)} maxLength={120} placeholder="Title — e.g. Principal, Developer" />
-            <input style={inp} value={company} onChange={e => setCompany(e.target.value)} maxLength={120} placeholder="Company (optional)" />
+            <input style={inp} value={title} onChange={e => setTitle(e.target.value)} maxLength={120} placeholder="Title — e.g. Principal, Developer" name="organization-title" autoComplete="organization-title" />
+            <input style={inp} value={company} onChange={e => setCompany(e.target.value)} maxLength={120} placeholder="Company (optional)" name="organization" autoComplete="organization" />
           </div>
-          <input style={{ ...inp, marginBottom: 10 }} value={location} onChange={e => setLocation(e.target.value)} maxLength={120} placeholder="Where you work — e.g. DC · Baltimore" />
+          <input style={{ ...inp, marginBottom: 10 }} value={location} onChange={e => setLocation(e.target.value)} maxLength={120} placeholder="Where you work — e.g. DC · Baltimore" name="city" autoComplete="address-level2" />
           <input style={{ ...inp, marginBottom: 10 }} value={headline} onChange={e => setHeadline(e.target.value)} maxLength={120} placeholder="What you do — e.g. Affordable multifamily · 12 units" />
           <textarea style={{ ...inp, resize: "vertical", marginBottom: 10 }} rows={3} value={bio} onChange={e => setBio(e.target.value)} maxLength={500} placeholder="A few sentences about you, your projects, and what you're building toward." />
           <button style={{ ...btnRed, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={save}>Save Profile</button>
@@ -2329,15 +2329,15 @@ export function WaitlistForm({ list = "insider" }) {
               <input type="text" name="website" value={hp} onChange={e => setHp(e.target.value)} tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }} />
               <div style={{ marginBottom: 14 }}>
                 <label style={lbl}>Full name</label>
-                <input style={inp} value={name} onChange={e => setName(e.target.value)} required placeholder="Your name" />
+                <input style={inp} value={name} onChange={e => setName(e.target.value)} required placeholder="Your name" name="name" autoComplete="name" />
               </div>
               <div style={{ marginBottom: 14 }}>
                 <label style={lbl}>Email</label>
-                <input style={inp} type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@example.com" />
+                <input style={inp} type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@example.com" name="email" autoComplete="email" />
               </div>
               <div style={{ marginBottom: 14 }}>
                 <label style={lbl}>Phone</label>
-                <input style={inp} type="tel" value={phone} onChange={e => setPhone(e.target.value)} required placeholder="(555) 555-5555" />
+                <input style={inp} type="tel" value={phone} onChange={e => setPhone(e.target.value)} required placeholder="(555) 555-5555" name="tel" autoComplete="tel" />
               </div>
               {insider ? (<>
               <div style={{ marginBottom: 14 }}>
