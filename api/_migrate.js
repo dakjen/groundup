@@ -279,7 +279,7 @@ const STATEMENTS = [
     ('deals-financing', 'Deals & Financing', 'Capital stacks, LIHTC, gap funding, underwriting questions.', 'Basic', FALSE, 2),
     ('jv-partnerships', 'JV & Partnerships', 'Find partners, structure splits, share opportunities.', 'Premium', FALSE, 3),
     ('opportunity-board', 'Opportunity Board', 'RFPs, funding windows, and deals worth chasing — posted by the team monthly. Reply in threads to discuss.', 'Premium', TRUE, 4),
-    ('elite-lounge', 'Elite Lounge', 'Private channel for Elite members and advisory clients.', 'Elite', FALSE, 5)
+    ('owner-lounge', 'Owner Lounge', 'Private channel for Owner members and advisory clients.', 'Elite', FALSE, 5)
     ON CONFLICT (slug) DO NOTHING`,
   `CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`,
   `CREATE INDEX IF NOT EXISTS idx_referrals_code ON referrals(code)`,
