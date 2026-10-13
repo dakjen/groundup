@@ -66,7 +66,11 @@ export function backdropClose(close) {
 export function GrowingInput({ value, onChange, onSubmit, style, mentionable, ...props }) {
   const ref = useRef(null);
   const [pick, setPick] = useState(0);
-  useEffect(() => { const el = ref.current; if (!el) return; el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 200) + "px"; }, [value]);
+  // Size to the text. A box measured while hidden (display:none) reads 0, so
+  // never go below one comfortable line, and re-measure once it is visible.
+  const fit = () => { const el = ref.current; if (!el) return; el.style.height = "auto"; const h = el.scrollHeight; el.style.height = (h > 0 ? Math.min(Math.max(h, 44), 200) : 44) + "px"; };
+  useEffect(fit, [value]);
+  useEffect(() => { const el = ref.current; if (!el || typeof ResizeObserver === "undefined") return; const ro = new ResizeObserver(() => { if (el.offsetParent !== null) fit(); }); ro.observe(el); return () => ro.disconnect(); }, []);
   // "@" plus whatever is typed after it, at the end of the text, opens the picker
   const m = mentionable ? /(^|\s)@([A-Za-z][\w.'-]*(?: [A-Za-z][\w.'-]*)?)?$/.exec(value || "") : null;
   const q = m ? (m[2] || "").toLowerCase() : null;
