@@ -919,7 +919,10 @@ export default async function handler(req, res) {
       // page. Land them on it, in the meetings section.
       success_url: item.startsWith('session_')
         ? `${base}/membership?checkout=success&item=${encodeURIComponent(item)}#meetings`
-        : `${base}/?checkout=success&item=${encodeURIComponent(item)}`,
+        : item === 'retainer_onboarding'
+          // The intake is paid — the next thing they must do is book the call.
+          ? `${base}/membership?checkout=success&item=retainer_onboarding#gu-advisory`
+          : `${base}/?checkout=success&item=${encodeURIComponent(item)}`,
       cancel_url: `${base}/?checkout=cancelled`,
     };
 
