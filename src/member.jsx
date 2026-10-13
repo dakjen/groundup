@@ -1751,7 +1751,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
               {hasAdvisory ? (
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                   <button style={btnRed} onClick={() => setActivePage("advisory")}>Open your advisory workspace →</button>
-                  <button style={{ ...btnGhost, color: "var(--gu-text2)", borderColor: "var(--gu-border)" }} onClick={() => { window.location.hash = "dealroom"; setActivePage("advisory"); }}>Deal room →</button>
+                  <button style={{ ...btnGhost, color: "var(--gu-text2)", borderColor: "var(--gu-border)" }} onClick={() => { setActivePage("advisory"); window.location.hash = "dealroom"; }}>Deal room →</button>
                 </div>
               ) : (<>
                 <ul style={{ listStyle: "none", padding: 0, margin: "0 0 20px" }}>
@@ -3433,8 +3433,12 @@ export function AdvisoryAdminPage() {
   const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 6000); };
   const load = () => api("/api/retainers?admin=1").then(d => { setData(d); const n = {}; for (const r of d.retainers || []) n[r.id] = r.private_notes || ""; setNotes(prev => ({ ...n, ...prev })); }).catch(e => setMsg({ ok: false, text: e.message }));
   useEffect(() => { load(); return pollVisible(load, 30000); }, []);
-  // #adv=<id> (from a pop-up) opens that client on Messages
-  useEffect(() => { const onHash = () => { const want = Number((window.location.hash.match(/adv=(\d+)/) || [])[1]); if (want) { setSel(want); setSub("messages"); } }; onHash(); window.addEventListener("hashchange", onHash); return () => window.removeEventListener("hashchange", onHash); }, []);
+  // Where she is lives in the URL (#adv=<client>&tab=<tab>), so a refresh lands
+  // on the same client and the same tab. A pop-up links here the same way.
+  const SUBS = ["overview", "room", "messages", "time", "docs", "notes"];
+  const readHash = () => { const h = window.location.hash; const id = (h.match(/adv=(\d+)/) || [])[1]; const tab = (h.match(/tab=(\w+)/) || [])[1]; return { id: id ? Number(id) : null, tab: SUBS.includes(tab) ? tab : null }; };
+  useEffect(() => { const onHash = () => { const { id, tab } = readHash(); if (id) { setSel(id); setSub(tab || "messages"); } else if (/adv=dashboard/.test(window.location.hash)) setSel("dashboard"); }; const { id, tab } = readHash(); if (id) { setSel(id); setSub(tab || "overview"); } window.addEventListener("hashchange", onHash); return () => window.removeEventListener("hashchange", onHash); }, []);
+  useEffect(() => { const want = sel === "dashboard" ? "adv=dashboard" : `adv=${sel}&tab=${sub}`; if (window.location.hash.slice(1) !== want) history.replaceState(null, "", "#" + want); }, [sel, sub]);
   const act = async (fn, ok) => { try { await fn(); if (ok) flash(true, ok); await load(); } catch (e) { flash(false, e.message); } };
   const post = (body) => api("/api/retainers", { method: "POST", body: JSON.stringify(body) });
   const money = (n) => "$" + Number(n || 0).toLocaleString();
