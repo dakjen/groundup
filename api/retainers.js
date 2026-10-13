@@ -169,6 +169,8 @@ export default async function handler(req, res) {
         INSERT INTO retainers (user_id, hours_per_month, monthly_amount, notes, status, started_at, created_at)
         VALUES (${Number(user_id)}, ${Number(hours_per_month) || 10}, ${Number(monthly_amount) || 5500}, ${notes || null}, ${st}, NOW(), NOW())
         RETURNING *`;
+      // Advisory clients get everything an Owner gets — the account moves to the Owner tier.
+      if (st === 'active') await sql`UPDATE users SET tier = 'Elite', tier_since = COALESCE(tier_since, NOW()), membership_status = 'active' WHERE id = ${Number(user_id)} AND tier IS DISTINCT FROM 'Elite'`;
       // Invite the client to choose a plan and pay
       if (st === 'offered') {
         const [u] = await sql`SELECT name, email FROM users WHERE id = ${Number(user_id)}`;

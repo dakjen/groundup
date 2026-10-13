@@ -407,6 +407,8 @@ async function fulfill(sql, session) {
       await sql`INSERT INTO retainers (user_id, hours_per_month, monthly_amount, status, started_at, created_at)
         VALUES (${userId}, ${spec.retainerHours}, ${spec.amount / 100}, 'active', NOW(), NOW())`;
     }
+    // A Senior Advisor client gets everything an Owner gets: put the account on the Owner tier.
+    await sql`UPDATE users SET tier = 'Elite', tier_since = COALESCE(tier_since, NOW()) WHERE id = ${userId} AND tier IS DISTINCT FROM 'Elite'`;
     if (md.intake_credit === '1') {
       await sql`UPDATE entitlements SET source = 'intake_credited' WHERE user_id = ${userId} AND course_id = 'intake' AND source = 'intake_paid'`;
     }
