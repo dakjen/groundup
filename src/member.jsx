@@ -2095,7 +2095,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
               </div>
               {!isAdmin && !active.locked && (
                 <div style={{ marginLeft: "auto", color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font, lineHeight: 1.5, textAlign: "right", maxWidth: 300 }}>
-                  Channels are for general topics. Anything about <em>your</em> project goes to the team directly — <a href="/sessions" style={{ color: "#e08a8a", fontWeight: 700 }}>book time</a>{member && TIER_RANK[member.tier] >= 4 ? <> or <button onClick={() => { setDmOpen(true); setSidebarOpen(false); }} style={{ background: "none", border: "none", padding: 0, color: "#e08a8a", fontWeight: 700, fontFamily: font, fontSize: 11.5, cursor: "pointer" }}>send a direct message</button></> : null}.
+                  Channels are for general topics. Anything about <em>your</em> project goes to the team directly — <a href="/contact" style={{ color: "#e08a8a", fontWeight: 700 }}>book time</a>{member && TIER_RANK[member.tier] >= 4 ? <> or <button onClick={() => { setDmOpen(true); setSidebarOpen(false); }} style={{ background: "none", border: "none", padding: 0, color: "#e08a8a", fontWeight: 700, fontFamily: font, fontSize: 11.5, cursor: "pointer" }}>send a direct message</button></> : null}.
                 </div>
               )}
             </div>
