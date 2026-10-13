@@ -1449,6 +1449,10 @@ function ChangePasswordCard() {
 }
 
 export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
+  // Back from the $1,500 intake checkout: the next step is the call, so it leads.
+  const intakePaid = (() => { const q = new URLSearchParams(window.location.search); return q.get("checkout") === "success" && q.get("item") === "retainer_onboarding"; })();
+  const [advisorLink, setAdvisorLink] = useState(null);
+  useEffect(() => { if (intakePaid) fetch("/api/waitlist?public=1").then(r => r.ok ? r.json() : null).then(d => setAdvisorLink(d?.advisor_call_link || null)).catch(() => {}); }, [intakePaid]);
   // Team accounts have no tier or plan — just a clean account view
   if (member && member.role === "admin") {
     return (
@@ -1634,6 +1638,16 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
             <p style={SUB}>{hasAdvisory
               ? "Your project is with Dr. Merritt. Your workspace has the documents, the messages and the hours logged."
               : "A membership teaches you the work. Advisory is Dr. Merritt doing it with you, on your actual deal."}</p>
+            {intakePaid && (
+              <div style={{ background: "#160404", border: "1px solid #b80101", borderRadius: 16, padding: "24px 28px", marginBottom: 16 }}>
+                <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>Step 1 of 1 — book your intake call</div>
+                <div style={{ color: "var(--gu-text)", fontFamily: serif, fontWeight: 700, fontSize: 24, marginBottom: 8 }}>Your intake is paid. Now pick a time with Dr. Merritt.</div>
+                <p style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.8, margin: "0 0 16px" }}>On the call you walk her through the whole project — pro forma, capital stack, site, timeline. Book it now; everything else waits on this.</p>
+                {advisorLink
+                  ? <a href={advisorLink} target="_blank" rel="noreferrer" style={{ ...btnRed, display: "inline-block", textDecoration: "none" }}>Book the intake call →</a>
+                  : <span style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>The booking link isn't set yet — email groundup@drginamerritt.net and the team will schedule it with you.</span>}
+              </div>
+            )}
             <div style={{ background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "26px 30px" }}>
               {hasAdvisory ? (
                 <button style={btnRed} onClick={() => setActivePage("advisory")}>Open your advisory workspace →</button>
