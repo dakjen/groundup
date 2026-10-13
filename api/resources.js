@@ -280,6 +280,7 @@ export default async function handler(req, res) {
         .map(c => ({
           id: c.id, title: c.title, description: c.description,
           stage: c.stage, stageColor: c.stage_color, duration: c.duration, series: c.series || null,
+          min_tier: c.series ? 'Premium' : 'Basic',
           hidden: admin ? !!c.hidden : undefined,
           // Unpublished lessons (draft: true) exist only for the team. They are
           // always appended after the published ones, so members' lesson indexes
@@ -324,7 +325,11 @@ export default async function handler(req, res) {
         SELECT course_id FROM entitlements
         WHERE user_id = ${user.id} AND course_id IN ('all', ${c.id})
           AND (expires_at IS NULL OR expires_at > NOW())` : [];
-      const fullAccess = rank >= 1 || passes.length > 0;
+      // The series — Underwriting, Community-Led Development, the case studies, AI — are
+      // a Premium-and-up benefit. The core stages open to every paid plan. A course
+      // pass opens its course regardless.
+      const needRank = c.series ? 3 : 1;
+      const fullAccess = rank >= needRank || passes.length > 0;
       // Case-study exercises: hand back this member's saved answers so a
       // submitted study stays submitted (and the reveal stays revealed).
       let myResponses = {};
@@ -341,7 +346,7 @@ export default async function handler(req, res) {
       const freeKey = user.free_lesson_key || null;
       return res.json({
         course: shape(i => freeKey === `${c.id}:${i}`),
-        access: 'free',
+        access: rank >= 1 ? 'premium' : 'free',
         free_lesson_key: freeKey,
         completed,
       });

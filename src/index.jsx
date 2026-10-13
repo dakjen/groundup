@@ -432,7 +432,9 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
   const memberRank = member && !member.suspended ? (TIER_RANK[member.tier] ?? 0) : 0;
   // A subscription (Basic+) or an active one-time pass ('all' or this course) unlocks everything here
   const hasPass = (member?.entitlements || []).some(e => e.course_id === "all" || e.course_id === course.id);
-  const fullAccess = memberRank >= 1 || hasPass;
+  // The series are Premium and up; the core stages open at Member.
+  const needRank = course.series ? 3 : 1;
+  const fullAccess = memberRank >= needRank || hasPass;
   const freeKey = member?.free_lesson_key || null;
   // Free accounts: titles only — a previously-claimed free lesson stays open
   const lessonUnlocked = (i) => fullAccess || (freeKey === `${course.id}:${i}`);
@@ -480,6 +482,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
       }
       return;
     }
+    if (memberRank >= 1 && course.series) { onUpgrade && onUpgrade(); return; }
     const key = `${course.id}:${i}`;
     if (freeKey === key) return setActiveLesson(i);
     if (!freeKey && i === 0) {
@@ -818,7 +821,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
         </div>
         {!fullAccess && (
           <div style={{ marginTop: 28, background: "#0d0d0f", border: "1px solid #24242a", borderRadius: 14, padding: "20px 26px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
-            <div style={{ color: "#9a9ba2", fontSize: 14, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{freeKey ? "Your claimed free lesson stays open. Upgrade to unlock every course." : "Browse every course's full curriculum here — lessons open with a membership (from \$49.99/mo) or a course pass."}</div>
+            <div style={{ color: "#9a9ba2", fontSize: 14, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{memberRank >= 1 && course.series ? "This series is included with Premium and Owner. A single course pass opens just this one." : freeKey ? "Your claimed free lesson stays open. Upgrade to unlock every course." : "Browse every course's full curriculum here — lessons open with a membership (from \$49.99/mo) or a course pass."}</div>
             <button onClick={onUpgrade} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>View Plans →</button>
           </div>
         )}
@@ -1592,6 +1595,7 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
                       <span style={{ background: "#b9bec718", color: "#b9bec7", border: "1px solid #b9bec745", borderRadius: 4, padding: "3px 10px", fontSize: 10, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "1px" }}>{course.stage}</span>
                       <span style={{ color: "#7a7050", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{(course.lessons || []).length} modules · {course.duration}</span>
+                      <span style={{ marginLeft: "auto", background: "#b8010118", color: "#e08a8a", border: "1px solid #b8010140", borderRadius: 4, padding: "3px 9px", fontSize: 10, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "1.5px" }}>PREMIUM+</span>
                     </div>
                     <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(20px,2.2vw,26px)", color: "#f0e6c8", marginBottom: 10, lineHeight: 1.2 }}>{course.title}</h3>
                     <p style={{ fontSize: 13.5, color: "#9a9ba2", lineHeight: 1.75, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{course.description}</p>

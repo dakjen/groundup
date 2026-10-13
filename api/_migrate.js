@@ -270,16 +270,19 @@ const STATEMENTS = [
   // When each person last opened each channel / DM thread — drives the unread bubbles
   `CREATE TABLE IF NOT EXISTS thread_seen (user_id INTEGER NOT NULL, kind TEXT NOT NULL, ref_id INTEGER NOT NULL, seen_at TIMESTAMP DEFAULT NOW(), PRIMARY KEY (user_id, kind, ref_id))`,
   `ALTER TABLE channels ADD COLUMN IF NOT EXISTS team_only BOOLEAN DEFAULT FALSE`,
+  `ALTER TABLE channels ADD COLUMN IF NOT EXISTS teaser BOOLEAN DEFAULT FALSE`,
   `INSERT INTO channels (slug, name, description, min_tier, admin_only_post, position, team_only)
     VALUES ('team-room', 'Team Room', 'Private — just us. Members never see this channel.', 'Basic', FALSE, 9, TRUE)
     ON CONFLICT (slug) DO NOTHING`,
   `INSERT INTO channels (slug, name, description, min_tier, admin_only_post, position) VALUES
     ('announcements', 'Announcements', 'Official updates from Dr. Merritt and the GroundUp team.', 'Basic', TRUE, 0),
     ('general', 'General', 'Introduce yourself and talk shop with fellow members.', 'Basic', FALSE, 1),
-    ('financial-structuring', 'Financial Structuring', 'Capital stacks, LIHTC, gap funding, underwriting questions.', 'Premium', FALSE, 2),
+    ('financial-structuring', 'Financial Structuring', 'How to structure a deal and build the capital stack — debt, equity, tax credits, subsidy, and how the pieces fit.', 'Premium', FALSE, 2),
     ('jv-partnerships', 'JV & Partnerships', 'Find partners, structure splits, share opportunities.', 'Premium', FALSE, 3),
     ('opportunity-board', 'Opportunity Board', 'RFPs, funding windows, and deals worth chasing — posted by the team monthly. Reply in threads to discuss.', 'Premium', TRUE, 4),
     ('owner-lounge', 'Owner Lounge', 'Private channel for Owner members and advisory clients.', 'Elite', FALSE, 5),
+    ('financial-modeling', 'Financial Modeling', 'Questions about your pro forma — assumptions, operating expenses, debt sizing, the flow of funds, what the model is telling you.', 'Premium', FALSE, 4),
+    ('deal-room', 'Deal Room', 'Bring the deal you are actually working on. Site, numbers, structure, the problem in front of you — Dr. Merritt and the team weigh in here. Owner members and advisory clients only.', 'Elite', FALSE, 8),
     ('groundup', 'GroundUp', 'Feedback on the platform, subjects and content you want covered, channels you think we should add, and questions about how GroundUp works. The team reads everything here.', 'Basic', FALSE, 2)
     ON CONFLICT (slug) DO NOTHING`,
   `CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`,
