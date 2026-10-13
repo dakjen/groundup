@@ -7354,7 +7354,7 @@ export default function App() {
           for (const i of fresh.slice(0, 3)) {
             try {
               const n = new Notification(i.title, { body: i.body, tag: i.key, icon: "/icon-192.png" });
-              n.onclick = () => { window.focus(); if (i.page) { if (i.retainer) window.location.hash = `adv=${i.retainer}`; setActivePage(i.page); n.close(); return; } if (i.slug) window.location.hash = `ch=${encodeURIComponent(i.slug)}${i.thread ? `&t=${i.thread}` : ""}`; else if (i.key.startsWith("dm:")) window.location.hash = "dm"; setActivePage("community"); n.close(); };
+              n.onclick = () => { window.focus(); if (i.page) { setActivePage(i.page); if (i.retainer) window.location.hash = `adv=${i.retainer}&tab=messages`; n.close(); return; } if (i.slug) window.location.hash = `ch=${encodeURIComponent(i.slug)}${i.thread ? `&t=${i.thread}` : ""}`; else if (i.key.startsWith("dm:")) window.location.hash = "dm"; setActivePage("community"); n.close(); };
             } catch {}
           }
         }
@@ -7655,7 +7655,7 @@ export default function App() {
       {toasts.length > 0 && (
         <div style={{ position: "fixed", top: 76, right: 16, zIndex: 340, display: "flex", flexDirection: "column", gap: 8, width: "min(340px, calc(100vw - 32px))" }}>
           {toasts.map(t => (
-            <button key={t.id} onClick={() => { setToasts(x => x.filter(y => y.id !== t.id)); if (t.page) { if (t.retainer) window.location.hash = `adv=${t.retainer}`; setActivePage(t.page); return; } if (t.slug) window.location.hash = `ch=${encodeURIComponent(t.slug)}${t.thread ? `&t=${t.thread}` : ""}`; else if (t.key.startsWith("dm:")) window.location.hash = "dm"; setActivePage("community"); }}
+            <button key={t.id} onClick={() => { setToasts(x => x.filter(y => y.id !== t.id)); if (t.page) { setActivePage(t.page); if (t.retainer) window.location.hash = `adv=${t.retainer}&tab=messages`; return; } if (t.slug) window.location.hash = `ch=${encodeURIComponent(t.slug)}${t.thread ? `&t=${t.thread}` : ""}`; else if (t.key.startsWith("dm:")) window.location.hash = "dm"; setActivePage("community"); }}
               style={{ textAlign: "left", background: "#0d0404", border: "1px solid #b8010160", borderLeft: "3px solid #b80101", borderRadius: 10, padding: "10px 14px", cursor: "pointer", boxShadow: "0 10px 30px rgba(0,0,0,0.5)" }}>
               <div style={{ color: "#f5e8e8", fontSize: 12.5, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", marginBottom: 2 }}>{t.title}</div>
               <div style={{ color: "#c8a8a8", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{t.body}</div>
