@@ -18,6 +18,13 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
+      // One client's direct line (admin) — opening it marks it seen
+      if (admin && req.query.admin === '1' && req.query.thread) {
+        const rid = Number(req.query.thread) || 0;
+        const messages = await sql`SELECT * FROM retainer_messages WHERE retainer_id = ${rid} ORDER BY created_at ASC LIMIT 300`;
+        if (admin.uid) { try { await sql`INSERT INTO thread_seen (user_id, kind, ref_id, seen_at) VALUES (${admin.uid}, 'advisory', ${rid}, NOW()) ON CONFLICT (user_id, kind, ref_id) DO UPDATE SET seen_at = NOW()`; } catch {} }
+        return res.json({ messages });
+      }
       // Admin roster
       if (admin && req.query.admin === '1') {
         const rows = await sql`
@@ -30,8 +37,8 @@ export default async function handler(req, res) {
           try { r.projects = await sql`SELECT id, name, details, created_at, updated_at FROM projects WHERE user_id = ${r.user_id} ORDER BY created_at ASC`; } catch { r.projects = []; }
           r.log = await sql`SELECT * FROM retainer_hours WHERE retainer_id = ${r.id} ORDER BY logged_on DESC, id DESC LIMIT 60`;
           r.files = await sql`SELECT * FROM retainer_files WHERE retainer_id = ${r.id} ORDER BY created_at DESC`;
-          // The direct line is the client's DM thread in Community — unread count for the pending flag
-          try { const [d] = await sql`SELECT COUNT(*)::int AS n FROM dms d WHERE d.user_id = ${r.user_id} AND d.from_admin = FALSE AND d.created_at > COALESCE((SELECT MAX(seen_at) FROM thread_seen t WHERE t.kind = 'dm' AND t.ref_id = ${r.user_id}), '1970-01-01')`; r.dm_unread = d?.n || 0; } catch { r.dm_unread = 0; }
+          // The direct line is its own thread, separate from Community DMs. Unread = what the client wrote since this admin last opened the tab.
+          try { const [d] = await sql`SELECT COUNT(*)::int AS n FROM retainer_messages m WHERE m.retainer_id = ${r.id} AND m.from_admin = FALSE AND m.created_at > COALESCE((SELECT seen_at FROM thread_seen t WHERE t.user_id = ${admin.uid || 0} AND t.kind = 'advisory' AND t.ref_id = ${r.id}), '1970-01-01')`; r.unread = d?.n || 0; } catch { r.unread = 0; }
         }
         const mrr = rows.filter(r => r.status === 'active').reduce((a, r) => a + Number(r.monthly_amount), 0);
         const [callRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
@@ -64,6 +71,12 @@ export default async function handler(req, res) {
       r.used_this_month = await monthUsed(r.id);
       r.log = await sql`SELECT hours, note, logged_on FROM retainer_hours WHERE retainer_id = ${r.id} ORDER BY logged_on DESC LIMIT 12`;
       r.files = await sql`SELECT * FROM retainer_files WHERE retainer_id = ${r.id} ORDER BY created_at DESC`;
+      if (req.query.thread) {
+        // The client's direct line — opening it marks it seen
+        const messages = await sql`SELECT * FROM retainer_messages WHERE retainer_id = ${r.id} ORDER BY created_at ASC LIMIT 300`;
+        try { await sql`INSERT INTO thread_seen (user_id, kind, ref_id, seen_at) VALUES (${session.uid}, 'advisory', ${r.id}, NOW()) ON CONFLICT (user_id, kind, ref_id) DO UPDATE SET seen_at = NOW()`; } catch {}
+        return res.json({ retainer: r, messages });
+      }
       return res.json({ retainer: r });
     }
 
@@ -86,8 +99,8 @@ export default async function handler(req, res) {
       return res.json({ success: true });
     }
 
-    // Workspace documents — client or team, on their own retainer
-    if (action === 'add_file' || action === 'remove_file') {
+    // The direct line and workspace documents — client or team, on their own retainer
+    if (action === 'message' || action === 'add_file' || action === 'remove_file') {
       let rid = Number(req.body.retainer_id) || 0;
       if (!admin) {
         if (!session?.uid) return res.status(401).json({ error: 'Sign in required' });
@@ -96,6 +109,31 @@ export default async function handler(req, res) {
         rid = own.id;
       }
       if (!rid) return res.status(400).json({ error: 'retainer_id required' });
+
+      if (action === 'message') {
+        const body = String(req.body.body || '').trim().slice(0, 4000);
+        if (!body) return res.status(400).json({ error: 'Message required' });
+        const [m] = await sql`INSERT INTO retainer_messages (retainer_id, from_admin, body, created_at)
+          VALUES (${rid}, ${!!admin}, ${body}, NOW()) RETURNING *`;
+        // The sender has seen their own thread
+        const seenBy = admin ? admin.uid : session?.uid;
+        if (seenBy) { try { await sql`INSERT INTO thread_seen (user_id, kind, ref_id, seen_at) VALUES (${seenBy}, 'advisory', ${rid}, NOW()) ON CONFLICT (user_id, kind, ref_id) DO UPDATE SET seen_at = NOW()`; } catch {} }
+        const [r] = await sql`SELECT r.user_id, u.name, u.email FROM retainers r JOIN users u ON u.id = r.user_id WHERE r.id = ${rid}`;
+        if (admin && r) {
+          await sendEmail(r.email, 'Dr. Merritt replied in your advisory workspace',
+            `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New message in your workspace</h2>
+             <p style="color:#444444;font-size:14px;line-height:1.8;">Sign in and open your Advisory workspace to read it and reply.</p>`);
+        } else if (r) {
+          const [gina] = await sql`SELECT email FROM users WHERE badge = 'drmerritt' LIMIT 1`;
+          const to = [...new Set([process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net', gina?.email].filter(Boolean))];
+          for (const addr of to) await sendEmail(addr,
+            `Advisory client — ${r.name}`,
+            `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${r.name} wrote in their advisory workspace</h2>
+             <p style="color:#444444;font-size:14px;line-height:1.8;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;padding:14px 18px;">${body.slice(0, 500)}</p>
+             <p style="color:#7a5050;font-size:12px;line-height:1.7;">Reply from their tab on the Advisory Clients page — they're emailed when you do.</p>`);
+        }
+        return res.status(201).json(m);
+      }
 
       if (action === 'add_file') {
         const { title, url, kind } = req.body;

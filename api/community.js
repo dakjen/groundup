@@ -92,6 +92,7 @@ export default async function handler(req, res) {
       // the community was last opened; for the team, member DMs since the inbox was.
       let latest = [];
       let mentions = 0;
+      let advisoryUnread = 0;
       try {
         if (visibleIds.length) {
           const posts = await sql`
@@ -110,6 +111,29 @@ export default async function handler(req, res) {
             ORDER BY d.id DESC LIMIT 3`;
           latest = latest.concat(dms.map(d => ({ key: 'dm:' + d.id, title: `DM from ${d.author}`, body: String(d.body).slice(0, 140), at: d.created_at })));
         }
+        // The advisory direct line is its own thread (not a DM): the team hears
+        // about client messages, the client hears about Dr. Merritt's replies.
+        try {
+          if (user.role === 'admin') {
+            const adv = await sql`
+              SELECT m.id, m.retainer_id, m.body, m.created_at, u.name AS author FROM retainer_messages m
+              JOIN retainers r ON r.id = m.retainer_id JOIN users u ON u.id = r.user_id
+              LEFT JOIN thread_seen t ON t.user_id = ${user.id} AND t.kind = 'advisory' AND t.ref_id = m.retainer_id
+              WHERE m.from_admin = FALSE AND m.created_at > COALESCE(t.seen_at, ${new Date(0).toISOString()})
+              ORDER BY m.id DESC LIMIT 5`;
+            advisoryUnread = adv.length;
+            latest = latest.concat(adv.slice(0, 3).map(a => ({ key: 'advisory:' + a.id, title: `${a.author} — advisory`, body: String(a.body).slice(0, 140), at: a.created_at, page: 'admin-retainers', retainer: a.retainer_id })));
+          } else {
+            const adv = await sql`
+              SELECT m.id, m.retainer_id, m.body, m.created_at FROM retainer_messages m
+              JOIN retainers r ON r.id = m.retainer_id AND r.user_id = ${user.id} AND r.status = 'active'
+              LEFT JOIN thread_seen t ON t.user_id = ${user.id} AND t.kind = 'advisory' AND t.ref_id = m.retainer_id
+              WHERE m.from_admin = TRUE AND m.created_at > COALESCE(t.seen_at, ${new Date(0).toISOString()})
+              ORDER BY m.id DESC LIMIT 5`;
+            advisoryUnread = adv.length;
+            latest = latest.concat(adv.slice(0, 3).map(a => ({ key: 'advisory:' + a.id, title: 'Dr. Merritt in your advisory workspace', body: String(a.body).slice(0, 140), at: a.created_at, page: 'advisory' })));
+          }
+        } catch (e) { console.error('advisory unseen failed', e.message); }
         // Mentions: unseen until the person opens that channel
         const ment = await sql`
           SELECT mn.id, mn.channel_id, m.id AS message_id, m.parent_id, m.body, m.created_at, c.name AS channel, c.slug, u.name AS author FROM mentions mn
@@ -119,10 +143,10 @@ export default async function handler(req, res) {
           ORDER BY m.id DESC LIMIT 5`;
         mentions = ment.length;
         latest = latest.filter(l => !ment.some(x => l.key === 'post:' + x.id)).concat(ment.map(x => ({ key: 'mention:' + x.id, title: `${x.author || 'Someone'} tagged you in #${x.channel}`, body: String(x.body).slice(0, 140), at: x.created_at, channel_id: x.channel_id, slug: x.slug, thread: x.parent_id || x.message_id })));
-        if (mentionsOnly) latest = latest.filter(l => l.key.startsWith('mention:') || l.key.startsWith('dm:'));
+        if (mentionsOnly) latest = latest.filter(l => l.key.startsWith('mention:') || l.key.startsWith('dm:') || l.key.startsWith('advisory:'));
         latest.sort((x, y) => new Date(y.at) - new Date(x.at));
       } catch (e) { console.error('latest unseen failed', e.message); }
-      return res.json({ unread, dm_unread: dmRow.n, announcement, latest, mentions });
+      return res.json({ unread, dm_unread: dmRow.n, advisory_unread: advisoryUnread, announcement, latest, mentions });
     }
 
     // POST { action: 'mark_seen', what: 'community' | 'dm' | 'announcement', id? }
@@ -254,17 +278,12 @@ export default async function handler(req, res) {
     // GET ?resource=dm-threads — admin: list members who have DM threads
     if (req.method === 'GET' && req.query.resource === 'dm-threads') {
       if (!isAdminReq) return res.status(403).json({ error: 'Admins only' });
-      // Advisory clients (active retainer) are listed even before they have
-      // written, so the team's "Advisory clients" section is complete.
       const threads = await sql`
-        SELECT u.id, u.name, u.tier, u.deal_profile, MAX(d.created_at) AS last_at, COUNT(d.id)::int AS msg_count,
-          COUNT(d.id) FILTER (WHERE d.from_admin = FALSE AND d.created_at > COALESCE(t.seen_at, ${new Date(0).toISOString()}))::int AS unread,
-          EXISTS (SELECT 1 FROM retainers r WHERE r.user_id = u.id AND r.status = 'active') AS advisory
-        FROM users u
-        LEFT JOIN dms d ON d.user_id = u.id
+        SELECT u.id, u.name, u.tier, u.deal_profile, MAX(d.created_at) AS last_at, COUNT(*) AS msg_count,
+          COUNT(*) FILTER (WHERE d.from_admin = FALSE AND d.created_at > COALESCE(t.seen_at, ${new Date(0).toISOString()}))::int AS unread
+        FROM dms d JOIN users u ON u.id = d.user_id
         LEFT JOIN thread_seen t ON t.user_id = ${user.id} AND t.kind = 'dm' AND t.ref_id = u.id
-        WHERE d.id IS NOT NULL OR EXISTS (SELECT 1 FROM retainers r WHERE r.user_id = u.id AND r.status = 'active')
-        GROUP BY u.id, u.name, u.tier, u.deal_profile, t.seen_at ORDER BY last_at DESC NULLS LAST LIMIT 150`;
+        GROUP BY u.id, u.name, u.tier, u.deal_profile, t.seen_at ORDER BY last_at DESC LIMIT 100`;
       return res.json({ threads });
     }
 
@@ -309,13 +328,11 @@ export default async function handler(req, res) {
         try {
           const [gina] = await sql`SELECT email FROM users WHERE badge = 'drmerritt' LIMIT 1`;
           const to = [...new Set([process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net', gina?.email].filter(Boolean))];
-          const [adv] = await sql`SELECT 1 AS x FROM retainers WHERE user_id = ${user.id} AND status = 'active' LIMIT 1`;
-          const who = adv ? 'Advisory client' : user.tier;
-          const html = `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${adv ? 'Message from an advisory client' : 'New direct message'}</h2>
-             <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${user.name}</strong> (${user.email}, ${who}) wrote:</p>
+          const html = `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New direct message</h2>
+             <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${user.name}</strong> (${user.email}, ${user.tier}) sent a DM:</p>
              <p style="color:#444444;font-size:14px;line-height:1.8;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;padding:14px 18px;">${text.slice(0, 500)}</p>
              <p style="color:#7a5050;font-size:12px;line-height:1.7;">The promise is a reply within 2 business days (Mon–Fri). Reply from the admin Community tab.</p>`;
-          for (const addr of to) await sendEmail(addr, `${adv ? 'Advisory client' : 'DM from'} ${user.name}${adv ? '' : ` (${user.tier})`}`, html);
+          for (const addr of to) await sendEmail(addr, `DM from ${user.name} (${user.tier})`, html);
         } catch (e) { console.error('dm notify failed', e); }
       }
       return res.status(201).json({ message: msg });
