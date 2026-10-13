@@ -985,7 +985,7 @@ export default async function handler(req, res) {
       if (pass) {
         let coupon;
         try { coupon = (await stripe.coupons.retrieve('PASSJOIN15')).id; }
-        catch { coupon = (await stripe.coupons.create({ id: 'PASSJOIN15', percent_off: 15, duration: 'once', name: 'Course pass alum — 15% off your first year' })).id; }
+        catch { coupon = (await stripe.coupons.create({ id: 'PASSJOIN15', percent_off: 15, duration: 'once', name: 'Pass alum — 15% off first year' })).id; }
         params.discounts = [{ coupon }];
         discounted = true;
       }
