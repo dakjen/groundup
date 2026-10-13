@@ -1575,7 +1575,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
           {/* The team had no profile editor at all, so Dr. Merritt could not set
               a photo and her posts fell back to the generic GroundUp mark —
               on the channels where her presence matters most. */}
-          {(TIER_RANK[member.tier] >= 4 || member.retainer) && <DealProfileCard member={member} />}
+          {TIER_RANK[member.tier] >= 4 && !member.retainer && <DealProfileCard member={member} />}
           <ProfileCard member={member} />
           <NotificationsCard member={member} />
           <ChangePasswordCard />
@@ -1752,7 +1752,10 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
             )}
             <div style={{ background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "26px 30px" }}>
               {hasAdvisory ? (
-                <button style={btnRed} onClick={() => setActivePage("advisory")}>Open your advisory workspace →</button>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <button style={btnRed} onClick={() => setActivePage("advisory")}>Open your advisory workspace →</button>
+                  <button style={{ ...btnGhost, color: "var(--gu-text2)", borderColor: "var(--gu-border)" }} onClick={() => { window.location.hash = "dealroom"; setActivePage("advisory"); }}>Deal room →</button>
+                </div>
               ) : (<>
                 <ul style={{ listStyle: "none", padding: 0, margin: "0 0 20px" }}>
                   {["She takes in your whole project — pro forma, capital stack, site, timeline — and finds what you missed",
@@ -1776,7 +1779,6 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
           <section id="gu-account" style={{ scrollMarginTop: 96 }}>
             <h2 style={H}>Profile &amp; billing</h2>
             <p style={SUB}>How you appear in the community, your referral link, and your plan.</p>
-            {(TIER_RANK[member.tier] >= 4 || member.retainer) && <DealProfileCard member={member} />}
             <ProfileCard member={member} />
             <NotificationsCard member={member} />
             <MyDocuments member={member} />
@@ -3193,7 +3195,8 @@ export function RetainerPage({ member, setActivePage }) {
   const [meetingNote, setMeetingNote] = useState("");
   const [meetingMin, setMeetingMin] = useState(60);
   const [meetingLink, setMeetingLink] = useState(null);   // after the request: where to pick a time
-  const [view, setView] = useState("workspace");          // "workspace" | "dealroom"
+  const [view, setView] = useState(() => /dealroom/.test(window.location.hash) ? "dealroom" : "workspace");   // "workspace" | "dealroom"
+  useEffect(() => { const onHash = () => { if (/dealroom/.test(window.location.hash)) setView("dealroom"); }; window.addEventListener("hashchange", onHash); return () => window.removeEventListener("hashchange", onHash); }, []);
   const [rooms, setRooms] = useState(null);               // projects + files, for the deal room summary
   const loadRooms = () => api("/api/auth", { method: "POST", body: JSON.stringify({ action: "projects" }) }).then(setRooms).catch(() => {});
   useEffect(() => { if (data && data.status === "active") loadRooms(); }, [data?.id]);
@@ -3303,7 +3306,7 @@ export function RetainerPage({ member, setActivePage }) {
   if (view === "dealroom") return (
     <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(20px,5vw,60px) 70px" }}>
       <div style={{ maxWidth: 980, margin: "0 auto" }}>
-        <button onClick={() => { setView("workspace"); loadRooms(); }} style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 12.5, fontFamily: font, fontWeight: 700, padding: 0, marginBottom: 14 }}>← Back to your workspace</button>
+        <button onClick={() => { setView("workspace"); loadRooms(); if (/dealroom/.test(window.location.hash)) history.replaceState(null, "", window.location.pathname); }} style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 12.5, fontFamily: font, fontWeight: 700, padding: 0, marginBottom: 14 }}>← Back to your workspace</button>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Senior Advisor Retainer</div>
         <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4.5vw,42px)", color: "var(--gu-text)", marginBottom: 10 }}>Deal Room</h1>
         <p style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.8, maxWidth: 620, marginBottom: 28 }}>Your secure workspace for the confidential documents behind each project — organized by development phase, shared only with Dr. Merritt. Add a project, then drop its documents into the phase they belong to.</p>
