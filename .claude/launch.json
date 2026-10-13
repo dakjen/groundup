@@ -12,6 +12,17 @@
       ],
       "port": 3300,
       "autoPort": false
+    },
+    {
+      "name": "advisory-preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--port",
+        "5199",
+        "--strictPort"
+      ],
+      "port": 5199
     }
   ]
 }

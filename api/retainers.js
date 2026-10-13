@@ -36,6 +36,7 @@ export default async function handler(req, res) {
           try { r.deal_files = await sql`SELECT id, project_id, folder, title, url, kind, size, created_at FROM deal_files WHERE user_id = ${r.user_id} ORDER BY created_at DESC`; } catch { r.deal_files = []; }
           try { r.projects = await sql`SELECT id, name, details, created_at, updated_at FROM projects WHERE user_id = ${r.user_id} ORDER BY created_at ASC`; } catch { r.projects = []; }
           r.log = await sql`SELECT * FROM retainer_hours WHERE retainer_id = ${r.id} ORDER BY logged_on DESC, id DESC LIMIT 60`;
+          try { r.meetings = await sql`SELECT * FROM retainer_meetings WHERE retainer_id = ${r.id} AND status <> 'done' ORDER BY scheduled_at ASC NULLS LAST, created_at DESC LIMIT 10`; } catch { r.meetings = []; }
           r.files = await sql`SELECT * FROM retainer_files WHERE retainer_id = ${r.id} ORDER BY created_at DESC`;
           // The direct line is its own thread, separate from Community DMs. Unread = what the client wrote since this admin last opened the tab.
           try { const [d] = await sql`SELECT COUNT(*)::int AS n FROM retainer_messages m WHERE m.retainer_id = ${r.id} AND m.from_admin = FALSE AND m.created_at > COALESCE((SELECT seen_at FROM thread_seen t WHERE t.user_id = ${admin.uid || 0} AND t.kind = 'advisory' AND t.ref_id = ${r.id}), '1970-01-01')`; r.unread = d?.n || 0; } catch { r.unread = 0; }
@@ -71,6 +72,7 @@ export default async function handler(req, res) {
       r.used_this_month = await monthUsed(r.id);
       r.log = await sql`SELECT hours, note, logged_on FROM retainer_hours WHERE retainer_id = ${r.id} ORDER BY logged_on DESC LIMIT 12`;
       r.files = await sql`SELECT * FROM retainer_files WHERE retainer_id = ${r.id} ORDER BY created_at DESC`;
+      try { r.meetings = await sql`SELECT id, minutes, topic, status, scheduled_at, created_at FROM retainer_meetings WHERE retainer_id = ${r.id} AND status <> 'done' ORDER BY scheduled_at ASC NULLS LAST, created_at DESC LIMIT 10`; } catch { r.meetings = []; }
       if (req.query.thread) {
         // The client's direct line — opening it marks it seen
         const messages = await sql`SELECT * FROM retainer_messages WHERE retainer_id = ${r.id} ORDER BY created_at ASC LIMIT 300`;
@@ -98,10 +100,11 @@ export default async function handler(req, res) {
       // The meeting comes out of this month's hours and shows on the timesheet
       await sql`INSERT INTO retainer_hours (retainer_id, hours, note, logged_on, created_at)
         VALUES (${r.id}, ${hours}, ${('Meeting' + (note ? ' — ' + note.slice(0, 160) : '')).slice(0, 200)}, CURRENT_DATE, NOW())`;
+      try { await sql`INSERT INTO retainer_meetings (retainer_id, minutes, topic) VALUES (${r.id}, ${minutes}, ${note || null})`; } catch (e) { console.error('meeting row failed', e.message); }
       const [linkRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
       const link = linkRow?.value || '';
       const [gina] = await sql`SELECT email FROM users WHERE badge = 'drmerritt' LIMIT 1`;
-      const to = [...new Set([process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net', gina?.email].filter(Boolean))];
+      const to = gina?.email ? [gina.email] : [process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net'];
       for (const addr of to) await sendEmail(addr,
         `Meeting request — ${u.name} (${minutes} min)`,
         `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">An advisory client would like a meeting</h2>
@@ -223,6 +226,15 @@ export default async function handler(req, res) {
       await sql`INSERT INTO retainer_hours (retainer_id, hours, note, logged_on, created_at)
         VALUES (${Number(retainer_id)}, ${Number(hours)}, ${note || null}, ${logged_on || null} , NOW())`;
       return res.status(201).json({ success: true });
+    }
+
+    // When the meeting is on the calendar (or finished) — shows to the client as "next meeting"
+    if (action === 'meeting_update') {
+      const id = Number(req.body.id) || 0;
+      const status = ['requested', 'scheduled', 'done'].includes(req.body.status) ? req.body.status : null;
+      const when = req.body.scheduled_at ? new Date(req.body.scheduled_at) : null;
+      await sql`UPDATE retainer_meetings SET scheduled_at = COALESCE(${when && !isNaN(when) ? when.toISOString() : null}, scheduled_at), status = COALESCE(${status}, CASE WHEN ${!!(when && !isNaN(when))} THEN 'scheduled' ELSE status END) WHERE id = ${id}`;
+      return res.json({ success: true });
     }
 
     // Dr. Merritt's private notes on a client — never shown to the client.

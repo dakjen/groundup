@@ -3162,8 +3162,8 @@ export function DirectLine({ loadMsgs, sendMsg, isAdmin, title, subtitle, height
     catch (e2) { setErr(e2.message); setDraft(text); }
   };
   return (
-    <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, display: "flex", flexDirection: "column", height, position: "sticky", top: 90 }}>
-      <div style={{ padding: "18px 22px", borderBottom: "1px solid var(--gu-border2)" }}>
+    <div style={{ background: "#1a0b0e", border: "1px solid #4a1a1e", borderRadius: 16, display: "flex", flexDirection: "column", height, position: "sticky", top: 90 }}>
+      <div style={{ padding: "18px 22px", borderBottom: "1px solid #4a1a1e", background: "#22100f", borderRadius: "16px 16px 0 0" }}>
         <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15, fontFamily: font }}>{title}</div>
         <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font }}>{subtitle}</div>
       </div>
@@ -3171,17 +3171,17 @@ export function DirectLine({ loadMsgs, sendMsg, isAdmin, title, subtitle, height
         {msgs.length === 0 && <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, textAlign: "center", marginTop: 40 }}>{isAdmin ? "No messages yet." : "Start the conversation — what are you working on?"}</div>}
         {msgs.map(m => { const mine = m.from_admin === !!isAdmin; return (
           <div key={m.id} style={{ display: "flex", justifyContent: mine ? "flex-end" : "flex-start", marginBottom: 10 }}>
-            <div style={{ maxWidth: "85%", background: mine ? "#b80101" : "#1a0a0a", border: mine ? "none" : "1px solid #3a1515", borderRadius: mine ? "16px 16px 4px 16px" : "16px 16px 16px 4px", padding: "10px 14px" }}>
-              {!mine && <div style={{ color: "#e0a0a0", fontSize: 10.5, fontWeight: 800, fontFamily: font, letterSpacing: "1px", textTransform: "uppercase", marginBottom: 4 }}>{m.from_admin ? "Dr. Merritt" : (otherName || "Client")}</div>}
-              <div style={{ color: mine ? "#ffffff" : "#f0e0e0", fontSize: 13.5, fontFamily: font, lineHeight: 1.65, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.body}</div>
+            <div style={{ maxWidth: "85%", background: mine ? "#b80101" : "#2e1a1c", border: mine ? "none" : "1px solid #5a2a2e", borderRadius: mine ? "16px 16px 4px 16px" : "16px 16px 16px 4px", padding: "10px 14px" }}>
+              {!mine && <div style={{ color: "#f0a8a8", fontSize: 10.5, fontWeight: 800, fontFamily: font, letterSpacing: "1px", textTransform: "uppercase", marginBottom: 4 }}>{m.from_admin ? "Dr. Merritt" : (otherName || "Client")}</div>}
+              <div style={{ color: mine ? "#ffffff" : "#fbf1f1", fontSize: 13.5, fontFamily: font, lineHeight: 1.65, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.body}</div>
               <div style={{ color: mine ? "rgba(255,255,255,0.75)" : "#b08c8c", fontSize: 10, fontFamily: font, marginTop: 5, textAlign: "right" }}>{timeAgo(m.created_at)}</div>
             </div>
           </div>
         ); })}
       </div>
       {err && <div style={{ color: "#ff6b6b", fontSize: 12, fontFamily: font, padding: "0 18px 6px" }}>{err}</div>}
-      <form onSubmit={send} style={{ display: "flex", gap: 8, padding: "12px 14px 16px", borderTop: "1px solid var(--gu-border2)", alignItems: "flex-end" }}>
-        <GrowingInput style={{ ...inp, marginBottom: 0, flex: 1 }} value={draft} onChange={e => setDraft(e.target.value)} onSubmit={() => send()} placeholder={isAdmin ? `Reply to ${otherName || "client"}…` : "Message Dr. Merritt…"} maxLength={4000} />
+      <form onSubmit={send} style={{ display: "flex", gap: 8, padding: "12px 14px 16px", borderTop: "1px solid #4a1a1e", alignItems: "flex-end" }}>
+        <GrowingInput style={{ ...inp, marginBottom: 0, flex: 1, background: "#120608", border: "1px solid #4a1a1e" }} value={draft} onChange={e => setDraft(e.target.value)} onSubmit={() => send()} placeholder={isAdmin ? `Reply to ${otherName || "client"}…` : "Message Dr. Merritt…"} maxLength={4000} />
         <button type="submit" style={{ ...btnRed, padding: "12px 16px" }}>Send</button>
       </form>
     </div>
@@ -3359,6 +3359,17 @@ export function RetainerPage({ member, setActivePage }) {
                   </div>
                 </div>
               )}
+              {(data.meetings || []).length > 0 && (
+                <div style={{ marginTop: 18, background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 12, padding: "14px 16px" }}>
+                  <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>{data.meetings[0].scheduled_at ? "Next meeting" : "Meeting requested"}</div>
+                  {data.meetings.map(m => (
+                    <div key={m.id} style={{ padding: "6px 0", borderBottom: "1px solid var(--gu-border2)", fontFamily: font }}>
+                      <div style={{ color: "var(--gu-text2)", fontSize: 13.5, fontWeight: 700 }}>{m.scheduled_at ? new Date(m.scheduled_at).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "Time to be confirmed"} · {m.minutes} min</div>
+                      {m.topic && <div style={{ color: "var(--gu-body)", fontSize: 13, lineHeight: 1.6, marginTop: 2 }}>{m.topic}</div>}
+                    </div>
+                  ))}
+                </div>
+              )}
               {data.log?.length > 0 && (
                 <div style={{ marginTop: 20, borderTop: "1px solid var(--gu-border2)", paddingTop: 14 }}>
                   <div style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>Hours logged</div>
@@ -3411,19 +3422,19 @@ export function RetainerPage({ member, setActivePage }) {
 // client's projects and deal rooms, her private notes, and the direct line.
 export function AdvisoryAdminPage() {
   const [data, setData] = useState(null);
-  const [tab, setTab] = useState(null);
+  const [sel, setSel] = useState("dashboard");      // "dashboard" | retainer id
+  const [sub, setSub] = useState("room");           // client page: room | messages | time | docs | notes
   const [notes, setNotes] = useState({});
   const [logForm, setLogForm] = useState({});
   const [docForm, setDocForm] = useState({});
   const [openProject, setOpenProject] = useState({});
-  const [sections, setSections] = useState({});   // collapsed-by-default extras, per client
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
   const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 6000); };
   const load = () => api("/api/retainers?admin=1").then(d => { setData(d); const n = {}; for (const r of d.retainers || []) n[r.id] = r.private_notes || ""; setNotes(prev => ({ ...n, ...prev })); }).catch(e => setMsg({ ok: false, text: e.message }));
   useEffect(() => { load(); return pollVisible(load, 30000); }, []);
-  useEffect(() => { if (data && tab === null) { const want = Number((window.location.hash.match(/adv=(\d+)/) || [])[1]); const first = (data.retainers || []).find(r => r.id === want) || (data.retainers || []).find(r => r.status === "active") || (data.retainers || [])[0]; if (first) setTab(first.id); } }, [data, tab]);
-  useEffect(() => { const onHash = () => { const want = Number((window.location.hash.match(/adv=(\d+)/) || [])[1]); if (want) setTab(want); }; window.addEventListener("hashchange", onHash); return () => window.removeEventListener("hashchange", onHash); }, []);
+  // #adv=<id> (from a pop-up) opens that client on Messages
+  useEffect(() => { const onHash = () => { const want = Number((window.location.hash.match(/adv=(\d+)/) || [])[1]); if (want) { setSel(want); setSub("messages"); } }; onHash(); window.addEventListener("hashchange", onHash); return () => window.removeEventListener("hashchange", onHash); }, []);
   const act = async (fn, ok) => { try { await fn(); if (ok) flash(true, ok); await load(); } catch (e) { flash(false, e.message); } };
   const post = (body) => api("/api/retainers", { method: "POST", body: JSON.stringify(body) });
   const money = (n) => "$" + Number(n || 0).toLocaleString();
@@ -3444,7 +3455,9 @@ export function AdvisoryAdminPage() {
   const logHours = (r) => { const f = logForm[r.id] || {}; if (!f.hours) return flash(false, "Enter the hours."); act(() => post({ action: "log_hours", retainer_id: r.id, hours: f.hours, note: f.note, logged_on: f.date || undefined }).then(() => setLogForm({ ...logForm, [r.id]: {} })), "Logged to the timesheet."); };
 
   const retainers = data?.retainers || [];
-  const r = retainers.find(x => x.id === tab);
+  const active = retainers.filter(x => x.status === "active");
+  const r = retainers.find(x => x.id === sel);
+  const open = (id, tab = "room") => { setSel(id); setSub(tab); window.scrollTo({ top: 0 }); };
   const docRow = (f, removable, rid) => (
     <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid var(--gu-border2)" }}>
       <FileTextIcon />
@@ -3462,170 +3475,227 @@ export function AdvisoryAdminPage() {
       <button onClick={() => addLink(rr, kind)} style={ghost}>Add link</button>
     </div>
   );
-  // Collapsible extras under the main work area
-  const section = (rr, key, label, summary, body) => {
-    const k = rr.id + ":" + key; const isOpen = !!sections[k];
+  const sideBtn = (on, onClick, label, sublabel, badge) => (
+    <button onClick={onClick} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", background: on ? "#b80101" : "transparent", border: "none", borderRadius: 8, padding: "10px 12px", cursor: "pointer", marginBottom: 2 }}>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: "block", color: on ? "#fff" : "var(--gu-text2)", fontWeight: 800, fontSize: 13.5, fontFamily: font, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
+        {sublabel && <span style={{ display: "block", color: on ? "rgba(255,255,255,0.75)" : "var(--gu-muted)", fontSize: 11, fontFamily: font }}>{sublabel}</span>}
+      </span>
+      {badge > 0 && <span style={{ background: on ? "#fff" : "#b80101", color: on ? "#b80101" : "#fff", borderRadius: 99, fontSize: 10.5, fontWeight: 800, fontFamily: font, padding: "1px 7px", flexShrink: 0 }}>{badge}</span>}
+    </button>
+  );
+  const stat = (label, value, sublabel) => (
+    <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "20px 22px" }}>
+      <div style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>{label}</div>
+      <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 36, color: "var(--gu-text)", lineHeight: 1 }}>{value}</div>
+      {sublabel && <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginTop: 8 }}>{sublabel}</div>}
+    </div>
+  );
+
+  // ── Dashboard: the numbers, what needs her, and the roster at a glance
+  const dashboard = () => {
+    const hoursUsed = active.reduce((a, x) => a + Number(x.used_this_month || 0), 0);
+    const hoursTotal = active.reduce((a, x) => a + Number(x.hours_per_month || 0), 0);
+    const unread = retainers.reduce((a, x) => a + Number(x.unread || 0), 0);
+    const waiting = (data.bookings || []).filter(b => b.status === "awaiting_booking");
+    const offered = retainers.filter(x => x.status === "offered");
+    const needs = [];
+    for (const x of retainers) if (x.unread > 0) needs.push({ text: `${x.name} wrote in the direct line (${x.unread} unread)`, go: () => open(x.id, "messages") });
+    for (const x of offered) needs.push({ text: `${x.name} was invited and hasn't chosen a block yet`, go: () => open(x.id, "docs") });
+    for (const x of retainers) for (const m of (x.meetings || [])) needs.push({ text: m.scheduled_at ? `Meeting with ${x.name} ${new Date(m.scheduled_at).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} (${m.minutes} min)${m.topic ? ` — ${m.topic.slice(0, 80)}` : ""}` : `${x.name} asked for a ${m.minutes}-minute meeting${m.topic ? ` — ${m.topic.slice(0, 80)}` : ""} (not on the calendar yet)`, go: () => open(x.id) });
+    for (const b of waiting) needs.push({ text: `${b.name} paid the ${b.label} and hasn't booked the call`, go: null });
+    for (const x of active) { const pct = Number(x.used_this_month || 0) / Math.max(1, Number(x.hours_per_month)); if (pct >= 0.9) needs.push({ text: `${x.name} has used ${Math.round(pct * 100)}% of this month's hours`, go: () => open(x.id, "time") }); }
     return (
-      <div style={{ ...card, padding: 0, overflow: "hidden" }}>
-        <button onClick={() => setSections({ ...sections, [k]: !isOpen })} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, background: "transparent", border: "none", padding: "16px 22px", cursor: "pointer", textAlign: "left" }}>
-          <span style={{ color: "var(--gu-muted)", fontSize: 11, width: 12, display: "inline-block", transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .15s" }}>▶</span>
-          <span style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 14, fontFamily: font }}>{label}</span>
-          <span style={{ marginLeft: "auto", color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, textAlign: "right" }}>{summary}</span>
-        </button>
-        {isOpen && <div style={{ padding: "0 22px 22px" }}>{body}</div>}
+      <div>
+        <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(28px,4vw,38px)", color: "var(--gu-text)", margin: "0 0 18px" }}>Advisory</h1>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 18 }}>
+          {stat("Monthly revenue", money(data.mrr), `${active.length} active retainer${active.length === 1 ? "" : "s"}`)}
+          {stat("Hours this month", `${hoursUsed.toFixed(1)}`, `of ${hoursTotal} across clients`)}
+          {stat("Unread messages", unread, unread ? "in the direct lines" : "all caught up")}
+          {stat("Waiting to book", waiting.length, waiting.length ? "paid intake, no call yet" : "everyone's booked")}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16, alignItems: "start" }}>
+          <div style={card}>
+            {eyebrow("Needs you")}
+            {needs.length === 0 ? <div style={{ color: "var(--gu-muted)", fontSize: 13.5, fontFamily: font }}>Nothing waiting on you right now.</div> : needs.map((n, i) => (
+              <div key={i} style={{ display: "flex", gap: 10, alignItems: "center", padding: "9px 0", borderBottom: "1px solid var(--gu-border2)" }}>
+                <span style={{ width: 7, height: 7, borderRadius: 4, background: "#b80101", flexShrink: 0 }} />
+                <span style={{ color: "var(--gu-text2)", fontSize: 13.5, fontFamily: font, flex: 1 }}>{n.text}</span>
+                {n.go && <button onClick={n.go} style={{ background: "none", border: "none", color: "#e08a8a", cursor: "pointer", fontSize: 12.5, fontFamily: font, fontWeight: 800 }}>Open →</button>}
+              </div>
+            ))}
+          </div>
+          <div style={card}>
+            {eyebrow("Clients")}
+            {retainers.map(x => { const used = Number(x.used_this_month || 0), total = Number(x.hours_per_month || 0); const pct = Math.min(100, Math.round(used / Math.max(1, total) * 100)); return (
+              <button key={x.id} onClick={() => open(x.id)} style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", padding: "10px 0", borderBottom: "1px solid var(--gu-border2)", cursor: "pointer" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline" }}>
+                  <span style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 14, fontFamily: font }}>{x.name}</span>
+                  <span style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font }}>{x.status === "active" ? `${used.toFixed(1)} of ${total} hrs · ${money(x.monthly_amount)}/mo` : x.status}</span>
+                </div>
+                {x.status === "active" && <div style={{ height: 6, background: "var(--gu-card2)", borderRadius: 99, overflow: "hidden", marginTop: 8 }}><div style={{ width: `${pct}%`, height: "100%", background: "#b80101", borderRadius: 99 }} /></div>}
+                {(x.projects || []).length > 0 && <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font, marginTop: 6 }}>{x.projects.map(p => p.name).join(" · ")}</div>}
+              </button>
+            ); })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ── One client: deal room, messages, timesheet, documents, notes
+  const client = () => {
+    const used = Number(r.used_this_month || 0); const total = Number(r.hours_per_month || 0); const pct = Math.min(100, Math.round(used / Math.max(1, total) * 100));
+    const engagement = (r.files || []).filter(f => f.kind === "engagement"); const shared = (r.files || []).filter(f => f.kind !== "engagement");
+    const projects = r.projects || []; const theirs = r.deal_files || [];
+    const usedBytes = theirs.reduce((a, f) => a + Number(f.size || 0), 0);
+    const curProj = openProject[r.id] ?? (projects[0] && projects[0].id);
+    const proj = projects.find(p => p.id === curProj);
+    const TABS = [["room", "Deal room"], ["messages", "Messages", r.unread], ["time", "Timesheet"], ["docs", "Documents"], ["notes", "Notes"]];
+    return (
+      <div style={{ minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap", marginBottom: 6 }}>
+          <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(28px,4vw,38px)", color: "var(--gu-text)", margin: 0 }}>{r.name}</h1>
+          <span style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>{r.email} · {r.hours_per_month} hrs/mo · {money(r.monthly_amount)}/mo · {used.toFixed(1)} hrs used this month</span>
+        </div>
+        {(r.meetings || []).length > 0 && (
+          <div style={{ background: "var(--gu-red-tint)", border: "1px solid #b8010160", borderRadius: 12, padding: "12px 16px", marginTop: 12 }}>
+            {r.meetings.map(m => (
+              <div key={m.id} style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", padding: "4px 0", fontFamily: font }}>
+                <span style={{ fontSize: 9, color: "#e08a8a", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase" }}>{m.scheduled_at ? "Next meeting" : "Meeting requested"}</span>
+                <span style={{ color: "var(--gu-text2)", fontSize: 13.5, fontWeight: 700 }}>{m.scheduled_at ? new Date(m.scheduled_at).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "not on the calendar yet"} · {m.minutes} min</span>
+                {m.topic && <span style={{ color: "var(--gu-body)", fontSize: 13, flex: "1 1 240px" }}>{m.topic}</span>}
+                <input type="datetime-local" defaultValue={m.scheduled_at ? new Date(new Date(m.scheduled_at).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""} onChange={e => e.target.value && act(() => post({ action: "meeting_update", id: m.id, scheduled_at: new Date(e.target.value).toISOString() }), "Meeting time saved — the client sees it.")} style={{ ...inp, marginBottom: 0, width: "auto", padding: "7px 10px", fontSize: 12.5 }} />
+                <button onClick={() => act(() => post({ action: "meeting_update", id: m.id, status: "done" }))} style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 12, fontFamily: font, fontWeight: 700 }}>Done</button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 4, borderBottom: "1px solid var(--gu-border)", margin: "14px 0 22px", flexWrap: "wrap" }}>
+          {TABS.map(([k, label, badge]) => (
+            <button key={k} onClick={() => setSub(k)} style={{ background: "transparent", border: "none", borderBottom: "2px solid " + (sub === k ? "#b80101" : "transparent"), marginBottom: -1, color: sub === k ? "var(--gu-text)" : "var(--gu-muted)", padding: "10px 14px", fontFamily: font, fontWeight: 800, fontSize: 13.5, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+              {label}{badge > 0 && <span style={{ background: "#b80101", color: "#fff", borderRadius: 99, fontSize: 10.5, fontWeight: 800, padding: "1px 7px" }}>{badge}</span>}
+            </button>
+          ))}
+        </div>
+
+        {sub === "room" && (
+          <div style={card}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
+              {eyebrow("Deal room")}
+              <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font }}>{fmtBytes(usedBytes)} of 50 GB used</div>
+            </div>
+            {projects.length === 0 ? <div style={{ color: "var(--gu-muted)", fontSize: 13.5, fontFamily: font }}>They haven't added a project yet — the deal room fills in as they do.</div> : (<>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
+                {projects.map(p => { const on = p.id === curProj; const n = theirs.filter(f => f.project_id === p.id).length; return (
+                  <button key={p.id} onClick={() => setOpenProject({ ...openProject, [r.id]: p.id })} style={{ background: on ? "#b80101" : "var(--gu-card2)", color: on ? "#fff" : "var(--gu-text2)", border: "1px solid " + (on ? "#b80101" : "var(--gu-border)"), borderRadius: 999, padding: "9px 16px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>{p.name}{n ? <span style={{ opacity: 0.75, fontWeight: 600 }}> · {n} doc{n === 1 ? "" : "s"}</span> : null}</button>
+                ); })}
+              </div>
+              {proj && (() => { const dp = proj.details || {}; const rows = [["Site control", dp.site_control], ["Financing path", dp.financing_path], ["Committed", dp.sources_committed], ["Still needed", dp.sources_missing], ["Timeline", dp.timeline], ["Team", dp.team], ["In the way", dp.blocker], ["Wants from you", dp.wants]].filter(x => x[1]); return (
+                <div>
+                  <div style={{ background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 14, padding: "18px 20px", marginBottom: 18 }}>
+                    <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 22, color: "var(--gu-text)" }}>{proj.name}</div>
+                    {dealSummary(dp) && <div style={{ color: "var(--gu-body)", fontSize: 13.5, fontFamily: font, marginTop: 4 }}>{dealSummary(dp)}</div>}
+                    {rows.length > 0 && <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "8px 20px", marginTop: 12 }}>
+                      {rows.map(([k, v]) => <div key={k} style={{ fontSize: 13, fontFamily: font, lineHeight: 1.6 }}><span style={{ color: "var(--gu-muted)" }}>{k}:</span> <span style={{ color: "var(--gu-text2)" }}>{v}</span></div>)}
+                    </div>}
+                    {!dealSummary(dp) && rows.length === 0 && <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, marginTop: 4 }}>No details filled in yet.</div>}
+                  </div>
+                  <DataRoom compact project={proj} files={theirs.filter(f => f.project_id === proj.id)} used={usedBytes} quota={50 * 1024 ** 3} onChange={load} flash={flash} />
+                </div>
+              ); })()}
+            </>)}
+          </div>
+        )}
+
+        {sub === "messages" && (
+          <DirectLine key={r.id} isAdmin otherName={firstName(r.name)} title="Direct line" subtitle={`${r.name} — only you see this`} height="min(72vh, 680px)"
+            loadMsgs={() => api(`/api/retainers?admin=1&thread=${r.id}`).then(d => d.messages)}
+            sendMsg={(text) => api("/api/retainers", { method: "POST", body: JSON.stringify({ action: "message", retainer_id: r.id, body: text }) })}
+            onLoaded={() => setData(d => d ? { ...d, retainers: d.retainers.map(x => x.id === r.id ? { ...x, unread: 0 } : x) } : d)} />
+        )}
+
+        {sub === "time" && (
+          <div style={card}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
+              {eyebrow("Timesheet · this month")}
+              <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>{money(r.monthly_amount)}/mo · {total} hrs</div>
+            </div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 12 }}>
+              <span style={{ fontFamily: serif, fontWeight: 700, fontSize: 44, color: "var(--gu-text)", lineHeight: 1 }}>{used.toFixed(1)}</span>
+              <span style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font }}>of {total} hours used · {Math.max(0, total - used).toFixed(1)} left</span>
+            </div>
+            <div style={{ height: 10, background: "var(--gu-card2)", borderRadius: 99, overflow: "hidden", marginBottom: 18 }}><div style={{ width: `${pct}%`, height: "100%", background: "#b80101", borderRadius: 99 }} /></div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              <input type="number" step="0.25" min="0" placeholder="Hours" value={(logForm[r.id] || {}).hours || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), hours: e.target.value } })} style={{ ...inp, marginBottom: 0, width: 90, padding: "9px 11px", fontSize: 13 }} />
+              <input type="date" value={(logForm[r.id] || {}).date || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), date: e.target.value } })} style={{ ...inp, marginBottom: 0, width: 150, padding: "9px 11px", fontSize: 13 }} />
+              <input placeholder="What you worked on" value={(logForm[r.id] || {}).note || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), note: e.target.value } })} style={{ ...inp, marginBottom: 0, flex: "1 1 180px", padding: "9px 11px", fontSize: 13 }} />
+              <button onClick={() => logHours(r)} style={btnRed}>Log hours</button>
+            </div>
+            <div style={{ marginTop: 18, borderTop: "1px solid var(--gu-border2)", paddingTop: 10 }}>
+              {(r.log || []).length === 0 && <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>Nothing logged yet.</div>}
+              {(r.log || []).map(l => (
+                <div key={l.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "7px 0", borderBottom: "1px solid var(--gu-border2)" }}>
+                  <span style={{ color: "var(--gu-body)", fontSize: 13.5, fontFamily: font }}>{l.note || "Advisory time"}</span>
+                  <span style={{ color: "var(--gu-text2)", fontSize: 13.5, fontFamily: font, fontWeight: 700, whiteSpace: "nowrap" }}>{Number(l.hours)} hrs · {new Date(l.logged_on || l.created_at).toLocaleDateString()}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {sub === "docs" && (<>
+          <div style={{ ...card, background: "linear-gradient(135deg, #111114, var(--gu-card))", border: "1px solid #b9bec740" }}>
+            {eyebrow("Engagement documents", "#b9bec7")}
+            <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, margin: "0 0 10px" }}>The agreement, the scope, anything formalized. Both sides see these.</p>
+            {engagement.length ? engagement.map(f => docRow(f, true, r.id)) : <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>None yet.</div>}
+            {addDocs(r, "engagement")}
+          </div>
+          <div style={card}>
+            {eyebrow("Sent to the client")}
+            <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, margin: "0 0 10px" }}>What you give back — a model you built, a marked-up term sheet, a memo. It shows in their workspace.</p>
+            {shared.length ? shared.map(f => docRow(f, true, r.id)) : <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>Nothing yet.</div>}
+            {addDocs(r, "link")}
+          </div>
+          <div style={card}>
+            {eyebrow("The engagement")}
+            <div style={{ color: "var(--gu-body)", fontSize: 13.5, fontFamily: font, marginBottom: 12 }}>{r.status} · since {new Date(r.started_at || r.created_at).toLocaleDateString(undefined, { month: "short", year: "numeric" })}{r.notes ? ` · ${r.notes}` : ""}</div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {r.status !== "active" && <button onClick={() => act(() => post({ action: "update", id: r.id, status: "active" }), "Active — and an Owner.")} style={ghost}>Mark active</button>}
+              {r.status === "active" && <button onClick={() => act(() => post({ action: "update", id: r.id, status: "paused" }), "Paused.")} style={ghost}>Pause</button>}
+              <button onClick={() => { if (window.confirm(`End ${r.name}'s retainer?`)) act(() => post({ action: "update", id: r.id, status: "ended" }), "Ended."); }} style={{ ...ghost, color: "#e08a8a" }}>End</button>
+            </div>
+          </div>
+        </>)}
+
+        {sub === "notes" && (
+          <div style={card}>
+            {eyebrow("Private notes · yours only")}
+            <textarea value={notes[r.id] ?? ""} onChange={e => setNotes({ ...notes, [r.id]: e.target.value })} rows={10} placeholder="What you think, what you're watching, what to raise next time. The client never sees this." style={{ ...inp, resize: "vertical", marginBottom: 10 }} />
+            <button onClick={() => act(() => post({ action: "private_notes", id: r.id, notes: notes[r.id] || "" }), "Notes saved.")} style={btnRed}>Save notes</button>
+          </div>
+        )}
       </div>
     );
   };
 
   return (
     <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "100px clamp(16px,3vw,40px) 70px" }}>
-      <div style={{ maxWidth: 1360, margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 16, flexWrap: "wrap", marginBottom: 18 }}>
-          <div>
-            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>Senior Advisor Retainer</div>
-            <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(28px,4vw,38px)", color: "var(--gu-text)", margin: 0 }}>Advisory Clients</h1>
-          </div>
-          {data && <span style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>{retainers.filter(x => x.status === "active").length} active · {money(data.mrr)}/mo</span>}
-          {msg && <span style={{ marginLeft: "auto", color: msg.ok ? "#22c55e" : "#ff6b6b", fontSize: 13, fontFamily: font }}>{msg.text}</span>}
-        </div>
-
-        {!data ? <div style={{ color: "var(--gu-muted)", fontFamily: font }}>Loading…</div> : retainers.length === 0 ? (
-          <div style={card}><div style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.7 }}>No advisory clients yet. Clients are added from Intake &amp; Bookings — invite someone after their intake call, and they appear here the moment they're set.</div></div>
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "240px minmax(0,1fr)", gap: 18, alignItems: "start" }} className="adv-grid">
-            {/* Client list */}
+      <div style={{ maxWidth: 1320, margin: "0 auto" }}>
+        {msg && <div style={{ color: msg.ok ? "#22c55e" : "#ff6b6b", fontSize: 13, fontFamily: font, marginBottom: 12 }}>{msg.text}</div>}
+        {!data ? <div style={{ color: "var(--gu-muted)", fontFamily: font }}>Loading…</div> : (
+          <div style={{ display: "grid", gridTemplateColumns: "230px minmax(0,1fr)", gap: 22, alignItems: "start" }} className="adv-grid">
             <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: 10, position: "sticky", top: 90 }}>
-              <div style={{ fontSize: 9.5, color: "var(--gu-muted)", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "8px 12px 10px" }}>Clients</div>
-              {retainers.map(x => { const on = tab === x.id; return (
-                <button key={x.id} onClick={() => setTab(x.id)} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", background: on ? "#b80101" : "transparent", border: "none", borderRadius: 8, padding: "10px 12px", cursor: "pointer", marginBottom: 2 }}>
-                  <span style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ display: "block", color: on ? "#fff" : "var(--gu-text2)", fontWeight: 800, fontSize: 13.5, fontFamily: font, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{x.name}</span>
-                    <span style={{ display: "block", color: on ? "rgba(255,255,255,0.75)" : "var(--gu-muted)", fontSize: 11, fontFamily: font }}>{x.status === "active" ? `${x.hours_per_month} hrs/mo` : x.status}</span>
-                  </span>
-                  {x.unread > 0 && <span style={{ background: on ? "#fff" : "#b80101", color: on ? "#b80101" : "#fff", borderRadius: 99, fontSize: 10.5, fontWeight: 800, fontFamily: font, padding: "1px 7px", flexShrink: 0 }}>{x.unread}</span>}
-                </button>
-              ); })}
+              {sideBtn(sel === "dashboard", () => { setSel("dashboard"); window.scrollTo({ top: 0 }); }, "Dashboard", null, 0)}
+              <div style={{ fontSize: 9.5, color: "var(--gu-muted)", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "16px 12px 8px" }}>Clients</div>
+              {retainers.length === 0 && <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, padding: "0 12px 8px" }}>None yet — add them from Intake &amp; Bookings.</div>}
+              {retainers.map(x => sideBtn(sel === x.id, () => open(x.id), x.name, x.status === "active" ? `${x.hours_per_month} hrs/mo` : x.status, x.unread))}
             </div>
-
-            {/* The client */}
-            {r && (() => {
-              const used = Number(r.used_this_month || 0); const total = Number(r.hours_per_month || 0); const pct = Math.min(100, Math.round(used / Math.max(1, total) * 100));
-              const engagement = (r.files || []).filter(f => f.kind === "engagement"); const shared = (r.files || []).filter(f => f.kind !== "engagement");
-              const projects = r.projects || []; const theirs = r.deal_files || [];
-              const usedBytes = theirs.reduce((a, f) => a + Number(f.size || 0), 0);
-              const pending = [];
-              for (const b of (data.bookings || []).filter(b => b.user_id === r.user_id && b.status === "awaiting_booking")) pending.push(`${b.label} paid ${new Date(b.created_at).toLocaleDateString()} — call not booked`);
-              if (r.status === "offered") pending.push("Invited — hasn't chosen a block yet");
-              const curProj = openProject[r.id] ?? (projects[0] && projects[0].id);
-              const proj = projects.find(p => p.id === curProj);
-              return (
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap", marginBottom: 14 }}>
-                    <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "var(--gu-text)", lineHeight: 1.1 }}>{r.name}</div>
-                    <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>{r.email} · {r.hours_per_month} hrs/mo · {money(r.monthly_amount)}/mo · {used.toFixed(1)} hrs used this month</div>
-                    {pending.map((p, i) => <span key={i} style={{ background: "var(--gu-red-tint)", border: "1px solid #b8010160", borderRadius: 999, color: "var(--gu-text2)", fontSize: 11.5, fontFamily: font, fontWeight: 700, padding: "4px 10px" }}>{p}</span>)}
-                  </div>
-
-                  {/* The work: deal room on the left, the talking space on the right */}
-                  <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(300px,380px)", gap: 16, alignItems: "start", marginBottom: 16 }} className="ret-grid">
-                    <div style={card}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
-                        {eyebrow("Deal room")}
-                        <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font }}>{fmtBytes(usedBytes)} of 50 GB used</div>
-                      </div>
-                      {projects.length === 0 ? <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>They haven't added a project yet — the deal room fills in as they do.</div> : (<>
-                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
-                          {projects.map(p => { const on = p.id === curProj; const n = theirs.filter(f => f.project_id === p.id).length; return (
-                            <button key={p.id} onClick={() => setOpenProject({ ...openProject, [r.id]: p.id })} style={{ background: on ? "#b80101" : "var(--gu-card2)", color: on ? "#fff" : "var(--gu-text2)", border: "1px solid " + (on ? "#b80101" : "var(--gu-border)"), borderRadius: 999, padding: "9px 16px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>{p.name}{n ? <span style={{ opacity: 0.75, fontWeight: 600 }}> · {n} doc{n === 1 ? "" : "s"}</span> : null}</button>
-                          ); })}
-                        </div>
-                        {proj && (() => { const dp = proj.details || {}; const k = r.id + ":details:" + proj.id; const open = !!sections[k]; return (
-                          <div>
-                            <button onClick={() => setSections({ ...sections, [k]: !open })} style={{ display: "flex", alignItems: "center", gap: 10, background: "transparent", border: "none", padding: "0 0 10px", cursor: "pointer", textAlign: "left", width: "100%" }}>
-                              <span style={{ color: "var(--gu-muted)", fontSize: 11, width: 12, display: "inline-block", transform: open ? "rotate(90deg)" : "none" }}>▶</span>
-                              <span style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 13.5, fontFamily: font }}>Project details</span>
-                              <span style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dealSummary(dp)}</span>
-                            </button>
-                            {open && (
-                              <div style={{ color: "var(--gu-body)", fontSize: 13.5, fontFamily: font, lineHeight: 1.7, padding: "0 0 14px 22px" }}>
-                                {dp.site_control && <div><span style={{ color: "var(--gu-muted)" }}>Site control:</span> {dp.site_control}</div>}
-                                {dp.sources_committed && <div><span style={{ color: "var(--gu-muted)" }}>Committed:</span> {dp.sources_committed}</div>}
-                                {dp.sources_missing && <div><span style={{ color: "var(--gu-muted)" }}>Still needed:</span> {dp.sources_missing}</div>}
-                                {dp.timeline && <div><span style={{ color: "var(--gu-muted)" }}>Timeline:</span> {dp.timeline}</div>}
-                                {dp.team && <div><span style={{ color: "var(--gu-muted)" }}>Team:</span> {dp.team}</div>}
-                                {dp.blocker && <div><span style={{ color: "var(--gu-muted)" }}>In the way:</span> {dp.blocker}</div>}
-                                {dp.wants && <div><span style={{ color: "var(--gu-muted)" }}>Wants from you:</span> {dp.wants}</div>}
-                                {!dealSummary(dp) && !dp.blocker && !dp.wants && <div style={{ color: "var(--gu-muted)" }}>No details filled in yet.</div>}
-                                {proj.updated_at && <div style={{ color: "var(--gu-muted)", fontSize: 12, marginTop: 4 }}>Updated {new Date(proj.updated_at).toLocaleDateString()}</div>}
-                              </div>
-                            )}
-                            <DataRoom compact project={proj} files={theirs.filter(f => f.project_id === proj.id)} used={usedBytes} quota={50 * 1024 ** 3} onChange={load} flash={flash} />
-                          </div>
-                        ); })()}
-                      </>)}
-                    </div>
-                    <DirectLine key={r.id} isAdmin otherName={firstName(r.name)} title="Direct line" subtitle={`${r.name} — private to this engagement`}
-                      loadMsgs={() => api(`/api/retainers?admin=1&thread=${r.id}`).then(d => d.messages)}
-                      sendMsg={(text) => api("/api/retainers", { method: "POST", body: JSON.stringify({ action: "message", retainer_id: r.id, body: text }) })}
-                      onLoaded={() => setData(d => d ? { ...d, retainers: d.retainers.map(x => x.id === r.id ? { ...x, unread: 0 } : x) } : d)} />
-                  </div>
-
-                  {/* Underneath: the timesheet, the paperwork, her notes, the plan */}
-                  {section(r, "time", "Timesheet", `${used.toFixed(1)} of ${total} hrs this month`, (
-                    <div>
-                      <div style={{ height: 10, background: "var(--gu-card2)", borderRadius: 99, overflow: "hidden", marginBottom: 16 }}><div style={{ width: `${pct}%`, height: "100%", background: "#b80101", borderRadius: 99 }} /></div>
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                        <input type="number" step="0.25" min="0" placeholder="Hours" value={(logForm[r.id] || {}).hours || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), hours: e.target.value } })} style={{ ...inp, marginBottom: 0, width: 90, padding: "9px 11px", fontSize: 13 }} />
-                        <input type="date" value={(logForm[r.id] || {}).date || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), date: e.target.value } })} style={{ ...inp, marginBottom: 0, width: 150, padding: "9px 11px", fontSize: 13 }} />
-                        <input placeholder="What you worked on" value={(logForm[r.id] || {}).note || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), note: e.target.value } })} style={{ ...inp, marginBottom: 0, flex: "1 1 180px", padding: "9px 11px", fontSize: 13 }} />
-                        <button onClick={() => logHours(r)} style={btnRed}>Log hours</button>
-                      </div>
-                      <div style={{ marginTop: 16, borderTop: "1px solid var(--gu-border2)", paddingTop: 10 }}>
-                        {(r.log || []).length === 0 && <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>Nothing logged yet.</div>}
-                        {(r.log || []).map(l => (
-                          <div key={l.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "6px 0", borderBottom: "1px solid var(--gu-border2)" }}>
-                            <span style={{ color: "var(--gu-body)", fontSize: 13, fontFamily: font }}>{l.note || "Advisory time"}</span>
-                            <span style={{ color: "var(--gu-text2)", fontSize: 13, fontFamily: font, fontWeight: 700, whiteSpace: "nowrap" }}>{Number(l.hours)} hrs · {new Date(l.logged_on || l.created_at).toLocaleDateString()}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                  {section(r, "docs", "Engagement documents", `${engagement.length} engagement · ${shared.length} sent to client`, (
-                    <div>
-                      <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, margin: "0 0 10px" }}>The agreement, the scope, anything formalized. Both sides see these.</p>
-                      {engagement.length ? engagement.map(f => docRow(f, true, r.id)) : <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>None yet.</div>}
-                      {addDocs(r, "engagement")}
-                      <div style={{ marginTop: 20 }}>
-                        {eyebrow("Sent to the client")}
-                        {shared.length ? shared.map(f => docRow(f, true, r.id)) : <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>Nothing yet — a model you built, a marked-up term sheet, a memo.</div>}
-                        {addDocs(r, "link")}
-                      </div>
-                    </div>
-                  ))}
-                  {section(r, "notes", "Private notes", notes[r.id] ? "yours only" : "nothing yet", (
-                    <div>
-                      <textarea value={notes[r.id] ?? ""} onChange={e => setNotes({ ...notes, [r.id]: e.target.value })} rows={5} placeholder="What you think, what you're watching, what to raise next time. The client never sees this." style={{ ...inp, resize: "vertical", marginBottom: 10 }} />
-                      <button onClick={() => act(() => post({ action: "private_notes", id: r.id, notes: notes[r.id] || "" }), "Notes saved.")} style={ghost}>Save notes</button>
-                    </div>
-                  ))}
-                  {section(r, "plan", "The engagement", `${r.status} · since ${new Date(r.started_at || r.created_at).toLocaleDateString(undefined, { month: "short", year: "numeric" })}`, (
-                    <div>
-                      {r.notes && <div style={{ color: "var(--gu-body)", fontSize: 13, fontFamily: font, marginBottom: 12 }}>{r.notes}</div>}
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        {r.status !== "active" && <button onClick={() => act(() => post({ action: "update", id: r.id, status: "active" }), "Active — and an Owner.")} style={ghost}>Mark active</button>}
-                        {r.status === "active" && <button onClick={() => act(() => post({ action: "update", id: r.id, status: "paused" }), "Paused.")} style={ghost}>Pause</button>}
-                        <button onClick={() => { if (window.confirm(`End ${r.name}'s retainer?`)) act(() => post({ action: "update", id: r.id, status: "ended" }), "Ended."); }} style={{ ...ghost, color: "#e08a8a" }}>End</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              );
-            })()}
+            <div style={{ minWidth: 0 }}>{sel === "dashboard" || !r ? dashboard() : client()}</div>
           </div>
         )}
       </div>
-      <style>{`@media (max-width: 1000px) { .ret-grid { grid-template-columns: 1fr !important; } } @media (max-width: 760px) { .adv-grid { grid-template-columns: 1fr !important; } .adv-grid > div:first-child { position: static !important; } }`}</style>
+      <style>{`@media (max-width: 760px) { .adv-grid { grid-template-columns: 1fr !important; } .adv-grid > div:first-child { position: static !important; } }`}</style>
     </div>
   );
 }
