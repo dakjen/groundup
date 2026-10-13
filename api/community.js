@@ -27,7 +27,10 @@ async function resolveUser(req, sql) {
   if (!session.uid) return null;
   const [u] = await sql`SELECT id, name, email, tier, role, membership_status, badge, badges, partner_slug FROM users WHERE id = ${session.uid}`;
   if (!u || u.membership_status !== 'active') return null;  // past_due/suspended = no access
-  return { ...u, rank: TIER_RANK[u.tier] ?? 0 };
+  let rank = TIER_RANK[u.tier] ?? 0;
+  // A Senior Advisor retainer includes everything in Owner — the Owner Lounge too.
+  try { const [r] = await sql`SELECT id FROM retainers WHERE user_id = ${u.id} AND status = 'active' LIMIT 1`; if (r) rank = Math.max(rank, TIER_RANK.Elite); } catch {}
+  return { ...u, rank };
 }
 
 // Course-discussion channels unlock at the general (December) launch
