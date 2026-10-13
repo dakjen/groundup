@@ -1604,9 +1604,8 @@ const REACTIONS = [
 ];
 
 // Reactions let a busy channel respond without adding a message to read.
-function Reactions({ m, hover }) {
+function Reactions({ m, open, setOpen }) {
   const [rx, setRx] = useState(m.reactions || []);
-  const [open, setOpen] = useState(false);
   const react = async (kind) => {
     const before = rx;
     // Move first, reconcile after — a reaction that lags feels broken.
@@ -1631,11 +1630,12 @@ function Reactions({ m, hover }) {
     fontSize: 11.5, fontFamily: font, fontWeight: 700, lineHeight: 1.6,
   });
   const has = rx.filter(r => r.n > 0);
-  // Always laid out, only sometimes visible: a row that appears on hover makes
-  // every message below it jump.
-  const hidden = !has.length && !hover && !open;
+  // The row only exists when there is a reaction to show or the picker is open;
+  // the "add a reaction" control lives in the message header, so nothing here
+  // appears or disappears on hover.
+  if (!has.length && !open) return null;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 6, flexWrap: "wrap", position: "relative", visibility: hidden ? "hidden" : "visible", minHeight: 24 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 6, flexWrap: "wrap", position: "relative" }}>
       {has.map(r => {
         const def = REACTIONS.find(x => x[0] === r.kind);
         const Icon = def ? def[1] : SmilePlus;
@@ -1645,13 +1645,8 @@ function Reactions({ m, hover }) {
           </button>
         );
       })}
-      {(hover || open) && (
-        <button onClick={() => setOpen(o => !o)} title="Add a reaction" style={{ ...chip(false), padding: "3px 7px" }}>
-          <SmilePlus size={13} />
-        </button>
-      )}
       {open && (
-        <div style={{ position: "absolute", bottom: "calc(100% + 4px)", left: 0, display: "flex", gap: 2, background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 10, padding: 4, zIndex: 40, boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
+        <div style={{ display: "flex", gap: 2, background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 10, padding: 4, zIndex: 40, boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
           {REACTIONS.map(([kind, Icon, label]) => (
             <button key={kind} onClick={() => react(kind)} title={label} style={{ background: "transparent", border: "none", color: "var(--gu-body)", cursor: "pointer", padding: 6, borderRadius: 7, display: "flex" }}>
               <Icon size={16} />
@@ -1665,6 +1660,7 @@ function Reactions({ m, hover }) {
 
 function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdit, meId, isAdmin }) {
   const [showProfile, setShowProfile] = useState(false);
+  const [reactOpen, setReactOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editDraft, setEditDraft] = useState("");
   // Your own messages are editable for 1 hour after sending; the team, anytime.
@@ -1714,7 +1710,9 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdi
         {!m.is_admin && <BadgeChips badges={m.author_badges} small />}
         <span style={{ color: "var(--gu-faint)", fontSize: 11, fontFamily: font }}>{timeAgo(m.created_at)}</span>
         {m.edited_at && <span style={{ color: "var(--gu-faint)", fontSize: 10, fontFamily: font, fontStyle: "italic" }}>(edited)</span>}
-        <span style={{ marginLeft: "auto", display: "flex", gap: 10, opacity: hover || editing ? 1 : 0, transition: "opacity 0.15s" }}>
+        <span style={{ marginLeft: "auto", display: "flex", gap: 10, alignItems: "center", opacity: hover || editing || reactOpen ? 1 : 0, transition: "opacity 0.15s" }}>
+          <button onClick={() => setReactOpen(o => !o)} title="Add a reaction" style={{ background: "none", border: "none", color: "var(--gu-faint)", cursor: "pointer", padding: 0, display: "flex" }}><SmilePlus size={13} /></button>
+          {!inThread && <button onClick={() => onOpenThread(m)} style={{ background: "none", border: "none", color: "var(--gu-faint)", cursor: "pointer", fontSize: 11, fontFamily: font }}>reply</button>}
           {canEdit && !editing && <button onClick={() => { setEditing(true); setEditDraft(m.body); }} style={{ background: "none", border: "none", color: "var(--gu-faint)", cursor: "pointer", fontSize: 11, fontFamily: font }}>edit</button>}
           {canDelete && <button onClick={() => { if (window.confirm("Delete this message? This can't be undone.")) onDelete(m); }} style={{ background: "none", border: "none", color: "var(--gu-faint)", cursor: "pointer", fontSize: 11, fontFamily: font }}>delete</button>}
         </span>
@@ -1754,12 +1752,12 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdi
           <span style={{ color: "var(--gu-faint)", fontSize: 11, fontFamily: font }}>{m.poll_results.total} vote{m.poll_results.total === 1 ? "" : "s"} — tap to vote or change your vote</span>
         </div>
       )}
-      <Reactions m={m} hover={hover} />
+      <Reactions m={m} open={reactOpen} setOpen={setReactOpen} />
       {/* A reply count is worth showing always; an invitation to reply only
           when the pointer is on the message. It used to sit under every post
           as a bordered pill, which is why one word of text filled a card. */}
-      {!inThread && (
-        <button onClick={() => onOpenThread(m)} style={{ background: "transparent", border: "none", padding: 0, marginTop: 4, color: Number(m.reply_count) > 0 ? "#e08a8a" : "var(--gu-muted)", cursor: "pointer", fontSize: 12, fontFamily: font, fontWeight: 700, visibility: Number(m.reply_count) > 0 || hover ? "visible" : "hidden" }}>
+      {!inThread && Number(m.reply_count) > 0 && (
+        <button onClick={() => onOpenThread(m)} style={{ background: "transparent", border: "none", padding: 0, marginTop: 4, color: "#e08a8a", cursor: "pointer", fontSize: 12, fontFamily: font, fontWeight: 700 }}>
           {Number(m.reply_count) > 0 ? `${m.reply_count} repl${Number(m.reply_count) === 1 ? "y" : "ies"} →` : "Reply"}
         </button>
       )}
