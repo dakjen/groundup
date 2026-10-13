@@ -1681,10 +1681,11 @@ function timeAgo(ts) {
 }
 
 function linkify(text) {
-  const parts = String(text).split(/(https?:\/\/[^\s]+|@[A-Z][\w.'-]*(?: [A-Z][\w.'-]*)?)/g);
+  const parts = String(text).split(/(https?:\/\/[^\s]+|@[A-Z][\w.'-]*(?: [A-Z][\w.'-]*)?|(?:^|(?<=\s))#[A-Za-z][\w-]{1,30})/g);
   return parts.map((p, i) => /^https?:\/\//.test(p)
     ? <a key={i} href={p} target="_blank" rel="noreferrer" style={{ color: "#b80101", wordBreak: "break-all" }}>{p}</a>
     : /^@/.test(p) ? <span key={i} style={{ color: "#e08a8a", fontWeight: 700 }}>{p}</span>
+    : /^#[A-Za-z]/.test(p) ? <span key={i} onClick={e => { e.stopPropagation(); window.dispatchEvent(new CustomEvent("gu-tag", { detail: p.toLowerCase() })); }} style={{ display: "inline-block", background: "#b8010120", color: "#f0b8b8", border: "1px solid #b8010140", borderRadius: 99, padding: "0 8px", fontSize: "0.9em", fontWeight: 700, cursor: "pointer", lineHeight: 1.6 }}>{p}</span>
     : p);
 }
 
@@ -1913,6 +1914,14 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
   const [dmDraft, setDmDraft] = useState("");
   const [dmThreads, setDmThreads] = useState([]);       // admin inbox
   const [mentionable, setMentionable] = useState([]);  // who can be @-tagged
+  // #tags: the tags used in the open channel become filter chips; clicking a
+  // tag in a message filters to it.
+  const [tagFilter, setTagFilter] = useState(null);
+  useEffect(() => { const on = (e) => setTagFilter(t => t === e.detail ? null : e.detail); window.addEventListener("gu-tag", on); return () => window.removeEventListener("gu-tag", on); }, []);
+  useEffect(() => { setTagFilter(null); }, [active?.id]);
+  const tagsOf = (body) => (String(body || "").match(/(?:^|\s)#[A-Za-z][\w-]{1,30}/g) || []).map(t => t.trim().toLowerCase());
+  const channelTags = (() => { const n = {}; for (const m of messages) for (const t of new Set(tagsOf(m.body))) n[t] = (n[t] || 0) + 1; return Object.entries(n).sort((a, b) => b[1] - a[1]); })();
+  const shownMessages = tagFilter ? messages.filter(m => tagsOf(m.body).includes(tagFilter)) : messages;
   const [dmTarget, setDmTarget] = useState(null);       // admin: selected member thread
   useEffect(() => {
     const h = hashState();
@@ -2285,7 +2294,16 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
               <>
             <div ref={feedRef} style={{ flex: 1, overflowY: "auto", padding: "12px 16px 8px" }}>
               {messages.length === 0 && <div style={{ color: "var(--gu-faint)", fontFamily: font, fontSize: 14, textAlign: "center", marginTop: 60 }}>No messages yet. {canPost ? "Start the conversation." : ""}</div>}
-              {messages.map(m => <Message key={m.id} m={m} onOpenThread={setThread} onDelete={deleteMsg} canDelete={isAdmin || (member && m.user_id === member.id)} onVote={votePoll} onEdit={editMsg} meId={member?.id} isAdmin={isAdmin} />)}
+              {channelTags.length > 0 && (
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
+                  <span style={{ color: "var(--gu-faint)", fontSize: 10.5, fontFamily: font, letterSpacing: "1.5px", textTransform: "uppercase", fontWeight: 700 }}>Tags</span>
+                  {channelTags.map(([t, n]) => (
+                    <button key={t} onClick={() => setTagFilter(tagFilter === t ? null : t)} style={{ background: tagFilter === t ? "#b80101" : "#b8010118", color: tagFilter === t ? "#fff" : "#f0b8b8", border: "1px solid " + (tagFilter === t ? "#b80101" : "#b8010140"), borderRadius: 99, padding: "2px 10px", fontSize: 11.5, fontFamily: font, fontWeight: 700, cursor: "pointer" }}>{t} <span style={{ opacity: 0.7 }}>{n}</span></button>
+                  ))}
+                  {tagFilter && <button onClick={() => setTagFilter(null)} style={{ background: "none", border: "none", color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font, cursor: "pointer" }}>clear</button>}
+                </div>
+              )}
+              {shownMessages.map(m => <Message key={m.id} m={m} onOpenThread={setThread} onDelete={deleteMsg} canDelete={isAdmin || (member && m.user_id === member.id)} onVote={votePoll} onEdit={editMsg} meId={member?.id} isAdmin={isAdmin} />)}
             </div>
             {error && <div style={{ color: "#ff6b6b", fontSize: 12, fontFamily: font, padding: "0 24px 6px" }}>{error}</div>}
             <div style={{ padding: "12px 20px 20px", borderTop: "1px solid #1a0000" }}>
