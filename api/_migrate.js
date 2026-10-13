@@ -271,6 +271,8 @@ const STATEMENTS = [
   // Owner deal profile: the deal they are working on, for the team to refer to
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS deal_profile JSONB`,
   `CREATE TABLE IF NOT EXISTS deal_files (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, title TEXT, url TEXT NOT NULL, kind TEXT DEFAULT 'file', created_at TIMESTAMP DEFAULT NOW())`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_mode TEXT DEFAULT 'all'`,
+  `CREATE TABLE IF NOT EXISTS mentions (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, message_id INTEGER NOT NULL, channel_id INTEGER NOT NULL, by_user_id INTEGER, created_at TIMESTAMP DEFAULT NOW(), UNIQUE (user_id, message_id))`,
   `CREATE TABLE IF NOT EXISTS channel_mutes (user_id INTEGER NOT NULL, channel_id INTEGER NOT NULL, PRIMARY KEY (user_id, channel_id))`,
   `CREATE TABLE IF NOT EXISTS thread_seen (user_id INTEGER NOT NULL, kind TEXT NOT NULL, ref_id INTEGER NOT NULL, seen_at TIMESTAMP DEFAULT NOW(), PRIMARY KEY (user_id, kind, ref_id))`,
   `ALTER TABLE channels ADD COLUMN IF NOT EXISTS team_only BOOLEAN DEFAULT FALSE`,

@@ -63,19 +63,56 @@ export function backdropClose(close) {
 
 // A message box that grows as you type, up to about eight lines, then scrolls.
 // Enter sends; Shift+Enter starts a new line.
-export function GrowingInput({ value, onChange, onSubmit, style, ...props }) {
+export function GrowingInput({ value, onChange, onSubmit, style, mentionable, ...props }) {
   const ref = useRef(null);
+  const [pick, setPick] = useState(0);
   useEffect(() => { const el = ref.current; if (!el) return; el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 200) + "px"; }, [value]);
+  // "@" plus whatever is typed after it, at the end of the text, opens the picker
+  const m = mentionable ? /(^|\s)@([A-Za-z][\w.'-]*(?: [A-Za-z][\w.'-]*)?)?$/.exec(value || "") : null;
+  const q = m ? (m[2] || "").toLowerCase() : null;
+  const options = q !== null ? mentionable.filter(p => p.name.toLowerCase().startsWith(q) || p.name.toLowerCase().split(" ").some(w => w.startsWith(q))).slice(0, 6) : [];
+  const choose = (p) => { const next = (value || "").replace(/@([A-Za-z][\w.'-]*(?: [A-Za-z][\w.'-]*)?)?$/, "@" + p.name + " "); onChange({ target: { value: next } }); setPick(0); setTimeout(() => ref.current && ref.current.focus(), 0); };
   return (
-    <textarea ref={ref} rows={1} value={value} onChange={onChange}
-      onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSubmit && onSubmit(); } }}
-      style={{ resize: "none", overflowY: "auto", lineHeight: 1.5, fontFamily: font, ...style }} {...props} />
+    <div style={{ position: "relative", flex: style?.flex ?? "none", minWidth: 0 }}>
+      {options.length > 0 && (
+        <div style={{ position: "absolute", bottom: "calc(100% + 6px)", left: 0, background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 10, padding: 4, zIndex: 50, minWidth: 220, boxShadow: "0 8px 30px rgba(0,0,0,0.4)" }}>
+          {options.map((p, i) => (
+            <button key={p.id} type="button" onMouseDown={e => { e.preventDefault(); choose(p); }} style={{ display: "flex", gap: 8, alignItems: "center", width: "100%", textAlign: "left", background: i === pick ? "#b8010128" : "transparent", border: "none", borderRadius: 7, padding: "7px 10px", color: "var(--gu-text)", fontFamily: font, fontSize: 13, cursor: "pointer" }}>
+              <span style={{ fontWeight: 700 }}>{p.name}</span><span style={{ color: "var(--gu-faint)", fontSize: 10.5, textTransform: "uppercase", letterSpacing: "1px" }}>{p.tier === "Elite" ? "Owner" : p.tier === "Basic" ? "Member" : p.tier}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      <textarea ref={ref} rows={1} value={value} onChange={e => { setPick(0); onChange(e); }}
+        onKeyDown={e => {
+          if (options.length) {
+            if (e.key === "ArrowDown") { e.preventDefault(); setPick(p => (p + 1) % options.length); return; }
+            if (e.key === "ArrowUp") { e.preventDefault(); setPick(p => (p - 1 + options.length) % options.length); return; }
+            if (e.key === "Tab" || e.key === "Enter") { e.preventDefault(); choose(options[pick] || options[0]); return; }
+            if (e.key === "Escape") { onChange({ target: { value: (value || "") + " " } }); return; }
+          }
+          if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSubmit && onSubmit(); }
+        }}
+        style={{ resize: "none", overflowY: "auto", lineHeight: 1.5, fontFamily: font, ...style, flex: "none", width: "100%", boxSizing: "border-box" }} {...props} />
+    </div>
   );
 }
 
 // "Turn on notifications" — desktop notifications while GroundUp is open in a
 // tab. Asks the browser once; shows nothing once granted, and a short note if
 // the browser has refused.
+export function NotifyModeToggle({ member, onChange }) {
+  const [mode, setMode] = useState(member?.notify_mode || "all");
+  const save = async (m) => { setMode(m); try { await api("/api/community", { method: "POST", body: JSON.stringify({ action: "notify_mode", mode: m }) }); const me = getMember(); if (me) saveMember({ ...me, notify_mode: m }); onChange && onChange(m); } catch {} };
+  const b = (m, label) => <button onClick={() => save(m)} style={{ flex: 1, background: mode === m ? "#b80101" : "transparent", border: "1px solid " + (mode === m ? "#b80101" : "#ffffff22"), color: "#f5e8e8", borderRadius: 6, padding: "6px 8px", fontSize: 11, fontFamily: font, fontWeight: 700, cursor: "pointer" }}>{label}</button>;
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ fontSize: 10, color: "#e8b4b4", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, padding: "0 2px", marginBottom: 6 }}>Notify me about</div>
+      <div style={{ display: "flex", gap: 6 }}>{b("all", "Every post")}{b("mentions", "Only when tagged")}</div>
+    </div>
+  );
+}
+
 export function NotifyToggle() {
   const supported = typeof window !== "undefined" && "Notification" in window;
   const [perm, setPerm] = useState(supported ? Notification.permission : "unsupported");
@@ -1644,9 +1681,10 @@ function timeAgo(ts) {
 }
 
 function linkify(text) {
-  const parts = String(text).split(/(https?:\/\/[^\s]+)/g);
+  const parts = String(text).split(/(https?:\/\/[^\s]+|@[A-Z][\w.'-]*(?: [A-Z][\w.'-]*)?)/g);
   return parts.map((p, i) => /^https?:\/\//.test(p)
     ? <a key={i} href={p} target="_blank" rel="noreferrer" style={{ color: "#b80101", wordBreak: "break-all" }}>{p}</a>
+    : /^@/.test(p) ? <span key={i} style={{ color: "#e08a8a", fontWeight: 700 }}>{p}</span>
     : p);
 }
 
@@ -1874,6 +1912,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
   const [dmMsgs, setDmMsgs] = useState([]);
   const [dmDraft, setDmDraft] = useState("");
   const [dmThreads, setDmThreads] = useState([]);       // admin inbox
+  const [mentionable, setMentionable] = useState([]);  // who can be @-tagged
   const [dmTarget, setDmTarget] = useState(null);       // admin: selected member thread
   useEffect(() => {
     const h = hashState();
@@ -1890,6 +1929,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
   const rank = member && !member.suspended ? (TIER_RANK[member.tier] ?? 0) : 0;
   const hasAccess = isAdmin || rank >= 1;
   const canEngage = isAdmin || rank >= 2;               // Basic (Member) is read-only
+  useEffect(() => { if (hasAccess) api("/api/community?resource=members").then(d => setMentionable(d.members || [])).catch(() => {}); }, [hasAccess]);
   const canDm = isAdmin || rank >= 3;                   // DMs are an Owner benefit
 
   const loadChannels = useCallback(async () => {
@@ -2060,6 +2100,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
       {/* Channel sidebar */}
       <div className="community-sidebar" style={{ width: 240, flexShrink: 0, borderRight: "1px solid #3f0707", background: "#4a0b0b", padding: "24px 12px", overflowY: "auto", display: sidebarOpen ? "block" : undefined }}>
         <NotifyToggle />
+        <NotifyModeToggle member={member} />
         {/* Two kinds of talk, kept apart on purpose: topic questions live in the
             phase channels ("I have a design question"), course questions live in
             Course Discussions ("in lesson 3 you said X — how?"). */}
@@ -2244,7 +2285,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
                   </div>
                 )}
                 <form onSubmit={e => { e.preventDefault(); send(null, draft, () => setDraft("")); }} style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
-                  <GrowingInput style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", flex: 1, marginBottom: 0 }} value={draft} onChange={e => setDraft(e.target.value)} onSubmit={() => send(null, draft, () => setDraft(""))} placeholder={active.slug === "deal-questions" ? "One specific question — a number, a term, a decision. Not the whole deal." : `Message ${active.name}`} maxLength={active.slug === "deal-questions" ? 600 : 4000} />
+                  <GrowingInput style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", flex: 1, marginBottom: 0 }} value={draft} onChange={e => setDraft(e.target.value)} mentionable={mentionable} onSubmit={() => send(null, draft, () => setDraft(""))} placeholder={active.slug === "deal-questions" ? "One specific question — a number, a term, a decision. Not the whole deal." : `Message ${active.name}`} maxLength={active.slug === "deal-questions" ? 600 : 4000} />
                   {isAdmin && <button type="button" onClick={() => setPollOpen(!pollOpen)} style={btnGhost}>Poll</button>}
                   <button type="submit" style={btnRed}>Send</button>
                 </form>
@@ -2275,7 +2316,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
           </div>
           {canEngage ? (
             <form onSubmit={e => { e.preventDefault(); send(thread.id, threadDraft, () => setThreadDraft("")); }} style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 14px 16px", borderTop: "1px solid #1a0000" }}>
-              <GrowingInput style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", flex: 1, marginBottom: 0 }} onSubmit={() => { send(thread.id, threadDraft, () => setThreadDraft("")); }} value={threadDraft} onChange={e => setThreadDraft(e.target.value)} placeholder="Reply…" maxLength={4000} />
+              <GrowingInput style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", flex: 1, marginBottom: 0 }} onSubmit={() => { send(thread.id, threadDraft, () => setThreadDraft("")); }} mentionable={mentionable} value={threadDraft} onChange={e => setThreadDraft(e.target.value)} placeholder="Reply…" maxLength={4000} />
               <button type="submit" style={{ ...btnRed, padding: "12px 16px" }}>↑</button>
             </form>
           ) : (

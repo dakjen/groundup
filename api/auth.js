@@ -35,7 +35,7 @@ export default async function handler(req, res) {
       // out. That happened: a new column was selected here before its migration
       // had run, and every member was logged out on refresh. Run the migrations
       // and retry once rather than dropping the session on the floor.
-      const loadUser = () => sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, comped, badges, referral_code, referred_by, referred_code, tier_since, ip_agreed_at, avatar_url, headline, bio, company, title, location, partner_slug, onboarded_at, created_at, deal_profile FROM users WHERE id = ${session.uid}`;
+      const loadUser = () => sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, comped, badges, referral_code, referred_by, referred_code, tier_since, ip_agreed_at, avatar_url, headline, bio, company, title, location, partner_slug, onboarded_at, created_at, deal_profile, notify_mode FROM users WHERE id = ${session.uid}`;
       let user;
       try {
         [user] = await loadUser();

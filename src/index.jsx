@@ -7579,6 +7579,7 @@ export default function App() {
   // browser notification (once permission is granted). The first poll after
   // sign-in only primes the list, so nothing old pops up.
   const shownRef = useRef(null);
+  const [toasts, setToasts] = useState([]); // in-site pop-ups, newest first
   const loadNotif = () => {
     if (!getMember()) return;
     fetch("/api/community?resource=notifications", { headers: { Authorization: "Bearer " + getMemberToken() } })
@@ -7589,6 +7590,11 @@ export default function App() {
         if (shownRef.current === null) { shownRef.current = new Set(items.map(i => i.key)); return; }
         const fresh = items.filter(i => !shownRef.current.has(i.key));
         for (const i of fresh) shownRef.current.add(i.key);
+        if (fresh.length) {
+          // In-site pop-up for everyone, no permission needed; it clears itself.
+          setToasts(t => [...fresh.slice(0, 3).map(i => ({ ...i, id: i.key + ":" + Date.now() })), ...t].slice(0, 4));
+          for (const i of fresh.slice(0, 3)) setTimeout(() => setToasts(t => t.filter(x => x.key !== i.key)), 9000);
+        }
         if (fresh.length && typeof Notification !== "undefined" && Notification.permission === "granted") {
           for (const i of fresh.slice(0, 3)) {
             try {
@@ -7889,6 +7895,17 @@ export default function App() {
           onAgreed={(u) => { setMember(u); setShowIpGate(false); const fn = ipPendingRef.current; ipPendingRef.current = null; if (fn) setTimeout(fn, 0); }}
           onSignOut={() => { clearMember(); setMember(null); setShowIpGate(false); sessionStorage.removeItem("currentUser"); setCurrentUser(null); navigateTo("home"); }}
         />
+      )}
+      {toasts.length > 0 && (
+        <div style={{ position: "fixed", top: 76, right: 16, zIndex: 340, display: "flex", flexDirection: "column", gap: 8, width: "min(340px, calc(100vw - 32px))" }}>
+          {toasts.map(t => (
+            <button key={t.id} onClick={() => { setToasts(x => x.filter(y => y.id !== t.id)); setActivePage("community"); }}
+              style={{ textAlign: "left", background: "#0d0404", border: "1px solid #b8010160", borderLeft: "3px solid #b80101", borderRadius: 10, padding: "10px 14px", cursor: "pointer", boxShadow: "0 10px 30px rgba(0,0,0,0.5)" }}>
+              <div style={{ color: "#f5e8e8", fontSize: 12.5, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", marginBottom: 2 }}>{t.title}</div>
+              <div style={{ color: "#c8a8a8", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{t.body}</div>
+            </button>
+          ))}
+        </div>
       )}
       {showWaitlistPop && !resetToken && !showSignup && (
         <div className="gu-pop-backdrop" style={{ position: "fixed", inset: 0, zIndex: 320, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} {...backdropClose(() => setShowWaitlistPop(false))}>
