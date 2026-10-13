@@ -389,6 +389,11 @@ export default async function handler(req, res) {
       if (!channel_id || !text) return res.status(400).json({ error: 'channel_id and body required' });
       if (text.length > 4000) return res.status(400).json({ error: 'Message too long' });
       const [channel] = await sql`SELECT * FROM channels WHERE id = ${channel_id}`;
+      // Deal Questions is for one specific question, not the whole deal. A short
+      // limit keeps it that way; the full picture belongs in an advisory call.
+      if (channel?.slug === 'deal-questions' && !isAdminReq && !parent_id && text.length > 600) {
+        return res.status(400).json({ error: 'Keep it to one specific question (600 characters). For the whole deal, book an advisory call.' });
+      }
       if (!channel || !canSeeChannel(channel, user)) {
         return res.status(403).json({ error: 'No access to this channel' });
       }
