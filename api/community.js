@@ -122,6 +122,11 @@ export default async function handler(req, res) {
     if (req.method === 'GET' && req.query.resource === 'channels') {
       const channels = await sql`SELECT * FROM channels ORDER BY position, id`;
       const visible = channels.filter(c => canSeeChannel(c, user));
+      // Channels above someone's plan still appear in the sidebar, locked, so
+      // they can see what a higher plan opens. Private and not-yet-live channels
+      // stay hidden. The body of a locked channel is never sent.
+      const locked = channels.filter(c => !canSeeChannel(c, user) && !c.team_only && !c.partner_slug && !(c.section === 'course' && !user.courseChannelsLive) && user.rank < (TIER_RANK[c.min_tier] ?? 1))
+        .map(c => ({ id: c.id, slug: c.slug, name: c.name, description: c.description, min_tier: c.min_tier, admin_only_post: c.admin_only_post, section: c.section, position: c.position, locked: true }));
       // Unread per channel: posts since this person last opened it, not their own
       if (user.id && visible.length) {
         try {
@@ -136,7 +141,8 @@ export default async function handler(req, res) {
           for (const c of visible) c.unread = by[c.id] || 0;
         } catch (e) { console.error('channel unread failed', e.message); }
       }
-      return res.json({ channels: visible, tier: user.tier });
+      const all = [...visible, ...locked].sort((x, y) => (x.position - y.position) || (x.id - y.id));
+      return res.json({ channels: all, tier: user.tier });
     }
 
     // GET ?resource=messages&channel=<id>[&thread=<messageId>]
