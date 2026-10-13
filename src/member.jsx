@@ -36,7 +36,7 @@ export async function guUpload(kind, formData, headers = {}) {
   const k = kind || "lesson";
   const url = "/api/lesson-pdfs" + (kind ? `?kind=${kind}` : "");
   const file = [...formData.values()].find(v => v instanceof File);
-  const DIRECT = { file: "shop-files", lesson: "lesson-pdfs", material: "lesson-pdfs", prep: "session-prep" };
+  const DIRECT = { file: "shop-files", lesson: "lesson-pdfs", material: "lesson-pdfs", prep: "session-prep", deal: "deal-docs" };
   if (!file || file.size <= 4 * 1024 * 1024 || !DIRECT[k]) return fetch(url, { method: "POST", headers, body: formData });
   try {
     const { upload } = await import("@vercel/blob/client");
@@ -132,37 +132,127 @@ export function NotifyToggle() {
 // where it stands, the capital stack, the team, the blocker — and the
 // documents and links that go with it. Not the paid Full Project Intake.
 const DEAL_PHASES = ["No deal yet", "Feasibility", "Predevelopment", "Program development", "Acquisition", "Financing", "Construction", "Lease-up", "Operating"];
-export function DealProfileCard({ member, onMemberUpdate }) {
-  const d0 = member.deal_profile || {};
-  const [d, setD] = useState({ name: "", location: "", phase: "", product: "", units: "", tdc: "", site_control: "", financing_path: "", sources_committed: "", sources_missing: "", gap: "", timeline: "", team: "", blocker: "", wants: "", ...Object.fromEntries(Object.entries(d0).filter(([, v]) => v !== null)) });
-  const [files, setFiles] = useState([]);
+const DEAL_BLANK = { name: "", location: "", phase: "", product: "", units: "", tdc: "", site_control: "", financing_path: "", sources_committed: "", sources_missing: "", gap: "", timeline: "", team: "", blocker: "", wants: "" };
+const DEAL_ACCEPT = ".pdf,.doc,.docx,.xls,.xlsx,.pptx,.csv,.png,.jpg,.jpeg,.zip,.txt";
+export function fmtBytes(n) { n = Number(n || 0); if (n >= 1024 ** 3) return (n / 1024 ** 3).toFixed(n >= 10 * 1024 ** 3 ? 0 : 1) + " GB"; if (n >= 1024 ** 2) return Math.round(n / 1024 ** 2) + " MB"; if (n >= 1024) return Math.round(n / 1024) + " KB"; return n + " B"; }
+export function dealSummary(dp) { if (!dp) return ""; return [dp.location, dp.phase, dp.product, dp.units && `${dp.units} units`, dp.tdc && `TDC ${dp.tdc}`, dp.gap && `gap ${dp.gap}`, dp.financing_path].filter(Boolean).join(" · "); }
+
+// The data room for one project: documents organized into folders, the way a
+// lender or investor would expect them. Each folder opens and closes; files go
+// in by upload or by link.
+// Same categories as the development overview — a document lives in the phase it belongs to.
+export const DEAL_FOLDERS = [
+  ["feasibility", "Feasibility", "Market study, site analysis, back-of-envelope, feasibility memo"],
+  ["predevelopment", "Predevelopment", "Predevelopment budget, due diligence, environmental, survey, title"],
+  ["program", "Program Development", "Unit mix, program narrative, resident services plan, design brief"],
+  ["acquisition", "Acquisition", "LOI, option, purchase agreement, appraisal, closing documents"],
+  ["financing", "Development (Financing, Construction)", "Pro forma, sources & uses, term sheets, subsidy applications, awards, capital stack"],
+  ["community", "Community Engagement", "Meeting notes, letters of support, community benefits agreement"],
+  ["construction", "Construction", "Drawings, GC contract, schedule, permits, draw requests, change orders"],
+  ["stabilization", "Stabilization", "Lease-up plan, rent roll, operating budget, property management agreement"],
+  ["compliance", "Compliance", "Regulatory agreements, compliance reports, audits, investor reporting"],
+  ["other", "Everything else", "Entity documents, team agreements, anything that doesn't fit a phase"],
+];
+export function DataRoom({ project, files, used, quota, onChange, flash, dark, compact }) {
+  const [openFolders, setOpenFolders] = useState({});
+  const [adding, setAdding] = useState(null);       // folder key with the link form open
   const [linkTitle, setLinkTitle] = useState(""); const [linkUrl, setLinkUrl] = useState("");
+  const [busy, setBusy] = useState(false); const [progress, setProgress] = useState("");
+  const [dragOver, setDragOver] = useState(null);
+  const toggle = (k) => setOpenFolders({ ...openFolders, [k]: !openFolders[k] });
+  const upload = async (folder, list) => {
+    const arr = [...(list || [])]; if (arr.length === 0) return;
+    const total = arr.reduce((a, f) => a + f.size, 0);
+    if (used + total > quota) return flash(false, `That would go past your ${fmtBytes(quota)} of storage.`);
+    setBusy(true);
+    try {
+      for (let i = 0; i < arr.length; i++) {
+        const file = arr[i];
+        setProgress(`Uploading ${file.name} (${fmtBytes(file.size)})${arr.length > 1 ? ` — ${i + 1} of ${arr.length}` : ""}…`);
+        const fd = new FormData(); fd.append("file", file);
+        const res = await guUpload("deal", fd, { Authorization: "Bearer " + (localStorage.getItem("guToken") || "") });
+        const u = await res.json(); if (!res.ok) throw new Error(u.error || "Upload failed");
+        await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "deal_file_add", project_id: project.id, folder, title: file.name, url: u.url, kind: "file", size: file.size }) });
+      }
+      flash(true, arr.length > 1 ? `${arr.length} documents added.` : "Document added."); setOpenFolders(o => ({ ...o, [folder]: true })); await onChange();
+    } catch (e) { flash(false, e.message); } finally { setBusy(false); setProgress(""); }
+  };
+  const addLink = async (folder) => {
+    if (!linkUrl.trim()) return;
+    try { await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "deal_file_add", project_id: project.id, folder, title: linkTitle.trim() || linkUrl.trim(), url: linkUrl.trim(), kind: "link" }) }); setLinkTitle(""); setLinkUrl(""); setAdding(null); setOpenFolders(o => ({ ...o, [folder]: true })); await onChange(); }
+    catch (e) { flash(false, e.message); }
+  };
+  const remove = async (f) => { try { await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "deal_file_remove", id: f.id }) }); await onChange(); } catch (e) { flash(false, e.message); } };
+  const inFolder = (k) => files.filter(f => (f.folder || "other") === k || (k === "other" && !DEAL_FOLDERS.some(([key]) => key === f.folder)));
+  return (
+    <div>
+      {DEAL_FOLDERS.map(([k, label, hint]) => {
+        const list = inFolder(k); const isOpen = !!openFolders[k];
+        return (
+          <div key={k} onDragOver={e => { e.preventDefault(); setDragOver(k); }} onDragLeave={() => setDragOver(null)} onDrop={e => { e.preventDefault(); setDragOver(null); upload(k, e.dataTransfer.files); }}
+            style={{ border: "1px solid " + (dragOver === k ? "#b80101" : "var(--gu-border)"), background: dragOver === k ? "var(--gu-red-tint)" : "var(--gu-card)", borderRadius: 12, marginBottom: 8, overflow: "hidden" }}>
+            <button onClick={() => toggle(k)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, background: "transparent", border: "none", padding: "13px 16px", cursor: "pointer", textAlign: "left" }}>
+              <span style={{ color: "var(--gu-muted)", fontSize: 11, width: 12, display: "inline-block", transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .15s" }}>▶</span>
+              <span style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 13.5, fontFamily: font, flex: 1 }}>{label}</span>
+              <span style={{ color: list.length ? "var(--gu-text2)" : "var(--gu-muted)", fontSize: 12, fontFamily: font, fontWeight: 700 }}>{list.length ? `${list.length} item${list.length === 1 ? "" : "s"}` : "empty"}</span>
+            </button>
+            {isOpen && (
+              <div style={{ padding: "0 16px 14px 40px" }}>
+                <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font, marginBottom: list.length ? 8 : 10 }}>{hint}</div>
+                {list.map(f => (
+                  <div key={f.id} style={{ display: "flex", gap: 10, alignItems: "center", padding: "8px 0", borderBottom: "1px solid var(--gu-border2)", fontSize: 13, fontFamily: font }}>
+                    <FileTextIcon />
+                    <a href={f.url} target="_blank" rel="noreferrer" style={{ color: "var(--gu-text2)", fontWeight: 700, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: "none" }}>{f.title || f.url}</a>
+                    <span style={{ color: "var(--gu-muted)", fontSize: 11.5, whiteSpace: "nowrap" }}>{f.kind === "link" ? "link" : fmtBytes(f.size)} · {new Date(f.created_at).toLocaleDateString()}</span>
+                    {!compact && <button onClick={() => remove(f)} style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 11.5, fontFamily: font, fontWeight: 700 }}>remove</button>}
+                  </div>
+                ))}
+                {!compact && (
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 10 }}>
+                    <label style={{ ...btnGhost, padding: "8px 14px", fontSize: 12, cursor: busy ? "wait" : "pointer", display: "inline-block", color: "var(--gu-text2)", borderColor: "var(--gu-border)" }}>{busy ? "Uploading…" : "Upload"}<input type="file" multiple accept={DEAL_ACCEPT} disabled={busy} style={{ display: "none" }} onChange={e => { upload(k, e.target.files); e.target.value = ""; }} /></label>
+                    {adding === k ? (
+                      <>
+                        <input style={{ ...inp, marginBottom: 0, padding: "8px 11px", fontSize: 13, flex: "1 1 110px" }} value={linkTitle} onChange={e => setLinkTitle(e.target.value)} placeholder="Name" maxLength={160} />
+                        <input style={{ ...inp, marginBottom: 0, padding: "8px 11px", fontSize: 13, flex: "2 1 180px" }} value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="https://…" maxLength={600} autoFocus onKeyDown={e => { if (e.key === "Enter") addLink(k); }} />
+                        <button style={{ ...btnRed, padding: "8px 14px", fontSize: 12 }} onClick={() => addLink(k)}>Add</button>
+                        <button style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 12, fontFamily: font, fontWeight: 700 }} onClick={() => setAdding(null)}>Cancel</button>
+                      </>
+                    ) : <button style={{ ...btnGhost, padding: "8px 14px", fontSize: 12, color: "var(--gu-text2)", borderColor: "var(--gu-border)" }} onClick={() => { setAdding(k); setLinkTitle(""); setLinkUrl(""); }}>Drop a link</button>}
+                    <span style={{ color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font }}>or drag files onto this folder</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+      {progress && <div style={{ color: "var(--gu-text2)", fontSize: 12.5, fontFamily: font, marginTop: 8 }}>{progress}</div>}
+    </div>
+  );
+}
+
+export function DealProfileCard({ member, onMemberUpdate }) {
+  const [data, setData] = useState(null);           // { projects, files, used_bytes, quota_bytes }
+  const [open, setOpen] = useState(null);           // project id being edited, or "new"
+  const [d, setD] = useState(DEAL_BLANK);
   const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(null);
   const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 5000); };
   const set = (k) => (e) => setD({ ...d, [k]: e.target.value });
-  useEffect(() => { api("/api/auth", { method: "POST", body: JSON.stringify({ action: "deal_files" }) }).then(r => setFiles(r.files || [])).catch(() => {}); }, []);
+  const load = () => api("/api/auth", { method: "POST", body: JSON.stringify({ action: "projects" }) }).then(r => { setData(r); return r; }).catch(() => setData({ projects: [], files: [], used_bytes: 0, quota_bytes: 50 * 1024 ** 3 }));
+  useEffect(() => { load().then(r => { if (r && r.projects.length === 0) { setOpen("new"); setD(DEAL_BLANK); } }); }, []);
+  const edit = (p) => { setOpen(p.id); setD({ ...DEAL_BLANK, ...Object.fromEntries(Object.entries(p.details || {}).filter(([, v]) => v !== null)), name: p.name }); };
   const save = async () => {
     setBusy(true);
-    try { const r = await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "deal_profile", deal: d }) }); const me = getMember(); if (me) saveMember({ ...me, deal_profile: r.deal_profile }); onMemberUpdate && onMemberUpdate({ ...member, deal_profile: r.deal_profile }); flash(true, "Saved — Dr. Merritt and the team can see this."); }
-    catch (e) { flash(false, e.message); } finally { setBusy(false); }
-  };
-  const upload = async (file) => {
-    if (!file) return;
-    setBusy(true);
     try {
-      const fd = new FormData(); fd.append("file", file);
-      const res = await guUpload("deal", fd, { Authorization: "Bearer " + (localStorage.getItem("guToken") || "") });
-      const u = await res.json(); if (!res.ok) throw new Error(u.error || "Upload failed");
-      const r = await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "deal_file_add", title: file.name, url: u.url, kind: "file" }) });
-      setFiles([r.file, ...files]); flash(true, "Document added.");
+      const r = await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "project_save", id: open === "new" ? 0 : open, name: d.name, deal: d }) });
+      const me = getMember(); if (me) saveMember({ ...me, deal_profile: r.deal_profile }); onMemberUpdate && onMemberUpdate({ ...member, deal_profile: r.deal_profile });
+      flash(true, "Saved — Dr. Merritt and the team can see this."); const nd = await load(); setOpen(r.project.id);
     } catch (e) { flash(false, e.message); } finally { setBusy(false); }
   };
-  const addLink = async () => {
-    if (!linkUrl.trim()) return;
-    try { const r = await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "deal_file_add", title: linkTitle.trim() || linkUrl.trim(), url: linkUrl.trim(), kind: "link" }) }); setFiles([r.file, ...files]); setLinkTitle(""); setLinkUrl(""); }
-    catch (e) { flash(false, e.message); }
+  const removeProject = async (p) => {
+    if (!window.confirm(`Remove ${p.name} and its documents?`)) return;
+    try { await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "project_remove", id: p.id }) }); setOpen(null); await load(); } catch (e) { flash(false, e.message); }
   };
-  const remove = async (f) => { try { await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "deal_file_remove", id: f.id }) }); setFiles(files.filter(x => x.id !== f.id)); } catch (e) { flash(false, e.message); } };
   const field = (label, k, props = {}) => (
     <div>
       <label style={lbl}>{label}</label>
@@ -171,41 +261,53 @@ export function DealProfileCard({ member, onMemberUpdate }) {
     </div>
   );
   const row = (a, b) => <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>{a}{b}</div>;
+  const projects = data?.projects || []; const files = data?.files || [];
+  const used = Number(data?.used_bytes || 0), quota = Number(data?.quota_bytes || 50 * 1024 ** 3);
+  const current = open && open !== "new" ? projects.find(p => p.id === open) : null;
   return (
-    <div style={{ background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
-      <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Your Deal</div>
-      <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 16, lineHeight: 1.7 }}>The deal you are working on, in enough detail that Dr. Merritt can refer to it before your advisory calls and direct messages. Fill in what you have; update it as the deal moves.{d0.updated_at ? ` Last updated ${new Date(d0.updated_at).toLocaleDateString()}.` : ""}</div>
-      {row(field("Project name", "name", { placeholder: "e.g. 9410 Hough" }), field("Location", "location", { placeholder: "City, state" }))}
-      {row(<div><label style={lbl}>Phase</label><select style={{ ...inp, cursor: "pointer" }} value={d.phase} onChange={set("phase")}><option value="">Choose…</option>{DEAL_PHASES.map(p => <option key={p} value={p}>{p}</option>)}</select></div>, field("Product", "product", { placeholder: "Affordable · mixed-income · workforce · mixed-use" }))}
-      {row(field("Units", "units", { placeholder: "e.g. 116", max: 40 }), field("Total development cost", "tdc", { placeholder: "e.g. $47M", max: 60 }))}
-      {row(field("Site control", "site_control", { placeholder: "LOI · option · under contract · owned · none yet" }), field("Financing path", "financing_path", { placeholder: "9% · 4% + bonds · non-LIHTC · undecided" }))}
-      {field("Sources committed", "sources_committed", { rows: 2, placeholder: "What is in: lender, equity, subsidy awards, amounts" })}
-      {field("Sources still needed", "sources_missing", { rows: 2, placeholder: "What is not: the gap, who you are talking to" })}
-      {row(field("Gap", "gap", { placeholder: "e.g. $6M", max: 60 }), field("Timeline", "timeline", { placeholder: "Target closing, application dates", max: 200 }))}
-      {field("Team", "team", { rows: 2, placeholder: "Architect, GC, attorney, property manager, consultants", max: 400 })}
-      {field("The one thing in the way right now", "blocker", { rows: 2 })}
-      {field("What you want from Dr. Merritt on this deal", "wants", { rows: 2 })}
-      <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginTop: 4 }}>
-        <button style={{ ...btnRed, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={save}>Save deal</button>
-        {msg && <span style={{ color: msg.ok ? "#22c55e" : "#ff6b6b", fontSize: 13, fontFamily: font }}>{msg.text}</span>}
+    <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
+        <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font }}>Your projects</div>
+        <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font }}>{fmtBytes(used)} of {fmtBytes(quota)} used</div>
       </div>
-      <div style={{ borderTop: "1px solid #1e0000", marginTop: 22, paddingTop: 18 }}>
-        <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Documents &amp; links</div>
-        <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 12, lineHeight: 1.7 }}>Pro forma, site plan, term sheets, the rent roll — upload them, or paste a link to a shared folder. Only you and the team can open them.</div>
-        {files.map(f => (
-          <div key={f.id} style={{ display: "flex", gap: 10, alignItems: "center", padding: "7px 0", borderBottom: "1px solid #1a0a0a", fontSize: 13, fontFamily: font }}>
-            <a href={f.url} target="_blank" rel="noreferrer" style={{ color: "#e08a8a", fontWeight: 700, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.title || f.url}</a>
-            <span style={{ color: "var(--gu-faint)", fontSize: 11 }}>{f.kind === "link" ? "link" : "file"} · {new Date(f.created_at).toLocaleDateString()}</span>
-            <button onClick={() => remove(f)} style={{ background: "none", border: "none", color: "var(--gu-faint)", cursor: "pointer", fontSize: 11, fontFamily: font }}>remove</button>
-          </div>
-        ))}
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
-          <label style={{ ...btnGhost, cursor: "pointer", display: "inline-block" }}>{busy ? "Working…" : "Upload a document"}<input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.pptx,.csv,.png,.jpg,.jpeg" style={{ display: "none" }} onChange={e => upload(e.target.files?.[0])} /></label>
-          <input style={{ ...inp, marginBottom: 0, flex: "1 1 140px" }} value={linkTitle} onChange={e => setLinkTitle(e.target.value)} placeholder="Link name" maxLength={160} />
-          <input style={{ ...inp, marginBottom: 0, flex: "2 1 220px" }} value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="https://…" maxLength={600} />
-          <button style={btnGhost} onClick={addLink}>Add link</button>
+      <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 16, lineHeight: 1.7 }}>Each project you are working on, in enough detail that Dr. Merritt can refer to it before your calls and messages — with that project's documents. Update it as the deal moves.</div>
+      {!data ? <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>Loading…</div> : (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
+          {projects.map(p => {
+            const on = open === p.id; const n = files.filter(f => f.project_id === p.id).length;
+            return <button key={p.id} onClick={() => on ? setOpen(null) : edit(p)} style={{ background: on ? "#b80101" : "var(--gu-card2)", color: on ? "#fff" : "var(--gu-text2)", border: "1px solid " + (on ? "#b80101" : "var(--gu-border)"), borderRadius: 999, padding: "9px 16px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>{p.name}{n ? <span style={{ opacity: 0.75, fontWeight: 600 }}> · {n} doc{n === 1 ? "" : "s"}</span> : null}</button>;
+          })}
+          <button onClick={() => { setOpen("new"); setD(DEAL_BLANK); }} style={{ background: "transparent", color: open === "new" ? "#fff" : "var(--gu-text2)", border: "1px dashed " + (open === "new" ? "#b80101" : "var(--gu-border)"), borderRadius: 999, padding: "9px 16px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>+ Add a project</button>
         </div>
-      </div>
+      )}
+      {open && (
+        <div style={{ background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 14, padding: "20px 22px" }}>
+          <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 22, color: "var(--gu-text)", marginBottom: 14 }}>{open === "new" ? "New project" : current?.name}</div>
+          {row(field("Project name", "name", { placeholder: "e.g. 9410 Hough" }), field("Location", "location", { placeholder: "City, state" }))}
+          {row(<div><label style={lbl}>Phase</label><select style={{ ...inp, cursor: "pointer" }} value={d.phase} onChange={set("phase")}><option value="">Choose…</option>{DEAL_PHASES.map(p => <option key={p} value={p}>{p}</option>)}</select></div>, field("Product", "product", { placeholder: "Affordable · mixed-income · workforce · mixed-use" }))}
+          {row(field("Units", "units", { placeholder: "e.g. 116", max: 40 }), field("Total development cost", "tdc", { placeholder: "e.g. $47M", max: 60 }))}
+          {row(field("Site control", "site_control", { placeholder: "LOI · option · under contract · owned · none yet" }), field("Financing path", "financing_path", { placeholder: "9% · 4% + bonds · non-LIHTC · undecided" }))}
+          {field("Sources committed", "sources_committed", { rows: 2, placeholder: "What is in: lender, equity, subsidy awards, amounts" })}
+          {field("Sources still needed", "sources_missing", { rows: 2, placeholder: "What is not: the gap, who you are talking to" })}
+          {row(field("Gap", "gap", { placeholder: "e.g. $6M", max: 60 }), field("Timeline", "timeline", { placeholder: "Target closing, application dates", max: 200 }))}
+          {field("Team", "team", { rows: 2, placeholder: "Architect, GC, attorney, property manager, consultants", max: 400 })}
+          {field("The one thing in the way right now", "blocker", { rows: 2 })}
+          {field("What you want from Dr. Merritt on this project", "wants", { rows: 2 })}
+          <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginTop: 4 }}>
+            <button style={{ ...btnRed, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={save}>{open === "new" ? "Add project" : "Save project"}</button>
+            {current && <button onClick={() => removeProject(current)} style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 12.5, fontFamily: font, fontWeight: 700 }}>Remove project</button>}
+            {msg && <span style={{ color: msg.ok ? "#22c55e" : "#ff6b6b", fontSize: 13, fontFamily: font }}>{msg.text}</span>}
+          </div>
+          {current ? (
+            <div style={{ borderTop: "1px solid var(--gu-border2)", marginTop: 22, paddingTop: 18 }}>
+              <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Deal room</div>
+              <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 12, lineHeight: 1.7 }}>Drop this project's documents into the folder they belong in — upload (up to 5 GB a file), drag files onto a folder, or drop a link to a shared folder. Only you and Dr. Merritt's team can open them.</div>
+              <DataRoom project={current} files={files.filter(f => f.project_id === current.id)} used={used} quota={quota} onChange={load} flash={flash} />
+            </div>
+          ) : <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginTop: 16 }}>Add the project first — then its deal room opens for documents and links.</div>}
+        </div>
+      )}
+      {!open && msg && <div style={{ color: msg.ok ? "#22c55e" : "#ff6b6b", fontSize: 13, fontFamily: font }}>{msg.text}</div>}
     </div>
   );
 }
@@ -2223,6 +2325,18 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
             )}
           </div>
         )}
+        {isAdmin && dmThreads.some(t => t.advisory) && (
+          <>
+            <div style={{ fontSize: 10, color: "#e8b4b4", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "0 12px", margin: "20px 0 10px" }}>Advisory Clients</div>
+            {dmThreads.filter(t => t.advisory).map(t => (
+              <button key={"adv" + t.id} onClick={() => { setDmTarget(t); setDmOpen(true); setSidebarOpen(false); setDmThreads(ts => ts.map(x => x.id === t.id ? { ...x, unread: 0 } : x)); }}
+                style={{ display: "flex", alignItems: "center", gap: 4, width: "100%", textAlign: "left", background: dmOpen && dmTarget?.id === t.id ? "#b80101" : "transparent", border: "none", borderRadius: 6, padding: "9px 12px", cursor: "pointer", marginBottom: 2 }}>
+                <span style={{ color: dmOpen && dmTarget?.id === t.id ? "var(--gu-text2)" : "var(--gu-muted)", fontWeight: 700, fontSize: 13.5, fontFamily: font }}><Handshake size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> {t.name}</span>
+                {!(dmOpen && dmTarget?.id === t.id) && t.unread > 0 && <span style={{ marginLeft: "auto", background: "#b80101", color: "#fff", borderRadius: 99, fontSize: 10.5, fontWeight: 800, fontFamily: font, padding: "1px 7px", minWidth: 18, textAlign: "center", flexShrink: 0 }}>{t.unread}</span>}
+              </button>
+            ))}
+          </>
+        )}
         {canDm && (
           <>
             <div style={{ fontSize: 10, color: "#e8b4b4", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "0 12px", margin: "20px 0 10px" }}>Direct Messages</div>
@@ -2232,8 +2346,8 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
                 <span style={{ color: dmOpen ? "var(--gu-text2)" : "var(--gu-muted)", fontWeight: 700, fontSize: 13.5, fontFamily: font }}><Mail size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> Dr. Merritt & Team</span>
               </button>
             )}
-            {isAdmin && dmThreads.length === 0 && <div style={{ color: "#c89a9a", fontSize: 12, fontFamily: font, padding: "0 12px" }}>No member DMs yet.</div>}
-            {isAdmin && dmThreads.map(t => (
+            {isAdmin && dmThreads.filter(t => !t.advisory).length === 0 && <div style={{ color: "#c89a9a", fontSize: 12, fontFamily: font, padding: "0 12px" }}>No member DMs yet.</div>}
+            {isAdmin && dmThreads.filter(t => !t.advisory).map(t => (
               <button key={t.id} onClick={() => { setDmTarget(t); setDmOpen(true); setSidebarOpen(false); setDmThreads(ts => ts.map(x => x.id === t.id ? { ...x, unread: 0 } : x)); }}
                 style={{ display: "flex", alignItems: "center", gap: 4, width: "100%", textAlign: "left", background: dmOpen && dmTarget?.id === t.id ? "#b80101" : "transparent", border: "none", borderRadius: 6, padding: "9px 12px", cursor: "pointer", marginBottom: 2 }}>
                 <span style={{ color: dmOpen && dmTarget?.id === t.id ? "var(--gu-text2)" : "var(--gu-muted)", fontWeight: 700, fontSize: 13.5, fontFamily: font }}><Mail size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> {t.name}</span>
@@ -2256,7 +2370,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
               <button className="community-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: "none", background: "transparent", border: "1px solid #2a0000", borderRadius: 6, color: "var(--gu-muted)", padding: "6px 10px", cursor: "pointer", fontFamily: font }}><Menu size={15} /></button>
               <div>
                 <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font }}><Mail size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }} /> {isAdmin ? (dmTarget?.name || "Direct Messages") : "Dr. Merritt & Team"}</div>
-                <div style={{ color: "var(--gu-muted2)", fontSize: 12, fontFamily: font }}>{isAdmin ? "Private thread with this member." : (<span>Quick questions welcome — replies within 2 business days (Mon–Fri). Deal-specific work (your numbers, your gap, your structure) belongs in your advisory calls or with Dr. Merritt on the whole deal — <a href="/contact" onClick={() => { try { const t = localStorage.getItem("guToken"); if (t) fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + t }, body: JSON.stringify({ action: "deal_lead", source: "dm_redirect" }) }); } catch {} }} style={{ color: "#b80101", fontWeight: 700 }}>send it to us here →</a></span>)}</div>
+                <div style={{ color: "var(--gu-muted2)", fontSize: 12, fontFamily: font }}>{isAdmin ? (dmTarget?.advisory ? "Advisory client — this is their direct line; it also shows on their tab on the Advisory page." : "Private thread with this member.") : (<span>Quick questions welcome — replies within 2 business days (Mon–Fri). Deal-specific work (your numbers, your gap, your structure) belongs in your advisory calls or with Dr. Merritt on the whole deal — <a href="/contact" onClick={() => { try { const t = localStorage.getItem("guToken"); if (t) fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + t }, body: JSON.stringify({ action: "deal_lead", source: "dm_redirect" }) }); } catch {} }} style={{ color: "#b80101", fontWeight: 700 }}>send it to us here →</a></span>)}</div>
                 {isAdmin && dmTarget?.deal_profile && (() => { const dp = dmTarget.deal_profile; const bits = [dp.name, dp.location, dp.phase, dp.units && `${dp.units} units`, dp.tdc && `TDC ${dp.tdc}`, dp.gap && `gap ${dp.gap}`].filter(Boolean); return (
                   <div style={{ color: "#e08a8a", fontSize: 12, fontFamily: font, marginTop: 4 }}>Their deal: {bits.join(" · ")}{dp.blocker ? ` — "${dp.blocker.slice(0, 120)}"` : ""}</div>
                 ); })()}
@@ -3042,35 +3156,60 @@ export function ResourcesPage({ member, onUpgrade }) {
 
 // ─── ADVISORY WORKSPACE (Senior Advisor retainer clients) ───────────────────
 
+// The direct line: the client's private DM thread with Dr. Merritt and the
+// team — the same thread as Direct Messages in Community, so it carries unread
+// bubbles, pop-ups and email like everything else. The team opens it from the
+// client's tab on the advisory page.
+export function DirectLine({ targetId, isAdmin, title, subtitle, height = "min(70vh, 620px)", otherName }) {
+  const [msgs, setMsgs] = useState([]); const [draft, setDraft] = useState(""); const [err, setErr] = useState(null);
+  const feedRef = useRef(null);
+  const load = useCallback(() => api("/api/community?resource=dm" + (isAdmin && targetId ? "&user=" + targetId : "")).then(d => { setMsgs(d.messages || []); setErr(null); }).catch(e => setErr(e.message)), [targetId, isAdmin]);
+  useEffect(() => { load(); return pollVisible(load, 20000); }, [load]);
+  useEffect(() => { if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight; }, [msgs.length]);
+  const send = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const text = draft.trim(); if (!text) return; setDraft("");
+    try { await api("/api/community", { method: "POST", body: JSON.stringify({ dm: true, body: text, user_id: isAdmin ? targetId : undefined }) }); await load(); }
+    catch (e2) { setErr(e2.message); setDraft(text); }
+  };
+  return (
+    <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, display: "flex", flexDirection: "column", height, position: "sticky", top: 90 }}>
+      <div style={{ padding: "18px 22px", borderBottom: "1px solid var(--gu-border2)" }}>
+        <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15, fontFamily: font }}>{title}</div>
+        <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font }}>{subtitle}</div>
+      </div>
+      <div ref={feedRef} style={{ flex: 1, overflowY: "auto", padding: "16px 18px" }}>
+        {msgs.length === 0 && <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, textAlign: "center", marginTop: 40 }}>{isAdmin ? "No messages yet." : "Start the conversation — what are you working on?"}</div>}
+        {msgs.map(m => { const mine = m.from_admin === !!isAdmin; return (
+          <div key={m.id} style={{ display: "flex", justifyContent: mine ? "flex-end" : "flex-start", marginBottom: 10 }}>
+            <div style={{ maxWidth: "85%", background: mine ? "#b80101" : "#1a0a0a", border: mine ? "none" : "1px solid #3a1515", borderRadius: mine ? "16px 16px 4px 16px" : "16px 16px 16px 4px", padding: "10px 14px" }}>
+              {!mine && <div style={{ color: "#e0a0a0", fontSize: 10.5, fontWeight: 800, fontFamily: font, letterSpacing: "1px", textTransform: "uppercase", marginBottom: 4 }}>{m.from_admin ? "Dr. Merritt & team" : (otherName || "Client")}</div>}
+              <div style={{ color: mine ? "#ffffff" : "#f0e0e0", fontSize: 13.5, fontFamily: font, lineHeight: 1.65, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.body}</div>
+              <div style={{ color: mine ? "rgba(255,255,255,0.75)" : "#b08c8c", fontSize: 10, fontFamily: font, marginTop: 5, textAlign: "right" }}>{timeAgo(m.created_at)}</div>
+            </div>
+          </div>
+        ); })}
+      </div>
+      {err && <div style={{ color: "#ff6b6b", fontSize: 12, fontFamily: font, padding: "0 18px 6px" }}>{err}</div>}
+      <form onSubmit={send} style={{ display: "flex", gap: 8, padding: "12px 14px 16px", borderTop: "1px solid var(--gu-border2)", alignItems: "flex-end" }}>
+        <GrowingInput style={{ ...inp, marginBottom: 0, flex: 1 }} value={draft} onChange={e => setDraft(e.target.value)} onSubmit={() => send()} placeholder={isAdmin ? `Reply to ${otherName || "client"}…` : "Message Dr. Merritt & team…"} maxLength={4000} />
+        <button type="submit" style={{ ...btnRed, padding: "12px 16px" }}>Send</button>
+      </form>
+    </div>
+  );
+}
+
 export function RetainerPage({ member, setActivePage }) {
   const [data, setData] = useState(undefined);
-  const [draft, setDraft] = useState("");
-  const [file, setFile] = useState({ title: "", url: "" });
   const [msg, setMsg] = useState(null);
-  const feedRef = useRef(null);
+  const [meetingOpen, setMeetingOpen] = useState(false);
+  const [meetingNote, setMeetingNote] = useState("");
 
   const load = () => api("/api/retainers").then(d => setData(d.retainer)).catch(() => setData(null));
   useEffect(() => { load(); return pollVisible(load, 30000); }, [member?.id]);
-  useEffect(() => { if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight; }, [data?.messages?.length]);
 
-  const send = async (e) => {
-    e.preventDefault();
-    const body = draft.trim();
-    if (!body) return;
-    setDraft("");
-    try { await api("/api/retainers", { method: "POST", body: JSON.stringify({ action: "message", body }) }); await load(); }
-    catch (err) { setMsg(err.message); }
-  };
-  const addFile = async (e) => {
-    e.preventDefault();
-    if (!file.title) return;
-    try {
-      await api("/api/retainers", { method: "POST", body: JSON.stringify({ action: "add_file", ...file }) });
-      setFile({ title: "", url: "" }); await load();
-    } catch (err) { setMsg(err.message); }
-  };
-  const requestTime = async () => {
-    try { await api("/api/retainers", { method: "POST", body: JSON.stringify({ action: "request_time", note: "" }) }); setMsg("Request sent — the team will reach out to schedule."); }
+  const requestMeeting = async () => {
+    try { await api("/api/retainers", { method: "POST", body: JSON.stringify({ action: "request_meeting", note: meetingNote }) }); setMsg("Request sent — Dr. Merritt's team will reach out with times."); setMeetingOpen(false); setMeetingNote(""); }
     catch (err) { setMsg(err.message); }
   };
 
@@ -3153,99 +3292,378 @@ export function RetainerPage({ member, setActivePage }) {
   const used = Number(data.used_this_month || 0);
   const total = Number(data.hours_per_month);
   const pct = Math.min(100, Math.round((used / total) * 100));
+  const engagement = (data.files || []).filter(f => f.kind === "engagement");
+  const shared = (data.files || []).filter(f => f.kind !== "engagement");
+  const row = (f) => (
+    <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid var(--gu-border2)" }}>
+      <FileTextIcon />
+      <span style={{ color: "var(--gu-text2)", fontSize: 13.5, fontFamily: font, fontWeight: 600, flex: 1 }}>{f.title}</span>
+      {f.url && <a href={f.url} target="_blank" rel="noreferrer" style={{ color: "#e08a8a", fontSize: 12.5, fontFamily: font, fontWeight: 800, textDecoration: "none" }}>Open ↗</a>}
+    </div>
+  );
 
   return (
     <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(20px,5vw,60px) 70px" }}>
-      <div style={{ maxWidth: 1080, margin: "0 auto" }}>
+      <div style={{ maxWidth: 1120, margin: "0 auto" }}>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Senior Advisor Retainer</div>
         <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4.5vw,42px)", color: "var(--gu-text)", marginBottom: 28 }}>Your Advisory Workspace</h1>
         {msg && <div style={{ color: "#22c55e", fontSize: 13, fontFamily: font, marginBottom: 16 }}>{msg}</div>}
 
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(280px,340px)", gap: 20, alignItems: "start" }} className="ret-grid">
-          {/* Left: hours + files */}
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(300px,360px)", gap: 20, alignItems: "start" }} className="ret-grid">
           <div>
+            {/* Hours */}
             <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "26px 28px", marginBottom: 18 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
                 <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font }}>Hours this month</div>
                 <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>${Number(data.monthly_amount).toLocaleString()}/mo · {total} hrs</div>
               </div>
               <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 12 }}>
-                <span style={{ fontFamily: serif, fontWeight: 700, fontSize: 44, color: "var(--gu-text)", lineHeight: 1 }}>{(total - used).toFixed(1)}</span>
+                <span style={{ fontFamily: serif, fontWeight: 700, fontSize: 44, color: "var(--gu-text)", lineHeight: 1 }}>{Math.max(0, total - used).toFixed(1)}</span>
                 <span style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font }}>of {total} hours remaining</span>
               </div>
               <div style={{ height: 10, background: "var(--gu-card2)", borderRadius: 99, overflow: "hidden", marginBottom: 16 }}>
                 <div style={{ width: `${pct}%`, height: "100%", background: "#b80101", borderRadius: 99 }} />
               </div>
-              <button onClick={requestTime} style={btnRed}>Request Time →</button>
+              <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, marginBottom: 14 }}>Dr. Merritt works on your projects behind the scenes and logs her hours here. Want time together on a call? Ask for a meeting.</div>
+              {!meetingOpen ? <button onClick={() => setMeetingOpen(true)} style={btnRed}>Request a meeting →</button> : (
+                <div style={{ background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 12, padding: 14 }}>
+                  <label style={lbl}>What would you like to cover?</label>
+                  <textarea style={{ ...inp, resize: "vertical", marginBottom: 10 }} rows={3} value={meetingNote} onChange={e => setMeetingNote(e.target.value)} maxLength={2000} placeholder="The lender's counter, the revised pro forma, next steps on site control…" />
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <button onClick={requestMeeting} style={btnRed}>Send request</button>
+                    <button onClick={() => setMeetingOpen(false)} style={btnGhost}>Cancel</button>
+                  </div>
+                </div>
+              )}
               {data.log?.length > 0 && (
                 <div style={{ marginTop: 20, borderTop: "1px solid var(--gu-border2)", paddingTop: 14 }}>
-                  <div style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>Recent hours</div>
+                  <div style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>Hours logged</div>
                   {data.log.map((l, i) => (
-                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: i < data.log.length - 1 ? "1px solid var(--gu-border2)" : "none" }}>
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "6px 0", borderBottom: i < data.log.length - 1 ? "1px solid var(--gu-border2)" : "none" }}>
                       <span style={{ color: "var(--gu-body)", fontSize: 13, fontFamily: font }}>{l.note || "Advisory time"}</span>
-                      <span style={{ color: "var(--gu-text2)", fontSize: 13, fontFamily: font, fontWeight: 700 }}>{Number(l.hours)} hrs · {new Date(l.logged_on).toLocaleDateString()}</span>
+                      <span style={{ color: "var(--gu-text2)", fontSize: 13, fontFamily: font, fontWeight: 700, whiteSpace: "nowrap" }}>{Number(l.hours)} hrs · {new Date(l.logged_on).toLocaleDateString()}</span>
                     </div>
                   ))}
                 </div>
               )}
             </div>
 
-            {(() => {
-              const engagement = (data.files || []).filter(f => f.kind === "engagement");
-              const project = (data.files || []).filter(f => f.kind !== "engagement");
-              const row = (f) => (
-                <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid var(--gu-border2)" }}>
-                  <FileTextIcon />
-                  <span style={{ color: "var(--gu-text2)", fontSize: 13.5, fontFamily: font, fontWeight: 600, flex: 1 }}>{f.title}</span>
-                  {f.url && <a href={f.url} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontSize: 12.5, fontFamily: font, fontWeight: 800, textDecoration: "none" }}>Open ↗</a>}
-                </div>
-              );
-              return (<>
-              <div style={{ background: "linear-gradient(135deg, #111114, var(--gu-card))", border: "1px solid #b9bec740", borderRadius: 16, padding: "26px 28px", marginBottom: 18 }}>
-                <div style={{ fontSize: 9, color: "#b9bec7", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Engagement Documents</div>
-                <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: engagement.length ? 14 : 0 }}>The paperwork of the engagement itself — your agreement, scope, and anything the team formalizes. Both sides see everything here.</p>
-                {engagement.length ? engagement.map(row) : <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font, marginTop: 10 }}>No engagement documents yet — the team adds them here as they're executed.</div>}
-              </div>
-              <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "26px 28px" }}>
-                <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Project Documents</div>
-                <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 14 }}>Send document links back and forth — deal docs, models, drafts, anything you want Dr. Merritt to review, and anything she sends back.</p>
-                <form onSubmit={addFile} style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
-                  <input style={{ ...inp, marginBottom: 0, flex: 1, minWidth: 150 }} value={file.title} onChange={e => setFile({ ...file, title: e.target.value })} placeholder="Document name" />
-                  <input style={{ ...inp, marginBottom: 0, flex: 1, minWidth: 180 }} value={file.url} onChange={e => setFile({ ...file, url: e.target.value })} placeholder="Link (Drive, Dropbox…)" />
-                  <button type="submit" style={btnRed}>Add</button>
-                </form>
-                {project.length ? project.map(row) : <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>Nothing shared yet.</div>}
-              </div>
-              </>);
-            })()}
+            {/* Engagement documents */}
+            <div style={{ background: "linear-gradient(135deg, #111114, var(--gu-card))", border: "1px solid #b9bec740", borderRadius: 16, padding: "26px 28px", marginBottom: 18 }}>
+              <div style={{ fontSize: 9, color: "#b9bec7", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Engagement Documents</div>
+              <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: engagement.length ? 14 : 0 }}>The paperwork of the engagement itself — your agreement, scope, and anything the team formalizes. Both sides see everything here.</p>
+              {engagement.length ? engagement.map(row) : <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font, marginTop: 10 }}>No engagement documents yet — the team adds them here as they're executed.</div>}
+              {shared.length > 0 && (<>
+                <div style={{ fontSize: 9, color: "#b9bec7", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, margin: "18px 0 6px" }}>From Dr. Merritt</div>
+                {shared.map(row)}
+              </>)}
+            </div>
+
+            {/* Projects and their deal rooms */}
+            <DealProfileCard member={member} />
           </div>
 
           {/* Right: direct line */}
-          <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, display: "flex", flexDirection: "column", height: "min(70vh, 620px)", position: "sticky", top: 90 }}>
-            <div style={{ padding: "18px 22px", borderBottom: "1px solid var(--gu-border2)" }}>
-              <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15, fontFamily: font }}>Direct line</div>
-              <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font }}>Dr. Merritt & the GroundUp team</div>
-            </div>
-            <div ref={feedRef} style={{ flex: 1, overflowY: "auto", padding: "16px 18px" }}>
-              {(!data.messages || data.messages.length === 0) && <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font, textAlign: "center", marginTop: 40 }}>Start the conversation — what are you working on?</div>}
-              {data.messages?.map(m => (
-                <div key={m.id} style={{ display: "flex", justifyContent: m.from_admin ? "flex-start" : "flex-end", marginBottom: 10 }}>
-                  <div style={{ maxWidth: "85%", background: m.from_admin ? "var(--gu-red-tint)" : "var(--gu-card2)", border: "1px solid " + (m.from_admin ? "#b8010130" : "var(--gu-border)"), borderRadius: 12, padding: "10px 14px" }}>
-                    {m.from_admin && <div style={{ marginBottom: 4 }}><span style={{ background: "#b80101", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, fontFamily: font, letterSpacing: "1px" }}>TEAM</span></div>}
-                    <div style={{ color: "var(--gu-body)", fontSize: 13.5, fontFamily: font, lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.body}</div>
-                    <div style={{ color: "var(--gu-faint)", fontSize: 10, fontFamily: font, marginTop: 4 }}>{timeAgo(m.created_at)}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <form onSubmit={send} style={{ display: "flex", gap: 8, padding: "12px 14px 16px", borderTop: "1px solid var(--gu-border2)" }}>
-              <input style={{ ...inp, marginBottom: 0, flex: 1 }} value={draft} onChange={e => setDraft(e.target.value)} placeholder="Message the team…" maxLength={4000} />
-              <button type="submit" style={{ ...btnRed, padding: "12px 16px" }}>↑</button>
-            </form>
-          </div>
+          <DirectLine title="Direct line" subtitle="Dr. Merritt & the GroundUp team — also in Community under Direct Messages" />
         </div>
       </div>
       <style>{`@media (max-width: 860px) { .ret-grid { grid-template-columns: 1fr !important; } }`}</style>
+    </div>
+  );
+}
+
+// ─── ADVISORY — Dr. Merritt's side ──────────────────────────────────────────
+// Her own page, built like the client's workspace: one tab per client, and on
+// that tab the whole engagement — the timesheet, the engagement documents, the
+// client's projects and deal rooms, her private notes, and the direct line.
+export function AdvisoryAdminPage() {
+  const [data, setData] = useState(null);
+  const [tab, setTab] = useState(null);
+  const [notes, setNotes] = useState({});
+  const [logForm, setLogForm] = useState({});
+  const [docForm, setDocForm] = useState({});
+  const [openProject, setOpenProject] = useState({});
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 6000); };
+  const load = () => api("/api/retainers?admin=1").then(d => { setData(d); const n = {}; for (const r of d.retainers || []) n[r.id] = r.private_notes || ""; setNotes(prev => ({ ...n, ...prev })); }).catch(e => setMsg({ ok: false, text: e.message }));
+  useEffect(() => { load(); return pollVisible(load, 30000); }, []);
+  useEffect(() => { if (data && tab === null) { const first = (data.retainers || []).find(r => r.status === "active") || (data.retainers || [])[0]; if (first) setTab(first.id); } }, [data, tab]);
+  const act = async (fn, ok) => { try { await fn(); if (ok) flash(true, ok); await load(); } catch (e) { flash(false, e.message); } };
+  const post = (body) => api("/api/retainers", { method: "POST", body: JSON.stringify(body) });
+  const money = (n) => "$" + Number(n || 0).toLocaleString();
+  const eyebrow = (t, color = "#b80101") => <div style={{ fontSize: 9, color, fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>{t}</div>;
+  const card = { background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "26px 28px", marginBottom: 18 };
+  const ghost = { ...btnGhost, color: "var(--gu-text2)", borderColor: "var(--gu-border)", padding: "9px 14px", fontSize: 12.5 };
+  const uploadDoc = async (r, kind, file) => {
+    if (!file) return; setBusy(true);
+    try {
+      const fd = new FormData(); fd.append("file", file);
+      const res = await guUpload("deal", fd, { Authorization: "Bearer " + getMemberToken() });
+      const u = await res.json(); if (!res.ok) throw new Error(u.error || "Upload failed");
+      await post({ action: "add_file", retainer_id: r.id, title: file.name, url: u.url, kind });
+      flash(true, "Shared — the client can open it."); await load();
+    } catch (e) { flash(false, e.message); } finally { setBusy(false); }
+  };
+  const addLink = (r, kind) => { const f = docForm[r.id + kind] || {}; if (!f.title || !f.url) return flash(false, "Name and link, please."); act(() => post({ action: "add_file", retainer_id: r.id, title: f.title, url: f.url, kind }).then(() => setDocForm({ ...docForm, [r.id + kind]: {} })), "Shared."); };
+  const logHours = (r) => { const f = logForm[r.id] || {}; if (!f.hours) return flash(false, "Enter the hours."); act(() => post({ action: "log_hours", retainer_id: r.id, hours: f.hours, note: f.note, logged_on: f.date || undefined }).then(() => setLogForm({ ...logForm, [r.id]: {} })), "Logged to the timesheet."); };
+
+  const retainers = data?.retainers || [];
+  const r = retainers.find(x => x.id === tab);
+  const docRow = (f, removable, rid) => (
+    <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid var(--gu-border2)" }}>
+      <FileTextIcon />
+      <span style={{ color: "var(--gu-text2)", fontSize: 13.5, fontFamily: font, fontWeight: 600, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.title}</span>
+      <span style={{ color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font }}>{new Date(f.created_at).toLocaleDateString()}</span>
+      {f.url && <a href={f.url} target="_blank" rel="noreferrer" style={{ color: "#e08a8a", fontSize: 12.5, fontFamily: font, fontWeight: 800, textDecoration: "none" }}>Open ↗</a>}
+      {removable && <button onClick={() => act(() => post({ action: "remove_file", retainer_id: rid, id: f.id }))} style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 11.5, fontFamily: font, fontWeight: 700 }}>remove</button>}
+    </div>
+  );
+  const addDocs = (rr, kind) => (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
+      <label style={{ ...ghost, display: "inline-block", cursor: busy ? "wait" : "pointer" }}>{busy ? "Uploading…" : "Upload"}<input type="file" accept={DEAL_ACCEPT} style={{ display: "none" }} onChange={e => { uploadDoc(rr, kind, e.target.files?.[0]); e.target.value = ""; }} /></label>
+      <input value={(docForm[rr.id + kind] || {}).title || ""} onChange={e => setDocForm({ ...docForm, [rr.id + kind]: { ...(docForm[rr.id + kind] || {}), title: e.target.value } })} placeholder="Document name" style={{ ...inp, marginBottom: 0, padding: "9px 11px", fontSize: 13, flex: "1 1 130px" }} />
+      <input value={(docForm[rr.id + kind] || {}).url || ""} onChange={e => setDocForm({ ...docForm, [rr.id + kind]: { ...(docForm[rr.id + kind] || {}), url: e.target.value } })} placeholder="or paste a link (Drive, DocuSign…)" style={{ ...inp, marginBottom: 0, padding: "9px 11px", fontSize: 13, flex: "2 1 200px" }} />
+      <button onClick={() => addLink(rr, kind)} style={ghost}>Add link</button>
+    </div>
+  );
+
+  return (
+    <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(20px,5vw,60px) 70px" }}>
+      <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Senior Advisor Retainer</div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 16, flexWrap: "wrap", marginBottom: 22 }}>
+          <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4.5vw,42px)", color: "var(--gu-text)", margin: 0 }}>Advisory Clients</h1>
+          {data && <span style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>{retainers.filter(x => x.status === "active").length} active · {money(data.mrr)}/mo</span>}
+          {msg && <span style={{ marginLeft: "auto", color: msg.ok ? "#22c55e" : "#ff6b6b", fontSize: 13, fontFamily: font }}>{msg.text}</span>}
+        </div>
+
+        {!data ? <div style={{ color: "var(--gu-muted)", fontFamily: font }}>Loading…</div> : retainers.length === 0 ? (
+          <div style={card}><div style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.7 }}>No advisory clients yet. Clients are added from Intake &amp; Bookings — invite someone after their intake call, and their tab appears here the moment they're set.</div></div>
+        ) : (<>
+          {/* One tab per client */}
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 22 }}>
+            {retainers.map(x => {
+              const on = tab === x.id; const pct = Math.min(100, Math.round(Number(x.used_this_month || 0) / Math.max(1, Number(x.hours_per_month)) * 100));
+              return (
+                <button key={x.id} onClick={() => setTab(x.id)} style={{ display: "flex", alignItems: "center", gap: 8, background: on ? "#b80101" : "var(--gu-card)", color: on ? "#fff" : "var(--gu-text2)", border: "1px solid " + (on ? "#b80101" : "var(--gu-border)"), borderRadius: 999, padding: "10px 18px", fontFamily: font, fontWeight: 800, fontSize: 13.5, cursor: "pointer" }}>
+                  {x.name}
+                  <span style={{ fontSize: 10, letterSpacing: "1px", opacity: 0.85, fontWeight: 800 }}>{x.status === "active" ? `${pct}%` : x.status.toUpperCase()}</span>
+                  {x.dm_unread > 0 && <span style={{ background: on ? "#fff" : "#b80101", color: on ? "#b80101" : "#fff", borderRadius: 99, fontSize: 10.5, fontWeight: 800, padding: "1px 7px" }}>{x.dm_unread}</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          {r && (() => {
+            const used = Number(r.used_this_month || 0); const total = Number(r.hours_per_month || 0); const pct = Math.min(100, Math.round(used / Math.max(1, total) * 100));
+            const engagement = (r.files || []).filter(f => f.kind === "engagement"); const shared = (r.files || []).filter(f => f.kind !== "engagement");
+            const projects = r.projects || []; const theirs = r.deal_files || [];
+            const usedBytes = theirs.reduce((a, f) => a + Number(f.size || 0), 0);
+            const pending = [];
+            for (const b of (data.bookings || []).filter(b => b.user_id === r.user_id && b.status === "awaiting_booking")) pending.push(`${b.label} paid ${new Date(b.created_at).toLocaleDateString()} — call not booked`);
+            if (r.status === "offered") pending.push("Invited — hasn't chosen a block yet");
+            if (r.dm_unread > 0) pending.push(`${r.dm_unread} unread in the direct line`);
+            const curProj = openProject[r.id] ?? (projects[0] && projects[0].id);
+            const proj = projects.find(p => p.id === curProj);
+            return (
+              <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(300px,360px)", gap: 20, alignItems: "start" }} className="ret-grid">
+                <div>
+                  {/* Who */}
+                  <div style={{ ...card, display: "flex", gap: 20, flexWrap: "wrap", alignItems: "flex-start" }}>
+                    <div style={{ flex: "1 1 260px", minWidth: 0 }}>
+                      <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "var(--gu-text)", lineHeight: 1.1 }}>{r.name}</div>
+                      <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, marginTop: 6 }}>{r.email} · {r.hours_per_month} hrs/mo · {money(r.monthly_amount)}/mo · since {new Date(r.started_at || r.created_at).toLocaleDateString(undefined, { month: "short", year: "numeric" })}</div>
+                      {r.notes && <div style={{ color: "var(--gu-body)", fontSize: 13, fontFamily: font, marginTop: 8 }}>{r.notes}</div>}
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 14 }}>
+                        {r.status !== "active" && <button onClick={() => act(() => post({ action: "update", id: r.id, status: "active" }), "Active — and an Owner.")} style={ghost}>Mark active</button>}
+                        {r.status === "active" && <button onClick={() => act(() => post({ action: "update", id: r.id, status: "paused" }), "Paused.")} style={ghost}>Pause</button>}
+                        <button onClick={() => { if (window.confirm(`End ${r.name}'s retainer?`)) act(() => post({ action: "update", id: r.id, status: "ended" }), "Ended."); }} style={{ ...ghost, color: "#e08a8a" }}>End</button>
+                      </div>
+                    </div>
+                    {pending.length > 0 && (
+                      <div style={{ flex: "0 1 280px", background: "var(--gu-red-tint)", border: "1px solid #b8010160", borderRadius: 12, padding: "12px 14px" }}>
+                        {eyebrow("Pending")}
+                        {pending.map((p, i) => <div key={i} style={{ color: "var(--gu-text2)", fontSize: 12.5, fontFamily: font, lineHeight: 1.6 }}>· {p}</div>)}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Timesheet */}
+                  <div style={card}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
+                      {eyebrow("Timesheet · this month")}
+                      <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>{money(r.monthly_amount)}/mo · {total} hrs</div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 12 }}>
+                      <span style={{ fontFamily: serif, fontWeight: 700, fontSize: 44, color: "var(--gu-text)", lineHeight: 1 }}>{used.toFixed(1)}</span>
+                      <span style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font }}>of {total} hours used · {Math.max(0, total - used).toFixed(1)} left</span>
+                    </div>
+                    <div style={{ height: 10, background: "var(--gu-card2)", borderRadius: 99, overflow: "hidden", marginBottom: 16 }}><div style={{ width: `${pct}%`, height: "100%", background: "#b80101", borderRadius: 99 }} /></div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                      <input type="number" step="0.25" min="0" placeholder="Hours" value={(logForm[r.id] || {}).hours || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), hours: e.target.value } })} style={{ ...inp, marginBottom: 0, width: 90, padding: "9px 11px", fontSize: 13 }} />
+                      <input type="date" value={(logForm[r.id] || {}).date || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), date: e.target.value } })} style={{ ...inp, marginBottom: 0, width: 150, padding: "9px 11px", fontSize: 13 }} />
+                      <input placeholder="What you worked on" value={(logForm[r.id] || {}).note || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), note: e.target.value } })} style={{ ...inp, marginBottom: 0, flex: "1 1 180px", padding: "9px 11px", fontSize: 13 }} />
+                      <button onClick={() => logHours(r)} style={btnRed}>Log hours</button>
+                    </div>
+                    <div style={{ marginTop: 16, borderTop: "1px solid var(--gu-border2)", paddingTop: 10 }}>
+                      {(r.log || []).length === 0 && <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>Nothing logged yet.</div>}
+                      {(r.log || []).map(l => (
+                        <div key={l.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "6px 0", borderBottom: "1px solid var(--gu-border2)" }}>
+                          <span style={{ color: "var(--gu-body)", fontSize: 13, fontFamily: font }}>{l.note || "Advisory time"}</span>
+                          <span style={{ color: "var(--gu-text2)", fontSize: 13, fontFamily: font, fontWeight: 700, whiteSpace: "nowrap" }}>{Number(l.hours)} hrs · {new Date(l.logged_on || l.created_at).toLocaleDateString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Engagement documents */}
+                  <div style={{ ...card, background: "linear-gradient(135deg, #111114, var(--gu-card))", border: "1px solid #b9bec740" }}>
+                    {eyebrow("Engagement Documents", "#b9bec7")}
+                    <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 10 }}>The agreement, the scope, anything formalized. Both sides see these.</p>
+                    {engagement.length ? engagement.map(f => docRow(f, true, r.id)) : <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>None yet.</div>}
+                    {addDocs(r, "engagement")}
+                    <div style={{ marginTop: 20 }}>
+                      {eyebrow("Sent to the client", "#b9bec7")}
+                      {shared.length ? shared.map(f => docRow(f, true, r.id)) : <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>Nothing yet — a model you built, a marked-up term sheet, a memo.</div>}
+                      {addDocs(r, "link")}
+                    </div>
+                  </div>
+
+                  {/* Their projects + deal rooms */}
+                  <div style={card}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
+                      {eyebrow("Their projects")}
+                      <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font }}>{fmtBytes(usedBytes)} of 50 GB used</div>
+                    </div>
+                    {projects.length === 0 ? <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>They haven't added a project yet.</div> : (<>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+                        {projects.map(p => { const on = p.id === curProj; const n = theirs.filter(f => f.project_id === p.id).length; return (
+                          <button key={p.id} onClick={() => setOpenProject({ ...openProject, [r.id]: p.id })} style={{ background: on ? "#b80101" : "var(--gu-card2)", color: on ? "#fff" : "var(--gu-text2)", border: "1px solid " + (on ? "#b80101" : "var(--gu-border)"), borderRadius: 999, padding: "9px 16px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>{p.name}{n ? <span style={{ opacity: 0.75, fontWeight: 600 }}> · {n} doc{n === 1 ? "" : "s"}</span> : null}</button>
+                        ); })}
+                      </div>
+                      {proj && (() => { const dp = proj.details || {}; return (
+                        <div style={{ background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 14, padding: "20px 22px" }}>
+                          <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 22, color: "var(--gu-text)", marginBottom: 4 }}>{proj.name}</div>
+                          <div style={{ color: "var(--gu-body)", fontSize: 13.5, fontFamily: font, lineHeight: 1.7 }}>
+                            {dealSummary(dp) && <div>{dealSummary(dp)}</div>}
+                            {dp.site_control && <div><span style={{ color: "var(--gu-muted)" }}>Site control:</span> {dp.site_control}</div>}
+                            {dp.sources_committed && <div><span style={{ color: "var(--gu-muted)" }}>Committed:</span> {dp.sources_committed}</div>}
+                            {dp.sources_missing && <div><span style={{ color: "var(--gu-muted)" }}>Still needed:</span> {dp.sources_missing}</div>}
+                            {dp.timeline && <div><span style={{ color: "var(--gu-muted)" }}>Timeline:</span> {dp.timeline}</div>}
+                            {dp.team && <div><span style={{ color: "var(--gu-muted)" }}>Team:</span> {dp.team}</div>}
+                            {dp.blocker && <div><span style={{ color: "var(--gu-muted)" }}>In the way:</span> {dp.blocker}</div>}
+                            {dp.wants && <div><span style={{ color: "var(--gu-muted)" }}>Wants from you:</span> {dp.wants}</div>}
+                            {proj.updated_at && <div style={{ color: "var(--gu-muted)", fontSize: 12, marginTop: 4 }}>Updated {new Date(proj.updated_at).toLocaleDateString()}</div>}
+                          </div>
+                          <div style={{ borderTop: "1px solid var(--gu-border2)", marginTop: 18, paddingTop: 16 }}>
+                            {eyebrow("Deal room")}
+                            <DataRoom compact project={proj} files={theirs.filter(f => f.project_id === proj.id)} used={usedBytes} quota={50 * 1024 ** 3} onChange={load} flash={flash} />
+                          </div>
+                        </div>
+                      ); })()}
+                    </>)}
+                  </div>
+
+                  {/* Private notes */}
+                  <div style={card}>
+                    {eyebrow("Private notes · yours only")}
+                    <textarea value={notes[r.id] ?? ""} onChange={e => setNotes({ ...notes, [r.id]: e.target.value })} rows={5} placeholder="What you think, what you're watching, what to raise next time. The client never sees this." style={{ ...inp, resize: "vertical", marginBottom: 10 }} />
+                    <button onClick={() => act(() => post({ action: "private_notes", id: r.id, notes: notes[r.id] || "" }), "Notes saved.")} style={ghost}>Save notes</button>
+                  </div>
+                </div>
+
+                <DirectLine key={r.user_id} isAdmin targetId={r.user_id} otherName={firstName(r.name)} title="Direct line" subtitle={`${r.name} — their DM thread, also under Advisory clients in Community`} />
+              </div>
+            );
+          })()}
+        </>)}
+      </div>
+      <style>{`@media (max-width: 860px) { .ret-grid { grid-template-columns: 1fr !important; } }`}</style>
+    </div>
+  );
+}
+
+// ─── INTAKE & BOOKINGS — the front door, kept apart from client work ────────
+export function BookingsAdminPage() {
+  const [data, setData] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [form, setForm] = useState({ user_id: "", hours_per_month: 10, monthly_amount: 5500, notes: "", status: "offered" });
+  const [callLink, setCallLink] = useState("");
+  const [msg, setMsg] = useState(null);
+  const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 6000); };
+  const load = () => api("/api/retainers?admin=1").then(d => { setData(d); if (d.call_link) setCallLink(d.call_link); }).catch(e => setMsg({ ok: false, text: e.message }));
+  useEffect(() => { load(); api("/api/users").then(d => setUsers(Array.isArray(d) ? d : d.users || [])).catch(() => {}); }, []);
+  const act = async (fn, ok) => { try { await fn(); if (ok) flash(true, ok); await load(); } catch (e) { flash(false, e.message); } };
+  const post = (body) => api("/api/retainers", { method: "POST", body: JSON.stringify(body) });
+  const eyebrow = (t) => <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>{t}</div>;
+  const card = { background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "26px 28px", marginBottom: 18 };
+  const ghost = { ...btnGhost, color: "var(--gu-text2)", borderColor: "var(--gu-border)", padding: "9px 14px", fontSize: 12.5 };
+  const bookings = data?.bookings || [];
+  const waiting = bookings.filter(b => b.status === "awaiting_booking");
+  const rest = bookings.filter(b => b.status !== "awaiting_booking");
+  const bookingRow = (b) => (
+    <div key={b.id} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", padding: "9px 0", borderBottom: "1px solid var(--gu-border2)", fontFamily: font, fontSize: 13 }}>
+      <span style={{ color: "var(--gu-text2)", fontWeight: 700 }}>{b.name}</span>
+      <span style={{ color: "var(--gu-muted)", fontSize: 12 }}>{b.email} · {b.label} · {new Date(b.created_at).toLocaleDateString()}{b.nudges ? ` · ${b.nudges} reminder${b.nudges > 1 ? "s" : ""}` : ""}</span>
+      <span style={{ marginLeft: "auto", fontSize: 10, letterSpacing: "1px", fontWeight: 800, color: b.status === "booked" ? "#22c55e" : b.status === "cancelled" ? "var(--gu-muted)" : "#e08a8a" }}>{String(b.status).replace("_", " ").toUpperCase()}</span>
+      {b.status === "awaiting_booking" && <button onClick={() => act(() => post({ action: "nudge_booking", id: b.id }), "Reminder sent.")} style={ghost}>Remind</button>}
+      {b.status === "awaiting_booking" && <button onClick={() => act(() => post({ action: "booking_status", id: b.id, status: "booked" }), "Marked booked.")} style={ghost}>Mark booked</button>}
+      {b.status === "booked" && <button onClick={() => act(() => post({ action: "booking_status", id: b.id, status: "awaiting_booking" }))} style={ghost}>Reopen</button>}
+    </div>
+  );
+  return (
+    <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(20px,5vw,60px) 70px" }}>
+      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Senior Advisor Retainer</div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 16, flexWrap: "wrap", marginBottom: 8 }}>
+          <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4.5vw,42px)", color: "var(--gu-text)", margin: 0 }}>Intake &amp; Bookings</h1>
+          {msg && <span style={{ marginLeft: "auto", color: msg.ok ? "#22c55e" : "#ff6b6b", fontSize: 13, fontFamily: font }}>{msg.text}</span>}
+        </div>
+        <p style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.7, maxWidth: 640, marginBottom: 28 }}>The front door: who has paid for an intake and still needs to book, the booking link they're sent to, and turning someone into an advisory client after the call. Client work lives on Advisory Clients.</p>
+        {!data ? <div style={{ color: "var(--gu-muted)", fontFamily: font }}>Loading…</div> : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 18, alignItems: "start" }}>
+            <div>
+              <div style={card}>
+                {eyebrow("Paid, not yet booked")}
+                {waiting.length === 0 ? <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>Everyone who paid has booked.</div> : waiting.map(bookingRow)}
+              </div>
+              <div style={card}>
+                {eyebrow("All bookings")}
+                {rest.length === 0 ? <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>Nothing yet.</div> : rest.map(bookingRow)}
+              </div>
+            </div>
+            <div>
+              <div style={card}>
+                {eyebrow("After the intake call: make them a client")}
+                <label style={lbl}>Member</label>
+                <select value={form.user_id} onChange={e => setForm({ ...form, user_id: e.target.value })} style={{ ...inp, marginBottom: 10, cursor: "pointer" }}>
+                  <option value="">Choose…</option>
+                  {users.filter(u => u.role !== "admin").map(u => <option key={u.id} value={u.id}>{u.name} — {u.email}</option>)}
+                </select>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                  <div><label style={lbl}>Hours / month</label><input type="number" value={form.hours_per_month} onChange={e => setForm({ ...form, hours_per_month: e.target.value })} style={inp} /></div>
+                  <div><label style={lbl}>Monthly amount ($)</label><input type="number" value={form.monthly_amount} onChange={e => setForm({ ...form, monthly_amount: e.target.value })} style={inp} /></div>
+                </div>
+                <label style={lbl}>How</label>
+                <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} style={{ ...inp, marginBottom: 10, cursor: "pointer" }}>
+                  <option value="offered">Invite them to choose a block and pay</option>
+                  <option value="active">Activate now (paid elsewhere) — makes them an Owner</option>
+                </select>
+                <label style={lbl}>Note for the client (optional)</label>
+                <input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Great talking today — here's what we discussed…" style={{ ...inp, marginBottom: 14 }} />
+                <button onClick={() => act(() => post({ action: "create", ...form }).then(() => setForm({ user_id: "", hours_per_month: 10, monthly_amount: 5500, notes: "", status: "offered" })), form.status === "offered" ? "Invitation sent — they choose a block and pay." : "Client added at Owner level — see Advisory Clients.")} style={btnRed}>{form.status === "offered" ? "Send invitation" : "Add client"}</button>
+              </div>
+              <div style={card}>
+                {eyebrow("Intake call booking link")}
+                <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, margin: "0 0 12px" }}>Dr. Merritt's Google Appointment or Calendly link. Someone who pays the intake is sent here to book; reminders use it too.</p>
+                <input value={callLink} onChange={e => setCallLink(e.target.value)} placeholder="https://calendar.app.google/…" style={{ ...inp, marginBottom: 12 }} />
+                <button onClick={() => act(() => post({ action: "set_call_link", url: callLink }), "Booking link saved.")} style={btnRed}>Save link</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

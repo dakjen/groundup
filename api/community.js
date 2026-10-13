@@ -254,12 +254,17 @@ export default async function handler(req, res) {
     // GET ?resource=dm-threads — admin: list members who have DM threads
     if (req.method === 'GET' && req.query.resource === 'dm-threads') {
       if (!isAdminReq) return res.status(403).json({ error: 'Admins only' });
+      // Advisory clients (active retainer) are listed even before they have
+      // written, so the team's "Advisory clients" section is complete.
       const threads = await sql`
-        SELECT u.id, u.name, u.tier, u.deal_profile, MAX(d.created_at) AS last_at, COUNT(*) AS msg_count,
-          COUNT(*) FILTER (WHERE d.from_admin = FALSE AND d.created_at > COALESCE(t.seen_at, ${new Date(0).toISOString()}))::int AS unread
-        FROM dms d JOIN users u ON u.id = d.user_id
+        SELECT u.id, u.name, u.tier, u.deal_profile, MAX(d.created_at) AS last_at, COUNT(d.id)::int AS msg_count,
+          COUNT(d.id) FILTER (WHERE d.from_admin = FALSE AND d.created_at > COALESCE(t.seen_at, ${new Date(0).toISOString()}))::int AS unread,
+          EXISTS (SELECT 1 FROM retainers r WHERE r.user_id = u.id AND r.status = 'active') AS advisory
+        FROM users u
+        LEFT JOIN dms d ON d.user_id = u.id
         LEFT JOIN thread_seen t ON t.user_id = ${user.id} AND t.kind = 'dm' AND t.ref_id = u.id
-        GROUP BY u.id, u.name, u.tier, u.deal_profile, t.seen_at ORDER BY last_at DESC LIMIT 100`;
+        WHERE d.id IS NOT NULL OR EXISTS (SELECT 1 FROM retainers r WHERE r.user_id = u.id AND r.status = 'active')
+        GROUP BY u.id, u.name, u.tier, u.deal_profile, t.seen_at ORDER BY last_at DESC NULLS LAST LIMIT 150`;
       return res.json({ threads });
     }
 
@@ -304,11 +309,13 @@ export default async function handler(req, res) {
         try {
           const [gina] = await sql`SELECT email FROM users WHERE badge = 'drmerritt' LIMIT 1`;
           const to = [...new Set([process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net', gina?.email].filter(Boolean))];
-          const html = `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New direct message</h2>
-             <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${user.name}</strong> (${user.email}, ${user.tier}) sent a DM:</p>
+          const [adv] = await sql`SELECT 1 AS x FROM retainers WHERE user_id = ${user.id} AND status = 'active' LIMIT 1`;
+          const who = adv ? 'Advisory client' : user.tier;
+          const html = `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${adv ? 'Message from an advisory client' : 'New direct message'}</h2>
+             <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${user.name}</strong> (${user.email}, ${who}) wrote:</p>
              <p style="color:#444444;font-size:14px;line-height:1.8;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;padding:14px 18px;">${text.slice(0, 500)}</p>
              <p style="color:#7a5050;font-size:12px;line-height:1.7;">The promise is a reply within 2 business days (Mon–Fri). Reply from the admin Community tab.</p>`;
-          for (const addr of to) await sendEmail(addr, `DM from ${user.name} (${user.tier})`, html);
+          for (const addr of to) await sendEmail(addr, `${adv ? 'Advisory client' : 'DM from'} ${user.name}${adv ? '' : ` (${user.tier})`}`, html);
         } catch (e) { console.error('dm notify failed', e); }
       }
       return res.status(201).json({ message: msg });
