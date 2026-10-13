@@ -52,7 +52,8 @@ export default async function handler(req, res) {
     // GET ?resource=notifications — unread counts + latest unseen announcement
     if (req.method === 'GET' && req.query.resource === 'notifications') {
       if (!user.id) return res.json({ unread: 0, dm_unread: 0, announcement: null });
-      const [me] = await sql`SELECT last_seen_community, last_seen_dm, seen_announcement_id FROM users WHERE id = ${user.id}`;
+      const [me] = await sql`SELECT last_seen_community, last_seen_dm, seen_announcement_id, notify_mode FROM users WHERE id = ${user.id}`;
+      const mentionsOnly = me?.notify_mode === 'mentions';
       const channels = await sql`SELECT * FROM channels`;
       let mutedIds = [];
       try { mutedIds = (await sql`SELECT channel_id FROM channel_mutes WHERE user_id = ${user.id}`).map(r => r.channel_id); } catch {}
@@ -90,6 +91,7 @@ export default async function handler(req, res) {
       // The newest unseen things, for desktop notifications. Channel posts since
       // the community was last opened; for the team, member DMs since the inbox was.
       let latest = [];
+      let mentions = 0;
       try {
         if (visibleIds.length) {
           const posts = await sql`
@@ -108,12 +110,29 @@ export default async function handler(req, res) {
             ORDER BY d.id DESC LIMIT 3`;
           latest = latest.concat(dms.map(d => ({ key: 'dm:' + d.id, title: `DM from ${d.author}`, body: String(d.body).slice(0, 140), at: d.created_at })));
         }
+        // Mentions: unseen until the person opens that channel
+        const ment = await sql`
+          SELECT mn.id, mn.channel_id, m.body, m.created_at, c.name AS channel, u.name AS author FROM mentions mn
+          JOIN messages m ON m.id = mn.message_id JOIN channels c ON c.id = mn.channel_id LEFT JOIN users u ON u.id = mn.by_user_id
+          LEFT JOIN thread_seen t ON t.user_id = mn.user_id AND t.kind = 'channel' AND t.ref_id = mn.channel_id
+          WHERE mn.user_id = ${user.id} AND m.deleted = FALSE AND m.created_at > COALESCE(t.seen_at, ${new Date(0).toISOString()})
+          ORDER BY m.id DESC LIMIT 5`;
+        mentions = ment.length;
+        latest = latest.filter(l => !ment.some(x => l.key === 'post:' + x.id)).concat(ment.map(x => ({ key: 'mention:' + x.id, title: `${x.author || 'Someone'} mentioned you in #${x.channel}`, body: String(x.body).slice(0, 140), at: x.created_at, channel_id: x.channel_id })));
+        if (mentionsOnly) latest = latest.filter(l => l.key.startsWith('mention:') || l.key.startsWith('dm:'));
         latest.sort((x, y) => new Date(y.at) - new Date(x.at));
       } catch (e) { console.error('latest unseen failed', e.message); }
-      return res.json({ unread, dm_unread: dmRow.n, announcement, latest });
+      return res.json({ unread, dm_unread: dmRow.n, announcement, latest, mentions });
     }
 
     // POST { action: 'mark_seen', what: 'community' | 'dm' | 'announcement', id? }
+    // What to be told about: every post, or only posts that @-tag you.
+    if (req.method === 'POST' && req.body && req.body.action === 'notify_mode') {
+      if (!user.id) return res.status(401).json({ error: 'Sign in required' });
+      const mode = req.body.mode === 'mentions' ? 'mentions' : 'all';
+      await sql`UPDATE users SET notify_mode = ${mode} WHERE id = ${user.id}`;
+      return res.json({ success: true, mode });
+    }
     // Mute a channel: no bubble, no desktop notification, no digest line for it.
     if (req.method === 'POST' && req.body && req.body.action === 'mute_channel') {
       if (!user.id) return res.status(401).json({ error: 'Sign in required' });
@@ -133,6 +152,11 @@ export default async function handler(req, res) {
     }
 
     // GET ?resource=channels — channels visible to this user
+    // Who can be @-mentioned: every active member and the team, names only.
+    if (req.method === 'GET' && req.query.resource === 'members') {
+      const rows = await sql`SELECT id, name, tier, role FROM users WHERE membership_status = 'active' AND name IS NOT NULL AND name <> '' ORDER BY name LIMIT 500`;
+      return res.json({ members: rows.map(r => ({ id: r.id, name: r.name, tier: r.role === 'admin' ? 'Team' : r.tier })) });
+    }
     if (req.method === 'GET' && req.query.resource === 'channels') {
       const channels = await sql`SELECT * FROM channels ORDER BY position, id`;
       const visible = channels.filter(c => canSeeChannel(c, user));
@@ -410,6 +434,39 @@ export default async function handler(req, res) {
         INSERT INTO messages (channel_id, user_id, parent_id, body, is_admin, created_at)
         VALUES (${channel_id}, ${user.id}, ${parent_id || null}, ${text}, ${user.role === 'admin'}, NOW())
         RETURNING *`;
+      // @-mentions: "@Full Name" in the text tags that person; they get a bubble,
+      // an in-site pop-up and (if on) a desktop notification, even in channels
+      // they have muted.
+      try {
+        const names = [...new Set((text.match(/@([A-Za-z][\w.'-]*(?: [A-Za-z][\w.'-]*){0,3})/g) || []).map(m => m.slice(1).trim().toLowerCase()))];
+        if (names.length) {
+          // try the longest prefix of each candidate first: "@Gina Merritt said" → "gina merritt", then "gina"
+          const found = new Map();
+          for (const n of names) {
+            const words = n.split(' ');
+            for (let k = words.length; k >= 1 && !found.has(n); k--) {
+              const cand = words.slice(0, k).join(' ');
+              const [u] = await sql`SELECT id FROM users WHERE LOWER(name) = ${cand} AND membership_status = 'active' LIMIT 1`;
+              if (u && u.id !== user.id) found.set(n, u.id);
+            }
+          }
+          for (const uid of new Set(found.values())) {
+            await sql`INSERT INTO mentions (user_id, message_id, channel_id, by_user_id) VALUES (${uid}, ${msg.id}, ${channel_id}, ${user.id || null}) ON CONFLICT DO NOTHING`;
+            // Tagged = told, by email too. This is the only per-post email anyone gets.
+            try {
+              const [tu] = await sql`SELECT name, email FROM users WHERE id = ${uid}`;
+              if (tu?.email) {
+                const esc = (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                await sendEmail(tu.email, `${user.name || 'A member'} tagged you in #${channel.slug || channel.name}`,
+                  `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">You were tagged in #${esc(channel.slug || channel.name)}</h2>
+                   <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${esc(user.name || 'A member')}</strong> wrote:</p>
+                   <p style="color:#333333;font-size:14px;line-height:1.8;background:#faf7f7;border-left:3px solid #b80101;border-radius:0 10px 10px 0;padding:14px 18px;">${esc(text.slice(0, 500))}${text.length > 500 ? '…' : ''}</p>
+                   <p style="margin-top:18px;"><a href="https://community.drginamerritt.net/community" style="color:#b80101;font-weight:700;">Open the community →</a></p>`);
+              }
+            } catch (e) { console.error('mention email failed', e.message); }
+          }
+        }
+      } catch (e) { console.error('mentions failed', e.message); }
       // No email per post: the team gets the Friday community digest instead,
       // and desktop notifications while the site is open.
       return res.status(201).json({ message: { ...msg, author_name: user.role === 'admin' ? (user.name || 'GroundUp Team') : user.name, author_tier: user.tier, author_badge: user.badge || null, author_badges: user.badges || [], reply_count: 0 } });

@@ -800,7 +800,7 @@ export async function sendCommunityWeekly(sql, opts = {}) {
     WHERE m.deleted = FALSE AND m.created_at >= ${since.toISOString()} AND NOT c.team_only
     ORDER BY c.position, c.id, m.created_at ASC`;
   const dms = await sql`SELECT COUNT(*)::int AS n FROM dms WHERE from_admin = FALSE AND created_at >= ${since.toISOString()}`;
-  const team = opts.to ? opts.to.map(e => ({ email: e, id: null })) : await sql`SELECT id, email FROM users WHERE role = 'admin' AND email IS NOT NULL`;
+  const team = opts.to ? opts.to.map(e => ({ email: e, id: null })) : await sql`SELECT id, email FROM users WHERE role = 'admin' AND email IS NOT NULL AND COALESCE(notify_mode, 'all') <> 'mentions'`;
   const esc = (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   let sent = 0;
   for (const t of team) {
