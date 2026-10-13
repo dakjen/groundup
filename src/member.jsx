@@ -2003,6 +2003,26 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
   };
 
   const pendingThread = useRef(hashState().t ? Number(hashState().t) : null);
+  // A pop-up or desktop notification sets the hash while this page is already
+  // open: follow it to that channel and thread.
+  useEffect(() => {
+    const onHash = () => {
+      const h = hashState();
+      if (h.dm !== undefined) { setDmOpen(true); return; }
+      if (!h.ch) return;
+      const ch = channels.find(c => c.slug === h.ch);
+      if (!ch || ch.locked) return;
+      pendingThread.current = h.t ? Number(h.t) : null;
+      setDmOpen(false);
+      setActive(a => (a?.id === ch.id ? a : ch));
+      if (h.t && active?.id === ch.id) {
+        // same channel: open the thread directly
+        api(`/api/community?resource=messages&channel=${ch.id}`).then(d => { const parent = (d.messages || []).find(m => m.id === Number(h.t)); if (parent) setThread(parent); }).catch(() => {});
+      }
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, [channels, active?.id]);
   useEffect(() => {
     if (active?.locked) { setMessages([]); return; }
     if (!active) return;

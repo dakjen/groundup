@@ -95,13 +95,13 @@ export default async function handler(req, res) {
       try {
         if (visibleIds.length) {
           const posts = await sql`
-            SELECT m.id, m.body, m.created_at, c.name AS channel, u.name AS author FROM messages m
+            SELECT m.id, m.parent_id, m.body, m.created_at, c.name AS channel, c.slug, u.name AS author FROM messages m
             JOIN channels c ON c.id = m.channel_id LEFT JOIN users u ON u.id = m.user_id
             WHERE m.channel_id = ANY(${visibleIds}) AND m.deleted = FALSE
               AND m.created_at > ${me?.last_seen_community || new Date(0).toISOString()}
               AND (m.user_id IS NULL OR m.user_id != ${user.id})
             ORDER BY m.id DESC LIMIT 3`;
-          latest = posts.map(p => ({ key: 'post:' + p.id, title: `${p.author || 'Someone'} in #${p.channel}`, body: String(p.body).slice(0, 140), at: p.created_at }));
+          latest = posts.map(p => ({ key: 'post:' + p.id, title: `${p.author || 'Someone'} in #${p.channel}`, body: String(p.body).slice(0, 140), at: p.created_at, slug: p.slug, thread: p.parent_id || p.id }));
         }
         if (user.role === 'admin') {
           const dms = await sql`
@@ -112,13 +112,13 @@ export default async function handler(req, res) {
         }
         // Mentions: unseen until the person opens that channel
         const ment = await sql`
-          SELECT mn.id, mn.channel_id, m.body, m.created_at, c.name AS channel, u.name AS author FROM mentions mn
+          SELECT mn.id, mn.channel_id, m.id AS message_id, m.parent_id, m.body, m.created_at, c.name AS channel, c.slug, u.name AS author FROM mentions mn
           JOIN messages m ON m.id = mn.message_id JOIN channels c ON c.id = mn.channel_id LEFT JOIN users u ON u.id = mn.by_user_id
           LEFT JOIN thread_seen t ON t.user_id = mn.user_id AND t.kind = 'channel' AND t.ref_id = mn.channel_id
           WHERE mn.user_id = ${user.id} AND m.deleted = FALSE AND m.created_at > COALESCE(t.seen_at, ${new Date(0).toISOString()})
           ORDER BY m.id DESC LIMIT 5`;
         mentions = ment.length;
-        latest = latest.filter(l => !ment.some(x => l.key === 'post:' + x.id)).concat(ment.map(x => ({ key: 'mention:' + x.id, title: `${x.author || 'Someone'} mentioned you in #${x.channel}`, body: String(x.body).slice(0, 140), at: x.created_at, channel_id: x.channel_id })));
+        latest = latest.filter(l => !ment.some(x => l.key === 'post:' + x.id)).concat(ment.map(x => ({ key: 'mention:' + x.id, title: `${x.author || 'Someone'} tagged you in #${x.channel}`, body: String(x.body).slice(0, 140), at: x.created_at, channel_id: x.channel_id, slug: x.slug, thread: x.parent_id || x.message_id })));
         if (mentionsOnly) latest = latest.filter(l => l.key.startsWith('mention:') || l.key.startsWith('dm:'));
         latest.sort((x, y) => new Date(y.at) - new Date(x.at));
       } catch (e) { console.error('latest unseen failed', e.message); }
