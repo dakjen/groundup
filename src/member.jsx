@@ -1400,6 +1400,17 @@ function ReferralCard({ member }) {
   );
 }
 
+function NotificationsCard({ member }) {
+  return (
+    <div style={{ background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
+      <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Notifications</div>
+      <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 16, lineHeight: 1.7 }}>What you hear about from the community — as pop-ups on the site, desktop notifications if you turn them on, and email. Direct messages always reach you.</div>
+      <NotifyModeToggle member={member} />
+      <NotifyToggle />
+    </div>
+  );
+}
+
 function ChangePasswordCard() {
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -1460,6 +1471,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
               on the channels where her presence matters most. */}
           {(TIER_RANK[member.tier] >= 4 || member.retainer) && <DealProfileCard member={member} />}
           <ProfileCard member={member} />
+          <NotificationsCard member={member} />
           <ChangePasswordCard />
         </div>
       </div>
@@ -1650,6 +1662,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
             <p style={SUB}>How you appear in the community, your referral link, and your plan.</p>
             {(TIER_RANK[member.tier] >= 4 || member.retainer) && <DealProfileCard member={member} />}
             <ProfileCard member={member} />
+            <NotificationsCard member={member} />
             <MyDocuments member={member} />
             <ReferralCard member={member} />
             <ChangePasswordCard />
@@ -2129,7 +2142,6 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
       {/* Channel sidebar */}
       <div className="community-sidebar" style={{ width: 240, flexShrink: 0, borderRight: "1px solid #3f0707", background: "#4a0b0b", padding: "24px 12px", overflowY: "auto", display: sidebarOpen ? "block" : undefined }}>
         <NotifyToggle />
-        <NotifyModeToggle member={member} />
         {/* Two kinds of talk, kept apart on purpose: topic questions live in the
             phase channels ("I have a design question"), course questions live in
             Course Discussions ("in lesson 3 you said X — how?"). */}
@@ -2147,24 +2159,24 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
           // A section heading that folds its list. Unread counts stay visible on the heading while folded,
           // and a section holding the channel you are in starts open.
           const head = (label, key, list) => {
-            const open = openSections[key] ?? list.some(c => c.id === active?.id);
+            const open = openSections[key] ?? (key === "general" || list.some(c => c.id === active?.id));
             const unread = list.reduce((n, c) => n + (c.unread || 0), 0);
             return (
-              <button onClick={() => toggleSection(key)} style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", background: "transparent", border: "none", padding: "0 12px", margin: "18px 0 10px", cursor: "pointer", textAlign: "left" }}>
+              <button onClick={() => toggleSection(key)} style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", background: "transparent", border: "none", padding: "0 12px", margin: key === "general" ? "0 0 10px" : "18px 0 10px", cursor: "pointer", textAlign: "left" }}>
                 <span style={{ fontSize: 10, color: "#e8b4b4", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font }}>{label}</span>
                 <span style={{ fontSize: 10, color: "#e8b4b4", fontFamily: font }}>{open ? "▾" : "▸"}</span>
                 {!open && <Bubble n={unread} />}
               </button>
             );
           };
-          const isOpen = (key, list) => openSections[key] ?? list.some(c => c.id === active?.id);
+          const isOpen = (key, list) => openSections[key] ?? (key === "general" || list.some(c => c.id === active?.id));
           const general = channels.filter(c => !c.section);
           const phases = channels.filter(c => c.section === "phase");
           const courses = channels.filter(c => c.section === "course");
           return (
             <>
-              <div style={{ fontSize: 10, color: "#e8b4b4", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "0 12px", marginBottom: 10 }}>Channels</div>
-              {general.map(c => chanBtn(c))}
+              {head("Channels", "general", general)}
+              {isOpen("general", general) && general.map(c => chanBtn(c))}
               {phases.length > 0 && head("By Development Phase", "phases", phases)}
               {isOpen("phases", phases) && phases.map(c => chanBtn(c, true))}
               {courses.length > 0 && head("Course Discussions", "courses", courses)}

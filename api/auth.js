@@ -59,6 +59,7 @@ export default async function handler(req, res) {
       const allowance = user.tier === 'Elite' ? 3 : 0;
       const [{ used }] = await sql`SELECT COUNT(*)::int AS used FROM session_requests WHERE user_id = ${user.id} AND status != 'declined'`;
       user.sessions = { total: allowance, used, remaining: Math.max(0, allowance - used) };
+      try { const [rt] = await sql`SELECT id FROM retainers WHERE user_id = ${user.id} AND status = 'active' LIMIT 1`; user.retainer = !!rt; } catch { user.retainer = false; }
       // Paid sessions still needing a calendar slot
       user.bookings = await sql`SELECT id, item, label, status, booked_at, created_at FROM bookings
         WHERE user_id = ${user.id} AND status IN ('awaiting_booking','booked') ORDER BY created_at DESC LIMIT 10`;
