@@ -3146,12 +3146,15 @@ export function ResourcesPage({ member, onUpgrade }) {
 // The direct line: the advisory thread between a client and Dr. Merritt's
 // team. Its own thread — not Community DMs — with unread counts, pop-ups and
 // email on both sides. `loadMsgs` returns the messages; `sendMsg` posts one.
-export function DirectLine({ loadMsgs, sendMsg, isAdmin, title, subtitle, height = "min(70vh, 620px)", otherName, onLoaded }) {
-  const [msgs, setMsgs] = useState([]); const [draft, setDraft] = useState(""); const [err, setErr] = useState(null);
+export function DirectLine({ loadMsgs, sendMsg, isAdmin, title, subtitle, height = "min(70vh, 620px)", otherName, onLoaded, initial, active = true, style }) {
+  // `initial` paints the thread instantly from data already on hand; the fetch
+  // (which also marks it seen) only runs while the thread is actually open.
+  const [msgs, setMsgs] = useState(initial || []); const [draft, setDraft] = useState(""); const [err, setErr] = useState(null);
   const feedRef = useRef(null);
+  useEffect(() => { if (initial && !active) setMsgs(initial); }, [initial, active]);
   const load = useCallback(() => loadMsgs().then(m => { setMsgs(m || []); setErr(null); onLoaded && onLoaded(); }).catch(e => setErr(e.message)), [loadMsgs]);
-  useEffect(() => { load(); return pollVisible(load, 20000); }, [load]);
-  useEffect(() => { if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight; }, [msgs.length]);
+  useEffect(() => { if (!active) return; load(); return pollVisible(load, 20000); }, [load, active]);
+  useEffect(() => { if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight; }, [msgs.length, active]);
   const send = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     const text = draft.trim(); if (!text) return; setDraft("");
@@ -3159,7 +3162,7 @@ export function DirectLine({ loadMsgs, sendMsg, isAdmin, title, subtitle, height
     catch (e2) { setErr(e2.message); setDraft(text); }
   };
   return (
-    <div style={{ background: "#1a0b0e", border: "1px solid #4a1a1e", borderRadius: 16, display: "flex", flexDirection: "column", height, position: "sticky", top: 90 }}>
+    <div style={{ background: "#1a0b0e", border: "1px solid #4a1a1e", borderRadius: 16, display: "flex", flexDirection: "column", height, position: "sticky", top: 90, ...(style || {}) }}>
       <div style={{ padding: "18px 22px", borderBottom: "1px solid #4a1a1e", background: "#22100f", borderRadius: "16px 16px 0 0" }}>
         <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15, fontFamily: font }}>{title}</div>
         <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font }}>{subtitle}</div>
@@ -3403,7 +3406,7 @@ export function RetainerPage({ member, setActivePage }) {
           </div>
 
           {/* Right: direct line */}
-          <DirectLine title="Direct line" subtitle="Dr. Merritt — private to your engagement"
+          <DirectLine title="Direct line" subtitle="Dr. Merritt — private to your engagement" initial={data.messages || []}
             loadMsgs={() => api("/api/retainers?thread=1").then(d => d.messages)}
             sendMsg={(text) => api("/api/retainers", { method: "POST", body: JSON.stringify({ action: "message", body: text }) })} />
         </div>
@@ -3653,12 +3656,11 @@ export function AdvisoryAdminPage() {
           </div>
         )}
 
-        {sub === "messages" && (
-          <DirectLine key={r.id} isAdmin otherName={firstName(r.name)} title="Direct line" subtitle={`${r.name} — only you see this`} height="min(72vh, 680px)"
-            loadMsgs={() => api(`/api/retainers?admin=1&thread=${r.id}`).then(d => d.messages)}
-            sendMsg={(text) => api("/api/retainers", { method: "POST", body: JSON.stringify({ action: "message", retainer_id: r.id, body: text }) })}
-            onLoaded={() => setData(d => d ? { ...d, retainers: d.retainers.map(x => x.id === r.id ? { ...x, unread: 0 } : x) } : d)} />
-        )}
+        <DirectLine key={r.id} isAdmin otherName={firstName(r.name)} title="Direct line" subtitle={`${r.name} — only you see this`} height="min(72vh, 680px)"
+          initial={r.messages || []} active={sub === "messages"} style={sub === "messages" ? {} : { display: "none" }}
+          loadMsgs={() => api(`/api/retainers?admin=1&thread=${r.id}`).then(d => d.messages)}
+          sendMsg={(text) => api("/api/retainers", { method: "POST", body: JSON.stringify({ action: "message", retainer_id: r.id, body: text }) })}
+          onLoaded={() => setData(d => d ? { ...d, retainers: d.retainers.map(x => x.id === r.id ? { ...x, unread: 0 } : x) } : d)} />
 
         {sub === "time" && (
           <div style={card}>
