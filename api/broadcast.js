@@ -170,6 +170,7 @@ export default async function handler(req, res) {
       const [done] = await sql`SELECT value FROM settings WHERE key = 'weekly_digest_sent'`;
       if (nowEt.getDay() === 5 && done?.value !== stamp) {
         weekly = launched ? await sendWeeklyDigest(sql) : await sendWaitlistWeekly(sql);
+        try { weekly.community = await sendCommunityWeekly(sql); } catch (e) { console.error('community weekly failed', e.message); }
         await sql`INSERT INTO settings (key, value) VALUES ('weekly_digest_sent', ${stamp}) ON CONFLICT (key) DO UPDATE SET value = ${stamp}`;
       }
     } catch (e) { console.error('weekly digest failed', e.message); }
@@ -785,4 +786,47 @@ export async function sendWaitlistWeekly(sql, opts = {}) {
   let sent = 0;
   for (const addr of to) { if (await sendEmail(addr, (opts.preview ? '[PREVIEW] ' : '') + subject, html, { light: true })) sent++; }
   return { sent, to, subject, total: entries.length, mrr };
+}
+
+
+// ── The Friday community digest: every channel's week, for the team ─────────
+// Replaces the email-per-post. Each team member's own mutes are respected.
+export async function sendCommunityWeekly(sql, opts = {}) {
+  const S = "'DM Sans',Arial,Helvetica,sans-serif", SERIF = "'Cormorant Garamond',Georgia,serif";
+  const since = new Date(Date.now() - 7 * 86400000);
+  const rows = await sql`
+    SELECT m.id, m.channel_id, m.body, m.created_at, m.parent_id, c.name AS channel, u.name AS author, u.tier
+    FROM messages m JOIN channels c ON c.id = m.channel_id LEFT JOIN users u ON u.id = m.user_id
+    WHERE m.deleted = FALSE AND m.created_at >= ${since.toISOString()} AND NOT c.team_only
+    ORDER BY c.position, c.id, m.created_at ASC`;
+  const dms = await sql`SELECT COUNT(*)::int AS n FROM dms WHERE from_admin = FALSE AND created_at >= ${since.toISOString()}`;
+  const team = opts.to ? opts.to.map(e => ({ email: e, id: null })) : await sql`SELECT id, email FROM users WHERE role = 'admin' AND email IS NOT NULL`;
+  const esc = (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  let sent = 0;
+  for (const t of team) {
+    const muted = t.id ? new Set((await sql`SELECT channel_id FROM channel_mutes WHERE user_id = ${t.id}`).map(r => r.channel_id)) : new Set();
+    const mine = rows.filter(r => !muted.has(r.channel_id));
+    const byChan = {};
+    for (const r of mine) (byChan[r.channel] ||= []).push(r);
+    const chans = Object.entries(byChan);
+    const body = chans.length === 0
+      ? `<p style="font-family:${S};color:#444444;font-size:14px;line-height:1.8;">A quiet week — nothing new in the channels you follow.</p>`
+      : chans.map(([name, ms]) => `
+        <div style="margin:0 0 22px;">
+          <div style="font-family:${S};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 8px;">#${esc(name)} · ${ms.length} post${ms.length === 1 ? '' : 's'}</div>
+          ${ms.slice(0, 8).map(m => `<div style="border-left:3px solid #e5dccf;padding:6px 0 6px 12px;margin:0 0 8px;">
+            <div style="font-family:${S};font-size:12px;color:#8a8a8a;">${esc(m.author || 'Member')}${m.tier ? ' · ' + esc(m.tier === 'Elite' ? 'Owner' : m.tier === 'Basic' ? 'Member' : m.tier) : ''} · ${new Date(m.created_at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}${m.parent_id ? ' · reply' : ''}</div>
+            <div style="font-family:${S};font-size:14px;color:#333333;line-height:1.7;">${esc(String(m.body).slice(0, 240))}${m.body.length > 240 ? '…' : ''}</div>
+          </div>`).join('')}
+          ${ms.length > 8 ? `<div style="font-family:${S};font-size:12px;color:#8a8a8a;">and ${ms.length - 8} more</div>` : ''}
+        </div>`).join('');
+  const html = `
+      <div style="font-family:${S};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 12px;">This week in the community</div>
+      <h1 style="font-family:${SERIF};color:#161616;font-size:30px;line-height:1.15;font-weight:700;margin:0 0 10px;">${mine.length} post${mine.length === 1 ? '' : 's'} across ${chans.length} channel${chans.length === 1 ? '' : 's'}</h1>
+      <p style="font-family:${S};color:#8a8a8a;font-size:13px;margin:0 0 22px;">${dms[0].n} member DM${dms[0].n === 1 ? '' : 's'} this week · channels you have muted are left out.</p>
+      ${body}
+      <p style="margin:18px 0 0;"><a href="${siteUrl()}/community" style="display:inline-block;background:#b80101;color:#ffffff;border-radius:10px;padding:12px 24px;font-weight:bold;font-size:13px;text-decoration:none;font-family:${S};">Open the community</a></p>`;
+    if (await sendEmail(t.email, (opts.preview ? '[PREVIEW] ' : '') + `Community this week — ${mine.length} post${mine.length === 1 ? '' : 's'}`, html)) sent++;
+  }
+  return { sent, posts: rows.length };
 }

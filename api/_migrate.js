@@ -268,6 +268,7 @@ const STATEMENTS = [
     id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     from_admin BOOLEAN DEFAULT FALSE, body TEXT NOT NULL, created_at TIMESTAMP DEFAULT NOW())`,
   // When each person last opened each channel / DM thread — drives the unread bubbles
+  `CREATE TABLE IF NOT EXISTS channel_mutes (user_id INTEGER NOT NULL, channel_id INTEGER NOT NULL, PRIMARY KEY (user_id, channel_id))`,
   `CREATE TABLE IF NOT EXISTS thread_seen (user_id INTEGER NOT NULL, kind TEXT NOT NULL, ref_id INTEGER NOT NULL, seen_at TIMESTAMP DEFAULT NOW(), PRIMARY KEY (user_id, kind, ref_id))`,
   `ALTER TABLE channels ADD COLUMN IF NOT EXISTS team_only BOOLEAN DEFAULT FALSE`,
   `ALTER TABLE channels ADD COLUMN IF NOT EXISTS teaser BOOLEAN DEFAULT FALSE`,
