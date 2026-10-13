@@ -231,11 +231,11 @@ export default async function handler(req, res) {
     if (req.method === 'GET' && req.query.resource === 'dm-threads') {
       if (!isAdminReq) return res.status(403).json({ error: 'Admins only' });
       const threads = await sql`
-        SELECT u.id, u.name, u.tier, MAX(d.created_at) AS last_at, COUNT(*) AS msg_count,
+        SELECT u.id, u.name, u.tier, u.deal_profile, MAX(d.created_at) AS last_at, COUNT(*) AS msg_count,
           COUNT(*) FILTER (WHERE d.from_admin = FALSE AND d.created_at > COALESCE(t.seen_at, ${new Date(0).toISOString()}))::int AS unread
         FROM dms d JOIN users u ON u.id = d.user_id
         LEFT JOIN thread_seen t ON t.user_id = ${user.id} AND t.kind = 'dm' AND t.ref_id = u.id
-        GROUP BY u.id, u.name, u.tier, t.seen_at ORDER BY last_at DESC LIMIT 100`;
+        GROUP BY u.id, u.name, u.tier, u.deal_profile, t.seen_at ORDER BY last_at DESC LIMIT 100`;
       return res.json({ threads });
     }
 

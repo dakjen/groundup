@@ -5794,6 +5794,14 @@ function UsersTab({ btnRed, btnGhost, inp, lbl, teamOnly = false }) {
                   )}
                 </div>
                 <div style={{ color: "#777777", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>{user.email}</div>
+                {user.deal_profile && (() => { const dp = user.deal_profile; const bits = [dp.name, dp.location, dp.phase, dp.units && `${dp.units} units`, dp.tdc && `TDC ${dp.tdc}`, dp.gap && `gap ${dp.gap}`, dp.financing_path].filter(Boolean); return (
+                  <div style={{ marginTop: 6, background: "#faf7f7", border: "1px solid #ecd9d9", borderRadius: 8, padding: "8px 12px", fontSize: 12, fontFamily: "'DM Sans', sans-serif", color: "#444444", lineHeight: 1.6 }}>
+                    <span style={{ color: "#b80101", fontWeight: 800, letterSpacing: "1px", fontSize: 10 }}>DEAL</span> {bits.join(" · ") || "started, nothing filled in yet"}
+                    {dp.blocker && <div><strong style={{ color: "#161616" }}>In the way:</strong> {dp.blocker}</div>}
+                    {dp.wants && <div><strong style={{ color: "#161616" }}>Wants:</strong> {dp.wants}</div>}
+                    {dp.sources_missing && <div><strong style={{ color: "#161616" }}>Still needed:</strong> {dp.sources_missing}</div>}
+                  </div>
+                ); })()}
               </div>
               <BadgeChips badges={user.badges} small />
               <div style={{ fontSize: 10, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif" }}>

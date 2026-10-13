@@ -49,7 +49,7 @@ export default async function handler(req, res) {
 
     if (req.method === 'GET') {
       const users = await sql`
-        SELECT id, name, email, tier, role, badge, membership_status, comped, badges, partner_slug, created_at
+        SELECT id, name, email, tier, role, badge, membership_status, comped, badges, partner_slug, created_at, deal_profile
         FROM users ORDER BY created_at DESC`;
       return res.json(users);
     }

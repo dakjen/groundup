@@ -268,6 +268,9 @@ const STATEMENTS = [
     id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     from_admin BOOLEAN DEFAULT FALSE, body TEXT NOT NULL, created_at TIMESTAMP DEFAULT NOW())`,
   // When each person last opened each channel / DM thread — drives the unread bubbles
+  // Owner deal profile: the deal they are working on, for the team to refer to
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS deal_profile JSONB`,
+  `CREATE TABLE IF NOT EXISTS deal_files (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, title TEXT, url TEXT NOT NULL, kind TEXT DEFAULT 'file', created_at TIMESTAMP DEFAULT NOW())`,
   `CREATE TABLE IF NOT EXISTS channel_mutes (user_id INTEGER NOT NULL, channel_id INTEGER NOT NULL, PRIMARY KEY (user_id, channel_id))`,
   `CREATE TABLE IF NOT EXISTS thread_seen (user_id INTEGER NOT NULL, kind TEXT NOT NULL, ref_id INTEGER NOT NULL, seen_at TIMESTAMP DEFAULT NOW(), PRIMARY KEY (user_id, kind, ref_id))`,
   `ALTER TABLE channels ADD COLUMN IF NOT EXISTS team_only BOOLEAN DEFAULT FALSE`,
@@ -283,7 +286,7 @@ const STATEMENTS = [
     ('opportunity-board', 'Opportunity Board', 'RFPs, funding windows, and deals worth chasing — posted by the team monthly. Reply in threads to discuss.', 'Premium', TRUE, 4),
     ('owner-lounge', 'Owner Lounge', 'Private channel for Owner members and advisory clients.', 'Elite', FALSE, 5),
     ('financial-modeling', 'Financial Modeling', 'Questions about your pro forma — assumptions, operating expenses, debt sizing, the flow of funds, what the model is telling you.', 'Premium', FALSE, 4),
-    ('deal-questions', 'Deal Questions', 'Deal-specific questions — a number that is not working, a term you are weighing, a decision on a real deal. Owner members and advisory clients only. Full deal reviews happen in advisory calls and the retainer.', 'Elite', FALSE, 8),
+    ('deal-room', 'Deal Room', 'Deal-specific questions — a number that is not working, a term you are weighing, a decision on a real deal. Owner members and advisory clients only. Full deal reviews happen in advisory calls and the retainer.', 'Elite', FALSE, 8),
     ('groundup', 'GroundUp', 'Feedback on the platform, subjects and content you want covered, channels you think we should add, and questions about how GroundUp works. The team reads everything here.', 'Basic', FALSE, 2)
     ON CONFLICT (slug) DO NOTHING`,
   `CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`,
