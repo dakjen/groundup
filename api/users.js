@@ -4,6 +4,13 @@ import { sendEmail, resetEmail, siteUrl, firstName } from './_email.js';
 
 const FIELDS = ['id', 'name', 'email', 'tier', 'role', 'badge', 'membership_status', 'created_at'];
 
+// Tiers are stored under their internal keys. The admin screen and anyone
+// editing by hand may type the display name instead, so accept both and
+// store the key — "Member" became a tier of its own once and locked a member
+// out of everything.
+const TIER_KEY = { free: 'Free', basic: 'Basic', member: 'Basic', builder: 'Builder', premium: 'Premium', elite: 'Elite', owner: 'Elite' };
+const normTier = (t) => t === undefined || t === null ? t : (TIER_KEY[String(t).trim().toLowerCase()] || null);
+
 export default async function handler(req, res) {
   if (!requireAdmin(req, res)) return;
   const sql = neon(process.env.DATABASE_URL);
@@ -50,7 +57,9 @@ export default async function handler(req, res) {
     // Add a user (member or team). Optional password lets them sign in immediately;
     // optional role 'admin' + badge creates a team member in one step.
     if (req.method === 'POST' && !req.body?.action) {
-      const { name, email, tier, password, role, badge } = req.body;
+      const { name, email, password, role, badge } = req.body;
+      const tier = normTier(req.body.tier);
+      if (req.body.tier !== undefined && tier === null) return res.status(400).json({ error: 'Invalid tier — use Free, Member, Builder, Premium or Owner' });
       if (!name || !email) return res.status(400).json({ error: 'Name and email required' });
       if (password && password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
       if (role !== undefined && !['member', 'admin'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
@@ -69,7 +78,9 @@ export default async function handler(req, res) {
 
     // Update tier / role / badge / comped, or reset a password ({ id, new_password })
     if (req.method === 'PATCH') {
-      const { id, tier, role, badge, comped, new_password, partner_slug } = req.body;
+      const { id, role, badge, comped, new_password, partner_slug } = req.body;
+      const tier = normTier(req.body.tier);
+      if (req.body.tier !== undefined && tier === null) return res.status(400).json({ error: 'Invalid tier — use Free, Member, Builder, Premium or Owner' });
       if (!id) return res.status(400).json({ error: 'id required' });
       if (role !== undefined && !['member', 'admin'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
       if (badge !== undefined && badge !== null && !['team', 'drmerritt'].includes(badge)) return res.status(400).json({ error: 'Invalid badge' });
