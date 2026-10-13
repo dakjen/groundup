@@ -305,7 +305,7 @@ export default async function handler(req, res) {
       return res.json({ message: updated });
     }
 
-    // Team: post a poll into a channel (e.g. event interest in Announcements / Elite Lounge)
+    // Team: post a poll into a channel (e.g. event interest in Announcements / Owner Lounge)
     if (req.method === 'POST' && req.body && req.body.action === 'create_poll') {
       if (!isAdminReq) return res.status(403).json({ error: 'Team only' });
       const { channel_id, question, options } = req.body;
