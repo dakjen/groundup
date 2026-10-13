@@ -3191,13 +3191,20 @@ export function RetainerPage({ member, setActivePage }) {
   const [msg, setMsg] = useState(null);
   const [meetingOpen, setMeetingOpen] = useState(false);
   const [meetingNote, setMeetingNote] = useState("");
+  const [meetingMin, setMeetingMin] = useState(60);
+  const [meetingLink, setMeetingLink] = useState(null);   // after the request: where to pick a time
 
   const load = () => api("/api/retainers").then(d => setData(d.retainer)).catch(() => setData(null));
   useEffect(() => { load(); return pollVisible(load, 30000); }, [member?.id]);
 
   const requestMeeting = async () => {
-    try { await api("/api/retainers", { method: "POST", body: JSON.stringify({ action: "request_meeting", note: meetingNote }) }); setMsg("Request sent — Dr. Merritt's team will reach out with times."); setMeetingOpen(false); setMeetingNote(""); }
-    catch (err) { setMsg(err.message); }
+    try {
+      const r = await api("/api/retainers", { method: "POST", body: JSON.stringify({ action: "request_meeting", note: meetingNote, minutes: meetingMin }) });
+      setMeetingOpen(false); setMeetingNote(""); setMeetingLink(r.link || "");
+      setMsg(r.link ? `${r.minutes} minutes set aside from this month's hours — now pick a time on Dr. Merritt's calendar.` : `${r.minutes} minutes set aside from this month's hours — the team will reach out with times.`);
+      if (r.link) window.open(r.link, "_blank", "noopener");
+      await load();
+    } catch (err) { setMsg(err.message); }
   };
 
   if (data === undefined) return <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "140px 20px", textAlign: "center", color: "var(--gu-muted)", fontFamily: font }}>Loading your workspace…</div>;
@@ -3311,13 +3318,24 @@ export function RetainerPage({ member, setActivePage }) {
               <div style={{ height: 10, background: "var(--gu-card2)", borderRadius: 99, overflow: "hidden", marginBottom: 16 }}>
                 <div style={{ width: `${pct}%`, height: "100%", background: "#b80101", borderRadius: 99 }} />
               </div>
-              <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, marginBottom: 14 }}>Dr. Merritt works on your projects behind the scenes and logs her hours here. Want time together on a call? Ask for a meeting.</div>
-              {!meetingOpen ? <button onClick={() => setMeetingOpen(true)} style={btnRed}>Request a meeting →</button> : (
+              <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, marginBottom: 14 }}>Dr. Merritt works on your projects behind the scenes and logs her hours here. Want time together? Request a meeting, say what you'd like to cover, and pick a time on her calendar.</div>
+              {meetingLink ? (
+                <div style={{ background: "var(--gu-card2)", border: "1px solid #b8010150", borderRadius: 12, padding: 14, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                  <span style={{ color: "var(--gu-text2)", fontSize: 13, fontFamily: font, flex: "1 1 200px" }}>{meetingLink ? "Pick a time on Dr. Merritt's calendar for your meeting." : "The team will reach out with times for your meeting."}</span>
+                  {meetingLink && <a href={meetingLink} target="_blank" rel="noreferrer" style={{ ...btnRed, textDecoration: "none", display: "inline-block" }}>Schedule the meeting →</a>}
+                  <button onClick={() => setMeetingLink(null)} style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 12, fontFamily: font, fontWeight: 700 }}>Done</button>
+                </div>
+              ) : !meetingOpen ? <button onClick={() => setMeetingOpen(true)} style={btnRed}>Request a meeting →</button> : (
                 <div style={{ background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 12, padding: 14 }}>
                   <label style={lbl}>What would you like to cover?</label>
                   <textarea style={{ ...inp, resize: "vertical", marginBottom: 10 }} rows={3} value={meetingNote} onChange={e => setMeetingNote(e.target.value)} maxLength={2000} placeholder="The lender's counter, the revised pro forma, next steps on site control…" />
+                  <label style={lbl}>How long</label>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+                    {[30, 45, 60, 90].map(m => <button key={m} onClick={() => setMeetingMin(m)} style={{ background: meetingMin === m ? "#b80101" : "transparent", color: meetingMin === m ? "#fff" : "var(--gu-text2)", border: "1px solid " + (meetingMin === m ? "#b80101" : "var(--gu-border)"), borderRadius: 999, padding: "7px 14px", fontFamily: font, fontWeight: 800, fontSize: 12.5, cursor: "pointer" }}>{m} min</button>)}
+                  </div>
+                  <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font, marginBottom: 12 }}>The meeting comes out of this month's hours and shows on your timesheet. You pick the time on Dr. Merritt's calendar next.</div>
                   <div style={{ display: "flex", gap: 10 }}>
-                    <button onClick={requestMeeting} style={btnRed}>Send request</button>
+                    <button onClick={requestMeeting} style={btnRed}>Send & pick a time →</button>
                     <button onClick={() => setMeetingOpen(false)} style={btnGhost}>Cancel</button>
                   </div>
                 </div>

@@ -91,12 +91,23 @@ export default async function handler(req, res) {
       if (!r) return res.status(403).json({ error: 'No active retainer' });
       const [u] = await sql`SELECT name, email FROM users WHERE id = ${session.uid}`;
       const note = String(req.body.note || '').trim().slice(0, 2000);
-      await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
-        `Meeting request — ${u.name}`,
+      const minutes = [30, 45, 60, 90].includes(Number(req.body.minutes)) ? Number(req.body.minutes) : 60;
+      const hours = minutes / 60;
+      const used = await monthUsed(r.id);
+      if (used + hours > Number(r.hours_per_month) + 0.001) return res.status(400).json({ error: `That meeting would go past your ${r.hours_per_month} hours this month — ${Math.max(0, Number(r.hours_per_month) - used).toFixed(2)} left.` });
+      // The meeting comes out of this month's hours and shows on the timesheet
+      await sql`INSERT INTO retainer_hours (retainer_id, hours, note, logged_on, created_at)
+        VALUES (${r.id}, ${hours}, ${('Meeting' + (note ? ' — ' + note.slice(0, 160) : '')).slice(0, 200)}, CURRENT_DATE, NOW())`;
+      const [linkRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
+      const link = linkRow?.value || '';
+      const [gina] = await sql`SELECT email FROM users WHERE badge = 'drmerritt' LIMIT 1`;
+      const to = [...new Set([process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net', gina?.email].filter(Boolean))];
+      for (const addr of to) await sendEmail(addr,
+        `Meeting request — ${u.name} (${minutes} min)`,
         `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">An advisory client would like a meeting</h2>
-         <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u.name}</strong> (${u.email}) — ${r.hours_per_month} hrs/mo retainer, ${await monthUsed(r.id)} used this month.</p>
-         ${note ? `<p style="color:#444444;font-size:14px;line-height:1.8;">${note}</p>` : ''}`);
-      return res.json({ success: true });
+         <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u.name}</strong> (${u.email}) — ${minutes} minutes, logged against their ${r.hours_per_month} hrs/mo retainer (${(used + hours).toFixed(2)} used this month).${link ? ' They were sent to your booking link to pick a time.' : ' No booking link is set, so they are waiting for you to reach out.'}</p>
+         ${note ? `<p style="color:#444444;font-size:14px;line-height:1.8;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;padding:14px 18px;"><strong style="color:#161616;">What they want to cover:</strong><br>${note.replace(/</g, '&lt;')}</p>` : ''}`);
+      return res.json({ success: true, link, minutes, used: used + hours });
     }
 
     // The direct line and workspace documents — client or team, on their own retainer
