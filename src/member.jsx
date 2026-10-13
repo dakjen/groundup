@@ -1981,10 +1981,9 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
           const chanBtn = (c, indent) => (
             <button key={c.id} onClick={() => { setActive(c); setDmOpen(false); setSidebarOpen(false); setChannels(cs => cs.map(x => x.id === c.id ? { ...x, unread: 0 } : x)); }}
               style={{ display: "flex", alignItems: "center", gap: 4, width: "100%", textAlign: "left", background: !dmOpen && active?.id === c.id ? "#b80101" : "transparent", border: "none", borderRadius: 6, padding: indent ? "8px 12px 8px 20px" : "9px 12px", cursor: "pointer", marginBottom: 2 }}>
-              <span style={{ color: c.locked ? "#d9b8b8" : "#ffffff", fontWeight: !dmOpen && active?.id === c.id ? 800 : 600, fontSize: indent ? 12.5 : 13.5, fontFamily: font, opacity: c.locked ? 0.75 : 1 }}>
+              <span style={{ color: c.locked ? "#d9b8b8" : "#ffffff", fontWeight: !dmOpen && active?.id === c.id ? 800 : 600, fontSize: indent ? 12.5 : 13.5, fontFamily: font, opacity: c.locked ? 0.75 : 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0, flex: 1 }} title={c.locked ? `${c.name} — ${TIER_LABELS[c.min_tier] || c.min_tier} and above` : c.name}>
                 {c.locked ? <Lock size={11} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> : c.admin_only_post ? <Megaphone size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 2 }} /> : "#"} {c.name}
               </span>
-              {c.min_tier !== "Basic" && <span style={{ marginLeft: 6, fontSize: 9, color: TIER_COLORS[c.min_tier], fontFamily: font, fontWeight: 800 }}>{(TIER_LABELS[c.min_tier] || c.min_tier).toUpperCase()}</span>}
               {!(!dmOpen && active?.id === c.id) && <Bubble n={c.unread} />}
             </button>
           );
