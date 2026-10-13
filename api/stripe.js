@@ -958,7 +958,7 @@ export default async function handler(req, res) {
       if (intake) {
         let coupon;
         try { coupon = (await stripe.coupons.retrieve('INTAKE1500')).id; }
-        catch { coupon = (await stripe.coupons.create({ id: 'INTAKE1500', amount_off: 150000, currency: 'usd', duration: 'once', name: 'Full Project Intake — credited to first month' })).id; }
+        catch { coupon = (await stripe.coupons.create({ id: 'INTAKE1500', amount_off: 150000, currency: 'usd', duration: 'once', name: 'Intake credit — first month' })).id; }
         params.discounts = [{ coupon }];
         params.metadata.intake_credit = '1';
         discounted = true;
