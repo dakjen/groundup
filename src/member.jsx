@@ -1626,8 +1626,8 @@ function Reactions({ m, open, setOpen }) {
     background: active ? "#b8010128" : "transparent",
     border: `1px solid ${active ? "#b8010170" : "var(--gu-border2)"}`,
     color: active ? "#f0b8b8" : "var(--gu-muted)",
-    borderRadius: 99, padding: "2px 8px", cursor: "pointer",
-    fontSize: 11.5, fontFamily: font, fontWeight: 700, lineHeight: 1.6,
+    borderRadius: 99, padding: "1px 7px", cursor: "pointer",
+    fontSize: 11, fontFamily: font, fontWeight: 700, lineHeight: 1.5,
   });
   const has = rx.filter(r => r.n > 0);
   // The row only exists when there is a reaction to show or the picker is open;
@@ -1635,7 +1635,7 @@ function Reactions({ m, open, setOpen }) {
   // appears or disappears on hover.
   if (!has.length && !open) return null;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 6, flexWrap: "wrap", position: "relative" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 3, flexWrap: "wrap", position: "relative" }}>
       {has.map(r => {
         const def = REACTIONS.find(x => x[0] === r.kind);
         const Icon = def ? def[1] : SmilePlus;
@@ -1677,30 +1677,30 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdi
         // A message is a line of talk, not a filing card. Everyone else's sits
         // flat on the page with no box at all; only your own and Dr. Merritt's
         // carry a surface, because those two are worth picking out at a glance.
-        padding: isGina ? "14px 18px" : mine ? "9px 14px" : "5px 8px",
+        padding: isGina ? "9px 12px" : mine ? "6px 10px" : "3px 6px",
         borderRadius: 12,
         background: isGina ? "linear-gradient(135deg, #1a0808 0%, #12060a 100%)" : mine ? "#2c1214" : hover ? "#1a0e0f" : "transparent",
         border: isGina ? "1px solid #b8010170" : "1px solid transparent",
         boxShadow: isGina ? "0 0 20px rgba(184,1,1,0.10)" : "none",
-        marginBottom: 2, maxWidth: 680, width: "fit-content", minWidth: 0,
+        marginBottom: 1, maxWidth: 680, width: "fit-content", minWidth: 0,
         marginLeft: mine ? "auto" : 0,
         transition: "background-color 0.12s" }}>
-      {isGina && <div style={{ height: 2, background: "linear-gradient(90deg, transparent, #b80101, transparent)", margin: "-16px -20px 12px", borderRadius: "10px 10px 0 0" }} />}
-      <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-      <span style={{ position: "relative", flexShrink: 0, cursor: "default", marginTop: 2 }}
+      {isGina && <div style={{ height: 2, background: "linear-gradient(90deg, transparent, #b80101, transparent)", margin: "-11px -14px 8px", borderRadius: "10px 10px 0 0" }} />}
+      <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+      <span style={{ position: "relative", flexShrink: 0, cursor: "default", marginTop: 1 }}
         onMouseEnter={() => !m.is_admin && setShowProfile(true)} onMouseLeave={() => setShowProfile(false)}>
         {m.is_admin && !isGina && !m.author_avatar
-          ? <span style={{ width: 36, height: 36, borderRadius: "50%", background: "#160404", border: "1px solid #b8010150", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}><img src="/icon-192.png" alt="GroundUp" width="26" height="26" style={{ borderRadius: 6 }} /></span>
-          : <Avatar url={m.author_avatar} name={m.is_admin ? (isGina ? "Gina Merritt" : "GroundUp Team") : m.author_name} size={30} />}
+          ? <span style={{ width: 24, height: 24, borderRadius: "50%", background: "#160404", border: "1px solid #b8010150", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}><img src="/icon-192.png" alt="GroundUp" width="26" height="26" style={{ borderRadius: 6 }} /></span>
+          : <Avatar url={m.author_avatar} name={m.is_admin ? (isGina ? "Gina Merritt" : "GroundUp Team") : m.author_name} size={24} />}
         {showProfile && !m.is_admin && <ProfileHover m={m} />}
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 1, flexWrap: "wrap" }}>
         <span style={{ position: "relative", cursor: "default" }}
           onMouseEnter={() => !m.is_admin && setShowProfile(true)} onMouseLeave={() => setShowProfile(false)}>
           <span style={isGina
-            ? { color: "#f5e8e8", fontWeight: 700, fontSize: 16, fontFamily: serif, letterSpacing: "0.3px" }
-            : { color: m.is_admin ? "#b80101" : "var(--gu-text2)", fontWeight: 800, fontSize: 13, fontFamily: font }}>{m.author_name || "Member"}</span>
+            ? { color: "#f5e8e8", fontWeight: 700, fontSize: 14, fontFamily: serif, letterSpacing: "0.3px" }
+            : { color: m.is_admin ? "#b80101" : "var(--gu-text2)", fontWeight: 800, fontSize: 12.5, fontFamily: font }}>{m.author_name || "Member"}</span>
         </span>
         {m.is_admin ? (
           isGina
@@ -1727,7 +1727,7 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdi
           </div>
         </div>
       ) : (
-        <div style={{ color: "var(--gu-body)", fontSize: 14, fontFamily: font, lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{linkify(m.body)}</div>
+        <div style={{ color: "var(--gu-body)", fontSize: 13.5, fontFamily: font, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{linkify(m.body)}</div>
       )}
       {m.poll && m.poll_results && (
         <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6, maxWidth: 420 }}>
@@ -1980,11 +1980,11 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
           const Bubble = ({ n }) => n > 0 ? <span style={{ marginLeft: "auto", background: "#b80101", color: "#fff", borderRadius: 99, fontSize: 10.5, fontWeight: 800, fontFamily: font, padding: "1px 7px", minWidth: 18, textAlign: "center", flexShrink: 0 }}>{n > 99 ? "99+" : n}</span> : null;
           const chanBtn = (c, indent) => (
             <button key={c.id} onClick={() => { setActive(c); setDmOpen(false); setSidebarOpen(false); setChannels(cs => cs.map(x => x.id === c.id ? { ...x, unread: 0 } : x)); }}
-              style={{ display: "flex", alignItems: "center", gap: 4, width: "100%", textAlign: "left", background: !dmOpen && active?.id === c.id ? "#b80101" : "transparent", border: "none", borderRadius: 6, padding: indent ? "8px 12px 8px 20px" : "9px 12px", cursor: "pointer", marginBottom: 2 }}>
+              style={{ display: "flex", alignItems: "center", gap: 4, width: "100%", textAlign: "left", opacity: c.muted ? 0.55 : 1, background: !dmOpen && active?.id === c.id ? "#b80101" : "transparent", border: "none", borderRadius: 6, padding: indent ? "8px 12px 8px 20px" : "9px 12px", cursor: "pointer", marginBottom: 2 }}>
               <span style={{ color: c.locked ? "#d9b8b8" : "#ffffff", fontWeight: !dmOpen && active?.id === c.id ? 800 : 600, fontSize: indent ? 12.5 : 13.5, fontFamily: font, opacity: c.locked ? 0.75 : 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0, flex: 1 }} title={c.locked ? `${c.name} — ${TIER_LABELS[c.min_tier] || c.min_tier} and above` : c.name}>
                 {c.locked ? <Lock size={11} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> : c.admin_only_post ? <Megaphone size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 2 }} /> : "#"} {c.name}
               </span>
-              {!(!dmOpen && active?.id === c.id) && <Bubble n={c.unread} />}
+              {!(!dmOpen && active?.id === c.id) && !c.muted && <Bubble n={c.unread} />}
             </button>
           );
           // A section heading that folds its list. Unread counts stay visible on the heading while folded,
@@ -2108,8 +2108,15 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
                 <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font }}>{active.admin_only_post ? <Megaphone size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> : "#"} {active.name}</div>
                 <div style={{ color: "var(--gu-muted2)", fontSize: 12, fontFamily: font }}>{active.description}</div>
               </div>
+              {!active.locked && (
+                <button onClick={async () => { const muted = !active.muted; try { await api("/api/community", { method: "POST", body: JSON.stringify({ action: "mute_channel", channel_id: active.id, muted }) }); setActive({ ...active, muted }); setChannels(cs => cs.map(x => x.id === active.id ? { ...x, muted } : x)); } catch {} }}
+                  title={active.muted ? "Unmute: show unread counts and notifications for this channel" : "Mute: no unread counts, notifications or digest lines for this channel"}
+                  style={{ marginLeft: isAdmin ? "auto" : 12, background: "transparent", border: "1px solid var(--gu-border)", borderRadius: 6, padding: "5px 10px", color: active.muted ? "#e08a8a" : "var(--gu-muted)", fontSize: 11, fontFamily: font, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
+                  {active.muted ? "Muted" : "Mute"}
+                </button>
+              )}
               {!isAdmin && !active.locked && (
-                <div style={{ marginLeft: "auto", color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font, lineHeight: 1.5, textAlign: "right", maxWidth: 300 }}>
+                <div style={{ marginLeft: 12, color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font, lineHeight: 1.5, textAlign: "right", maxWidth: 300 }}>
                   Channels are for general topics. Anything about <em>your</em> project goes to the team directly — <a href="/contact" style={{ color: "#e08a8a", fontWeight: 700 }}>book time</a>{member && TIER_RANK[member.tier] >= 4 ? <> or <button onClick={() => { setDmOpen(true); setSidebarOpen(false); }} style={{ background: "none", border: "none", padding: 0, color: "#e08a8a", fontWeight: 700, fontFamily: font, fontSize: 11.5, cursor: "pointer" }}>send a direct message</button></> : null}.
                 </div>
               )}
@@ -2125,7 +2132,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
               </div>
             ) : (
               <>
-            <div ref={feedRef} style={{ flex: 1, overflowY: "auto", padding: "20px 20px 12px" }}>
+            <div ref={feedRef} style={{ flex: 1, overflowY: "auto", padding: "12px 16px 8px" }}>
               {messages.length === 0 && <div style={{ color: "var(--gu-faint)", fontFamily: font, fontSize: 14, textAlign: "center", marginTop: 60 }}>No messages yet. {canPost ? "Start the conversation." : ""}</div>}
               {messages.map(m => <Message key={m.id} m={m} onOpenThread={setThread} onDelete={deleteMsg} canDelete={isAdmin || (member && m.user_id === member.id)} onVote={votePoll} onEdit={editMsg} meId={member?.id} isAdmin={isAdmin} />)}
             </div>

@@ -54,7 +54,9 @@ export default async function handler(req, res) {
       if (!user.id) return res.json({ unread: 0, dm_unread: 0, announcement: null });
       const [me] = await sql`SELECT last_seen_community, last_seen_dm, seen_announcement_id FROM users WHERE id = ${user.id}`;
       const channels = await sql`SELECT * FROM channels`;
-      const visibleIds = channels.filter(ch => canSeeChannel(ch, user)).map(ch => ch.id);
+      let mutedIds = [];
+      try { mutedIds = (await sql`SELECT channel_id FROM channel_mutes WHERE user_id = ${user.id}`).map(r => r.channel_id); } catch {}
+      const visibleIds = channels.filter(ch => canSeeChannel(ch, user) && !mutedIds.includes(ch.id)).map(ch => ch.id);
       let unread = 0;
       if (visibleIds.length) {
         const [row] = await sql`
@@ -112,6 +114,15 @@ export default async function handler(req, res) {
     }
 
     // POST { action: 'mark_seen', what: 'community' | 'dm' | 'announcement', id? }
+    // Mute a channel: no bubble, no desktop notification, no digest line for it.
+    if (req.method === 'POST' && req.body && req.body.action === 'mute_channel') {
+      if (!user.id) return res.status(401).json({ error: 'Sign in required' });
+      const cid = Number(req.body.channel_id);
+      if (!cid) return res.status(400).json({ error: 'channel_id required' });
+      if (req.body.muted) await sql`INSERT INTO channel_mutes (user_id, channel_id) VALUES (${user.id}, ${cid}) ON CONFLICT DO NOTHING`;
+      else await sql`DELETE FROM channel_mutes WHERE user_id = ${user.id} AND channel_id = ${cid}`;
+      return res.json({ success: true, muted: !!req.body.muted });
+    }
     if (req.method === 'POST' && req.body && req.body.action === 'mark_seen') {
       if (!user.id) return res.json({ success: true });
       const what = req.body.what;
@@ -145,6 +156,8 @@ export default async function handler(req, res) {
             GROUP BY m.channel_id`;
           const by = Object.fromEntries(rows.map(r => [r.channel_id, r.n]));
           for (const c of visible) c.unread = by[c.id] || 0;
+          const mutes = new Set((await sql`SELECT channel_id FROM channel_mutes WHERE user_id = ${user.id}`).map(r => r.channel_id));
+          for (const c of visible) c.muted = mutes.has(c.id);
         } catch (e) { console.error('channel unread failed', e.message); }
       }
       const all = [...visible, ...locked].sort((x, y) => (x.position - y.position) || (x.id - y.id));
@@ -392,22 +405,8 @@ export default async function handler(req, res) {
         INSERT INTO messages (channel_id, user_id, parent_id, body, is_admin, created_at)
         VALUES (${channel_id}, ${user.id}, ${parent_id || null}, ${text}, ${user.role === 'admin'}, NOW())
         RETURNING *`;
-      // Member posted → Dr. Merritt (and ONLY Dr. Merritt) hears about it on her
-      // phone, so she can jump into the channel and answer. Nobody else is emailed.
-      if (user.role !== 'admin') {
-        try {
-          const [gina] = await sql`SELECT email FROM users WHERE badge = 'drmerritt' LIMIT 1`;
-          if (gina?.email) {
-            const snippet = text.length > 300 ? text.slice(0, 300) + '…' : text;
-            const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const html = `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New post in #${esc(channel.slug || channel.name)}</h2>
-              <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${esc(user.name)}</strong> (${esc(user.tier)}) ${parent_id ? 'replied in a thread' : 'posted'}:</p>
-              <p style="color:#e8e0da;font-size:14px;line-height:1.8;border-left:3px solid #b80101;padding-left:14px;">${esc(snippet)}</p>
-              <p style="margin-top:18px;"><a href="https://community.drginamerritt.net/community" style="color:#b80101;font-weight:700;">Open the community →</a></p>`;
-            await sendEmail(gina.email, `${user.name} posted in #${channel.slug || channel.name}`, html);
-          }
-        } catch (e) { console.error('channel notify failed', e); }
-      }
+      // No email per post: the team gets the Friday community digest instead,
+      // and desktop notifications while the site is open.
       return res.status(201).json({ message: { ...msg, author_name: user.role === 'admin' ? (user.name || 'GroundUp Team') : user.name, author_tier: user.tier, author_badge: user.badge || null, author_badges: user.badges || [], reply_count: 0 } });
     }
 
