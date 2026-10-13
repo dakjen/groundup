@@ -84,7 +84,7 @@ export function NotifyToggle() {
   return (
     <button onClick={() => Notification.requestPermission().then(p => { setPerm(p); if (p === "granted") try { new Notification("GroundUp notifications are on", { body: "You'll hear about new posts and DMs while GroundUp is open." }); } catch {} })}
       style={{ display: "block", width: "100%", textAlign: "left", background: "#ffffff14", border: "1px solid #ffffff22", borderRadius: 6, padding: "9px 12px", color: "#f5e8e8", fontSize: 12.5, fontFamily: font, fontWeight: 700, cursor: "pointer", marginBottom: 12 }}>
-      🔔 Turn on desktop notifications
+      Turn on desktop notifications
     </button>
   );
 }
@@ -1001,7 +1001,7 @@ function MeetingCard({ b, onChange, link }) {
           <button onClick={addLink} disabled={busy === "link"} style={btnGhost}>{busy === "link" ? "…" : "🔗 Submit link"}</button>
         </div>
         <label style={{ ...btnGhost, display: "inline-block", cursor: busy === "file" ? "default" : "pointer", opacity: busy === "file" ? 0.6 : 1 }}>
-          {busy === "file" ? "Uploading…" : "📎 Upload project documents"}
+          {busy === "file" ? "Uploading…" : "Upload project documents"}
           <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.pptx,.csv,.png,.jpg,.jpeg" onChange={e => upload(e.target.files?.[0])} style={{ display: "none" }} disabled={busy === "file"} />
         </label>
         <div style={{ color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font, marginTop: 8, lineHeight: 1.7 }}>
@@ -2571,7 +2571,7 @@ export function MyCohortPage({ member, onNav, onCourse }) {
             <p style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.8, maxWidth: 600, marginBottom: 36 }}>Your program's home base — the curriculum selected for your cohort, your private channel, and everything your group does together.</p>
 
             <div onClick={() => onNav("community")} style={{ background: "var(--gu-card)", border: "1px solid #b8010140", borderRadius: 16, padding: "22px 26px", cursor: "pointer", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 40 }}>
-              <span style={{ fontSize: 22 }}>💬</span>
+              
               <div style={{ flex: 1, minWidth: 220 }}>
                 <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 3 }}>{data.partner.name} Cohort — your private channel</div>
                 <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.6 }}>Just your group and Dr. Merritt — ask questions, share progress, and hear about cohort sessions here first.</div>
