@@ -45,11 +45,13 @@ async function getAccess(sql, userId) {
   // ANY paid membership grants the live sessions (invites + RSVP). Recordings
   // ("the old ones") stay a Builder-and-up benefit.
   const [ent] = await sql`
-    SELECT expires_at FROM entitlements
+    SELECT expires_at, source FROM entitlements
     WHERE user_id = ${userId} AND course_id = 'lunchlearn' AND (expires_at IS NULL OR expires_at > NOW())
     ORDER BY expires_at DESC NULLS FIRST LIMIT 1`;
-  if (ent) return ent;
   const [u] = await sql`SELECT tier FROM users WHERE id = ${userId} AND membership_status = 'active'`;
+  // A founding member's free year of Lunch & Learns is a membership benefit: it
+  // travels with a paid plan, not with the person after they drop to Free.
+  if (ent && !(ent.source === 'founding25' && (!u || u.tier === 'Free'))) return ent;
   if (u && ['Builder', 'Premium', 'Elite'].includes(u.tier)) return { expires_at: null, via: 'membership' };
   if (u && u.tier === 'Basic') return { expires_at: null, via: 'membership_live' }; // live only — no recordings
   return null;
