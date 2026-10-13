@@ -276,7 +276,7 @@ const STATEMENTS = [
   `INSERT INTO channels (slug, name, description, min_tier, admin_only_post, position) VALUES
     ('announcements', 'Announcements', 'Official updates from Dr. Merritt and the GroundUp team.', 'Basic', TRUE, 0),
     ('general', 'General', 'Introduce yourself and talk shop with fellow members.', 'Basic', FALSE, 1),
-    ('deals-financing', 'Deals & Financing', 'Capital stacks, LIHTC, gap funding, underwriting questions.', 'Basic', FALSE, 2),
+    ('financial-structuring', 'Financial Structuring', 'Capital stacks, LIHTC, gap funding, underwriting questions.', 'Premium', FALSE, 2),
     ('jv-partnerships', 'JV & Partnerships', 'Find partners, structure splits, share opportunities.', 'Premium', FALSE, 3),
     ('opportunity-board', 'Opportunity Board', 'RFPs, funding windows, and deals worth chasing — posted by the team monthly. Reply in threads to discuss.', 'Premium', TRUE, 4),
     ('owner-lounge', 'Owner Lounge', 'Private channel for Owner members and advisory clients.', 'Elite', FALSE, 5),
