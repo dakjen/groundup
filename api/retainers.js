@@ -37,6 +37,8 @@ export default async function handler(req, res) {
           try { r.projects = await sql`SELECT id, name, details, created_at, updated_at FROM projects WHERE user_id = ${r.user_id} ORDER BY created_at ASC`; } catch { r.projects = []; }
           r.log = await sql`SELECT * FROM retainer_hours WHERE retainer_id = ${r.id} ORDER BY logged_on DESC, id DESC LIMIT 60`;
           try { r.meetings = await sql`SELECT * FROM retainer_meetings WHERE retainer_id = ${r.id} AND status <> 'done' ORDER BY scheduled_at ASC NULLS LAST, created_at DESC LIMIT 10`; } catch { r.meetings = []; }
+          // The thread rides along so the Messages tab shows instantly (it is not marked seen until opened)
+          r.messages = await sql`SELECT * FROM retainer_messages WHERE retainer_id = ${r.id} ORDER BY created_at ASC LIMIT 300`;
           r.files = await sql`SELECT * FROM retainer_files WHERE retainer_id = ${r.id} ORDER BY created_at DESC`;
           // The direct line is its own thread, separate from Community DMs. Unread = what the client wrote since this admin last opened the tab.
           try { const [d] = await sql`SELECT COUNT(*)::int AS n FROM retainer_messages m WHERE m.retainer_id = ${r.id} AND m.from_admin = FALSE AND m.created_at > COALESCE((SELECT seen_at FROM thread_seen t WHERE t.user_id = ${admin.uid || 0} AND t.kind = 'advisory' AND t.ref_id = ${r.id}), '1970-01-01')`; r.unread = d?.n || 0; } catch { r.unread = 0; }
@@ -73,6 +75,7 @@ export default async function handler(req, res) {
       r.log = await sql`SELECT hours, note, logged_on FROM retainer_hours WHERE retainer_id = ${r.id} ORDER BY logged_on DESC LIMIT 12`;
       r.files = await sql`SELECT * FROM retainer_files WHERE retainer_id = ${r.id} ORDER BY created_at DESC`;
       try { r.meetings = await sql`SELECT id, minutes, topic, status, scheduled_at, created_at FROM retainer_meetings WHERE retainer_id = ${r.id} AND status <> 'done' ORDER BY scheduled_at ASC NULLS LAST, created_at DESC LIMIT 10`; } catch { r.meetings = []; }
+      r.messages = await sql`SELECT * FROM retainer_messages WHERE retainer_id = ${r.id} ORDER BY created_at ASC LIMIT 300`;
       if (req.query.thread) {
         // The client's direct line — opening it marks it seen
         const messages = await sql`SELECT * FROM retainer_messages WHERE retainer_id = ${r.id} ORDER BY created_at ASC LIMIT 300`;
