@@ -273,6 +273,12 @@ const STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS deal_files (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, title TEXT, url TEXT NOT NULL, kind TEXT DEFAULT 'file', created_at TIMESTAMP DEFAULT NOW())`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_mode TEXT DEFAULT 'all'`,
   `CREATE TABLE IF NOT EXISTS mentions (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, message_id INTEGER NOT NULL, channel_id INTEGER NOT NULL, by_user_id INTEGER, created_at TIMESTAMP DEFAULT NOW(), UNIQUE (user_id, message_id))`,
+  `ALTER TABLE retainers ADD COLUMN IF NOT EXISTS private_notes TEXT`,
+  // Advisory clients can have more than one project; each carries its own details and documents
+  `CREATE TABLE IF NOT EXISTS projects (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, name TEXT NOT NULL, details JSONB, created_at TIMESTAMP DEFAULT NOW(), updated_at TIMESTAMP DEFAULT NOW())`,
+  `ALTER TABLE deal_files ADD COLUMN IF NOT EXISTS project_id INTEGER`,
+  `ALTER TABLE deal_files ADD COLUMN IF NOT EXISTS size BIGINT DEFAULT 0`,
+  `ALTER TABLE deal_files ADD COLUMN IF NOT EXISTS folder TEXT`,
   `CREATE TABLE IF NOT EXISTS channel_mutes (user_id INTEGER NOT NULL, channel_id INTEGER NOT NULL, PRIMARY KEY (user_id, channel_id))`,
   `CREATE TABLE IF NOT EXISTS thread_seen (user_id INTEGER NOT NULL, kind TEXT NOT NULL, ref_id INTEGER NOT NULL, seen_at TIMESTAMP DEFAULT NOW(), PRIMARY KEY (user_id, kind, ref_id))`,
   `ALTER TABLE channels ADD COLUMN IF NOT EXISTS team_only BOOLEAN DEFAULT FALSE`,
