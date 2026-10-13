@@ -4775,7 +4775,8 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
               const past = new Date(ev.date) < new Date();
               const rsvps = (data.rsvpsByEvent || {})[ev.date] || [];
               return (
-                <div key={ev.id} style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", padding: "10px 0", borderBottom: "1px solid #f2efe8", opacity: past ? 0.5 : 1 }}>
+                <div key={ev.id}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", padding: "10px 0", borderBottom: "1px solid #f2efe8", opacity: past ? 0.5 : 1 }}>
                   <div style={{ flex: 1, minWidth: 200 }}>
                     <span style={{ color: "#222222", fontSize: 13.5, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{ev.title}</span>
                     <span style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 10 }}>{new Date(ev.date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}{ev.time ? ` · ${ev.time}` : ""}{past ? " · past" : ""}</span>
@@ -4803,6 +4804,7 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
                     ))}
                   </div>
                 )}
+                </div>
               );
             })}
           </div>
