@@ -1875,6 +1875,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
 
   const pendingThread = useRef(hashState().t ? Number(hashState().t) : null);
   useEffect(() => {
+    if (active?.locked) { setMessages([]); return; }
     if (!active) return;
     setThread(null);
     loadMessages(active.id).then(() => {
@@ -1977,8 +1978,8 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
           const chanBtn = (c, indent) => (
             <button key={c.id} onClick={() => { setActive(c); setDmOpen(false); setSidebarOpen(false); setChannels(cs => cs.map(x => x.id === c.id ? { ...x, unread: 0 } : x)); }}
               style={{ display: "flex", alignItems: "center", gap: 4, width: "100%", textAlign: "left", background: !dmOpen && active?.id === c.id ? "#b80101" : "transparent", border: "none", borderRadius: 6, padding: indent ? "8px 12px 8px 20px" : "9px 12px", cursor: "pointer", marginBottom: 2 }}>
-              <span style={{ color: "#ffffff", fontWeight: !dmOpen && active?.id === c.id ? 800 : 600, fontSize: indent ? 12.5 : 13.5, fontFamily: font }}>
-                {c.admin_only_post ? <Megaphone size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 2 }} /> : "#"} {c.name}
+              <span style={{ color: c.locked ? "#d9b8b8" : "#ffffff", fontWeight: !dmOpen && active?.id === c.id ? 800 : 600, fontSize: indent ? 12.5 : 13.5, fontFamily: font, opacity: c.locked ? 0.75 : 1 }}>
+                {c.locked ? <Lock size={11} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> : c.admin_only_post ? <Megaphone size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 2 }} /> : "#"} {c.name}
               </span>
               {c.min_tier !== "Basic" && <span style={{ marginLeft: 6, fontSize: 9, color: TIER_COLORS[c.min_tier], fontFamily: font, fontWeight: 800 }}>{(TIER_LABELS[c.min_tier] || c.min_tier).toUpperCase()}</span>}
               {!(!dmOpen && active?.id === c.id) && <Bubble n={c.unread} />}
@@ -2093,6 +2094,17 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
                 <div style={{ color: "var(--gu-muted2)", fontSize: 12, fontFamily: font }}>{active.description}</div>
               </div>
             </div>
+            {active.locked ? (
+              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 32 }}>
+                <div style={{ maxWidth: 420, textAlign: "center" }}>
+                  <Lock size={28} style={{ color: "#b80101", marginBottom: 14 }} />
+                  <div style={{ color: "var(--gu-text2)", fontFamily: serif, fontWeight: 700, fontSize: 26, marginBottom: 8 }}>#{active.name} is a {TIER_LABELS[active.min_tier] || active.min_tier} channel</div>
+                  <p style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.8, margin: "0 0 18px" }}>{active.description}{active.description ? " " : ""}Members on {TIER_LABELS[active.min_tier] || active.min_tier} and above read and post here. Move up a plan to open it.</p>
+                  <a href="/pricing" style={{ display: "inline-block", background: "#b80101", color: "#fff", borderRadius: 10, padding: "12px 22px", fontFamily: font, fontWeight: 800, fontSize: 13, textDecoration: "none" }}>See the plans →</a>
+                </div>
+              </div>
+            ) : (
+              <>
             <div ref={feedRef} style={{ flex: 1, overflowY: "auto", padding: "20px 20px 12px" }}>
               {messages.length === 0 && <div style={{ color: "var(--gu-faint)", fontFamily: font, fontSize: 14, textAlign: "center", marginTop: 60 }}>No messages yet. {canPost ? "Start the conversation." : ""}</div>}
               {messages.map(m => <Message key={m.id} m={m} onOpenThread={setThread} onDelete={deleteMsg} canDelete={isAdmin || (member && m.user_id === member.id)} onVote={votePoll} onEdit={editMsg} meId={member?.id} isAdmin={isAdmin} />)}
@@ -2126,6 +2138,8 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
                 <div style={{ color: "var(--gu-muted2)", fontSize: 13, fontFamily: font, textAlign: "center", padding: "8px 0" }}>Only the GroundUp team posts in this channel. Reply in threads to join the discussion.</div>
               )}
             </div>
+              </>
+            )}
           </>
         )}
       </div>
