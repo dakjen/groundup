@@ -462,9 +462,9 @@ async function fulfill(sql, session) {
       if (seats.taken > seats.cap) {
         const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
         await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
-          `ELITE OVER CAP: ${seats.taken} of ${seats.cap} seats`,
-          `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Elite went over cap</h2>
-           <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u?.name}</strong> (${u?.email}) completed Elite checkout at the same moment as someone else, putting Elite at <strong style="color:#161616;">${seats.taken} of ${seats.cap}</strong>. Their payment went through and their access is live. Either raise the cap in Admin, or reach out to arrange a refund.</p>`);
+          `OWNER OVER CAP: ${seats.taken} of ${seats.cap} seats`,
+          `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Owner went over cap</h2>
+           <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u?.name}</strong> (${u?.email}) completed Owner checkout at the same moment as someone else, putting Elite at <strong style="color:#161616;">${seats.taken} of ${seats.cap}</strong>. Their payment went through and their access is live. Either raise the cap in Admin, or reach out to arrange a refund.</p>`);
       }
     }
   } else if (item === 'product') {
@@ -837,9 +837,9 @@ export default async function handler(req, res) {
       const seats = await eliteSeats(sql);
       if (seats.full) {
         return res.status(409).json({
-          error: 'Elite is full',
+          error: 'Owner is full',
           elite_full: true,
-          message: `All ${seats.cap} Elite seats are taken. Join the waitlist and you'll be first to know when one opens.`,
+          message: `All ${seats.cap} Owner seats are taken. Join the waitlist and you'll be first to know when one opens.`,
         });
       }
     }
