@@ -280,7 +280,7 @@ const STATEMENTS = [
     ('jv-partnerships', 'JV & Partnerships', 'Find partners, structure splits, share opportunities.', 'Premium', FALSE, 3),
     ('opportunity-board', 'Opportunity Board', 'RFPs, funding windows, and deals worth chasing — posted by the team monthly. Reply in threads to discuss.', 'Premium', TRUE, 4),
     ('owner-lounge', 'Owner Lounge', 'Private channel for Owner members and advisory clients.', 'Elite', FALSE, 5),
-    ('groundup', 'GroundUp', 'Feedback on the platform, subjects and content you want covered, and questions about how GroundUp works. The team reads everything here.', 'Basic', FALSE, 2)
+    ('groundup', 'GroundUp', 'Feedback on the platform, subjects and content you want covered, channels you think we should add, and questions about how GroundUp works. The team reads everything here.', 'Basic', FALSE, 2)
     ON CONFLICT (slug) DO NOTHING`,
   `CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`,
   `CREATE INDEX IF NOT EXISTS idx_referrals_code ON referrals(code)`,
