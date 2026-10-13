@@ -4691,6 +4691,18 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
   const [evForm, setEvForm] = useState({ title: "", date: "", time: "", description: "" });
   const [msg, setMsg] = useState(null);
   const [showRequests, setShowRequests] = useState(false);
+  const [openRsvp, setOpenRsvp] = useState(null); // event date whose RSVP list is expanded
+  const downloadCsv = (name, header, rows) => {
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const csv = [header.join(",")].concat(rows.map(r => r.map(esc).join(","))).join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" }));
+    a.download = `${name}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+  const evLabel = (ev) => `${ev.title} ${new Date(ev.date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`;
+  const rsvpRows = (ev) => ((data.rsvpsByEvent || {})[ev.date] || []).map(r => [evLabel(ev), r.name, r.email, r.question || ""]);
 
   const call = async (method, body) => {
     const res = await fetch("/api/lunchlearn" + (method === "GET" ? "?admin=1" : ""), {
@@ -4756,7 +4768,9 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
 
         {(data.events || []).length > 0 && (
           <div style={{ marginTop: 22, borderTop: "1px solid #eeebe4", paddingTop: 16 }}>
-            <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>Scheduled ({(data.events || []).filter(e => (e.kind || "lnl") !== "office" && new Date(e.date) > Date.now()).length} upcoming)</div>
+<div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>            <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>Scheduled ({(data.events || []).filter(e => (e.kind || "lnl") !== "office" && new Date(e.date) > Date.now()).length} upcoming)</div>
+              <button onClick={() => downloadCsv("lunch-learn-rsvps-all", ["Session", "Name", "Email", "Question"], (data.events || []).filter(e => (e.kind || "lnl") !== "office").flatMap(rsvpRows))} style={{ ...btnGhost, fontSize: 11, padding: "4px 10px", marginLeft: "auto" }}>Download all RSVPs (CSV)</button>
+            </div>
             {(data.events || []).filter(e => (e.kind || "lnl") !== "office").map(ev => {
               const past = new Date(ev.date) < new Date();
               const rsvps = (data.rsvpsByEvent || {})[ev.date] || [];
@@ -4766,7 +4780,7 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
                     <span style={{ color: "#222222", fontSize: 13.5, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{ev.title}</span>
                     <span style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 10 }}>{new Date(ev.date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}{ev.time ? ` · ${ev.time}` : ""}{past ? " · past" : ""}</span>
                   </div>
-                  <span title={rsvps.map(r => r.name).join(", ")} style={{ color: "#6b6259", fontSize: 12, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>{rsvps.length} RSVP{rsvps.length === 1 ? "" : "s"}</span>
+                  <button onClick={() => setOpenRsvp(openRsvp === ev.date ? null : ev.date)} disabled={rsvps.length === 0} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px", color: rsvps.length ? "#b80101" : "#9a9a9a", borderColor: rsvps.length ? "#b8010140" : "#e4e0d8" }}>{rsvps.length} RSVP{rsvps.length === 1 ? "" : "s"}{rsvps.length ? (openRsvp === ev.date ? " ▴" : " ▾") : ""}</button>
                   <button onClick={async () => {
                     const title = window.prompt("Session name:", ev.title);
                     if (!title || title === ev.title) return;
@@ -4774,6 +4788,21 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
                   }} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Rename</button>
                   <button onClick={async () => { if (!window.confirm(`Remove "${ev.title}" from the schedule?`)) return; try { await call("POST", { action: "remove_event", id: ev.id }); flash(true, "Session removed."); await load(); } catch (e) { flash(false, e.message); } }} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Remove</button>
                 </div>
+                {openRsvp === ev.date && rsvps.length > 0 && (
+                  <div style={{ background: "#faf9f6", border: "1px solid #eeebe4", borderRadius: 10, padding: "12px 16px", margin: "6px 0 10px" }}>
+                    <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+                      <span style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>Who's coming · {rsvps.length}</span>
+                      <button onClick={() => downloadCsv(`lunch-learn-rsvps-${ev.date.slice(0, 10)}`, ["Session", "Name", "Email", "Question"], rsvpRows(ev))} style={{ ...btnGhost, fontSize: 11, padding: "4px 10px", marginLeft: "auto" }}>Download CSV</button>
+                    </div>
+                    {rsvps.map((r, i) => (
+                      <div key={i} style={{ display: "flex", gap: 12, flexWrap: "wrap", padding: "6px 0", borderTop: i ? "1px solid #f0ede6" : "none", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif" }}>
+                        <span style={{ color: "#222222", fontWeight: 700, minWidth: 160 }}>{r.name}</span>
+                        <span style={{ color: "#6b6259" }}>{r.email}</span>
+                        {r.question && <span style={{ color: "#444444", flexBasis: "100%", fontStyle: "italic" }}>"{r.question}"</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
               );
             })}
           </div>
@@ -4852,6 +4881,7 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
         <div style={{ ...heading, cursor: "pointer" }} onClick={() => setShowRequests(!showRequests)}>
           <Inbox size={13} color="#b80101" /> Topic Requests ({data.requests.length}) <span style={{ marginLeft: "auto", color: "#9a9a9a" }}>{showRequests ? "Hide" : "Show"}</span>
         </div>
+        {data.requests.length > 0 && <button onClick={() => downloadCsv("lunch-learn-topic-requests", ["Name", "Email", "Request", "Date"], data.requests.map(r => [r.name || "", r.email || "", r.body, new Date(r.created_at).toLocaleDateString()]))} style={{ ...btnGhost, fontSize: 11, padding: "4px 10px", marginBottom: 10 }}>Download CSV</button>}
         {showRequests && (data.requests.length === 0 ? (
           <p style={{ color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No submissions yet — attendees are asked what they want to learn when they get access.</p>
         ) : (
