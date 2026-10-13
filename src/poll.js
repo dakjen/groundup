@@ -11,7 +11,7 @@
 // shows stale data.
 
 const IDLE_MS = 5 * 60 * 1000; // treat the person as away after this much quiet
-const MIN_MS = 30 * 1000;      // floor: nothing here polls faster than this
+const MIN_MS = 15 * 1000;      // floor: nothing here polls faster than this
 const ACTIVITY = ["mousemove", "keydown", "pointerdown", "scroll", "touchstart"];
 
 export function pollVisible(fn, ms) {
