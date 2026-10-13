@@ -3170,7 +3170,7 @@ export function DirectLine({ loadMsgs, sendMsg, isAdmin, title, subtitle, height
         {msgs.map(m => { const mine = m.from_admin === !!isAdmin; return (
           <div key={m.id} style={{ display: "flex", justifyContent: mine ? "flex-end" : "flex-start", marginBottom: 10 }}>
             <div style={{ maxWidth: "85%", background: mine ? "#b80101" : "#1a0a0a", border: mine ? "none" : "1px solid #3a1515", borderRadius: mine ? "16px 16px 4px 16px" : "16px 16px 16px 4px", padding: "10px 14px" }}>
-              {!mine && <div style={{ color: "#e0a0a0", fontSize: 10.5, fontWeight: 800, fontFamily: font, letterSpacing: "1px", textTransform: "uppercase", marginBottom: 4 }}>{m.from_admin ? "Dr. Merritt & team" : (otherName || "Client")}</div>}
+              {!mine && <div style={{ color: "#e0a0a0", fontSize: 10.5, fontWeight: 800, fontFamily: font, letterSpacing: "1px", textTransform: "uppercase", marginBottom: 4 }}>{m.from_admin ? "Dr. Merritt" : (otherName || "Client")}</div>}
               <div style={{ color: mine ? "#ffffff" : "#f0e0e0", fontSize: 13.5, fontFamily: font, lineHeight: 1.65, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.body}</div>
               <div style={{ color: mine ? "rgba(255,255,255,0.75)" : "#b08c8c", fontSize: 10, fontFamily: font, marginTop: 5, textAlign: "right" }}>{timeAgo(m.created_at)}</div>
             </div>
@@ -3179,7 +3179,7 @@ export function DirectLine({ loadMsgs, sendMsg, isAdmin, title, subtitle, height
       </div>
       {err && <div style={{ color: "#ff6b6b", fontSize: 12, fontFamily: font, padding: "0 18px 6px" }}>{err}</div>}
       <form onSubmit={send} style={{ display: "flex", gap: 8, padding: "12px 14px 16px", borderTop: "1px solid var(--gu-border2)", alignItems: "flex-end" }}>
-        <GrowingInput style={{ ...inp, marginBottom: 0, flex: 1 }} value={draft} onChange={e => setDraft(e.target.value)} onSubmit={() => send()} placeholder={isAdmin ? `Reply to ${otherName || "client"}…` : "Message Dr. Merritt & team…"} maxLength={4000} />
+        <GrowingInput style={{ ...inp, marginBottom: 0, flex: 1 }} value={draft} onChange={e => setDraft(e.target.value)} onSubmit={() => send()} placeholder={isAdmin ? `Reply to ${otherName || "client"}…` : "Message Dr. Merritt…"} maxLength={4000} />
         <button type="submit" style={{ ...btnRed, padding: "12px 16px" }}>Send</button>
       </form>
     </div>
@@ -3193,6 +3193,10 @@ export function RetainerPage({ member, setActivePage }) {
   const [meetingNote, setMeetingNote] = useState("");
   const [meetingMin, setMeetingMin] = useState(60);
   const [meetingLink, setMeetingLink] = useState(null);   // after the request: where to pick a time
+  const [view, setView] = useState("workspace");          // "workspace" | "dealroom"
+  const [rooms, setRooms] = useState(null);               // projects + files, for the deal room summary
+  const loadRooms = () => api("/api/auth", { method: "POST", body: JSON.stringify({ action: "projects" }) }).then(setRooms).catch(() => {});
+  useEffect(() => { if (data && data.status === "active") loadRooms(); }, [data?.id]);
 
   const load = () => api("/api/retainers").then(d => setData(d.retainer)).catch(() => setData(null));
   useEffect(() => { load(); return pollVisible(load, 30000); }, [member?.id]);
@@ -3296,6 +3300,18 @@ export function RetainerPage({ member, setActivePage }) {
     </div>
   );
 
+  if (view === "dealroom") return (
+    <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(20px,5vw,60px) 70px" }}>
+      <div style={{ maxWidth: 980, margin: "0 auto" }}>
+        <button onClick={() => { setView("workspace"); loadRooms(); }} style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 12.5, fontFamily: font, fontWeight: 700, padding: 0, marginBottom: 14 }}>← Back to your workspace</button>
+        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Senior Advisor Retainer</div>
+        <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4.5vw,42px)", color: "var(--gu-text)", marginBottom: 10 }}>Deal Room</h1>
+        <p style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.8, maxWidth: 620, marginBottom: 28 }}>Your secure workspace for the confidential documents behind each project — organized by development phase, shared only with Dr. Merritt. Add a project, then drop its documents into the phase they belong to.</p>
+        <DealProfileCard member={member} />
+      </div>
+    </div>
+  );
+
   return (
     <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(20px,5vw,60px) 70px" }}>
       <div style={{ maxWidth: 1120, margin: "0 auto" }}>
@@ -3364,12 +3380,19 @@ export function RetainerPage({ member, setActivePage }) {
               </>)}
             </div>
 
-            {/* Projects and their deal rooms */}
-            <DealProfileCard member={member} />
+            {/* The deal room: a door, not the whole thing */}
+            <button onClick={() => setView("dealroom")} style={{ width: "100%", textAlign: "left", background: "var(--gu-card)", border: "1px solid #b8010150", borderRadius: 16, padding: "26px 28px", cursor: "pointer", display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
+              <div style={{ flex: "1 1 260px", minWidth: 0 }}>
+                <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Deal Room</div>
+                <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "var(--gu-text)", marginBottom: 6 }}>{rooms && rooms.projects.length ? `${rooms.projects.length} project${rooms.projects.length === 1 ? "" : "s"} · ${rooms.files.length} document${rooms.files.length === 1 ? "" : "s"}` : "Your documents, organized"}</div>
+                <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rooms && rooms.projects.length ? rooms.projects.map(p => p.name).join(" · ") : "Add your projects and drop their documents in by development phase — shared only with Dr. Merritt."}{rooms ? ` · ${fmtBytes(rooms.used_bytes)} of ${fmtBytes(rooms.quota_bytes)} used` : ""}</div>
+              </div>
+              <span style={{ ...btnRed, display: "inline-block" }}>Open the deal room →</span>
+            </button>
           </div>
 
           {/* Right: direct line */}
-          <DirectLine title="Direct line" subtitle="Dr. Merritt & the GroundUp team — private to your engagement"
+          <DirectLine title="Direct line" subtitle="Dr. Merritt — private to your engagement"
             loadMsgs={() => api("/api/retainers?thread=1").then(d => d.messages)}
             sendMsg={(text) => api("/api/retainers", { method: "POST", body: JSON.stringify({ action: "message", body: text }) })} />
         </div>

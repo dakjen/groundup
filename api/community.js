@@ -114,7 +114,8 @@ export default async function handler(req, res) {
         // The advisory direct line is its own thread (not a DM): the team hears
         // about client messages, the client hears about Dr. Merritt's replies.
         try {
-          if (user.role === 'admin') {
+          if (user.role === 'admin' && user.badge === 'drmerritt') {
+            // Only Dr. Merritt is told about advisory messages — it is her thread
             const adv = await sql`
               SELECT m.id, m.retainer_id, m.body, m.created_at, u.name AS author FROM retainer_messages m
               JOIN retainers r ON r.id = m.retainer_id JOIN users u ON u.id = r.user_id
@@ -123,7 +124,7 @@ export default async function handler(req, res) {
               ORDER BY m.id DESC LIMIT 5`;
             advisoryUnread = adv.length;
             latest = latest.concat(adv.slice(0, 3).map(a => ({ key: 'advisory:' + a.id, title: `${a.author} — advisory`, body: String(a.body).slice(0, 140), at: a.created_at, page: 'admin-retainers', retainer: a.retainer_id })));
-          } else {
+          } else if (user.role !== 'admin') {
             const adv = await sql`
               SELECT m.id, m.retainer_id, m.body, m.created_at FROM retainer_messages m
               JOIN retainers r ON r.id = m.retainer_id AND r.user_id = ${user.id} AND r.status = 'active'

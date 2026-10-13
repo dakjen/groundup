@@ -135,8 +135,9 @@ export default async function handler(req, res) {
             `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New message in your workspace</h2>
              <p style="color:#444444;font-size:14px;line-height:1.8;">Sign in and open your Advisory workspace to read it and reply.</p>`);
         } else if (r) {
+          // The advisory direct line is Dr. Merritt's alone — not the team inbox
           const [gina] = await sql`SELECT email FROM users WHERE badge = 'drmerritt' LIMIT 1`;
-          const to = [...new Set([process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net', gina?.email].filter(Boolean))];
+          const to = gina?.email ? [gina.email] : [process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net'];
           for (const addr of to) await sendEmail(addr,
             `Advisory client — ${r.name}`,
             `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${r.name} wrote in their advisory workspace</h2>
