@@ -1700,7 +1700,7 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdi
           onMouseEnter={() => !m.is_admin && setShowProfile(true)} onMouseLeave={() => setShowProfile(false)}>
           <span style={isGina
             ? { color: "#f5e8e8", fontWeight: 700, fontSize: 14, fontFamily: serif, letterSpacing: "0.3px" }
-            : { color: m.is_admin ? "#b80101" : "var(--gu-text2)", fontWeight: 800, fontSize: 12.5, fontFamily: font }}>{m.author_name || "Member"}</span>
+            : { color: m.is_admin ? "#b80101" : "var(--gu-text2)", fontWeight: 800, fontSize: 12, fontFamily: font }}>{m.author_name || "Member"}</span>
         </span>
         {m.is_admin ? (
           isGina
@@ -1708,7 +1708,7 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdi
             : <span style={{ background: "#b80101", color: "#fff", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, fontFamily: font, letterSpacing: "1px" }}>TEAM</span>
         ) : m.author_tier && <TierBadge tier={m.author_tier} small />}
         {!m.is_admin && <BadgeChips badges={m.author_badges} small />}
-        <span style={{ color: "var(--gu-faint)", fontSize: 11, fontFamily: font }}>{timeAgo(m.created_at)}</span>
+        <span style={{ color: "var(--gu-faint)", fontSize: 10.5, fontFamily: font }}>{timeAgo(m.created_at)}</span>
         {m.edited_at && <span style={{ color: "var(--gu-faint)", fontSize: 10, fontFamily: font, fontStyle: "italic" }}>(edited)</span>}
         <span style={{ marginLeft: "auto", display: "flex", gap: 10, alignItems: "center", opacity: hover || editing || reactOpen ? 1 : 0, transition: "opacity 0.15s" }}>
           <button onClick={() => setReactOpen(o => !o)} title="Add a reaction" style={{ background: "none", border: "none", color: "var(--gu-faint)", cursor: "pointer", padding: 0, display: "flex" }}><SmilePlus size={13} /></button>
@@ -1727,7 +1727,7 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdi
           </div>
         </div>
       ) : (
-        <div style={{ color: "var(--gu-body)", fontSize: 13.5, fontFamily: font, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{linkify(m.body)}</div>
+        <div style={{ color: "var(--gu-body)", fontSize: 13, fontFamily: font, lineHeight: 1.45, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{linkify(m.body)}</div>
       )}
       {m.poll && m.poll_results && (
         <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6, maxWidth: 420 }}>
