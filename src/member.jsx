@@ -154,12 +154,11 @@ export const DEAL_FOLDERS = [
   ["other", "Everything else", "Entity documents, team agreements, anything that doesn't fit a phase"],
 ];
 export function DataRoom({ project, files, used, quota, onChange, flash, dark, compact }) {
-  const [openFolders, setOpenFolders] = useState({});
-  const [adding, setAdding] = useState(null);       // folder key with the link form open
+  // Every document, listed under its category — all on the page, nothing to open.
+  const [adding, setAdding] = useState(null);     // category key with the link form open
   const [linkTitle, setLinkTitle] = useState(""); const [linkUrl, setLinkUrl] = useState("");
   const [busy, setBusy] = useState(false); const [progress, setProgress] = useState("");
   const [dragOver, setDragOver] = useState(null);
-  const toggle = (k) => setOpenFolders({ ...openFolders, [k]: !openFolders[k] });
   const upload = async (folder, list) => {
     const arr = [...(list || [])]; if (arr.length === 0) return;
     const total = arr.reduce((a, f) => a + f.size, 0);
@@ -174,58 +173,56 @@ export function DataRoom({ project, files, used, quota, onChange, flash, dark, c
         const u = await res.json(); if (!res.ok) throw new Error(u.error || "Upload failed");
         await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "deal_file_add", project_id: project.id, folder, title: file.name, url: u.url, kind: "file", size: file.size }) });
       }
-      flash(true, arr.length > 1 ? `${arr.length} documents added.` : "Document added."); setOpenFolders(o => ({ ...o, [folder]: true })); await onChange();
+      flash(true, arr.length > 1 ? `${arr.length} documents added.` : "Document added."); await onChange();
     } catch (e) { flash(false, e.message); } finally { setBusy(false); setProgress(""); }
   };
   const addLink = async (folder) => {
     if (!linkUrl.trim()) return;
-    try { await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "deal_file_add", project_id: project.id, folder, title: linkTitle.trim() || linkUrl.trim(), url: linkUrl.trim(), kind: "link" }) }); setLinkTitle(""); setLinkUrl(""); setAdding(null); setOpenFolders(o => ({ ...o, [folder]: true })); await onChange(); }
+    try { await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "deal_file_add", project_id: project.id, folder, title: linkTitle.trim() || linkUrl.trim(), url: linkUrl.trim(), kind: "link" }) }); setLinkTitle(""); setLinkUrl(""); setAdding(null); await onChange(); }
     catch (e) { flash(false, e.message); }
   };
   const remove = async (f) => { try { await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "deal_file_remove", id: f.id }) }); await onChange(); } catch (e) { flash(false, e.message); } };
   const inFolder = (k) => files.filter(f => (f.folder || "other") === k || (k === "other" && !DEAL_FOLDERS.some(([key]) => key === f.folder)));
+  const dropProps = (k) => compact ? {} : ({ onDragOver: e => { e.preventDefault(); setDragOver(k); }, onDragLeave: () => setDragOver(null), onDrop: e => { e.preventDefault(); setDragOver(null); upload(k, e.dataTransfer.files); } });
+  const small = { ...btnGhost, padding: "6px 12px", fontSize: 11.5, color: "var(--gu-text2)", borderColor: "var(--gu-border)" };
   return (
     <div>
       {DEAL_FOLDERS.map(([k, label, hint]) => {
-        const list = inFolder(k); const isOpen = !!openFolders[k];
+        const list = inFolder(k);
+        if (compact && list.length === 0) return null;
         return (
-          <div key={k} onDragOver={e => { e.preventDefault(); setDragOver(k); }} onDragLeave={() => setDragOver(null)} onDrop={e => { e.preventDefault(); setDragOver(null); upload(k, e.dataTransfer.files); }}
-            style={{ border: "1px solid " + (dragOver === k ? "#b80101" : "var(--gu-border)"), background: dragOver === k ? "var(--gu-red-tint)" : "var(--gu-card)", borderRadius: 12, marginBottom: 8, overflow: "hidden" }}>
-            <button onClick={() => toggle(k)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, background: "transparent", border: "none", padding: "13px 16px", cursor: "pointer", textAlign: "left" }}>
-              <span style={{ color: "var(--gu-muted)", fontSize: 11, width: 12, display: "inline-block", transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .15s" }}>▶</span>
-              <span style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 13.5, fontFamily: font, flex: 1 }}>{label}</span>
-              <span style={{ color: list.length ? "var(--gu-text2)" : "var(--gu-muted)", fontSize: 12, fontFamily: font, fontWeight: 700 }}>{list.length ? `${list.length} item${list.length === 1 ? "" : "s"}` : "empty"}</span>
-            </button>
-            {isOpen && (
-              <div style={{ padding: "0 16px 14px 40px" }}>
-                <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font, marginBottom: list.length ? 8 : 10 }}>{hint}</div>
-                {list.map(f => (
-                  <div key={f.id} style={{ display: "flex", gap: 10, alignItems: "center", padding: "8px 0", borderBottom: "1px solid var(--gu-border2)", fontSize: 13, fontFamily: font }}>
-                    <FileTextIcon />
-                    <a href={f.url} target="_blank" rel="noreferrer" style={{ color: "var(--gu-text2)", fontWeight: 700, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: "none" }}>{f.title || f.url}</a>
-                    <span style={{ color: "var(--gu-muted)", fontSize: 11.5, whiteSpace: "nowrap" }}>{f.kind === "link" ? "link" : fmtBytes(f.size)} · {new Date(f.created_at).toLocaleDateString()}</span>
-                    {!compact && <button onClick={() => remove(f)} style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 11.5, fontFamily: font, fontWeight: 700 }}>remove</button>}
-                  </div>
-                ))}
-                {!compact && (
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 10 }}>
-                    <label style={{ ...btnGhost, padding: "8px 14px", fontSize: 12, cursor: busy ? "wait" : "pointer", display: "inline-block", color: "var(--gu-text2)", borderColor: "var(--gu-border)" }}>{busy ? "Uploading…" : "Upload"}<input type="file" multiple accept={DEAL_ACCEPT} disabled={busy} style={{ display: "none" }} onChange={e => { upload(k, e.target.files); e.target.value = ""; }} /></label>
-                    {adding === k ? (
-                      <>
-                        <input style={{ ...inp, marginBottom: 0, padding: "8px 11px", fontSize: 13, flex: "1 1 110px" }} value={linkTitle} onChange={e => setLinkTitle(e.target.value)} placeholder="Name" maxLength={160} />
-                        <input style={{ ...inp, marginBottom: 0, padding: "8px 11px", fontSize: 13, flex: "2 1 180px" }} value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="https://…" maxLength={600} autoFocus onKeyDown={e => { if (e.key === "Enter") addLink(k); }} />
-                        <button style={{ ...btnRed, padding: "8px 14px", fontSize: 12 }} onClick={() => addLink(k)}>Add</button>
-                        <button style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 12, fontFamily: font, fontWeight: 700 }} onClick={() => setAdding(null)}>Cancel</button>
-                      </>
-                    ) : <button style={{ ...btnGhost, padding: "8px 14px", fontSize: 12, color: "var(--gu-text2)", borderColor: "var(--gu-border)" }} onClick={() => { setAdding(k); setLinkTitle(""); setLinkUrl(""); }}>Drop a link</button>}
-                    <span style={{ color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font }}>or drag files onto this folder</span>
-                  </div>
-                )}
+          <div key={k} {...dropProps(k)} style={{ padding: "14px 0 12px", borderTop: "1px solid var(--gu-border2)", background: dragOver === k ? "var(--gu-red-tint)" : "transparent", borderRadius: 8 }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: list.length ? 6 : 0 }}>
+              <span style={{ fontSize: 10, color: "#e08a8a", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font }}>{label}</span>
+              <span style={{ color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font }}>{list.length ? `${list.length} item${list.length === 1 ? "" : "s"}` : hint}</span>
+              {!compact && (
+                <span style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                  <label style={{ ...small, cursor: busy ? "wait" : "pointer", display: "inline-block" }}>{busy ? "Uploading…" : "Upload"}<input type="file" multiple accept={DEAL_ACCEPT} disabled={busy} style={{ display: "none" }} onChange={e => { upload(k, e.target.files); e.target.value = ""; }} /></label>
+                  <button style={small} onClick={() => { setAdding(adding === k ? null : k); setLinkTitle(""); setLinkUrl(""); }}>Drop a link</button>
+                </span>
+              )}
+            </div>
+            {list.map(f => (
+              <div key={f.id} style={{ display: "flex", gap: 10, alignItems: "center", padding: "7px 0 7px 4px", fontSize: 13, fontFamily: font }}>
+                <FileTextIcon />
+                <a href={f.url} target="_blank" rel="noreferrer" style={{ color: "var(--gu-text2)", fontWeight: 700, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: "none" }}>{f.title || f.url}</a>
+                <span style={{ color: "var(--gu-muted)", fontSize: 11.5, whiteSpace: "nowrap" }}>{f.kind === "link" ? "link" : fmtBytes(f.size)} · {new Date(f.created_at).toLocaleDateString()}</span>
+                {!compact && <button onClick={() => remove(f)} style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 11.5, fontFamily: font, fontWeight: 700 }}>remove</button>}
+              </div>
+            ))}
+            {adding === k && (
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 8 }}>
+                <input style={{ ...inp, marginBottom: 0, padding: "8px 11px", fontSize: 13, flex: "1 1 110px" }} value={linkTitle} onChange={e => setLinkTitle(e.target.value)} placeholder="Name" maxLength={160} />
+                <input style={{ ...inp, marginBottom: 0, padding: "8px 11px", fontSize: 13, flex: "2 1 180px" }} value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="https://…" maxLength={600} autoFocus onKeyDown={e => { if (e.key === "Enter") addLink(k); }} />
+                <button style={{ ...btnRed, padding: "8px 14px", fontSize: 12 }} onClick={() => addLink(k)}>Add</button>
+                <button style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 12, fontFamily: font, fontWeight: 700 }} onClick={() => setAdding(null)}>Cancel</button>
               </div>
             )}
           </div>
         );
       })}
+      {compact && files.length === 0 && <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>No documents yet.</div>}
+      {!compact && <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font, marginTop: 10 }}>Upload or drop a link under the category it belongs to — or drag files straight onto a category.</div>}
       {progress && <div style={{ color: "var(--gu-text2)", fontSize: 12.5, fontFamily: font, marginTop: 8 }}>{progress}</div>}
     </div>
   );
@@ -301,7 +298,7 @@ export function DealProfileCard({ member, onMemberUpdate }) {
           {current ? (
             <div style={{ borderTop: "1px solid var(--gu-border2)", marginTop: 22, paddingTop: 18 }}>
               <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Documents</div>
-              <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 12, lineHeight: 1.7 }}>Drop this project's documents into the folder they belong in — upload (up to 5 GB a file), drag files onto a folder, or drop a link to a shared folder. Only you and Dr. Merritt's team can open them.</div>
+              <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 12, lineHeight: 1.7 }}>This project's documents, listed by development phase. Upload (up to 5 GB a file), drag files onto a category, or drop a link to a shared folder. Only you and Dr. Merritt can open them.</div>
               <DataRoom project={current} files={files.filter(f => f.project_id === current.id)} used={used} quota={quota} onChange={load} flash={flash} />
             </div>
           ) : <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginTop: 16 }}>Add the project first — then its deal room opens for documents and links.</div>}
@@ -3423,7 +3420,7 @@ export function RetainerPage({ member, setActivePage }) {
 export function AdvisoryAdminPage() {
   const [data, setData] = useState(null);
   const [sel, setSel] = useState("dashboard");      // "dashboard" | retainer id
-  const [sub, setSub] = useState("room");           // client page: room | messages | time | docs | notes
+  const [sub, setSub] = useState("overview");       // client page: overview | room | messages | time | docs | notes
   const [notes, setNotes] = useState({});
   const [logForm, setLogForm] = useState({});
   const [docForm, setDocForm] = useState({});
@@ -3457,7 +3454,7 @@ export function AdvisoryAdminPage() {
   const retainers = data?.retainers || [];
   const active = retainers.filter(x => x.status === "active");
   const r = retainers.find(x => x.id === sel);
-  const open = (id, tab = "room") => { setSel(id); setSub(tab); window.scrollTo({ top: 0 }); };
+  const open = (id, tab = "overview") => { setSel(id); setSub(tab); window.scrollTo({ top: 0 }); };
   const docRow = (f, removable, rid) => (
     <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid var(--gu-border2)" }}>
       <FileTextIcon />
@@ -3551,7 +3548,8 @@ export function AdvisoryAdminPage() {
     const usedBytes = theirs.reduce((a, f) => a + Number(f.size || 0), 0);
     const curProj = openProject[r.id] ?? (projects[0] && projects[0].id);
     const proj = projects.find(p => p.id === curProj);
-    const TABS = [["room", "Deal room"], ["messages", "Messages", r.unread], ["time", "Timesheet"], ["docs", "Documents"], ["notes", "Notes"]];
+    const TABS = [["overview", "Overview"], ["room", "Deal room"], ["messages", "Messages", r.unread], ["time", "Timesheet"], ["docs", "Documents"], ["notes", "Notes"]];
+    const when = (d) => new Date(d).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
     return (
       <div style={{ minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap", marginBottom: 6 }}>
@@ -3578,6 +3576,53 @@ export function AdvisoryAdminPage() {
             </button>
           ))}
         </div>
+
+        {sub === "overview" && (
+          <div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 16 }}>
+              {stat("Hours this month", used.toFixed(1), `of ${total} · ${Math.max(0, total - used).toFixed(1)} left`)}
+              {stat("Projects", projects.length, projects.length ? `${theirs.length} document${theirs.length === 1 ? "" : "s"} · ${fmtBytes(usedBytes)}` : "none added yet")}
+              {stat("Messages", r.unread || 0, r.unread ? "unread in the direct line" : "caught up")}
+              {stat("Retainer", money(r.monthly_amount), `${r.hours_per_month} hrs/mo · ${r.status}`)}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16, alignItems: "start" }}>
+              <div style={card}>
+                {eyebrow("Projects")}
+                {projects.length === 0 ? <div style={{ color: "var(--gu-muted)", fontSize: 13.5, fontFamily: font }}>They haven't added a project yet.</div> : projects.map(p => { const dp = p.details || {}; const n = theirs.filter(f => f.project_id === p.id).length; return (
+                  <button key={p.id} onClick={() => { setOpenProject({ ...openProject, [r.id]: p.id }); setSub("room"); }} style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", padding: "10px 0", borderBottom: "1px solid var(--gu-border2)", cursor: "pointer" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline" }}>
+                      <span style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 14.5, fontFamily: font }}>{p.name}</span>
+                      <span style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font }}>{n} doc{n === 1 ? "" : "s"}</span>
+                    </div>
+                    {dealSummary(dp) && <div style={{ color: "var(--gu-body)", fontSize: 13, fontFamily: font, marginTop: 3 }}>{dealSummary(dp)}</div>}
+                    {dp.blocker && <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginTop: 3 }}>In the way: {dp.blocker}</div>}
+                  </button>
+                ); })}
+              </div>
+              <div>
+                <div style={card}>
+                  {eyebrow("Meetings")}
+                  {(r.meetings || []).length === 0 ? <div style={{ color: "var(--gu-muted)", fontSize: 13.5, fontFamily: font }}>Nothing requested or scheduled.</div> : r.meetings.map(m => (
+                    <div key={m.id} style={{ padding: "8px 0", borderBottom: "1px solid var(--gu-border2)", fontFamily: font }}>
+                      <div style={{ color: "var(--gu-text2)", fontSize: 13.5, fontWeight: 700 }}>{m.scheduled_at ? when(m.scheduled_at) : "Requested — not on the calendar yet"} · {m.minutes} min</div>
+                      {m.topic && <div style={{ color: "var(--gu-body)", fontSize: 13, lineHeight: 1.6, marginTop: 2 }}>{m.topic}</div>}
+                    </div>
+                  ))}
+                </div>
+                <div style={card}>
+                  {eyebrow("Recent hours")}
+                  {(r.log || []).length === 0 ? <div style={{ color: "var(--gu-muted)", fontSize: 13.5, fontFamily: font }}>Nothing logged yet.</div> : (r.log || []).slice(0, 5).map(l => (
+                    <div key={l.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "6px 0", borderBottom: "1px solid var(--gu-border2)" }}>
+                      <span style={{ color: "var(--gu-body)", fontSize: 13, fontFamily: font }}>{l.note || "Advisory time"}</span>
+                      <span style={{ color: "var(--gu-text2)", fontSize: 13, fontFamily: font, fontWeight: 700, whiteSpace: "nowrap" }}>{Number(l.hours)} hrs · {new Date(l.logged_on || l.created_at).toLocaleDateString()}</span>
+                    </div>
+                  ))}
+                  <button onClick={() => setSub("time")} style={{ background: "none", border: "none", color: "#e08a8a", cursor: "pointer", fontSize: 12.5, fontFamily: font, fontWeight: 800, padding: "10px 0 0" }}>Open the timesheet →</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {sub === "room" && (
           <div style={card}>
