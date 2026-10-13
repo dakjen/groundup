@@ -50,6 +50,17 @@ export async function guUpload(kind, formData, headers = {}) {
   }
 }
 
+// Closing a popup by clicking the dark backdrop — but only when the click both
+// started and ended on the backdrop. A drag that starts inside a field (selecting
+// a password, say) and ends outside used to count as a click and throw away
+// everything typed.
+export function backdropClose(close) {
+  return {
+    onMouseDown: (e) => { e.currentTarget.dataset.down = e.target === e.currentTarget ? "1" : ""; },
+    onClick: (e) => { if (e.target === e.currentTarget && e.currentTarget.dataset.down === "1") close(); },
+  };
+}
+
 export function firstName(full) {
   const parts = String(full || "").trim().split(/\s+/);
   if (/^(Dr|Mr|Mrs|Ms|Prof|Rev)\.?$/i.test(parts[0]) && parts[1]) return parts[0] + " " + parts[1];
@@ -194,7 +205,7 @@ export function AuthModal({ onClose, onAuthed, onSignupIntent, defaultTier = "Fr
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} {...backdropClose(onClose)}>
       <div onClick={e => e.stopPropagation()} style={{ position: "relative", background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "36px 36px 32px", width: "100%", maxWidth: 440, maxHeight: "90vh", overflowY: "auto" }}>
         <button onClick={onClose} aria-label="Close" style={{ position: "absolute", top: 14, right: 16, background: "none", border: "none", color: "#8a7070", fontSize: 22, lineHeight: 1, cursor: "pointer", padding: 4 }}>×</button>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>GroundUp Membership</div>
@@ -724,7 +735,7 @@ function SlotPicker({ bookingId, included, title, onClose, onBooked }) {
   const card = { background: "#ffffff", borderRadius: 18, width: "100%", maxWidth: 760, color: "#1a1a1a", boxShadow: "0 24px 70px rgba(0,0,0,0.5)", overflow: "hidden" };
 
   const body = (inner) => (
-    <div style={overlay} onClick={onClose}>
+    <div style={overlay} {...backdropClose(onClose)}>
       <div style={card} onClick={(e) => e.stopPropagation()}>
         <div style={{ background: "#0d0404", padding: "18px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
