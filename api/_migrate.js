@@ -283,7 +283,7 @@ const STATEMENTS = [
     ('opportunity-board', 'Opportunity Board', 'RFPs, funding windows, and deals worth chasing — posted by the team monthly. Reply in threads to discuss.', 'Premium', TRUE, 4),
     ('owner-lounge', 'Owner Lounge', 'Private channel for Owner members and advisory clients.', 'Elite', FALSE, 5),
     ('financial-modeling', 'Financial Modeling', 'Questions about your pro forma — assumptions, operating expenses, debt sizing, the flow of funds, what the model is telling you.', 'Premium', FALSE, 4),
-    ('deal-room', 'Deal Room', 'Bring the deal you are actually working on. Site, numbers, structure, the problem in front of you — Dr. Merritt and the team weigh in here. Owner members and advisory clients only.', 'Elite', FALSE, 8),
+    ('deal-questions', 'Deal Questions', 'Deal-specific questions — a number that is not working, a term you are weighing, a decision on a real deal. Owner members and advisory clients only. Full deal reviews happen in advisory calls and the retainer.', 'Elite', FALSE, 8),
     ('groundup', 'GroundUp', 'Feedback on the platform, subjects and content you want covered, channels you think we should add, and questions about how GroundUp works. The team reads everything here.', 'Basic', FALSE, 2)
     ON CONFLICT (slug) DO NOTHING`,
   `CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`,
