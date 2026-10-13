@@ -89,6 +89,90 @@ export function NotifyToggle() {
   );
 }
 
+// ─── OWNER DEAL PROFILE ──────────────────────────────────────────────────────
+// Owners come with a real deal and higher expectations. This is the fuller
+// picture Dr. Merritt refers to before an advisory call or a DM: the project,
+// where it stands, the capital stack, the team, the blocker — and the
+// documents and links that go with it. Not the paid Full Project Intake.
+const DEAL_PHASES = ["No deal yet", "Feasibility", "Predevelopment", "Program development", "Acquisition", "Financing", "Construction", "Lease-up", "Operating"];
+export function DealProfileCard({ member, onMemberUpdate }) {
+  const d0 = member.deal_profile || {};
+  const [d, setD] = useState({ name: "", location: "", phase: "", product: "", units: "", tdc: "", site_control: "", financing_path: "", sources_committed: "", sources_missing: "", gap: "", timeline: "", team: "", blocker: "", wants: "", ...Object.fromEntries(Object.entries(d0).filter(([, v]) => v !== null)) });
+  const [files, setFiles] = useState([]);
+  const [linkTitle, setLinkTitle] = useState(""); const [linkUrl, setLinkUrl] = useState("");
+  const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(null);
+  const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 5000); };
+  const set = (k) => (e) => setD({ ...d, [k]: e.target.value });
+  useEffect(() => { api("/api/auth", { method: "POST", body: JSON.stringify({ action: "deal_files" }) }).then(r => setFiles(r.files || [])).catch(() => {}); }, []);
+  const save = async () => {
+    setBusy(true);
+    try { const r = await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "deal_profile", deal: d }) }); const me = getMember(); if (me) saveMember({ ...me, deal_profile: r.deal_profile }); onMemberUpdate && onMemberUpdate({ ...member, deal_profile: r.deal_profile }); flash(true, "Saved — Dr. Merritt and the team can see this."); }
+    catch (e) { flash(false, e.message); } finally { setBusy(false); }
+  };
+  const upload = async (file) => {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const fd = new FormData(); fd.append("file", file);
+      const res = await guUpload("deal", fd, { Authorization: "Bearer " + (localStorage.getItem("guToken") || "") });
+      const u = await res.json(); if (!res.ok) throw new Error(u.error || "Upload failed");
+      const r = await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "deal_file_add", title: file.name, url: u.url, kind: "file" }) });
+      setFiles([r.file, ...files]); flash(true, "Document added.");
+    } catch (e) { flash(false, e.message); } finally { setBusy(false); }
+  };
+  const addLink = async () => {
+    if (!linkUrl.trim()) return;
+    try { const r = await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "deal_file_add", title: linkTitle.trim() || linkUrl.trim(), url: linkUrl.trim(), kind: "link" }) }); setFiles([r.file, ...files]); setLinkTitle(""); setLinkUrl(""); }
+    catch (e) { flash(false, e.message); }
+  };
+  const remove = async (f) => { try { await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "deal_file_remove", id: f.id }) }); setFiles(files.filter(x => x.id !== f.id)); } catch (e) { flash(false, e.message); } };
+  const field = (label, k, props = {}) => (
+    <div>
+      <label style={lbl}>{label}</label>
+      {props.rows ? <textarea style={{ ...inp, resize: "vertical" }} rows={props.rows} value={d[k]} onChange={set(k)} maxLength={props.max || 600} placeholder={props.placeholder || ""} />
+        : <input style={inp} value={d[k]} onChange={set(k)} maxLength={props.max || 160} placeholder={props.placeholder || ""} />}
+    </div>
+  );
+  const row = (a, b) => <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>{a}{b}</div>;
+  return (
+    <div style={{ background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
+      <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Your Deal</div>
+      <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 16, lineHeight: 1.7 }}>The deal you are working on, in enough detail that Dr. Merritt can refer to it before your advisory calls and direct messages. Fill in what you have; update it as the deal moves.{d0.updated_at ? ` Last updated ${new Date(d0.updated_at).toLocaleDateString()}.` : ""}</div>
+      {row(field("Project name", "name", { placeholder: "e.g. 9410 Hough" }), field("Location", "location", { placeholder: "City, state" }))}
+      {row(<div><label style={lbl}>Phase</label><select style={{ ...inp, cursor: "pointer" }} value={d.phase} onChange={set("phase")}><option value="">Choose…</option>{DEAL_PHASES.map(p => <option key={p} value={p}>{p}</option>)}</select></div>, field("Product", "product", { placeholder: "Affordable · mixed-income · workforce · mixed-use" }))}
+      {row(field("Units", "units", { placeholder: "e.g. 116", max: 40 }), field("Total development cost", "tdc", { placeholder: "e.g. $47M", max: 60 }))}
+      {row(field("Site control", "site_control", { placeholder: "LOI · option · under contract · owned · none yet" }), field("Financing path", "financing_path", { placeholder: "9% · 4% + bonds · non-LIHTC · undecided" }))}
+      {field("Sources committed", "sources_committed", { rows: 2, placeholder: "What is in: lender, equity, subsidy awards, amounts" })}
+      {field("Sources still needed", "sources_missing", { rows: 2, placeholder: "What is not: the gap, who you are talking to" })}
+      {row(field("Gap", "gap", { placeholder: "e.g. $6M", max: 60 }), field("Timeline", "timeline", { placeholder: "Target closing, application dates", max: 200 }))}
+      {field("Team", "team", { rows: 2, placeholder: "Architect, GC, attorney, property manager, consultants", max: 400 })}
+      {field("The one thing in the way right now", "blocker", { rows: 2 })}
+      {field("What you want from Dr. Merritt on this deal", "wants", { rows: 2 })}
+      <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginTop: 4 }}>
+        <button style={{ ...btnRed, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={save}>Save deal</button>
+        {msg && <span style={{ color: msg.ok ? "#22c55e" : "#ff6b6b", fontSize: 13, fontFamily: font }}>{msg.text}</span>}
+      </div>
+      <div style={{ borderTop: "1px solid #1e0000", marginTop: 22, paddingTop: 18 }}>
+        <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Documents &amp; links</div>
+        <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 12, lineHeight: 1.7 }}>Pro forma, site plan, term sheets, the rent roll — upload them, or paste a link to a shared folder. Only you and the team can open them.</div>
+        {files.map(f => (
+          <div key={f.id} style={{ display: "flex", gap: 10, alignItems: "center", padding: "7px 0", borderBottom: "1px solid #1a0a0a", fontSize: 13, fontFamily: font }}>
+            <a href={f.url} target="_blank" rel="noreferrer" style={{ color: "#e08a8a", fontWeight: 700, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.title || f.url}</a>
+            <span style={{ color: "var(--gu-faint)", fontSize: 11 }}>{f.kind === "link" ? "link" : "file"} · {new Date(f.created_at).toLocaleDateString()}</span>
+            <button onClick={() => remove(f)} style={{ background: "none", border: "none", color: "var(--gu-faint)", cursor: "pointer", fontSize: 11, fontFamily: font }}>remove</button>
+          </div>
+        ))}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
+          <label style={{ ...btnGhost, cursor: "pointer", display: "inline-block" }}>{busy ? "Working…" : "Upload a document"}<input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.pptx,.csv,.png,.jpg,.jpeg" style={{ display: "none" }} onChange={e => upload(e.target.files?.[0])} /></label>
+          <input style={{ ...inp, marginBottom: 0, flex: "1 1 140px" }} value={linkTitle} onChange={e => setLinkTitle(e.target.value)} placeholder="Link name" maxLength={160} />
+          <input style={{ ...inp, marginBottom: 0, flex: "2 1 220px" }} value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="https://…" maxLength={600} />
+          <button style={btnGhost} onClick={addLink}>Add link</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function firstName(full) {
   const parts = String(full || "").trim().split(/\s+/);
   if (/^(Dr|Mr|Mrs|Ms|Prof|Rev)\.?$/i.test(parts[0]) && parts[1]) return parts[0] + " " + parts[1];
@@ -1337,6 +1421,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
           {/* The team had no profile editor at all, so Dr. Merritt could not set
               a photo and her posts fell back to the generic GroundUp mark —
               on the channels where her presence matters most. */}
+          {(TIER_RANK[member.tier] >= 4 || member.retainer) && <DealProfileCard member={member} />}
           <ProfileCard member={member} />
           <ChangePasswordCard />
         </div>
@@ -1526,6 +1611,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
           <section id="gu-account" style={{ scrollMarginTop: 96 }}>
             <h2 style={H}>Profile &amp; billing</h2>
             <p style={SUB}>How you appear in the community, your referral link, and your plan.</p>
+            {(TIER_RANK[member.tier] >= 4 || member.retainer) && <DealProfileCard member={member} />}
             <ProfileCard member={member} />
             <MyDocuments member={member} />
             <ReferralCard member={member} />
@@ -1881,6 +1967,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
     if (active?.locked) { setMessages([]); return; }
     if (!active) return;
     setThread(null);
+    setMessages([]); // the old channel must not linger while the new one loads
     loadMessages(active.id).then(() => {
       // First load after a refresh: reopen the thread that was open
       const tid = pendingThread.current; pendingThread.current = null;
@@ -2074,6 +2161,9 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
               <div>
                 <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font }}><Mail size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }} /> {isAdmin ? (dmTarget?.name || "Direct Messages") : "Dr. Merritt & Team"}</div>
                 <div style={{ color: "var(--gu-muted2)", fontSize: 12, fontFamily: font }}>{isAdmin ? "Private thread with this member." : (<span>Quick questions welcome — replies within 2 business days (Mon–Fri). Deal-specific work (your numbers, your gap, your structure) belongs in your advisory calls or with Dr. Merritt on the whole deal — <a href="/contact" onClick={() => { try { const t = localStorage.getItem("guToken"); if (t) fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + t }, body: JSON.stringify({ action: "deal_lead", source: "dm_redirect" }) }); } catch {} }} style={{ color: "#b80101", fontWeight: 700 }}>send it to us here →</a></span>)}</div>
+                {isAdmin && dmTarget?.deal_profile && (() => { const dp = dmTarget.deal_profile; const bits = [dp.name, dp.location, dp.phase, dp.units && `${dp.units} units`, dp.tdc && `TDC ${dp.tdc}`, dp.gap && `gap ${dp.gap}`].filter(Boolean); return (
+                  <div style={{ color: "#e08a8a", fontSize: 12, fontFamily: font, marginTop: 4 }}>Their deal: {bits.join(" · ")}{dp.blocker ? ` — "${dp.blocker.slice(0, 120)}"` : ""}</div>
+                ); })()}
               </div>
             </div>
             <div style={{ flex: 1, overflowY: "auto", padding: "20px 20px 12px" }}>
@@ -2108,17 +2198,17 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
                 <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font }}>{active.admin_only_post ? <Megaphone size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> : "#"} {active.name}</div>
                 <div style={{ color: "var(--gu-muted2)", fontSize: 12, fontFamily: font }}>{active.description}</div>
               </div>
+              {!isAdmin && !active.locked && (
+                <div style={{ marginLeft: "auto", color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font, lineHeight: 1.5, textAlign: "right", maxWidth: 300 }}>
+                  Channels are for general topics. Anything about <em>your</em> project goes to the team directly — <a href="/contact" style={{ color: "#e08a8a", fontWeight: 700 }}>book time</a>{member && TIER_RANK[member.tier] >= 4 ? <> or <button onClick={() => { setDmOpen(true); setSidebarOpen(false); }} style={{ background: "none", border: "none", padding: 0, color: "#e08a8a", fontWeight: 700, fontFamily: font, fontSize: 11.5, cursor: "pointer" }}>send a direct message</button></> : null}.
+                </div>
+              )}
               {!active.locked && (
                 <button onClick={async () => { const muted = !active.muted; try { await api("/api/community", { method: "POST", body: JSON.stringify({ action: "mute_channel", channel_id: active.id, muted }) }); setActive({ ...active, muted }); setChannels(cs => cs.map(x => x.id === active.id ? { ...x, muted } : x)); } catch {} }}
                   title={active.muted ? "Unmute: show unread counts and notifications for this channel" : "Mute: no unread counts, notifications or digest lines for this channel"}
                   style={{ marginLeft: isAdmin ? "auto" : 12, background: "transparent", border: "1px solid var(--gu-border)", borderRadius: 6, padding: "5px 10px", color: active.muted ? "#e08a8a" : "var(--gu-muted)", fontSize: 11, fontFamily: font, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
                   {active.muted ? "Muted" : "Mute"}
                 </button>
-              )}
-              {!isAdmin && !active.locked && (
-                <div style={{ marginLeft: 12, color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font, lineHeight: 1.5, textAlign: "right", maxWidth: 300 }}>
-                  Channels are for general topics. Anything about <em>your</em> project goes to the team directly — <a href="/contact" style={{ color: "#e08a8a", fontWeight: 700 }}>book time</a>{member && TIER_RANK[member.tier] >= 4 ? <> or <button onClick={() => { setDmOpen(true); setSidebarOpen(false); }} style={{ background: "none", border: "none", padding: 0, color: "#e08a8a", fontWeight: 700, fontFamily: font, fontSize: 11.5, cursor: "pointer" }}>send a direct message</button></> : null}.
-                </div>
               )}
             </div>
             {active.locked ? (

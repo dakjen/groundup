@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   // Members may upload their own profile picture, and documents for a session
   // they have paid for. Everything else is team-only.
   const isAvatar = req.query.kind === 'avatar';
-  const isPrep = req.query.kind === 'prep';
+  const isPrep = req.query.kind === 'prep' || req.query.kind === 'deal';
   const session = (isAvatar || isPrep) ? getSession(req) : null;
   if (!getAdmin(req) && !((isAvatar || isPrep) && session?.uid)) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -36,6 +36,7 @@ export default async function handler(req, res) {
         lesson: { folder: 'lesson-pdfs', types: { '.pdf': DOCS['.pdf'] }, max: 200 * MB },
         material: { folder: 'lesson-pdfs', types: DOCS, max: 200 * MB },
         prep: { folder: 'session-prep', types: PREP, max: 25 * MB },
+        deal: { folder: 'deal-docs', types: PREP, max: 25 * MB },
       };
       const rule = RULES[kind];
       if (!rule) return res.status(400).json({ error: 'This kind of file can\'t be uploaded directly.' });
@@ -80,7 +81,7 @@ export default async function handler(req, res) {
 
       // kind=file (shop deliverable PDF), kind=cover (shop image), kind=avatar
       // (member profile picture), default: lesson PDF
-      const kind = ['cover', 'file', 'avatar', 'prep', 'page'].includes(req.query.kind) ? req.query.kind : 'lesson';
+      const kind = ['cover', 'file', 'avatar', 'prep', 'page', 'deal'].includes(req.query.kind) ? req.query.kind : 'lesson';
       const lower = filePart.filename.toLowerCase();
       const IMG = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp' };
       const imgExt = Object.keys(IMG).find(e => lower.endsWith(e));
@@ -89,14 +90,14 @@ export default async function handler(req, res) {
         if (!imgExt) return res.status(400).json({ error: 'Profile pictures must be PNG, JPG, or WEBP' });
         if (filePart.data.length > 4 * 1024 * 1024) return res.status(400).json({ error: 'Keep profile pictures under 4MB' });
         folder = 'avatars'; contentType = IMG[imgExt];
-      } else if (kind === 'prep') {
+      } else if (kind === 'prep' || kind === 'deal') {
         // Whatever she needs to read before a session: a pro forma, a rent roll,
         // a term sheet, a site plan. Documents, spreadsheets and images.
         const PREP = { '.pdf': 'application/pdf', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.doc': 'application/msword', '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', '.xls': 'application/vnd.ms-excel', '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation', '.csv': 'text/csv', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg' };
         const ext = Object.keys(PREP).find(e => lower.endsWith(e));
         if (!ext) return res.status(400).json({ error: 'Send a PDF, Word, Excel, PowerPoint, CSV or image.' });
         if (filePart.data.length > 25 * 1024 * 1024) return res.status(400).json({ error: 'Keep files under 25MB — for anything larger, share a link instead.' });
-        folder = 'session-prep'; contentType = PREP[ext];
+        folder = kind === 'deal' ? 'deal-docs' : 'session-prep'; contentType = PREP[ext];
       } else if (kind === 'page') {
         // A rendered page of a shop document — the only thing a view-only member
         // is ever sent. Images, never the source PDF.

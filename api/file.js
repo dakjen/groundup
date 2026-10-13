@@ -32,6 +32,15 @@ export default async function handler(req, res) {
   // Session prep documents are somebody's pro forma, term sheet or rent roll.
   // Those belong to the person who sent them and to Dr. Merritt — not to every
   // signed-in member, which is all the door above checks.
+  // Owner deal documents: theirs and the team's, nobody else's.
+  if (pathname.startsWith('deal-docs/') && !admin) {
+    try {
+      const { neon } = await import('@neondatabase/serverless');
+      const sql = neon(process.env.DATABASE_URL);
+      const [own] = await sql`SELECT 1 AS x FROM deal_files WHERE user_id = ${session.uid} AND url LIKE ${'%' + pathname}`;
+      if (!own) return res.status(403).json({ error: 'Not your document' });
+    } catch (e) { return res.status(403).json({ error: 'Not your document' }); }
+  }
   if (pathname.startsWith('session-prep/') && !admin) {
     try {
       const { neon } = await import('@neondatabase/serverless');

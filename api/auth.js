@@ -35,7 +35,7 @@ export default async function handler(req, res) {
       // out. That happened: a new column was selected here before its migration
       // had run, and every member was logged out on refresh. Run the migrations
       // and retry once rather than dropping the session on the floor.
-      const loadUser = () => sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, comped, badges, referral_code, referred_by, referred_code, tier_since, ip_agreed_at, avatar_url, headline, bio, company, title, location, partner_slug, onboarded_at, created_at FROM users WHERE id = ${session.uid}`;
+      const loadUser = () => sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, comped, badges, referral_code, referred_by, referred_code, tier_since, ip_agreed_at, avatar_url, headline, bio, company, title, location, partner_slug, onboarded_at, created_at, deal_profile FROM users WHERE id = ${session.uid}`;
       let user;
       try {
         [user] = await loadUser();
@@ -519,6 +519,49 @@ export default async function handler(req, res) {
 
     // Member profile: headline ("what you do") and bio, shown on hover in the
     // community. The avatar itself uploads through /api/lesson-pdfs?kind=avatar.
+    // Owner deal profile: the deal they are actually working on, in enough
+    // detail that Dr. Merritt can refer to it before an advisory call or a DM.
+    // Documents are uploaded to /api/lesson-pdfs?kind=deal and listed here;
+    // links are kept as rows too.
+    if (action === 'deal_profile') {
+      const session = getSession(req);
+      if (!session || !session.uid) return res.status(401).json({ error: 'Sign in required' });
+      const d = req.body.deal || {};
+      const clip = (v, n = 300) => { const t = String(v ?? '').trim().slice(0, n); return t || null; };
+      const profile = {
+        name: clip(d.name, 160), location: clip(d.location, 160), phase: clip(d.phase, 60), product: clip(d.product, 120),
+        units: clip(d.units, 40), tdc: clip(d.tdc, 60), site_control: clip(d.site_control, 160), financing_path: clip(d.financing_path, 120),
+        sources_committed: clip(d.sources_committed, 600), sources_missing: clip(d.sources_missing, 600), gap: clip(d.gap, 60),
+        timeline: clip(d.timeline, 200), team: clip(d.team, 400), blocker: clip(d.blocker, 600), wants: clip(d.wants, 600),
+        updated_at: new Date().toISOString(),
+      };
+      await sql`UPDATE users SET deal_profile = ${JSON.stringify(profile)}::jsonb WHERE id = ${session.uid}`;
+      return res.json({ success: true, deal_profile: profile });
+    }
+    if (action === 'deal_files') {
+      const session = getSession(req);
+      if (!session || !session.uid) return res.status(401).json({ error: 'Sign in required' });
+      const files = await sql`SELECT id, title, url, kind, created_at FROM deal_files WHERE user_id = ${session.uid} ORDER BY created_at DESC`;
+      return res.json({ files });
+    }
+    if (action === 'deal_file_add') {
+      const session = getSession(req);
+      if (!session || !session.uid) return res.status(401).json({ error: 'Sign in required' });
+      const url = String(req.body.url || '').trim().slice(0, 600);
+      const kind = req.body.kind === 'link' ? 'link' : 'file';
+      if (!url) return res.status(400).json({ error: 'url required' });
+      if (kind === 'link' && !/^https?:\/\//i.test(url)) return res.status(400).json({ error: 'Links must start with http' });
+      if (kind === 'file' && !url.startsWith('/api/file?p=deal-docs')) return res.status(400).json({ error: 'Not an uploaded deal document' });
+      const [f] = await sql`INSERT INTO deal_files (user_id, title, url, kind) VALUES (${session.uid}, ${String(req.body.title || '').trim().slice(0, 160) || null}, ${url}, ${kind}) RETURNING id, title, url, kind, created_at`;
+      return res.json({ file: f });
+    }
+    if (action === 'deal_file_remove') {
+      const session = getSession(req);
+      if (!session || !session.uid) return res.status(401).json({ error: 'Sign in required' });
+      await sql`DELETE FROM deal_files WHERE id = ${Number(req.body.id)} AND user_id = ${session.uid}`;
+      return res.json({ success: true });
+    }
+
     if (action === 'update_profile') {
       const session = getSession(req);
       if (!session || !session.uid) return res.status(401).json({ error: 'Sign in required' });
