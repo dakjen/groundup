@@ -82,7 +82,30 @@ export default async function handler(req, res) {
           ORDER BY id DESC LIMIT 1`;
         announcement = ann || null;
       }
-      return res.json({ unread, dm_unread: dmRow.n, announcement });
+      // The newest unseen things, for desktop notifications. Channel posts since
+      // the community was last opened; for the team, member DMs since the inbox was.
+      let latest = [];
+      try {
+        if (visibleIds.length) {
+          const posts = await sql`
+            SELECT m.id, m.body, m.created_at, c.name AS channel, u.name AS author FROM messages m
+            JOIN channels c ON c.id = m.channel_id LEFT JOIN users u ON u.id = m.user_id
+            WHERE m.channel_id = ANY(${visibleIds}) AND m.deleted = FALSE
+              AND m.created_at > ${me?.last_seen_community || new Date(0).toISOString()}
+              AND (m.user_id IS NULL OR m.user_id != ${user.id})
+            ORDER BY m.id DESC LIMIT 3`;
+          latest = posts.map(p => ({ key: 'post:' + p.id, title: `${p.author || 'Someone'} in #${p.channel}`, body: String(p.body).slice(0, 140), at: p.created_at }));
+        }
+        if (user.role === 'admin') {
+          const dms = await sql`
+            SELECT d.id, d.body, d.created_at, u.name AS author FROM dms d JOIN users u ON u.id = d.user_id
+            WHERE d.from_admin = FALSE AND d.created_at > ${me?.last_seen_dm || new Date(0).toISOString()}
+            ORDER BY d.id DESC LIMIT 3`;
+          latest = latest.concat(dms.map(d => ({ key: 'dm:' + d.id, title: `DM from ${d.author}`, body: String(d.body).slice(0, 140), at: d.created_at })));
+        }
+        latest.sort((x, y) => new Date(y.at) - new Date(x.at));
+      } catch (e) { console.error('latest unseen failed', e.message); }
+      return res.json({ unread, dm_unread: dmRow.n, announcement, latest });
     }
 
     // POST { action: 'mark_seen', what: 'community' | 'dm' | 'announcement', id? }
@@ -99,6 +122,20 @@ export default async function handler(req, res) {
     if (req.method === 'GET' && req.query.resource === 'channels') {
       const channels = await sql`SELECT * FROM channels ORDER BY position, id`;
       const visible = channels.filter(c => canSeeChannel(c, user));
+      // Unread per channel: posts since this person last opened it, not their own
+      if (user.id && visible.length) {
+        try {
+          const rows = await sql`
+            SELECT m.channel_id, COUNT(*)::int AS n FROM messages m
+            LEFT JOIN thread_seen t ON t.user_id = ${user.id} AND t.kind = 'channel' AND t.ref_id = m.channel_id
+            WHERE m.channel_id = ANY(${visible.map(c => c.id)}) AND m.deleted = FALSE
+              AND (m.user_id IS NULL OR m.user_id != ${user.id})
+              AND m.created_at > COALESCE(t.seen_at, ${new Date(0).toISOString()})
+            GROUP BY m.channel_id`;
+          const by = Object.fromEntries(rows.map(r => [r.channel_id, r.n]));
+          for (const c of visible) c.unread = by[c.id] || 0;
+        } catch (e) { console.error('channel unread failed', e.message); }
+      }
       return res.json({ channels: visible, tier: user.tier });
     }
 
@@ -109,6 +146,9 @@ export default async function handler(req, res) {
       const [channel] = await sql`SELECT * FROM channels WHERE id = ${channelId}`;
       if (!channel || !canSeeChannel(channel, user)) {
         return res.status(403).json({ error: 'No access to this channel' });
+      }
+      if (user.id && !req.query.thread) {
+        try { await sql`INSERT INTO thread_seen (user_id, kind, ref_id, seen_at) VALUES (${user.id}, 'channel', ${channelId}, NOW()) ON CONFLICT (user_id, kind, ref_id) DO UPDATE SET seen_at = NOW()`; } catch { /* table appears after migrate */ }
       }
       const threadId = req.query.thread ? Number(req.query.thread) : null;
       const rows = threadId
@@ -166,9 +206,11 @@ export default async function handler(req, res) {
     if (req.method === 'GET' && req.query.resource === 'dm-threads') {
       if (!isAdminReq) return res.status(403).json({ error: 'Admins only' });
       const threads = await sql`
-        SELECT u.id, u.name, u.tier, MAX(d.created_at) AS last_at, COUNT(*) AS msg_count
+        SELECT u.id, u.name, u.tier, MAX(d.created_at) AS last_at, COUNT(*) AS msg_count,
+          COUNT(*) FILTER (WHERE d.from_admin = FALSE AND d.created_at > COALESCE(t.seen_at, ${new Date(0).toISOString()}))::int AS unread
         FROM dms d JOIN users u ON u.id = d.user_id
-        GROUP BY u.id, u.name, u.tier ORDER BY last_at DESC LIMIT 100`;
+        LEFT JOIN thread_seen t ON t.user_id = ${user.id} AND t.kind = 'dm' AND t.ref_id = u.id
+        GROUP BY u.id, u.name, u.tier, t.seen_at ORDER BY last_at DESC LIMIT 100`;
       return res.json({ threads });
     }
 
@@ -179,6 +221,7 @@ export default async function handler(req, res) {
       else if (!isAdminReq && user.rank < TIER_RANK.Elite) return res.status(403).json({ error: 'Direct messages are an Owner benefit' });
       if (!targetId) return res.status(400).json({ error: 'No thread' });
       const msgs = await sql`SELECT * FROM dms WHERE user_id = ${targetId} ORDER BY created_at ASC LIMIT 200`;
+      if (isAdminReq && user.id) { try { await sql`INSERT INTO thread_seen (user_id, kind, ref_id, seen_at) VALUES (${user.id}, 'dm', ${targetId}, NOW()) ON CONFLICT (user_id, kind, ref_id) DO UPDATE SET seen_at = NOW()`; } catch {} }
       return res.json({ messages: msgs });
     }
 

@@ -7531,15 +7531,35 @@ export default function App() {
   const [notif, setNotif] = useState(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
+  // Desktop notifications: anything in `latest` we have not shown yet becomes a
+  // browser notification (once permission is granted). The first poll after
+  // sign-in only primes the list, so nothing old pops up.
+  const shownRef = useRef(null);
   const loadNotif = () => {
     if (!getMember()) return;
     fetch("/api/community?resource=notifications", { headers: { Authorization: "Bearer " + getMemberToken() } })
-      .then(r => r.ok ? r.json() : null).then(d => d && setNotif(d)).catch(() => {});
+      .then(r => r.ok ? r.json() : null).then(d => {
+        if (!d) return;
+        setNotif(d);
+        const items = Array.isArray(d.latest) ? d.latest : [];
+        if (shownRef.current === null) { shownRef.current = new Set(items.map(i => i.key)); return; }
+        const fresh = items.filter(i => !shownRef.current.has(i.key));
+        for (const i of fresh) shownRef.current.add(i.key);
+        if (fresh.length && typeof Notification !== "undefined" && Notification.permission === "granted") {
+          for (const i of fresh.slice(0, 3)) {
+            try {
+              const n = new Notification(i.title, { body: i.body, tag: i.key, icon: "/icon-192.png" });
+              n.onclick = () => { window.focus(); setActivePage("community"); n.close(); };
+            } catch {}
+          }
+        }
+      }).catch(() => {});
   };
   useEffect(() => {
     if (!member) return;
+    shownRef.current = null;
     loadNotif();
-    return pollVisible(loadNotif, 30000);
+    return pollVisible(loadNotif, member?.role === "admin" ? 15000 : 30000);
   }, [member?.id]);
   const markSeen = (what, id) => {
     fetch("/api/community", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "mark_seen", what, id }) })

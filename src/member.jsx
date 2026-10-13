@@ -61,6 +61,34 @@ export function backdropClose(close) {
   };
 }
 
+// A message box that grows as you type, up to about eight lines, then scrolls.
+// Enter sends; Shift+Enter starts a new line.
+export function GrowingInput({ value, onChange, onSubmit, style, ...props }) {
+  const ref = useRef(null);
+  useEffect(() => { const el = ref.current; if (!el) return; el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 200) + "px"; }, [value]);
+  return (
+    <textarea ref={ref} rows={1} value={value} onChange={onChange}
+      onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSubmit && onSubmit(); } }}
+      style={{ resize: "none", overflowY: "auto", lineHeight: 1.5, fontFamily: font, ...style }} {...props} />
+  );
+}
+
+// "Turn on notifications" — desktop notifications while GroundUp is open in a
+// tab. Asks the browser once; shows nothing once granted, and a short note if
+// the browser has refused.
+export function NotifyToggle() {
+  const supported = typeof window !== "undefined" && "Notification" in window;
+  const [perm, setPerm] = useState(supported ? Notification.permission : "unsupported");
+  if (!supported || perm === "granted") return null;
+  if (perm === "denied") return <div style={{ color: "#c89a9a", fontSize: 11, fontFamily: font, padding: "0 12px 10px" }}>Desktop notifications are blocked for this site in your browser settings.</div>;
+  return (
+    <button onClick={() => Notification.requestPermission().then(p => { setPerm(p); if (p === "granted") try { new Notification("GroundUp notifications are on", { body: "You'll hear about new posts and DMs while GroundUp is open." }); } catch {} })}
+      style={{ display: "block", width: "100%", textAlign: "left", background: "#ffffff14", border: "1px solid #ffffff22", borderRadius: 6, padding: "9px 12px", color: "#f5e8e8", fontSize: 12.5, fontFamily: font, fontWeight: 700, cursor: "pointer", marginBottom: 12 }}>
+      🔔 Turn on desktop notifications
+    </button>
+  );
+}
+
 export function firstName(full) {
   const parts = String(full || "").trim().split(/\s+/);
   if (/^(Dr|Mr|Mrs|Ms|Prof|Rev)\.?$/i.test(parts[0]) && parts[1]) return parts[0] + " " + parts[1];
@@ -1603,9 +1631,11 @@ function Reactions({ m, hover }) {
     fontSize: 11.5, fontFamily: font, fontWeight: 700, lineHeight: 1.6,
   });
   const has = rx.filter(r => r.n > 0);
-  if (!has.length && !hover && !open) return null;
+  // Always laid out, only sometimes visible: a row that appears on hover makes
+  // every message below it jump.
+  const hidden = !has.length && !hover && !open;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 6, flexWrap: "wrap", position: "relative" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 6, flexWrap: "wrap", position: "relative", visibility: hidden ? "hidden" : "visible", minHeight: 24 }}>
       {has.map(r => {
         const def = REACTIONS.find(x => x[0] === r.kind);
         const Icon = def ? def[1] : SmilePlus;
@@ -1728,8 +1758,8 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdi
       {/* A reply count is worth showing always; an invitation to reply only
           when the pointer is on the message. It used to sit under every post
           as a bordered pill, which is why one word of text filled a card. */}
-      {!inThread && (Number(m.reply_count) > 0 || hover) && (
-        <button onClick={() => onOpenThread(m)} style={{ background: "transparent", border: "none", padding: 0, marginTop: 4, color: Number(m.reply_count) > 0 ? "#e08a8a" : "var(--gu-muted)", cursor: "pointer", fontSize: 12, fontFamily: font, fontWeight: 700 }}>
+      {!inThread && (
+        <button onClick={() => onOpenThread(m)} style={{ background: "transparent", border: "none", padding: 0, marginTop: 4, color: Number(m.reply_count) > 0 ? "#e08a8a" : "var(--gu-muted)", cursor: "pointer", fontSize: 12, fontFamily: font, fontWeight: 700, visibility: Number(m.reply_count) > 0 || hover ? "visible" : "hidden" }}>
           {Number(m.reply_count) > 0 ? `${m.reply_count} repl${Number(m.reply_count) === 1 ? "y" : "ies"} →` : "Reply"}
         </button>
       )}
@@ -1802,6 +1832,13 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
     loadChannels().catch(e => setError(e.message)).finally(() => setLoading(false));
     if (isAdmin) api("/api/community?resource=dm-threads").then(d => setDmThreads(d.threads)).catch(() => {});
     api("/api/community", { method: "POST", body: JSON.stringify({ action: "mark_seen", what: "community" }) }).catch(() => {});
+    // Keep the unread bubbles current while the page is open
+    const t = setInterval(() => {
+      if (document.hidden) return;
+      loadChannels().catch(() => {});
+      if (isAdmin) api("/api/community?resource=dm-threads").then(d => setDmThreads(d.threads)).catch(() => {});
+    }, 20000);
+    return () => clearInterval(t);
   }, [hasAccess, isAdmin, loadChannels]);
 
   const loadDm = useCallback(async (targetId) => {
@@ -1933,17 +1970,20 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
     <div style={{ background: "var(--gu-bg)", paddingTop: 64, display: "flex", height: "100vh", boxSizing: "border-box", overflow: "hidden", position: "fixed", inset: 0 }}>
       {/* Channel sidebar */}
       <div className="community-sidebar" style={{ width: 240, flexShrink: 0, borderRight: "1px solid #3f0707", background: "#4a0b0b", padding: "24px 12px", overflowY: "auto", display: sidebarOpen ? "block" : undefined }}>
+        <NotifyToggle />
         {/* Two kinds of talk, kept apart on purpose: topic questions live in the
             phase channels ("I have a design question"), course questions live in
             Course Discussions ("in lesson 3 you said X — how?"). */}
         {(() => {
+          const Bubble = ({ n }) => n > 0 ? <span style={{ marginLeft: "auto", background: "#b80101", color: "#fff", borderRadius: 99, fontSize: 10.5, fontWeight: 800, fontFamily: font, padding: "1px 7px", minWidth: 18, textAlign: "center", flexShrink: 0 }}>{n > 99 ? "99+" : n}</span> : null;
           const chanBtn = (c, indent) => (
-            <button key={c.id} onClick={() => { setActive(c); setDmOpen(false); setSidebarOpen(false); }}
-              style={{ display: "block", width: "100%", textAlign: "left", background: !dmOpen && active?.id === c.id ? "#b80101" : "transparent", border: "none", borderRadius: 6, padding: indent ? "8px 12px 8px 20px" : "9px 12px", cursor: "pointer", marginBottom: 2 }}>
+            <button key={c.id} onClick={() => { setActive(c); setDmOpen(false); setSidebarOpen(false); setChannels(cs => cs.map(x => x.id === c.id ? { ...x, unread: 0 } : x)); }}
+              style={{ display: "flex", alignItems: "center", gap: 4, width: "100%", textAlign: "left", background: !dmOpen && active?.id === c.id ? "#b80101" : "transparent", border: "none", borderRadius: 6, padding: indent ? "8px 12px 8px 20px" : "9px 12px", cursor: "pointer", marginBottom: 2 }}>
               <span style={{ color: "#ffffff", fontWeight: !dmOpen && active?.id === c.id ? 800 : 600, fontSize: indent ? 12.5 : 13.5, fontFamily: font }}>
                 {c.admin_only_post ? <Megaphone size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 2 }} /> : "#"} {c.name}
               </span>
               {c.min_tier !== "Basic" && <span style={{ marginLeft: 6, fontSize: 9, color: TIER_COLORS[c.min_tier], fontFamily: font, fontWeight: 800 }}>{(TIER_LABELS[c.min_tier] || c.min_tier).toUpperCase()}</span>}
+              {!(!dmOpen && active?.id === c.id) && <Bubble n={c.unread} />}
             </button>
           );
           const head = (label) => <div style={{ fontSize: 10, color: "#e8b4b4", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "0 12px", margin: "18px 0 10px" }}>{label}</div>;
@@ -1997,10 +2037,11 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
             )}
             {isAdmin && dmThreads.length === 0 && <div style={{ color: "#c89a9a", fontSize: 12, fontFamily: font, padding: "0 12px" }}>No member DMs yet.</div>}
             {isAdmin && dmThreads.map(t => (
-              <button key={t.id} onClick={() => { setDmTarget(t); setDmOpen(true); setSidebarOpen(false); }}
-                style={{ display: "block", width: "100%", textAlign: "left", background: dmOpen && dmTarget?.id === t.id ? "#b80101" : "transparent", border: "none", borderRadius: 6, padding: "9px 12px", cursor: "pointer", marginBottom: 2 }}>
+              <button key={t.id} onClick={() => { setDmTarget(t); setDmOpen(true); setSidebarOpen(false); setDmThreads(ts => ts.map(x => x.id === t.id ? { ...x, unread: 0 } : x)); }}
+                style={{ display: "flex", alignItems: "center", gap: 4, width: "100%", textAlign: "left", background: dmOpen && dmTarget?.id === t.id ? "#b80101" : "transparent", border: "none", borderRadius: 6, padding: "9px 12px", cursor: "pointer", marginBottom: 2 }}>
                 <span style={{ color: dmOpen && dmTarget?.id === t.id ? "var(--gu-text2)" : "var(--gu-muted)", fontWeight: 700, fontSize: 13.5, fontFamily: font }}><Mail size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} /> {t.name}</span>
                 <span style={{ marginLeft: 6, fontSize: 9, color: TIER_COLORS[t.tier], fontFamily: font, fontWeight: 800 }}>{(TIER_LABELS[t.tier] || t.tier).toUpperCase()}</span>
+                {!(dmOpen && dmTarget?.id === t.id) && t.unread > 0 && <span style={{ marginLeft: "auto", background: "#b80101", color: "#fff", borderRadius: 99, fontSize: 10.5, fontWeight: 800, fontFamily: font, padding: "1px 7px", minWidth: 18, textAlign: "center", flexShrink: 0 }}>{t.unread}</span>}
               </button>
             ))}
           </>
@@ -2040,8 +2081,8 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
               ))}
             </div>
             {error && <div style={{ color: "#ff6b6b", fontSize: 12, fontFamily: font, padding: "0 24px 6px" }}>{error}</div>}
-            <form onSubmit={sendDm} style={{ display: "flex", gap: 10, padding: "12px 20px 20px", borderTop: "1px solid #1a0000" }}>
-              <input style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", flex: 1 }} value={dmDraft} onChange={e => setDmDraft(e.target.value)} placeholder={isAdmin ? `Reply to ${dmTarget?.name || "member"}…` : "Message Dr. Merritt & team…"} maxLength={4000} />
+            <form onSubmit={sendDm} style={{ display: "flex", gap: 10, padding: "12px 20px 20px", borderTop: "1px solid #1a0000", alignItems: "flex-end" }}>
+              <GrowingInput style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", flex: 1, marginBottom: 0 }} value={dmDraft} onChange={e => setDmDraft(e.target.value)} onSubmit={() => sendDm({ preventDefault() {} })} placeholder={isAdmin ? `Reply to ${dmTarget?.name || "member"}…` : "Message Dr. Merritt & team…"} maxLength={4000} />
               <button type="submit" style={btnRed}>Send</button>
             </form>
           </>
@@ -2075,8 +2116,8 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
                     </div>
                   </div>
                 )}
-                <form onSubmit={e => { e.preventDefault(); send(null, draft, () => setDraft("")); }} style={{ display: "flex", gap: 10 }}>
-                  <input style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", flex: 1 }} value={draft} onChange={e => setDraft(e.target.value)} placeholder={`Message ${active.name}`} maxLength={4000} />
+                <form onSubmit={e => { e.preventDefault(); send(null, draft, () => setDraft("")); }} style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+                  <GrowingInput style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", flex: 1, marginBottom: 0 }} value={draft} onChange={e => setDraft(e.target.value)} onSubmit={() => send(null, draft, () => setDraft(""))} placeholder={`Message ${active.name}`} maxLength={4000} />
                   {isAdmin && <button type="button" onClick={() => setPollOpen(!pollOpen)} style={btnGhost}>Poll</button>}
                   <button type="submit" style={btnRed}>Send</button>
                 </form>
@@ -2105,7 +2146,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
           </div>
           {canEngage ? (
             <form onSubmit={e => { e.preventDefault(); send(thread.id, threadDraft, () => setThreadDraft("")); }} style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 14px 16px", borderTop: "1px solid #1a0000" }}>
-              <input style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", flex: 1 }} value={threadDraft} onChange={e => setThreadDraft(e.target.value)} placeholder="Reply…" maxLength={4000} />
+              <GrowingInput style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", flex: 1, marginBottom: 0 }} onSubmit={() => { send(thread.id, threadDraft, () => setThreadDraft("")); }} value={threadDraft} onChange={e => setThreadDraft(e.target.value)} placeholder="Reply…" maxLength={4000} />
               <button type="submit" style={{ ...btnRed, padding: "12px 16px" }}>↑</button>
             </form>
           ) : (
