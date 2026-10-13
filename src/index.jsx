@@ -4555,7 +4555,7 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
                     {l.draft && <span title="Unpublished — members can't see this lesson" style={{ color: "#666666", background: "#ececec", border: "1px solid #d8d4cc", borderRadius: 4, padding: "1px 7px", fontSize: 10, fontWeight: 800, letterSpacing: "1px", fontFamily: "'DM Sans', sans-serif" }}>UNPUBLISHED</span>}
                     {att.pdf && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#1a7a3a", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}><FileText size={12} /> PDF</span>}
                     {att.video && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#1a7a3a", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}><Video size={12} /> VIDEO</span>}
-                    {att.materials?.length > 0 && <span style={{ color: "#1a7a3a", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}>📎 {att.materials.length}</span>}
+                    {att.materials?.length > 0 && <span style={{ color: "#1a7a3a", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}>{att.materials.length} file{att.materials.length === 1 ? "" : "s"}</span>}
                     <span style={{ color: "#9a9a9a", fontSize: 14, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>▾</span>
                   </button>
                   {open && (

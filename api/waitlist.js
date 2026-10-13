@@ -469,7 +469,7 @@ export default async function handler(req, res) {
         addContact(entry.email, entry.name, { WAITLIST_BUDGET: budget, SMS: cleanPhone }),
         // The team inbox and Dakotah both get every waitlist alert.
         ...[process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net', 'dakotah@dakjencreative.com'].map(to => sendEmail(to,
-          `${isNew ? 'WAITLIST +1' : 'Waitlist update'}: ${entry.name} (${entry.list === 'insider' ? 'Insider' : 'General'})${isRetainerLead ? ' · 🔥 RETAINER LEAD' : ''}${founding ? ' · FOUNDING 25' : ''} — ${total} total`,
+          `${isNew ? 'WAITLIST +1' : 'Waitlist update'}: ${entry.name} (${entry.list === 'insider' ? 'Insider' : 'General'})${isRetainerLead ? ' · RETAINER LEAD' : ''}${founding ? ' · FOUNDING 25' : ''} — ${total} total`,
           `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${isNew ? 'New waitlist signup' : 'Waitlist entry updated'}</h2>
            <p style="color:#444444;font-size:14px;line-height:1.9;">
              <strong style="color:#161616;">${entry.name}</strong> — ${entry.email}${entry.phone ? ' · ' + entry.phone : ''}<br/>
