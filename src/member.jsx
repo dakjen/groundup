@@ -1794,6 +1794,9 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
     if ("dm" in h) { setDmOpen(true); if (h.dm) setDmTarget({ id: Number(h.dm) }); }
   }, []);
   const [newChanOpen, setNewChanOpen] = useState(false);
+  // The phase and course sections fold up; which ones are open is remembered on this device.
+  const [openSections, setOpenSections] = useState(() => { try { return JSON.parse(localStorage.getItem("guSidebarOpen") || "{}"); } catch { return {}; } });
+  const toggleSection = (k) => setOpenSections(o => { const n = { ...o, [k]: !o[k] }; try { localStorage.setItem("guSidebarOpen", JSON.stringify(n)); } catch {} return n; });
   const [pollOpen, setPollOpen] = useState(false);
   const [pollForm, setPollForm] = useState({ question: "", options: ["", ""] });
   const [newChan, setNewChan] = useState({ name: "", min_tier: "Basic", admin_only_post: false });
@@ -1985,7 +1988,20 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
               {!(!dmOpen && active?.id === c.id) && <Bubble n={c.unread} />}
             </button>
           );
-          const head = (label) => <div style={{ fontSize: 10, color: "#e8b4b4", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "0 12px", margin: "18px 0 10px" }}>{label}</div>;
+          // A section heading that folds its list. Unread counts stay visible on the heading while folded,
+          // and a section holding the channel you are in starts open.
+          const head = (label, key, list) => {
+            const open = openSections[key] ?? list.some(c => c.id === active?.id);
+            const unread = list.reduce((n, c) => n + (c.unread || 0), 0);
+            return (
+              <button onClick={() => toggleSection(key)} style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", background: "transparent", border: "none", padding: "0 12px", margin: "18px 0 10px", cursor: "pointer", textAlign: "left" }}>
+                <span style={{ fontSize: 10, color: "#e8b4b4", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font }}>{label}</span>
+                <span style={{ fontSize: 10, color: "#e8b4b4", fontFamily: font }}>{open ? "▾" : "▸"}</span>
+                {!open && <Bubble n={unread} />}
+              </button>
+            );
+          };
+          const isOpen = (key, list) => openSections[key] ?? list.some(c => c.id === active?.id);
           const general = channels.filter(c => !c.section);
           const phases = channels.filter(c => c.section === "phase");
           const courses = channels.filter(c => c.section === "course");
@@ -1993,10 +2009,10 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
             <>
               <div style={{ fontSize: 10, color: "#e8b4b4", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, padding: "0 12px", marginBottom: 10 }}>Channels</div>
               {general.map(c => chanBtn(c))}
-              {phases.length > 0 && head("By Development Phase")}
-              {phases.map(c => chanBtn(c, true))}
-              {courses.length > 0 && head("Course Discussions")}
-              {courses.map(c => chanBtn(c, true))}
+              {phases.length > 0 && head("By Development Phase", "phases", phases)}
+              {isOpen("phases", phases) && phases.map(c => chanBtn(c, true))}
+              {courses.length > 0 && head("Course Discussions", "courses", courses)}
+              {isOpen("courses", courses) && courses.map(c => chanBtn(c, true))}
             </>
           );
         })()}
