@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { FileText, Send, Hourglass, FolderOpen, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2, BadgePercent } from "lucide-react";
 import COURSE_CATALOG from "./courseCatalog.js";
 import { pollVisible } from "./poll.js";
-import { guUpload, PasswordInput, AuthModal, OnboardingFlow, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
+import { backdropClose, guUpload, PasswordInput, AuthModal, OnboardingFlow, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -3096,7 +3096,7 @@ function ShopPage({ member, onSignIn }) {
 
         {/* One-time IP agreement before first view/download */}
         {needAgree && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setNeedAgree(null)}>
+          <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} {...backdropClose(() => setNeedAgree(null))}>
             <div onClick={e => e.stopPropagation()} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 18, padding: "32px 34px", maxWidth: 480, width: "100%" }}>
               <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "#f5e8e8", marginBottom: 12 }}>Before you open this</div>
               <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", marginBottom: 18 }}>
@@ -3116,7 +3116,7 @@ function ShopPage({ member, onSignIn }) {
 
         {/* Purchase disclaimer — must agree before checkout */}
         {confirmBuy && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setConfirmBuy(null)}>
+          <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} {...backdropClose(() => setConfirmBuy(null))}>
             <div onClick={e => e.stopPropagation()} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 18, padding: "32px 34px", maxWidth: 460, width: "100%" }}>
               <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "#f5e8e8", marginBottom: 8 }}>{confirmBuy.title}</div>
               <div style={{ color: "#b80101", fontFamily: serif, fontWeight: 700, fontSize: 22, marginBottom: 16 }}>{usd(confirmBuy.price_cents)}</div>
@@ -3611,7 +3611,7 @@ function IpAgreementGate({ member, onAgreed, onSignOut, onDismiss }) {
     } catch { setBusy(false); }
   };
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 500, background: "rgba(0,0,0,0.94)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => onDismiss && onDismiss()}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 500, background: "rgba(0,0,0,0.94)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} {...backdropClose(() => onDismiss && onDismiss())}>
       <div onClick={e => e.stopPropagation()} style={{ background: "#0d0404", border: "1px solid #b8010150", borderRadius: 20, padding: "38px 38px 32px", maxWidth: 520, width: "100%", position: "relative" }}>
         {onDismiss && <button onClick={onDismiss} style={{ position: "absolute", top: 14, right: 16, background: "transparent", border: "none", color: "#6a5050", fontSize: 20, cursor: "pointer" }}>×</button>}
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Before you continue</div>
@@ -7317,7 +7317,7 @@ function EmailTab({ btnRed, btnGhost, inp, lbl }) {
 function ContentAgreementModal({ onAgree, onClose }) {
   const [checked, setChecked] = useState(false);
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} {...backdropClose(onClose)}>
       <div onClick={e => e.stopPropagation()} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "40px clamp(24px,5vw,48px)", width: "100%", maxWidth: 540, position: "relative", maxHeight: "90vh", overflowY: "auto" }}>
         <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "transparent", border: "none", color: "#6a5050", fontSize: 20, cursor: "pointer", lineHeight: 1 }}>✕</button>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
@@ -7399,7 +7399,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
   const planColors = { Free: "#6a6b69", Basic: "#b80101", Premium: "#b80101", Elite: "#570404" };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={e => e.target === e.currentTarget && onClose()}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} {...backdropClose(onClose)}>
       <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "40px clamp(24px,5vw,48px)", width: "100%", maxWidth: 480, position: "relative" }}>
         <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "transparent", border: "none", color: "#6a5050", fontSize: 20, cursor: "pointer", lineHeight: 1 }}>✕</button>
 
@@ -7827,7 +7827,7 @@ export default function App() {
         />
       )}
       {showWaitlistPop && !resetToken && !showSignup && (
-        <div className="gu-pop-backdrop" style={{ position: "fixed", inset: 0, zIndex: 320, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setShowWaitlistPop(false)}>
+        <div className="gu-pop-backdrop" style={{ position: "fixed", inset: 0, zIndex: 320, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} {...backdropClose(() => setShowWaitlistPop(false))}>
           <div className="gu-pop-card" onClick={e => e.stopPropagation()} style={{ position: "relative", width: "100%", maxWidth: 480, background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "40px 36px 34px", textAlign: "center" }}>
             <button onClick={() => setShowWaitlistPop(false)} aria-label="Close" style={{ position: "absolute", top: 12, right: 16, background: "none", border: "none", color: "#8a7070", fontSize: 24, lineHeight: 1, cursor: "pointer", padding: 4 }}>×</button>
             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Now open</div>
