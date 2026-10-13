@@ -128,7 +128,8 @@ export default async function handler(req, res) {
       // Channels above someone's plan still appear in the sidebar, locked, so
       // they can see what a higher plan opens. Private and not-yet-live channels
       // stay hidden. The body of a locked channel is never sent.
-      const locked = channels.filter(c => !canSeeChannel(c, user) && !c.team_only && !c.partner_slug && !(c.section === 'course' && !user.courseChannelsLive) && user.rank < (TIER_RANK[c.min_tier] ?? 1))
+      // Owner-level channels are private: they do not appear at all below Owner.
+      const locked = channels.filter(c => !canSeeChannel(c, user) && !c.team_only && !c.partner_slug && c.min_tier !== 'Elite' && !(c.section === 'course' && !user.courseChannelsLive) && user.rank < (TIER_RANK[c.min_tier] ?? 1))
         .map(c => ({ id: c.id, slug: c.slug, name: c.name, description: c.description, min_tier: c.min_tier, admin_only_post: c.admin_only_post, section: c.section, position: c.position, locked: true }));
       // Unread per channel: posts since this person last opened it, not their own
       if (user.id && visible.length) {
