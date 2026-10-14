@@ -7440,8 +7440,7 @@ export default function App() {
   // Theme: the light palette is for the ADMIN PAGES only — on member-facing
   // pages, admins see the same dark theme members do (so previews are true).
   useEffect(() => {
-    // The advisory pages are built like the client's workspace, so they stay dark.
-    const light = member?.role === "admin" && String(activePage || "").startsWith("admin-") && !["admin-retainers", "admin-bookings"].includes(activePage);
+    const light = member?.role === "admin" && String(activePage || "").startsWith("admin-");
     const V = light ? {
       "--gu-bg": "#f6f4f0", "--gu-panel": "#efece6", "--gu-card": "#ffffff", "--gu-card2": "#faf8f5",
       "--gu-card3": "#f2efe9", "--gu-red-tint": "#fdf1f1", "--gu-border": "#dcdcdc", "--gu-border2": "#e6e6e6",

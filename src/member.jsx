@@ -188,7 +188,7 @@ export function DataRoom({ project, files, used, quota, onChange, flash, dark, c
   const remove = async (f) => { try { await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "deal_file_remove", id: f.id }) }); await onChange(); } catch (e) { flash(false, e.message); } };
   const inFolder = (k) => files.filter(f => (f.folder || "other") === k || (k === "other" && !DEAL_FOLDERS.some(([key]) => key === f.folder)));
   const dropProps = (k) => compact ? {} : ({ onDragOver: e => { e.preventDefault(); setDragOver(k); }, onDragLeave: () => setDragOver(null), onDrop: e => { e.preventDefault(); setDragOver(null); upload(k, e.dataTransfer.files); } });
-  const small = { ...btnGhost, padding: "6px 12px", fontSize: 11.5, color: "var(--gu-text2)", borderColor: "var(--gu-border)" };
+  const small = { ...btnGhost, padding: "6px 12px", fontSize: 11.5, color: "var(--gu-text2)", borderColor: "var(--gu-border)", background: "var(--gu-card)" };
   return (
     <div>
       {DEAL_FOLDERS.map(([k, label, hint]) => {
@@ -197,7 +197,7 @@ export function DataRoom({ project, files, used, quota, onChange, flash, dark, c
         return (
           <div key={k} {...dropProps(k)} style={{ padding: "14px 0 12px", borderTop: "1px solid var(--gu-border2)", background: dragOver === k ? "var(--gu-red-tint)" : "transparent", borderRadius: 8 }}>
             <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: list.length ? 6 : 0 }}>
-              <span style={{ fontSize: 10, color: "#e08a8a", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font }}>{label}</span>
+              <span style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font }}>{label}</span>
               <span style={{ color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font }}>{list.length ? `${list.length} item${list.length === 1 ? "" : "s"}` : hint}</span>
               {!compact && (
                 <span style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
@@ -3166,8 +3166,8 @@ export function DirectLine({ loadMsgs, sendMsg, isAdmin, title, subtitle, height
     catch (e2) { setErr(e2.message); setDraft(text); }
   };
   return (
-    <div style={{ background: "#1a0b0e", border: "1px solid #4a1a1e", borderRadius: 16, display: "flex", flexDirection: "column", height, position: "sticky", top: 90, ...(style || {}) }}>
-      <div style={{ padding: "18px 22px", borderBottom: "1px solid #4a1a1e", background: "#22100f", borderRadius: "16px 16px 0 0" }}>
+    <div style={{ background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 16, display: "flex", flexDirection: "column", height, position: "sticky", top: 90, ...(style || {}) }}>
+      <div style={{ padding: "18px 22px", borderBottom: "1px solid var(--gu-border)", background: "var(--gu-card3)", borderRadius: "16px 16px 0 0" }}>
         <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15, fontFamily: font }}>{title}</div>
         <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font }}>{subtitle}</div>
       </div>
@@ -3175,17 +3175,17 @@ export function DirectLine({ loadMsgs, sendMsg, isAdmin, title, subtitle, height
         {msgs.length === 0 && <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, textAlign: "center", marginTop: 40 }}>{isAdmin ? "No messages yet." : "Start the conversation — what are you working on?"}</div>}
         {msgs.map(m => { const mine = m.from_admin === !!isAdmin; return (
           <div key={m.id} style={{ display: "flex", justifyContent: mine ? "flex-end" : "flex-start", marginBottom: 10 }}>
-            <div style={{ maxWidth: "85%", background: mine ? "#b80101" : "#2e1a1c", border: mine ? "none" : "1px solid #5a2a2e", borderRadius: mine ? "16px 16px 4px 16px" : "16px 16px 16px 4px", padding: "10px 14px" }}>
-              {!mine && <div style={{ color: "#f0a8a8", fontSize: 10.5, fontWeight: 800, fontFamily: font, letterSpacing: "1px", textTransform: "uppercase", marginBottom: 4 }}>{m.from_admin ? "Dr. Merritt" : (otherName || "Client")}</div>}
-              <div style={{ color: mine ? "#ffffff" : "#fbf1f1", fontSize: 13.5, fontFamily: font, lineHeight: 1.65, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.body}</div>
-              <div style={{ color: mine ? "rgba(255,255,255,0.75)" : "#b08c8c", fontSize: 10, fontFamily: font, marginTop: 5, textAlign: "right" }}>{timeAgo(m.created_at)}</div>
+            <div style={{ maxWidth: "85%", background: mine ? "#b80101" : "var(--gu-card)", border: mine ? "none" : "1px solid var(--gu-border)", borderRadius: mine ? "16px 16px 4px 16px" : "16px 16px 16px 4px", padding: "10px 14px" }}>
+              {!mine && <div style={{ color: "#b80101", fontSize: 10.5, fontWeight: 800, fontFamily: font, letterSpacing: "1px", textTransform: "uppercase", marginBottom: 4 }}>{m.from_admin ? "Dr. Merritt" : (otherName || "Client")}</div>}
+              <div style={{ color: mine ? "#ffffff" : "var(--gu-text)", fontSize: 13.5, fontFamily: font, lineHeight: 1.65, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.body}</div>
+              <div style={{ color: mine ? "rgba(255,255,255,0.75)" : "var(--gu-muted)", fontSize: 10, fontFamily: font, marginTop: 5, textAlign: "right" }}>{timeAgo(m.created_at)}</div>
             </div>
           </div>
         ); })}
       </div>
       {err && <div style={{ color: "#ff6b6b", fontSize: 12, fontFamily: font, padding: "0 18px 6px" }}>{err}</div>}
-      <form onSubmit={send} style={{ display: "flex", gap: 8, padding: "12px 14px 16px", borderTop: "1px solid #4a1a1e", alignItems: "flex-end" }}>
-        <GrowingInput style={{ ...inp, marginBottom: 0, flex: 1, background: "#120608", border: "1px solid #4a1a1e" }} value={draft} onChange={e => setDraft(e.target.value)} onSubmit={() => send()} placeholder={isAdmin ? `Reply to ${otherName || "client"}…` : "Message Dr. Merritt…"} maxLength={4000} />
+      <form onSubmit={send} style={{ display: "flex", gap: 8, padding: "12px 14px 16px", borderTop: "1px solid var(--gu-border)", alignItems: "flex-end" }}>
+        <GrowingInput style={{ ...inp, marginBottom: 0, flex: 1, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)" }} value={draft} onChange={e => setDraft(e.target.value)} onSubmit={() => send()} placeholder={isAdmin ? `Reply to ${otherName || "client"}…` : "Message Dr. Merritt…"} maxLength={4000} />
         <button type="submit" style={{ ...btnRed, padding: "12px 16px" }}>Send</button>
       </form>
     </div>
@@ -3448,7 +3448,7 @@ export function AdvisoryAdminPage() {
   const money = (n) => "$" + Number(n || 0).toLocaleString();
   const eyebrow = (t, color = "#b80101") => <div style={{ fontSize: 9, color, fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>{t}</div>;
   const card = { background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "24px 26px", marginBottom: 16 };
-  const ghost = { ...btnGhost, color: "var(--gu-text2)", borderColor: "var(--gu-border)", padding: "9px 14px", fontSize: 12.5 };
+  const ghost = { ...btnGhost, color: "var(--gu-text2)", borderColor: "var(--gu-border)", padding: "9px 14px", fontSize: 12.5, background: "var(--gu-card)" };
   const uploadDoc = async (r, kind, file) => {
     if (!file) return; setBusy(true);
     try {
@@ -3471,15 +3471,15 @@ export function AdvisoryAdminPage() {
       <FileTextIcon />
       <span style={{ color: "var(--gu-text2)", fontSize: 13.5, fontFamily: font, fontWeight: 600, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.title}</span>
       <span style={{ color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font }}>{new Date(f.created_at).toLocaleDateString()}</span>
-      {f.url && <a href={f.url} target="_blank" rel="noreferrer" style={{ color: "#e08a8a", fontSize: 12.5, fontFamily: font, fontWeight: 800, textDecoration: "none" }}>Open ↗</a>}
+      {f.url && <a href={f.url} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontSize: 12.5, fontFamily: font, fontWeight: 800, textDecoration: "none" }}>Open ↗</a>}
       {removable && <button onClick={() => act(() => post({ action: "remove_file", retainer_id: rid, id: f.id }))} style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 11.5, fontFamily: font, fontWeight: 700 }}>remove</button>}
     </div>
   );
   const addDocs = (rr, kind) => (
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
       <label style={{ ...ghost, display: "inline-block", cursor: busy ? "wait" : "pointer" }}>{busy ? "Uploading…" : "Upload"}<input type="file" accept={DEAL_ACCEPT} style={{ display: "none" }} onChange={e => { uploadDoc(rr, kind, e.target.files?.[0]); e.target.value = ""; }} /></label>
-      <input value={(docForm[rr.id + kind] || {}).title || ""} onChange={e => setDocForm({ ...docForm, [rr.id + kind]: { ...(docForm[rr.id + kind] || {}), title: e.target.value } })} placeholder="Document name" style={{ ...inp, marginBottom: 0, padding: "9px 11px", fontSize: 13, flex: "1 1 130px" }} />
-      <input value={(docForm[rr.id + kind] || {}).url || ""} onChange={e => setDocForm({ ...docForm, [rr.id + kind]: { ...(docForm[rr.id + kind] || {}), url: e.target.value } })} placeholder="or paste a link (Drive, DocuSign…)" style={{ ...inp, marginBottom: 0, padding: "9px 11px", fontSize: 13, flex: "2 1 200px" }} />
+      <input value={(docForm[rr.id + kind] || {}).title || ""} onChange={e => setDocForm({ ...docForm, [rr.id + kind]: { ...(docForm[rr.id + kind] || {}), title: e.target.value } })} placeholder="Document name" style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, padding: "9px 11px", fontSize: 13, flex: "1 1 130px" }} />
+      <input value={(docForm[rr.id + kind] || {}).url || ""} onChange={e => setDocForm({ ...docForm, [rr.id + kind]: { ...(docForm[rr.id + kind] || {}), url: e.target.value } })} placeholder="or paste a link (Drive, DocuSign…)" style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, padding: "9px 11px", fontSize: 13, flex: "2 1 200px" }} />
       <button onClick={() => addLink(rr, kind)} style={ghost}>Add link</button>
     </div>
   );
@@ -3529,7 +3529,7 @@ export function AdvisoryAdminPage() {
               <div key={i} style={{ display: "flex", gap: 10, alignItems: "center", padding: "9px 0", borderBottom: "1px solid var(--gu-border2)" }}>
                 <span style={{ width: 7, height: 7, borderRadius: 4, background: "#b80101", flexShrink: 0 }} />
                 <span style={{ color: "var(--gu-text2)", fontSize: 13.5, fontFamily: font, flex: 1 }}>{n.text}</span>
-                {n.go && <button onClick={n.go} style={{ background: "none", border: "none", color: "#e08a8a", cursor: "pointer", fontSize: 12.5, fontFamily: font, fontWeight: 800 }}>Open →</button>}
+                {n.go && <button onClick={n.go} style={{ background: "none", border: "none", color: "#b80101", cursor: "pointer", fontSize: 12.5, fontFamily: font, fontWeight: 800 }}>Open →</button>}
               </div>
             ))}
           </div>
@@ -3571,10 +3571,10 @@ export function AdvisoryAdminPage() {
           <div style={{ background: "var(--gu-red-tint)", border: "1px solid #b8010160", borderRadius: 12, padding: "12px 16px", marginTop: 12 }}>
             {r.meetings.map(m => (
               <div key={m.id} style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", padding: "4px 0", fontFamily: font }}>
-                <span style={{ fontSize: 9, color: "#e08a8a", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase" }}>{m.scheduled_at ? "Next meeting" : "Meeting requested"}</span>
+                <span style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase" }}>{m.scheduled_at ? "Next meeting" : "Meeting requested"}</span>
                 <span style={{ color: "var(--gu-text2)", fontSize: 13.5, fontWeight: 700 }}>{m.scheduled_at ? new Date(m.scheduled_at).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "not on the calendar yet"} · {m.minutes} min</span>
                 {m.topic && <span style={{ color: "var(--gu-body)", fontSize: 13, flex: "1 1 240px" }}>{m.topic}</span>}
-                <input type="datetime-local" defaultValue={m.scheduled_at ? new Date(new Date(m.scheduled_at).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""} onChange={e => e.target.value && act(() => post({ action: "meeting_update", id: m.id, scheduled_at: new Date(e.target.value).toISOString() }), "Meeting time saved — the client sees it.")} style={{ ...inp, marginBottom: 0, width: "auto", padding: "7px 10px", fontSize: 12.5 }} />
+                <input type="datetime-local" defaultValue={m.scheduled_at ? new Date(new Date(m.scheduled_at).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""} onChange={e => e.target.value && act(() => post({ action: "meeting_update", id: m.id, scheduled_at: new Date(e.target.value).toISOString() }), "Meeting time saved — the client sees it.")} style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, width: "auto", padding: "7px 10px", fontSize: 12.5 }} />
                 <button onClick={() => act(() => post({ action: "meeting_update", id: m.id, status: "done" }))} style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 12, fontFamily: font, fontWeight: 700 }}>Done</button>
               </div>
             ))}
@@ -3628,7 +3628,7 @@ export function AdvisoryAdminPage() {
                       <span style={{ color: "var(--gu-text2)", fontSize: 13, fontFamily: font, fontWeight: 700, whiteSpace: "nowrap" }}>{Number(l.hours)} hrs · {new Date(l.logged_on || l.created_at).toLocaleDateString()}</span>
                     </div>
                   ))}
-                  <button onClick={() => setSub("time")} style={{ background: "none", border: "none", color: "#e08a8a", cursor: "pointer", fontSize: 12.5, fontFamily: font, fontWeight: 800, padding: "10px 0 0" }}>Open the timesheet →</button>
+                  <button onClick={() => setSub("time")} style={{ background: "none", border: "none", color: "#b80101", cursor: "pointer", fontSize: 12.5, fontFamily: font, fontWeight: 800, padding: "10px 0 0" }}>Open the timesheet →</button>
                 </div>
               </div>
             </div>
@@ -3682,9 +3682,9 @@ export function AdvisoryAdminPage() {
             </div>
             <div style={{ height: 10, background: "var(--gu-card2)", borderRadius: 99, overflow: "hidden", marginBottom: 18 }}><div style={{ width: `${pct}%`, height: "100%", background: "#b80101", borderRadius: 99 }} /></div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-              <input type="number" step="0.25" min="0" placeholder="Hours" value={(logForm[r.id] || {}).hours || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), hours: e.target.value } })} style={{ ...inp, marginBottom: 0, width: 90, padding: "9px 11px", fontSize: 13 }} />
-              <input type="date" value={(logForm[r.id] || {}).date || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), date: e.target.value } })} style={{ ...inp, marginBottom: 0, width: 150, padding: "9px 11px", fontSize: 13 }} />
-              <input placeholder="What you worked on" value={(logForm[r.id] || {}).note || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), note: e.target.value } })} style={{ ...inp, marginBottom: 0, flex: "1 1 180px", padding: "9px 11px", fontSize: 13 }} />
+              <input type="number" step="0.25" min="0" placeholder="Hours" value={(logForm[r.id] || {}).hours || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), hours: e.target.value } })} style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, width: 90, padding: "9px 11px", fontSize: 13 }} />
+              <input type="date" value={(logForm[r.id] || {}).date || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), date: e.target.value } })} style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, width: 150, padding: "9px 11px", fontSize: 13 }} />
+              <input placeholder="What you worked on" value={(logForm[r.id] || {}).note || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), note: e.target.value } })} style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, flex: "1 1 180px", padding: "9px 11px", fontSize: 13 }} />
               <button onClick={() => logHours(r)} style={btnRed}>Log hours</button>
             </div>
             <div style={{ marginTop: 18, borderTop: "1px solid var(--gu-border2)", paddingTop: 10 }}>
@@ -3700,8 +3700,8 @@ export function AdvisoryAdminPage() {
         )}
 
         {sub === "docs" && (<>
-          <div style={{ ...card, background: "linear-gradient(135deg, #111114, var(--gu-card))", border: "1px solid #b9bec740" }}>
-            {eyebrow("Engagement documents", "#b9bec7")}
+          <div style={{ ...card, background: "var(--gu-card2)", border: "1px solid var(--gu-border)" }}>
+            {eyebrow("Engagement documents")}
             <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, margin: "0 0 10px" }}>The agreement, the scope, anything formalized. Both sides see these.</p>
             {engagement.length ? engagement.map(f => docRow(f, true, r.id)) : <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>None yet.</div>}
             {addDocs(r, "engagement")}
@@ -3718,7 +3718,7 @@ export function AdvisoryAdminPage() {
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {r.status !== "active" && <button onClick={() => act(() => post({ action: "update", id: r.id, status: "active" }), "Active — and an Owner.")} style={ghost}>Mark active</button>}
               {r.status === "active" && <button onClick={() => act(() => post({ action: "update", id: r.id, status: "paused" }), "Paused.")} style={ghost}>Pause</button>}
-              <button onClick={() => { if (window.confirm(`End ${r.name}'s retainer?`)) act(() => post({ action: "update", id: r.id, status: "ended" }), "Ended."); }} style={{ ...ghost, color: "#e08a8a" }}>End</button>
+              <button onClick={() => { if (window.confirm(`End ${r.name}'s retainer?`)) act(() => post({ action: "update", id: r.id, status: "ended" }), "Ended."); }} style={{ ...ghost, color: "#b80101" }}>End</button>
             </div>
           </div>
         </>)}
@@ -3726,7 +3726,7 @@ export function AdvisoryAdminPage() {
         {sub === "notes" && (
           <div style={card}>
             {eyebrow("Private notes · yours only")}
-            <textarea value={notes[r.id] ?? ""} onChange={e => setNotes({ ...notes, [r.id]: e.target.value })} rows={10} placeholder="What you think, what you're watching, what to raise next time. The client never sees this." style={{ ...inp, resize: "vertical", marginBottom: 10 }} />
+            <textarea value={notes[r.id] ?? ""} onChange={e => setNotes({ ...notes, [r.id]: e.target.value })} rows={10} placeholder="What you think, what you're watching, what to raise next time. The client never sees this." style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", resize: "vertical", marginBottom: 10 }} />
             <button onClick={() => act(() => post({ action: "private_notes", id: r.id, notes: notes[r.id] || "" }), "Notes saved.")} style={btnRed}>Save notes</button>
           </div>
         )}
@@ -3769,7 +3769,7 @@ export function BookingsAdminPage() {
   const post = (body) => api("/api/retainers", { method: "POST", body: JSON.stringify(body) });
   const eyebrow = (t) => <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>{t}</div>;
   const card = { background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "26px 28px", marginBottom: 18 };
-  const ghost = { ...btnGhost, color: "var(--gu-text2)", borderColor: "var(--gu-border)", padding: "9px 14px", fontSize: 12.5 };
+  const ghost = { ...btnGhost, color: "var(--gu-text2)", borderColor: "var(--gu-border)", padding: "9px 14px", fontSize: 12.5, background: "var(--gu-card)" };
   const bookings = data?.bookings || [];
   const waiting = bookings.filter(b => b.status === "awaiting_booking");
   const rest = bookings.filter(b => b.status !== "awaiting_booking");
@@ -3777,7 +3777,7 @@ export function BookingsAdminPage() {
     <div key={b.id} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", padding: "9px 0", borderBottom: "1px solid var(--gu-border2)", fontFamily: font, fontSize: 13 }}>
       <span style={{ color: "var(--gu-text2)", fontWeight: 700 }}>{b.name}</span>
       <span style={{ color: "var(--gu-muted)", fontSize: 12 }}>{b.email} · {b.label} · {new Date(b.created_at).toLocaleDateString()}{b.nudges ? ` · ${b.nudges} reminder${b.nudges > 1 ? "s" : ""}` : ""}</span>
-      <span style={{ marginLeft: "auto", fontSize: 10, letterSpacing: "1px", fontWeight: 800, color: b.status === "booked" ? "#22c55e" : b.status === "cancelled" ? "var(--gu-muted)" : "#e08a8a" }}>{String(b.status).replace("_", " ").toUpperCase()}</span>
+      <span style={{ marginLeft: "auto", fontSize: 10, letterSpacing: "1px", fontWeight: 800, color: b.status === "booked" ? "#22c55e" : b.status === "cancelled" ? "var(--gu-muted)" : "#b80101" }}>{String(b.status).replace("_", " ").toUpperCase()}</span>
       {b.status === "awaiting_booking" && <button onClick={() => act(() => post({ action: "nudge_booking", id: b.id }), "Reminder sent.")} style={ghost}>Remind</button>}
       {b.status === "awaiting_booking" && <button onClick={() => act(() => post({ action: "booking_status", id: b.id, status: "booked" }), "Marked booked.")} style={ghost}>Mark booked</button>}
       {b.status === "booked" && <button onClick={() => act(() => post({ action: "booking_status", id: b.id, status: "awaiting_booking" }))} style={ghost}>Reopen</button>}
@@ -3808,7 +3808,7 @@ export function BookingsAdminPage() {
               <div style={card}>
                 {eyebrow("After the intake call: make them a client")}
                 <label style={lbl}>Member</label>
-                <select value={form.user_id} onChange={e => setForm({ ...form, user_id: e.target.value })} style={{ ...inp, marginBottom: 10, cursor: "pointer" }}>
+                <select value={form.user_id} onChange={e => setForm({ ...form, user_id: e.target.value })} style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 10, cursor: "pointer" }}>
                   <option value="">Choose…</option>
                   {users.filter(u => u.role !== "admin").map(u => <option key={u.id} value={u.id}>{u.name} — {u.email}</option>)}
                 </select>
@@ -3817,18 +3817,18 @@ export function BookingsAdminPage() {
                   <div><label style={lbl}>Monthly amount ($)</label><input type="number" value={form.monthly_amount} onChange={e => setForm({ ...form, monthly_amount: e.target.value })} style={inp} /></div>
                 </div>
                 <label style={lbl}>How</label>
-                <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} style={{ ...inp, marginBottom: 10, cursor: "pointer" }}>
+                <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 10, cursor: "pointer" }}>
                   <option value="offered">Invite them to choose a block and pay</option>
                   <option value="active">Activate now (paid elsewhere) — makes them an Owner</option>
                 </select>
                 <label style={lbl}>Note for the client (optional)</label>
-                <input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Great talking today — here's what we discussed…" style={{ ...inp, marginBottom: 14 }} />
+                <input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Great talking today — here's what we discussed…" style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 14 }} />
                 <button onClick={() => act(() => post({ action: "create", ...form }).then(() => setForm({ user_id: "", hours_per_month: 10, monthly_amount: 5500, notes: "", status: "offered" })), form.status === "offered" ? "Invitation sent — they choose a block and pay." : "Client added at Owner level — see Advisory Clients.")} style={btnRed}>{form.status === "offered" ? "Send invitation" : "Add client"}</button>
               </div>
               <div style={card}>
                 {eyebrow("Intake call booking link")}
                 <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, margin: "0 0 12px" }}>Dr. Merritt's Google Appointment or Calendly link. Someone who pays the intake is sent here to book; reminders use it too.</p>
-                <input value={callLink} onChange={e => setCallLink(e.target.value)} placeholder="https://calendar.app.google/…" style={{ ...inp, marginBottom: 12 }} />
+                <input value={callLink} onChange={e => setCallLink(e.target.value)} placeholder="https://calendar.app.google/…" style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 12 }} />
                 <button onClick={() => act(() => post({ action: "set_call_link", url: callLink }), "Booking link saved.")} style={btnRed}>Save link</button>
               </div>
             </div>
