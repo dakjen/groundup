@@ -685,6 +685,8 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
               <button onClick={() => {
                 const token = getMemberToken();
                 if (token) fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ action: "deal_lead", source: "lesson:" + course.id }) }).catch(() => {});
+                // Remember the lesson so the booking page can offer the way back
+                try { sessionStorage.setItem("guReturnTo", JSON.stringify({ href: window.location.pathname + window.location.search + window.location.hash, label: lesson.title })); } catch {}
                 window.location.href = "/contact";
               }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px 22px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>Send her your deal →</button>
             </div>
@@ -2375,6 +2377,8 @@ function PricingPage({ onSignUp }) {
 // ─── CONTACT / BOOKING PAGE ──────────────────────────────────────────────────
 
 function ContactPage({ setActivePage, advisorLink }) {
+  // Arrived from a lesson's "Send her your deal"? Offer the way back to it.
+  const [returnTo] = useState(() => { try { return JSON.parse(sessionStorage.getItem("guReturnTo") || "null"); } catch { return null; } });
   const SESSION_TYPES = [
     { id: "deal", title: "Deal Review", desc: "Dr. Merritt reviews a specific site or deal — feasibility, market read, deal structure, and whether it's worth pursuing.", price: "$500", duration: "45 min", Icon: Building2, stripe: "https://buy.stripe.com/placeholder_deal" },
     { id: "strategy", title: "Strategy Session", desc: "Big picture direction: where to focus, how to grow your pipeline, what JV structures make sense for your stage.", price: "$425", duration: "45 min", Icon: Compass, stripe: "https://buy.stripe.com/placeholder_strategy" },
@@ -2469,6 +2473,9 @@ function ContactPage({ setActivePage, advisorLink }) {
   return (
     <div style={{ background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 860, margin: "0 auto" }}>
+        {returnTo && returnTo.href && (
+          <a href={returnTo.href} onClick={() => { try { sessionStorage.removeItem("guReturnTo"); } catch {} }} style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#e08a8a", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, textDecoration: "none", marginBottom: 26, border: "1px solid #b8010150", borderRadius: 999, padding: "8px 16px" }}>← Back to {returnTo.label || "the lesson"}</a>
+        )}
         <div style={{ marginBottom: 56, maxWidth: 600 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Work with Dr. Merritt</div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(36px,5vw,56px)", color: "#f5e8e8", marginBottom: 16, lineHeight: 1.1 }}>Book a 1-on-1 Session</h1>
