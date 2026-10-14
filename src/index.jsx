@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { FileText, Send, Hourglass, FolderOpen, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2, BadgePercent } from "lucide-react";
 import COURSE_CATALOG from "./courseCatalog.js";
 import { pollVisible } from "./poll.js";
-import { backdropClose, guUpload, PasswordInput, AuthModal, OnboardingFlow, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
+import { backdropClose, guUpload, PasswordInput, AuthModal, OnboardingFlow, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, AdvisoryAdminPage, BookingsAdminPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -1001,7 +1001,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
   const launched = !!(window.__guLaunchAt && new Date(window.__guLaunchAt).getTime() <= Date.now());
   const ADMIN_GROUPS = [
     { label: "GroundUp", items: [["courses", "Courses"], ["community", "Community"], ["resources", "Resources"]] },
-    { label: "Advisory & Retainers", items: [["admin-retainers", "Advisory & Retainers"]] },
+    { label: "Advisory", items: [["admin-retainers", "Advisory Clients"], ["admin-bookings", "Intake & Bookings"]] },
     { label: launched ? "Users" : "Waitlist", items: launched
       ? [["admin-users", "Users"], ["admin-contacts", "Contacts"], ["admin-waitlist", "Waitlist"], ["admin-referrals", "Referrals"], ["admin-invites", "Gifts & Invites"]]
       : [["admin-waitlist", "Waitlist"], ["admin-contacts", "Contacts"], ["admin-users", "Users"], ["admin-referrals", "Referrals"], ["admin-invites", "Gifts & Invites"]] },
@@ -6892,251 +6892,6 @@ function SystemStatusTab() {
   );
 }
 
-function RetainerTab({ btnRed, btnGhost, inp, lbl }) {
-  const [data, setData] = useState(null);
-  const [openWs, setOpenWs] = useState(null);   // which client's workspace is expanded
-  const [reply, setReply] = useState({});
-  const sendReply = async (rid) => {
-    const body = (reply[rid] || "").trim(); if (!body) return;
-    try { await call("POST", { action: "message", id: rid, body }); setReply({ ...reply, [rid]: "" }); flash(true, "Sent — they'll get an email."); await load(); } catch (e) { flash(false, e.message); }
-  };
-  const [users, setUsers] = useState([]);
-  const [form, setForm] = useState({ user_id: "", hours_per_month: 10, monthly_amount: 5500, notes: "", status: "offered" });
-  const [logForm, setLogForm] = useState({});
-  const [callLink, setCallLink] = useState("");
-  const [msg, setMsg] = useState(null);
-
-  const hdrs = () => ({ "Content-Type": "application/json", Authorization: "Bearer " + sessionStorage.getItem("adminToken") });
-  const call = async (method, body) => {
-    const res = await fetch("/api/retainers" + (method === "GET" ? "?admin=1" : ""), { method, headers: hdrs(), ...(body ? { body: JSON.stringify(body) } : {}) });
-    const d = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(d.error || "Request failed");
-    return d;
-  };
-  const load = () => call("GET").then(d => { setData(d); if (d.call_link) setCallLink(d.call_link); }).catch(e => setMsg({ ok: false, text: e.message }));
-  useEffect(() => {
-    load();
-    fetch("/api/users", { headers: hdrs() }).then(r => r.json()).then(u => setUsers(Array.isArray(u) ? u : [])).catch(() => {});
-  }, []);
-  const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 5000); };
-
-  const create = async () => {
-    if (!form.user_id) { flash(false, "Pick a member first."); return; }
-    try { await call("POST", { action: "create", ...form }); flash(true, form.status === "offered" ? "Invitation sent — they choose hours and pay." : "Retainer added."); setForm({ ...form, user_id: "", notes: "" }); await load(); }
-    catch (e) { flash(false, e.message); }
-  };
-  const logHours = async (rid) => {
-    const f = logForm[rid] || {};
-    if (!f.hours) { flash(false, "Enter hours."); return; }
-    try { await call("POST", { action: "log_hours", retainer_id: rid, hours: f.hours, note: f.note }); setLogForm({ ...logForm, [rid]: {} }); await load(); flash(true, "Hours logged."); }
-    catch (e) { flash(false, e.message); }
-  };
-  const setStatus = async (id, status) => { try { await call("POST", { action: "update", id, status }); await load(); } catch (e) { flash(false, e.message); } };
-  const addDoc = async (rid) => {
-    const title = document.getElementById("rf-title-" + rid)?.value.trim();
-    const url = document.getElementById("rf-url-" + rid)?.value.trim();
-    const kind = document.getElementById("rf-kind-" + rid)?.value || "link";
-    if (!title || !url) { flash(false, "Document name and link required."); return; }
-    try {
-      await call("POST", { action: "add_file", retainer_id: rid, title, url, kind });
-      document.getElementById("rf-title-" + rid).value = ""; document.getElementById("rf-url-" + rid).value = "";
-      await load(); flash(true, kind === "engagement" ? "Engagement document shared — the client sees it in the gold section of their workspace." : "Document shared to their workspace.");
-    } catch (e) { flash(false, e.message); }
-  };
-
-  const section = { background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 14, padding: "28px 32px", marginBottom: 20 };
-  if (!data) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading…</div>;
-  const active = data.retainers.filter(r => r.status === "active");
-
-  return (
-    <div style={{ maxWidth: 860 }}>
-      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#161616", marginBottom: 8 }}>Retainer Clients</h2>
-      <p style={{ color: "#666666", fontSize: 13, marginBottom: 24, fontFamily: "'DM Sans', sans-serif" }}>Senior Advisor clients, their promised hours, and what they pay. After an engagement call, invite them here — they pick their hours and pay, and their workspace opens automatically.</p>
-      {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#1a7a3a" : "#b80101", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 20 }}>
-        {[["Active clients", active.length], ["Retainer MRR", "$" + Number(data.mrr || 0).toLocaleString()], ["Hours promised / mo", active.reduce((a, r) => a + Number(r.hours_per_month), 0)]].map(([l, v]) => (
-          <div key={l} style={{ background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 12, padding: "20px 18px", textAlign: "center" }}>
-            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 30, color: "#161616" }}>{v}</div>
-            <div style={{ fontSize: 10, color: "#8a8a8a", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 6 }}>{l}</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={section}>
-        <div style={{ fontSize: 10, color: "#8a8a8a", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>Engagement Call Booking Link</div>
-        <p style={{ color: "#8a8a8a", fontSize: 12, marginBottom: 14, fontFamily: "'DM Sans', sans-serif" }}>Paste Dr. Merritt's Google Appointment (or Calendly) link — the "Book an Engagement Call" button on the sessions page sends people straight there.</p>
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-          <input value={callLink} onChange={e => setCallLink(e.target.value)} placeholder="https://calendar.app.google/…" style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1, minWidth: 260 }} />
-          <button onClick={async () => { try { await call("POST", { action: "set_call_link", url: callLink }); flash(true, "Booking link saved."); } catch (e) { flash(false, e.message); } }} style={btnRed}>Save Link</button>
-        </div>
-      </div>
-
-      <div style={section}>
-        <div style={{ fontSize: 10, color: "#8a8a8a", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 20 }}>Add / Invite a Client</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", columnGap: 20, rowGap: 18 }}>
-          <div><label style={lbl}>Member</label>
-            <select value={form.user_id} onChange={e => setForm({ ...form, user_id: e.target.value })} style={{ ...inp, maxWidth: "none", marginBottom: 0, cursor: "pointer" }}>
-              <option value="">Choose…</option>
-              {users.filter(u => u.role !== "admin").map(u => <option key={u.id} value={u.id}>{u.name} — {u.email}</option>)}
-            </select>
-          </div>
-          <div><label style={lbl}>Hours / month</label><input type="number" value={form.hours_per_month} onChange={e => setForm({ ...form, hours_per_month: e.target.value })} style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
-          <div><label style={lbl}>Monthly amount ($)</label><input type="number" value={form.monthly_amount} onChange={e => setForm({ ...form, monthly_amount: e.target.value })} style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
-          <div><label style={lbl}>How to add</label>
-            <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} style={{ ...inp, maxWidth: "none", marginBottom: 0, cursor: "pointer" }}>
-              <option value="offered">Invite to choose & pay</option>
-              <option value="active">Activate now (paid elsewhere)</option>
-            </select>
-          </div>
-        </div>
-        <div style={{ marginTop: 18 }}>
-          <label style={lbl}>Note for the client (optional)</label>
-          <input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Great talking today — here's what we discussed…" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} />
-        </div>
-        <button onClick={create} style={{ ...btnRed, marginTop: 22, padding: "12px 28px" }}>{form.status === "offered" ? "Send Invitation" : "Add Client"}</button>
-      </div>
-
-      {data.bookings && data.bookings.length > 0 && (
-        <div style={section}>
-          <div style={{ fontSize: 10, color: "#8a8a8a", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>Paid Sessions & Bookings</div>
-          <p style={{ color: "#8a8a8a", fontSize: 12, marginBottom: 16, fontFamily: "'DM Sans', sans-serif" }}>Everyone who paid for a 1:1. Reminders go out automatically after 48 hours if they haven't booked.</p>
-          {data.bookings.map(b => {
-            const c = b.status === "booked" ? "#1a7a3a" : b.status === "refunded" ? "#b80101" : "#7d6d6d";
-            return (
-              <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderBottom: "1px solid #eeebe4", flexWrap: "wrap" }}>
-                <div style={{ flex: 1, minWidth: 190 }}>
-                  <div style={{ color: "#161616", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{b.name}</div>
-                  <div style={{ color: "#8a8a8a", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{b.label} · ${Number(b.amount).toLocaleString()} · {new Date(b.created_at).toLocaleDateString()}</div>
-                </div>
-                <span style={{ color: c, fontSize: 10, fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{b.status.replace("_", " ")}</span>
-                {b.nudges > 0 && <span style={{ color: "#9a9a9a", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>{b.nudges} nudge{b.nudges > 1 ? "s" : ""}</span>}
-                {b.status === "awaiting_booking" && (
-                  <>
-                    <button onClick={async () => { try { await call("POST", { action: "nudge_booking", id: b.id }); flash(true, "Reminder sent."); await load(); } catch (e) { flash(false, e.message); } }} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Nudge</button>
-                    <button onClick={async () => { try { await call("POST", { action: "booking_status", id: b.id, status: "booked" }); await load(); } catch (e) { flash(false, e.message); } }} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Mark booked</button>
-                  </>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {data.retainers.length === 0 ? (
-        <div style={{ background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 14, padding: 40, textAlign: "center", color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No retainer clients yet.</div>
-      ) : data.retainers.map(r => {
-        const used = Number(r.used_this_month || 0);
-        const pct = Math.min(100, Math.round((used / Number(r.hours_per_month)) * 100));
-        const color = r.status === "active" ? "#1a7a3a" : r.status === "offered" ? "#7d6d6d" : "#8a8a8a";
-        return (
-          <div key={r.id} style={{ ...section, marginBottom: 14 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
-              <div>
-                <div style={{ color: "#161616", fontSize: 16, fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}>{r.name}</div>
-                <div style={{ color: "#8a8a8a", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif" }}>{r.email}</div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ color: "#161616", fontSize: 15, fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}>{r.hours_per_month} hrs · ${Number(r.monthly_amount).toLocaleString()}/mo</div>
-                <span style={{ color, fontSize: 10, fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{r.status}</span>
-              </div>
-            </div>
-            {r.status === "active" && (
-              <>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#666666", fontFamily: "'DM Sans', sans-serif", marginBottom: 5 }}>
-                  <span>{used} of {r.hours_per_month} hours used this month</span><span>{pct}%</span>
-                </div>
-                <div style={{ height: 8, background: "#f0f0f0", borderRadius: 99, overflow: "hidden", marginBottom: 16 }}>
-                  <div style={{ width: `${pct}%`, height: "100%", background: pct > 90 ? "#b80101" : "#1a7a3a", borderRadius: 99 }} />
-                </div>
-                <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-                  <input type="number" step="0.25" placeholder="Hours" value={(logForm[r.id] || {}).hours || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), hours: e.target.value } })} style={{ ...inp, maxWidth: 110, marginBottom: 0 }} />
-                  <input placeholder="What you worked on" value={(logForm[r.id] || {}).note || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), note: e.target.value } })} style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1, minWidth: 180 }} />
-                  <button onClick={() => logHours(r.id)} style={btnRed}>Log Hours</button>
-                </div>
-                {/* Share a document into their workspace — engagement docs land in the gold section */}
-                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginTop: 14, borderTop: "1px dashed #eeebe4", paddingTop: 14 }}>
-                  <select id={"rf-kind-" + r.id} defaultValue="link" style={{ ...inp, maxWidth: 170, marginBottom: 0, cursor: "pointer" }}>
-                    <option value="link">Project document</option>
-                    <option value="engagement">Engagement document</option>
-                  </select>
-                  <input id={"rf-title-" + r.id} placeholder="Document name" style={{ ...inp, maxWidth: 200, marginBottom: 0 }} />
-                  <input id={"rf-url-" + r.id} placeholder="Link (Drive, DocuSign…)" style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1, minWidth: 160 }} />
-                  <button onClick={() => addDoc(r.id)} style={btnRed}>Share</button>
-                </div>
-                {r.files?.length > 0 && (
-                  <div style={{ marginTop: 10 }}>
-                    {r.files.map(f => (
-                      <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", padding: "4px 0" }}>
-                        {f.kind === "engagement" && <span style={{ background: "#6a6a6a18", color: "#5a5a5a", borderRadius: 4, padding: "1px 7px", fontSize: 9, fontWeight: 800, letterSpacing: "1px" }}>ENGAGEMENT</span>}
-                        <span style={{ color: "#333333", fontWeight: 600 }}>{f.title}</span>
-                        {f.url && <a href={f.url} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontWeight: 800, textDecoration: "none" }}>Open ↗</a>}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-            {/* The client's workspace, from our side: their messages, our replies, the hours log */}
-            {(() => {
-              const msgs = r.messages || [];
-              const lastClient = msgs.filter(m => !m.from_admin).slice(-1)[0];
-              const lastAdmin = msgs.filter(m => m.from_admin).slice(-1)[0];
-              const awaiting = lastClient && (!lastAdmin || new Date(lastClient.created_at) > new Date(lastAdmin.created_at));
-              const open = openWs === r.id;
-              return (
-                <div style={{ marginTop: 16, borderTop: "1px solid #eeebe4", paddingTop: 12 }}>
-                  <button onClick={() => setOpenWs(open ? null : r.id)} style={{ background: awaiting ? "#b8010110" : "transparent", color: awaiting ? "#b80101" : "#333333", border: "1px solid " + (awaiting ? "#b8010140" : "#d8d4cc"), borderRadius: 8, padding: "8px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-                    {open ? "▾" : "▸"} Workspace · {msgs.length} message{msgs.length === 1 ? "" : "s"} · {(r.log || []).length} hours entr{(r.log || []).length === 1 ? "y" : "ies"}
-                    {awaiting && <span style={{ background: "#b80101", color: "#fff", borderRadius: 99, padding: "1px 8px", fontSize: 9.5, letterSpacing: "1px" }}>AWAITING REPLY</span>}
-                  </button>
-                  {open && (
-                    <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 3fr) minmax(220px, 2fr)", gap: 18, marginTop: 14 }}>
-                      <div>
-                        <div style={{ fontSize: 10, color: "#666666", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Messages</div>
-                        <div style={{ maxHeight: 360, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, padding: "4px 2px" }}>
-                          {msgs.length === 0 && <div style={{ color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No messages yet.</div>}
-                          {msgs.map(m => (
-                            <div key={m.id} style={{ alignSelf: m.from_admin ? "flex-end" : "flex-start", maxWidth: "85%", background: m.from_admin ? "#b80101" : "#f3efe8", color: m.from_admin ? "#fff" : "#222222", borderRadius: m.from_admin ? "14px 14px 4px 14px" : "14px 14px 14px 4px", padding: "9px 13px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
-                              {!m.from_admin && <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", color: "#8a5a5a", marginBottom: 3 }}>{r.name}</div>}
-                              {m.body}
-                              <div style={{ fontSize: 10, opacity: 0.7, marginTop: 4, textAlign: "right" }}>{new Date(m.created_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</div>
-                            </div>
-                          ))}
-                        </div>
-                        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                          <textarea value={reply[r.id] || ""} onChange={e => setReply({ ...reply, [r.id]: e.target.value })} rows={2} placeholder={`Reply to ${r.name.split(" ")[0]}…`} style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1, resize: "vertical" }} />
-                          <button onClick={() => sendReply(r.id)} style={{ ...btnRed, alignSelf: "flex-end" }}>Send</button>
-                        </div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 10, color: "#666666", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Hours log</div>
-                        {(r.log || []).length === 0 && <div style={{ color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>Nothing logged yet.</div>}
-                        {(r.log || []).map(l => (
-                          <div key={l.id} style={{ borderBottom: "1px solid #f0ece4", padding: "7px 0", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif" }}>
-                            <span style={{ color: "#161616", fontWeight: 800 }}>{Number(l.hours)} hrs</span>
-                            <span style={{ color: "#9a9a9a", marginLeft: 8 }}>{new Date(l.logged_on).toLocaleDateString()}</span>
-                            {l.note && <div style={{ color: "#555555", marginTop: 2 }}>{l.note}</div>}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-            <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
-              {r.status !== "active" && <button onClick={() => setStatus(r.id, "active")} style={{ ...btnGhost, fontSize: 11, padding: "6px 14px" }}>Mark active</button>}
-              {r.status === "active" && <button onClick={() => setStatus(r.id, "paused")} style={{ ...btnGhost, fontSize: 11, padding: "6px 14px" }}>Pause</button>}
-              <button onClick={() => setStatus(r.id, "ended")} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "6px 14px" }}>End</button>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 function EmailTab({ btnRed, btnGhost, inp, lbl }) {
   const AUDIENCES = [
     { id: "all", label: "Everyone" },
@@ -7505,7 +7260,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "admin-invites", "admin-team", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "support", "glossary"];
+  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-bookings", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "admin-invites", "admin-team", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "support", "glossary"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
     return PAGES.includes(p) ? p : (sessionStorage.getItem("activePage") || "home");
@@ -7606,7 +7361,7 @@ export default function App() {
           for (const i of fresh.slice(0, 3)) {
             try {
               const n = new Notification(i.title, { body: i.body, tag: i.key, icon: "/icon-192.png" });
-              n.onclick = () => { window.focus(); if (i.slug) window.location.hash = `ch=${encodeURIComponent(i.slug)}${i.thread ? `&t=${i.thread}` : ""}`; else if (i.key.startsWith("dm:")) window.location.hash = "dm"; setActivePage("community"); n.close(); };
+              n.onclick = () => { window.focus(); if (i.page) { setActivePage(i.page); if (i.retainer) window.location.hash = `adv=${i.retainer}&tab=messages`; n.close(); return; } if (i.slug) window.location.hash = `ch=${encodeURIComponent(i.slug)}${i.thread ? `&t=${i.thread}` : ""}`; else if (i.key.startsWith("dm:")) window.location.hash = "dm"; setActivePage("community"); n.close(); };
             } catch {}
           }
         }
@@ -7685,7 +7440,8 @@ export default function App() {
   // Theme: the light palette is for the ADMIN PAGES only — on member-facing
   // pages, admins see the same dark theme members do (so previews are true).
   useEffect(() => {
-    const light = member?.role === "admin" && String(activePage || "").startsWith("admin-");
+    // The advisory pages are built like the client's workspace, so they stay dark.
+    const light = member?.role === "admin" && String(activePage || "").startsWith("admin-") && !["admin-retainers", "admin-bookings"].includes(activePage);
     const V = light ? {
       "--gu-bg": "#f6f4f0", "--gu-panel": "#efece6", "--gu-card": "#ffffff", "--gu-card2": "#faf8f5",
       "--gu-card3": "#f2efe9", "--gu-red-tint": "#fdf1f1", "--gu-border": "#dcdcdc", "--gu-border2": "#e6e6e6",
@@ -7906,7 +7662,7 @@ export default function App() {
       {toasts.length > 0 && (
         <div style={{ position: "fixed", top: 76, right: 16, zIndex: 340, display: "flex", flexDirection: "column", gap: 8, width: "min(340px, calc(100vw - 32px))" }}>
           {toasts.map(t => (
-            <button key={t.id} onClick={() => { setToasts(x => x.filter(y => y.id !== t.id)); if (t.slug) window.location.hash = `ch=${encodeURIComponent(t.slug)}${t.thread ? `&t=${t.thread}` : ""}`; else if (t.key.startsWith("dm:")) window.location.hash = "dm"; setActivePage("community"); }}
+            <button key={t.id} onClick={() => { setToasts(x => x.filter(y => y.id !== t.id)); if (t.page) { setActivePage(t.page); if (t.retainer) window.location.hash = `adv=${t.retainer}&tab=messages`; return; } if (t.slug) window.location.hash = `ch=${encodeURIComponent(t.slug)}${t.thread ? `&t=${t.thread}` : ""}`; else if (t.key.startsWith("dm:")) window.location.hash = "dm"; setActivePage("community"); }}
               style={{ textAlign: "left", background: "#0d0404", border: "1px solid #b8010160", borderLeft: "3px solid #b80101", borderRadius: 10, padding: "10px 14px", cursor: "pointer", boxShadow: "0 10px 30px rgba(0,0,0,0.5)" }}>
               <div style={{ color: "#f5e8e8", fontSize: 12.5, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", marginBottom: 2 }}>{t.title}</div>
               <div style={{ color: "#c8a8a8", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{t.body}</div>
@@ -7986,7 +7742,7 @@ export default function App() {
       {/* The nav's Sign In always opens the real login — team and members sign in
           here with their email/password, pre-launch included. Only JOIN buttons
           route to the waitlist before launch. */}
-      <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => { setAuthMode("login"); setSignupTier("Free"); setShowSignup(true); }} member={member} unread={(notif?.unread || 0) + (notif?.dm_unread || 0)} />
+      <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => { setAuthMode("login"); setSignupTier("Free"); setShowSignup(true); }} member={member} unread={(notif?.unread || 0) + (notif?.dm_unread || 0) + (notif?.advisory_unread || 0)} />
       {activePage === "home" && <HomePage setActivePage={navigateTo} onSignUp={openSignup} currentUser={currentUser} eventInvited={eventInvited} preLaunch={prelaunch} />}
       {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} onGlossary={() => navigateTo("glossary")} onNav={navigateTo} /></div>}
       {activePage === "advisory" && <RetainerPage member={member} setActivePage={navigateTo} />}
@@ -8018,7 +7774,8 @@ export default function App() {
       {member?.role === "admin" && activePage === "admin-waitlist" && <TeamPage><WaitlistTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-email" && <TeamPage><EmailTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-courses" && <TeamPage><CourseAttachmentsAdmin btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
-      {member?.role === "admin" && activePage === "admin-retainers" && <TeamPage><RetainerTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
+      {member?.role === "admin" && activePage === "admin-retainers" && <AdvisoryAdminPage />}
+      {member?.role === "admin" && activePage === "admin-bookings" && <BookingsAdminPage />}
       {member?.role === "admin" && activePage === "admin-revenue" && <TeamPage><RevenueTab /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-status" && <TeamPage><SystemStatusTab /></TeamPage>}
       {activePage === "contact" && <ContactPage setActivePage={navigateTo} advisorLink={advisorLink} />}

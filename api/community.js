@@ -92,6 +92,7 @@ export default async function handler(req, res) {
       // the community was last opened; for the team, member DMs since the inbox was.
       let latest = [];
       let mentions = 0;
+      let advisoryUnread = 0;
       try {
         if (visibleIds.length) {
           const posts = await sql`
@@ -110,6 +111,30 @@ export default async function handler(req, res) {
             ORDER BY d.id DESC LIMIT 3`;
           latest = latest.concat(dms.map(d => ({ key: 'dm:' + d.id, title: `DM from ${d.author}`, body: String(d.body).slice(0, 140), at: d.created_at })));
         }
+        // The advisory direct line is its own thread (not a DM): the team hears
+        // about client messages, the client hears about Dr. Merritt's replies.
+        try {
+          if (user.role === 'admin' && user.badge === 'drmerritt') {
+            // Only Dr. Merritt is told about advisory messages — it is her thread
+            const adv = await sql`
+              SELECT m.id, m.retainer_id, m.body, m.created_at, u.name AS author FROM retainer_messages m
+              JOIN retainers r ON r.id = m.retainer_id JOIN users u ON u.id = r.user_id
+              LEFT JOIN thread_seen t ON t.user_id = ${user.id} AND t.kind = 'advisory' AND t.ref_id = m.retainer_id
+              WHERE m.from_admin = FALSE AND m.created_at > COALESCE(t.seen_at, ${new Date(0).toISOString()})
+              ORDER BY m.id DESC LIMIT 5`;
+            advisoryUnread = adv.length;
+            latest = latest.concat(adv.slice(0, 3).map(a => ({ key: 'advisory:' + a.id, title: `${a.author} — advisory`, body: String(a.body).slice(0, 140), at: a.created_at, page: 'admin-retainers', retainer: a.retainer_id })));
+          } else if (user.role !== 'admin') {
+            const adv = await sql`
+              SELECT m.id, m.retainer_id, m.body, m.created_at FROM retainer_messages m
+              JOIN retainers r ON r.id = m.retainer_id AND r.user_id = ${user.id} AND r.status = 'active'
+              LEFT JOIN thread_seen t ON t.user_id = ${user.id} AND t.kind = 'advisory' AND t.ref_id = m.retainer_id
+              WHERE m.from_admin = TRUE AND m.created_at > COALESCE(t.seen_at, ${new Date(0).toISOString()})
+              ORDER BY m.id DESC LIMIT 5`;
+            advisoryUnread = adv.length;
+            latest = latest.concat(adv.slice(0, 3).map(a => ({ key: 'advisory:' + a.id, title: 'Dr. Merritt in your advisory workspace', body: String(a.body).slice(0, 140), at: a.created_at, page: 'advisory' })));
+          }
+        } catch (e) { console.error('advisory unseen failed', e.message); }
         // Mentions: unseen until the person opens that channel
         const ment = await sql`
           SELECT mn.id, mn.channel_id, m.id AS message_id, m.parent_id, m.body, m.created_at, c.name AS channel, c.slug, u.name AS author FROM mentions mn
@@ -119,10 +144,10 @@ export default async function handler(req, res) {
           ORDER BY m.id DESC LIMIT 5`;
         mentions = ment.length;
         latest = latest.filter(l => !ment.some(x => l.key === 'post:' + x.id)).concat(ment.map(x => ({ key: 'mention:' + x.id, title: `${x.author || 'Someone'} tagged you in #${x.channel}`, body: String(x.body).slice(0, 140), at: x.created_at, channel_id: x.channel_id, slug: x.slug, thread: x.parent_id || x.message_id })));
-        if (mentionsOnly) latest = latest.filter(l => l.key.startsWith('mention:') || l.key.startsWith('dm:'));
+        if (mentionsOnly) latest = latest.filter(l => l.key.startsWith('mention:') || l.key.startsWith('dm:') || l.key.startsWith('advisory:'));
         latest.sort((x, y) => new Date(y.at) - new Date(x.at));
       } catch (e) { console.error('latest unseen failed', e.message); }
-      return res.json({ unread, dm_unread: dmRow.n, announcement, latest, mentions });
+      return res.json({ unread, dm_unread: dmRow.n, advisory_unread: advisoryUnread, announcement, latest, mentions });
     }
 
     // POST { action: 'mark_seen', what: 'community' | 'dm' | 'announcement', id? }
