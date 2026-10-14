@@ -524,90 +524,36 @@ export default async function handler(req, res) {
     // detail that Dr. Merritt can refer to it before an advisory call or a DM.
     // Documents are uploaded to /api/lesson-pdfs?kind=deal and listed here;
     // links are kept as rows too.
-    // Projects: an advisory client (or Owner) can have more than one. Each has
-    // its own details and its own documents — uploaded, or a link. The first
-    // project is mirrored into users.deal_profile so the team's quick views
-    // (DM header, Users tab) keep working.
-    const QUOTA = 50 * 1024 * 1024 * 1024; // 50GB of uploaded documents per client
-    const clipDeal = (d) => {
+    if (action === 'deal_profile') {
+      const session = getSession(req);
+      if (!session || !session.uid) return res.status(401).json({ error: 'Sign in required' });
+      const d = req.body.deal || {};
       const clip = (v, n = 300) => { const t = String(v ?? '').trim().slice(0, n); return t || null; };
-      return {
+      const profile = {
         name: clip(d.name, 160), location: clip(d.location, 160), phase: clip(d.phase, 60), product: clip(d.product, 120),
         units: clip(d.units, 40), tdc: clip(d.tdc, 60), site_control: clip(d.site_control, 160), financing_path: clip(d.financing_path, 120),
         sources_committed: clip(d.sources_committed, 600), sources_missing: clip(d.sources_missing, 600), gap: clip(d.gap, 60),
         timeline: clip(d.timeline, 200), team: clip(d.team, 400), blocker: clip(d.blocker, 600), wants: clip(d.wants, 600),
         updated_at: new Date().toISOString(),
       };
-    };
-    const mirrorPrimary = async (uid) => {
-      const [p] = await sql`SELECT details FROM projects WHERE user_id = ${uid} ORDER BY created_at ASC LIMIT 1`;
-      await sql`UPDATE users SET deal_profile = ${p ? JSON.stringify(p.details) : null}::jsonb WHERE id = ${uid}`;
-    };
-    const listProjects = async (uid) => {
-      let projects = await sql`SELECT id, name, details, created_at, updated_at FROM projects WHERE user_id = ${uid} ORDER BY created_at ASC`;
-      if (projects.length === 0) {
-        // Older accounts kept one deal on the user row — carry it over as the first project
-        const [u] = await sql`SELECT deal_profile FROM users WHERE id = ${uid}`;
-        if (u?.deal_profile) {
-          await sql`INSERT INTO projects (user_id, name, details) VALUES (${uid}, ${u.deal_profile.name || 'My project'}, ${JSON.stringify(u.deal_profile)}::jsonb)`;
-          projects = await sql`SELECT id, name, details, created_at, updated_at FROM projects WHERE user_id = ${uid} ORDER BY created_at ASC`;
-          await sql`UPDATE deal_files SET project_id = ${projects[0].id} WHERE user_id = ${uid} AND project_id IS NULL`;
-        }
-      }
-      const files = await sql`SELECT id, project_id, folder, title, url, kind, size, created_at FROM deal_files WHERE user_id = ${uid} ORDER BY created_at DESC`;
-      const used = files.reduce((a, f) => a + Number(f.size || 0), 0);
-      return { projects, files, used_bytes: used, quota_bytes: QUOTA };
-    };
-    if (action === 'projects' || action === 'deal_files') {
-      const session = getSession(req);
-      if (!session || !session.uid) return res.status(401).json({ error: 'Sign in required' });
-      return res.json(await listProjects(session.uid));
+      await sql`UPDATE users SET deal_profile = ${JSON.stringify(profile)}::jsonb WHERE id = ${session.uid}`;
+      return res.json({ success: true, deal_profile: profile });
     }
-    if (action === 'project_save' || action === 'deal_profile') {
+    if (action === 'deal_files') {
       const session = getSession(req);
       if (!session || !session.uid) return res.status(401).json({ error: 'Sign in required' });
-      const details = clipDeal(req.body.deal || {});
-      const name = String(req.body.name || details.name || '').trim().slice(0, 160) || 'My project';
-      details.name = details.name || name;
-      const id = Number(req.body.id) || 0;
-      let row;
-      if (id) {
-        [row] = await sql`UPDATE projects SET name = ${name}, details = ${JSON.stringify(details)}::jsonb, updated_at = NOW() WHERE id = ${id} AND user_id = ${session.uid} RETURNING id, name, details, created_at, updated_at`;
-        if (!row) return res.status(404).json({ error: 'Project not found' });
-      } else {
-        const [{ n }] = await sql`SELECT COUNT(*)::int AS n FROM projects WHERE user_id = ${session.uid}`;
-        if (n >= 25) return res.status(400).json({ error: 'That is a lot of projects — 25 is the limit.' });
-        [row] = await sql`INSERT INTO projects (user_id, name, details) VALUES (${session.uid}, ${name}, ${JSON.stringify(details)}::jsonb) RETURNING id, name, details, created_at, updated_at`;
-      }
-      await mirrorPrimary(session.uid);
-      return res.json({ success: true, project: row, deal_profile: details });
-    }
-    if (action === 'project_remove') {
-      const session = getSession(req);
-      if (!session || !session.uid) return res.status(401).json({ error: 'Sign in required' });
-      const id = Number(req.body.id) || 0;
-      await sql`DELETE FROM deal_files WHERE project_id = ${id} AND user_id = ${session.uid}`;
-      await sql`DELETE FROM projects WHERE id = ${id} AND user_id = ${session.uid}`;
-      await mirrorPrimary(session.uid);
-      return res.json({ success: true });
+      const files = await sql`SELECT id, title, url, kind, created_at FROM deal_files WHERE user_id = ${session.uid} ORDER BY created_at DESC`;
+      return res.json({ files });
     }
     if (action === 'deal_file_add') {
       const session = getSession(req);
       if (!session || !session.uid) return res.status(401).json({ error: 'Sign in required' });
       const url = String(req.body.url || '').trim().slice(0, 600);
       const kind = req.body.kind === 'link' ? 'link' : 'file';
-      const size = kind === 'file' ? Math.max(0, Number(req.body.size) || 0) : 0;
-      const projectId = Number(req.body.project_id) || null;
-      const folder = String(req.body.folder || '').trim().slice(0, 60) || null;
       if (!url) return res.status(400).json({ error: 'url required' });
       if (kind === 'link' && !/^https?:\/\//i.test(url)) return res.status(400).json({ error: 'Links must start with http' });
       if (kind === 'file' && !url.startsWith('/api/file?p=deal-docs')) return res.status(400).json({ error: 'Not an uploaded deal document' });
-      if (projectId) { const [p] = await sql`SELECT id FROM projects WHERE id = ${projectId} AND user_id = ${session.uid}`; if (!p) return res.status(404).json({ error: 'Project not found' }); }
-      if (size) {
-        const [{ used }] = await sql`SELECT COALESCE(SUM(size), 0)::bigint AS used FROM deal_files WHERE user_id = ${session.uid}`;
-        if (Number(used) + size > QUOTA) return res.status(400).json({ error: 'That would go past your 50GB of document storage. Remove something, or share this one as a link.' });
-      }
-      const [f] = await sql`INSERT INTO deal_files (user_id, project_id, folder, title, url, kind, size) VALUES (${session.uid}, ${projectId}, ${folder}, ${String(req.body.title || '').trim().slice(0, 160) || null}, ${url}, ${kind}, ${size}) RETURNING id, project_id, folder, title, url, kind, size, created_at`;
+      const [f] = await sql`INSERT INTO deal_files (user_id, title, url, kind) VALUES (${session.uid}, ${String(req.body.title || '').trim().slice(0, 160) || null}, ${url}, ${kind}) RETURNING id, title, url, kind, created_at`;
       return res.json({ file: f });
     }
     if (action === 'deal_file_remove') {

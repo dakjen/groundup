@@ -18,13 +18,6 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      // One client's direct line (admin) — opening it marks it seen
-      if (admin && req.query.admin === '1' && req.query.thread) {
-        const rid = Number(req.query.thread) || 0;
-        const messages = await sql`SELECT * FROM retainer_messages WHERE retainer_id = ${rid} ORDER BY created_at ASC LIMIT 300`;
-        if (admin.uid) { try { await sql`INSERT INTO thread_seen (user_id, kind, ref_id, seen_at) VALUES (${admin.uid}, 'advisory', ${rid}, NOW()) ON CONFLICT (user_id, kind, ref_id) DO UPDATE SET seen_at = NOW()`; } catch {} }
-        return res.json({ messages });
-      }
       // Admin roster
       if (admin && req.query.admin === '1') {
         const rows = await sql`
@@ -32,16 +25,9 @@ export default async function handler(req, res) {
           JOIN users u ON u.id = r.user_id ORDER BY r.status, r.created_at DESC`;
         for (const r of rows) {
           r.used_this_month = await monthUsed(r.id);
-          try { const [u] = await sql`SELECT deal_profile, tier, avatar_url FROM users WHERE id = ${r.user_id}`; r.deal_profile = u?.deal_profile || null; r.tier = u?.tier; r.avatar_url = u?.avatar_url; } catch {}
-          try { r.deal_files = await sql`SELECT id, project_id, folder, title, url, kind, size, created_at FROM deal_files WHERE user_id = ${r.user_id} ORDER BY created_at DESC`; } catch { r.deal_files = []; }
-          try { r.projects = await sql`SELECT id, name, details, created_at, updated_at FROM projects WHERE user_id = ${r.user_id} ORDER BY created_at ASC`; } catch { r.projects = []; }
-          r.log = await sql`SELECT * FROM retainer_hours WHERE retainer_id = ${r.id} ORDER BY logged_on DESC, id DESC LIMIT 60`;
-          try { r.meetings = await sql`SELECT * FROM retainer_meetings WHERE retainer_id = ${r.id} AND status <> 'done' ORDER BY scheduled_at ASC NULLS LAST, created_at DESC LIMIT 10`; } catch { r.meetings = []; }
-          // The thread rides along so the Messages tab shows instantly (it is not marked seen until opened)
-          r.messages = await sql`SELECT * FROM retainer_messages WHERE retainer_id = ${r.id} ORDER BY created_at ASC LIMIT 300`;
+          r.log = await sql`SELECT * FROM retainer_hours WHERE retainer_id = ${r.id} ORDER BY logged_on DESC, id DESC LIMIT 20`;
           r.files = await sql`SELECT * FROM retainer_files WHERE retainer_id = ${r.id} ORDER BY created_at DESC`;
-          // The direct line is its own thread, separate from Community DMs. Unread = what the client wrote since this admin last opened the tab.
-          try { const [d] = await sql`SELECT COUNT(*)::int AS n FROM retainer_messages m WHERE m.retainer_id = ${r.id} AND m.from_admin = FALSE AND m.created_at > COALESCE((SELECT seen_at FROM thread_seen t WHERE t.user_id = ${admin.uid || 0} AND t.kind = 'advisory' AND t.ref_id = ${r.id}), '1970-01-01')`; r.unread = d?.n || 0; } catch { r.unread = 0; }
+          r.messages = await sql`SELECT * FROM retainer_messages WHERE retainer_id = ${r.id} ORDER BY created_at ASC LIMIT 200`;
         }
         const mrr = rows.filter(r => r.status === 'active').reduce((a, r) => a + Number(r.monthly_amount), 0);
         const [callRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
@@ -74,49 +60,29 @@ export default async function handler(req, res) {
       r.used_this_month = await monthUsed(r.id);
       r.log = await sql`SELECT hours, note, logged_on FROM retainer_hours WHERE retainer_id = ${r.id} ORDER BY logged_on DESC LIMIT 12`;
       r.files = await sql`SELECT * FROM retainer_files WHERE retainer_id = ${r.id} ORDER BY created_at DESC`;
-      try { r.meetings = await sql`SELECT id, minutes, topic, status, scheduled_at, created_at FROM retainer_meetings WHERE retainer_id = ${r.id} AND status <> 'done' ORDER BY scheduled_at ASC NULLS LAST, created_at DESC LIMIT 10`; } catch { r.meetings = []; }
-      r.messages = await sql`SELECT * FROM retainer_messages WHERE retainer_id = ${r.id} ORDER BY created_at ASC LIMIT 300`;
-      if (req.query.thread) {
-        // The client's direct line — opening it marks it seen
-        const messages = await sql`SELECT * FROM retainer_messages WHERE retainer_id = ${r.id} ORDER BY created_at ASC LIMIT 300`;
-        try { await sql`INSERT INTO thread_seen (user_id, kind, ref_id, seen_at) VALUES (${session.uid}, 'advisory', ${r.id}, NOW()) ON CONFLICT (user_id, kind, ref_id) DO UPDATE SET seen_at = NOW()`; } catch {}
-        return res.json({ retainer: r, messages });
-      }
+      r.messages = await sql`SELECT * FROM retainer_messages WHERE retainer_id = ${r.id} ORDER BY created_at ASC LIMIT 200`;
       return res.json({ retainer: r });
     }
 
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     const action = req.body?.action;
 
-    // Client asks for a meeting (Dr. Merritt works behind the scenes and logs
-    // her hours on the timesheet; a meeting is what the client requests)
-    if (action === 'request_time' || action === 'request_meeting') {
+    // Client requests time against their retainer
+    if (action === 'request_time') {
       if (!session?.uid) return res.status(401).json({ error: 'Sign in required' });
       const [r] = await sql`SELECT * FROM retainers WHERE user_id = ${session.uid} AND status = 'active' LIMIT 1`;
       if (!r) return res.status(403).json({ error: 'No active retainer' });
       const [u] = await sql`SELECT name, email FROM users WHERE id = ${session.uid}`;
       const note = String(req.body.note || '').trim().slice(0, 2000);
-      const minutes = [30, 45, 60, 90].includes(Number(req.body.minutes)) ? Number(req.body.minutes) : 60;
-      const hours = minutes / 60;
-      const used = await monthUsed(r.id);
-      if (used + hours > Number(r.hours_per_month) + 0.001) return res.status(400).json({ error: `That meeting would go past your ${r.hours_per_month} hours this month — ${Math.max(0, Number(r.hours_per_month) - used).toFixed(2)} left.` });
-      // The meeting comes out of this month's hours and shows on the timesheet
-      await sql`INSERT INTO retainer_hours (retainer_id, hours, note, logged_on, created_at)
-        VALUES (${r.id}, ${hours}, ${('Meeting' + (note ? ' — ' + note.slice(0, 160) : '')).slice(0, 200)}, CURRENT_DATE, NOW())`;
-      try { await sql`INSERT INTO retainer_meetings (retainer_id, minutes, topic) VALUES (${r.id}, ${minutes}, ${note || null})`; } catch (e) { console.error('meeting row failed', e.message); }
-      const [linkRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
-      const link = linkRow?.value || '';
-      const [gina] = await sql`SELECT email FROM users WHERE badge = 'drmerritt' LIMIT 1`;
-      const to = gina?.email ? [gina.email] : [process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net'];
-      for (const addr of to) await sendEmail(addr,
-        `Meeting request — ${u.name} (${minutes} min)`,
-        `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">An advisory client would like a meeting</h2>
-         <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u.name}</strong> (${u.email}) — ${minutes} minutes, logged against their ${r.hours_per_month} hrs/mo retainer (${(used + hours).toFixed(2)} used this month).${link ? ' They were sent to your booking link to pick a time.' : ' No booking link is set, so they are waiting for you to reach out.'}</p>
-         ${note ? `<p style="color:#444444;font-size:14px;line-height:1.8;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;padding:14px 18px;"><strong style="color:#161616;">What they want to cover:</strong><br>${note.replace(/</g, '&lt;')}</p>` : ''}`);
-      return res.json({ success: true, link, minutes, used: used + hours });
+      await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
+        `Retainer time request — ${u.name}`,
+        `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Retainer client needs time</h2>
+         <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u.name}</strong> (${u.email}) — ${r.hours_per_month} hrs/mo retainer, ${await monthUsed(r.id)} used this month.</p>
+         ${note ? `<p style="color:#444444;font-size:14px;line-height:1.8;">${note}</p>` : ''}`);
+      return res.json({ success: true });
     }
 
-    // The direct line and workspace documents — client or team, on their own retainer
+    // Workspace messages — client or team, on their own retainer
     if (action === 'message' || action === 'add_file' || action === 'remove_file') {
       let rid = Number(req.body.retainer_id) || 0;
       if (!admin) {
@@ -132,23 +98,21 @@ export default async function handler(req, res) {
         if (!body) return res.status(400).json({ error: 'Message required' });
         const [m] = await sql`INSERT INTO retainer_messages (retainer_id, from_admin, body, created_at)
           VALUES (${rid}, ${!!admin}, ${body}, NOW()) RETURNING *`;
-        // The sender has seen their own thread
-        const seenBy = admin ? admin.uid : session?.uid;
-        if (seenBy) { try { await sql`INSERT INTO thread_seen (user_id, kind, ref_id, seen_at) VALUES (${seenBy}, 'advisory', ${rid}, NOW()) ON CONFLICT (user_id, kind, ref_id) DO UPDATE SET seen_at = NOW()`; } catch {} }
+        // Notify the other side
         const [r] = await sql`SELECT r.user_id, u.name, u.email FROM retainers r JOIN users u ON u.id = r.user_id WHERE r.id = ${rid}`;
         if (admin && r) {
           await sendEmail(r.email, 'Dr. Merritt replied in your advisory workspace',
             `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New message in your workspace</h2>
-             <p style="color:#444444;font-size:14px;line-height:1.8;">Sign in and open your Advisory workspace to read it and reply.</p>`);
+             <p style="color:#444444;font-size:14px;line-height:1.8;">Sign in to read it and reply.</p>`);
         } else if (r) {
-          // The advisory direct line is Dr. Merritt's alone — not the team inbox
+          // Dr. Merritt is on this deal — she gets the message directly, not just the team inbox
           const [gina] = await sql`SELECT email FROM users WHERE badge = 'drmerritt' LIMIT 1`;
-          const to = gina?.email ? [gina.email] : [process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net'];
+          const to = [...new Set([process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net', gina?.email].filter(Boolean))];
           for (const addr of to) await sendEmail(addr,
-            `Advisory client — ${r.name}`,
-            `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${r.name} wrote in their advisory workspace</h2>
+            `Advisory workspace — ${r.name}`,
+            `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${r.name} posted in their advisory workspace</h2>
              <p style="color:#444444;font-size:14px;line-height:1.8;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;padding:14px 18px;">${body.slice(0, 500)}</p>
-             <p style="color:#7a5050;font-size:12px;line-height:1.7;">Reply from their tab on the Advisory Clients page — they're emailed when you do.</p>`);
+             <p style="color:#7a5050;font-size:12px;line-height:1.7;">Reply from the admin Retainers tab — the client is emailed when you do.</p>`);
         }
         return res.status(201).json(m);
       }
@@ -159,11 +123,6 @@ export default async function handler(req, res) {
         if (url) { try { new URL(url); } catch { return res.status(400).json({ error: 'Invalid link' }); } }
         const [f] = await sql`INSERT INTO retainer_files (retainer_id, title, url, kind, uploaded_by, created_at)
           VALUES (${rid}, ${String(title).slice(0, 200)}, ${url || null}, ${kind || 'link'}, ${session?.uid || null}, NOW()) RETURNING *`;
-        // A document the team uploaded for this client has to open for the client:
-        // register it under their account so the file gate lets them through.
-        if (admin && url && String(url).startsWith('/api/file?p=deal-docs')) {
-          try { const [r] = await sql`SELECT user_id FROM retainers WHERE id = ${rid}`; if (r) await sql`INSERT INTO deal_files (user_id, title, url, kind) VALUES (${r.user_id}, ${String(title).slice(0, 160)}, ${url}, 'file')`; } catch (e) { console.error('deal_files mirror failed', e.message); }
-        }
         return res.status(201).json(f);
       }
 
@@ -231,21 +190,6 @@ export default async function handler(req, res) {
       return res.status(201).json({ success: true });
     }
 
-    // When the meeting is on the calendar (or finished) — shows to the client as "next meeting"
-    if (action === 'meeting_update') {
-      const id = Number(req.body.id) || 0;
-      const status = ['requested', 'scheduled', 'done'].includes(req.body.status) ? req.body.status : null;
-      const when = req.body.scheduled_at ? new Date(req.body.scheduled_at) : null;
-      await sql`UPDATE retainer_meetings SET scheduled_at = COALESCE(${when && !isNaN(when) ? when.toISOString() : null}, scheduled_at), status = COALESCE(${status}, CASE WHEN ${!!(when && !isNaN(when))} THEN 'scheduled' ELSE status END) WHERE id = ${id}`;
-      return res.json({ success: true });
-    }
-
-    // Dr. Merritt's private notes on a client — never shown to the client.
-    if (action === 'private_notes') {
-      await sql`UPDATE retainers SET private_notes = ${String(req.body.notes || '').slice(0, 8000)} WHERE id = ${Number(req.body.id)}`;
-      return res.json({ success: true });
-    }
-
     if (action === 'update') {
       const { id, hours_per_month, monthly_amount, status, notes } = req.body;
       const [r] = await sql`
@@ -255,7 +199,6 @@ export default async function handler(req, res) {
           status = COALESCE(${status ?? null}, status),
           notes = COALESCE(${notes ?? null}, notes)
         WHERE id = ${Number(id)} RETURNING *`;
-      if (r && status === 'active') await sql`UPDATE users SET tier = 'Elite', tier_since = COALESCE(tier_since, NOW()), membership_status = 'active' WHERE id = ${r.user_id} AND tier IS DISTINCT FROM 'Elite'`;
       return res.json(r);
     }
 

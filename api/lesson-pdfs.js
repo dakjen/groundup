@@ -36,10 +36,7 @@ export default async function handler(req, res) {
         lesson: { folder: 'lesson-pdfs', types: { '.pdf': DOCS['.pdf'] }, max: 200 * MB },
         material: { folder: 'lesson-pdfs', types: DOCS, max: 200 * MB },
         prep: { folder: 'session-prep', types: PREP, max: 25 * MB },
-        // Advisory project documents: big models, drawings, zipped due-diligence
-        // folders. Up to 5GB a file; the 50GB-per-client total is enforced when
-        // the file is registered.
-        deal: { folder: 'deal-docs', types: { ...PREP, '.zip': 'application/zip', '.txt': 'text/plain' }, max: 5 * 1024 * MB },
+        deal: { folder: 'deal-docs', types: PREP, max: 25 * MB },
       };
       const rule = RULES[kind];
       if (!rule) return res.status(400).json({ error: 'This kind of file can\'t be uploaded directly.' });
@@ -48,7 +45,7 @@ export default async function handler(req, res) {
       const lower = pathname.toLowerCase();
       const ext = Object.keys(rule.types).find(e => lower.endsWith(e));
       if (!pathname.startsWith(rule.folder + '/') || pathname.includes('..')) return res.status(400).json({ error: 'Upload path not allowed' });
-      if (!ext) return res.status(400).json({ error: kind === 'prep' || kind === 'deal' ? 'Send a PDF, Word, Excel, PowerPoint, CSV or image.' : Object.keys(rule.types).length > 1 ? 'Materials can be PDF, Word, Excel, or PowerPoint files' : 'Only PDF files are allowed' });
+      if (!ext) return res.status(400).json({ error: kind === 'prep' ? 'Send a PDF, Word, Excel, PowerPoint, CSV or image.' : Object.keys(rule.types).length > 1 ? 'Materials can be PDF, Word, Excel, or PowerPoint files' : 'Only PDF files are allowed' });
       // A client token is the store id plus an HMAC-signed grant: this one
       // path, this content type, this size limit, good for an hour. Built here
       // rather than with @vercel/blob/client, which the deploy does not package

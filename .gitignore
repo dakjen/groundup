@@ -6,4 +6,3 @@ dist
 .vercel
 .env*.local
 originals/
-preview/
