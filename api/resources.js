@@ -239,7 +239,7 @@ export default async function handler(req, res) {
       // Downloads sit behind the same four-month door as advisory calls and
       // networking: an Owner reads everything from day one and starts taking
       // files away once they have been here a while.
-      const gate = await benefitGate(sql, u);
+      const gate = await benefitGate(sql, u, 'downloads');
       if (gate.active) {
         return res.status(403).json({ error: `Downloads open after 4 months of membership — yours unlock on ${new Date(gate.until).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}. Everything is readable in the viewer until then.` });
       }

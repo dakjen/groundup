@@ -159,7 +159,8 @@ export default async function handler(req, res) {
       {
         const [me] = await sql`SELECT tier, role, comped, tier_since, partner_slug FROM users WHERE id = ${session.uid} AND membership_status = 'active'`;
         const rank = admin ? 4 : (TIER_RANK[me?.tier] ?? 0);
-        const gate = { active: false }; // office hours are not gated — only advisory calls & networking are
+        // Office hours are time with Dr. Merritt: Owner after 2 months, Premium after 4
+        const gate = admin ? { active: false } : await benefitGate(sql, { ...me, id: session.uid });
         const [lifetime] = await sql`SELECT id FROM entitlements WHERE user_id = ${session.uid} AND course_id = 'officehours' AND source = 'lifetime' AND expires_at > NOW() LIMIT 1`;
         // Cohort members see their cohort's sessions even below Premium
         const cohortSessions = officeEvents.filter(e => (e.audience || '').startsWith('cohort:') && me?.partner_slug && e.audience === 'cohort:' + me.partner_slug);
@@ -393,6 +394,8 @@ export default async function handler(req, res) {
             return res.status(403).json({ error: 'Office hours come with Premium and Owner — or the Lifetime Pass' });
           }
           if (req.body.going && !isCohortSession) {
+            const g = admin ? { active: false } : await benefitGate(sql, { ...me, id: session.uid });
+            if (g.active) return res.status(403).json({ error: `Office hours open after your first ${g.months} months of membership — yours unlock on ${new Date(g.until).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}.` });
             const [pRow] = await sql`SELECT value FROM settings WHERE key = ${rank >= 4 ? 'office_allow_elite' : 'office_allow_premium'}`;
             const limit = parseInt(pRow?.value, 10) || (rank >= 4 ? 6 : 2);
             const officeKeys = events.filter(e => (e.kind || 'lnl') === 'office').map(e => e.date);

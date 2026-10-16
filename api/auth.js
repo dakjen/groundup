@@ -439,7 +439,7 @@ export default async function handler(req, res) {
       const [u] = await sql`SELECT id, name, email, tier, role, comped, tier_since FROM users WHERE id = ${session.uid}`;
       if (!u) return res.status(401).json({ error: 'Account not found' });
       const gate = await benefitGate(sql, u);
-      if (gate.active) return res.status(403).json({ error: 'Advisory calls unlock after four months of continuous membership — yours open on ' + new Date(gate.until).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) + '.' });
+      if (gate.active) return res.status(403).json({ error: `Advisory calls unlock after your first ${gate.months} months of membership — yours open on ` + new Date(gate.until).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) + '.' });
       const allowance = u.tier === 'Elite' ? 3 : 0;
       const [{ used }] = await sql`SELECT COUNT(*)::int AS used FROM session_requests WHERE user_id = ${u.id} AND status != 'declined'`;
       if (used >= allowance) return res.status(400).json({ error: 'No sessions remaining on your plan' });
