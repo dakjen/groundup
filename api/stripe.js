@@ -325,7 +325,16 @@ async function ensureLnlCoupon(stripe) {
 // splitting it at the same rate. A refund-eligible cancellation consumes the
 // slice instead, so the pot funds the refund and NREUV keeps what was sent.
 const POT_PCT = 0.20;
-const POT_CAP_CENTS = 100000; // the pot never holds more than $1,000 in total
+// The pot's ceiling grows with the membership: $1,000 for every ten paying
+// members (rounded up), never less than $1,000. Twenty members → $2,000;
+// twenty-one → $3,000. The settings key refund_pot_per_10_cents overrides the step.
+async function potCapCents(sql) {
+  let per = 100000;
+  try { const [r] = await sql`SELECT value FROM settings WHERE key = 'refund_pot_per_10_cents'`; const v = parseInt(r?.value, 10); if (Number.isFinite(v) && v > 0) per = v; } catch {}
+  let paying = 0;
+  try { const [r] = await sql`SELECT COUNT(*)::int AS n FROM users WHERE membership_status = 'active' AND tier IN ('Basic','Builder','Premium','Elite') AND COALESCE(comped, FALSE) = FALSE AND COALESCE(role, 'member') = 'member'`; paying = r?.n || 0; } catch {}
+  return per * Math.max(1, Math.ceil(paying / 10));
+}
 function potWindowDays(item) { return String(item || '').endsWith('_annual') ? 193 : 45; }
 
 async function splitCharge(stripe, chargeId, item, sql) {
@@ -338,13 +347,13 @@ async function splitCharge(stripe, chargeId, item, sql) {
     if (!bt || charge.currency !== 'usd') return;
     const gross = charge.amount;      // what the customer paid
     const net = bt.net;               // what actually landed after Stripe's fee
-    // Hold 20% — but never past the $1,000 pot cap. When the pot is full, new
-    // payments split 100% immediately; releases/consumptions free up room again.
+    // Hold 20% — but never past the pot cap ($1,000 per ten paying members). When
+    // the pot is full, new payments split 100% immediately; releases/consumptions free up room again.
     let held = Math.floor(gross * POT_PCT);
     if (sql && held > 0) {
       try {
         const [pot] = await sql`SELECT COALESCE(SUM(held_cents), 0)::int AS total FROM held_transfers WHERE status = 'held'`;
-        held = Math.max(0, Math.min(held, POT_CAP_CENTS - (pot?.total || 0)));
+        held = Math.max(0, Math.min(held, (await potCapCents(sql)) - (pot?.total || 0)));
       } catch { held = 0; }
     } else if (!sql) held = 0;
     // Split only the non-pot 80% now; never transfer more than settled
