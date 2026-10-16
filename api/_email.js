@@ -401,9 +401,9 @@ export function waitlistConfirmEmail(name, founding, first10, list = 'insider') 
 // and Dr. Merritt's sign-off. Built for the white card shell.
 const PLANS = [
   ['Member',  49.99, 'Every course, the community, Lunch & Learn recordings'],
-  ['Builder', 149.99, 'Everything in Member, plus the Builder channels and office hours'],
-  ['Premium', 249.99, 'Read the full document library, the Opportunity Board, group office hours with Dr. Merritt'],
-  ['Owner',   499.99, 'Direct line to Dr. Merritt, 1:1 advisory calls, downloads from the library'],
+  ['Builder', 149.99, 'Everything in Member, plus posting and networking in the community'],
+  ['Premium', 249.99, 'The Financial Structuring, Financial Modeling and JV channels, the Opportunity Board, the full library, group office hours with Dr. Merritt'],
+  ['Owner',   499.99, 'Direct line to Dr. Merritt, 1:1 advisory calls, the Owner Lounge and Deal Room, downloads from the library'],
 ];
 const usd = (n) => '$' + n.toFixed(2);
 const seqHero = (src, alt) => `<img src="${siteUrl()}${src}" alt="${alt}" width="496" style="width:100%;border-radius:10px;display:block;margin:0 0 26px;" />`;
@@ -439,7 +439,7 @@ const seqFoundingBlock = () => seqBlock('What a founding seat means', `
 const seqCurriculum = () => seqBlock('What opens', `
         <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0;">
           ${seqRow('The curriculum', '15 courses and 60 lessons — the nine-phase Development Overview, Stages 1–7 of a deal from predevelopment to the fifteen-year compliance clock, the Underwriting Series, three of Dr. Merritt\'s own deals as case studies')}
-          ${seqRow('The community', 'channels by stage and by topic, direct messages, the Opportunity Board of RFPs and funding windows')}
+          ${seqRow('The community', 'General and GroundUp channels for every member; Financial Structuring, Financial Modeling, JV &amp; Partnerships and the Opportunity Board on Premium; the Owner Lounge and Deal Room on Owner; direct messages to Dr. Merritt on Owner')}
           ${seqRow('Lunch &amp; Learn', 'quarterly live sessions with Dr. Merritt, recorded for members')}
           ${seqRow('The library', 'guides, action plans and working documents from real deals — read on every plan, downloadable on Owner')}
           ${seqRow('Dr. Merritt', 'group office hours on Premium, a direct line and 1:1 advisory calls on Owner')}
