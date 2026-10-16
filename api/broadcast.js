@@ -569,6 +569,55 @@ async function nreuvTransfers(fromSec, toSec) {
   return { total: total / 100, count };
 }
 
+// ── Section 3 statement: gross receipts, refunds and chargebacks, Platform
+// Revenue by category, the fee per category, the reserve held and released ─────
+export async function revenueStatement(sql, start, end) {
+  const CATS = [['course_membership', 'Course & Membership', 25], ['advisory', 'Advisory', 10], ['lunch_learn', 'Lunch & Learn', 0]];
+  let rows = [];
+  try {
+    rows = await sql`SELECT category, COUNT(*)::int AS n, COALESCE(SUM(gross_cents),0)::int AS gross, COALESCE(SUM(fee_cents),0)::int AS fees,
+        COALESCE(SUM(CASE WHEN status IN ('refunded','partially_refunded') THEN refunded_cents ELSE 0 END),0)::int AS refunds,
+        COALESCE(SUM(CASE WHEN status = 'disputed_lost' THEN gross_cents ELSE 0 END),0)::int AS chargebacks,
+        COALESCE(SUM(nreuv_cents),0)::int AS nreuv_paid
+      FROM revenue_ledger WHERE created_at >= ${start.toISOString()} AND created_at < ${end.toISOString()} GROUP BY category`;
+  } catch { rows = []; }
+  const by = Object.fromEntries(rows.map(r => [r.category, r]));
+  const cats = CATS.map(([key, label, fee]) => {
+    const r = by[key] || { n: 0, gross: 0, fees: 0, refunds: 0, chargebacks: 0, nreuv_paid: 0 };
+    const platform = Math.max(0, r.gross - r.refunds - r.chargebacks - r.fees);   // Platform Revenue per the agreement
+    const notable = Math.round(platform * fee / 100);
+    return { key, label, feePct: fee, count: r.n, gross: r.gross, refunds: r.refunds, chargebacks: r.chargebacks, fees: r.fees, platform, notable, nreuv: platform - notable, nreuvPaid: r.nreuv_paid };
+  });
+  let heldEnd = 0, releasedInMonth = 0, releasedNreuv = 0, cap = null;
+  try { const [h] = await sql`SELECT COALESCE(SUM(held_cents),0)::int AS t FROM held_transfers WHERE status = 'held' AND created_at < ${end.toISOString()}`; heldEnd = h?.t || 0; } catch {}
+  try { const [r] = await sql`SELECT COALESCE(SUM(held_cents),0)::int AS t, COALESCE(SUM(FLOOR(held_cents * rate_pct / 100.0)),0)::int AS n FROM held_transfers WHERE status = 'released' AND released_at >= ${start.toISOString()} AND released_at < ${end.toISOString()}`; releasedInMonth = r?.t || 0; releasedNreuv = r?.n || 0; } catch {}
+  try { const key = `pot_cap_${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}`; const [c] = await sql`SELECT value FROM settings WHERE key = ${key}`; cap = c?.value ? Number(c.value) : null; } catch {}
+  const total = (k) => cats.reduce((a, c) => a + c[k], 0);
+  return { cats, totals: { count: total('count'), gross: total('gross'), refunds: total('refunds'), chargebacks: total('chargebacks'), fees: total('fees'), platform: total('platform'), notable: total('notable'), nreuv: total('nreuv') }, reserve: { heldEnd, releasedInMonth, releasedNreuv, cap } };
+}
+
+export function statementHtml(st, monthName, S = "'DM Sans',Arial,Helvetica,sans-serif") {
+  const m = (c) => '$' + ((c || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const th = (t, right) => `<th align="${right ? 'right' : 'left'}" style="font-family:${S};font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#8a8a8a;padding:6px 8px;border-bottom:1px solid #e5dccf;">${t}</th>`;
+  const td = (t, right, strong) => `<td align="${right ? 'right' : 'left'}" style="font-family:${S};font-size:13px;color:${strong ? '#161616' : '#444444'};font-weight:${strong ? 'bold' : 'normal'};padding:7px 8px;border-bottom:1px solid #f0ece4;white-space:nowrap;">${t}</td>`;
+  const row = (c, strong) => `<tr>${td(c.label, false, strong)}${td(m(c.gross), true)}${td(c.refunds || c.chargebacks ? '(' + m(c.refunds + c.chargebacks) + ')' : '—', true)}${td('(' + m(c.fees) + ')', true)}${td(m(c.platform), true, true)}${td(c.feePct === undefined ? m(c.notable) : `${m(c.notable)} <span style="color:#8a8a8a;font-weight:normal;">(${c.feePct}%)</span>`, true)}${td(m(c.nreuv), true, true)}</tr>`;
+  return `
+    <div style="font-family:${S};font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#b80101;font-weight:bold;margin:26px 0 8px;">Revenue statement — ${monthName}</div>
+    <p style="font-family:${S};color:#8a8a8a;font-size:12px;margin:0 0 10px;line-height:1.6;">Per Section 3 of the services agreement. Platform Revenue is gross receipts less refunds, chargebacks and processing fees; the fee is calculated on Platform Revenue in each category. A record of the split, not a bill.</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;">
+      <tr>${th('Category')}${th('Gross', 1)}${th('Refunds / CB', 1)}${th('Stripe fees', 1)}${th('Platform revenue', 1)}${th('Notable fee', 1)}${th('NREUV share', 1)}</tr>
+      ${st.cats.map(c => row(c)).join('')}
+      ${row({ ...st.totals, label: 'Total' }, true)}
+    </table>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:12px;">
+      <tr>${td('Payments counted', false)}${td(String(st.totals.count), true, true)}</tr>
+      <tr>${td('Actually transferred to NREUV this month (immediate splits + reserve releases)', false)}${td(m(st.cats.reduce((a, c) => a + c.nreuvPaid, 0) + st.reserve.releasedNreuv), true, true)}</tr>
+      <tr>${td('Held in the refund reserve at month end', false)}${td(m(st.reserve.heldEnd), true, true)}</tr>
+      <tr>${td('Released from the reserve during the month', false)}${td(st.reserve.releasedInMonth ? `${m(st.reserve.releasedInMonth)} <span style="color:#8a8a8a;font-weight:normal;">(${m(st.reserve.releasedNreuv)} to NREUV)</span>` : '—', true, true)}</tr>
+      ${st.reserve.cap ? `<tr>${td('Reserve maximum for the month', false)}${td(m(st.reserve.cap), true, true)}</tr>` : ''}
+    </table>`;
+}
+
 // ── The monthly report: the 1st of the month, the month that just closed ─────
 export async function sendMonthlyReport(sql, opts = {}) {
   const now = new Date();
@@ -642,6 +691,7 @@ export async function sendMonthlyReport(sql, opts = {}) {
       ${stat(start.getFullYear() + ' year to date', nreuvYtd ? money(nreuvYtd.total) : '—', nreuvYtd ? `${nreuvYtd.count} transfers since Jan 1` : 'fills in on the server (Stripe)', '#1a7a3a')}
       ${stat('Recurring, your share', money(nreuvMrr) + '/mo', 'of ' + money(totalMrr) + ' gross MRR — 75% memberships · 90% retainers')}
     </tr></table>
+    ${statementHtml(await revenueStatement(sql, start, end), monthName, S)}
     ${head('Membership base')}
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
       ${stat('Gross MRR at month end', money(totalMrr), `${paying.length} paying · ${ret.n} retainer${ret.n === 1 ? '' : 's'}`)}
@@ -750,6 +800,7 @@ export async function sendDakJenMonthly(sql, opts = {}) {
       ${line('Paying members now', paying.length)}
       ${line('Active retainers', ret.n)}
     </table>
+    ${statementHtml(await revenueStatement(sql, start, end), monthName, F)}
     ${notable ? '' : `<p style="font-family:${F};color:${MID};font-size:12px;font-style:italic;line-height:1.6;margin:18px 0 0;">Notable fills in once its revenue source is connected (QuickBooks, a Notable Stripe account, or a sheet).</p>`}`;
 
   // DJC page: white, the DJC MARKETING header over a rose rule, the DJC footer
