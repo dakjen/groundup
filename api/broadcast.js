@@ -4,7 +4,7 @@ import { requireAdmin } from './_utils.js';
 import { sendBulk, sendEmail, siteUrl, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail, passExpiryEmail, waitlistConfirmEmail, retainerInterestEmail, countdownEmail, recommendEmail, launchEmail, foundingThanksEmail, firstName } from './_email.js';
 import { recommendPlan, sendRecommendBatch, sendLaunchBatch } from './waitlist.js';
 import { foundingSeats } from './stripe.js';
-import { insiderReminderEmail, generalFoundingEmail } from './_email.js';
+import { insiderReminderEmail, generalFoundingEmail, generalHeadsUpEmail } from './_email.js';
 import { referredRevenue, rungFor } from './referrals.js';
 
 // Team email tools: send a custom email or an event announcement to a segment.
@@ -228,10 +228,30 @@ export default async function handler(req, res) {
       if (ins?.value && !isNaN(Date.parse(ins.value))) {
         const DAY = 86400000;
         const opened = new Date(ins.value).getTime();
-        const closesAt = opened + days * DAY;
+        // The window closes at midnight Eastern on the day it ends. Adding whole days in
+        // milliseconds drifts an hour when the clocks change (Nov 1), so snap back to midnight.
+        let closesAt = opened + days * DAY;
+        { const h = Number(new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', hour12: false }).format(new Date(closesAt))) % 24; if (h === 23) closesAt += 3600000; else if (h === 1) closesAt -= 3600000; }
         const closesText = new Date(closesAt).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
         const now = Date.now();
         const joined = new Set((await sql`SELECT LOWER(email) AS email FROM users WHERE membership_status = 'active' AND tier IS DISTINCT FROM 'Free'`).map(r => r.email));
+        // Launch day — the general list hears that insiders are in, and the fixed
+        // date their turn at any remaining founding seats begins
+        if (now >= opened && now < closesAt) {
+          const [done] = await sql`SELECT value FROM settings WHERE key = 'drip_general_headsup'`;
+          if (!done?.value) {
+            const [pub] = await sql`SELECT value FROM settings WHERE key = 'launch_at'`;
+            const fmtDay = (t) => new Date(t).toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric' });
+            const rows = (await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = 'general' AND NOT COALESCE(comped, FALSE)`).filter(r => !joined.has(String(r.email).toLowerCase()));
+            let n = 0;
+            for (const r of rows) {
+              const mail = generalHeadsUpEmail(r.name, { opensText: fmtDay(opened), seatsDate: fmtDay(closesAt), publicText: pub?.value ? fmtDay(pub.value) : 'December 1' });
+              if (await sendEmail(r.email, mail.subject, mail.html, { marketing: true })) n++;
+            }
+            drip.general_headsup = n;
+            await sql`INSERT INTO settings (key, value) VALUES ('drip_general_headsup', 'sent') ON CONFLICT (key) DO UPDATE SET value = 'sent'`;
+          }
+        }
         // Step 5 — midpoint of the window
         if (now >= opened + Math.floor(days / 2) * DAY && now < closesAt) {
           const [done] = await sql`SELECT value FROM settings WHERE key = 'drip_insider_reminder'`;
