@@ -5503,6 +5503,7 @@ function RevenueTab() {
   const [loading, setLoading] = useState(true);
 
   const [retainers, setRetainers] = useState({ active_count: 0, retainer_mrr: 0 });
+  const [actual, setActual] = useState(null);     // { statement: { current, previous }, reserve }
   useEffect(() => {
     const hdrs = { Authorization: "Bearer " + sessionStorage.getItem("adminToken") };
     Promise.all([
@@ -5513,6 +5514,7 @@ function RevenueTab() {
       if (u?.users) setUsers(u.users.map(x => ({ ...x, joinedAt: x.created_at })));
       if (r?.referrals) setReferrals(r.referrals);
       if (rev?.retainerStats) setRetainers({ active_count: Number(rev.retainerStats.active_count) || 0, retainer_mrr: Number(rev.retainerStats.retainer_mrr) || 0 });
+      if (rev?.statement) setActual({ statement: rev.statement, reserve: rev.reserve });
     }).finally(() => setLoading(false));
   }, []);
 
@@ -5564,7 +5566,7 @@ function RevenueTab() {
   return (
     <div style={{ maxWidth: 780 }}>
       <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#161616", marginBottom: 8 }}>Revenue</h2>
-      <p style={{ color: "#666666", fontSize: 13, marginBottom: 32 }}>Based on current users and their plan tiers.</p>
+      <p style={{ color: "#666666", fontSize: 13, marginBottom: 32 }}>The recurring base from current plan tiers, and the actual money Stripe has collected and split.</p>
 
       {/* Top stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 32 }}>
@@ -5615,7 +5617,53 @@ function RevenueTab() {
               <div style={{ width: `${pct}%`, background: "linear-gradient(90deg, #570404, #7a1010)" }} />
               <div style={{ flex: 1, background: "#7d6d6d" }} />
             </div>
-            <div style={{ fontSize: 12, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>Memberships split <strong>75% to NREUV</strong> · retainers, 1:1s & intakes <strong>90%</strong> · Lunch & Learn <strong>100%</strong> (one-time revenue like L&L and passes isn't in MRR, so it isn't shown here). Shares are of gross — the platform absorbs Stripe's fees.</div>
+            <div style={{ fontSize: 12, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>Memberships split <strong>75% to NREUV</strong> · retainers, 1:1s & intakes <strong>90%</strong> · Lunch & Learn <strong>100%</strong> (one-time revenue like L&L and passes isn't in MRR, so it isn't shown here). This is the recurring base at list price; per the services agreement, Stripe's fees come off before the split and are borne pro rata, and 20% of each payment sits in the refund reserve until the sweep on the 7th — the actual figures are in the statement below.</div>
+          </div>
+        );
+      })()}
+
+      {/* Actual money — the services agreement's statement, from the ledger */}
+      {actual && (() => {
+        const F = "'DM Sans', sans-serif";
+        const m = (c) => "$" + ((c || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const now = new Date(); const label = (d) => d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+        const cur = actual.statement.current, prev = actual.statement.previous, rs = actual.reserve;
+        const th = (t, right) => <th style={{ textAlign: right ? "right" : "left", fontSize: 10, letterSpacing: "1.5px", textTransform: "uppercase", color: "#8a8a8a", padding: "6px 8px", borderBottom: "1px solid #e5dccf", fontFamily: F, fontWeight: 800 }}>{t}</th>;
+        const td = (t, right, strong) => <td style={{ textAlign: right ? "right" : "left", fontSize: 13, color: strong ? "#161616" : "#444444", fontWeight: strong ? 800 : 500, padding: "7px 8px", borderBottom: "1px solid #f0ece4", fontFamily: F, whiteSpace: "nowrap" }}>{t}</td>;
+        const table = (st, title) => (
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: 11, color: "#9a9a9a", fontFamily: F, fontWeight: 800, marginBottom: 6 }}>{title} · {st.totals.count} payment{st.totals.count === 1 ? "" : "s"}</div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead><tr>{th("Category")}{th("Gross", 1)}{th("Refunds / CB", 1)}{th("Stripe fees", 1)}{th("Platform revenue", 1)}{th("Notable fee", 1)}{th("NREUV share", 1)}</tr></thead>
+                <tbody>
+                  {[...st.cats, { ...st.totals, label: "Total", total: true }].map((c, i) => (
+                    <tr key={i}>{td(c.label, false, c.total)}{td(m(c.gross), true)}{td(c.refunds + c.chargebacks ? "(" + m(c.refunds + c.chargebacks) + ")" : "—", true)}{td("(" + m(c.fees) + ")", true)}{td(m(c.platform), true, true)}{td(c.total ? m(c.notable) : `${m(c.notable)} (${c.feePct}%)`, true)}{td(m(c.nreuv), true, true)}</tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+        const pct = rs ? Math.min(100, Math.round((rs.held_cents / Math.max(1, rs.cap_cents)) * 100)) : 0;
+        return (
+          <div style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 14, padding: 28, marginBottom: 20 }}>
+            <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: F, marginBottom: 6 }}>Actual money — what Stripe collected</div>
+            <p style={{ color: "#8d847a", fontSize: 12, fontFamily: F, lineHeight: 1.7, margin: "0 0 16px" }}>Per Section 3 of the services agreement. Platform revenue is gross less refunds, chargebacks and processing fees; the fee is calculated on platform revenue in each category. Figures come from the revenue ledger, written at the moment each payment splits.</p>
+            {table(cur, label(now) + " so far")}
+            {table(prev, label(new Date(now.getFullYear(), now.getMonth() - 1, 1)))}
+            {rs && (
+              <div style={{ background: "#faf7f2", border: "1px solid #e5dccf", borderRadius: 12, padding: "16px 18px" }}>
+                <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: F, marginBottom: 8 }}>Refund reserve</div>
+                <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "baseline", marginBottom: 8 }}>
+                  <div><span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#161616" }}>{m(rs.held_cents)}</span> <span style={{ color: "#8a8a8a", fontSize: 12, fontFamily: F }}>held · {rs.slices} payment{rs.slices === 1 ? "" : "s"}</span></div>
+                  <div style={{ color: "#444444", fontSize: 12.5, fontFamily: F }}>Maximum this month <strong>{m(rs.cap_cents)}</strong> ($1,000 per ten paying members · {rs.paying} paying)</div>
+                  <div style={{ color: "#444444", fontSize: 12.5, fontFamily: F }}>Floor <strong>{m(rs.floor_cents)}</strong></div>
+                </div>
+                <div style={{ height: 8, background: "#efe9e2", borderRadius: 99, overflow: "hidden", marginBottom: 8 }}><div style={{ width: `${pct}%`, height: "100%", background: "linear-gradient(90deg, #b80101, #570404)", borderRadius: 99 }} /></div>
+                <div style={{ color: "#8d847a", fontSize: 12, fontFamily: F, lineHeight: 1.6 }}>{rs.swept_this_month ? `Swept this month: ${rs.swept_this_month}.` : `Next sweep ${new Date(rs.next_sweep).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}: released down to the floor, oldest payments first, each at its own rate.`} 20% of each payment is held until the cap; past the cap, payments split in full.</div>
+              </div>
+            )}
           </div>
         );
       })()}

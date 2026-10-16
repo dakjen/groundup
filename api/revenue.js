@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { requireAdmin } from './_utils.js';
+import { revenueStatement } from './broadcast.js';
 
 
 export default async function handler(req, res) {
@@ -54,7 +55,24 @@ export default async function handler(req, res) {
         FROM referrals
       `;
 
-      return res.json({ userStats, retainerStats, signupsByMonth, referralStats });
+      // Actual money, per the services agreement: this month and last month from the
+      // revenue ledger, and where the refund reserve stands right now.
+      let statement = null, reserve = null;
+      try {
+        const now = new Date();
+        const thisStart = new Date(now.getFullYear(), now.getMonth(), 1), nextStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        const lastStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        statement = { current: await revenueStatement(sql, thisStart, nextStart), previous: await revenueStatement(sql, lastStart, thisStart) };
+        const [h] = await sql`SELECT COALESCE(SUM(held_cents),0)::int AS t, COUNT(*)::int AS n FROM held_transfers WHERE status = 'held'`;
+        const et = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
+        const y = et.find(p => p.type === 'year').value, m = et.find(p => p.type === 'month').value, d = Number(et.find(p => p.type === 'day').value);
+        const [capRow] = await sql`SELECT value FROM settings WHERE key = ${`pot_cap_${y}-${m}`}`;
+        const [sweep] = await sql`SELECT value FROM settings WHERE key = ${`pot_sweep_${y}-${m}`}`;
+        const [paying] = await sql`SELECT COUNT(*)::int AS n FROM users WHERE membership_status = 'active' AND tier IN ('Basic','Builder','Premium','Elite') AND COALESCE(comped, FALSE) = FALSE AND COALESCE(role,'member') = 'member'`;
+        const nextSweep = d < 7 ? new Date(Number(y), Number(m) - 1, 7) : new Date(Number(y), Number(m), 7);
+        reserve = { held_cents: h?.t || 0, slices: h?.n || 0, cap_cents: capRow?.value ? Number(capRow.value) : 100000 * Math.max(1, Math.ceil((paying?.n || 0) / 10)), floor_cents: 100000, paying: paying?.n || 0, swept_this_month: sweep?.value || null, next_sweep: nextSweep.toISOString() };
+      } catch (e) { console.error('revenue actuals failed', e.message); }
+      return res.json({ userStats, retainerStats, signupsByMonth, referralStats, statement, reserve });
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
