@@ -596,8 +596,8 @@ export function launchEmail(name, rec, link, painPoint, stretchLink) {
       ${seqHero('/opt/founding-banner-v2.jpg', 'Dr. Gina Merritt at 9410 Hough')}
       ${seqKicker("We're live")}
       ${seqH1(`GroundUp is open, ${firstName(name)}.`)}
-      ${seqP(`You are getting this first because you were here first. Your account can be created right now, and the plan below is the one we chose for you${painPoint ? ' from what you told us about what has been standing in your way' : ''}. The founding rate is already on the link.`)}
-      ${seqBtn(link, rec.ctaLabel || `Join as ${rec.label} — secure checkout →`)}
+      ${seqP(`You are getting this first because you were here first. Your account can be created right now. The plan below is the one we would pick for you${painPoint ? ', from what you told us about what has been standing in your way' : ''} — it is marked on the pricing page when you arrive, and every other plan is there beside it if another fits better. The founding rate applies to whichever plan the first twenty-five people choose.`)}
+      ${seqBtn(link, rec.ctaLabel || `See your plan and join →`)}
       ${seqRecCard(rec)}
       ${rec.stretch && stretchLink ? seqBtn(stretchLink, `Claim ${rec.stretch.label} at 10% off →`) : ''}
       ${seqNote('Start with Stage 0. Nine lessons, the whole life of a deal in order. Everything after it goes deeper — but that is the map.')}

@@ -2027,7 +2027,7 @@ function Chip({ text, color }) {
   );
 }
 
-function PlanCard({ plan, onSelect, seats, compact }) {
+function PlanCard({ plan, onSelect, seats, compact, recommended }) {
   // Scarcity only reads as real when it's close — stay quiet until the last few seats
   const showSeats = seats && !seats.full && seats.remaining <= 5;
   // Pre-launch every plan button joins the waitlist, so it should say so
@@ -2035,9 +2035,10 @@ function PlanCard({ plan, onSelect, seats, compact }) {
   const preLaunch = typeof window !== "undefined" && window.__guLaunchAt && new Date(window.__guLaunchAt).getTime() > Date.now();
   const cta = seats?.full ? "Join the Owner waitlist" : preLaunch ? "Join the waitlist" : plan.cta;
   return (
-    <div style={{ background: plan.popular ? "#0d0404" : "#080404", border: "1px solid " + (plan.popular ? "#b8010130" : "#150000"), borderRadius: 20, padding: "40px 32px", position: "relative", boxShadow: plan.popular ? "0 0 60px rgba(184,1,1,0.08)" : "none" }}>
+    <div style={{ background: plan.popular || recommended ? "#0d0404" : "#080404", border: "1px solid " + (recommended ? "#b80101" : plan.popular ? "#b8010130" : "#150000"), borderRadius: 20, padding: "40px 32px", position: "relative", boxShadow: plan.popular ? "0 0 60px rgba(184,1,1,0.08)" : "none" }}>
       {plan.popular && <div style={{ position: "absolute", top: -1, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, transparent, #b80101, transparent)", borderRadius: "20px 20px 0 0" }} />}
-      {plan.popular && <div style={{ position: "absolute", top: 16, right: 16, background: "#b8010115", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "3px 10px", fontSize: 9, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase" }}>POPULAR</div>}
+      {recommended && <div style={{ position: "absolute", top: 16, right: 16, background: "#b80101", color: "#ffffff", borderRadius: 4, padding: "4px 10px", fontSize: 9, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase" }}>Recommended for you</div>}
+      {plan.popular && !recommended && <div style={{ position: "absolute", top: 16, right: 16, background: "#b8010115", color: "#b80101", border: "1px solid #b8010130", borderRadius: 4, padding: "3px 10px", fontSize: 9, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase" }}>POPULAR</div>}
       {plan.best && <div style={{ position: "absolute", top: 16, right: 16, background: "#b9bec715", color: "#b9bec7", border: "1px solid #b9bec735", borderRadius: 4, padding: "3px 10px", fontSize: 9, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase" }}>BEST VALUE</div>}
 
       <Chip text={plan.name} color={plan.accent} />
@@ -2137,6 +2138,8 @@ function PricingPage({ onSignUp }) {
   const [tab, setTabRaw] = useState(() => (window.location.hash.match(/tab=([\w-]+)/) || [])[1] || "plans");
   const setTab = (t) => { setTabRaw(t); window.history.replaceState({}, "", window.location.pathname + window.location.search + "#tab=" + t); };
   const [lifetime, setLifetime] = useState(null);
+  // From a launch email: the plan we recommended is marked, the rest stay open
+  const [recommendedTier] = useState(() => { try { return sessionStorage.getItem("guRecommended") || null; } catch { return null; } });
   useEffect(() => {
     fetch("/api/stripe").then(r => r.ok ? r.json() : null).then(d => d?.lifetime && setLifetime(d.lifetime)).catch(() => {});
   }, []);
@@ -2274,7 +2277,7 @@ function PricingPage({ onSignUp }) {
           {plans.filter(p => p.tier !== "Partner" && p.tier !== "Free").map((raw, i) => {
             const plan = annual && ANNUAL_PRICES[raw.tier] ? { ...raw, price: ANNUAL_PRICES[raw.tier], period: "/yr" } : raw;
             return (
-            <PlanCard key={i} plan={plan} compact seats={plan.limited ? elite : null} onSelect={() => {
+            <PlanCard key={i} plan={plan} compact seats={plan.limited ? elite : null} recommended={recommendedTier === plan.tier} onSelect={() => {
               // Before launch every one of these buttons is labelled "Join the
               // waitlist", so that is where every one of them goes. The Senior
               // Advisor card used to carry that label and open the booking page.
@@ -7551,7 +7554,8 @@ export default function App() {
       const plan = params.get("plan") || "Basic";
       if (params.get("promo")) localStorage.setItem("guPromo", params.get("promo"));
       if (plan === "Advisor") { setActivePage("contact"); window.history.replaceState({}, "", window.location.pathname); return; }
-      if (["Basic", "Premium", "Elite"].includes(plan)) { setSignupTier(plan); setShowSignup(true); }
+      // Their recommendation is marked on the pricing page; every plan stays open to them.
+      if (["Basic", "Builder", "Premium", "Elite"].includes(plan)) { try { sessionStorage.setItem("guRecommended", plan); } catch {} }
       setActivePage("pricing");
       window.history.replaceState({}, "", window.location.pathname);
     }
