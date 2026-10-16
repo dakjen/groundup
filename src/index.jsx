@@ -6367,7 +6367,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
   const heading = { fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 };
   const statCard = (label, value, sub) => (
     <div style={{ background: "#ececec", border: "1px solid #2a1010", borderRadius: 12, padding: "20px 18px", textAlign: "center" }}>
-      <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 34, color: "#222222", lineHeight: 1.1 }}>{value}</div>
+      <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: String(value).length > 8 ? "clamp(20px, 2.4vw, 30px)" : 34, color: "#222222", lineHeight: 1.1, overflowWrap: "anywhere" }}>{value}</div>
       <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginTop: 6 }}>{label}</div>
       {sub && <div style={{ fontSize: 11, color: "#666666", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>{sub}</div>}
     </div>
@@ -6491,7 +6491,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
         return (
           <div className="gu-wl-stats">
           <style>{`
-            .gu-wl-stats { display: grid; grid-template-columns: 1fr 1fr 2fr 1fr; gap: 12px; margin-bottom: 20px; align-items: stretch; }
+            .gu-wl-stats { display: grid; grid-template-columns: 1fr 1.3fr 2fr 1.2fr; gap: 12px; margin-bottom: 20px; align-items: stretch; }
             .gu-wl-stats > * { min-width: 0; }
             @media (max-width: 760px) { .gu-wl-stats { grid-template-columns: 1fr 1fr; } .gu-wl-stats > div:nth-of-type(3) { grid-column: 1 / -1; grid-row: 1; } .gu-wl-stats > div:nth-of-type(4) { grid-column: 1 / -1; } }
           `}</style>
@@ -6512,7 +6512,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
                 </div>
               );
             })()}
-            {statCard("Retainer leads", advisorRec, `${eliteRec} Owner · ${premiumRec} Premium`)}
+            {statCard("Headed for", `${premiumRec + eliteRec + advisorRec}`, `${premiumRec} Premium · ${eliteRec} Owner · ${advisorRec} Senior Advisor`)}
           </div>
         );
       })()}
