@@ -469,7 +469,14 @@ const seqRecCard = (rec) => `
       <div style="border:1px solid #e5dccf;border-radius:12px;padding:22px 26px;margin:0 0 20px;">
         <div style="font-family:${SANS};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px;">Our recommendation for you</div>
         <div style="font-family:${SERIF};color:#161616;font-size:30px;font-weight:700;line-height:1.1;">${rec.label}</div>
-        <div style="font-family:${SANS};color:#b80101;font-size:15px;font-weight:bold;margin:4px 0 12px;">${rec.price}</div>
+        ${(() => {
+          // Membership plans: list price crossed out, then the founding rate (25% off the first year).
+          // Passes and the retainer have no founding rate, so they show their own price.
+          const pl = PLANS.find(x => x[0] === rec.label);
+          return pl
+            ? `<div style="font-family:${SANS};font-size:15px;margin:4px 0 12px;"><span style="color:#8a8a8a;text-decoration:line-through;">${usd(pl[1])}/mo</span> <strong style="color:#b80101;">${usd(pl[1] * 0.75)}/mo</strong> <span style="color:#666666;font-size:12.5px;">founding rate, your first year</span></div>`
+            : `<div style="font-family:${SANS};color:#b80101;font-size:15px;font-weight:bold;margin:4px 0 12px;">${rec.price}</div>`;
+        })()}
         ${rec.features?.length ? rec.features.map(f => `<div style="font-family:${SANS};color:#444444;font-size:14px;line-height:1.9;"><span style="color:#b80101;">→</span> ${f}</div>`).join('') : ''}
       </div>
       ${rec.stretch ? `<div style="border:1px solid #b8010140;background:#fdf6f6;border-radius:12px;padding:18px 22px;margin:0 0 20px;">
@@ -480,7 +487,7 @@ const seqRecCard = (rec) => `
       ${rec.next ? `<div style="border:1px solid #e5dccf;border-radius:12px;padding:16px 22px;margin:0 0 20px;">
         <div style="font-family:${SANS};font-size:11px;color:#666666;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:6px;">One step up, if you want it</div>
         ${(() => { const pl = PLANS.find(x => x[0] === rec.next.label); return pl
-          ? `<div style="font-family:${SANS};color:#161616;font-size:15px;font-weight:bold;margin-bottom:2px;">${rec.next.label} · <span style="color:#b80101;">${usd(pl[1] * 0.75)}/mo</span> <span style="color:#8a8a8a;font-weight:normal;font-size:13px;">founding rate · ${usd(pl[1])} list</span></div><div style="font-family:${SANS};color:#666666;font-size:12.5px;margin-bottom:8px;">${rec.next.delta} than ${rec.label}</div>`
+          ? `<div style="font-family:${SANS};color:#161616;font-size:15px;font-weight:bold;margin-bottom:2px;">${rec.next.label} · <span style="color:#8a8a8a;text-decoration:line-through;font-weight:normal;">${usd(pl[1])}/mo</span> <span style="color:#b80101;">${usd(pl[1] * 0.75)}/mo</span> <span style="color:#8a8a8a;font-weight:normal;font-size:13px;">founding rate</span></div><div style="font-family:${SANS};color:#666666;font-size:12.5px;margin-bottom:8px;">${rec.next.delta} than ${rec.label}</div>`
           : `<div style="font-family:${SANS};color:#161616;font-size:15px;font-weight:bold;margin-bottom:6px;">${rec.next.label} · ${rec.next.price}</div>`; })()}
         ${rec.next.extras.map(f => `<div style="font-family:${SANS};color:#444444;font-size:13px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}
       </div>` : ''}`;
