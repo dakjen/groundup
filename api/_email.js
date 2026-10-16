@@ -640,6 +640,29 @@ export function insiderReminderEmail(name, opts = {}) {
 }
 
 // 6 — after the window: the general list hears how many seats are left.
+// Launch day, to the GENERAL list: insiders are in today; a fixed date for
+// when founding seats, if any remain, open to them.
+export function generalHeadsUpEmail(name, opts = {}) {
+  const first = firstName(name);
+  const opensText = opts.opensText || 'November 1';          // the insider launch, e.g. "Sunday, November 1"
+  const seatsDate = opts.seatsDate || 'November 6';           // the day the window closes to insiders
+  const publicText = opts.publicText || 'Tuesday, December 1';
+  return {
+    subject: `GroundUp opened to insiders today — your date is ${seatsDate}`,
+    html: `
+      ${seqHero('/opt/founding-banner-v2.jpg', 'Dr. Gina Merritt at 9410 Hough')}
+      ${seqKicker('Insiders are in')}
+      ${seqH1(`The doors opened today, ${first}.`)}
+      ${seqP(`GroundUp opened to our insider list on <strong style="color:#161616;">${opensText}</strong>. They get the first look, and the first twenty-five people to purchase a membership become founding members: 25% off Member, Builder, Premium or Owner for the entire first year, the first year of live Lunch &amp; Learn sessions, an invitation to the launch party in Washington, DC, and the Founding Member badge.`)}
+      ${seqBlock(`Your date: ${seatsDate}`, seqP(`Insiders have the seats to themselves through ${seatsDate}. Any founding seat still open that day goes to the waitlist — to you — and you can join on the spot, at the founding rate, without waiting for the public opening on ${publicText}. If seats remain, you will get an email from us that morning with your link.`, { size: 14, mb: 0 }))}
+      ${seqNote('I would rather a founding seat went to someone who has been waiting than sat empty. If one is there on the day, it is yours to take.')}
+      ${seqCurriculum()}
+      ${seqBlock('Membership', seqPlanTable(false))}
+      ${seqDates()}
+      ${seqSign()}`,
+  };
+}
+
 export function generalFoundingEmail(name, opts = {}) {
   const first = firstName(name);
   const left = Number(opts.seatsLeft ?? 0);
