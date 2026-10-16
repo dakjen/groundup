@@ -567,8 +567,8 @@ export function recommendEmail(name, rec, launchAt, painPoint) {
     html: `
       ${seqHero('/opt/LIIF-Stills1.jpg', 'Dr. Gina Merritt outside a finished development')}
       ${seqKicker('One week out')}
-      ${seqH1(`We read your answers, ${firstName(name)}.`)}
-      ${seqP(`Doors open <strong style="color:#161616;">${dateText}</strong>. We went through what you told us when you joined the waitlist${painPoint ? ' — what you want to learn, and what has been standing in your way' : ''} — and based on your goals and your budget, this is the plan we would put you on.`)}
+      ${seqH1(`${firstName(name)}, here is the plan we would pick for you.`)}
+      ${seqP(`Doors open <strong style="color:#161616;">${dateText}</strong>. When you joined the waitlist you told us${painPoint ? ' what you want to learn and what has been standing in your way' : ' a little about where you are'} — and based on your goals and your budget, this is the plan we would put you on.`)}
       ${seqRecCard(rec)}
       ${seqNote('Pick the plan that matches the deal in front of you, not the one you hope to have in five years. You can move up the day you need to.')}
       ${seqFeature(FEATURES.gap)}
