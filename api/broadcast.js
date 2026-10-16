@@ -39,7 +39,10 @@ export default async function handler(req, res) {
   // Vercel attaches to cron requests automatically.
   if (req.method === 'GET' && process.env.CRON_SECRET && req.headers.authorization === `Bearer ${process.env.CRON_SECRET}`) {
     const sql = neon(process.env.DATABASE_URL);
-    const rows = await sql`
+    // The 8 AM Eastern run (vercel.json, ?drip=1) sends only the launch emails, so
+    // they land in the morning instead of at the 11 AM daily run.
+    const dripOnly = req.query.drip === '1';
+    const rows = dripOnly ? [] : await sql`
       SELECT e.id, e.course_id, u.name, u.email FROM entitlements e
       JOIN users u ON u.id = e.user_id
       WHERE e.source = 'stripe_onetime' AND e.course_id != 'lunchlearn'
@@ -54,7 +57,7 @@ export default async function handler(req, res) {
 
     // Lifetime Pass Builder years that have run out: revert to Free — but only
     // accounts with no Stripe billing, so a real Builder subscription is never touched.
-    const expiredBuilders = await sql`
+    const expiredBuilders = dripOnly ? [] : await sql`
       SELECT DISTINCT u.id, u.name, u.email FROM users u
       JOIN entitlements e ON e.user_id = u.id AND e.course_id = 'builder_year' AND e.source = 'lifetime' AND e.expires_at < NOW()
       WHERE u.tier = 'Builder' AND u.stripe_customer_id IS NULL AND COALESCE(u.role, 'member') = 'member'`;
@@ -237,7 +240,8 @@ export default async function handler(req, res) {
         const joined = new Set((await sql`SELECT LOWER(email) AS email FROM users WHERE membership_status = 'active' AND tier IS DISTINCT FROM 'Free'`).map(r => r.email));
         // Launch day — the general list hears that insiders are in, and the fixed
         // date their turn at any remaining founding seats begins
-        if (now >= opened && now < closesAt) {
+        const H = 3600000;
+        if (now >= opened + 8 * H && now < closesAt) {
           const [done] = await sql`SELECT value FROM settings WHERE key = 'drip_general_headsup'`;
           if (!done?.value) {
             const [pub] = await sql`SELECT value FROM settings WHERE key = 'launch_at'`;
@@ -268,7 +272,7 @@ export default async function handler(req, res) {
           }
         }
         // 24 hours before the window closes, seats remain → tell the general list what's coming
-        if (now >= closesAt - DAY && now < closesAt) {
+        if (now >= closesAt - DAY + 8 * H && now < closesAt + 8 * H) {
           const [done] = await sql`SELECT value FROM settings WHERE key = 'drip_general_tomorrow'`;
           if (!done?.value) {
             const seats = await foundingSeats(sql);
@@ -276,7 +280,7 @@ export default async function handler(req, res) {
             if (seats.remaining > 0) {
               const rows = (await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = 'general' AND NOT COALESCE(comped, FALSE)`).filter(r => !joined.has(String(r.email).toLowerCase()));
               for (const r of rows) {
-                const mail = generalSeatsTomorrowEmail(r.name, { seatsLeft: seats.remaining, opensText: closesText });
+                const mail = generalSeatsTomorrowEmail(r.name, { seatsLeft: seats.remaining, opensText: new Date(closesAt + 8 * H).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }) });
                 if (await sendEmail(r.email, mail.subject, mail.html, { marketing: true })) n++;
               }
             }
@@ -285,7 +289,7 @@ export default async function handler(req, res) {
           }
         }
         // Step 6 — window closed, seats remain → the general list
-        if (now >= closesAt) {
+        if (now >= closesAt + 8 * H) {
           const [done] = await sql`SELECT value FROM settings WHERE key = 'drip_general_founding'`;
           if (!done?.value) {
             const seats = await foundingSeats(sql);
@@ -303,6 +307,7 @@ export default async function handler(req, res) {
         }
       }
     } catch (e) { console.error('insider window drip failed', e.message); }
+    if (dripOnly) return res.json({ success: true, drip });
     return res.json({ success: true, expired: rows.length, sent, drip, pot_released: released, pot_released_cents: releasedCents, weekly, monthly, founding, ladder });
   }
 

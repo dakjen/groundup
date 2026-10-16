@@ -6604,12 +6604,29 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
       <div style={section}>
         <div style={heading}>Launch Emails — Automatic</div>
         <p style={{ color: "#666666", fontSize: 12, marginBottom: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8 }}>
-          The whole sequence runs itself from the launch dates above — nothing to press. Per list, the daily run sends:
+          The whole sequence runs itself from the launch dates above — nothing to press. Emails go out at 8 AM Eastern. {listFilter === "general" ? "The general list hears:" : listFilter === "insider" ? "The insider list hears:" : "Pick the Insider or General tab to see that list's schedule. Both lists hear:"}
         </p>
-        {[["~14 days out", "Save-the-date countdown to everyone on the list"],
-          ["~7 days out", "Each person's personalized plan recommendation — no pay link yet"],
-          ["~2 days out", "The final-stretch countdown (recommendations caught up first if the date was set late)"],
-          ["Launch day", "\"We're live\" with their personal checkout link — retainer-track people get the discovery-call invite instead"]].map(([when, what]) => (
+        {(listFilter === "general" ? [
+            ["Nov 1", "Insiders are in — and the fixed date (Nov 6) that any remaining founding seats open to them"],
+            ["Nov 5", "\"In 24 hours, N founding seats open to you\" with the live count (only if seats remain)"],
+            ["Nov 6", "\"N founding seats just opened to the waitlist\" — join link, what a founding seat means (only if seats remain)"],
+            ["~Nov 17", "Two-week countdown to the December 1 public opening"],
+            ["~Nov 24", "Each person's personalized plan recommendation — no pay link yet"],
+            ["~Nov 29", "The final-stretch countdown"],
+            ["Dec 1", "\"We're live\" with their personal link — retainer-track people get the discovery-call invite instead"],
+          ] : listFilter === "insider" ? [
+            ["~Oct 18", "Two-week countdown to the November 1 insider opening"],
+            ["~Oct 25", "Each person's personalized plan recommendation — no pay link yet"],
+            ["~Oct 30", "The final-stretch countdown"],
+            ["Nov 1", "\"We're live\" with their personal link — founding seats are earned at checkout, first come first served"],
+            ["~Nov 3", "Reminder to insiders who haven't joined, with the live seat count"],
+            ["Nov 6", "Insider window closes — remaining founding seats go to the general list"],
+          ] : [
+            ["~14 days out", "Save-the-date countdown to everyone on the list"],
+            ["~7 days out", "Each person's personalized plan recommendation — no pay link yet"],
+            ["~2 days out", "The final-stretch countdown"],
+            ["Launch day", "\"We're live\" with their personal link — retainer-track people get the discovery-call invite instead"],
+          ]).map(([when, what]) => (
           <div key={when} style={{ display: "flex", gap: 14, padding: "8px 0", borderBottom: "1px solid #f5f2ec", fontFamily: "'DM Sans', sans-serif" }}>
             <span style={{ color: "#b80101", fontSize: 12, fontWeight: 800, minWidth: 100, whiteSpace: "nowrap" }}>{when}</span>
             <span style={{ color: "#444444", fontSize: 12.5, lineHeight: 1.6 }}>{what}</span>

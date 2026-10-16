@@ -654,7 +654,7 @@ export function generalHeadsUpEmail(name, opts = {}) {
       ${seqKicker('Insiders are in')}
       ${seqH1(`The doors opened today, ${first}.`)}
       ${seqP(`GroundUp opened to our insider list on <strong style="color:#161616;">${opensText}</strong>. They get the first look, and the first twenty-five people to purchase a membership become founding members: 25% off Member, Builder, Premium or Owner for the entire first year, the first year of live Lunch &amp; Learn sessions, an invitation to the launch party in Washington, DC, and the Founding Member badge.`)}
-      ${seqBlock(`Your date: ${seatsDate}`, seqP(`Insiders have the seats to themselves until ${seatsDate}. Any founding seat still open when that day begins goes to the waitlist — to you — and you can join on the spot, at the founding rate, without waiting for the public opening on ${publicText}. If seats remain, you will get an email from us the day before with the count, and another the moment the door opens with your link.`, { size: 14, mb: 0 }))}
+      ${seqBlock(`Your date: ${seatsDate}`, seqP(`Insiders have the seats to themselves until ${seatsDate}. Any founding seat still open that morning goes to the waitlist — to you — and you can join on the spot, at the founding rate, without waiting for the public opening on ${publicText}. If seats remain, you will get an email from us the day before with the count, and another the moment the door opens with your link.`, { size: 14, mb: 0 }))}
       ${seqNote('I would rather a founding seat went to someone who has been waiting than sat empty. If one is there on the day, it is yours to take.')}
       ${seqCurriculum()}
       ${seqBlock('Membership', seqPlanTable(false))}
