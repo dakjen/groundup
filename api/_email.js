@@ -427,11 +427,11 @@ const seqPlanTable = (founding = true) => `
           <td align="right" style="font-family:${SANS};font-size:13px;padding:7px 0;white-space:nowrap;vertical-align:top;">${founding ? `<strong style="color:#b80101;">${usd(p * 0.75)}/mo</strong><br/><span style="color:#8a8a8a;text-decoration:line-through;font-size:12px;">${usd(p)}</span>` : `<strong style="color:#161616;">${usd(p)}/mo</strong>`}</td>
         </tr>`).join('')}
       </table>
-      ${founding ? `<p style="font-family:${SANS};color:#666666;font-size:12.5px;line-height:1.7;margin:0;">Founding rates are 25% off list for your entire first year — then list price. Course passes ($100 single course · $275 all-access) stay as they are.</p>` : ''}`;
+      ${founding ? `<p style="font-family:${SANS};color:#666666;font-size:12.5px;line-height:1.7;margin:0;">Founding rates are 25% off list for your entire first year — then list price. The founding discount applies to memberships only; course passes and advisory retainers are not discounted.</p>` : ''}`;
 const seqFoundingBlock = () => seqBlock('What a founding seat means', `
         ${seqP('The first <strong style="color:#161616;">twenty-five people to purchase a membership</strong> become founding members. It is earned at checkout, first come first served, and it comes with:', { size: 14, mb: 12 })}
         <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 4px;">
-          ${seqRow('25% off', 'any membership, for your entire first year')}
+          ${seqRow('25% off', 'Member, Builder, Premium or Owner, for your entire first year — memberships only; passes and advisory retainers are not discounted')}
           ${seqRow('Lunch &amp; Learn', 'your first year of LIVE sessions with Dr. Merritt, included')}
           ${seqRow('The launch party', 'an invitation to the GroundUp launch party in Washington, DC')}
           ${seqRow('The badge', 'Founding Member on your profile, for as long as you are here')}
@@ -580,7 +580,7 @@ export function recommendEmail(name, rec, launchAt, painPoint) {
       ${seqNote('Pick the plan that matches the deal in front of you, not the one you hope to have in five years. You can move up the day you need to.')}
       ${seqFeature(FEATURES.gap)}
       ${seqFoundingBlock()}
-      ${seqBlock('Every plan, at founding rates', seqPlanTable(true))}
+      ${seqBlock('Every membership, at founding rates', seqPlanTable(true))}
       ${seqDates()}
       ${seqComing()}
       ${seqP('Nothing to do yet — on launch day you get one more email with your personal checkout link, and the founding rate applies automatically.', { size: 14 })}
@@ -603,7 +603,7 @@ export function launchEmail(name, rec, link, painPoint, stretchLink) {
       ${seqNote('Start with Stage 0. Nine lessons, the whole life of a deal in order. Everything after it goes deeper — but that is the map.')}
       ${seqFeature(FEATURES.feasibility)}
       ${seqFoundingBlock()}
-      ${seqBlock('Not the right fit? Every plan, at founding rates', seqPlanTable(true) + `<p style="font-family:${SANS};color:#666666;font-size:12.5px;line-height:1.7;margin:10px 0 0;">Choose any of them at <a href="${siteUrl()}/pricing" style="color:#b80101;">${siteUrl().replace(/^https?:\/\//, '')}/pricing</a> — and you can change plans anytime.</p>`)}
+      ${seqBlock('Not the right fit? Every membership, at founding rates', seqPlanTable(true) + `<p style="font-family:${SANS};color:#666666;font-size:12.5px;line-height:1.7;margin:10px 0 0;">Choose any of them at <a href="${siteUrl()}/pricing" style="color:#b80101;">${siteUrl().replace(/^https?:\/\//, '')}/pricing</a> — and you can change plans anytime.</p>`)}
       ${seqDates()}
       ${seqSign()}`,
   };
@@ -627,7 +627,7 @@ export function insiderReminderEmail(name, opts = {}) {
           <div style="font-family:${SERIF};color:#ffffff;font-size:44px;font-weight:700;line-height:1;">${left}</div>
           <div style="font-family:${SANS};color:#c8a8a8;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-top:6px;">founding seats left</div>
         </td>
-        <td style="padding-left:20px;font-family:${SANS};color:#444444;font-size:14px;line-height:1.8;">Your personal link still carries your founding rate — 25% off any membership for the whole first year.</td>
+        <td style="padding-left:20px;font-family:${SANS};color:#444444;font-size:14px;line-height:1.8;">Your personal link still carries your founding rate — 25% off Member, Builder, Premium or Owner for the whole first year.</td>
       </tr></table>
       ${seqBtn(link, 'Claim my seat →')}
       ${seqFeature(FEATURES.guarantees)}
@@ -778,7 +778,7 @@ export function foundingThanksEmail(name, opts = {}) {
       <div style="border-left:4px solid #b80101;background:#faf7f7;border-radius:0 12px 12px 0;padding:22px 26px;margin:0 0 26px;">
         <div style="font-family:${SANS};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;">What founding member means</div>
         <p style="font-family:${SANS};color:#333333;font-size:14px;line-height:1.85;margin:0 0 10px;">On November 1 your account opens \u2014 a full month before anyone else can join. From that moment, <strong style="color:#b80101;">the first 25 people who pay become the founding members</strong>. There are only 25. On December 1 the doors open to everyone who found the waitlist this fall, and <strong style="color:#b80101;">any seat you haven\u2019t claimed is theirs</strong> \u2014 so set up your account and join the day it opens. Founding members carry a permanent badge in the community, and the rate below for a full year.</p>
-        <p style="font-family:${SANS};color:#333333;font-size:14px;line-height:1.85;margin:0 0 12px;">Claim a seat and you lock <strong style="color:#b80101;">25% off any membership for your entire first year</strong> \u2014 a rate that will never be offered again:</p>
+        <p style="font-family:${SANS};color:#333333;font-size:14px;line-height:1.85;margin:0 0 12px;">Claim a seat and you lock <strong style="color:#b80101;">25% off Member, Builder, Premium or Owner for your entire first year</strong> \u2014 a rate that will never be offered again:</p>
         <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 12px;">
           <tr><td style="font-family:${SANS};font-size:14px;color:#161616;font-weight:bold;padding:5px 12px 5px 0;white-space:nowrap;">Member</td><td style="font-family:${SANS};font-size:14px;color:#444444;padding:5px 0;"><s style="color:#999999;">$49.99</s> &nbsp;<strong style="color:#b80101;">$37.49/mo</strong> your first year</td></tr>
           <tr><td style="font-family:${SANS};font-size:14px;color:#161616;font-weight:bold;padding:5px 12px 5px 0;white-space:nowrap;">Builder</td><td style="font-family:${SANS};font-size:14px;color:#444444;padding:5px 0;"><s style="color:#999999;">$149.99</s> &nbsp;<strong style="color:#b80101;">$112.49/mo</strong> your first year</td></tr>
