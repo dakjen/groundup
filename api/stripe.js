@@ -321,7 +321,7 @@ async function ensureLnlCoupon(stripe) {
 // THE REFUND POT: 20% of every payment stays in the Stripe platform balance
 // until its refund window closes; only the remaining 80% is split immediately.
 // The daily cron releases each pot slice once the window passes (45 days for
-// monthly/one-time, 193 days — 6 months + the 10-day grace — for annual),
+// monthly/one-time, 193 days for annual, so a discretionary refund can still be funded),
 // splitting it at the same rate. A refund-eligible cancellation consumes the
 // slice instead, so the pot funds the refund and NREUV keeps what was sent.
 const POT_PCT = 0.20;
@@ -712,14 +712,29 @@ export default async function handler(req, res) {
         // Refund rules — alert-driven (the NREUV split transfer must be reversed
         // alongside any refund, so the team processes these by hand):
         //   Monthly: cancel before the 5th of the month → that month refunded.
-        //   Annual:  cancel within the first 6 months — plus a 10-day grace
-        //            period into the second half — and 6 months (half the annual
-        //            payment) is refunded; after that, the refund is forfeited.
+        //   Annual:  no automatic refund. Every annual cancellation goes to the
+        //            team for review; any refund is at NREUV's discretion.
         const isAnnual = (sub.items?.data?.[0]?.price?.recurring?.interval || sub.plan?.interval) === 'year';
         const daysIn = sub.start_date ? (Date.now() / 1000 - sub.start_date) / 86400 : 14999;
         const monthsIn = daysIn / 30.44;
-        // 6 months ≈ 183 days, plus the 10-day grace period into the second half
-        const refundEligible = isAnnual ? daysIn <= 193 : new Date().getDate() < 5;
+        const refundEligible = isAnnual ? false : new Date().getDate() < 5;
+        if (isAnnual) {
+          try {
+            const [ru] = await sql`SELECT name, email, tier FROM users WHERE stripe_customer_id = ${sub.customer}`;
+            let paid = 0, held = 0;
+            try {
+              const inv = sub.latest_invoice ? await stripe.invoices.retrieve(sub.latest_invoice) : null;
+              paid = inv?.amount_paid || 0;
+              if (inv?.charge) { const [row] = await sql`SELECT held_cents FROM held_transfers WHERE charge_id = ${inv.charge} AND status = 'held'`; held = row?.held_cents || 0; }
+            } catch {}
+            const d = (c) => '$' + (c / 100).toFixed(2);
+            if (ru) await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
+              `ANNUAL CANCELLATION — refund subject to your approval: ${ru.name}`,
+              `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">An annual member cancelled</h2>
+               <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${ru.name}</strong> (${ru.email}, ${ru.tier}) cancelled an ANNUAL membership about ${monthsIn.toFixed(1)} months in. They paid <strong style="color:#161616;">${d(paid)}</strong>. Annual plans carry no automatic refund — any refund is at your discretion, and they have been told the team will review and reply.</p>
+               <p style="color:#444444;font-size:14px;line-height:1.8;">${held > 0 ? `The refund pot is still holding <strong style="color:#161616;">${d(held)}</strong> of this payment and can fund that much of any refund you approve.` : 'The pot slice for this payment has already been released.'} If you refund, process it on their annual invoice in Stripe and reverse the matching share of the NREUV transfer.</p>`);
+          } catch (e) { console.error('annual cancel alert failed', e.message); }
+        }
         if (refundEligible) {
           try {
             const [ru] = await sql`SELECT name, email, tier FROM users WHERE stripe_customer_id = ${sub.customer}`;
@@ -758,7 +773,7 @@ export default async function handler(req, res) {
         const [u] = await sql`SELECT name, email FROM users WHERE stripe_customer_id = ${sub.customer}`;
         if (u) {
           const refundNote = isAnnual
-            ? (refundEligible ? ' Because you cancelled within the first six months of your annual plan (the 10-day grace period included), 6 months — half your annual payment — will be refunded to your card.' : ' Annual plans cancelled more than 10 days into their second half aren\'t refunded, so your access continues through the end of the year you paid for.')
+            ? ' Annual plans are not automatically refunded. Your cancellation has gone to the team for review; any refund is at our discretion, and we will reply within five business days. Your access continues through the end of the year you paid for.'
             : (refundEligible ? ' Because you cancelled before the 5th, this month\'s payment will be refunded to your card.' : ' Cancellations on or after the 5th aren\'t refunded for the current month, so your access continues through the period you paid for.');
           await sendEmail(u.email, 'Your GroundUp membership is cancelled',
             `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">You're all set, ${firstName(u.name)}.</h2>
