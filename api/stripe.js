@@ -318,8 +318,8 @@ async function ensureLnlCoupon(stripe) {
 // Revenue split — NREUV's share is a % of GROSS (the sticker price). The platform
 // absorbs Stripe's processing fee out of its own share.
 //
-// THE REFUND RESERVE: 20% of every payment stays in the Stripe platform balance;
-// only the remaining 80% is split immediately. The reserve is capped at $1,000 per
+// THE REFUND RESERVE: Stripe's fee comes off first (borne pro rata), then 20% of the
+// payment stays in the platform balance; only the remainder is split immediately. The reserve is capped at $1,000 per
 // ten paying members and swept on the 7th of each month down to the $1,000 floor
 // (api/broadcast.js), oldest slices first, each split at its own rate. A monthly
 // cancellation before the 5th consumes its slice, so the reserve funds the refund.
@@ -343,6 +343,9 @@ async function potCapCents(sql) {
 }
 function potWindowDays() { return 45; } // informational only — the 7th-of-the-month sweep decides releases
 
+// Revenue category per the services agreement, from the item's split rate.
+export const categoryOf = (item) => { const r = splitRate(item); return r >= 1 ? 'lunch_learn' : r >= 0.9 ? 'advisory' : 'course_membership'; };
+
 async function splitCharge(stripe, chargeId, item, sql) {
   const dest = process.env.NREUV_CONNECT_ACCOUNT;
   if (!dest || !chargeId) return;
@@ -352,30 +355,37 @@ async function splitCharge(stripe, chargeId, item, sql) {
     const bt = charge.balance_transaction;
     if (!bt || charge.currency !== 'usd') return;
     const gross = charge.amount;      // what the customer paid
-    const net = bt.net;               // what actually landed after Stripe's fee
-    // Hold 20% — but never past the pot cap ($1,000 per ten paying members). When
-    // the pot is full, new payments split 100% immediately; releases/consumptions free up room again.
-    let held = Math.floor(gross * POT_PCT);
+    const fee = bt.fee || 0;          // Stripe's processing fee
+    const net = bt.net;               // what landed after the fee
+    // Per the agreement: processing fees come off before the split (both parties
+    // bear them pro rata), then 20% of the payment is held for the refund reserve
+    // up to the cap ($1,000 per ten paying members), and the rest is split.
+    let held = Math.floor(net * POT_PCT);
     if (sql && held > 0) {
       try {
         const [pot] = await sql`SELECT COALESCE(SUM(held_cents), 0)::int AS total FROM held_transfers WHERE status = 'held'`;
         held = Math.max(0, Math.min(held, (await potCapCents(sql)) - (pot?.total || 0)));
       } catch { held = 0; }
     } else if (!sql) held = 0;
-    // Split only the non-pot 80% now; never transfer more than settled
-    const share = Math.min(Math.floor((gross - held) * rate), net);
+    const share = Math.max(0, Math.min(Math.floor((net - held) * rate), net - held));
     if (share > 0) {
       await stripe.transfers.create({
         amount: share, currency: 'usd', destination: dest,
         source_transaction: chargeId,
-        description: `NREUV ${Math.round(rate * 100)}% of gross less 20% refund pot — ${item || 'purchase'} (gross ${gross}¢, pot ${held}¢, fee ${gross - net}¢)`,
+        description: `NREUV ${Math.round(rate * 100)}% of net less reserve — ${item || 'purchase'} (gross ${gross}¢, fee ${fee}¢, reserve ${held}¢)`,
       });
     }
-    if (sql && held > 0) {
-      const days = potWindowDays(item);
-      await sql`INSERT INTO held_transfers (charge_id, customer_id, item, gross_cents, held_cents, rate_pct, release_after, status, created_at)
-        VALUES (${chargeId}, ${charge.customer || null}, ${item || null}, ${gross}, ${held}, ${Math.round(rate * 100)}, NOW() + (${days} || ' days')::interval, 'held', NOW())
-        ON CONFLICT (charge_id) DO NOTHING`;
+    if (sql) {
+      if (held > 0) {
+        await sql`INSERT INTO held_transfers (charge_id, customer_id, item, gross_cents, held_cents, rate_pct, release_after, status, created_at)
+          VALUES (${chargeId}, ${charge.customer || null}, ${item || null}, ${gross}, ${held}, ${Math.round(rate * 100)}, NOW() + interval '45 days', 'held', NOW())
+          ON CONFLICT (charge_id) DO NOTHING`;
+      }
+      try {
+        await sql`INSERT INTO revenue_ledger (charge_id, customer_id, item, category, rate_pct, gross_cents, fee_cents, net_cents, held_cents, nreuv_cents, status, created_at)
+          VALUES (${chargeId}, ${charge.customer || null}, ${item || null}, ${categoryOf(item)}, ${Math.round(rate * 100)}, ${gross}, ${fee}, ${net}, ${held}, ${share}, 'paid', to_timestamp(${charge.created}))
+          ON CONFLICT (charge_id) DO NOTHING`;
+      } catch (e) { console.error('ledger write failed', e.message); }
     }
   } catch (e) { console.error('split failed', chargeId, e.message); }
 }
@@ -703,6 +713,17 @@ export default async function handler(req, res) {
         }
       } else if (event.type === 'charge.refunded') {
         const ch = event.data.object;
+        // The ledger counts refunds against the month they are issued (agreement §2, §3)
+        try { await sql`UPDATE revenue_ledger SET refunded_cents = ${ch.amount_refunded || 0}, status = ${ch.refunded ? 'refunded' : 'partially_refunded'}, updated_at = NOW() WHERE charge_id = ${ch.id}`; } catch {}
+        try {
+          const [lg] = await sql`SELECT item, category, rate_pct, gross_cents, nreuv_cents, held_cents FROM revenue_ledger WHERE charge_id = ${ch.id}`;
+          const d = (c) => '$' + ((c || 0) / 100).toFixed(2);
+          await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
+            `REFUND ISSUED — reverse the NREUV share: ${d(ch.amount_refunded)} on ${lg?.item || 'a payment'}`,
+            `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">A refund was issued in Stripe</h2>
+             <p style="color:#444444;font-size:14px;line-height:1.8;">Charge ${ch.id} — ${lg?.item || 'unknown item'} (${lg?.category || 'uncategorized'}, NREUV ${lg?.rate_pct ?? '?'}%). Refunded <strong style="color:#161616;">${d(ch.amount_refunded)}</strong> of ${d(ch.amount)}.</p>
+             <p style="color:#444444;font-size:14px;line-height:1.8;">Per the services agreement a refund under the published terms reverses the split: reverse <strong style="color:#161616;">${lg ? d(Math.round((lg.nreuv_cents || 0) * Math.min(1, (ch.amount_refunded || 0) / Math.max(1, ch.amount)))) : 'the matching share'}</strong> of the NREUV transfer on this charge${lg?.held_cents ? `; the reserve was holding ${d(lg.held_cents)} of it` : ''}. A discretionary refund (an approved annual refund) comes out of NREUV's share alone — reverse the whole refunded amount from the transfer instead.</p>`);
+        } catch (e) { console.error('refund alert failed', e.message); }
         const [b] = await sql`
           UPDATE bookings SET status = 'refunded'
           WHERE charge_id = ${ch.payment_intent} AND status != 'refunded' RETURNING *`;
@@ -713,6 +734,21 @@ export default async function handler(req, res) {
             `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Payment refunded — cancel their slot</h2>
              <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u?.name}</strong> (${u?.email}) was refunded for <strong style="color:#161616;">${b.label}</strong>. If they already booked on the calendar, remove that appointment.</p>`);
         }
+      } else if (event.type === 'charge.dispute.created' || event.type === 'charge.dispute.closed') {
+        // Chargebacks: the agreement says one that exceeds the reserve reduces that
+        // month's Platform Revenue and is borne pro rata — nothing already paid out is clawed back.
+        const dp = event.data.object;
+        try { await sql`UPDATE revenue_ledger SET status = ${event.type === 'charge.dispute.closed' ? (dp.status === 'won' ? 'paid' : 'disputed_lost') : 'disputed'}, dispute_id = ${dp.id}, updated_at = NOW() WHERE charge_id = ${dp.charge}`; } catch {}
+        try {
+          const [lg] = await sql`SELECT item, category, rate_pct, gross_cents, nreuv_cents FROM revenue_ledger WHERE charge_id = ${dp.charge}`;
+          const [pot] = await sql`SELECT COALESCE(SUM(held_cents), 0)::int AS total FROM held_transfers WHERE status = 'held'`;
+          const d = (c) => '$' + ((c || 0) / 100).toFixed(2);
+          await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
+            event.type === 'charge.dispute.created' ? `CHARGEBACK — ${d(dp.amount)} disputed on ${lg?.item || 'a payment'}` : `Chargeback ${dp.status} — ${d(dp.amount)} on ${lg?.item || 'a payment'}`,
+            `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${event.type === 'charge.dispute.created' ? 'A bank dispute landed' : `Dispute ${dp.status}`}</h2>
+             <p style="color:#444444;font-size:14px;line-height:1.8;">Charge ${dp.charge} — ${lg?.item || 'unknown item'} (${lg?.category || 'uncategorized'}). Amount <strong style="color:#161616;">${d(dp.amount)}</strong>, reason: ${dp.reason || 'not given'}. Respond in Stripe → Disputes${dp.evidence_details?.due_by ? ` by ${new Date(dp.evidence_details.due_by * 1000).toLocaleDateString('en-US')}` : ''}.</p>
+             <p style="color:#444444;font-size:14px;line-height:1.8;">The reserve currently holds <strong style="color:#161616;">${d(pot?.total)}</strong>. Per the agreement, a chargeback the reserve cannot cover reduces Platform Revenue for the month it is issued and is borne by both parties in proportion to their shares of the ${lg?.category || 'applicable'} category; amounts already distributed are not clawed back. It is recorded on the ledger for the monthly statement.</p>`);
+        } catch (e) { console.error('dispute alert failed', e.message); }
       } else if (event.type === 'customer.subscription.deleted') {
         const sub = event.data.object;
         // Refund rules — alert-driven (the NREUV split transfer must be reversed
