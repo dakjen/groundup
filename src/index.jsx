@@ -1564,7 +1564,7 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
               onMouseEnter={e => { e.currentTarget.style.borderColor = "#b8010145"; e.currentTarget.style.transform = "translateY(-2px)"; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a0000"; e.currentTarget.style.transform = "none"; }}>
               <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 30, color: course.stageColor, lineHeight: 1, opacity: 0.4, minWidth: 40 }}>0{i + 1}</div>
+                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 30, color: course.stageColor, lineHeight: 1, opacity: 0.4, minWidth: 40 }}>{(() => { const m = String(course.stage || "").match(/Stage\s+(\d+)/i); const n = m ? Number(m[1]) : i; return String(n).padStart(2, "0"); })()}</div>
                 <div style={{ flex: 1, minWidth: 220 }}>
                   <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(18px,2.2vw,23px)", color: "#f0d8d8", margin: "0 0 3px", lineHeight: 1.2 }}>{course.title}</h2>
                   <p style={{ fontSize: 12.5, color: "#7a5858", fontFamily: "'DM Sans', sans-serif", margin: 0, lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" }}>{course.description}</p>
