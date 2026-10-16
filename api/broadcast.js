@@ -4,7 +4,7 @@ import { requireAdmin } from './_utils.js';
 import { sendBulk, sendEmail, siteUrl, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail, passExpiryEmail, waitlistConfirmEmail, retainerInterestEmail, countdownEmail, recommendEmail, launchEmail, foundingThanksEmail, firstName } from './_email.js';
 import { recommendPlan, sendRecommendBatch, sendLaunchBatch } from './waitlist.js';
 import { foundingSeats } from './stripe.js';
-import { insiderReminderEmail, generalFoundingEmail, generalHeadsUpEmail } from './_email.js';
+import { insiderReminderEmail, generalFoundingEmail, generalHeadsUpEmail, generalSeatsTomorrowEmail } from './_email.js';
 import { referredRevenue, rungFor } from './referrals.js';
 
 // Team email tools: send a custom email or an event announcement to a segment.
@@ -265,6 +265,23 @@ export default async function handler(req, res) {
             }
             drip.insider_reminder = n;
             await sql`INSERT INTO settings (key, value) VALUES ('drip_insider_reminder', 'sent') ON CONFLICT (key) DO UPDATE SET value = 'sent'`;
+          }
+        }
+        // 24 hours before the window closes, seats remain → tell the general list what's coming
+        if (now >= closesAt - DAY && now < closesAt) {
+          const [done] = await sql`SELECT value FROM settings WHERE key = 'drip_general_tomorrow'`;
+          if (!done?.value) {
+            const seats = await foundingSeats(sql);
+            let n = 0;
+            if (seats.remaining > 0) {
+              const rows = (await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = 'general' AND NOT COALESCE(comped, FALSE)`).filter(r => !joined.has(String(r.email).toLowerCase()));
+              for (const r of rows) {
+                const mail = generalSeatsTomorrowEmail(r.name, { seatsLeft: seats.remaining, opensText: closesText });
+                if (await sendEmail(r.email, mail.subject, mail.html, { marketing: true })) n++;
+              }
+            }
+            drip.general_tomorrow = n;
+            await sql`INSERT INTO settings (key, value) VALUES ('drip_general_tomorrow', ${seats.remaining > 0 ? 'sent' : 'skipped-no-seats'}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`;
           }
         }
         // Step 6 — window closed, seats remain → the general list
