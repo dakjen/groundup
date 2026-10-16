@@ -111,24 +111,36 @@ export default async function handler(req, res) {
       } catch (e) { console.error('launch drip failed for ' + list, e.message); }
     }
 
-    // Refund pot: release every slice whose refund window has closed — NREUV's
-    // rate applies to the held 20% exactly as it did to the 80% on day one.
+    // Refund reserve sweep. The reserve fills from 20% of each sale (up to the
+    // cap: $1,000 per ten paying members). On the 7th of each month — two days
+    // after the monthly refund window closes on the 5th — it is swept down to the
+    // $1,000 floor, oldest slices first, each released at its own payment's rate.
     let released = 0, releasedCents = 0;
-    if (process.env.STRIPE_SECRET_KEY && process.env.NREUV_CONNECT_ACCOUNT) {
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-      const due = await sql`SELECT id, charge_id, item, held_cents, rate_pct FROM held_transfers
-        WHERE status = 'held' AND release_after < NOW() LIMIT 100`;
-      for (const h of due) {
-        const amount = Math.floor(h.held_cents * (h.rate_pct / 100));
-        try {
-          if (amount > 0) await stripe.transfers.create({
-            amount, currency: 'usd', destination: process.env.NREUV_CONNECT_ACCOUNT,
-            source_transaction: h.charge_id,
-            description: `NREUV ${h.rate_pct}% of refund-pot release — ${h.item || 'purchase'} (pot ${h.held_cents}¢)`,
-          });
-          await sql`UPDATE held_transfers SET status = 'released', released_at = NOW() WHERE id = ${h.id}`;
-          released++; releasedCents += amount;
-        } catch (e) { console.error('pot release failed', h.charge_id, e.message); }
+    if (!dripOnly && process.env.STRIPE_SECRET_KEY && process.env.NREUV_CONNECT_ACCOUNT) {
+      const et = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+      const etDay = Number(et.find(p => p.type === 'day').value);
+      const monthKey = `pot_sweep_${et.find(p => p.type === 'year').value}-${et.find(p => p.type === 'month').value}`;
+      const [sweptRow] = await sql`SELECT value FROM settings WHERE key = ${monthKey}`;
+      if (etDay >= 7 && !sweptRow?.value) {
+        const FLOOR = 100000;
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+        const [tot] = await sql`SELECT COALESCE(SUM(held_cents), 0)::int AS total FROM held_transfers WHERE status = 'held'`;
+        let total = tot?.total || 0;
+        const held = await sql`SELECT id, charge_id, item, held_cents, rate_pct FROM held_transfers WHERE status = 'held' ORDER BY created_at ASC LIMIT 500`;
+        for (const h of held) {
+          if (total - h.held_cents < FLOOR) break;
+          const amount = Math.floor(h.held_cents * (h.rate_pct / 100));
+          try {
+            if (amount > 0) await stripe.transfers.create({
+              amount, currency: 'usd', destination: process.env.NREUV_CONNECT_ACCOUNT,
+              source_transaction: h.charge_id,
+              description: `NREUV ${h.rate_pct}% of reserve release — ${h.item || 'purchase'} (reserve ${h.held_cents}¢)`,
+            });
+            await sql`UPDATE held_transfers SET status = 'released', released_at = NOW() WHERE id = ${h.id}`;
+            total -= h.held_cents; released++; releasedCents += amount;
+          } catch (e) { console.error('reserve release failed', h.charge_id, e.message); break; }
+        }
+        await sql`INSERT INTO settings (key, value) VALUES (${monthKey}, ${`swept ${released} slices, ${releasedCents}¢ to NREUV, reserve now ${total}¢`}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`;
       }
     }
     // Founding email — fires itself the day the insider waitlist reaches 25

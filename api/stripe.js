@@ -318,24 +318,30 @@ async function ensureLnlCoupon(stripe) {
 // Revenue split — NREUV's share is a % of GROSS (the sticker price). The platform
 // absorbs Stripe's processing fee out of its own share.
 //
-// THE REFUND POT: 20% of every payment stays in the Stripe platform balance
-// until its refund window closes; only the remaining 80% is split immediately.
-// The daily cron releases each pot slice once the window passes (45 days for
-// monthly/one-time, 193 days for annual, so a discretionary refund can still be funded),
-// splitting it at the same rate. A refund-eligible cancellation consumes the
-// slice instead, so the pot funds the refund and NREUV keeps what was sent.
+// THE REFUND RESERVE: 20% of every payment stays in the Stripe platform balance;
+// only the remaining 80% is split immediately. The reserve is capped at $1,000 per
+// ten paying members and swept on the 7th of each month down to the $1,000 floor
+// (api/broadcast.js), oldest slices first, each split at its own rate. A monthly
+// cancellation before the 5th consumes its slice, so the reserve funds the refund.
 const POT_PCT = 0.20;
 // The pot's ceiling grows with the membership: $1,000 for every ten paying
 // members (rounded up), never less than $1,000. Twenty members → $2,000;
 // twenty-one → $3,000. The settings key refund_pot_per_10_cents overrides the step.
+// Per the services agreement the maximum is measured on the first of the month
+// and applies for that month, so the first computation each month is kept.
 async function potCapCents(sql) {
+  const et = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit' }).formatToParts(new Date());
+  const key = `pot_cap_${et.find(p => p.type === 'year').value}-${et.find(p => p.type === 'month').value}`;
+  try { const [r] = await sql`SELECT value FROM settings WHERE key = ${key}`; const v = parseInt(r?.value, 10); if (Number.isFinite(v) && v > 0) return v; } catch {}
   let per = 100000;
   try { const [r] = await sql`SELECT value FROM settings WHERE key = 'refund_pot_per_10_cents'`; const v = parseInt(r?.value, 10); if (Number.isFinite(v) && v > 0) per = v; } catch {}
   let paying = 0;
   try { const [r] = await sql`SELECT COUNT(*)::int AS n FROM users WHERE membership_status = 'active' AND tier IN ('Basic','Builder','Premium','Elite') AND COALESCE(comped, FALSE) = FALSE AND COALESCE(role, 'member') = 'member'`; paying = r?.n || 0; } catch {}
-  return per * Math.max(1, Math.ceil(paying / 10));
+  const cap = per * Math.max(1, Math.ceil(paying / 10));
+  try { await sql`INSERT INTO settings (key, value) VALUES (${key}, ${String(cap)}) ON CONFLICT (key) DO NOTHING`; } catch {}
+  return cap;
 }
-function potWindowDays(item) { return String(item || '').endsWith('_annual') ? 193 : 45; }
+function potWindowDays() { return 45; } // informational only — the 7th-of-the-month sweep decides releases
 
 async function splitCharge(stripe, chargeId, item, sql) {
   const dest = process.env.NREUV_CONNECT_ACCOUNT;
@@ -732,7 +738,7 @@ export default async function handler(req, res) {
               `ANNUAL CANCELLATION — refund subject to your approval: ${ru.name}`,
               `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">An annual member cancelled</h2>
                <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${ru.name}</strong> (${ru.email}, ${ru.tier}) cancelled an ANNUAL membership about ${monthsIn.toFixed(1)} months in. They paid <strong style="color:#161616;">${d(paid)}</strong>. Annual plans carry no automatic refund — any refund is at your discretion, and they have been told the team will review and reply.</p>
-               <p style="color:#444444;font-size:14px;line-height:1.8;">${held > 0 ? `The refund pot is still holding <strong style="color:#161616;">${d(held)}</strong> of this payment and can fund that much of any refund you approve.` : 'The pot slice for this payment has already been released.'} If you refund, process it on their annual invoice in Stripe and reverse the matching share of the NREUV transfer.</p>`);
+               <p style="color:#444444;font-size:14px;line-height:1.8;">If you approve a refund, it comes out of NREUV's share alone — process it on their annual invoice in Stripe and reverse the matching NREUV transfer; the platform fee stays as it was. The reserve is not used for annual refunds.</p>`);
           } catch (e) { console.error('annual cancel alert failed', e.message); }
         }
         if (refundEligible) {
