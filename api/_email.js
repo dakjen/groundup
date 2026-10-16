@@ -663,6 +663,31 @@ export function generalHeadsUpEmail(name, opts = {}) {
   };
 }
 
+// The day before the window closes, to the GENERAL list: in 24 hours the
+// remaining founding seats open to them, with the live count.
+export function generalSeatsTomorrowEmail(name, opts = {}) {
+  const first = firstName(name);
+  const left = Number(opts.seatsLeft ?? 0);
+  const opensText = opts.opensText || 'tomorrow at midnight';   // e.g. "Friday, November 6 at 12:00 AM EST"
+  return {
+    subject: `In 24 hours: ${left} founding seat${left === 1 ? '' : 's'} open${left === 1 ? 's' : ''} to you`,
+    html: `
+      ${seqHero('/opt/hough-exterior.jpg', '9410 Hough, Cleveland')}
+      ${seqKicker('Tomorrow')}
+      ${seqH1(`${left} founding seat${left === 1 ? '' : 's'} left, ${first}, and ${left === 1 ? 'it opens' : 'they open'} to you in 24 hours.`)}
+      ${seqP(`Our insiders have had the first days. As of this morning <strong style="color:#161616;">${left} of the twenty-five founding seat${left === 1 ? '' : 's'} ${left === 1 ? 'is' : 'are'} still open</strong>. At <strong style="color:#161616;">${opensText}</strong> ${left === 1 ? 'it goes' : 'they go'} to the waitlist, first come first served. We will email you the moment the door opens, with a link that creates your account on the spot.`)}
+      ${seqFoundingBlock()}
+      ${seqBlock('Have this ready', `
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0;">
+          ${seqRow('Your plan', 'pick it from the table below — the founding rate applies to whichever membership you choose')}
+          ${seqRow('Your link', 'it arrives by email at the opening; the page tells you if the seats are gone before you pay')}
+        </table>`)}
+      ${seqBlock('Membership at founding rates', seqPlanTable(true))}
+      ${seqDates()}
+      ${seqSign()}`,
+  };
+}
+
 export function generalFoundingEmail(name, opts = {}) {
   const first = firstName(name);
   const left = Number(opts.seatsLeft ?? 0);
