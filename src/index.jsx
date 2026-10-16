@@ -3740,6 +3740,8 @@ function OfficeHoursPage({ member, onSignIn, setActivePage }) {
                       </div>
                       <div style={{ color: "#e0c4c4", fontSize: 13.5, fontFamily: font, fontWeight: 700 }}>{new Date(ev.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}{ev.time ? ` · ${ev.time}` : ""}</div>
                       {ev.description && <div style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginTop: 6 }}>{ev.description}</div>}
+                      {ev.my_rsvp && ev.link && <a href={ev.link} target="_blank" rel="noreferrer" style={{ display: "inline-block", marginTop: 10, color: "#22c55e", fontSize: 13, fontFamily: font, fontWeight: 800, textDecoration: "none", border: "1px solid #22c55e50", borderRadius: 8, padding: "7px 14px" }}>Join the session →</a>}
+                      {!ev.my_rsvp && ev.has_link && <div style={{ color: "#8a7070", fontSize: 12, fontFamily: font, marginTop: 8 }}>The meeting link appears here once you hold a seat.</div>}
                     </div>
                     <div style={{ textAlign: "center", minWidth: 130 }}>
                       <div style={{ fontSize: 9, color: "#8f7070", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 4 }}>Starts in</div>
@@ -3765,7 +3767,7 @@ function OfficeHoursPage({ member, onSignIn, setActivePage }) {
 // Admin: drop office-hours batches, watch the RSVP lists
 function OfficeHoursAdmin({ btnRed, btnGhost, inp, lbl }) {
   const [data, setData] = useState(null);
-  const [form, setForm] = useState({ title: "", date: "", time: "", description: "", audience: "all" });
+  const [form, setForm] = useState({ title: "", date: "", time: "", description: "", audience: "all", link: "" });
   // Cohorts available for cohort-only sessions
   const [partners, setPartners] = useState([]);
   useEffect(() => {
@@ -3803,9 +3805,10 @@ function OfficeHoursAdmin({ btnRed, btnGhost, inp, lbl }) {
             {partners.length === 0 && <div style={{ fontSize: 11, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>Cohort options appear once a partner page exists (Admin → All Courses → Partner Pages).</div>}
           </div>
           <div><label style={lbl}>Date &amp; time (your local time)</label><input type="datetime-local" value={toLocalInput(form.date)} onChange={e => setForm({ ...form, date: e.target.value ? new Date(e.target.value).toISOString() : "" })} style={{ ...inp, maxWidth: "none", marginBottom: 0, colorScheme: "light" }} /></div>
+          <div><label style={lbl}>Meeting link (Zoom, Google Meet)</label><input value={form.link} onChange={e => setForm({ ...form, link: e.target.value })} placeholder="https://zoom.us/j/…" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /><div style={{ fontSize: 11, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>Shown only to members who hold a seat.</div></div>
           <div><label style={lbl}>Time label (e.g. 12–2 PM ET)</label><input value={form.time} onChange={e => setForm({ ...form, time: e.target.value })} placeholder="12–2 PM ET" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} /></div>
         </div>
-        <button onClick={async () => { try { await call("POST", { action: "add_event", kind: "office", ...form }); setForm({ title: "", date: "", time: "", description: "", audience: "all" }); flash(true, "Office hours added to the drop."); await load(); } catch (e) { flash(false, e.message); } }} style={btnRed}>Add to Drop</button>
+        <button onClick={async () => { try { await call("POST", { action: "add_event", kind: "office", ...form }); setForm({ title: "", date: "", time: "", description: "", audience: "all", link: "" }); flash(true, "Office hours added to the drop."); await load(); } catch (e) { flash(false, e.message); } }} style={btnRed}>Add to Drop</button>
       </div>
       <div style={section}>
         <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Scheduled ({officeEvents.filter(e => new Date(e.date) > Date.now()).length} upcoming)</div>
@@ -3822,6 +3825,7 @@ function OfficeHoursAdmin({ btnRed, btnGhost, inp, lbl }) {
                   <span style={{ color: "#8d847a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginLeft: 10 }}>{new Date(ev.date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}{ev.time ? ` · ${ev.time}` : ""}{past ? " · past" : ""}</span>
                 </div>
                 <span style={{ color: "#6b6259", fontSize: 12, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>{rsvps.length} RSVP{rsvps.length === 1 ? "" : "s"}</span>
+                <button onClick={async () => { const l = window.prompt("Meeting link for this session (leave empty to remove):", ev.link || ""); if (l === null) return; try { await call("POST", { action: "update_event", id: ev.id, link: l.trim() }); flash(true, l.trim() ? "Link saved — seat holders can join from it." : "Link removed."); await load(); } catch (e) { flash(false, e.message); } }} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px", color: ev.link ? "#1a7a3a" : "#b80101", borderColor: ev.link ? "#1a7a3a40" : "#b8010140" }}>{ev.link ? "Link set" : "No link — add one"}</button>
                 <button onClick={async () => { const t = window.prompt("Session name:", ev.title); if (!t || t === ev.title) return; try { await call("POST", { action: "update_event", id: ev.id, title: t }); flash(true, "Renamed."); await load(); } catch (e) { flash(false, e.message); } }} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Rename</button>
                 <button onClick={async () => { if (!window.confirm(`Remove "${ev.title}"?`)) return; try { await call("POST", { action: "remove_event", id: ev.id }); flash(true, "Removed."); await load(); } catch (e) { flash(false, e.message); } }} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Remove</button>
               </div>

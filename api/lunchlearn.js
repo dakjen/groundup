@@ -173,7 +173,7 @@ export default async function handler(req, res) {
           office_hours = {
             eligible: true, gate,
             allowance: { limit, used: usedRows[0]?.n || 0, remaining: Math.max(0, limit - (usedRows[0]?.n || 0)) },
-            events: officeEvents.filter(e => admin || audienceFits(e, me, rank >= 3 || lifetime ? Math.max(rank, 3) : rank)).map(e => ({ ...e, my_rsvp: myRsvpKeys.includes(e.date) })),
+            events: officeEvents.filter(e => admin || audienceFits(e, me, rank >= 3 || lifetime ? Math.max(rank, 3) : rank)).map(e => { const mine = myRsvpKeys.includes(e.date); return { ...e, my_rsvp: mine, has_link: !!e.link, link: mine || admin ? e.link : undefined }; }),
           };
         } else {
           office_hours = { eligible: false, events: [] };
@@ -292,6 +292,7 @@ export default async function handler(req, res) {
       if (req.body.title) ev.title = String(req.body.title).slice(0, 200);
       if (req.body.time !== undefined) ev.time = String(req.body.time || '').slice(0, 50);
       if (req.body.description !== undefined) ev.description = String(req.body.description || '').slice(0, 500);
+      if (req.body.link !== undefined) { const l = String(req.body.link || '').trim().slice(0, 500); if (l && !/^https?:\/\//i.test(l)) return res.status(400).json({ error: 'The meeting link must start with http' }); if (l) ev.link = l; else delete ev.link; }
       await saveEvents(sql, events);
       return res.json({ success: true, events });
     }
