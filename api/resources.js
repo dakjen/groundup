@@ -272,16 +272,22 @@ export default async function handler(req, res) {
 
     // ── Course catalog: titles and descriptions only, safe to show anyone ──
     if (req.method === 'GET' && req.query.courses === '1') {
-      const rows = await sql`SELECT id, title, description, stage, stage_color, duration, series, lessons, hidden FROM courses ORDER BY position, id`;
+      const rows = await sql`SELECT id, title, description, stage, stage_color, duration, series, lessons, hidden, available_at FROM courses ORDER BY position, id`;
+      // A hidden course with a release date opens itself on that date; until
+      // then members see it announced as coming.
+      const released = (c) => !c.hidden || (c.available_at && new Date(c.available_at) <= new Date());
+      const upcoming = rows.filter(c => c.hidden && c.available_at && new Date(c.available_at) > new Date())
+        .map(c => ({ id: c.id, title: c.title, series: c.series || null, available_at: c.available_at }));
       // Team gets full lessons (for the admin preview) INCLUDING unpublished
       // drafts; everyone else gets published courses only, id + title per lesson
       const catalog = rows
-        .filter(c => admin || !c.hidden)
+        .filter(c => admin || released(c))
         .map(c => ({
           id: c.id, title: c.title, description: c.description,
           stage: c.stage, stageColor: c.stage_color, duration: c.duration, series: c.series || null,
           min_tier: c.series ? 'Premium' : 'Basic',
           hidden: admin ? !!c.hidden : undefined,
+          available_at: c.available_at || null,
           // Unpublished lessons (draft: true) exist only for the team. They are
           // always appended after the published ones, so members' lesson indexes
           // (and their progress) are unaffected.
@@ -296,17 +302,17 @@ export default async function handler(req, res) {
           for (const r of rows) progress[r.course_id] = r.n;
         } catch { /* table appears after migrate */ }
       }
-      return res.json({ courses: catalog, progress });
+      return res.json({ courses: catalog, progress, upcoming });
     }
 
     // ── Full course content: server-enforced entitlements ──
     // The lesson bodies never ship in the JS bundle; they only leave the
     // database for someone this block says is allowed to read them.
     if (req.method === 'GET' && req.query.course) {
-      const [c] = await sql`SELECT id, title, description, stage, stage_color, duration, series, lessons, hidden FROM courses WHERE id = ${req.query.course}`;
+      const [c] = await sql`SELECT id, title, description, stage, stage_color, duration, series, lessons, hidden, available_at FROM courses WHERE id = ${req.query.course}`;
       if (!c) return res.status(404).json({ error: 'Course not found' });
-      // Unpublished drafts exist only for the team — invisible to members
-      if (c.hidden && !admin) return res.status(404).json({ error: 'Course not found' });
+      // Unpublished drafts exist only for the team — invisible to members until their release date, if one is set
+      if (c.hidden && !admin && !(c.available_at && new Date(c.available_at) <= new Date())) return res.status(404).json({ error: 'Course not found' });
       const shape = (full) => ({
         id: c.id, title: c.title, description: c.description,
         stage: c.stage, stageColor: c.stage_color, duration: c.duration, series: c.series || null,

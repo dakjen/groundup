@@ -1467,10 +1467,11 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
   const [catalog, setCatalog] = useState(null);
   const [catalogFailed, setCatalogFailed] = useState(false);
   const [progress, setProgress] = useState({}); // course id → lessons completed
+  const [upcoming, setUpcoming] = useState([]); // hidden courses with a release date — announced, not open
   useEffect(() => {
     fetch("/api/resources?courses=1", { headers: getMemberToken() ? { Authorization: "Bearer " + getMemberToken() } : {} })
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.courses?.length) { setCatalog(d.courses.filter(c => !c.hidden)); setProgress(d.progress || {}); } else setCatalogFailed(true); })
+      .then(d => { if (d?.courses?.length) { setCatalog(d.courses.filter(c => !c.hidden)); setProgress(d.progress || {}); setUpcoming(d.upcoming || []); } else setCatalogFailed(true); })
       .catch(() => setCatalogFailed(true));
   }, []);
   // No flash-of-wrong-catalog: wait for the live list, and only fall back to
@@ -1517,15 +1518,15 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
             <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(38px,5vw,52px)", color: "#f5e8e8", margin: 0, lineHeight: 1.1 }}>Welcome back{member?.name ? `, ${firstName(member.name)}` : ""}.</h1>
             {/* The Underwriting Series is still unpublished — announce it here, next to
                 their name, rather than interrupting the curriculum further down. */}
-            {!seriesGroups["The Underwriting Series"] && (
+            {!seriesGroups["The Underwriting Series"] && (() => { const up = upcoming.find(u => u.series === "The Underwriting Series"); const when = up?.available_at ? new Date(up.available_at).toLocaleDateString(undefined, { month: "long", year: "numeric" }) : null; return (
               <span title="Underwriting the Project Budget & The Closing Draw — Dr. Merritt's own method, line by line." style={{ display: "inline-flex", alignItems: "stretch", borderRadius: 3, overflow: "hidden", border: "1px solid #b8010155", whiteSpace: "nowrap", alignSelf: "center", marginLeft: "auto" }}>
-                <span style={{ background: "#b80101", color: "#ffffff", fontSize: 9, fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", padding: "6px 10px", display: "flex", alignItems: "center" }}>Coming soon</span>
+                <span style={{ background: "#b80101", color: "#ffffff", fontSize: 9, fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", padding: "6px 10px", display: "flex", alignItems: "center" }}>{when ? `Coming ${when}` : "Coming"}</span>
                 <span style={{ background: "#150000", padding: "5px 12px", display: "flex", alignItems: "baseline", gap: 8 }}>
                   <span style={{ color: "#f0d8d8", fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 15.5 }}>The Underwriting Series</span>
                   <span style={{ color: "#8a7070", fontFamily: "'DM Sans', sans-serif", fontSize: 11.5 }}>her own method, line by line</span>
                 </span>
               </span>
-            )}
+            ); })()}
           </div>
           <p style={{ color: "#8a7070", fontSize: 15, maxWidth: 620, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif", margin: 0 }}>Everything you learn with lives here — the courses, the library, the glossary, and the rooms where your questions get answered.</p>
         </div>
