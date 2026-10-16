@@ -72,8 +72,48 @@ export default async function handler(req, res) {
       return res.json(pc ? { name: pc.owner_name, company: pc.company || null, logo: pc.logo_url || null } : { name: null });
     } catch { return res.json({ name: null }); }
   }
+  // Public: someone wants to be a referral partner (the /refer form, linked
+  // from the launch-party save-the-date). Stored for the team and emailed.
+  if (req.method === 'POST' && req.body?.action === 'partner_request') {
+    try {
+      const sql = neon(process.env.DATABASE_URL);
+      const name = String(req.body.name || '').trim().slice(0, 200);
+      const email = String(req.body.email || '').trim().toLowerCase().slice(0, 200);
+      const company = String(req.body.company || '').trim().slice(0, 200) || null;
+      const phone = String(req.body.phone || '').trim().slice(0, 50) || null;
+      const note = String(req.body.note || '').trim().slice(0, 2000) || null;
+      if (!name || !email) return res.status(400).json({ error: 'Name and email are required' });
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'That email doesn\'t look right' });
+      try { await sql`CREATE TABLE IF NOT EXISTS partner_requests (id SERIAL PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, company TEXT, phone TEXT, note TEXT, status TEXT DEFAULT 'new', created_at TIMESTAMP DEFAULT NOW())`; } catch {}
+      const [dup] = await sql`SELECT id FROM partner_requests WHERE email = ${email} AND status = 'new'`;
+      if (!dup) await sql`INSERT INTO partner_requests (name, email, company, phone, note) VALUES (${name}, ${email}, ${company}, ${phone}, ${note})`;
+      const esc = (t) => String(t || '').replace(/</g, '&lt;');
+      const html = `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Wants to be a referral partner — ${esc(name)}</h2>
+        <p style="color:#444444;font-size:14px;line-height:1.9;">
+          <strong style="color:#161616;">Name:</strong> ${esc(name)}<br/>
+          <strong style="color:#161616;">Email:</strong> ${esc(email)}<br/>
+          ${company ? `<strong style="color:#161616;">Company:</strong> ${esc(company)}<br/>` : ''}
+          ${phone ? `<strong style="color:#161616;">Phone:</strong> ${esc(phone)}<br/>` : ''}
+        </p>
+        ${note ? `<p style="color:#444444;font-size:14px;line-height:1.8;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;padding:14px 18px;">${esc(note)}</p>` : ''}
+        <p style="color:#7a5050;font-size:12px;line-height:1.7;">Create their code from Admin → Referrals; the request is listed there.</p>`;
+      for (const addr of ['djmj@nreuv.com', 'dakotah@dakjencreative.com']) { try { await sendEmail(addr, `REFERRAL PARTNER REQUEST: ${name}`, html); } catch {} }
+      return res.json({ success: true });
+    } catch (e) { console.error('partner_request failed', e); return res.status(500).json({ error: 'Could not send that right now' }); }
+  }
   if (!requireAdmin(req, res)) return;
   const sql = neon(process.env.DATABASE_URL);
+
+  // Referral-partner requests for the team: who asked, and where it stands
+  if (req.method === 'GET' && req.query.requests === '1') {
+    try { const requests = await sql`SELECT * FROM partner_requests WHERE status = 'new' ORDER BY created_at DESC LIMIT 200`; return res.json({ requests }); }
+    catch { return res.json({ requests: [] }); }
+  }
+  if (req.method === 'POST' && req.body?.action === 'request_status') {
+    const status = ['new', 'done', 'dismissed'].includes(req.body.status) ? req.body.status : 'done';
+    await sql`UPDATE partner_requests SET status = ${status} WHERE id = ${Number(req.body.id)}`;
+    return res.json({ success: true });
+  }
 
   try {
     // Partner referral codes: a custom code per ambassador; signups through

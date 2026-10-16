@@ -279,6 +279,8 @@ const STATEMENTS = [
   `ALTER TABLE deal_files ADD COLUMN IF NOT EXISTS project_id INTEGER`,
   `ALTER TABLE deal_files ADD COLUMN IF NOT EXISTS size BIGINT DEFAULT 0`,
   `ALTER TABLE deal_files ADD COLUMN IF NOT EXISTS folder TEXT`,
+  // People who raised a hand to be a referral partner (from the /refer form)
+  `CREATE TABLE IF NOT EXISTS partner_requests (id SERIAL PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, company TEXT, phone TEXT, note TEXT, status TEXT DEFAULT 'new', created_at TIMESTAMP DEFAULT NOW())`,
   // Meetings an advisory client asks for: what they want to cover, how long, and when Dr. Merritt has it on the calendar
   `CREATE TABLE IF NOT EXISTS retainer_meetings (id SERIAL PRIMARY KEY, retainer_id INTEGER NOT NULL, minutes INTEGER DEFAULT 60, topic TEXT, status TEXT DEFAULT 'requested', scheduled_at TIMESTAMP, created_at TIMESTAMP DEFAULT NOW())`,
   `CREATE TABLE IF NOT EXISTS channel_mutes (user_id INTEGER NOT NULL, channel_id INTEGER NOT NULL, PRIMARY KEY (user_id, channel_id))`,

@@ -4301,6 +4301,56 @@ function parseYouTubeId(input) {
 // Attach PDFs and videos to existing lessons (courses themselves ship in code)
 // ─── PARTNER PAGE: a company's branded slice of GroundUp ────────────────────
 // ─── PARTNER INTEREST FORM: organizations exploring cohort sponsorship ──────
+// Friends, family and colleagues who want to send people to GroundUp. A short
+// form; the team sees the request on Admin → Referrals and makes their code.
+function ReferPartnerPage() {
+  const font = "'DM Sans', sans-serif";
+  const [form, setForm] = useState({ name: "", email: "", company: "", phone: "", note: "" });
+  const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+  const inp = { width: "100%", boxSizing: "border-box", background: "#0a0505", border: "1px solid #2a0000", borderRadius: 10, padding: "13px 14px", color: "#f0d8d8", fontFamily: font, fontSize: 14, outline: "none" };
+  const lbl = { display: "block", fontSize: 10, color: "#8a7070", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 7 };
+  const submit = async (e) => {
+    e.preventDefault(); setBusy(true); setErr(null);
+    try {
+      const res = await fetch("/api/referrals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "partner_request", ...form }) });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || "Something went wrong");
+      setDone(true);
+    } catch (e2) { setErr(e2.message); } finally { setBusy(false); }
+  };
+  return (
+    <div style={{ background: "#000", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
+      <div style={{ maxWidth: 600, margin: "0 auto" }}>
+        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12, textAlign: "center" }}>Referral partners</div>
+        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(32px,4.5vw,46px)", color: "#f5e8e8", textAlign: "center", lineHeight: 1.15, marginBottom: 14 }}>Send people to GroundUp.<br />Earn your membership.</h1>
+        <p style={{ color: "#8a7070", fontSize: 14.5, fontFamily: font, lineHeight: 1.8, textAlign: "center", maxWidth: 500, margin: "0 auto 36px" }}>Know developers, nonprofits, or anyone who should be learning this work from Dr. Merritt? Tell us you are in. You get your own link to share, and as the people you send join, you earn toward a complimentary GroundUp membership.</p>
+        {done ? (
+          <div style={{ background: "#0d0404", border: "1px solid #22c55e50", borderRadius: 18, padding: "44px 36px", textAlign: "center" }}>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#f5e8e8", marginBottom: 10 }}>You're in.</h2>
+            <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font, lineHeight: 1.8 }}>The team has your request. You will get your personal referral link by email, with a note on how the rewards work.</p>
+          </div>
+        ) : (
+          <form onSubmit={submit} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 18, padding: "34px 32px", display: "grid", gap: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              <div><label style={lbl}>Your name</label><input style={inp} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required maxLength={200} autoComplete="name" /></div>
+              <div><label style={lbl}>Email</label><input style={inp} type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required maxLength={200} autoComplete="email" /></div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              <div><label style={lbl}>Company or organization (optional)</label><input style={inp} value={form.company} onChange={e => setForm({ ...form, company: e.target.value })} maxLength={200} autoComplete="organization" /></div>
+              <div><label style={lbl}>Phone (optional)</label><input style={inp} type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} maxLength={50} autoComplete="tel" /></div>
+            </div>
+            <div><label style={lbl}>Who would you send our way? (optional)</label><textarea style={{ ...inp, resize: "vertical" }} rows={3} value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} maxLength={2000} placeholder="Developers in my network, a nonprofit board I sit on, my church…" /></div>
+            {err && <div style={{ color: "#ff6b6b", fontSize: 13, fontFamily: font }}>{err}</div>}
+            <button type="submit" disabled={busy} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "14px 24px", fontFamily: font, fontWeight: 800, fontSize: 14, cursor: "pointer", opacity: busy ? 0.6 : 1 }}>{busy ? "Sending…" : "Count me in →"}</button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PartnerInterestPage() {
   const font = "'DM Sans', sans-serif";
   const [form, setForm] = useState({ org: "", contact: "", email: "", phone: "", size: "", needs: "" });
@@ -5934,6 +5984,7 @@ function ContactsTab({ btnRed, btnGhost, inp, lbl }) {
 }
 
 function ReferralTab({ btnRed, btnGhost, inp, lbl, mode = 'referrals' }) {
+  const authHeaders = () => ({ Authorization: "Bearer " + sessionStorage.getItem("adminToken") });
   const showCodes = mode === 'referrals';
   const showInvites = mode === 'invites';
   const [invites, setInvites] = useState([]);
@@ -6025,6 +6076,15 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl, mode = 'referrals' }) {
   // circulation long after that.
   const codeLink = (c) => `https://community.drginamerritt.net/waitlist?list=general&source=${encodeURIComponent("ref:" + c.code)}`;
 
+  // People who asked to be a referral partner (the /refer form). One click
+  // prefills the code form with their details.
+  const [requests, setRequests] = useState([]);
+  const loadRequests = () => fetch("/api/referrals?requests=1", { headers: authHeaders() })
+    .then(r => r.ok ? r.json() : { requests: [] }).then(d => setRequests(d.requests || [])).catch(() => {});
+  useEffect(() => { loadRequests(); }, []);
+  const settleRequest = async (rq, status) => {
+    try { await call("POST", { action: "request_status", id: rq.id, status }); loadRequests(); } catch (e) { flash(false, e.message); }
+  };
   // People who named a partner in "where did you hear about us" without
   // arriving on their link. Credited only when someone agrees.
   const [claims, setClaims] = useState([]);
@@ -6121,6 +6181,25 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl, mode = 'referrals' }) {
           </div>
           <button onClick={createCode} style={btnRed}>Create Code</button>
         </div>
+        {requests.length > 0 && (
+          <div style={{ background: "#fdf1f1", border: "1px solid #e8b4b4", borderRadius: 12, padding: "16px 18px", marginBottom: 18 }}>
+            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 4 }}>Want to be a referral partner — {requests.length}</div>
+            <p style={{ color: "#8d7a7a", fontSize: 12, fontFamily: "'DM Sans', sans-serif", margin: "0 0 12px", lineHeight: 1.6 }}>From the sign-up form at community.drginamerritt.net/refer. "Make their code" fills the form above with their details; create it, then send them the link.</p>
+            {requests.map(rq => (
+              <div key={rq.id} style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", padding: "9px 0", borderTop: "1px solid #f3dede", fontFamily: "'DM Sans', sans-serif" }}>
+                <div style={{ flex: 1, minWidth: 220 }}>
+                  <span style={{ color: "#222222", fontSize: 13, fontWeight: 700 }}>{rq.name}</span>
+                  <span style={{ color: "#9a9a9a", fontSize: 12 }}> · {rq.email}{rq.company ? ` · ${rq.company}` : ""}{rq.phone ? ` · ${rq.phone}` : ""}</span>
+                  {rq.note && <div style={{ color: "#6a5a5a", fontSize: 12, marginTop: 2 }}>{rq.note}</div>}
+                  <div style={{ color: "#9a9a9a", fontSize: 11, marginTop: 2 }}>{new Date(rq.created_at).toLocaleDateString()}</div>
+                </div>
+                <button onClick={() => { setPcForm(f => ({ ...f, owner_name: rq.name, owner_email: rq.email, company: rq.company || "" })); window.scrollTo({ top: 0, behavior: "smooth" }); }} style={{ ...btnRed, fontSize: 11, padding: "5px 12px" }}>Make their code</button>
+                <button onClick={() => settleRequest(rq, "done")} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Done</button>
+                <button onClick={() => settleRequest(rq, "dismissed")} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px" }}>Dismiss</button>
+              </div>
+            ))}
+          </div>
+        )}
         {claims.length > 0 && (
           <div style={{ background: "#fffaf0", border: "1px solid #e0c48a", borderRadius: 12, padding: "16px 18px", marginBottom: 18 }}>
             <div style={{ fontSize: 10, color: "#8a6a10", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 4 }}>Claimed referrals — {claims.length} awaiting review</div>
@@ -7260,7 +7339,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-bookings", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "admin-invites", "admin-team", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "support", "glossary"];
+  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-bookings", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "admin-invites", "admin-team", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "refer", "support", "glossary"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
     return PAGES.includes(p) ? p : (sessionStorage.getItem("activePage") || "home");
@@ -7746,6 +7825,7 @@ export default function App() {
       {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} onGlossary={() => navigateTo("glossary")} onNav={navigateTo} /></div>}
       {activePage === "advisory" && <RetainerPage member={member} setActivePage={navigateTo} />}
       {activePage === "partner-interest" && <PartnerInterestPage />}
+      {activePage === "refer" && <ReferPartnerPage />}
       {activePage === "partner" && <PartnerPage slug={partnerSlug} onSignIn={() => setShowAuth("login")} onExplore={() => navigateTo("courses")} />}
       {activePage === "shop" && <ShopPage member={member} onSignIn={() => openSignup("Free")} />}
       {activePage === "terms" && <TermsPage />}
