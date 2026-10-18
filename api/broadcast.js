@@ -2,7 +2,7 @@ import Stripe from 'stripe';
 import { neon } from '@neondatabase/serverless';
 import { requireAdmin } from './_utils.js';
 import { sendBulk, sendEmail, siteUrl, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail, passExpiryEmail, waitlistConfirmEmail, retainerInterestEmail, countdownEmail, recommendEmail, launchEmail, foundingThanksEmail, firstName } from './_email.js';
-import { recommendPlan, sendRecommendBatch, sendLaunchBatch } from './waitlist.js';
+import { recommendPlan, sendRecommendBatch, sendLaunchBatch, logEmails } from './waitlist.js';
 import { foundingSeats } from './stripe.js';
 import { insiderReminderEmail, generalFoundingEmail, generalHeadsUpEmail, generalSeatsTomorrowEmail } from './_email.js';
 import { referredRevenue, rungFor } from './referrals.js';
@@ -90,7 +90,9 @@ export default async function handler(req, res) {
           if (entries.length) {
             const launchText = new Date(lr.value).toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
             const mail = countdownEmail(stage, launchText, list);
-            drip[list + '_countdown_' + stage.replace(' ', '')] = await sendBulk(entries, mail.subject, mail.html);
+            const n = await sendBulk(entries, mail.subject, mail.html);
+            drip[list + '_countdown_' + stage.replace(' ', '')] = n;
+            await logEmails(sql, `countdown — ${stage}`, list, mail.subject, entries.map(r => ({ name: r.name, email: r.email, ok: true })));
           }
           await sql`INSERT INTO settings (key, value) VALUES (${flag}, 'sent') ON CONFLICT (key) DO UPDATE SET value = 'sent'`;
         };
