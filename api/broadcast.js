@@ -264,7 +264,8 @@ export default async function handler(req, res) {
             let n = 0;
             for (const r of rows) {
               const mail = generalHeadsUpEmail(r.name, { opensText: fmtDay(opened), seatsDate: fmtDay(closesAt), publicText: pub?.value ? fmtDay(pub.value) : 'December 1' });
-              if (await sendEmail(r.email, mail.subject, mail.html, { marketing: true })) n++;
+              const ok = await sendEmail(r.email, mail.subject, mail.html, { marketing: true }); if (ok) n++;
+              await logEmails(sql, 'launch day — insiders are in', 'general', mail.subject, [{ name: r.name, email: r.email, ok: !!ok }]);
             }
             drip.general_headsup = n;
             await sql`INSERT INTO settings (key, value) VALUES ('drip_general_headsup', 'sent') ON CONFLICT (key) DO UPDATE SET value = 'sent'`;
@@ -279,7 +280,8 @@ export default async function handler(req, res) {
             let n = 0;
             for (const r of rows) {
               const mail = insiderReminderEmail(r.name, { seatsLeft: seats.remaining, closesText, closesShort: new Date(closesAt).toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'long', day: 'numeric' }), closesKey: new Date(closesAt - 1).toISOString().slice(0, 10), link: `${siteUrl()}/?join=1&email=${encodeURIComponent(r.email)}` });
-              if (await sendEmail(r.email, mail.subject, mail.html, { marketing: true })) n++;
+              const ok = await sendEmail(r.email, mail.subject, mail.html, { marketing: true }); if (ok) n++;
+              await logEmails(sql, 'insider reminder', 'insider', mail.subject, [{ name: r.name, email: r.email, ok: !!ok }]);
             }
             drip.insider_reminder = n;
             await sql`INSERT INTO settings (key, value) VALUES ('drip_insider_reminder', 'sent') ON CONFLICT (key) DO UPDATE SET value = 'sent'`;
@@ -295,7 +297,8 @@ export default async function handler(req, res) {
               const rows = (await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = 'general' AND NOT COALESCE(comped, FALSE)`).filter(r => !joined.has(String(r.email).toLowerCase()));
               for (const r of rows) {
                 const mail = generalSeatsTomorrowEmail(r.name, { seatsLeft: seats.remaining, opensText: new Date(closesAt + 8 * H).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }) });
-                if (await sendEmail(r.email, mail.subject, mail.html, { marketing: true })) n++;
+                const ok = await sendEmail(r.email, mail.subject, mail.html, { marketing: true }); if (ok) n++;
+                await logEmails(sql, 'founding seats tomorrow', 'general', mail.subject, [{ name: r.name, email: r.email, ok: !!ok }]);
               }
             }
             drip.general_tomorrow = n;
@@ -312,7 +315,8 @@ export default async function handler(req, res) {
               const rows = (await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = 'general' AND NOT COALESCE(comped, FALSE)`).filter(r => !joined.has(String(r.email).toLowerCase()));
               for (const r of rows) {
                 const mail = generalFoundingEmail(r.name, { seatsLeft: seats.remaining, link: `${siteUrl()}/?join=1&email=${encodeURIComponent(r.email)}` });
-                if (await sendEmail(r.email, mail.subject, mail.html, { marketing: true })) n++;
+                const ok = await sendEmail(r.email, mail.subject, mail.html, { marketing: true }); if (ok) n++;
+                await logEmails(sql, 'founding seats open', 'general', mail.subject, [{ name: r.name, email: r.email, ok: !!ok }]);
               }
             }
             drip.general_founding = n;
@@ -321,6 +325,32 @@ export default async function handler(req, res) {
         }
       }
     } catch (e) { console.error('insider window drip failed', e.message); }
+    // Engagement reports: three days after each launch-related send, who opened
+    // and who clicked (from Brevo), emailed to DakJen Creative. Runs for sends up to
+    // the date in settings.engagement_reports_until (default Nov 30, 2026).
+    if (!dripOnly) {
+      try {
+        const [untilRow] = await sql`SELECT value FROM settings WHERE key = 'engagement_reports_until'`;
+        const until = untilRow?.value || '2026-11-30';
+        const batches = await sql`SELECT kind, list, subject, DATE(created_at) AS day, MIN(created_at) AS first_at, COUNT(*)::int AS n
+          FROM email_log WHERE ok = TRUE AND created_at > '2026-10-17' AND created_at <= ${until + ' 23:59:59'}
+            AND created_at < NOW() - interval '3 days' AND kind NOT ILIKE 'preview%'
+          GROUP BY kind, list, subject, DATE(created_at) ORDER BY first_at ASC`;
+        for (const b of batches) {
+          const flagKey = `engagement_report_${b.kind}_${b.list}_${String(b.day).slice(0, 10)}`.replace(/[^a-z0-9_:-]/gi, '_').slice(0, 120);
+          const [done] = await sql`SELECT value FROM settings WHERE key = ${flagKey}`;
+          if (done?.value) continue;
+          const recips = await sql`SELECT recipient_name AS name, LOWER(recipient_email) AS email FROM email_log WHERE kind = ${b.kind} AND COALESCE(list,'all') = ${b.list || 'all'} AND DATE(created_at) = ${b.day} AND ok = TRUE`;
+          const report = await engagementFor(b.subject, new Date(b.first_at), recips);
+          const html = engagementHtml(b, report);
+          const to = ['dakotah@dakjencreative.com'];
+          let ok = false; for (const addr of to) ok = (await sendEmail(addr, `Opens report — ${b.kind} (${b.list || 'all'}) sent ${new Date(b.first_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}: ${report.opened.length} of ${recips.length} opened`, html, { light: true })) || ok;
+          await sql`INSERT INTO settings (key, value) VALUES (${flagKey}, ${`sent ${new Date().toISOString()}`}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`;
+          drip['engagement_' + b.kind] = report.opened.length;
+        }
+      } catch (e) { console.error('engagement reports failed', e.message); }
+    }
+
     // The pre-launch weekly: each issue goes once, on or after its Wednesday,
     // to the whole waitlist (both lists, comped and opted-out excluded), and
     // never more than six days late so a missed run cannot send a stale issue.
@@ -954,4 +984,61 @@ export async function sendCommunityWeekly(sql, opts = {}) {
     if (await sendEmail(t.email, (opts.preview ? '[PREVIEW] ' : '') + `Community this week — ${mine.length} post${mine.length === 1 ? '' : 's'}`, html)) sent++;
   }
   return { sent, posts: rows.length };
+}
+
+
+// ── Who opened and clicked a send, from Brevo's event log ───────────────────
+export async function engagementFor(subject, sentAt, recipients) {
+  const key = process.env.BREVO_API_KEY;
+  const set = new Map(recipients.map(r => [String(r.email).toLowerCase(), { name: r.name || '', email: String(r.email).toLowerCase(), opens: 0, first: null, clicks: 0, delivered: false, bounced: false }]));
+  if (key) {
+    const days = Math.max(1, Math.min(30, Math.ceil((Date.now() - sentAt.getTime()) / 86400000) + 1));
+    for (const ev of ['delivered', 'opened', 'clicks', 'hardBounces', 'softBounces']) {
+      let offset = 0;
+      for (let page = 0; page < 10; page++) {
+        const r = await fetch(`https://api.brevo.com/v3/smtp/statistics/events?days=${days}&limit=2500&offset=${offset}&event=${ev}`, { headers: { 'api-key': key } });
+        if (!r.ok) break;
+        const d = await r.json(); const evs = d.events || [];
+        for (const e of evs) {
+          if (e.subject !== subject) continue;
+          const row = set.get(String(e.email).toLowerCase()); if (!row) continue;
+          if (ev === 'delivered') row.delivered = true;
+          else if (ev === 'opened') { row.opens++; if (!row.first || e.date < row.first) row.first = e.date; }
+          else if (ev === 'clicks') row.clicks++;
+          else row.bounced = true;
+        }
+        if (evs.length < 2500) break; offset += 2500;
+      }
+    }
+  }
+  const rows = [...set.values()];
+  // Opens within 90 seconds of the send are almost always a mail app pre-loading images, not a person
+  const sentMs = sentAt.getTime();
+  for (const r of rows) r.auto = !!(r.first && Math.abs(new Date(r.first).getTime() - sentMs) < 90000 && r.opens === 1 && !r.clicks);
+  const opened = rows.filter(r => r.opens > 0).sort((a, b) => (b.clicks - a.clicks) || (b.opens - a.opens));
+  return { rows, opened, clicked: rows.filter(r => r.clicks > 0), bounced: rows.filter(r => r.bounced), notOpened: rows.filter(r => !r.opens && !r.bounced), brevo: !!key };
+}
+
+export function engagementHtml(batch, rep) {
+  const S = "'DM Sans',Arial,Helvetica,sans-serif";
+  const when = (d) => d ? new Date(d).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+  const total = rep.rows.length, o = rep.opened.length, c = rep.clicked.length, likely = rep.opened.filter(r => !r.auto).length;
+  const pct = (n) => total ? Math.round((n / total) * 100) + '%' : '—';
+  const tile = (label, v, sub) => `<td style="padding:6px;width:25%;vertical-align:top;"><div style="background:#faf7f2;border:1px solid #e5dccf;border-radius:12px;padding:14px 12px;"><div style="font-family:${S};font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#8a8a8a;font-weight:bold;">${label}</div><div style="font-family:Georgia,serif;font-size:30px;font-weight:bold;color:#161616;line-height:1.1;margin-top:6px;">${v}</div><div style="font-family:${S};font-size:11.5px;color:#8a8a8a;margin-top:4px;">${sub}</div></div></td>`;
+  const row = (r) => `<tr><td style="font-family:${S};font-size:13px;color:#161616;padding:6px 0;border-bottom:1px solid #f0ece4;">${r.name || '—'} <span style="color:#8a8a8a;">· ${r.email}</span></td><td align="right" style="font-family:${S};font-size:12px;color:${r.clicks ? '#1a7a3a' : r.auto ? '#9a9a9a' : '#444444'};padding:6px 0;border-bottom:1px solid #f0ece4;white-space:nowrap;">${r.clicks ? `clicked · ` : ''}${r.opens} open${r.opens === 1 ? '' : 's'} · first ${when(r.first)}${r.auto ? ' · likely automatic' : ''}</td></tr>`;
+  return `
+    <h2 style="font-family:Georgia,serif;color:#161616;font-size:22px;margin:0 0 4px;">Opens report — ${batch.kind}</h2>
+    <p style="font-family:${S};color:#8a8a8a;font-size:13px;margin:0 0 18px;">“${batch.subject}” · ${batch.list || 'all'} list · sent ${when(batch.first_at)} ET · measured three days later${rep.brevo ? '' : ' · Brevo not reachable, counts are empty'}</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
+      ${tile('Sent', total, rep.bounced.length ? `${rep.bounced.length} bounced` : 'all delivered')}
+      ${tile('Opened', o, pct(o) + ' of sent')}
+      ${tile('Likely real opens', likely, 'excludes instant auto-opens')}
+      ${tile('Clicked', c, pct(c) + ' of sent')}
+    </tr></table>
+    <div style="font-family:${S};font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#b80101;font-weight:bold;margin:22px 0 8px;">Opened (${o})</div>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">${rep.opened.map(row).join('') || `<tr><td style="font-family:${S};font-size:13px;color:#8a8a8a;">No opens recorded yet.</td></tr>`}</table>
+    <div style="font-family:${S};font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#8a8a8a;font-weight:bold;margin:22px 0 8px;">Not opened (${rep.notOpened.length})</div>
+    <p style="font-family:${S};font-size:12.5px;color:#444444;line-height:1.8;margin:0;">${rep.notOpened.map(r => r.name || r.email).join(' · ') || '—'}</p>
+    ${rep.bounced.length ? `<div style="font-family:${S};font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#b80101;font-weight:bold;margin:22px 0 8px;">Bounced (${rep.bounced.length})</div><p style="font-family:${S};font-size:12.5px;color:#444444;line-height:1.8;margin:0;">${rep.bounced.map(r => `${r.name || ''} ${r.email}`).join(' · ')}</p>` : ''}
+    <p style="font-family:${S};font-size:11.5px;color:#9a9a9a;line-height:1.7;margin:22px 0 0;">Opens come from Brevo's tracking image. Apple Mail privacy hides opens for some recipients, so real readership is higher than shown. Clicks are the reliable signal.</p>`;
 }
