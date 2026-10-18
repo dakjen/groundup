@@ -41,5 +41,6 @@
         }
       ]
     }
-  ]
+  ],
+  "buildCommand": "npm run build"
 }

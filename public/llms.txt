@@ -1,101 +1,95 @@
-# GroundUp
+# GroundUp by Dr. Gina Merritt
 
-> GroundUp is an online education platform and community for affordable housing
-> development, built by Dr. Gina Merritt of Northern Real Estate Urban Ventures —
-> 30+ years and a $390M+ portfolio, $6B+ underwritten, from public housing in the Bronx to
-> developer and owner. It exists for underrepresented and emerging developers:
-> the knowledge, the community, and the resources to get deals done and build
-> generational wealth from the ground up.
+> GroundUp by Dr. Gina Merritt is an online education platform and membership community for
+> affordable housing development, built by Dr. Gina Merritt of Northern Real Estate Urban
+> Ventures (Washington, DC) — 30+ years, a $390M+ development portfolio, $6B+ underwritten,
+> 8,000+ units built, from public housing in the Bronx to developer and owner. It exists for
+> underrepresented and emerging developers, nonprofits, CDFIs and anyone who needs to learn how
+> affordable housing really gets built. Site: https://community.drginamerritt.net
+
+## Opening dates
+- Insider waitlist opens November 1, 2026 (midnight Eastern). Public opening December 1, 2026.
+- The first twenty-five members become founding members: 25% off Member, Builder, Premium or
+  Owner for their entire first year, the first year of live Lunch & Learns, a launch-party
+  invitation in Washington, DC, and a Founding Member badge. Earned at checkout, first come first served.
+- Join the waitlist: https://community.drginamerritt.net/waitlist
 
 ## What GroundUp teaches
-- Predevelopment: reading markets, valuing land, controlling a site
-- Building your team: JV partnerships, ownership vs. economic interest
-- Financing the deal: capital stacks, LIHTC & tax credits, closing the gap
-- Why affordable housing doesn't pencil — and how deals close anyway
-- Zoning, entitlements & what you're allowed to build
-- Design & construction management
-- After opening day: operations, lease-up, and the long game
-- New expertise added every quarter
+- Stage 0, The Development Overview: the nine phases of a deal in order — feasibility,
+  predevelopment, program development, acquisition, development (financing and construction),
+  community engagement, construction, stabilization, compliance
+- Stage 1, Predevelopment: reading a market, valuing land, due diligence, managing sellers
+- Stage 2, Building Your Team: JVs, partners, guarantees, the developer fee
+- Stage 3, Financing the Deal: capital stacks, LIHTC 9% vs 4%, subsidy, closing the gap
+- Stage 4, Why Affordable Housing Doesn't Pencil: land, the gap, the case for subsidy
+- Stage 5, Zoning, Entitlements & What You're Allowed to Build
+- Stage 6, Design, Construction & Getting to Opening Day
+- Stage 7, After Opening Day: compliance and the fifteen years nobody warns you about
+- Coming January 2027 (Premium and Owner): The Underwriting Series — Underwriting the Project
+  Budget and The Closing Draw. Case studies of Dr. Merritt's own deals (Ninety-Four Ten Hough,
+  the Beacon Center, Mary's House) and a Community-Led Development series follow.
 
-## Pricing — the full fee structure
-All prices in USD. Memberships bill monthly (or annually at roughly 10% off). No coupon codes exist; every discount is applied automatically by the account.
+## Pricing (USD; monthly billing)
+### Memberships — every plan includes every course
+- Free ($0): every course title and outline, one free live Lunch & Learn, a community profile
+- Member ($49.99/mo): every course and written lesson, case studies and worksheets, invites to live
+  Lunch & Learns, read access to the whole community
+- Builder ($149.99/mo): + post and network in the community, the Lunch & Learn recording library,
+  view-only guides, templates and the Developer's Playbook
+- Premium ($249.99/mo): + the full document library, the Opportunity Board (RFPs and funding
+  windows), the Financial Structuring, Financial Modeling and JV & Partnerships channels, group
+  office hours with Dr. Merritt (after 4 months of membership), 10% off 1:1 sessions
+- Owner ($499.99/mo, limited seats): + direct messages to Dr. Merritt and her team, three
+  one-on-one advisory calls a year (after 2 months), deal support on your own project, the Owner
+  Lounge and the Deal Room, three downloads a month including the Developer's Playbook (after 4
+  months), 30% off 1:1 sessions, networking event invitation
+- Memberships are the only purchase that can be cancelled. Monthly plans cancelled before the 5th
+  are refunded for that month. Digital products, passes and sessions are non-refundable.
 
-### Memberships
-- Free ($0): browse every course outline (lesson content locked), one free live Lunch & Learn, a community profile. Can buy passes and sessions.
-- Member ($49.99/mo · $599.88/yr): every course and lesson, case studies, worksheets, read access to the community, resource lists
-- Builder ($149.99/mo · $1,799.88/yr): + post and network in the community, the Lunch & Learn recording library, view-only templates and guides. Most popular.
-- Premium ($249.99/mo · $2,999.88/yr): + 3 template downloads/month, the Opportunity Board (RFPs and funding windows), the JV & Partnerships channel, group office hours with Dr. Merritt (3/yr), 10% off 1:1 sessions, 1 included 1:1 session per year (after 4 months, no rollover). Best value.
-- Owner ($499.99/mo · $5,999.88/yr, limited seats): + direct messages to Dr. Merritt and team, 3 included 1:1 advisory sessions per year (after 4 months, no rollover), group office hours (6/yr), unlimited downloads including the Developer's Playbook, 30% off 1:1 sessions, the private Owner Lounge, NREUV partner-network referral codes
-
-### Founding members (insider waitlist, first year only)
-- 25% off any membership tier for the entire first year: Member $37.49, Builder $112.49, Premium $187.49, Owner $374.99 per month
-- First year of live Lunch & Learns free, a permanent founding badge, 15% off the first three retainer months
-- Applied automatically at signup — no codes
-
-### Course passes (one-time)
-- Single Course Pass $100 (one course, 60 days)
-- All-Access Pass $275 (every course, 30 days)
-- Lifetime Pass $5,000 (every course forever, one year of Builder free, group office hours for 5 years, every Lunch & Learn for life; numbered, limited run)
-
-### Lunch & Learn
-- One live session $39.99 · one-year pass $105 · Lifetime Pass $350. Free members get one live session free.
-
-### 1:1 sessions with Dr. Merritt (45 minutes, specialized)
-- Deal Review $500 · Strategy Session $425 · Capital Stack Review $550 · Community Development $375
-- Premium members 10% off, Owner members 30% off (rounded down to the nearest $5)
+### One-time
+- Single Course Pass $100 (one course, 60 days) · All-Access Pass $275 (every course, 30 days)
+- Lunch & Learn: one live session $39.99 · one-year pass $105 · Lifetime Pass $350
+- 1:1 sessions with Dr. Merritt (45 minutes): Deal Review $500 · Strategy Session $425 ·
+  Capital Stack Review $550 · Community Development $375 (Premium 10% off, Owner 30% off)
+- Full Project Intake $1,500: Dr. Merritt reviews your whole project; credited against the first
+  month of a Senior Advisor retainer
 
 ### Senior Advisor retainers (Dr. Merritt embedded on your project, month to month)
-- Advisor 5: $3,025/mo (5 hrs) · Advisor 10: $5,500/mo (10 hrs) · Advisor 15: $7,700/mo (15 hrs). All include everything in Owner.
-- Path in: free discovery call → optional $1,500 Full Project Intake (credited against the first retainer month) → retainer
-- Intake refunds are discretionary; if a session happened with no real deal on the table, any refund is reduced by $550
+- 5 hours $3,025/mo · 10 hours $5,500/mo · 15 hours $7,700/mo. Includes everything in Owner,
+  a private workspace with a deal room for project documents, a direct line to Dr. Merritt, and a
+  timesheet of hours worked. Path in: Full Project Intake, then the retainer.
 
-### Referral program
-- Members and partners get custom referral links. People who join through one get $5 / $15 / $20 / $25 off per month (by tier) for 24 months. Referrers earn 25% off at 15 referrals, 50% at 25, a comped membership at 50.
-
-### Organizations (Partner)
-- Agencies, CDFIs, and nonprofit developer programs sponsor a cohort's first year at a negotiated group rate with a branded partner page, a private cohort channel, and cohort-only office hours. No fixed price — see /partner-interest.
+### Organizations
+- Agencies, CDFIs and nonprofit developer programs can sponsor a cohort's first year at a group
+  rate with a branded partner page, a private cohort channel and cohort-only office hours:
+  https://community.drginamerritt.net/partner-interest
+- Referral partners get their own link and earn toward a complimentary membership:
+  https://community.drginamerritt.net/refer
 
 ## Key pages
-- [Home](https://community.drginamerritt.net/): what GroundUp is
-- [Courses](https://community.drginamerritt.net/courses): the curriculum
-- [Pricing](https://community.drginamerritt.net/pricing): plans and passes
-- [About](https://community.drginamerritt.net/about): Dr. Gina Merritt's story
-- [Lunch & Learns](https://community.drginamerritt.net/lunchlearn): live sessions
-- [Contact](https://community.drginamerritt.net/contact): book a 1:1 session
+- Home: https://community.drginamerritt.net/
+- Courses: https://community.drginamerritt.net/courses
+- Pricing: https://community.drginamerritt.net/pricing
+- About Dr. Merritt: https://community.drginamerritt.net/about
+- Lunch & Learns: https://community.drginamerritt.net/lunchlearn
+- Book a session: https://community.drginamerritt.net/contact
 
 ## About the founder
-Dr. Gina Merritt — Bronx-raised, from public housing to $390M+ portfolio in real estate
-development. Founder of Northern Real Estate Urban Ventures (Washington, DC).
-Notable projects include 9410 Hough (Cleveland), Nannie Helen (Washington DC),
-Parkway House, and Beacon Center DC.
+Dr. Gina Merritt — raised in the Bronx, bootstrapped from public housing to a $390M+ portfolio.
+Howard graduate, Darden MBA, USC doctorate. Founder of Northern Real Estate Urban Ventures.
+Projects include Ninety-Four Ten Hough (Cleveland, $47M, 116 apartments), the Beacon Center
+(Washington, DC, 99 apartments plus office, retail and a community facility across three capital
+stacks), Nannie Helen at 4800 (Washington, DC), Parkway House, and Mary's House (fifteen
+single-room units with communal space for LGBTQ+ adults 62+). Through Project Community Capital®
+her company stays embedded on site after opening.
 
-## Who GroundUp is for
-Everyone who needs development knowledge: working developers, house flippers
-scaling into ground-up development, small multifamily owners (2-6 units) going
-bigger, people with a family property or a site opportunity who don't know
-where to start, developers heading into their first big deal, nonprofits,
-CDFIs, banks and institutions, and community members entering the industry.
-The core member: someone with the skill and intelligence for development who
-needs help with one or more parts of the process — the financing, the JVs,
-the funding, the underwriting — and wants it from someone who has closed
-billions in real deals.
+## Who it is for
+Working developers, house flippers scaling into ground-up development, small multifamily owners
+going bigger, people with a family property or site who don't know where to start, developers
+heading into their first big deal, nonprofits, CDFIs, banks and institutions, and community
+members entering the industry — especially BIPOC, women and other underrepresented developers.
 
-People searching for: real estate development education, how to become a real
-estate developer, affordable housing development courses, LIHTC training,
-tax credit financing explained, capital stack education, first-time developer
-resources, how to scale from flipping houses to development, small multifamily
-to large multifamily, what to do with inherited family property, BIPOC and
-underrepresented developer community, women in real estate development,
-community development training, underwriting a project budget.
-
-## Ways in
-- Free account: browse every course curriculum + one free live Lunch & Learn session
-- Course passes: $100 (one course, 60 days) or $275 (all courses, 30 days) — written lessons
-- Memberships from $49.99/mo — see Pricing above for the full structure
-- Deep-dive series (e.g. The Underwriting Series) added over time
-- Deal-specific support: the Owner membership, 1:1 sessions with Dr. Merritt,
-  a $1,500 Full Project Intake (credited toward the retainer), and Senior
-  Advisor retainers for whole-deal involvement
-- Organizations (agencies, CDFIs, nonprofit developer programs) can sponsor a
-  cohort's first year at a group discount with a branded partner page —
-  see /partner-interest
+People searching for: affordable housing development course, how to become a real estate
+developer, LIHTC training, tax credit financing explained, capital stack education, first-time
+developer resources, underwriting a project budget, community development training,
+underrepresented developer community.
