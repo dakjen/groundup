@@ -28,7 +28,7 @@ const PLANS = {
 
 // Every campaign send leaves a permanent record — who, what, when — so the
 // team can always see exactly which emails went out.
-async function logEmails(sql, kind, list, subject, recipients) {
+export async function logEmails(sql, kind, list, subject, recipients) {
   try {
     for (const r of recipients) {
       await sql`INSERT INTO email_log (kind, list, subject, recipient_name, recipient_email, ok, created_at)
