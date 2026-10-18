@@ -1027,6 +1027,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
           <GULogo size={38} light={lightNav} />
           <div>
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 20, color: lightNav ? "#161616" : "#fff", lineHeight: 1, letterSpacing: "1px" }}>GROUNDUP</div>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 8.5, letterSpacing: "1.8px", textTransform: "uppercase", color: lightNav ? "#8a6a6a" : "#c8a8a8", lineHeight: 1, marginTop: 4, whiteSpace: "nowrap" }}>by Dr. Gina Merritt</div>
           </div>
         </div>
         {/* Desktop nav */}
@@ -4154,7 +4155,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
       </div>
 
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>
-        <div style={{ fontFamily: font, fontSize: 12, color: "#8a7575" }}>© {new Date().getFullYear()} GroundUp · Northern Real Estate Urban Ventures<span style={{ margin: "0 8px" }}>·</span><a href="/terms" style={{ color: "#9a7878", fontSize: 12, textDecoration: "none" }}>Terms</a><span style={{ margin: "0 6px" }}>·</span><a href="/privacy" style={{ color: "#9a7878", fontSize: 12, textDecoration: "none" }}>Privacy</a><span style={{ margin: "0 6px" }}>·</span><a href="mailto:groundup@drginamerritt.net?subject=Tech%20support%20—%20GroundUp" style={{ color: "#9a7878", fontSize: 12, textDecoration: "none" }}>Tech Support</a><span style={{ margin: "0 8px" }}>·</span><a href="https://gobenotable.com" target="_blank" rel="noreferrer" style={{ color: "#4a3535", textDecoration: "none" }}>Powered by Notable Services</a></div>
+        <div style={{ fontFamily: font, fontSize: 12, color: "#8a7575" }}>© {new Date().getFullYear()} GroundUp by Dr. Gina Merritt · Northern Real Estate Urban Ventures<span style={{ margin: "0 8px" }}>·</span><a href="/terms" style={{ color: "#9a7878", fontSize: 12, textDecoration: "none" }}>Terms</a><span style={{ margin: "0 6px" }}>·</span><a href="/privacy" style={{ color: "#9a7878", fontSize: 12, textDecoration: "none" }}>Privacy</a><span style={{ margin: "0 6px" }}>·</span><a href="mailto:groundup@drginamerritt.net?subject=Tech%20support%20—%20GroundUp" style={{ color: "#9a7878", fontSize: 12, textDecoration: "none" }}>Tech Support</a><span style={{ margin: "0 8px" }}>·</span><a href="https://gobenotable.com" target="_blank" rel="noreferrer" style={{ color: "#4a3535", textDecoration: "none" }}>Powered by Notable Services</a></div>
         <button onClick={onAdmin} style={{ background: "transparent", border: "none", color: "#2a1a1a", fontFamily: font, fontSize: 11, cursor: "pointer", letterSpacing: "1px" }}>Admin</button>
       </footer>
     </div>
@@ -4195,7 +4196,8 @@ function SiteGatePage({ onUnlock }) {
     <div style={{ minHeight: "100vh", background: "#000", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ width: "100%", maxWidth: 420, background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: 48 }}>
         <div style={{ marginBottom: 36, textAlign: "center" }}>
-          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 6 }}>GroundUp</div>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#f5e8e8", marginBottom: 2 }}>GroundUp</div>
+          <div style={{ fontSize: 10, color: "#c8a8a8", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 10 }}>by Dr. Gina Merritt</div>
           <div style={{ fontSize: 12, color: "#6a5050", fontFamily: "'DM Sans', sans-serif" }}>Enter password to continue</div>
         </div>
         <div style={{ marginBottom: 24 }}>
@@ -7937,7 +7939,7 @@ export default function App() {
       {activePage === "support" && <SupportPage />}
       {activePage === "glossary" && <GlossaryPage member={member} onSignIn={() => setShowSignup(true)} setActivePage={navigateTo} />}
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>
-        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#8a7575" }}>© {new Date().getFullYear()} GroundUp · Northern Real Estate Urban Ventures<span style={{ margin: "0 8px" }}>·</span><button onClick={() => navigateTo("terms")} style={{ background: "none", border: "none", color: "#9a7878", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Terms</button><span style={{ margin: "0 6px" }}>·</span><button onClick={() => navigateTo("privacy")} style={{ background: "none", border: "none", color: "#9a7878", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Privacy</button><span style={{ margin: "0 6px" }}>·</span><button onClick={() => navigateTo("support")} style={{ background: "none", border: "none", color: "#9a7878", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Tech Support</button><span style={{ margin: "0 8px" }}>·</span><a href="https://gobenotable.com" target="_blank" rel="noreferrer" style={{ color: "#4a3535", textDecoration: "none" }}>Powered by Notable Services</a></div>
+        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#8a7575" }}>© {new Date().getFullYear()} GroundUp by Dr. Gina Merritt · Northern Real Estate Urban Ventures<span style={{ margin: "0 8px" }}>·</span><button onClick={() => navigateTo("terms")} style={{ background: "none", border: "none", color: "#9a7878", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Terms</button><span style={{ margin: "0 6px" }}>·</span><button onClick={() => navigateTo("privacy")} style={{ background: "none", border: "none", color: "#9a7878", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Privacy</button><span style={{ margin: "0 6px" }}>·</span><button onClick={() => navigateTo("support")} style={{ background: "none", border: "none", color: "#9a7878", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Tech Support</button><span style={{ margin: "0 8px" }}>·</span><a href="https://gobenotable.com" target="_blank" rel="noreferrer" style={{ color: "#4a3535", textDecoration: "none" }}>Powered by Notable Services</a></div>
       </footer>
     </>
   );
