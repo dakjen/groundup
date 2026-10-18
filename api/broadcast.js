@@ -4,7 +4,7 @@ import { requireAdmin } from './_utils.js';
 import { sendBulk, sendEmail, siteUrl, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail, passExpiryEmail, waitlistConfirmEmail, retainerInterestEmail, countdownEmail, recommendEmail, launchEmail, foundingThanksEmail, firstName } from './_email.js';
 import { recommendPlan, sendRecommendBatch, sendLaunchBatch, logEmails } from './waitlist.js';
 import { foundingSeats } from './stripe.js';
-import { insiderReminderEmail, generalFoundingEmail, generalHeadsUpEmail, generalSeatsTomorrowEmail } from './_email.js';
+import { insiderReminderEmail, generalFoundingEmail, generalHeadsUpEmail, generalSeatsTomorrowEmail, NEWSLETTER_ISSUES, newsletterEmail } from './_email.js';
 import { referredRevenue, rungFor } from './referrals.js';
 
 // Team email tools: send a custom email or an event announcement to a segment.
@@ -321,6 +321,24 @@ export default async function handler(req, res) {
         }
       }
     } catch (e) { console.error('insider window drip failed', e.message); }
+    // The pre-launch weekly: each issue goes once, on or after its Wednesday,
+    // to the whole waitlist (both lists, comped and opted-out excluded), and
+    // never more than six days late so a missed run cannot send a stale issue.
+    try {
+      const todayET = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+      for (const issue of NEWSLETTER_ISSUES) {
+        if (todayET < issue.on) continue;
+        if ((new Date(todayET) - new Date(issue.on)) / 86400000 > 6) continue;
+        const [done] = await sql`SELECT value FROM settings WHERE key = ${'nl_sent_' + issue.key}`;
+        if (done?.value) continue;
+        const rows = await sql`SELECT name, email FROM waitlist WHERE NOT COALESCE(comped, FALSE)`;
+        const mail = newsletterEmail(issue, '{{FIRSTNAME}}');
+        const n = rows.length ? await sendBulk(rows, mail.subject, mail.html) : 0;
+        await logEmails(sql, `weekly — ${issue.key}`, 'all', mail.subject, rows.map(r => ({ name: r.name, email: r.email, ok: true })));
+        await sql`INSERT INTO settings (key, value) VALUES (${'nl_sent_' + issue.key}, ${`sent ${n} on ${todayET}`}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`;
+        drip['weekly_' + issue.key] = n;
+      }
+    } catch (e) { console.error('weekly newsletter failed', e.message); }
     if (dripOnly) return res.json({ success: true, drip });
     return res.json({ success: true, expired: rows.length, sent, drip, pot_released: released, pot_released_cents: releasedCents, weekly, monthly, founding, ladder });
   }

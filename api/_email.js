@@ -642,6 +642,64 @@ export function insiderReminderEmail(name, opts = {}) {
 // 6 — after the window: the general list hears how many seats are left.
 // Launch day, to the GENERAL list: insiders are in today; a fixed date for
 // when founding seats, if any remain, open to them.
+// ── The pre-launch weekly: Wednesdays, one thing Dr. Merritt teaches, a project
+// it came from, a look at the site, and the date. Short on purpose.
+export const NEWSLETTER_ISSUES = [
+  { key: 'nl1', on: '2026-10-22', feature: 'feasibility', photo: '/opt/ui-home.jpg', photoAlt: 'GroundUp — the home page',
+    subject: 'Land value is an output, not an input',
+    headline: 'The first thing GroundUp teaches you to unlearn.',
+    intro: 'Most people start with the asking price. Dr. Merritt starts with what the finished building can support and works backwards to what the dirt is worth. It is the first lesson in the Development Overview, and it changes how you read every listing after.',
+    number: ['$47M', '9410 Hough, Cleveland', 'A 116-apartment development on a site that sat vacant fifteen years. The rents supported about $7M of debt. Everything above that is the gap — and the whole curriculum is about closing it.'],
+    site: 'Here is the front door. Sign in on launch day and the courses, the community and Dr. Merritt\'s calendar are behind it.' },
+  { key: 'nl2', on: '2026-10-29', feature: 'predevelopment', photo: '/opt/beacon-center.jpg', photoAlt: 'The Beacon Center, Washington, DC',
+    subject: 'The money you can lose before you break ground',
+    headline: 'Predevelopment is where deals die quietly.',
+    intro: 'Between site control and closing, a developer spends real money on entitlement, design, reports and applications — and all of it is at risk if the deal does not close. Dr. Merritt has run out of predevelopment money and had to find a second lender. She teaches you how to size the budget so you do not.',
+    number: ['$1M–$4M', 'spent before closing', 'What a developer can have at risk before a single construction dollar lands. Stage 0, Lesson 2 shows what has to be paid before closing and what can wait.'],
+    site: 'The Beacon Center: 99 apartments, office, retail and a community facility in one deal, financed across three separate capital stacks. It is a case study inside GroundUp.' },
+  { key: 'nl3', on: '2026-11-12', feature: 'community', photo: '/opt/gina-9410.jpg', photoAlt: 'Dr. Gina Merritt at 9410 Hough',
+    subject: 'Community first. Then the city.',
+    headline: 'Dr. Merritt does the order backwards, on purpose.',
+    intro: 'Most developers go to the government for subsidy, then to the neighborhood. Dr. Merritt goes to the neighborhood first — ten months of monthly meetings at Hough before closing — so that by the time she asks the city, the community has already said yes.',
+    number: ['10', 'months of meetings', 'Before 9410 Hough closed. The façade color went to a community vote and the rezoning drew no challenge. Stage 0, Lesson 6 walks through how.'],
+    site: 'GroundUp is open to insiders now and opens to everyone December 1. The Community-Led Development series goes deeper on exactly this.' },
+  { key: 'nl4', on: '2026-11-19', feature: 'guarantees', photo: '/opt/nannie-helen.jpg', photoAlt: 'Nannie Helen at 4800, Washington, DC',
+    subject: 'What you are signing when you sign a guarantee',
+    headline: 'Whoever provides the guarantees controls the deal.',
+    intro: 'Construction, financing, operating deficits after opening — nearly every project requires guarantees, and without generational wealth behind you, someone else is signing them. Stage 2 is about building a team and a structure where that does not cost you the deal.',
+    number: ['3', 'guarantees on most deals', 'Completion, repayment and operating-deficit. Dr. Merritt teaches what each one puts at risk and how joint-venture structures share the exposure.'],
+    site: 'Twelve days to the public opening. Insiders have been in since November 1.' },
+  { key: 'nl5', on: '2026-11-26', feature: 'compliance', photo: '/opt/maryshouse-still1.jpg', photoAlt: 'Mary\'s House, Washington, DC',
+    subject: 'The fifteen years nobody warns you about',
+    headline: 'Opening day is the middle of the story.',
+    intro: 'A tax credit deal comes with fifteen years of federal compliance and an extended use agreement of at least fifteen more. One unit out of compliance can trigger recapture. Stage 7 is the part of development most courses skip, and the part that decides whether you keep what you built.',
+    number: ['15 + 15', 'years of compliance', 'The federal compliance period, then the extended use period. The developer fee is generally the only money a developer earns in the first fifteen — Stage 7 explains why that is still worth it.'],
+    site: 'Doors open Tuesday, December 1 at midnight Eastern. Your plan recommendation and your personal link arrive by email before then.' },
+];
+
+export function newsletterEmail(issue, name) {
+  const f = FEATURES[issue.feature];
+  const first = firstName(name);
+  return {
+    subject: issue.subject,
+    html: `
+      ${seqHero(issue.photo, issue.photoAlt)}
+      ${seqKicker('This week from GroundUp')}
+      ${seqH1(issue.headline)}
+      ${seqP(`${first ? first + ', ' : ''}${issue.intro}`)}
+      ${seqFeature(f)}
+      ${seqNumber(issue.number[0], issue.number[1], issue.number[2])}
+      ${seqP(issue.site, { size: 14 })}
+      ${seqBlock('Opening', `
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0;">
+          ${seqRow('Insiders', 'Sunday, November 1 — the first twenty-five to join become founding members')}
+          ${seqRow('Everyone', 'Tuesday, December 1')}
+          ${seqRow('Your link', 'arrives by email on your opening day; nothing to do until then')}
+        </table>`)}
+      ${seqSign()}`,
+  };
+}
+
 export function generalHeadsUpEmail(name, opts = {}) {
   const first = firstName(name);
   const opensText = opts.opensText || 'November 1';          // the insider launch, e.g. "Sunday, November 1"
