@@ -11,7 +11,7 @@ const BREVO = 'https://api.brevo.com/v3';
 function sender() {
   return {
     email: process.env.BREVO_SENDER_EMAIL || 'groundup@drginamerritt.net',
-    name: process.env.BREVO_SENDER_NAME || 'GroundUp',
+    name: process.env.BREVO_SENDER_NAME || 'GroundUp by Dr. Gina Merritt',
   };
 }
 
@@ -55,7 +55,8 @@ const wrap = (inner, toEmail, light) => (light !== 'dark' && light !== true) ? `
     <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;color:#333333;">
       <div style="background:#000000;padding:26px 32px 22px;">
         <img src="${siteUrl()}/icon-192.png" alt="" width="42" height="42" style="display:block;border-radius:10px;margin-bottom:10px;" />
-        <div style="font-family:${SANS};font-size:20px;font-weight:bold;color:#ffffff;letter-spacing:1px;margin-bottom:4px;">GROUNDUP</div>
+        <div style="font-family:${SANS};font-size:20px;font-weight:bold;color:#ffffff;letter-spacing:1px;margin-bottom:2px;">GROUNDUP</div>
+        <div style="font-family:${SANS};font-size:10px;font-weight:bold;color:#c8a8a8;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">by Dr. Gina Merritt</div>
       </div>
       <div style="height:4px;background:#b80101;font-size:0;line-height:0;">&nbsp;</div>
       <div style="padding:32px 32px 28px;">
@@ -69,7 +70,8 @@ const wrap = (inner, toEmail, light) => (light !== 'dark' && light !== true) ? `
   <div style="background:#f3ede4;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;">
     <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e5dccf;border-radius:16px;padding:36px 32px;color:#333333;">
       <img src="${siteUrl()}/icon-192.png" alt="" width="42" height="42" style="display:block;border-radius:10px;margin-bottom:10px;" />
-      <div style="font-size:20px;font-weight:bold;color:#161616;letter-spacing:1px;margin-bottom:4px;">GROUNDUP</div>
+      <div style="font-size:20px;font-weight:bold;color:#161616;letter-spacing:1px;margin-bottom:2px;">GROUNDUP</div>
+      <div style="font-size:10px;font-weight:bold;color:#8a6a6a;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">by Dr. Gina Merritt</div>
       ${inner}
       <div style="border-top:1px solid #efe8db;margin-top:32px;padding-top:16px;font-size:11px;color:#9a9285;">
         Northern Real Estate Urban Ventures · 825 10th St NW, Suite 981, Washington, DC 20001${toEmail ? ` · <a href="${unsubLink(toEmail)}" style="color:#8a8a8a;">Unsubscribe</a>` : ''}
@@ -78,7 +80,8 @@ const wrap = (inner, toEmail, light) => (light !== 'dark' && light !== true) ? `
   </div>` : `
   <div style="background:#000;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;">
     <div style="max-width:560px;margin:0 auto;background:#0d0404;border:1px solid #2a0000;border-radius:16px;padding:36px 32px;color:#e8d8d8;">
-      <div style="font-size:20px;font-weight:bold;color:#fff;letter-spacing:1px;margin-bottom:4px;">GROUNDUP</div>
+      <div style="font-size:20px;font-weight:bold;color:#fff;letter-spacing:1px;margin-bottom:2px;">GROUNDUP</div>
+      <div style="font-size:10px;font-weight:bold;color:#c8a8a8;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">by Dr. Gina Merritt</div>
       ${inner}
       <div style="border-top:1px solid #2a0000;margin-top:32px;padding-top:16px;font-size:11px;color:#5a4040;">
         Northern Real Estate Urban Ventures · 825 10th St NW, Suite 981, Washington, DC 20001${toEmail ? ` · <a href="${unsubLink(toEmail)}" style="color:#7a5555;">Unsubscribe</a>` : ''}
