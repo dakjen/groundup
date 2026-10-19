@@ -134,8 +134,8 @@ export default async function handler(req, res) {
         // An advisory call the plan already includes. It schedules exactly like
         // a paid one — the allowance is what gets checked instead of a payment.
         const [me] = await sql`SELECT tier, role, comped, tier_since FROM users WHERE id = ${session.uid}`;
-        const allowance = me?.tier === 'Elite' ? 3 : 0;
-        if (!allowance) return res.status(403).json({ error: 'Advisory calls are included with the Owner plan.' });
+        const allowance = me?.tier === 'Elite' ? 3 : me?.tier === 'Premium' ? 1 : 0;
+        if (!allowance) return res.status(403).json({ error: 'Included sessions come with Premium (one a year) and Owner (three a year).' });
         const gate = await benefitGate(sql, { ...me, id: session.uid });
         if (gate.active) return res.status(403).json({ error: `Advisory calls open on ${new Date(gate.until).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.` });
         const [{ used }] = await sql`SELECT COUNT(*)::int AS used FROM session_requests WHERE user_id = ${session.uid} AND status != 'declined'`;

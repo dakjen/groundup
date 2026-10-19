@@ -43,7 +43,7 @@ export default async function handler(req, res) {
       // member object cached in the browser at sign-in, which never contains
       // them — so an Owner with three calls saw nothing at all.
       const [me] = await sql`SELECT tier, role, comped, tier_since FROM users WHERE id = ${uid}`;
-      const allowance = me?.tier === 'Elite' ? 3 : 0;
+      const allowance = me?.tier === 'Elite' ? 3 : me?.tier === 'Premium' ? 1 : 0;
       const [{ used }] = await sql`SELECT COUNT(*)::int AS used FROM session_requests
         WHERE user_id = ${uid} AND status != 'declined'`;
       return res.json({

@@ -1948,6 +1948,7 @@ const plans = [
       "Development timeline templates",
       "Group office hours with Dr. Merritt + priority booking — after 4 months",
       "10% off 1:1 sessions with Dr. Merritt",
+      "1 free 1:1 session with Dr. Merritt every year — unlocks after 4 months, no rollover",
       "GroundUp-only rates with our partners",
     ],
     locked: ["The Developer's Playbook download (view-only until Owner)", "Deal-specific support — an Owner benefit"],
@@ -2103,8 +2104,7 @@ const BENEFIT_HELP = {
   "Group office hours with Dr. Merritt": "Live group Q&A sessions with Dr. Merritt — bring your questions (Premium books 2 a year, Owner 6).",
   "Discount on paid 1:1 sessions": "A standing discount on private paid sessions with Dr. Merritt — deal review, strategy, capital stack.",
   "Discount on 1:1 sessions": "A standing discount on private paid sessions with Dr. Merritt — deal review, strategy, capital stack.",
-  "Included 1:1 time with Dr. Merritt": "Three private advisory calls a year with Dr. Merritt, included with Owner and unlocking after 2 months. Use them or lose them: unused calls don't roll over.",
-  "Included 1:1 time with Dr. Merritt (after 2 months)": "Three private advisory calls a year with Dr. Merritt, included with Owner and unlocking after 2 months. Use them or lose them: unused calls don't roll over.",
+  "Included 1:1 time with Dr. Merritt": "Private one-on-one time included in your membership — Premium gets 1 session a year after 4 months, Owner gets 3 advisory calls a year after 2 months. Use them or lose them: unused sessions don't roll over.",
   "GroundUp-only rates with our partners": "Member-only rates with our partner network — services and tools at prices reserved for GroundUp.",
   "Direct messages to Dr. Merritt & her team": "Message Dr. Merritt and her team directly — quick questions answered within 2 business days.",
   "Advisory calls — 3/yr (unlock after 2 months)": "Three private advisory calls a year with Dr. Merritt, unlocking after 2 months, included with Owner — where deal support happens.",
@@ -2318,7 +2318,7 @@ function PricingPage({ onSignUp }) {
                   ["The Opportunity Board — RFPs & funding windows", "—", "—", "—", "✓", "✓"],
                   ["Group office hours with Dr. Merritt", "—", "—", "—", "✓", "✓"],
                   ["Discount on paid 1:1 sessions", "—", "—", "—", "10%", "30%"],
-                  ["Included 1:1 time with Dr. Merritt (after 2 months)", "—", "—", "—", "—", "3 advisory calls/yr"],
+                  ["Included 1:1 time with Dr. Merritt", "—", "—", "—", "1 session/yr (after 4 months)", "3 advisory calls/yr (after 2 months)"],
                   ["GroundUp-only rates with our partners", "—", "—", "—", "✓", "✓"],
                   ["Direct messages to Dr. Merritt & her team", "—", "—", "—", "—", "✓"],
                   ["Deal support — bring YOUR deal", "—", "—", "—", "—", "✓"],
@@ -3550,7 +3550,7 @@ function TermsPage() {
 
       <h2 style={S.h2}>3. Memberships & billing</h2>
       <p style={S.p}>Plans: Member $49.99/mo · Builder $149.99/mo · Premium $249.99/mo · Owner $499.99/mo (limited seats), plus one-time course passes, Lunch &amp; Learn access, digital products, 1:1 sessions, and advisory retainers. Subscriptions <strong style={S.strong}>renew automatically each month</strong> on your billing date and are charged to your card by Stripe until you cancel. You can <strong style={S.strong}>cancel anytime, self-service</strong>, from Membership &amp; Billing on your member page — access continues through the period you've paid for. Prices may change with advance notice; changes apply from your next billing cycle.</p>
-      <p style={S.p}>Some benefits unlock with tenure: time with Dr. Merritt (advisory calls and office hours) opens after 2 months of continuous membership for Owner and 4 months for Premium; the networking event opens after 4 months. Owner's included advisory calls are use-them-or-lose-them — unused calls do not roll over or accumulate across years. Member, Builder and Premium read the guides, templates and the Developer’s Playbook in the on-site reader; the files themselves are not provided at those tiers. Owner includes 3 downloads per billing month, unlocking after 4 months of continuous membership (unused downloads don’t roll over). Anything you buy outright is yours to download permanently. Owner seats are limited and offered while available.</p>
+      <p style={S.p}>Some benefits unlock with tenure: time with Dr. Merritt (advisory calls and office hours) opens after 2 months of continuous membership for Owner and 4 months for Premium; Premium's included yearly session and the networking event open after 4 months. Included one-on-one sessions are use-them-or-lose-them — unused sessions do not roll over or accumulate across years. Member, Builder and Premium read the guides, templates and the Developer’s Playbook in the on-site reader; the files themselves are not provided at those tiers. Owner includes 3 downloads per billing month, unlocking after 4 months of continuous membership (unused downloads don’t roll over). Anything you buy outright is yours to download permanently. Owner seats are limited and offered while available.</p>
 
       <h2 style={S.h2}>4. Refunds</h2>
       <p style={S.p}><strong style={S.strong}>Memberships are the only purchase that can be cancelled.</strong> Everything else is <strong style={S.strong}>non-refundable</strong>: digital products (guides, templates, the Developer&rsquo;s Playbook and other downloads), course passes, Lunch &amp; Learn access, 1:1 sessions once booked, and the Full Project Intake except as described below. Digital products are delivered the moment you buy them and cannot be returned.</p>
@@ -4066,7 +4066,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
                     ["The Opportunity Board — RFPs & funding windows", "—", "—", "—", "✓", "✓"],
                     ["Group office hours with Dr. Merritt", "—", "—", "—", "✓", "✓"],
                     ["Discount on paid 1:1 sessions", "—", "—", "—", "10%", "30%"],
-                    ["Included 1:1 time with Dr. Merritt", "—", "—", "—", "—", "3 advisory calls/yr"],
+                    ["Included 1:1 time with Dr. Merritt", "—", "—", "—", "1 session/yr", "3 advisory calls/yr"],
                     ["GroundUp-only rates with our partners", "—", "—", "—", "✓", "✓"],
                     ["Direct messages to Dr. Merritt & her team", "—", "—", "—", "—", "✓"],
                     ["Deal support — bring YOUR deal", "—", "—", "—", "—", "✓"],

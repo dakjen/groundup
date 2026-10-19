@@ -29,7 +29,7 @@ const a = (href, text) => `<a href="${href}">${esc(text)}</a>`;
 const PLANS = [
   ['Member', '$49.99/mo', 'Every course and every written lesson, case studies and worksheets, invites to every live Lunch & Learn, read access to the whole community.'],
   ['Builder', '$149.99/mo', 'Everything in Member, plus posting and networking in the community, the Lunch & Learn recording library, and view-only access to every guide, template and the Developer\'s Playbook.'],
-  ['Premium', '$249.99/mo', 'Everything in Builder, plus the full document library, the Opportunity Board of RFPs and funding windows, the Financial Structuring, Financial Modeling and JV & Partnerships channels, group office hours with Dr. Merritt after four months, and 10% off 1:1 sessions.'],
+  ['Premium', '$249.99/mo', 'Everything in Builder, plus the full document library, the Opportunity Board of RFPs and funding windows, the Financial Structuring, Financial Modeling and JV & Partnerships channels, group office hours with Dr. Merritt and one included 1:1 session a year after four months, and 10% off 1:1 sessions.'],
   ['Owner', '$499.99/mo, limited seats', 'Everything in Premium, plus direct messages to Dr. Merritt and her team, three one-on-one advisory calls a year after two months, deal support on your own project, the Owner Lounge and Deal Room, three downloads a month after four months, and 30% off 1:1 sessions.'],
   ['Senior Advisor retainer', 'from $3,025/mo', 'Dr. Merritt embedded on your project month to month: 5, 10 or 15 hours a month, a private workspace with a deal room, and everything in Owner. Starts with a $1,500 Full Project Intake, credited against the first month.'],
 ];
