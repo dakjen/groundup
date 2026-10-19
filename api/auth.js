@@ -56,7 +56,7 @@ export default async function handler(req, res) {
       user.trial = usedTrial ? { course_id: usedTrial.course_id, expires_at: usedTrial.expires_at } : null;
       user.benefit_gate = await benefitGate(sql, user);
       user.trial_available = trialEligible && !usedTrial && user.membership_status === 'active';
-      const allowance = user.tier === 'Elite' ? 3 : 0;
+      const allowance = user.tier === 'Elite' ? 3 : user.tier === 'Premium' ? 1 : 0;
       const [{ used }] = await sql`SELECT COUNT(*)::int AS used FROM session_requests WHERE user_id = ${user.id} AND status != 'declined'`;
       user.sessions = { total: allowance, used, remaining: Math.max(0, allowance - used) };
       try { const [rt] = await sql`SELECT id FROM retainers WHERE user_id = ${user.id} AND status = 'active' LIMIT 1`; user.retainer = !!rt; } catch { user.retainer = false; }
@@ -440,7 +440,7 @@ export default async function handler(req, res) {
       if (!u) return res.status(401).json({ error: 'Account not found' });
       const gate = await benefitGate(sql, u);
       if (gate.active) return res.status(403).json({ error: `Advisory calls unlock after your first ${gate.months} months of membership — yours open on ` + new Date(gate.until).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) + '.' });
-      const allowance = u.tier === 'Elite' ? 3 : 0;
+      const allowance = u.tier === 'Elite' ? 3 : u.tier === 'Premium' ? 1 : 0;
       const [{ used }] = await sql`SELECT COUNT(*)::int AS used FROM session_requests WHERE user_id = ${u.id} AND status != 'declined'`;
       if (used >= allowance) return res.status(400).json({ error: 'No sessions remaining on your plan' });
       const note = (req.body.note || '').trim().slice(0, 2000);

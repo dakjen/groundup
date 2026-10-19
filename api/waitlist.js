@@ -17,7 +17,7 @@ const PLANS = {
   ] },
   Premium: { tier: 'Premium', label: 'Premium', price: '$249.99/mo', rank: 3, features: [
     'Everything in Builder', 'Read every guide and template in the library', 'The Opportunity Board — RFPs & funding windows',
-    'The Premium channels — Financial Structuring, Financial Modeling, JV & Partnerships', 'Lunch & Learn recordings', 'Group office hours with Dr. Merritt + priority booking', '10% off every 1:1 session',
+    'The Premium channels — Financial Structuring, Financial Modeling, JV & Partnerships', 'Lunch & Learn recordings', 'Group office hours with Dr. Merritt + priority booking', 'One included 1:1 session a year, after 4 months', '10% off every 1:1 session',
   ] },
   Elite: { tier: 'Elite', label: 'Owner', price: '$499.99/mo', rank: 4, features: [
     'Everything in Premium', 'Direct messages to Dr. Merritt & her team (replies within 2 business days, Mon–Fri)',
