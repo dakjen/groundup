@@ -157,8 +157,9 @@ export default async function handler(req, res) {
       const upcomingEvents = upcomingAll.filter(e => (e.kind || 'lnl') !== 'office');
       const officeEvents = upcomingAll.filter(e => (e.kind || 'lnl') === 'office');
       const event = upcomingEvents[0] || null;
-      const myRsvpRows = session.uid ? await sql`SELECT event_key FROM lnl_rsvps WHERE user_id = ${session.uid}` : [];
+      const myRsvpRows = session.uid ? await sql`SELECT event_key, joined_at FROM lnl_rsvps WHERE user_id = ${session.uid}` : [];
       const myRsvpKeys = myRsvpRows.map(r => r.event_key);
+      const joinedKeys = myRsvpRows.filter(r => r.joined_at).map(r => r.event_key);
       const my_rsvp = !!(event && myRsvpKeys.includes(event.date));
       // Office hours: Premium+ benefit with a yearly RSVP allowance per tier
       let office_hours = null;
@@ -179,7 +180,7 @@ export default async function handler(req, res) {
           office_hours = {
             eligible: true, gate,
             allowance: { limit, used: usedRows[0]?.n || 0, remaining: Math.max(0, limit - (usedRows[0]?.n || 0)) },
-            events: officeEvents.filter(e => admin || audienceFits(e, me, rank >= 3 || lifetime ? Math.max(rank, 3) : rank)).map(e => { const mine = myRsvpKeys.includes(e.date); return { ...e, my_rsvp: mine, has_link: !!e.link, link: mine ? e.link : undefined }; }),   // the link follows the seat, team included
+            events: officeEvents.filter(e => admin || audienceFits(e, me, rank >= 3 || lifetime ? Math.max(rank, 3) : rank)).map(e => { const mine = myRsvpKeys.includes(e.date); return { ...e, my_rsvp: mine, joined: joinedKeys.includes(e.date), has_link: !!e.link, link: mine ? e.link : undefined }; }),   // the link follows the seat, team included
           };
         } else {
           office_hours = { eligible: false, events: [] };
@@ -188,7 +189,7 @@ export default async function handler(req, res) {
       return res.json({
         event, my_rsvp, office_hours,
         // The full upcoming schedule, with this member's RSVP state per session
-        events: upcomingEvents.map(e => ({ ...e, my_rsvp: myRsvpKeys.includes(e.date) })),
+        events: upcomingEvents.map(e => ({ ...e, my_rsvp: myRsvpKeys.includes(e.date), joined: joinedKeys.includes(e.date) })),
         active: !!access || !!admin,
         expires_at: access?.expires_at || null,
         // The Zoom link is for people who hold a seat — RSVP first
@@ -335,6 +336,44 @@ export default async function handler(req, res) {
       return res.json({ success: true });
     }
 
+    // The join link was clicked: stamp the seat so it can't be released after.
+    if (action === 'joined') {
+      if (!session?.uid) return res.status(401).json({ error: 'Sign in required' });
+      await sql`UPDATE lnl_rsvps SET joined_at = COALESCE(joined_at, NOW()) WHERE user_id = ${session.uid} AND event_key = ${String(req.body.event_key || '')}`;
+      return res.json({ success: true });
+    }
+
+    // Ad funnel: a free scoping call with the GroundUp team — the human read
+    // before anyone pays for an intake with Dr. Merritt. Records the lead,
+    // tells the team, and sends the caller the booking link.
+    if (action === 'scoping_call') {
+      const email = String(req.body.email || '').trim().toLowerCase().slice(0, 200);
+      const name = String(req.body.name || '').trim().slice(0, 120);
+      if ((req.body.website && String(req.body.website).trim())) return res.status(201).json({ success: true });
+      if (!name || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'Your name and a real email, please' });
+      const phone = String(req.body.phone || '').trim().slice(0, 40) || null;
+      const stage = String(req.body.stage || '').trim().slice(0, 80) || null;
+      const about = String(req.body.about || '').trim().slice(0, 2000) || null;
+      const acq = String(req.body.acquisition || '').slice(0, 120) || 'scoping-call';
+      try { await sql`INSERT INTO scoping_requests (name, email, phone, stage, about, acquisition) VALUES (${name}, ${email}, ${phone}, ${stage}, ${about}, ${acq})`; } catch (e) { console.error('scoping insert', e.message); }
+      try { await sql`INSERT INTO waitlist (name, email, list, source, acquisition, created_at) VALUES (${name}, ${email}, 'general', ${'ad:' + acq}, ${acq}, NOW()) ON CONFLICT DO NOTHING`; } catch {}
+      const [linkRow] = await sql`SELECT value FROM settings WHERE key = 'scoping_call_link'`;
+      const link = linkRow?.value || '';
+      const esc = (x) => String(x || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const teamTo = [...new Set([process.env.SCOPING_EMAIL || 'dakotah@dakjencreative.com', process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net'])];
+      for (const addr of teamTo) await sendEmail(addr, `Scoping call request — ${name}`,
+        `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${esc(name)} wants a scoping call</h2>
+         <p style="color:#444444;font-size:14px;line-height:1.8;">${esc(email)}${phone ? ' · ' + esc(phone) : ''}<br>Where they are: <strong>${esc(stage || 'not said')}</strong><br>Came in from: ${esc(acq)}</p>
+         ${about ? `<p style="color:#444444;font-size:14px;line-height:1.8;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;padding:14px 18px;">${esc(about)}</p>` : ''}
+         <p style="color:#7a5050;font-size:12px;line-height:1.7;">${link ? 'They were sent the booking link. ' : 'No booking link is set yet — reach out to pick a time. '}Track it on Intake &amp; Bookings.</p>`);
+      await sendEmail(email, 'Your free scoping call with GroundUp',
+        `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Let's talk about what you're building, ${esc(name.split(' ')[0])}.</h2>
+         <p style="color:#444444;font-size:14px;line-height:1.8;">Twenty minutes with the GroundUp team. We'll hear where your project stands, what's in the way, and tell you honestly what would help most — a course, a membership, office hours, or time with Dr. Merritt. No pitch for things you don't need.</p>
+         ${link ? `<p style="margin:22px 0;"><a href="${esc(link)}" style="display:inline-block;background:#b80101;color:#ffffff;text-decoration:none;font-weight:700;padding:13px 26px;border-radius:8px;">Pick a time →</a></p>` : `<p style="color:#444444;font-size:14px;line-height:1.8;">We'll reach out within one business day with times.</p>`}
+         <p style="color:#7a5050;font-size:12px;line-height:1.7;">Come with whatever you have — a site, a napkin pro forma, a question. That's plenty.</p>`);
+      return res.status(201).json({ success: true, link: link || null });
+    }
+
     // Ad funnel: a free seat at the next live session, no account needed yet.
     // Makes a single-use code, emails it with the three steps, and records the lead.
     if (action === 'free_seat') {
@@ -452,6 +491,9 @@ export default async function handler(req, res) {
         const q = String(req.body.question || '').slice(0, 500) || null;
         await sql`INSERT INTO lnl_rsvps (user_id, event_key, question, created_at) VALUES (${session.uid}, ${target.date}, ${q}, NOW()) ON CONFLICT (user_id, event_key) DO UPDATE SET question = COALESCE(${q}, lnl_rsvps.question)`;
       } else {
+        // Once they've clicked the join link the seat is spent, whenever that was.
+        const [held] = await sql`SELECT joined_at FROM lnl_rsvps WHERE user_id = ${session.uid} AND event_key = ${target.date}`;
+        if (held?.joined_at) return res.status(400).json({ error: 'You joined this session — the seat counts toward your plan.' });
         // A seat can be released up to an hour before the session. After that
         // it is spent — otherwise an Owner could join, release, and keep all
         // six office-hours spots for the year.

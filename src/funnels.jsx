@@ -64,6 +64,26 @@ const OFFERS = {
     ],
     success: { title: "Your seat is saved.", body: "Your code is on its way by email, with the three steps to claim it. Check your inbox (and the promotions tab)." },
   },
+  call: {
+    page: "call", eyebrow: "Free scoping call · 20 minutes",
+    headline: ["Tell us what you're building.", "We'll tell you what would actually help."],
+    sub: "Before you buy a course, a membership, or an hour of anyone's time, talk to a person. Twenty minutes with the GroundUp team: where your project stands, what's in the way, and an honest read on the next right step — even if that step isn't us.",
+    image: "/opt/LIIF-Stills1.jpg", imageAlt: "A finished affordable housing development",
+    proof: [["20 min", "on the phone or Zoom"], ["$0", "no card, no pitch"], ["30+ yrs", "of experience behind the answer"]],
+    bullets: [
+      "A real conversation about your deal or your goal, not a sales script",
+      "An honest diagnosis: course, membership, office hours, or time with Dr. Merritt — and which one first",
+      "If you need Dr. Merritt directly, you'll arrive at her intake prepared, with the right documents",
+      "If you don't, we'll say so and point you somewhere useful",
+    ],
+    cta: "Book my free call →", priceNote: "Free · 20 minutes · with the GroundUp team", mode: "call", item: "scoping",
+    faq: [
+      ["Who will I talk to?", "A member of the GroundUp team who knows the curriculum, the memberships and Dr. Merritt's advisory work, and who can tell you which fits where you are."],
+      ["Is this a call with Dr. Merritt?", "No. Her time is booked through the Full Project Intake. This call is how you find out whether you need that yet, and how to show up ready if you do."],
+      ["What should I bring?", "Whatever you have: a site, a napkin pro forma, a question. That's plenty."],
+    ],
+    success: { title: "You're on the list.", body: "Check your email for the booking link and pick a time that works. Come with whatever you have." },
+  },
   intake: {
     page: "intake", eyebrow: "Full Project Intake · $1,500",
     headline: ["Your whole deal,", "read by someone who has closed them."],
@@ -88,7 +108,8 @@ const OFFERS = {
 
 export function FunnelPage({ offer }) {
   const o = OFFERS[offer];
-  const [form, setForm] = useState({ name: "", email: "", website: "" });
+  const [form, setForm] = useState({ name: "", email: "", website: "", phone: "", stage: "", about: "" });
+  const [bookLink, setBookLink] = useState(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
   const [done, setDone] = useState(() => { try { return new URLSearchParams(window.location.search).get("success") === "1"; } catch { return false; } });
@@ -102,7 +123,12 @@ export function FunnelPage({ offer }) {
   const submit = async (e) => {
     e.preventDefault(); setBusy(true); setErr(null);
     try {
-      if (o.mode === "lead") {
+      if (o.mode === "call") {
+        const r = await fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "scoping_call", name: form.name, email: form.email, phone: form.phone, stage: form.stage, about: form.about, website: form.website, acquisition: acq }) });
+        const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || "Something went wrong");
+        setBookLink(d.link || null); setDone(true); pixel("Lead", { content_name: o.page }); pixel("Schedule", { content_name: o.page });
+        try { history.replaceState(null, "", window.location.pathname + "?success=1"); } catch {}
+      } else if (o.mode === "lead") {
         const r = await fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "free_seat", name: form.name, email: form.email, website: form.website, acquisition: acq }) });
         const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || "Something went wrong");
         setSessionInfo(d.session || null); setDone(true); pixel("Lead", { content_name: o.page });
@@ -122,6 +148,7 @@ export function FunnelPage({ offer }) {
     <div style={{ background: "#0d0404", border: "1px solid #22c55e50", borderRadius: 18, padding: compact ? "22px 20px" : "30px 28px" }}>
       <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 26, color: "#f5e8e8", marginBottom: 8 }}>{o.success.title}</div>
       <div style={{ color: "#c8a8a8", fontSize: 14.5, fontFamily: font, lineHeight: 1.7 }}>{o.success.body}{sessionInfo?.date ? ` Next session: ${sessionInfo.title}, ${new Date(sessionInfo.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}${sessionInfo.time ? " · " + sessionInfo.time + " ET" : ""}.` : ""}</div>
+      {bookLink && <a href={bookLink} target="_blank" rel="noreferrer" style={{ ...btn, display: "block", textAlign: "center", textDecoration: "none", marginTop: 16, boxSizing: "border-box" }}>Pick a time →</a>}
       <a href="/" style={{ display: "inline-block", marginTop: 16, color: "#e08a8a", fontFamily: font, fontWeight: 800, fontSize: 13, textDecoration: "none" }}>See everything else inside GroundUp →</a>
     </div>
   ) : (
@@ -129,10 +156,22 @@ export function FunnelPage({ offer }) {
       {o.priceNote && <div style={{ color: "#e0c4c4", fontSize: 13, fontFamily: font, fontWeight: 800, letterSpacing: "0.5px" }}>{o.priceNote}</div>}
       <input style={inp} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Your name" required maxLength={120} autoComplete="name" />
       <input style={inp} type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="Email" required maxLength={200} autoComplete="email" inputMode="email" />
+      {o.mode === "call" && (<>
+        <input style={inp} type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Phone (optional)" maxLength={40} autoComplete="tel" inputMode="tel" />
+        <select style={{ ...inp, cursor: "pointer" }} value={form.stage} onChange={e => setForm({ ...form, stage: e.target.value })} required>
+          <option value="">Where are you right now?</option>
+          <option>Just getting started — learning the business</option>
+          <option>Have a site or an idea, no numbers yet</option>
+          <option>Have numbers, need financing figured out</option>
+          <option>Deal in motion — need an experienced read</option>
+          <option>Already developing — want to go bigger</option>
+        </select>
+        <textarea style={{ ...inp, resize: "vertical" }} rows={3} value={form.about} onChange={e => setForm({ ...form, about: e.target.value })} placeholder="What are you building, and what's in the way? A sentence or two is fine." maxLength={2000} />
+      </>)}
       <input value={form.website} onChange={e => setForm({ ...form, website: e.target.value })} tabIndex={-1} autoComplete="off" style={{ position: "absolute", left: -9999, opacity: 0, height: 0 }} aria-hidden="true" />
       {err && <div style={{ color: "#ff6b6b", fontSize: 13, fontFamily: font }}>{err}</div>}
       <button type="submit" disabled={busy} style={{ ...btn, opacity: busy ? 0.6 : 1 }}>{busy ? "One moment…" : o.cta}</button>
-      <div style={{ color: "#8a7070", fontSize: 11.5, fontFamily: font, lineHeight: 1.6, textAlign: "center" }}>{o.mode === "buy" ? "Secure checkout by Stripe. Your email becomes your GroundUp account." : "No card. One code, one seat, yours."}</div>
+      <div style={{ color: "#8a7070", fontSize: 11.5, fontFamily: font, lineHeight: 1.6, textAlign: "center" }}>{o.mode === "buy" ? "Secure checkout by Stripe. Your email becomes your GroundUp account." : o.mode === "call" ? "No card. We reply within one business day." : "No card. One code, one seat, yours."}</div>
     </form>
   );
 
@@ -163,7 +202,7 @@ export function FunnelPage({ offer }) {
             <span style={{ fontFamily: serif, fontWeight: 700, fontSize: 17, color: "#fff", letterSpacing: "1px" }}>GROUNDUP</span>
             <span className="fn-byline" style={{ fontFamily: font, fontWeight: 700, fontSize: 8.5, letterSpacing: "1.8px", textTransform: "uppercase", color: "#c8a8a8", whiteSpace: "nowrap" }}>by Dr. Gina Merritt</span>
           </a>
-          <span style={{ color: "#8a7070", fontSize: 11, fontFamily: font, fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" }}>{o.mode === "buy" ? "Secure checkout" : "Free seat"}</span>
+          <span style={{ color: "#8a7070", fontSize: 11, fontFamily: font, fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" }}>{o.mode === "buy" ? "Secure checkout" : o.mode === "call" ? "Free call" : "Free seat"}</span>
         </div>
 
         <div className="fn-hero">

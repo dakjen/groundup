@@ -15,6 +15,9 @@ if (PIXEL) {
 
 // The static copy crawlers read (scripts/prerender.mjs) comes out the moment the app mounts
 for (const id of ['seo-content', 'seo-style']) { const el = document.getElementById(id); if (el) el.remove(); }
+// The splash holds the screen black for a beat, then fades once the app has painted —
+// a refresh reads as one quiet moment instead of a blink of half-built page.
+setTimeout(() => { const sp = document.getElementById('gu-splash'); if (sp) { sp.classList.add('out'); setTimeout(() => { sp.remove(); const st = document.getElementById('gu-splash-style'); if (st) st.remove(); }, 400); } }, 450);
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

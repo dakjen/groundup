@@ -3884,9 +3884,10 @@ export function BookingsAdminPage() {
   const [users, setUsers] = useState([]);
   const [form, setForm] = useState({ user_id: "", hours_per_month: 10, monthly_amount: 5500, notes: "", status: "offered" });
   const [callLink, setCallLink] = useState("");
+  const [scopeLink, setScopeLink] = useState("");
   const [msg, setMsg] = useState(null);
   const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 6000); };
-  const load = () => api("/api/retainers?admin=1").then(d => { setData(d); if (d.call_link) setCallLink(d.call_link); }).catch(e => setMsg({ ok: false, text: e.message }));
+  const load = () => api("/api/retainers?admin=1").then(d => { setData(d); if (d.call_link) setCallLink(d.call_link); if (d.scoping_link) setScopeLink(d.scoping_link); }).catch(e => setMsg({ ok: false, text: e.message }));
   useEffect(() => { load(); api("/api/users").then(d => setUsers(Array.isArray(d) ? d : d.users || [])).catch(() => {}); }, []);
   const act = async (fn, ok) => { try { await fn(); if (ok) flash(true, ok); await load(); } catch (e) { flash(false, e.message); } };
   const post = (body) => api("/api/retainers", { method: "POST", body: JSON.stringify(body) });
@@ -3918,6 +3919,26 @@ export function BookingsAdminPage() {
         {!data ? <div style={{ color: "var(--gu-muted)", fontFamily: font }}>Loading…</div> : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 18, alignItems: "start" }}>
             <div>
+              <div style={card}>
+                {eyebrow("Free scoping calls")}
+                <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, marginBottom: 12 }}>From the /go/call funnel: people who asked for twenty minutes with the team before anything is sold. The booking link below goes out in their confirmation email.</div>
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 14 }}>
+                  <input value={scopeLink} onChange={e => setScopeLink(e.target.value)} placeholder="Booking link for scoping calls (Google appointment, Calendly…)" style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, flex: "1 1 260px" }} />
+                  <button onClick={() => act(() => post({ action: "set_scoping_link", url: scopeLink }), "Scoping link saved.")} style={ghost}>Save</button>
+                </div>
+                {(data.scoping || []).length === 0 ? <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>No requests yet.</div> : data.scoping.map(r => (
+                  <div key={r.id} style={{ padding: "9px 0", borderBottom: "1px solid var(--gu-border2)", fontFamily: font, fontSize: 13 }}>
+                    <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                      <span style={{ color: "var(--gu-text2)", fontWeight: 700 }}>{r.name}</span>
+                      <span style={{ color: "var(--gu-muted)", fontSize: 12 }}>{r.email}{r.phone ? ` · ${r.phone}` : ""} · {new Date(r.created_at).toLocaleDateString()}{r.stage ? ` · ${r.stage}` : ""}</span>
+                      <select value={r.status} onChange={e => act(() => post({ action: "scoping_status", id: r.id, status: e.target.value }))} style={{ marginLeft: "auto", background: "var(--gu-card2)", color: r.status === "new" ? "#b80101" : "var(--gu-text2)", border: "1px solid var(--gu-border)", borderRadius: 6, padding: "4px 8px", fontFamily: font, fontWeight: 700, fontSize: 11, cursor: "pointer" }}>
+                        <option value="new">New</option><option value="booked">Booked</option><option value="done">Call done</option><option value="passed">Not a fit</option>
+                      </select>
+                    </div>
+                    {r.about && <div style={{ color: "var(--gu-body)", fontSize: 12.5, lineHeight: 1.6, marginTop: 4 }}>{r.about}</div>}
+                  </div>
+                ))}
+              </div>
               <div style={card}>
                 {eyebrow("Paid, not yet booked")}
                 {waiting.length === 0 ? <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>Everyone who paid has booked.</div> : waiting.map(bookingRow)}

@@ -290,6 +290,8 @@ const STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS partner_requests (id SERIAL PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, company TEXT, phone TEXT, note TEXT, status TEXT DEFAULT 'new', created_at TIMESTAMP DEFAULT NOW())`,
   // Meetings an advisory client asks for: what they want to cover, how long, and when Dr. Merritt has it on the calendar
   `CREATE TABLE IF NOT EXISTS retainer_meetings (id SERIAL PRIMARY KEY, retainer_id INTEGER NOT NULL, minutes INTEGER DEFAULT 60, topic TEXT, status TEXT DEFAULT 'requested', scheduled_at TIMESTAMP, created_at TIMESTAMP DEFAULT NOW())`,
+  `ALTER TABLE lnl_rsvps ADD COLUMN IF NOT EXISTS joined_at TIMESTAMP`,
+  `CREATE TABLE IF NOT EXISTS scoping_requests (id SERIAL PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT, stage TEXT, about TEXT, acquisition TEXT, status TEXT DEFAULT 'new', created_at TIMESTAMP DEFAULT NOW())`,
   `ALTER TABLE resources ADD COLUMN IF NOT EXISTS partner_type TEXT`,
   `CREATE TABLE IF NOT EXISTS push_subscriptions (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, endpoint TEXT UNIQUE NOT NULL, keys JSONB NOT NULL, created_at TIMESTAMP DEFAULT NOW())`,
   `CREATE TABLE IF NOT EXISTS channel_mutes (user_id INTEGER NOT NULL, channel_id INTEGER NOT NULL, PRIMARY KEY (user_id, channel_id))`,
