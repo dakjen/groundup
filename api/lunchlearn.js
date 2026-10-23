@@ -22,6 +22,12 @@ function audienceFits(ev, me, rank) {
 
 // The schedule lives in settings.lnl_events (array). settings.lnl_event (single)
 // is legacy — read once for back-compat, never written again.
+// A session stays on the schedule (and joinable) until four hours after it
+// starts — people join late, sessions run long, and a link that vanishes two
+// minutes in is worse than one that lingers.
+const LIVE_HOURS = 4;
+export const stillLive = (e) => new Date(e.date).getTime() + LIVE_HOURS * 3600e3 > Date.now();
+
 async function getEvents(sql) {
   const [row] = await sql`SELECT value FROM settings WHERE key = 'lnl_events'`;
   let events = row?.value ? JSON.parse(row.value) : null;
@@ -111,7 +117,7 @@ export default async function handler(req, res) {
         WHERE e.course_id = 'lunchlearn' AND (e.expires_at IS NULL OR e.expires_at > NOW())
         ORDER BY e.created_at DESC LIMIT 200`;
       const events = await getEvents(sql);
-      const upcoming = events.filter(e => new Date(e.date) > new Date());
+      const upcoming = events.filter(stillLive);
       const event = upcoming[0] || null;
       const allRsvps = events.length ? await sql`
         SELECT r.event_key, r.question, u.name, u.email FROM lnl_rsvps r JOIN users u ON u.id = r.user_id
@@ -147,7 +153,7 @@ export default async function handler(req, res) {
       const allEvents = await getEvents(sql);
       // Lunch & Learns and Office Hours share the schedule store but are
       // separate experiences — L&L keeps its page, office hours get their own
-      const upcomingAll = allEvents.filter(e => new Date(e.date) > new Date());
+      const upcomingAll = allEvents.filter(stillLive);
       const upcomingEvents = upcomingAll.filter(e => (e.kind || 'lnl') !== 'office');
       const officeEvents = upcomingAll.filter(e => (e.kind || 'lnl') === 'office');
       const event = upcomingEvents[0] || null;
@@ -185,7 +191,9 @@ export default async function handler(req, res) {
         events: upcomingEvents.map(e => ({ ...e, my_rsvp: myRsvpKeys.includes(e.date) })),
         active: !!access || !!admin,
         expires_at: access?.expires_at || null,
-        link,
+        // The Zoom link is for people who hold a seat — RSVP first
+        link: admin || my_rsvp ? link : null,
+        has_link: !!link,
         recordings,
         discount_until: user?.lnl_discount_until || null,
         has_request: !!reqRow,
@@ -341,7 +349,7 @@ export default async function handler(req, res) {
       try { await sql`ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS acquisition TEXT`; } catch {}
       try { await sql`INSERT INTO waitlist (name, email, list, source, acquisition, created_at) VALUES (${name}, ${email}, 'general', ${'ad:' + acq}, ${acq}, NOW()) ON CONFLICT DO NOTHING`; } catch (e) { console.error('free seat lead', e.message); }
       const events = await getEvents(sql);
-      const next = events.filter(e => (e.kind || 'lnl') === 'lnl' && new Date(e.date) > new Date()).sort((a, b) => a.date.localeCompare(b.date))[0] || null;
+      const next = events.filter(e => (e.kind || 'lnl') === 'lnl' && stillLive(e)).sort((a, b) => a.date.localeCompare(b.date))[0] || null;
       const mail = freeSeatEmail(name, code, next);
       const ok = await sendEmail(email, mail.subject, mail.html);
       try { await addLnlContact?.(email, name); } catch {}
@@ -400,7 +408,7 @@ export default async function handler(req, res) {
       // event_key targets a specific session; default to the next upcoming L&L
       const target = req.body.event_key
         ? events.find(e => e.date === req.body.event_key)
-        : events.find(e => new Date(e.date) > new Date() && (e.kind || 'lnl') !== 'office');
+        : events.find(e => stillLive(e) && (e.kind || 'lnl') !== 'office');
       if (!target) return res.status(400).json({ error: 'No upcoming session scheduled' });
       if ((target.kind || 'lnl') === 'office') {
         // Office hours: Premium+ only, behind the new-member gate, within the yearly allowance

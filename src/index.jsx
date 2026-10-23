@@ -2851,6 +2851,8 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
               <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 17, fontFamily: font, marginBottom: 8 }}>Live Session Access</div>
               {status?.link ? (
                 <a href={status.link} target="_blank" rel="noreferrer" style={{ display: "inline-block", background: "#b80101", color: "#fff", borderRadius: 8, padding: "11px 22px", fontFamily: font, fontWeight: 800, fontSize: 13, textDecoration: "none", marginTop: 6 }}>Join the Next Session</a>
+              ) : status?.has_link && status?.event ? (
+                <p style={{ color: "#c8a8a8", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>RSVP to the next session below and the join link appears here.</p>
               ) : (
                 <p style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>The join link for the next session will appear here — check back closer to the date.</p>
               )}
@@ -3818,11 +3820,11 @@ function OfficeHoursAdmin({ btnRed, btnGhost, inp, lbl }) {
         <button onClick={async () => { try { await call("POST", { action: "add_event", kind: "office", ...form }); setForm({ title: "", date: "", time: "", description: "", audience: "all", link: "" }); flash(true, "Office hours added to the drop."); await load(); } catch (e) { flash(false, e.message); } }} style={btnRed}>Add to Drop</button>
       </div>
       <div style={section}>
-        <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Scheduled ({officeEvents.filter(e => new Date(e.date) > Date.now()).length} upcoming)</div>
+        <div style={{ fontSize: 10, color: "#666666", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Scheduled ({officeEvents.filter(e => new Date(e.date).getTime() + 4 * 3600e3 > Date.now()).length} upcoming)</div>
         {officeEvents.length === 0 && <div style={{ color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No office hours dropped yet.</div>}
         {officeEvents.map(ev => {
           const rsvps = (data.rsvpsByEvent || {})[ev.date] || [];
-          const past = new Date(ev.date) < new Date();
+          const past = new Date(ev.date).getTime() + 4 * 3600e3 < Date.now();   // live for four hours after the start
           return (
             <div key={ev.id} style={{ padding: "12px 0", borderBottom: "1px solid #f2efe8", opacity: past ? 0.5 : 1 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
