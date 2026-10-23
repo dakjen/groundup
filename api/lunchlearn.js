@@ -179,7 +179,7 @@ export default async function handler(req, res) {
           office_hours = {
             eligible: true, gate,
             allowance: { limit, used: usedRows[0]?.n || 0, remaining: Math.max(0, limit - (usedRows[0]?.n || 0)) },
-            events: officeEvents.filter(e => admin || audienceFits(e, me, rank >= 3 || lifetime ? Math.max(rank, 3) : rank)).map(e => { const mine = myRsvpKeys.includes(e.date); return { ...e, my_rsvp: mine, has_link: !!e.link, link: mine || admin ? e.link : undefined }; }),
+            events: officeEvents.filter(e => admin || audienceFits(e, me, rank >= 3 || lifetime ? Math.max(rank, 3) : rank)).map(e => { const mine = myRsvpKeys.includes(e.date); return { ...e, my_rsvp: mine, has_link: !!e.link, link: mine ? e.link : undefined }; }),   // the link follows the seat, team included
           };
         } else {
           office_hours = { eligible: false, events: [] };
@@ -192,7 +192,7 @@ export default async function handler(req, res) {
         active: !!access || !!admin,
         expires_at: access?.expires_at || null,
         // The Zoom link is for people who hold a seat — RSVP first
-        link: admin || my_rsvp ? link : null,
+        link: my_rsvp ? link : null,
         has_link: !!link,
         recordings,
         discount_until: user?.lnl_discount_until || null,
@@ -456,7 +456,7 @@ export default async function handler(req, res) {
         // it is spent — otherwise an Owner could join, release, and keep all
         // six office-hours spots for the year.
         const msToStart = new Date(target.date).getTime() - Date.now();
-        if (!admin && msToStart < 3600e3) return res.status(400).json({ error: msToStart > 0 ? 'Seats lock an hour before the session starts.' : 'This session has started — the seat is yours and counts toward your plan.' });
+        if (msToStart < 3600e3) return res.status(400).json({ error: msToStart > 0 ? 'Seats lock an hour before the session starts.' : 'This session has started — the seat is yours and counts toward your plan.' });
         await sql`DELETE FROM lnl_rsvps WHERE user_id = ${session.uid} AND event_key = ${target.date}`;
       }
       return res.json({ success: true });
