@@ -975,7 +975,9 @@ function GULogo({ size = 40, light = false }) {
 
 // ─── NAV ────────────────────────────────────────────────────────────────────
 
-function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread = 0 }) {
+function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread = 0, dots = {} }) {
+  // A red dot on a team menu item (and its group) when something there is waiting, e.g. an advisory message
+  const dot = (id) => dots[id] > 0 ? <span style={{ display: "inline-block", width: 7, height: 7, borderRadius: 4, background: "#b80101", marginLeft: 6, verticalAlign: "middle" }} /> : null;
   const [menuOpen, setMenuOpen] = useState(false);
   const isTeam = member?.role === "admin";
   // Members get the session-type tabs folded into one "With Dr. Gina" dropdown,
@@ -1061,12 +1063,12 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
                 <div key={g.label} style={{ position: "relative" }} data-admin-menu="1">
                   <button onClick={() => single ? go(ids[0]) : setAdminOpen(open ? false : g.label)}
                     style={{ background: active ? "#b8010112" : "transparent", color: active ? "#b80101" : "#3a3a3a", border: active ? "1px solid #b8010130" : "1px solid transparent", borderRadius: 7, padding: "7px 12px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>
-                    {g.label}{!single && <span style={{ marginLeft: 5, fontSize: 9, opacity: 0.6 }}>▾</span>}
+                    {g.label}{ids.some(id => dots[id] > 0) && dot(ids.find(id => dots[id] > 0))}{!single && <span style={{ marginLeft: 5, fontSize: 9, opacity: 0.6 }}>▾</span>}
                   </button>
                   {open && !single && (
                     <div style={{ position: "absolute", top: "100%", left: 0, paddingTop: 6, zIndex: 200 }}><div style={{ background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 12, padding: 6, minWidth: 190, boxShadow: "0 12px 40px rgba(0,0,0,0.18)" }}>
                       {g.items.map(([id, label]) => (
-                        <button key={id} onClick={() => go(id)} style={{ display: "block", width: "100%", textAlign: "left", background: activePage === id ? "#b8010112" : "transparent", color: activePage === id ? "#b80101" : "#333333", border: "none", borderRadius: 8, padding: "9px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>{label}</button>
+                        <button key={id} onClick={() => go(id)} style={{ display: "block", width: "100%", textAlign: "left", background: activePage === id ? "#b8010112" : "transparent", color: activePage === id ? "#b80101" : "#333333", border: "none", borderRadius: 8, padding: "9px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>{label}{dot(id)}</button>
                       ))}
                     </div></div>
                   )}
@@ -1099,7 +1101,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
             <button key={page} onClick={() => { setActivePage(page); setMenuOpen(false); }} style={{ background: activePage === page ? "#57040418" : "transparent", color: activePage === page ? "#b80101" : "#c8a0a0", border: activePage === page ? "1px solid #57040440" : "1px solid transparent", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>{pageLabels[page] || page}</button>
           ))}
           {member && !isTeam && SESSION_PAGES.map(([id, label]) => (
-            <button key={id} onClick={() => { setActivePage(id); setMenuOpen(false); }} style={{ background: activePage === id ? "#57040418" : "transparent", color: activePage === id ? "#b80101" : "#c8a0a0", border: "1px solid transparent", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>{label}</button>
+            <button key={id} onClick={() => { setActivePage(id); setMenuOpen(false); }} style={{ background: activePage === id ? "#57040418" : "transparent", color: activePage === id ? "#b80101" : "#c8a0a0", border: "1px solid transparent", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>{label}{dot(id)}</button>
           ))}
           {isTeam && ADMIN_GROUPS.map(g => (
             <div key={g.label}>
@@ -7921,7 +7923,7 @@ export default function App() {
       {/* The nav's Sign In always opens the real login — team and members sign in
           here with their email/password, pre-launch included. Only JOIN buttons
           route to the waitlist before launch. */}
-      <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => { setAuthMode("login"); setSignupTier("Free"); setShowSignup(true); }} member={member} unread={(notif?.unread || 0) + (notif?.dm_unread || 0) + (notif?.advisory_unread || 0)} />
+      <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => { setAuthMode("login"); setSignupTier("Free"); setShowSignup(true); }} member={member} unread={(notif?.unread || 0) + (notif?.dm_unread || 0) + (notif?.advisory_unread || 0)} dots={{ "admin-retainers": notif?.advisory_unread || 0 }} />
       {activePage === "home" && <HomePage setActivePage={navigateTo} onSignUp={openSignup} currentUser={currentUser} eventInvited={eventInvited} preLaunch={prelaunch} />}
       {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} onGlossary={() => navigateTo("glossary")} onNav={navigateTo} /></div>}
       {activePage === "advisory" && <RetainerPage member={member} setActivePage={navigateTo} />}
