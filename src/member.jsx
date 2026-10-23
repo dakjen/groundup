@@ -236,26 +236,36 @@ export function DataRoom({ project, files, used, quota, onChange, flash, dark, c
 }
 
 export function DealProfileCard({ member, onMemberUpdate }) {
+  // The client's deal room, built like Dr. Merritt's side: one tab per project,
+  // and on each tab the project itself — its facts, then its documents by phase.
+  // The setup form only shows for a new project or behind "Edit details".
   const [data, setData] = useState(null);           // { projects, files, used_bytes, quota_bytes }
-  const [open, setOpen] = useState(null);           // project id being edited, or "new"
+  const hashProject = () => { const m = /[&#]p=(\d+)/.exec(window.location.hash); return m ? Number(m[1]) : null; };
+  const [open, setOpen] = useState(hashProject);    // project id shown, or "new"
+  const [editing, setEditing] = useState(false);
   const [d, setD] = useState(DEAL_BLANK);
   const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(null);
   const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 5000); };
   const set = (k) => (e) => setD({ ...d, [k]: e.target.value });
   const load = () => api("/api/auth", { method: "POST", body: JSON.stringify({ action: "projects" }) }).then(r => { setData(r); return r; }).catch(() => setData({ projects: [], files: [], used_bytes: 0, quota_bytes: 50 * 1024 ** 3 }));
-  useEffect(() => { load().then(r => { if (r && r.projects.length === 0) { setOpen("new"); setD(DEAL_BLANK); } }); }, []);
-  const edit = (p) => { setOpen(p.id); setD({ ...DEAL_BLANK, ...Object.fromEntries(Object.entries(p.details || {}).filter(([, v]) => v !== null)), name: p.name }); };
+  useEffect(() => { load().then(r => {
+    if (!r) return;
+    if (r.projects.length === 0) { setOpen("new"); setEditing(true); setD(DEAL_BLANK); }
+    else if (!open || !r.projects.some(p => p.id === open)) setOpen(r.projects[0].id);
+  }); }, []);
+  const show = (p) => { setOpen(p.id); setEditing(false); window.location.hash = `dealroom&p=${p.id}`; };
+  const edit = (p) => { setEditing(true); setD({ ...DEAL_BLANK, ...Object.fromEntries(Object.entries(p.details || {}).filter(([, v]) => v !== null)), name: p.name }); };
   const save = async () => {
     setBusy(true);
     try {
       const r = await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "project_save", id: open === "new" ? 0 : open, name: d.name, deal: d }) });
       const me = getMember(); if (me) saveMember({ ...me, deal_profile: r.deal_profile }); onMemberUpdate && onMemberUpdate({ ...member, deal_profile: r.deal_profile });
-      flash(true, "Saved — Dr. Merritt and the team can see this."); const nd = await load(); setOpen(r.project.id);
+      flash(true, "Saved — Dr. Merritt and the team can see this."); await load(); setOpen(r.project.id); setEditing(false);
     } catch (e) { flash(false, e.message); } finally { setBusy(false); }
   };
   const removeProject = async (p) => {
     if (!window.confirm(`Remove ${p.name} and its documents?`)) return;
-    try { await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "project_remove", id: p.id }) }); setOpen(null); await load(); } catch (e) { flash(false, e.message); }
+    try { await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "project_remove", id: p.id }) }); const r = await load(); setEditing(false); setOpen(r.projects[0] ? r.projects[0].id : "new"); if (!r.projects[0]) setEditing(true); } catch (e) { flash(false, e.message); }
   };
   const field = (label, k, props = {}) => (
     <div>
@@ -268,50 +278,65 @@ export function DealProfileCard({ member, onMemberUpdate }) {
   const projects = data?.projects || []; const files = data?.files || [];
   const used = Number(data?.used_bytes || 0), quota = Number(data?.quota_bytes || 50 * 1024 ** 3);
   const current = open && open !== "new" ? projects.find(p => p.id === open) : null;
+  const dp = current?.details || {};
+  const facts = [["Site control", dp.site_control], ["Financing path", dp.financing_path], ["Sources committed", dp.sources_committed], ["Still needed", dp.sources_missing], ["Gap", dp.gap], ["Timeline", dp.timeline], ["Team", dp.team], ["In the way right now", dp.blocker], ["What you want from Dr. Merritt", dp.wants]].filter(x => x[1]);
+  const tab = (on) => ({ background: on ? "#b80101" : "var(--gu-card2)", color: on ? "#fff" : "var(--gu-text2)", border: "1px solid " + (on ? "#b80101" : "var(--gu-border)"), borderRadius: 999, padding: "9px 16px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" });
+  const form = (
+    <div style={{ background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 14, padding: "20px 22px" }}>
+      <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 22, color: "var(--gu-text)", marginBottom: 4 }}>{open === "new" ? "Set up a project" : `Edit ${current?.name}`}</div>
+      <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 14, lineHeight: 1.7 }}>The facts Dr. Merritt reads before your calls and messages. Fill in what you know — you can update it as the deal moves.</div>
+      {row(field("Project name", "name", { placeholder: "e.g. 9410 Hough" }), field("Location", "location", { placeholder: "City, state" }))}
+      {row(<div><label style={lbl}>Phase</label><select style={{ ...inp, cursor: "pointer" }} value={d.phase} onChange={set("phase")}><option value="">Choose…</option>{DEAL_PHASES.map(p => <option key={p} value={p}>{p}</option>)}</select></div>, field("Product", "product", { placeholder: "Affordable · mixed-income · workforce · mixed-use" }))}
+      {row(field("Units", "units", { placeholder: "e.g. 116", max: 40 }), field("Total development cost", "tdc", { placeholder: "e.g. $47M", max: 60 }))}
+      {row(field("Site control", "site_control", { placeholder: "LOI · option · under contract · owned · none yet" }), field("Financing path", "financing_path", { placeholder: "9% · 4% + bonds · non-LIHTC · undecided" }))}
+      {field("Sources committed", "sources_committed", { rows: 2, placeholder: "What is in: lender, equity, subsidy awards, amounts" })}
+      {field("Sources still needed", "sources_missing", { rows: 2, placeholder: "What is not: the gap, who you are talking to" })}
+      {row(field("Gap", "gap", { placeholder: "e.g. $6M", max: 60 }), field("Timeline", "timeline", { placeholder: "Target closing, application dates", max: 200 }))}
+      {field("Team", "team", { rows: 2, placeholder: "Architect, GC, attorney, property manager, consultants", max: 400 })}
+      {field("The one thing in the way right now", "blocker", { rows: 2 })}
+      {field("What you want from Dr. Merritt on this project", "wants", { rows: 2 })}
+      <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginTop: 4 }}>
+        <button style={{ ...btnRed, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={save}>{open === "new" ? "Add project" : "Save project"}</button>
+        {(current || projects.length > 0) && <button onClick={() => { setEditing(false); if (open === "new" && projects[0]) setOpen(projects[0].id); }} style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 12.5, fontFamily: font, fontWeight: 700 }}>Cancel</button>}
+        {current && <button onClick={() => removeProject(current)} style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 12.5, fontFamily: font, fontWeight: 700, marginLeft: "auto" }}>Remove project</button>}
+      </div>
+    </div>
+  );
   return (
     <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
-        <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font }}>Deal room</div>
-        <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font }}>{fmtBytes(used)} of {fmtBytes(quota)} used</div>
-      </div>
-      <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 16, lineHeight: 1.7 }}>Each project you are working on — the details Dr. Merritt refers to before your calls and messages, and that project's documents organized by phase. Update it as the deal moves.</div>
       {!data ? <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>Loading…</div> : (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
-          {projects.map(p => {
-            const on = open === p.id; const n = files.filter(f => f.project_id === p.id).length;
-            return <button key={p.id} onClick={() => on ? setOpen(null) : edit(p)} style={{ background: on ? "#b80101" : "var(--gu-card2)", color: on ? "#fff" : "var(--gu-text2)", border: "1px solid " + (on ? "#b80101" : "var(--gu-border)"), borderRadius: 999, padding: "9px 16px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>{p.name}{n ? <span style={{ opacity: 0.75, fontWeight: 600 }}> · {n} doc{n === 1 ? "" : "s"}</span> : null}</button>;
-          })}
-          <button onClick={() => { setOpen("new"); setD(DEAL_BLANK); }} style={{ background: "transparent", color: open === "new" ? "#fff" : "var(--gu-text2)", border: "1px dashed " + (open === "new" ? "#b80101" : "var(--gu-border)"), borderRadius: 999, padding: "9px 16px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>+ Add a project</button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 20 }}>
+          {projects.map(p => { const n = files.filter(f => f.project_id === p.id).length; return (
+            <button key={p.id} onClick={() => show(p)} style={tab(open === p.id)}>{p.name}{n ? <span style={{ opacity: 0.75, fontWeight: 600 }}> · {n} doc{n === 1 ? "" : "s"}</span> : null}</button>
+          ); })}
+          <button onClick={() => { setOpen("new"); setEditing(true); setD(DEAL_BLANK); }} style={{ background: "transparent", color: "var(--gu-text2)", border: "1px dashed " + (open === "new" ? "#b80101" : "var(--gu-border)"), borderRadius: 999, padding: "9px 16px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>+ Add a project</button>
+          <span style={{ marginLeft: "auto", color: "var(--gu-muted)", fontSize: 12, fontFamily: font }}>{fmtBytes(used)} of {fmtBytes(quota)} used</span>
         </div>
       )}
-      {open && (
-        <div style={{ background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 14, padding: "20px 22px" }}>
-          <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 22, color: "var(--gu-text)", marginBottom: 14 }}>{open === "new" ? "New project" : current?.name}</div>
-          {row(field("Project name", "name", { placeholder: "e.g. 9410 Hough" }), field("Location", "location", { placeholder: "City, state" }))}
-          {row(<div><label style={lbl}>Phase</label><select style={{ ...inp, cursor: "pointer" }} value={d.phase} onChange={set("phase")}><option value="">Choose…</option>{DEAL_PHASES.map(p => <option key={p} value={p}>{p}</option>)}</select></div>, field("Product", "product", { placeholder: "Affordable · mixed-income · workforce · mixed-use" }))}
-          {row(field("Units", "units", { placeholder: "e.g. 116", max: 40 }), field("Total development cost", "tdc", { placeholder: "e.g. $47M", max: 60 }))}
-          {row(field("Site control", "site_control", { placeholder: "LOI · option · under contract · owned · none yet" }), field("Financing path", "financing_path", { placeholder: "9% · 4% + bonds · non-LIHTC · undecided" }))}
-          {field("Sources committed", "sources_committed", { rows: 2, placeholder: "What is in: lender, equity, subsidy awards, amounts" })}
-          {field("Sources still needed", "sources_missing", { rows: 2, placeholder: "What is not: the gap, who you are talking to" })}
-          {row(field("Gap", "gap", { placeholder: "e.g. $6M", max: 60 }), field("Timeline", "timeline", { placeholder: "Target closing, application dates", max: 200 }))}
-          {field("Team", "team", { rows: 2, placeholder: "Architect, GC, attorney, property manager, consultants", max: 400 })}
-          {field("The one thing in the way right now", "blocker", { rows: 2 })}
-          {field("What you want from Dr. Merritt on this project", "wants", { rows: 2 })}
-          <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginTop: 4 }}>
-            <button style={{ ...btnRed, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={save}>{open === "new" ? "Add project" : "Save project"}</button>
-            {current && <button onClick={() => removeProject(current)} style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 12.5, fontFamily: font, fontWeight: 700 }}>Remove project</button>}
-            {msg && <span style={{ color: msg.ok ? "#22c55e" : "#ff6b6b", fontSize: 13, fontFamily: font }}>{msg.text}</span>}
-          </div>
-          {current ? (
-            <div style={{ borderTop: "1px solid var(--gu-border2)", marginTop: 22, paddingTop: 18 }}>
-              <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Documents</div>
-              <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 12, lineHeight: 1.7 }}>This project's documents, listed by development phase. Upload (up to 5 GB a file), drag files onto a category, or drop a link to a shared folder. Only you and Dr. Merritt can open them.</div>
-              <DataRoom project={current} files={files.filter(f => f.project_id === current.id)} used={used} quota={quota} onChange={load} flash={flash} />
+      {msg && <div style={{ color: msg.ok ? "#22c55e" : "#ff6b6b", fontSize: 13, fontFamily: font, marginBottom: 12 }}>{msg.text}</div>}
+      {(open === "new" || editing) && form}
+      {current && !editing && (
+        <div>
+          {/* The project itself */}
+          <div style={{ background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 14, padding: "20px 22px", marginBottom: 22 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+              <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 26, color: "var(--gu-text)" }}>{current.name}</div>
+              <button onClick={() => edit(current)} style={{ background: "none", border: "none", color: "#b80101", cursor: "pointer", fontSize: 12.5, fontFamily: font, fontWeight: 800, padding: 0 }}>Edit details</button>
             </div>
-          ) : <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginTop: 16 }}>Add the project first — then its deal room opens for documents and links.</div>}
+            {dealSummary(dp) && <div style={{ color: "var(--gu-body)", fontSize: 14, fontFamily: font, marginTop: 4 }}>{dealSummary(dp)}</div>}
+            {facts.length > 0 && <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "10px 24px", marginTop: 14 }}>
+              {facts.map(([k, v]) => <div key={k} style={{ fontFamily: font, lineHeight: 1.6 }}><div style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>{k}</div><div style={{ color: "var(--gu-text2)", fontSize: 13.5 }}>{v}</div></div>)}
+            </div>}
+            {!dealSummary(dp) && facts.length === 0 && <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, marginTop: 4 }}>No details yet — add what you know so Dr. Merritt has it before your next conversation.</div>}
+          </div>
+          {/* Its documents, by phase */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 4 }}>
+            <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font }}>Documents</div>
+            <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font }}>Up to 5 GB a file · only you and Dr. Merritt can open them</div>
+          </div>
+          <DataRoom project={current} files={files.filter(f => f.project_id === current.id)} used={used} quota={quota} onChange={load} flash={flash} />
         </div>
       )}
-      {!open && msg && <div style={{ color: msg.ok ? "#22c55e" : "#ff6b6b", fontSize: 13, fontFamily: font }}>{msg.text}</div>}
     </div>
   );
 }
@@ -3216,6 +3241,7 @@ export function RetainerPage({ member, setActivePage }) {
   useEffect(() => { const onHash = () => { if (/dealroom/.test(window.location.hash)) setView("dealroom"); }; window.addEventListener("hashchange", onHash); return () => window.removeEventListener("hashchange", onHash); }, []);
   const [rooms, setRooms] = useState(null);               // projects + files, for the deal room summary
   const loadRooms = () => api("/api/auth", { method: "POST", body: JSON.stringify({ action: "projects" }) }).then(setRooms).catch(() => {});
+  const openRoom = (pid) => { window.location.hash = `dealroom&p=${pid}`; setView("dealroom"); };
   useEffect(() => { if (data && data.status === "active") loadRooms(); }, [data?.id]);
 
   const load = () => api("/api/retainers").then(d => setData(d.retainer)).catch(() => setData(null));
@@ -3326,7 +3352,7 @@ export function RetainerPage({ member, setActivePage }) {
         <button onClick={() => { setView("workspace"); loadRooms(); if (/dealroom/.test(window.location.hash)) history.replaceState(null, "", window.location.pathname); }} style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 12.5, fontFamily: font, fontWeight: 700, padding: 0, marginBottom: 14 }}>← Back to your workspace</button>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Senior Advisor Retainer</div>
         <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4.5vw,42px)", color: "var(--gu-text)", marginBottom: 10 }}>Deal Room</h1>
-        <p style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.8, maxWidth: 620, marginBottom: 28 }}>Your secure workspace for the confidential documents behind each project — organized by development phase, shared only with Dr. Merritt. Add a project, then drop its documents into the phase they belong to.</p>
+        <p style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.8, maxWidth: 620, marginBottom: 28 }}>One tab per project: the facts Dr. Merritt works from, and that project's documents filed by development phase. Only you and Dr. Merritt can open any of it.</p>
         <DealProfileCard member={member} />
       </div>
     </div>
@@ -3348,14 +3374,43 @@ export function RetainerPage({ member, setActivePage }) {
               {(data.meetings || []).length > 0 && <span style={{ color: "var(--gu-muted)", fontSize: 13 }}>· {data.meetings[0].scheduled_at ? `next meeting ${new Date(data.meetings[0].scheduled_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : "meeting requested"}</span>}
             </div>
             {/* The work comes first: the deal room */}
-            <button onClick={() => setView("dealroom")} style={{ width: "100%", textAlign: "left", background: "var(--gu-card)", border: "1px solid #b8010150", borderRadius: 16, padding: "26px 28px", cursor: "pointer", display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
-              <div style={{ flex: "1 1 260px", minWidth: 0 }}>
-                <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Deal Room</div>
-                <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "var(--gu-text)", marginBottom: 6 }}>{rooms && rooms.projects.length ? `${rooms.projects.length} project${rooms.projects.length === 1 ? "" : "s"} · ${rooms.files.length} document${rooms.files.length === 1 ? "" : "s"}` : "Your documents, organized"}</div>
-                <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rooms && rooms.projects.length ? rooms.projects.map(p => p.name).join(" · ") : "Add your projects and drop their documents in by development phase — shared only with Dr. Merritt."}{rooms ? ` · ${fmtBytes(rooms.used_bytes)} of ${fmtBytes(rooms.quota_bytes)} used` : ""}</div>
+            <div style={{ background: "var(--gu-card)", border: "1px solid #b8010150", borderRadius: 16, padding: "30px 32px", marginBottom: 36 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 14, flexWrap: "wrap", marginBottom: 8 }}>
+                <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font }}>Deal Room</div>
+                <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font }}>{rooms ? `${fmtBytes(rooms.used_bytes)} of ${fmtBytes(rooms.quota_bytes)} used` : ""}</div>
               </div>
-              <span style={{ ...btnRed, display: "inline-block" }}>Open the deal room →</span>
-            </button>
+              <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "var(--gu-text)", marginBottom: 8, lineHeight: 1.15 }}>{rooms && rooms.projects.length ? `${rooms.projects.length} project${rooms.projects.length === 1 ? "" : "s"} · ${rooms.files.length} document${rooms.files.length === 1 ? "" : "s"}` : "Your documents, organized"}</div>
+              <div style={{ color: "var(--gu-muted)", fontSize: 13.5, fontFamily: font, lineHeight: 1.7, marginBottom: 22, maxWidth: 560 }}>Each project's documents, filed by development phase and shared only with Dr. Merritt.</div>
+              {rooms && rooms.projects.length > 0 && (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10, marginBottom: 22 }}>
+                  {rooms.projects.map(p => { const n = rooms.files.filter(f => f.project_id === p.id).length; return (
+                    <button key={p.id} onClick={() => openRoom(p.id)} style={{ textAlign: "left", background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 12, padding: "14px 16px", cursor: "pointer" }}>
+                      <div style={{ color: "var(--gu-text)", fontSize: 14.5, fontFamily: font, fontWeight: 800, marginBottom: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
+                      <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font }}>{n} document{n === 1 ? "" : "s"} →</div>
+                    </button>
+                  ); })}
+                </div>
+              )}
+              {rooms && rooms.files.length > 0 && (
+                <div style={{ marginBottom: 22 }}>
+                  <div style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Recent documents</div>
+                  {rooms.files.slice(0, 6).map(f => { const proj = rooms.projects.find(p => p.id === f.project_id); const fold = DEAL_FOLDERS.find(x => x[0] === f.folder); return (
+                    <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid var(--gu-border2)", fontFamily: font }}>
+                      <FileTextIcon />
+                      <a href={f.url} target="_blank" rel="noreferrer" style={{ color: "var(--gu-text2)", fontSize: 13.5, fontWeight: 700, textDecoration: "none", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.title || f.url}</a>
+                      <span style={{ color: "var(--gu-muted)", fontSize: 12, whiteSpace: "nowrap" }}>{[proj && proj.name, fold && fold[1]].filter(Boolean).join(" · ")}</span>
+                    </div>
+                  ); })}
+                </div>
+              )}
+              <button onClick={() => setView("dealroom")} style={btnRed}>{rooms && rooms.projects.length ? "Open the deal room →" : "Add your first project →"}</button>
+            </div>
+
+            {/* Below the line: the administrative side of the engagement */}
+            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
+              <div style={{ fontSize: 10, color: "var(--gu-muted)", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, whiteSpace: "nowrap" }}>Administrative</div>
+              <div style={{ flex: 1, height: 1, background: "var(--gu-border)" }} />
+            </div>
 
             {/* Hours */}
             <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "26px 28px", marginBottom: 18 }}>
