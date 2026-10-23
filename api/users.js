@@ -49,7 +49,8 @@ export default async function handler(req, res) {
 
     if (req.method === 'GET') {
       const users = await sql`
-        SELECT id, name, email, tier, role, badge, membership_status, comped, badges, partner_slug, created_at, deal_profile
+        SELECT id, name, email, tier, role, badge, membership_status, comped, badges, partner_slug, created_at, deal_profile,
+               onb_role, onb_experience, onb_focus, onb_phase, onb_learn, onb_pain, onb_goal, onb_source, company, title, location, onboarded_at, acquisition
         FROM users ORDER BY created_at DESC`;
       return res.json(users);
     }

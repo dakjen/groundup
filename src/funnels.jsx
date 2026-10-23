@@ -68,7 +68,7 @@ const OFFERS = {
     page: "intake", eyebrow: "Full Project Intake · $1,500",
     headline: ["Put your whole deal", "in front of Dr. Merritt."],
     sub: "Pro forma, capital stack, site, timeline — she takes in the entire project and tells you what you missed, what the lender will say, and what to do next. For developers with a live deal.",
-    image: "/opt/gina-conversation.jpg", imageAlt: "Dr. Gina Merritt in conversation",
+    image: "/opt/LIIF-Stills1.jpg", imageAlt: "Dr. Gina Merritt outside a finished development",
     proof: [["$47M", "9410 Hough, Cleveland"], ["$52M", "Beacon Center, DC"], ["3", "capital stacks on one deal"]],
     bullets: [
       "A working session on your actual numbers, not a consultation about development in general",
@@ -152,6 +152,7 @@ export function FunnelPage({ offer }) {
           .fn-img { aspect-ratio: 4 / 3; border-radius: 16px; }
           .fn-two { grid-template-columns: 1fr; gap: 18px; }
           .fn-desktop-form { display: none; }
+          .fn-byline { display: none; }
           .fn-sticky { display: block; position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); background: rgba(0,0,0,0.92); backdrop-filter: blur(12px); border-top: 1px solid #2a0000; z-index: 205; }
         }
       `}</style>
@@ -160,7 +161,7 @@ export function FunnelPage({ offer }) {
           <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
             <img src="/gu-icon-red.png" alt="" width={28} height={28} style={{ display: "block" }} />
             <span style={{ fontFamily: serif, fontWeight: 700, fontSize: 17, color: "#fff", letterSpacing: "1px" }}>GROUNDUP</span>
-            <span style={{ fontFamily: font, fontWeight: 700, fontSize: 8.5, letterSpacing: "1.8px", textTransform: "uppercase", color: "#c8a8a8" }}>by Dr. Gina Merritt</span>
+            <span className="fn-byline" style={{ fontFamily: font, fontWeight: 700, fontSize: 8.5, letterSpacing: "1.8px", textTransform: "uppercase", color: "#c8a8a8", whiteSpace: "nowrap" }}>by Dr. Gina Merritt</span>
           </a>
           <span style={{ color: "#8a7070", fontSize: 11, fontFamily: font, fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" }}>{o.mode === "buy" ? "Secure checkout" : "Free seat"}</span>
         </div>
