@@ -536,7 +536,7 @@ export default async function handler(req, res) {
         units: clip(d.units, 40), tdc: clip(d.tdc, 60), site_control: clip(d.site_control, 160), financing_path: clip(d.financing_path, 120),
         sources_committed: clip(d.sources_committed, 600), sources_missing: clip(d.sources_missing, 600), gap: clip(d.gap, 60),
         timeline: clip(d.timeline, 200), team: clip(d.team, 400), blocker: clip(d.blocker, 600), wants: clip(d.wants, 600),
-        notes: clip(d.notes, 8000), archived: d.archived === true || d.archived === 'true' ? true : null,
+        notes: clip(d.notes, 8000), shared_notes: clip(d.shared_notes, 8000), archived: d.archived === true || d.archived === 'true' ? true : null,
         updated_at: new Date().toISOString(),
       };
     };

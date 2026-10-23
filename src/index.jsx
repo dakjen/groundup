@@ -3,6 +3,7 @@ import { FileText, Send, Hourglass, FolderOpen, MessagesSquare, Video, Handshake
 import COURSE_CATALOG from "./courseCatalog.js";
 import { pollVisible } from "./poll.js";
 import { FunnelPage } from "./funnels.jsx";
+import { GetStartedPage } from "./getstarted.jsx";
 import { backdropClose, guUpload, PasswordInput, AuthModal, OnboardingFlow, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, AdvisoryAdminPage, BookingsAdminPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
@@ -999,7 +1000,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
     ? []
     : member
     ? ["courses", ...(member.partner_slug ? ["cohort"] : []), "community", "resources", "advisory", "support"]
-    : ["home", "courses", "about", "pricing", "lunchlearn", "contact", "support"];
+    : ["home", "get-started", "courses", "about", "pricing", "lunchlearn", "contact", "support"];
   // The admin menu, grouped the way the team thinks about the work.
   // Waitlist heads the People group until the public launch passes; then Users does.
   const launched = !!(window.__guLaunchAt && new Date(window.__guLaunchAt).getTime() <= Date.now());
@@ -1023,7 +1024,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
   }, [adminOpen]);
   const lightNav = member?.role === "admin";
   const navInactive = lightNav ? "#5a5a5a" : "#6a6b69";
-  const pageLabels = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", officehours: "Office Hours", contact: "Book with Dr. Gina", support: "Contact Us", glossary: "Glossary", community: "Community", library: "The Library", membership: "Membership", resources: "Resources", advisory: "Advisory", cohort: "My Cohort" };
+  const pageLabels = { home: "Home", "get-started": "Get started", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", officehours: "Office Hours", contact: "Book with Dr. Gina", support: "Contact Us", glossary: "Glossary", community: "Community", library: "The Library", membership: "Membership", resources: "Resources", advisory: "Advisory", cohort: "My Cohort" };
   return (
     <>
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: lightNav ? "rgba(255,255,255,0.97)" : "rgba(0,0,0,0.97)", backdropFilter: "blur(16px)", borderBottom: lightNav ? "1px solid #d8ccb6" : "1px solid #1a0000", padding: "0 clamp(16px,4vw,48px)", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
@@ -7473,7 +7474,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-bookings", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "admin-invites", "admin-team", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "refer", "support", "glossary", "go/playbook", "go/lunch", "go/intake", "go/call"];
+  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-bookings", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "admin-invites", "admin-team", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "refer", "support", "glossary", "get-started", "go/playbook", "go/lunch", "go/intake", "go/call"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
     return PAGES.includes(p) ? p : (sessionStorage.getItem("activePage") || "home");
@@ -7505,6 +7506,7 @@ export default function App() {
       privacy: ["Privacy Policy — GroundUp", "What GroundUp collects, how it is used, who processes it, and how deletion works."],
       "go/playbook": ["The Developer's Playbook — GroundUp by Dr. Gina Merritt", "The step-by-step Dr. Merritt follows on every deal, from the first site walk to the fifteen-year compliance clock. Read it in your GroundUp account."],
       "go/lunch": ["A free seat at a live Lunch & Learn with Dr. Gina Merritt", "Watch a real deal get taken apart, live, and ask your questions. Your first seat is free."],
+      "get-started": ["What kind of help do you need? — GroundUp by Dr. Gina Merritt", "Eight questions, one honest answer: nothing yet, a course, a membership, live time with Dr. Merritt, or one-on-one advisory work."],
       "go/call": ["A free 20-minute scoping call with the GroundUp team", "Tell us what you're building. We'll tell you honestly what would help: a course, a membership, office hours, or time with Dr. Merritt."],
       "go/intake": ["A free 20-minute scoping call with the GroundUp team", "Tell us what you're building. We'll tell you honestly what would help: a course, a membership, office hours, or time with Dr. Merritt."],
     };
@@ -7965,6 +7967,7 @@ export default function App() {
       {activePage === "advisory" && <RetainerPage member={member} setActivePage={navigateTo} />}
       {activePage === "partner-interest" && <PartnerInterestPage />}
       {activePage === "refer" && <ReferPartnerPage />}
+      {activePage === "get-started" && <GetStartedPage setActivePage={navigateTo} onSignIn={() => openSignup("Free")} />}
       {activePage.startsWith("go/") && <FunnelPage offer={activePage === "go/intake" ? "call" : activePage.slice(3)} />}
       {activePage === "partner" && <PartnerPage slug={partnerSlug} onSignIn={() => setShowAuth("login")} onExplore={() => navigateTo("courses")} />}
       {activePage === "shop" && <ShopPage member={member} onSignIn={() => openSignup("Free")} />}
