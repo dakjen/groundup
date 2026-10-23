@@ -278,6 +278,7 @@ export function DealProfileCard({ member, onMemberUpdate, messages }) {
   const [tab, setTabState] = useState(hashTab);
   const setTab = (t) => { setTabState(t); if (open && open !== "new") window.location.hash = `dealroom&p=${open}&t=${t}`; };
   const [notes, setNotes] = useState(""); const [notesSaved, setNotesSaved] = useState(true);
+  const [shared, setShared] = useState(""); const [sharedSaved, setSharedSaved] = useState(true);
   const [d, setD] = useState(DEAL_BLANK);
   const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(null);
   const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 5000); };
@@ -289,10 +290,10 @@ export function DealProfileCard({ member, onMemberUpdate, messages }) {
     else if (!open || !r.projects.some(p => p.id === open)) { const first = r.projects.find(p => !p.details?.archived) || r.projects[0]; setOpen(first.id); }
   }); }, []);
   const show = (p) => { setOpen(p.id); setEditing(false); window.location.hash = `dealroom&p=${p.id}&t=${tab}`; };
-  useEffect(() => { const p = projects.find(x => x.id === open); setNotes(p?.details?.notes || ""); setNotesSaved(true); }, [open, data]);
+  useEffect(() => { const p = projects.find(x => x.id === open); setNotes(p?.details?.notes || ""); setNotesSaved(true); setShared(p?.details?.shared_notes || ""); setSharedSaved(true); }, [open, data]);
   const setArchived = async (p, on) => { try { await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "project_save", id: p.id, name: p.name, deal: { ...(p.details || {}), archived: on } }) }); const r = await load(); if (on) { const next = r.projects.find(x => !x.details?.archived); setOpen(next ? next.id : null); } flash(true, on ? `${p.name} archived.` : `${p.name} is back.`); } catch (e) { flash(false, e.message); } };
   const [showArchived, setShowArchived] = useState(false);
-  const saveNotes = async () => { if (!current) return; try { await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "project_save", id: current.id, name: current.name, deal: { ...(current.details || {}), notes } }) }); setNotesSaved(true); await load(); } catch (e) { flash(false, e.message); } };
+  const saveNotes = async (which) => { if (!current) return; try { await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "project_save", id: current.id, name: current.name, deal: { ...(current.details || {}), notes, shared_notes: shared } }) }); if (which === "shared") setSharedSaved(true); else setNotesSaved(true); await load(); } catch (e) { flash(false, e.message); } };
   const edit = (p) => { setEditing(true); setD({ ...DEAL_BLANK, ...Object.fromEntries(Object.entries(p.details || {}).filter(([, v]) => v !== null)), name: p.name }); };
   const save = async () => {
     setBusy(true);
@@ -400,14 +401,22 @@ export function DealProfileCard({ member, onMemberUpdate, messages }) {
         </div>
       )}
       {current && !editing && tab === "notes" && (
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
-            <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font }}>Notes</div>
-            <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font }}>Private to you — Dr. Merritt doesn't see these.</div>
+        <div style={{ display: "grid", gap: 28 }}>
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+              <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font }}>Shared notes</div>
+              <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font }}>Dr. Merritt reads these on her side of the deal room.</div>
+            </div>
+            <textarea value={shared} onChange={e => { setShared(e.target.value); setSharedSaved(false); }} rows={8} maxLength={8000} placeholder="What you want her to know going in: where things stand, what changed, the question on the table…" style={{ ...inp, resize: "vertical", marginBottom: 10, lineHeight: 1.7 }} />
+            <button onClick={() => saveNotes("shared")} disabled={sharedSaved} style={{ ...btnRed, opacity: sharedSaved ? 0.5 : 1 }}>{sharedSaved ? "Saved" : "Save shared notes"}</button>
           </div>
-          <textarea value={notes} onChange={e => { setNotes(e.target.value); setNotesSaved(false); }} rows={14} maxLength={8000} placeholder="Due diligence, open questions, what the lender said, what to raise next time…" style={{ ...inp, resize: "vertical", marginBottom: 10, lineHeight: 1.7 }} />
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <button onClick={saveNotes} disabled={notesSaved} style={{ ...btnRed, opacity: notesSaved ? 0.5 : 1 }}>{notesSaved ? "Saved" : "Save notes"}</button>
+          <div style={{ borderTop: "1px solid var(--gu-border2)", paddingTop: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+              <div style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font }}>Private notes</div>
+              <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font }}>Only you. Dr. Merritt doesn't see these.</div>
+            </div>
+            <textarea value={notes} onChange={e => { setNotes(e.target.value); setNotesSaved(false); }} rows={10} maxLength={8000} placeholder="Due diligence, open questions, what the lender said, what to raise next time…" style={{ ...inp, resize: "vertical", marginBottom: 10, lineHeight: 1.7 }} />
+            <button onClick={() => saveNotes("private")} disabled={notesSaved} style={{ ...btnRed, opacity: notesSaved ? 0.5 : 1 }}>{notesSaved ? "Saved" : "Save private notes"}</button>
           </div>
         </div>
       )}
@@ -3779,6 +3788,10 @@ export function AdvisoryAdminPage() {
                       {rows.map(([k, v]) => <div key={k} style={{ fontSize: 13, fontFamily: font, lineHeight: 1.6 }}><span style={{ color: "var(--gu-muted)" }}>{k}:</span> <span style={{ color: "var(--gu-text2)" }}>{v}</span></div>)}
                     </div>}
                     {!dealSummary(dp) && rows.length === 0 && <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, marginTop: 4 }}>No details filled in yet.</div>}
+                    {dp.shared_notes && <div style={{ marginTop: 14, borderTop: "1px solid var(--gu-border2)", paddingTop: 12 }}>
+                      <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 4 }}>Their shared notes</div>
+                      <div style={{ color: "var(--gu-body)", fontSize: 13.5, fontFamily: font, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{dp.shared_notes}</div>
+                    </div>}
                   </div>
                   <DataRoom compact project={proj} files={theirs.filter(f => f.project_id === proj.id)} used={usedBytes} quota={50 * 1024 ** 3} onChange={load} flash={flash} />
                 </div>
