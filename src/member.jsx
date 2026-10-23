@@ -107,6 +107,9 @@ export function GrowingInput({ value, onChange, onSubmit, style, mentionable, ..
 // the browser has refused.
 export function NotifyModeToggle({ member, onChange }) {
   const [mode, setMode] = useState(member?.notify_mode || "all");
+  // The account refreshes from the server a beat after the page loads; follow it,
+  // or the toggle shows the stale cached value while the server has the real one.
+  useEffect(() => { if (member?.notify_mode) setMode(member.notify_mode); }, [member?.notify_mode]);
   const save = async (m) => { setMode(m); try { await api("/api/community", { method: "POST", body: JSON.stringify({ action: "notify_mode", mode: m }) }); const me = getMember(); if (me) saveMember({ ...me, notify_mode: m }); onChange && onChange(m); } catch {} };
   const b = (m, label) => <button onClick={() => save(m)} style={{ flex: 1, background: mode === m ? "#b80101" : "transparent", border: "1px solid " + (mode === m ? "#b80101" : "#ffffff22"), color: "#f5e8e8", borderRadius: 6, padding: "6px 8px", fontSize: 11, fontFamily: font, fontWeight: 700, cursor: "pointer" }}>{label}</button>;
   return (

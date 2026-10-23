@@ -426,7 +426,7 @@ function LessonRich({ text, lead }) {
 // phase they open in. Unlisted courses (series, drafts) show no map.
 const COURSE_PHASE = { mc1: "Predevelopment", mc2: "Predevelopment", mc3: "Development", mc5: "Feasibility", mc6: "Predevelopment", mc4: "Construction", mc7: "Stabilization" };
 
-function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
+function MiniCoursePage({ course, onBack, backLabel, member, onUpgrade, onMemberUpdate }) {
   const pageBg = "#000";
   // Paid members (Basic+) get every lesson. Free members get ONE lesson total across
   // all courses: the first they open is claimed server-side and everything else locks.
@@ -509,7 +509,8 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
   });
   useEffect(() => {
     const base = `#c=${encodeURIComponent(course.id)}`;
-    window.history.replaceState({}, "", window.location.pathname + window.location.search + (activeLesson !== null ? `${base}&l=${activeLesson}` : base));
+    const from = /from=glossary/.test(window.location.hash) ? "&from=glossary" : "";
+    window.history.replaceState({}, "", window.location.pathname + window.location.search + (activeLesson !== null ? `${base}&l=${activeLesson}` : base) + from);
   }, [activeLesson, course.id]);
   const [myResponses, setMyResponses] = useState({});
   // Progress: which lesson indexes this member has marked complete
@@ -789,7 +790,7 @@ function MiniCoursePage({ course, onBack, member, onUpgrade, onMemberUpdate }) {
   return (
     <div style={{ background: pageBg, minHeight: "100vh", padding: "100px clamp(20px,5vw,60px) 80px" }}>
       <div style={{ maxWidth: 760, margin: "0 auto" }}>
-        <button onClick={onBack} style={{ background: "transparent", color: "#6a6b69", border: "1px solid #1a0000", borderRadius: 8, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", marginBottom: 40 }}>← All courses</button>
+        <button onClick={onBack} style={{ background: "transparent", color: "#6a6b69", border: "1px solid #1a0000", borderRadius: 8, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", marginBottom: 40 }}>{backLabel || "← All courses"}</button>
         <div style={{ fontSize: 10, color: course.stageColor, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>{course.stage}</div>
         <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(28px,4vw,44px)", color: "#f5e8e8", marginBottom: 16, lineHeight: 1.2 }}>{course.title}</h1>
         <p style={{ color: "#8a7070", fontSize: 15, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif", marginBottom: 28 }}>{course.description}</p>
@@ -1414,7 +1415,7 @@ function GlossaryPage({ member, onSignIn, setActivePage }) {
   const refLabel = (r) => {
     const c = courseTitles[r.course_id];
     if (!c || c.hidden) return null;
-    return { title: c.title.split(":")[0], lessonTitle: Number.isFinite(r.lesson) && c.lessons[r.lesson] ? c.lessons[r.lesson] : null, href: `/courses#c=${r.course_id}${Number.isFinite(r.lesson) ? `&l=${r.lesson}` : ""}` };
+    return { title: c.title.split(":")[0], lessonTitle: Number.isFinite(r.lesson) && c.lessons[r.lesson] ? c.lessons[r.lesson] : null, href: `/courses#c=${r.course_id}${Number.isFinite(r.lesson) ? `&l=${r.lesson}` : ""}&from=glossary` };
   };
   return (
     <div style={{ background: "#000", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 90px" }}>
@@ -1507,7 +1508,8 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
   }
 
   if (activeMiniCourse) {
-    return <MiniCoursePage course={activeMiniCourse} onBack={() => { setActiveMiniCourse(null); window.history.replaceState({}, "", window.location.pathname + window.location.search); }} member={member} onUpgrade={onUpgrade} onMemberUpdate={onMemberUpdate} />;
+    const fromGlossary = /from=glossary/.test(window.location.hash);
+    return <MiniCoursePage course={activeMiniCourse} backLabel={fromGlossary ? "← Back to the glossary" : undefined} onBack={() => { if (fromGlossary) { window.location.href = "/glossary"; return; } setActiveMiniCourse(null); window.history.replaceState({}, "", window.location.pathname + window.location.search); }} member={member} onUpgrade={onUpgrade} onMemberUpdate={onMemberUpdate} />;
   }
 
   return (
