@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { FileText, Send, Hourglass, FolderOpen, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2, BadgePercent } from "lucide-react";
 import COURSE_CATALOG from "./courseCatalog.js";
 import { pollVisible } from "./poll.js";
+import { FunnelPage } from "./funnels.jsx";
 import { backdropClose, guUpload, PasswordInput, AuthModal, OnboardingFlow, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, AdvisoryAdminPage, BookingsAdminPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
@@ -7415,7 +7416,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-bookings", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "admin-invites", "admin-team", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "refer", "support", "glossary"];
+  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-bookings", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "admin-invites", "admin-team", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "refer", "support", "glossary", "go/playbook", "go/lunch", "go/intake"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
     return PAGES.includes(p) ? p : (sessionStorage.getItem("activePage") || "home");
@@ -7445,6 +7446,9 @@ export default function App() {
       contact: ["Book a 1:1 Session — GroundUp", "Work directly with Dr. Gina Merritt: deal review, strategy, capital stack review and community development sessions."],
       terms: ["Terms of Use — GroundUp", "The GroundUp Terms of Use: content license, memberships, billing, refunds, and community rules."],
       privacy: ["Privacy Policy — GroundUp", "What GroundUp collects, how it is used, who processes it, and how deletion works."],
+      "go/playbook": ["The Developer's Playbook — GroundUp by Dr. Gina Merritt", "The step-by-step Dr. Merritt follows on every deal, from the first site walk to the fifteen-year compliance clock. Read it in your GroundUp account."],
+      "go/lunch": ["A free seat at a live Lunch & Learn with Dr. Gina Merritt", "Watch a real deal get taken apart, live, and ask your questions. Your first seat is free."],
+      "go/intake": ["Full Project Intake with Dr. Gina Merritt — $1,500", "Put your whole deal in front of Dr. Merritt: pro forma, capital stack, site, timeline. Credits toward a Senior Advisor retainer."],
     };
     const [title, desc] = SEO[activePage] || SEO.home;
     document.title = title;
@@ -7690,7 +7694,7 @@ export default function App() {
   useEffect(() => {
     // Never over the password-reset or sign-in forms — it sat on top of the
     // reset form and made the emailed link look like it did nothing.
-    if (!prelaunch || member || isAdmin || resetToken || showSignup) return;
+    if (!prelaunch || member || isAdmin || resetToken || showSignup || String(activePage || "").startsWith("go/")) return;
     try { if (localStorage.getItem("guWaitlistPopSeen") === "1") return; } catch {}
     const t = setTimeout(() => {
       setShowWaitlistPop(true);
@@ -7903,6 +7907,7 @@ export default function App() {
       {activePage === "advisory" && <RetainerPage member={member} setActivePage={navigateTo} />}
       {activePage === "partner-interest" && <PartnerInterestPage />}
       {activePage === "refer" && <ReferPartnerPage />}
+      {activePage.startsWith("go/") && <FunnelPage offer={activePage.slice(3)} />}
       {activePage === "partner" && <PartnerPage slug={partnerSlug} onSignIn={() => setShowAuth("login")} onExplore={() => navigateTo("courses")} />}
       {activePage === "shop" && <ShopPage member={member} onSignIn={() => openSignup("Free")} />}
       {activePage === "terms" && <TermsPage />}

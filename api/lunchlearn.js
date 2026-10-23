@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { getSession, getAdmin, TIER_RANK, benefitGate } from './_utils.js';
-import { sendEmail, lnlAccessEmail, addLnlContact } from './_email.js';
+import { sendEmail, lnlAccessEmail, addLnlContact, freeSeatEmail } from './_email.js';
 import { wallToUtc, partsIn } from './_gcal.js';
 
 // Lunch & Learn onboarding: $69.99 buys 6 months of access (entitlement
@@ -325,6 +325,27 @@ export default async function handler(req, res) {
       if (url) { try { new URL(url); } catch { return res.status(400).json({ error: 'Invalid URL' }); } }
       await sql`INSERT INTO settings (key, value) VALUES ('lnl_link', ${url}) ON CONFLICT (key) DO UPDATE SET value = ${url}`;
       return res.json({ success: true });
+    }
+
+    // Ad funnel: a free seat at the next live session, no account needed yet.
+    // Makes a single-use code, emails it with the three steps, and records the lead.
+    if (action === 'free_seat') {
+      const email = String(req.body.email || '').trim().toLowerCase().slice(0, 200);
+      const name = String(req.body.name || '').trim().slice(0, 120);
+      if ((req.body.website && String(req.body.website).trim())) return res.status(201).json({ success: true });
+      if (!name || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'Your name and a real email, please' });
+      const acq = String(req.body.acquisition || '').slice(0, 120) || 'free-seat';
+      const code = 'LIVE-' + genCode().slice(0, 6);
+      const [coupon] = await sql`INSERT INTO coupons (code, kind, max_uses, expires_at, created_at) VALUES (${code}, 'lnl_comp', 1, NOW() + interval '180 days', NOW()) ON CONFLICT (code) DO NOTHING RETURNING code`;
+      if (!coupon) return res.status(500).json({ error: 'Try once more' });
+      try { await sql`ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS acquisition TEXT`; } catch {}
+      try { await sql`INSERT INTO waitlist (name, email, list, source, acquisition, created_at) VALUES (${name}, ${email}, 'general', ${'ad:' + acq}, ${acq}, NOW()) ON CONFLICT DO NOTHING`; } catch (e) { console.error('free seat lead', e.message); }
+      const events = await getEvents(sql);
+      const next = events.filter(e => (e.kind || 'lnl') === 'lnl' && new Date(e.date) > new Date()).sort((a, b) => a.date.localeCompare(b.date))[0] || null;
+      const mail = freeSeatEmail(name, code, next);
+      const ok = await sendEmail(email, mail.subject, mail.html);
+      try { await addLnlContact?.(email, name); } catch {}
+      return res.status(201).json({ success: true, sent: !!ok, session: next ? { title: next.title, date: next.date, time: next.time } : null });
     }
 
     if (action === 'create_coupon') {
