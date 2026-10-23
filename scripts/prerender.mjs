@@ -65,7 +65,10 @@ function pages({ list, upcoming }) {
   };
 }
 
-const STYLE = `<style id="seo-style">#seo-content{background:#000;color:#e2cfcf;font-family:'DM Sans',Arial,sans-serif;max-width:760px;margin:0 auto;padding:110px 24px 60px;line-height:1.7}#seo-content h1,#seo-content h2{font-family:'Cormorant Garamond',Georgia,serif;color:#f5e8e8;line-height:1.15}#seo-content h1{font-size:40px}#seo-content h2{font-size:24px;margin-top:28px}#seo-content a{color:#e08a8a}</style>`;
+// The pre-rendered copy is for crawlers and screen readers: it sits in the
+// page as accessible text (the standard clipped sr-only pattern) so nothing
+// flashes on screen before the app mounts, then main.jsx removes it.
+const STYLE = `<style id="seo-style">#seo-content{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}</style>`;
 
 const data = await courses();
 const P = pages(data);
