@@ -3074,6 +3074,10 @@ export function ResourcesPage({ member, onUpgrade }) {
     { key: "resource", title: "Resources", desc: "Curated tools and reading Dr. Merritt's team actually uses." },
     { key: "partner", title: "NREUV Partner Network", desc: "The firms in our corner — with member referral codes.", elite: true },
   ];
+  // One category at a time, chosen from a dropdown, so the page never becomes a scroll.
+  const [cat, setCat] = useState(() => { try { return sessionStorage.getItem("guResCat") || "template"; } catch { return "template"; } });
+  useEffect(() => { try { sessionStorage.setItem("guResCat", cat); } catch {} }, [cat]);
+  const shown = groups.filter(g => g.key === cat);
 
   return (
     <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
@@ -3081,7 +3085,13 @@ export function ResourcesPage({ member, onUpgrade }) {
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Member Library</div>
         <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "var(--gu-text)", marginBottom: 40 }}>Resources & Templates</h1>
         {error && <div style={{ color: "#ff6b6b", fontFamily: font, fontSize: 13, marginBottom: 20 }}>{error}</div>}
-        {!data ? <div style={{ color: "var(--gu-muted)", fontFamily: font }}>Loading…</div> : groups.map(g => {
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 28 }}>
+          <label style={{ ...lbl, marginBottom: 0 }}>Category</label>
+          <select value={cat} onChange={e => setCat(e.target.value)} style={{ ...inp, width: "auto", minWidth: 240, marginBottom: 0, cursor: "pointer" }}>
+            {groups.map(g => <option key={g.key} value={g.key}>{g.title}{data ? ` (${data.resources.filter(r => r.category === g.key).length})` : ""}</option>)}
+          </select>
+        </div>
+        {!data ? <div style={{ color: "var(--gu-muted)", fontFamily: font }}>Loading…</div> : shown.map(g => {
           const items = data.resources.filter(r => r.category === g.key);
           const locked = g.elite && rank < 3 && member.role !== "admin";
           return (

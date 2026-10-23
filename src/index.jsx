@@ -1082,7 +1082,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
             // sell the waitlist opened a sign-in box instead.
             launched
               ? <button onClick={onSignUp} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 7, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", marginLeft: 8, whiteSpace: "nowrap" }}>Sign In / Join</button>
-              : <button onClick={onSignUp} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 7, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", marginLeft: 8, whiteSpace: "nowrap" }}>Join GroundUp</button>
+              : <button onClick={onSignUp} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 7, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", marginLeft: 8, whiteSpace: "nowrap" }}>Sign in</button>
           )}
         </div>
         {/* Mobile hamburger */}
@@ -1114,7 +1114,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
           ) : (
             launched
               ? <button onClick={() => { setMenuOpen(false); onSignUp(); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 15, cursor: "pointer", marginTop: 8 }}>{launched ? "Sign In / Join" : "Join the Waitlist"} →</button>
-              : <button onClick={() => { setMenuOpen(false); onSignUp(); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", width: "100%" }}>Join GroundUp</button>
+              : <button onClick={() => { setMenuOpen(false); onSignUp(); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", width: "100%" }}>Sign in</button>
           )}
         </div>
       )}
@@ -6838,11 +6838,11 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const res = await guUpload("", fd, { Authorization: "Bearer " + sessionStorage.getItem("adminToken") });
+      const res = await guUpload("material", fd, { Authorization: "Bearer " + sessionStorage.getItem("adminToken") });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Upload failed");
       setForm(f => ({ ...f, url: d.url }));
-      flash(true, "PDF uploaded — link filled in below.");
+      flash(true, "File uploaded — link filled in below.");
     } catch (e) { flash(false, e.message); } finally { setUploading(false); }
   };
   const patch = async (id, p) => { try { await call("PATCH", { id, ...p }); await load(); } catch (e) { flash(false, e.message); } };
@@ -6865,12 +6865,12 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
             <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="DakJen Creative — Marketing" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} />
           </div>
           <div>
-            <label style={lbl}>Link — or upload a PDF</label>
+            <label style={lbl}>Link — or upload a file (PDF, Word, Excel, PowerPoint)</label>
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
               <input value={form.url} onChange={e => setForm({ ...form, url: e.target.value })} placeholder="https://… (Excel, Drive, anything)" style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1 }} />
               <label style={{ ...btnGhost, cursor: "pointer", whiteSpace: "nowrap", padding: "10px 14px" }}>
-                {uploading ? "Uploading…" : "Upload PDF"}
-                <input type="file" accept="application/pdf" style={{ display: "none" }} onChange={e => uploadPdf(e.target.files[0])} />
+                {uploading ? "Uploading…" : "Upload file"}
+                <input type="file" accept=".pdf,.docx,.xlsx,.pptx" style={{ display: "none" }} onChange={e => uploadPdf(e.target.files[0])} />
               </label>
             </div>
           </div>
