@@ -1,6 +1,9 @@
 import { neon } from '@neondatabase/serverless';
 import { getSession, getAdmin, TIER_RANK, benefitGate } from './_utils.js';
 
+// Partner types live in settings as a JSON list of short names; blanks and duplicates dropped.
+function parseTypes(v) { try { const a = JSON.parse(v || '[]'); return [...new Set((Array.isArray(a) ? a : []).map(x => String(x).trim().slice(0, 60)).filter(Boolean))].slice(0, 50); } catch { return []; } }
+
 // Resources & Templates: Premium unlocks resources/templates, Elite adds the
 // NREUV partner network (links + referral codes). Admin-editable.
 
@@ -475,7 +478,8 @@ export default async function handler(req, res) {
             FROM resource_clicks GROUP BY resource_id
           ) c ON c.resource_id = r.id
           ORDER BY r.category, r.position, r.id`;
-        return res.json({ resources: rows });
+        const [pt] = await sql`SELECT value FROM settings WHERE key = 'partner_types'`;
+        return res.json({ resources: rows, partner_types: parseTypes(pt?.value) });
       }
       const session = getSession(req);
       if (!session || !session.uid) return res.status(401).json({ error: 'Sign in required' });
@@ -484,27 +488,36 @@ export default async function handler(req, res) {
       const rank = TIER_RANK[user.tier] ?? 0;
       const rows = await sql`SELECT * FROM resources ORDER BY category, position, id`;
       const visible = rows.filter(r => rank >= (TIER_RANK[r.min_tier] ?? 2));
-      return res.json({ resources: visible, tier: user.tier });
+      const [pt] = await sql`SELECT value FROM settings WHERE key = 'partner_types'`;
+      return res.json({ resources: visible, tier: user.tier, partner_types: parseTypes(pt?.value) });
     }
 
     if (!admin) return res.status(401).json({ error: 'Unauthorized' });
 
+    // The kinds of partner in the network (Marketing, Legal, Architecture…) —
+    // the team adds and renames them here; the member page filters by them.
+    if (req.method === 'POST' && req.body.action === 'partner_types') {
+      const list = parseTypes(JSON.stringify(req.body.types || []));
+      await sql`INSERT INTO settings (key, value) VALUES ('partner_types', ${JSON.stringify(list)}) ON CONFLICT (key) DO UPDATE SET value = ${JSON.stringify(list)}`;
+      return res.json({ success: true, partner_types: list });
+    }
+
     if (req.method === 'POST') {
-      const { title, description, url, code, category, min_tier, position, recommendation, phase } = req.body;
+      const { title, description, url, code, category, min_tier, position, recommendation, phase, partner_type } = req.body;
       if (!title) return res.status(400).json({ error: 'Title required' });
       if (url) { try { new URL(url); } catch { return res.status(400).json({ error: 'Invalid URL' }); } }
       const safeCat = ['resource', 'template', 'partner'].includes(category) ? category : 'resource';
       const safeTier = ['Premium', 'Elite'].includes(min_tier) ? min_tier : 'Premium';
       const safePhase = phase >= 1 && phase <= 9 ? Number(phase) : null;
       const [row] = await sql`
-        INSERT INTO resources (title, description, url, code, category, min_tier, position, recommendation, phase, created_at)
-        VALUES (${String(title).trim()}, ${description || null}, ${url || null}, ${code || null}, ${safeCat}, ${safeTier}, ${Number(position) || 0}, ${recommendation || null}, ${safePhase}, NOW())
+        INSERT INTO resources (title, description, url, code, category, min_tier, position, recommendation, phase, partner_type, created_at)
+        VALUES (${String(title).trim()}, ${description || null}, ${url || null}, ${code || null}, ${safeCat}, ${safeTier}, ${Number(position) || 0}, ${recommendation || null}, ${safePhase}, ${safeCat === 'partner' && partner_type ? String(partner_type).slice(0, 60) : null}, NOW())
         RETURNING *`;
       return res.status(201).json(row);
     }
 
     if (req.method === 'PATCH') {
-      const { id, title, description, url, code, category, min_tier, position, recommendation, phase } = req.body;
+      const { id, title, description, url, code, category, min_tier, position, recommendation, phase, partner_type } = req.body;
       if (!id) return res.status(400).json({ error: 'id required' });
       if (url) { try { new URL(url); } catch { return res.status(400).json({ error: 'Invalid URL' }); } }
       const [row] = await sql`
@@ -517,7 +530,8 @@ export default async function handler(req, res) {
           min_tier = COALESCE(${min_tier ?? null}, min_tier),
           position = COALESCE(${position ?? null}, position),
           recommendation = COALESCE(${recommendation ?? null}, recommendation),
-          phase = CASE WHEN ${phase !== undefined} THEN ${phase >= 1 && phase <= 9 ? Number(phase) : null} ELSE phase END
+          phase = CASE WHEN ${phase !== undefined} THEN ${phase >= 1 && phase <= 9 ? Number(phase) : null} ELSE phase END,
+          partner_type = CASE WHEN ${partner_type !== undefined} THEN ${partner_type ? String(partner_type).slice(0, 60) : null} ELSE partner_type END
         WHERE id = ${id} RETURNING *`;
       if (!row) return res.status(404).json({ error: 'Not found' });
       return res.json(row);

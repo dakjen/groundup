@@ -3176,10 +3176,9 @@ export function ResourcesPage({ member, onUpgrade }) {
     { key: "resource", title: "Resources", desc: "Curated tools and reading Dr. Merritt's team actually uses." },
     { key: "partner", title: "NREUV Partner Network", desc: "The firms in our corner — with member referral codes.", elite: true },
   ];
-  // One category at a time, chosen from a dropdown, so the page never becomes a scroll.
-  const [cat, setCat] = useState(() => { try { return sessionStorage.getItem("guResCat") || "template"; } catch { return "template"; } });
-  useEffect(() => { try { sessionStorage.setItem("guResCat", cat); } catch {} }, [cat]);
-  const shown = groups.filter(g => g.key === cat);
+  // The partner network filters by the type of partner (Marketing, Legal…) the team set up.
+  const [ptype, setPtype] = useState("");
+  const partnerTypes = data?.partner_types || [];
 
   return (
     <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
@@ -3187,14 +3186,9 @@ export function ResourcesPage({ member, onUpgrade }) {
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Member Library</div>
         <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "var(--gu-text)", marginBottom: 40 }}>Resources & Templates</h1>
         {error && <div style={{ color: "#ff6b6b", fontFamily: font, fontSize: 13, marginBottom: 20 }}>{error}</div>}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 28 }}>
-          <label style={{ ...lbl, marginBottom: 0 }}>Category</label>
-          <select value={cat} onChange={e => setCat(e.target.value)} style={{ ...inp, width: "auto", minWidth: 240, marginBottom: 0, cursor: "pointer" }}>
-            {groups.map(g => <option key={g.key} value={g.key}>{g.title}{data ? ` (${data.resources.filter(r => r.category === g.key).length})` : ""}</option>)}
-          </select>
-        </div>
-        {!data ? <div style={{ color: "var(--gu-muted)", fontFamily: font }}>Loading…</div> : shown.map(g => {
-          const items = data.resources.filter(r => r.category === g.key);
+        {!data ? <div style={{ color: "var(--gu-muted)", fontFamily: font }}>Loading…</div> : groups.map(g => {
+          const all = data.resources.filter(r => r.category === g.key);
+          const items = g.key === "partner" && ptype ? all.filter(r => r.partner_type === ptype) : all;
           const locked = g.elite && rank < 3 && member.role !== "admin";
           return (
             <div key={g.key} style={{ marginBottom: 44 }}>
@@ -3203,6 +3197,15 @@ export function ResourcesPage({ member, onUpgrade }) {
                 {g.elite && <TierBadge tier="Elite" small />}
               </div>
               <p style={{ color: "var(--gu-muted2)", fontSize: 13, fontFamily: font, marginBottom: 18 }}>{g.desc}</p>
+              {g.key === "partner" && !locked && partnerTypes.length > 0 && (
+                <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 18 }}>
+                  <label style={{ ...lbl, marginBottom: 0 }}>Type of partner</label>
+                  <select value={ptype} onChange={e => setPtype(e.target.value)} style={{ ...inp, width: "auto", minWidth: 220, marginBottom: 0, cursor: "pointer" }}>
+                    <option value="">All types ({all.length})</option>
+                    {partnerTypes.map(t => <option key={t} value={t}>{t} ({all.filter(r => r.partner_type === t).length})</option>)}
+                  </select>
+                </div>
+              )}
               {locked ? (
                 <div style={{ background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 14, padding: "26px 30px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
                   <Lock size={18} color="var(--gu-muted)" />
@@ -3210,7 +3213,7 @@ export function ResourcesPage({ member, onUpgrade }) {
                   <button style={btnRed} onClick={onUpgrade}>Go Owner →</button>
                 </div>
               ) : items.length === 0 ? (
-                <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font, background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 12, padding: "20px 24px" }}>Nothing here yet — check back soon.</div>
+                <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font, background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 12, padding: "20px 24px" }}>{g.key === "partner" && ptype ? `No ${ptype} partners yet.` : "Nothing here yet — check back soon."}</div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {items.map(r => (
