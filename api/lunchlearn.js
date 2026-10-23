@@ -452,6 +452,11 @@ export default async function handler(req, res) {
         const q = String(req.body.question || '').slice(0, 500) || null;
         await sql`INSERT INTO lnl_rsvps (user_id, event_key, question, created_at) VALUES (${session.uid}, ${target.date}, ${q}, NOW()) ON CONFLICT (user_id, event_key) DO UPDATE SET question = COALESCE(${q}, lnl_rsvps.question)`;
       } else {
+        // A seat can be released up to an hour before the session. After that
+        // it is spent — otherwise an Owner could join, release, and keep all
+        // six office-hours spots for the year.
+        const msToStart = new Date(target.date).getTime() - Date.now();
+        if (!admin && msToStart < 3600e3) return res.status(400).json({ error: msToStart > 0 ? 'Seats lock an hour before the session starts.' : 'This session has started — the seat is yours and counts toward your plan.' });
         await sql`DELETE FROM lnl_rsvps WHERE user_id = ${session.uid} AND event_key = ${target.date}`;
       }
       return res.json({ success: true });
