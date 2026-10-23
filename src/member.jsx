@@ -3341,6 +3341,22 @@ export function RetainerPage({ member, setActivePage }) {
 
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(300px,360px)", gap: 20, alignItems: "start" }} className="ret-grid">
           <div>
+            {/* Where you stand, in one line */}
+            <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 14, fontFamily: font }}>
+              <span style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "var(--gu-text)", lineHeight: 1 }}>{Math.max(0, total - used).toFixed(1)}</span>
+              <span style={{ color: "var(--gu-muted)", fontSize: 13.5 }}>of {total} hours left this month</span>
+              {(data.meetings || []).length > 0 && <span style={{ color: "var(--gu-muted)", fontSize: 13 }}>· {data.meetings[0].scheduled_at ? `next meeting ${new Date(data.meetings[0].scheduled_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : "meeting requested"}</span>}
+            </div>
+            {/* The work comes first: the deal room */}
+            <button onClick={() => setView("dealroom")} style={{ width: "100%", textAlign: "left", background: "var(--gu-card)", border: "1px solid #b8010150", borderRadius: 16, padding: "26px 28px", cursor: "pointer", display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
+              <div style={{ flex: "1 1 260px", minWidth: 0 }}>
+                <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Deal Room</div>
+                <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "var(--gu-text)", marginBottom: 6 }}>{rooms && rooms.projects.length ? `${rooms.projects.length} project${rooms.projects.length === 1 ? "" : "s"} · ${rooms.files.length} document${rooms.files.length === 1 ? "" : "s"}` : "Your documents, organized"}</div>
+                <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rooms && rooms.projects.length ? rooms.projects.map(p => p.name).join(" · ") : "Add your projects and drop their documents in by development phase — shared only with Dr. Merritt."}{rooms ? ` · ${fmtBytes(rooms.used_bytes)} of ${fmtBytes(rooms.quota_bytes)} used` : ""}</div>
+              </div>
+              <span style={{ ...btnRed, display: "inline-block" }}>Open the deal room →</span>
+            </button>
+
             {/* Hours */}
             <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "26px 28px", marginBottom: 18 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
@@ -3411,15 +3427,6 @@ export function RetainerPage({ member, setActivePage }) {
               </>)}
             </div>
 
-            {/* The deal room: a door, not the whole thing */}
-            <button onClick={() => setView("dealroom")} style={{ width: "100%", textAlign: "left", background: "var(--gu-card)", border: "1px solid #b8010150", borderRadius: 16, padding: "26px 28px", cursor: "pointer", display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
-              <div style={{ flex: "1 1 260px", minWidth: 0 }}>
-                <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Deal Room</div>
-                <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "var(--gu-text)", marginBottom: 6 }}>{rooms && rooms.projects.length ? `${rooms.projects.length} project${rooms.projects.length === 1 ? "" : "s"} · ${rooms.files.length} document${rooms.files.length === 1 ? "" : "s"}` : "Your documents, organized"}</div>
-                <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{rooms && rooms.projects.length ? rooms.projects.map(p => p.name).join(" · ") : "Add your projects and drop their documents in by development phase — shared only with Dr. Merritt."}{rooms ? ` · ${fmtBytes(rooms.used_bytes)} of ${fmtBytes(rooms.quota_bytes)} used` : ""}</div>
-              </div>
-              <span style={{ ...btnRed, display: "inline-block" }}>Open the deal room →</span>
-            </button>
           </div>
 
           {/* Right: direct line */}
