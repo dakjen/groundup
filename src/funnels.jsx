@@ -26,15 +26,15 @@ const pixel = (event, data) => { try { if (typeof window.fbq === "function") win
 const OFFERS = {
   playbook: {
     page: "playbook", eyebrow: "The Developer's Playbook",
-    headline: ["The playbook Dr. Merritt", "actually uses."],
-    sub: "Thirty years, billions underwritten, 8,000+ units built — written down as the step-by-step she follows on every deal. Read it in your GroundUp account, from the first site walk to the fifteen-year compliance clock.",
+    headline: ["Nobody hands you", "the map. This is the map."],
+    sub: "Affordable housing gets built by people who learned the hard way, one deal at a time, with nobody to call. The Developer's Playbook is thirty years of that work written down in order: what to do, when, and what it costs if you skip it.",
     image: "/opt/nannie-helen.webp", imageAlt: "Nannie Helen at 4800, Washington, DC",
     proof: [["$6B+", "underwritten"], ["8,000+", "units built"], ["30+", "years in the work"]],
     bullets: [
       "Every phase of a deal in order: feasibility, predevelopment, program, acquisition, financing, community, construction, stabilization, compliance",
-      "The checklists she runs before closing, before construction, and before conversion",
+      "The checklists a developer runs before closing, before construction, and before conversion",
       "What to pay before closing and what can wait — the discipline that keeps a predevelopment budget skinny",
-      "Yours to read in the portal anytime, tied to your account",
+      "Yours to read in the GroundUp portal anytime, tied to your account",
     ],
     cta: "Get the Playbook →", priceNote: null, mode: "buy", item: "playbook",
     faq: [
@@ -45,14 +45,14 @@ const OFFERS = {
     success: { title: "The Playbook is yours.", body: "Check your email: we made you a GroundUp account and sent a link to set your password. The Playbook is waiting under Shop → My documents." },
   },
   lunch: {
-    page: "lunch", eyebrow: "A free seat · live with Dr. Gina Merritt",
-    headline: ["Watch a real deal", "get taken apart. Live."],
-    sub: "One live session with Dr. Merritt — the real numbers from a real project, and your questions answered on the call. Normally $39.99. Your first seat is on us.",
-    image: "/opt/sis-gm-speech.jpg", imageAlt: "Dr. Gina Merritt speaking",
-    proof: [["$390M+", "portfolio"], ["116", "apartments at 9410 Hough"], ["Live", "Q&A on the call"]],
+    page: "lunch", eyebrow: "A free seat · live Lunch & Learn",
+    headline: ["See how a real deal", "actually gets built."],
+    sub: "There is no school for this. A live Lunch & Learn is the next best thing: one real project, the real numbers, what went wrong and how it closed, with a developer who has done it for thirty years answering your questions on the call. Normally $39.99. Your first seat is free.",
+    image: "/opt/sis-gm-speech.jpg", imageAlt: "A live Lunch & Learn session",
+    proof: [["$390M+", "portfolio behind it"], ["116", "apartments on one deal"], ["Live", "Q&A on the call"]],
     bullets: [
       "A full session, not a teaser: the deal, the capital stack, what went wrong and how it closed",
-      "Ask Dr. Merritt directly during the live Q&A",
+      "Ask your questions live, about your own situation",
       "The recording is yours after",
       "Attend and get 25% off your first month if you ever join GroundUp",
     ],
@@ -66,23 +66,23 @@ const OFFERS = {
   },
   intake: {
     page: "intake", eyebrow: "Full Project Intake · $1,500",
-    headline: ["Put your whole deal", "in front of Dr. Merritt."],
-    sub: "Pro forma, capital stack, site, timeline — she takes in the entire project and tells you what you missed, what the lender will say, and what to do next. For developers with a live deal.",
-    image: "/opt/LIIF-Stills1.jpg", imageAlt: "Dr. Gina Merritt outside a finished development",
+    headline: ["Your whole deal,", "read by someone who has closed them."],
+    sub: "Most developers find out what the lender thinks when the lender says no. The Full Project Intake puts your entire project — pro forma, capital stack, site, timeline — in front of thirty years of experience first, and gives you back what you missed and what to do next.",
+    image: "/opt/LIIF-Stills1.jpg", imageAlt: "A finished affordable housing development",
     proof: [["$47M", "9410 Hough, Cleveland"], ["$52M", "Beacon Center, DC"], ["3", "capital stacks on one deal"]],
     bullets: [
       "A working session on your actual numbers, not a consultation about development in general",
       "A written read-back: the gaps, the risks, the order of operations from here",
-      "Your documents go through a private brief before the call, so she arrives prepared",
+      "Your documents go through a private brief before the call, so the review arrives prepared",
       "The $1,500 credits in full against your first month if you continue on a Senior Advisor retainer",
     ],
     cta: "Book the intake →", priceNote: "$1,500 · one time · credits toward a retainer", mode: "buy", item: "retainer_onboarding",
     faq: [
       ["Who is this for?", "A developer with a deal in motion: a site under control, numbers on paper, a financing question in front of them."],
-      ["What happens after I pay?", "You get an account and a link to book the call on Dr. Merritt's calendar, then a brief to attach your documents."],
+      ["What happens after I pay?", "You get an account and a link to book the call, then a brief to attach your documents."],
       ["Refund?", "The intake is refundable only at NREUV's discretion. If a session happens with no real deal on the table, any refund is reduced by $550."],
     ],
-    success: { title: "You're booked in.", body: "Check your email: we made you a GroundUp account and sent a link to set your password. Once you are in, the first thing you see is the link to pick a time with Dr. Merritt." },
+    success: { title: "You're booked in.", body: "Check your email: we made you a GroundUp account and sent a link to set your password. Once you are in, the first thing you see is the link to pick a time for your intake call." },
   },
 };
 
@@ -198,8 +198,8 @@ export function FunnelPage({ offer }) {
             <div style={{ display: "flex", gap: 14, alignItems: "center", background: "#0d0404", border: "1px solid #2a0000", borderRadius: 18, padding: "18px 20px", marginBottom: 18 }}>
               <img src="/opt/gina-9410.webp" alt="Dr. Gina Merritt" width={64} height={64} style={{ width: 64, height: 64, borderRadius: 32, objectFit: "cover", flexShrink: 0 }} />
               <div>
-                <div style={{ color: "#f5e8e8", fontFamily: font, fontWeight: 800, fontSize: 14 }}>Dr. Gina Merritt</div>
-                <div style={{ color: "#8f7070", fontFamily: font, fontSize: 12.5, lineHeight: 1.6 }}>Raised in the Bronx. From public housing to a $390M+ portfolio across DC, Baltimore and Cleveland. Howard, Darden MBA, USC doctorate. Founder, Northern Real Estate Urban Ventures.</div>
+                <div style={{ color: "#f5e8e8", fontFamily: font, fontWeight: 800, fontSize: 14 }}>Built by a working developer</div>
+                <div style={{ color: "#8f7070", fontFamily: font, fontSize: 12.5, lineHeight: 1.6 }}>GroundUp is taught by Dr. Gina Merritt: thirty years in affordable housing, a $390M+ portfolio across DC, Baltimore and Cleveland, and $6B+ underwritten. Every lesson comes from a deal that closed.</div>
               </div>
             </div>
             <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 18, padding: "20px 22px" }}>
