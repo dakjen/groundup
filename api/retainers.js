@@ -1,6 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 import { getSession, getAdmin } from './_utils.js';
 import { sendEmail, firstName } from './_email.js';
+import { sendPush } from './_push.js';
 
 // Senior Advisor retainers: clients see their own workspace; the team sees the roster.
 export default async function handler(req, res) {
@@ -140,6 +141,7 @@ export default async function handler(req, res) {
           await sendEmail(r.email, 'Dr. Merritt replied in your advisory workspace',
             `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New message in your workspace</h2>
              <p style="color:#444444;font-size:14px;line-height:1.8;">Sign in and open your Advisory workspace to read it and reply.</p>`);
+          await sendPush(sql, [r.user_id], { title: 'Dr. Merritt replied', body: body.slice(0, 140), url: '/advisory', tag: 'advisory:' + rid });
         } else if (r) {
           // The advisory direct line is Dr. Merritt's alone — not the team inbox
           const [gina] = await sql`SELECT email FROM users WHERE badge = 'drmerritt' LIMIT 1`;
@@ -149,6 +151,8 @@ export default async function handler(req, res) {
             `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${r.name} wrote in their advisory workspace</h2>
              <p style="color:#444444;font-size:14px;line-height:1.8;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;padding:14px 18px;">${body.slice(0, 500)}</p>
              <p style="color:#7a5050;font-size:12px;line-height:1.7;">Reply from their tab on the Advisory Clients page — they're emailed when you do.</p>`);
+          const [gu] = await sql`SELECT id FROM users WHERE badge = 'drmerritt' LIMIT 1`;
+          if (gu) await sendPush(sql, [gu.id], { title: `${r.name} — advisory`, body: body.slice(0, 140), url: `/admin-retainers#adv=${rid}&tab=messages`, tag: 'advisory:' + rid });
         }
         return res.status(201).json(m);
       }
