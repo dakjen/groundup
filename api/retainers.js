@@ -46,6 +46,8 @@ export default async function handler(req, res) {
         }
         const mrr = rows.filter(r => r.status === 'active').reduce((a, r) => a + Number(r.monthly_amount), 0);
         const [callRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
+        const [scopeRow] = await sql`SELECT value FROM settings WHERE key = 'scoping_call_link'`;
+        let scoping = []; try { scoping = await sql`SELECT * FROM scoping_requests ORDER BY created_at DESC LIMIT 200`; } catch {}
         const bookings = await sql`
           SELECT b.*, u.name, u.email FROM bookings b JOIN users u ON u.id = b.user_id
           ORDER BY (b.status = 'awaiting_booking') DESC, b.created_at DESC LIMIT 100`;
@@ -65,7 +67,7 @@ export default async function handler(req, res) {
             await sql`UPDATE bookings SET nudges = COALESCE(nudges,0) + 1, last_nudge_at = NOW() WHERE id = ${b.id}`;
           }
         }
-        return res.json({ retainers: rows, mrr, call_link: callRow?.value || '', bookings });
+        return res.json({ retainers: rows, mrr, call_link: callRow?.value || '', bookings, scoping, scoping_link: scopeRow?.value || '' });
       }
       // Member's own retainer
       if (!session?.uid) return res.status(401).json({ error: 'Sign in required' });
@@ -199,6 +201,17 @@ export default async function handler(req, res) {
       return res.json({ success: true });
     }
 
+    if (action === 'set_scoping_link') {
+      const url = String(req.body.url || '').trim();
+      if (url) { try { new URL(url); } catch { return res.status(400).json({ error: 'Invalid link' }); } }
+      await sql`INSERT INTO settings (key, value) VALUES ('scoping_call_link', ${url}) ON CONFLICT (key) DO UPDATE SET value = ${url}`;
+      return res.json({ success: true });
+    }
+    if (action === 'scoping_status') {
+      const st = ['new', 'booked', 'done', 'passed'].includes(req.body.status) ? req.body.status : 'new';
+      await sql`UPDATE scoping_requests SET status = ${st} WHERE id = ${Number(req.body.id)}`;
+      return res.json({ success: true });
+    }
     if (action === 'set_call_link') {
       const url = String(req.body.url || '').trim();
       if (url) { try { new URL(url); } catch { return res.status(400).json({ error: 'Invalid link' }); } }

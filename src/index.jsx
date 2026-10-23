@@ -2834,8 +2834,8 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
                     await fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "rsvp", going: !ev.my_rsvp, event_key: ev.date }) });
                     await loadStatus();
                   } catch {}
-                }} disabled={ev.my_rsvp && new Date(ev.date).getTime() - Date.now() < 3600e3} style={{ background: ev.my_rsvp ? "transparent" : "#b80101", color: ev.my_rsvp ? "#22c55e" : "#fff", border: ev.my_rsvp ? "1px solid #22c55e60" : "none", borderRadius: 8, padding: "10px 18px", fontFamily: font, fontWeight: 800, fontSize: 12.5, cursor: "pointer", whiteSpace: "nowrap" }}>
-                  {ev.my_rsvp ? (new Date(ev.date).getTime() - Date.now() < 3600e3 ? "✓ Going" : "✓ Going — tap to cancel") : "RSVP — I'll be there"}
+                }} disabled={ev.my_rsvp && (ev.joined || new Date(ev.date).getTime() - Date.now() < 3600e3)} style={{ background: ev.my_rsvp ? "transparent" : "#b80101", color: ev.my_rsvp ? "#22c55e" : "#fff", border: ev.my_rsvp ? "1px solid #22c55e60" : "none", borderRadius: 8, padding: "10px 18px", fontFamily: font, fontWeight: 800, fontSize: 12.5, cursor: "pointer", whiteSpace: "nowrap" }}>
+                  {ev.my_rsvp ? (ev.joined || new Date(ev.date).getTime() - Date.now() < 3600e3 ? "✓ Going" : "✓ Going — tap to cancel") : "RSVP — I'll be there"}
                 </button>
                 <a href={gcalUrl(`GroundUp Lunch & Learn: ${ev.title}`, ev.date, 60, status?.link ? `Live session with Dr. Gina Merritt.\n\nJoin Zoom: ${status.link}\n\nYour Lunch & Learn page: ${window.location.origin}/lunchlearn` : "Live session with Dr. Gina Merritt. Your join link is on your Lunch & Learn page: " + window.location.origin, status?.link || "Online")} target="_blank" rel="noreferrer"
                   style={{ color: "#c8a8a8", border: "1px solid #2a0000", borderRadius: 8, padding: "10px 14px", fontFamily: font, fontWeight: 700, fontSize: 12, textDecoration: "none", whiteSpace: "nowrap" }}>+ Google Calendar</a>
@@ -2850,7 +2850,7 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
               <div style={{ fontSize: 9, color: "#22c55e", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>You're in</div>
               <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 17, fontFamily: font, marginBottom: 8 }}>Live Session Access</div>
               {status?.link ? (
-                <a href={status.link} target="_blank" rel="noreferrer" style={{ display: "inline-block", background: "#b80101", color: "#fff", borderRadius: 8, padding: "11px 22px", fontFamily: font, fontWeight: 800, fontSize: 13, textDecoration: "none", marginTop: 6 }}>Join the Next Session</a>
+                <a href={status.link} target="_blank" rel="noreferrer" onClick={() => { if (status.event) fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "joined", event_key: status.event.date }) }).then(() => loadStatus()).catch(() => {}); }} style={{ display: "inline-block", background: "#b80101", color: "#fff", borderRadius: 8, padding: "11px 22px", fontFamily: font, fontWeight: 800, fontSize: 13, textDecoration: "none", marginTop: 6 }}>Join the Next Session</a>
               ) : status?.has_link && status?.event ? (
                 <p style={{ color: "#c8a8a8", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>RSVP to the next session below and the join link appears here.</p>
               ) : (
@@ -3749,7 +3749,7 @@ function OfficeHoursPage({ member, onSignIn, setActivePage }) {
                       </div>
                       <div style={{ color: "#e0c4c4", fontSize: 13.5, fontFamily: font, fontWeight: 700 }}>{new Date(ev.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}{ev.time ? ` · ${ev.time}` : ""}</div>
                       {ev.description && <div style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginTop: 6 }}>{ev.description}</div>}
-                      {ev.my_rsvp && ev.link && <a href={ev.link} target="_blank" rel="noreferrer" style={{ display: "inline-block", marginTop: 10, color: "#22c55e", fontSize: 13, fontFamily: font, fontWeight: 800, textDecoration: "none", border: "1px solid #22c55e50", borderRadius: 8, padding: "7px 14px" }}>Join the session →</a>}
+                      {ev.my_rsvp && ev.link && <a href={ev.link} target="_blank" rel="noreferrer" onClick={() => { fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "joined", event_key: ev.date }) }).then(() => load()).catch(() => {}); }} style={{ display: "inline-block", marginTop: 10, color: "#22c55e", fontSize: 13, fontFamily: font, fontWeight: 800, textDecoration: "none", border: "1px solid #22c55e50", borderRadius: 8, padding: "7px 14px" }}>Join the session →</a>}
                       {!ev.my_rsvp && ev.has_link && <div style={{ color: "#8a7070", fontSize: 12, fontFamily: font, marginTop: 8 }}>The meeting link appears here once you hold a seat.</div>}
                     </div>
                     <div style={{ textAlign: "center", minWidth: 130 }}>
@@ -3757,10 +3757,10 @@ function OfficeHoursPage({ member, onSignIn, setActivePage }) {
                       <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 22, color: "#b80101" }}>{cd(ev.date)}</div>
                     </div>
                     <button
-                      disabled={oh.gate?.active || (!ev.my_rsvp && oh.allowance.remaining <= 0) || (ev.my_rsvp && new Date(ev.date).getTime() - now < 3600e3)}
+                      disabled={oh.gate?.active || (!ev.my_rsvp && oh.allowance.remaining <= 0) || (ev.my_rsvp && (ev.joined || new Date(ev.date).getTime() - now < 3600e3))}
                       onClick={() => rsvp(ev, !ev.my_rsvp)}
                       style={{ background: ev.my_rsvp ? "transparent" : "#b80101", color: ev.my_rsvp ? "#22c55e" : "#fff", border: ev.my_rsvp ? "1px solid #22c55e60" : "none", borderRadius: 10, padding: "12px 20px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer", opacity: oh.gate?.active || (!ev.my_rsvp && oh.allowance.remaining <= 0) ? 0.5 : 1, whiteSpace: "nowrap" }}>
-                      {ev.my_rsvp ? (new Date(ev.date).getTime() - now < 3600e3 ? "✓ You're in" : "✓ You're in — tap to release") : oh.gate?.active ? `Opens ${new Date(oh.gate.until).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : oh.allowance.remaining <= 0 ? "No spots left on your plan" : "RSVP — save my seat"}
+                      {ev.my_rsvp ? (ev.joined || new Date(ev.date).getTime() - now < 3600e3 ? "✓ You're in" : "✓ You're in — tap to release") : oh.gate?.active ? `Opens ${new Date(oh.gate.until).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : oh.allowance.remaining <= 0 ? "No spots left on your plan" : "RSVP — save my seat"}
                     </button>
                   </div>
                 ))}
@@ -7473,7 +7473,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-bookings", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "admin-invites", "admin-team", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "refer", "support", "glossary", "go/playbook", "go/lunch", "go/intake"];
+  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-bookings", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "admin-invites", "admin-team", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "refer", "support", "glossary", "go/playbook", "go/lunch", "go/intake", "go/call"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
     return PAGES.includes(p) ? p : (sessionStorage.getItem("activePage") || "home");
@@ -7505,7 +7505,8 @@ export default function App() {
       privacy: ["Privacy Policy — GroundUp", "What GroundUp collects, how it is used, who processes it, and how deletion works."],
       "go/playbook": ["The Developer's Playbook — GroundUp by Dr. Gina Merritt", "The step-by-step Dr. Merritt follows on every deal, from the first site walk to the fifteen-year compliance clock. Read it in your GroundUp account."],
       "go/lunch": ["A free seat at a live Lunch & Learn with Dr. Gina Merritt", "Watch a real deal get taken apart, live, and ask your questions. Your first seat is free."],
-      "go/intake": ["Full Project Intake with Dr. Gina Merritt — $1,500", "Put your whole deal in front of Dr. Merritt: pro forma, capital stack, site, timeline. Credits toward a Senior Advisor retainer."],
+      "go/call": ["A free 20-minute scoping call with the GroundUp team", "Tell us what you're building. We'll tell you honestly what would help: a course, a membership, office hours, or time with Dr. Merritt."],
+      "go/intake": ["A free 20-minute scoping call with the GroundUp team", "Tell us what you're building. We'll tell you honestly what would help: a course, a membership, office hours, or time with Dr. Merritt."],
     };
     const [title, desc] = SEO[activePage] || SEO.home;
     document.title = title;
@@ -7964,7 +7965,7 @@ export default function App() {
       {activePage === "advisory" && <RetainerPage member={member} setActivePage={navigateTo} />}
       {activePage === "partner-interest" && <PartnerInterestPage />}
       {activePage === "refer" && <ReferPartnerPage />}
-      {activePage.startsWith("go/") && <FunnelPage offer={activePage.slice(3)} />}
+      {activePage.startsWith("go/") && <FunnelPage offer={activePage === "go/intake" ? "call" : activePage.slice(3)} />}
       {activePage === "partner" && <PartnerPage slug={partnerSlug} onSignIn={() => setShowAuth("login")} onExplore={() => navigateTo("courses")} />}
       {activePage === "shop" && <ShopPage member={member} onSignIn={() => openSignup("Free")} />}
       {activePage === "terms" && <TermsPage />}
