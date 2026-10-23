@@ -2834,8 +2834,8 @@ function LunchLearnPage({ member, onSignIn, setActivePage }) {
                     await fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "rsvp", going: !ev.my_rsvp, event_key: ev.date }) });
                     await loadStatus();
                   } catch {}
-                }} style={{ background: ev.my_rsvp ? "transparent" : "#b80101", color: ev.my_rsvp ? "#22c55e" : "#fff", border: ev.my_rsvp ? "1px solid #22c55e60" : "none", borderRadius: 8, padding: "10px 18px", fontFamily: font, fontWeight: 800, fontSize: 12.5, cursor: "pointer", whiteSpace: "nowrap" }}>
-                  {ev.my_rsvp ? "✓ Going — tap to cancel" : "RSVP — I'll be there"}
+                }} disabled={ev.my_rsvp && new Date(ev.date).getTime() - Date.now() < 3600e3} style={{ background: ev.my_rsvp ? "transparent" : "#b80101", color: ev.my_rsvp ? "#22c55e" : "#fff", border: ev.my_rsvp ? "1px solid #22c55e60" : "none", borderRadius: 8, padding: "10px 18px", fontFamily: font, fontWeight: 800, fontSize: 12.5, cursor: "pointer", whiteSpace: "nowrap" }}>
+                  {ev.my_rsvp ? (new Date(ev.date).getTime() - Date.now() < 3600e3 ? "✓ Going" : "✓ Going — tap to cancel") : "RSVP — I'll be there"}
                 </button>
                 <a href={gcalUrl(`GroundUp Lunch & Learn: ${ev.title}`, ev.date, 60, status?.link ? `Live session with Dr. Gina Merritt.\n\nJoin Zoom: ${status.link}\n\nYour Lunch & Learn page: ${window.location.origin}/lunchlearn` : "Live session with Dr. Gina Merritt. Your join link is on your Lunch & Learn page: " + window.location.origin, status?.link || "Online")} target="_blank" rel="noreferrer"
                   style={{ color: "#c8a8a8", border: "1px solid #2a0000", borderRadius: 8, padding: "10px 14px", fontFamily: font, fontWeight: 700, fontSize: 12, textDecoration: "none", whiteSpace: "nowrap" }}>+ Google Calendar</a>
@@ -3757,10 +3757,10 @@ function OfficeHoursPage({ member, onSignIn, setActivePage }) {
                       <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 22, color: "#b80101" }}>{cd(ev.date)}</div>
                     </div>
                     <button
-                      disabled={oh.gate?.active || (!ev.my_rsvp && oh.allowance.remaining <= 0)}
+                      disabled={oh.gate?.active || (!ev.my_rsvp && oh.allowance.remaining <= 0) || (ev.my_rsvp && new Date(ev.date).getTime() - now < 3600e3)}
                       onClick={() => rsvp(ev, !ev.my_rsvp)}
                       style={{ background: ev.my_rsvp ? "transparent" : "#b80101", color: ev.my_rsvp ? "#22c55e" : "#fff", border: ev.my_rsvp ? "1px solid #22c55e60" : "none", borderRadius: 10, padding: "12px 20px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer", opacity: oh.gate?.active || (!ev.my_rsvp && oh.allowance.remaining <= 0) ? 0.5 : 1, whiteSpace: "nowrap" }}>
-                      {ev.my_rsvp ? "✓ You're in — tap to release" : oh.gate?.active ? `Opens ${new Date(oh.gate.until).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : oh.allowance.remaining <= 0 ? "No spots left on your plan" : "RSVP — save my seat"}
+                      {ev.my_rsvp ? (new Date(ev.date).getTime() - now < 3600e3 ? "✓ You're in" : "✓ You're in — tap to release") : oh.gate?.active ? `Opens ${new Date(oh.gate.until).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : oh.allowance.remaining <= 0 ? "No spots left on your plan" : "RSVP — save my seat"}
                     </button>
                   </div>
                 ))}
