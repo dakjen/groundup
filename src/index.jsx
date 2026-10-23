@@ -6800,7 +6800,9 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
 
 function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
   const [rows, setRows] = useState(null);
-  const [form, setForm] = useState({ title: "", description: "", url: "", code: "", category: "resource", min_tier: "Premium", recommendation: "", phase: "" });
+  const [types, setTypes] = useState([]);           // partner types the team has set up
+  const [newType, setNewType] = useState("");
+  const [form, setForm] = useState({ title: "", description: "", url: "", code: "", category: "resource", min_tier: "Premium", recommendation: "", phase: "", partner_type: "" });
   const [msg, setMsg] = useState(null);
   const [editId, setEditId] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -6815,11 +6817,13 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
     if (!res.ok) throw new Error(d.error || "Request failed");
     return d;
   };
-  const load = () => call("GET").then(d => setRows(d.resources)).catch(e => setMsg({ ok: false, text: e.message }));
+  const load = () => call("GET").then(d => { setRows(d.resources); setTypes(d.partner_types || []); }).catch(e => setMsg({ ok: false, text: e.message }));
+  const saveTypes = async (list) => { try { const d = await call("POST", { action: "partner_types", types: list }); setTypes(d.partner_types); } catch (e) { flash(false, e.message); } };
+  const addType = async () => { const t = newType.trim(); if (!t) return; await saveTypes([...types, t]); setNewType(""); setForm(f => ({ ...f, partner_type: t })); };
   useEffect(() => { load(); }, []);
   const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 4000); };
 
-  const blank = () => ({ title: "", description: "", url: "", code: "", category: form.category, min_tier: form.min_tier, recommendation: "", phase: "" });
+  const blank = () => ({ title: "", description: "", url: "", code: "", category: form.category, min_tier: form.min_tier, recommendation: "", phase: "", partner_type: "" });
   const add = async () => {
     if (!form.title) { flash(false, "Title required."); return; }
     try {
@@ -6831,7 +6835,7 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
   };
   const startEdit = (r) => {
     setEditId(r.id);
-    setForm({ title: r.title || "", description: r.description || "", url: r.url || "", code: r.code || "", category: r.category || "resource", min_tier: r.min_tier || "Premium", recommendation: r.recommendation || "", phase: r.phase || "" });
+    setForm({ title: r.title || "", description: r.description || "", url: r.url || "", code: r.code || "", category: r.category || "resource", min_tier: r.min_tier || "Premium", recommendation: r.recommendation || "", phase: r.phase || "", partner_type: r.partner_type || "" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const uploadPdf = async (file) => {
@@ -6886,6 +6890,19 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
               <option value="resource">Resource</option><option value="template">Template</option><option value="partner">Partner</option>
             </select>
           </div>
+          {form.category === "partner" && (
+            <div>
+              <label style={lbl}>Type of partner</label>
+              <select value={form.partner_type} onChange={e => setForm({ ...form, partner_type: e.target.value })} style={{ ...inp, maxWidth: "none", marginBottom: 8, cursor: "pointer" }}>
+                <option value="">Choose a type…</option>
+                {types.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input value={newType} onChange={e => setNewType(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addType(); } }} placeholder="New type, e.g. Legal" style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1 }} />
+                <button type="button" onClick={addType} style={{ ...btnGhost, whiteSpace: "nowrap", padding: "10px 14px" }}>Add type</button>
+              </div>
+            </div>
+          )}
           <div>
             <label style={lbl}>Unlocks at</label>
             <select value={form.min_tier} onChange={e => setForm({ ...form, min_tier: e.target.value })} style={{ ...inp, maxWidth: "none", marginBottom: 0, cursor: "pointer" }}>
@@ -6914,6 +6931,22 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
         </div>
       </div>
 
+      <div style={{ background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 14, padding: "22px 32px", marginBottom: 28 }}>
+        <div style={{ fontSize: 10, color: "#8a8a8a", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>Partner types</div>
+        <p style={{ color: "#666666", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", margin: "0 0 12px" }}>The dropdown members use to filter the NREUV Partner Network. Add one here or from the form above; removing a type leaves its partners in place, untyped.</p>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          {types.length === 0 && <span style={{ color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>None yet.</span>}
+          {types.map(t => (
+            <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#f4f1ec", border: "1px solid #e0dbd2", borderRadius: 999, padding: "6px 6px 6px 12px", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, color: "#222222" }}>
+              {t} <span style={{ color: "#9a9a9a", fontWeight: 600 }}>{rows.filter(r => r.partner_type === t).length}</span>
+              <button onClick={() => { if (window.confirm(`Remove the type "${t}"?`)) saveTypes(types.filter(x => x !== t)); }} style={{ background: "none", border: "none", color: "#b80101", cursor: "pointer", fontSize: 12, fontWeight: 800, padding: "0 4px" }}>×</button>
+            </span>
+          ))}
+          <input value={newType} onChange={e => setNewType(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addType(); } }} placeholder="Add a type" style={{ ...inp, maxWidth: 180, marginBottom: 0, padding: "7px 12px", fontSize: 13 }} />
+          <button type="button" onClick={addType} style={{ ...btnGhost, padding: "7px 14px", fontSize: 12 }}>Add</button>
+        </div>
+      </div>
+
       {rows.length === 0 ? (
         <div style={{ background: "#ececec", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No resources yet — add your first one above.</div>
       ) : rows.map(r => (
@@ -6925,7 +6958,7 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
               {r.clicks ? `${r.clicks} click${r.clicks === 1 ? "" : "s"} · ${r.clickers} member${r.clickers === 1 ? "" : "s"} · last ${new Date(r.last_click).toLocaleDateString()}` : "No clicks yet"}
             </div>
           </div>
-          <span style={{ color: "#666666", fontSize: 10, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{CAT_LABEL[r.category]}</span>
+          <span style={{ color: "#666666", fontSize: 10, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{CAT_LABEL[r.category]}{r.category === "partner" ? ` · ${r.partner_type || "untyped"}` : ""}</span>
           <select value={r.min_tier} onChange={e => patch(r.id, { min_tier: e.target.value })} style={{ background: "#ececec", color: "#b80101", border: "1px solid #2a1010", borderRadius: 6, padding: "5px 8px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 11, cursor: "pointer", outline: "none" }}>
             <option value="Premium">Premium</option><option value="Elite">Owner</option>
           </select>
