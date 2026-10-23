@@ -1,7 +1,8 @@
 import Stripe from 'stripe';
+import crypto from 'crypto';
 import { neon } from '@neondatabase/serverless';
-import { getSession, getAdmin } from './_utils.js';
-import { sendEmail, siteUrl, addLnlContact, dealSupportBlock, firstName } from './_email.js';
+import { hashPassword, signToken, getSession, getAdmin } from './_utils.js';
+import { sendEmail, siteUrl, addLnlContact, dealSupportBlock, firstName, guestWelcomeEmail } from './_email.js';
 
 export const config = { api: { bodyParser: false } };
 
@@ -671,6 +672,21 @@ export default async function handler(req, res) {
       if (event.type === 'checkout.session.completed') {
         const cs = event.data.object;
         await fulfill(sql, cs);
+        if (cs.metadata?.guest === '1') {
+          // The purchase made the account; hand them the key.
+          try {
+            const uid = Number(cs.metadata.user_id);
+            const [gu] = await sql`SELECT id, name, email FROM users WHERE id = ${uid}`;
+            if (gu) {
+              const token = signToken({ uid: gu.id, purpose: 'reset' }, 1000 * 60 * 60 * 24);
+              const link = `${siteUrl()}/?reset=${encodeURIComponent(token)}`;
+              const isIntake = cs.metadata.item === 'retainer_onboarding';
+              const mail = guestWelcomeEmail(gu.name, isIntake ? 'Full Project Intake' : 'Playbook', link,
+                isIntake ? 'Once you are in, the first thing you see is the link to book your intake call with Dr. Merritt. Pick a time, then send your documents through the brief on the same page.' : 'The Playbook opens in your account under Shop → My documents. Read it there anytime; it is tied to your account and watermarked to you.');
+              await sendEmail(gu.email, mail.subject, mail.html);
+            }
+          } catch (e) { console.error('guest welcome failed', e.message); }
+        }
         if (cs.mode === 'payment' && cs.payment_intent) {
           const pi = await stripe.paymentIntents.retrieve(cs.payment_intent);
           await splitCharge(stripe, pi.latest_charge, cs.metadata?.item, sql);
@@ -854,9 +870,35 @@ export default async function handler(req, res) {
     const raw = await readRawBody(req);
     const body = JSON.parse(raw.toString() || '{}');
     const session = getSession(req);
-    if (!session?.uid) return res.status(401).json({ error: 'Sign in to purchase' });
-    const [user] = await sql`SELECT id, name, email, tier, lnl_discount_until, referred_by, referred_code FROM users WHERE id = ${session.uid}`;
-    if (!user) return res.status(401).json({ error: 'Account not found' });
+    let user;
+    if (body.action === 'guest_checkout') {
+      // Ad funnels: buy first, account second. The email is the account; the
+      // purchase makes it if it does not exist, and the welcome email sets the password.
+      const email = String(body.email || '').trim().toLowerCase().slice(0, 200);
+      const name = String(body.name || '').trim().slice(0, 120) || email.split('@')[0];
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'That email doesn\'t look right' });
+      const ALLOWED = { playbook: true, retainer_onboarding: true };
+      if (!ALLOWED[body.item]) return res.status(400).json({ error: 'Not available this way' });
+      const acq = String(body.acquisition || '').slice(0, 120) || null;
+      [user] = await sql`SELECT id, name, email, tier, lnl_discount_until, referred_by, referred_code FROM users WHERE email = ${email}`;
+      if (!user) {
+        try { await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS acquisition TEXT`; } catch {}
+        [user] = await sql`INSERT INTO users (name, email, tier, password_hash, role, ip_agreed_at, acquisition, created_at)
+          VALUES (${name}, ${email}, 'Free', ${hashPassword(crypto.randomBytes(24).toString('hex'))}, 'member', NOW(), ${acq}, NOW())
+          ON CONFLICT (email) DO UPDATE SET email = EXCLUDED.email
+          RETURNING id, name, email, tier, lnl_discount_until, referred_by, referred_code`;
+      }
+      body.guest = true; body.agreed_ip = true;
+      if (body.item === 'playbook') {
+        const [pb] = await sql`SELECT id FROM products WHERE is_playbook AND active ORDER BY id DESC LIMIT 1`;
+        if (!pb) return res.status(409).json({ error: 'The Playbook isn\'t on sale yet — leave your email and we\'ll tell you the day it is.' });
+        body.item = 'product'; body.product_id = pb.id;
+      }
+    } else {
+      if (!session?.uid) return res.status(401).json({ error: 'Sign in to purchase' });
+      [user] = await sql`SELECT id, name, email, tier, lnl_discount_until, referred_by, referred_code FROM users WHERE id = ${session.uid}`;
+      if (!user) return res.status(401).json({ error: 'Account not found' });
+    }
 
     // ── Self-service billing portal: manage payment method or cancel ──
     // Cancelling must be as easy as joining — one click, no emailing the team.
@@ -880,9 +922,9 @@ export default async function handler(req, res) {
         mode: 'payment',
         customer_email: user.email,
         line_items: [{ quantity: 1, price_data: { currency: 'usd', unit_amount: p.price_cents, product_data: { name: p.title, ...taxCodeField } } }],
-        metadata: { user_id: String(user.id), item: 'product', product_id: String(p.id) },
-        success_url: `${siteUrl()}/shop?purchased=1`,
-        cancel_url: `${siteUrl()}/shop`,
+        metadata: { user_id: String(user.id), item: 'product', product_id: String(p.id), ...(body.guest ? { guest: '1', acquisition: String(body.acquisition || '').slice(0, 120) } : {}) },
+        success_url: body.guest ? `${siteUrl()}/go/playbook?success=1` : `${siteUrl()}/shop?purchased=1`,
+        cancel_url: body.guest ? `${siteUrl()}/go/playbook` : `${siteUrl()}/shop`,
       });
       return res.json({ url: checkout.url });
     }
@@ -975,7 +1017,7 @@ export default async function handler(req, res) {
           ...(product.mode === 'subscription' ? { recurring: { interval: product.annual ? 'year' : 'month' } } : {}),
         },
       }],
-      metadata: { user_id: String(user.id), item, course_id: body.course_id || '' },
+      metadata: { user_id: String(user.id), item, course_id: body.course_id || '', ...(body.guest ? { guest: '1', acquisition: String(body.acquisition || '').slice(0, 120) } : {}) },
       ...(product.mode === 'subscription' ? { subscription_data: { metadata: { user_id: String(user.id), item } } } : {}),
       // A session purchase isn't finished at payment — they still have to pick a
       // time. Send them back to the booking page rather than the homepage, so the
@@ -983,7 +1025,9 @@ export default async function handler(req, res) {
       // A session isn't finished at payment — there's a time to pick, a brief to
       // write and documents to attach, and all of that now lives on the member
       // page. Land them on it, in the meetings section.
-      success_url: item.startsWith('session_')
+      success_url: body.guest && item === 'retainer_onboarding'
+        ? `${base}/go/intake?success=1`
+        : item.startsWith('session_')
         ? `${base}/membership?checkout=success&item=${encodeURIComponent(item)}#meetings`
         : item === 'retainer_onboarding'
           // The intake is paid — the next thing they must do is book the call.

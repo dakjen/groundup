@@ -279,6 +279,9 @@ const STATEMENTS = [
   `ALTER TABLE deal_files ADD COLUMN IF NOT EXISTS project_id INTEGER`,
   `ALTER TABLE deal_files ADD COLUMN IF NOT EXISTS size BIGINT DEFAULT 0`,
   `ALTER TABLE deal_files ADD COLUMN IF NOT EXISTS folder TEXT`,
+  // Where an account came from (ad funnels): e.g. ig:playbook:spring — set by guest checkout and the free-seat form
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS acquisition TEXT`,
+  `ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS acquisition TEXT`,
   // Revenue ledger: one row per Stripe charge, the way the services agreement counts it
   `CREATE TABLE IF NOT EXISTS revenue_ledger (id SERIAL PRIMARY KEY, charge_id TEXT UNIQUE, customer_id TEXT, item TEXT, category TEXT, rate_pct INTEGER, gross_cents INTEGER DEFAULT 0, fee_cents INTEGER DEFAULT 0, net_cents INTEGER DEFAULT 0, held_cents INTEGER DEFAULT 0, nreuv_cents INTEGER DEFAULT 0, status TEXT DEFAULT 'paid', refunded_cents INTEGER DEFAULT 0, dispute_id TEXT, created_at TIMESTAMP DEFAULT NOW(), updated_at TIMESTAMP DEFAULT NOW())`,
   // A hidden course with a release date shows as 'coming' and opens itself on the day

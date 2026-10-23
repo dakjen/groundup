@@ -703,6 +703,49 @@ export function newsletterEmail(issue, name) {
   };
 }
 
+// ── Ad funnels ───────────────────────────────────────────────────────────────
+// Someone bought from an ad without an account: the purchase made one for them.
+export function guestWelcomeEmail(name, what, setLink, nextStep) {
+  const first = firstName(name);
+  return {
+    subject: `Your ${what} is ready — set your password`,
+    html: `
+      ${seqKicker('You\'re in')}
+      ${seqH1(`${first ? first + ', y' : 'Y'}our ${what} is ready.`)}
+      ${seqP(`We made you a GroundUp account with this email address so your purchase has a home. One step: choose a password, and you are in.`)}
+      ${seqBtn(setLink, 'Set my password →')}
+      ${nextStep ? seqP(nextStep, { size: 14 }) : ''}
+      ${seqP('The link is good for 24 hours. If it expires, use "Forgot password" on the sign-in page with this email address.', { size: 13, color: '#8a8a8a' })}
+      ${seqSign()}`,
+  };
+}
+// A free seat at the next live Lunch & Learn, claimed from an ad.
+export function freeSeatEmail(name, code, session) {
+  const first = firstName(name);
+  const when = session?.date ? new Date(session.date).toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric' }) + (session.time ? ` · ${session.time} ET` : '') : 'the next live session';
+  return {
+    subject: `Your free seat: ${session?.title || 'Lunch & Learn'} with Dr. Gina Merritt`,
+    html: `
+      ${seqHero('/opt/sis-gm-speech.jpg', 'Dr. Gina Merritt')}
+      ${seqKicker('Your seat is saved')}
+      ${seqH1(`${first ? first + ', y' : 'Y'}our code is inside.`)}
+      ${seqP(`A live session with Dr. Merritt — a real deal, the real numbers, your questions answered. <strong style="color:#161616;">${esc(session?.title || 'Lunch & Learn')}</strong>, ${when}.`)}
+      <div style="border:1px solid #e5dccf;background:#faf7f7;border-radius:12px;padding:20px 24px;margin:0 0 22px;text-align:center;">
+        <div style="font-family:${SANS};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px;">Your code</div>
+        <div style="font-family:${SANS};font-size:30px;font-weight:bold;color:#161616;letter-spacing:4px;">${code}</div>
+      </div>
+      ${seqBlock('Three steps', `
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0;">
+          ${seqRow('1', `Create a free account at <a href="${siteUrl()}/lunchlearn" style="color:#b80101;">community.drginamerritt.net/lunchlearn</a> — no card needed`)}
+          ${seqRow('2', 'On the Lunch &amp; Learn page, enter the code where it says "Have a code from Dr. Merritt?"')}
+          ${seqRow('3', 'RSVP to the session. The join link appears on that page the day of, and we remind you by email')}
+        </table>`)}
+      ${seqP('The code is yours alone and good for one live session. Attend, and 25% off your first month of membership is waiting if you join within two months.', { size: 14 })}
+      ${seqSign()}`,
+  };
+}
+const esc = (t) => String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
 export function generalHeadsUpEmail(name, opts = {}) {
   const first = firstName(name);
   const opensText = opts.opensText || 'November 1';          // the insider launch, e.g. "Sunday, November 1"
