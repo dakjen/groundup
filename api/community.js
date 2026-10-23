@@ -1,6 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 import { getSession, getAdmin, TIER_RANK } from './_utils.js';
 import { sendEmail, dmReplyEmail } from './_email.js';
+import { sendPush, adminIds, PUSH_PUBLIC_KEY } from './_push.js';
 
 // A channel is visible when the tier gate passes, team-only channels stay with
 // the team, and a cohort channel stays inside its cohort (admins see all).
@@ -148,6 +149,23 @@ export default async function handler(req, res) {
         latest.sort((x, y) => new Date(y.at) - new Date(x.at));
       } catch (e) { console.error('latest unseen failed', e.message); }
       return res.json({ unread, dm_unread: dmRow.n, advisory_unread: advisoryUnread, announcement, latest, mentions });
+    }
+
+    // Push notifications: the browser asks for our public key, then hands us
+    // its subscription. One row per device; turning off removes that device.
+    if (req.method === 'GET' && req.query.resource === 'push_key') return res.json({ key: PUSH_PUBLIC_KEY });
+    if (req.method === 'POST' && req.body && req.body.action === 'push_subscribe') {
+      if (!user.id) return res.status(401).json({ error: 'Sign in required' });
+      const sub = req.body.subscription || {};
+      if (!sub.endpoint || !sub.keys) return res.status(400).json({ error: 'Subscription required' });
+      await sql`INSERT INTO push_subscriptions (user_id, endpoint, keys) VALUES (${user.id}, ${sub.endpoint}, ${JSON.stringify(sub.keys)}::jsonb)
+        ON CONFLICT (endpoint) DO UPDATE SET user_id = EXCLUDED.user_id, keys = EXCLUDED.keys`;
+      return res.json({ success: true });
+    }
+    if (req.method === 'POST' && req.body && req.body.action === 'push_unsubscribe') {
+      if (!user.id) return res.status(401).json({ error: 'Sign in required' });
+      if (req.body.endpoint) await sql`DELETE FROM push_subscriptions WHERE user_id = ${user.id} AND endpoint = ${req.body.endpoint}`;
+      return res.json({ success: true });
     }
 
     // POST { action: 'mark_seen', what: 'community' | 'dm' | 'announcement', id? }
@@ -323,6 +341,7 @@ export default async function handler(req, res) {
             const mail = dmReplyEmail(target.name);
             await sendEmail(target.email, mail.subject, mail.html);
           }
+          await sendPush(sql, [targetId], { title: 'The GroundUp team replied', body: text.slice(0, 140), url: '/community#dm', tag: 'dm:' + targetId });
         } catch (e) { console.error('dm email failed', e); }
       } else {
         // Member sent a DM → Dr. Merritt and the team both hear about it
@@ -334,6 +353,7 @@ export default async function handler(req, res) {
              <p style="color:#444444;font-size:14px;line-height:1.8;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;padding:14px 18px;">${text.slice(0, 500)}</p>
              <p style="color:#7a5050;font-size:12px;line-height:1.7;">The promise is a reply within 2 business days (Mon–Fri). Reply from the admin Community tab.</p>`;
           for (const addr of to) await sendEmail(addr, `DM from ${user.name} (${user.tier})`, html);
+          await sendPush(sql, await adminIds(sql), { title: `DM from ${user.name}`, body: text.slice(0, 140), url: '/community#dm', tag: 'dm:' + user.id });
         } catch (e) { console.error('dm notify failed', e); }
       }
       return res.status(201).json({ message: msg });
@@ -489,6 +509,7 @@ export default async function handler(req, res) {
                    <p style="margin-top:18px;"><a href="https://community.drginamerritt.net/community" style="color:#b80101;font-weight:700;">Open the community →</a></p>`);
               }
             } catch (e) { console.error('mention email failed', e.message); }
+            await sendPush(sql, [uid], { title: `${user.name || 'A member'} tagged you in #${channel.slug || channel.name}`, body: text.slice(0, 140), url: `/community#ch=${encodeURIComponent(channel.slug || '')}`, tag: 'mention:' + msg.id });
           }
         }
       } catch (e) { console.error('mentions failed', e.message); }
