@@ -5823,7 +5823,16 @@ function UsersTab({ btnRed, btnGhost, inp, lbl, teamOnly = false }) {
 
   return (
     <div style={{ maxWidth: 800 }}>
-      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#161616", marginBottom: 8 }}>{teamOnly ? "Team" : "Users"}</h2>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap" }}>
+        <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#161616", marginBottom: 8 }}>{teamOnly ? "Team" : "Users"}</h2>
+        {!teamOnly && users.length > 0 && <button onClick={() => {
+          const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+          const header = ["Name", "Email", "Plan", "Joined", "Role", "Experience", "Focus", "Phase", "Wants to learn", "In the way", "A win this year", "Found us", "Came from (ad)", "Company", "Location", "Onboarded"];
+          const rows = users.filter(u => (u.role || "member") === "member").map(u => [u.name, u.email, u.tier, u.created_at ? new Date(u.created_at).toLocaleDateString() : "", u.onb_role, u.onb_experience, u.onb_focus, u.onb_phase, u.onb_learn, u.onb_pain, u.onb_goal, u.onb_source, u.acquisition, u.company, u.location, u.onboarded_at ? "yes" : ""]);
+          const csv = [header.join(",")].concat(rows.map(r => r.map(esc).join(","))).join("\n");
+          const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" })); a.download = `groundup-members-onboarding-${new Date().toISOString().slice(0, 10)}.csv`; a.click(); URL.revokeObjectURL(a.href);
+        }} style={{ ...btnGhost, fontSize: 12, padding: "7px 14px" }}>Download CSV with onboarding answers</button>}
+      </div>
       <p style={{ color: "#666666", fontSize: 13, marginBottom: 32 }}>Manage members, plan tiers, team access, and password resets.</p>
 
       {tempPw && (
@@ -5911,6 +5920,15 @@ function UsersTab({ btnRed, btnGhost, inp, lbl, teamOnly = false }) {
                   )}
                 </div>
                 <div style={{ color: "#777777", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>{user.email}</div>
+                {(user.onb_role || user.onb_learn || user.onb_goal || user.onb_pain) && (
+                  <div style={{ marginTop: 6, background: "#f7f7f4", border: "1px solid #e4e1da", borderRadius: 8, padding: "8px 12px", fontSize: 12, fontFamily: "'DM Sans', sans-serif", color: "#444444", lineHeight: 1.6 }}>
+                    <span style={{ color: "#7d6d6d", fontWeight: 800, letterSpacing: "1px", fontSize: 10 }}>ONBOARDING</span> {[user.onb_role, user.onb_experience, user.onb_focus, user.onb_phase, user.company, user.location].filter(Boolean).join(" · ")}
+                    {user.onb_learn && <div><strong style={{ color: "#161616" }}>Wants to learn:</strong> {user.onb_learn}</div>}
+                    {user.onb_pain && <div><strong style={{ color: "#161616" }}>In the way:</strong> {user.onb_pain}</div>}
+                    {user.onb_goal && <div><strong style={{ color: "#161616" }}>A win this year:</strong> {user.onb_goal}</div>}
+                    {(user.onb_source || user.acquisition) && <div><strong style={{ color: "#161616" }}>Found us:</strong> {[user.onb_source, user.acquisition].filter(Boolean).join(" · ")}</div>}
+                  </div>
+                )}
                 {user.deal_profile && (() => { const dp = user.deal_profile; const bits = [dp.name, dp.location, dp.phase, dp.units && `${dp.units} units`, dp.tdc && `TDC ${dp.tdc}`, dp.gap && `gap ${dp.gap}`, dp.financing_path].filter(Boolean); return (
                   <div style={{ marginTop: 6, background: "#faf7f7", border: "1px solid #ecd9d9", borderRadius: 8, padding: "8px 12px", fontSize: 12, fontFamily: "'DM Sans', sans-serif", color: "#444444", lineHeight: 1.6 }}>
                     <span style={{ color: "#b80101", fontWeight: 800, letterSpacing: "1px", fontSize: 10 }}>DEAL</span> {bits.join(" · ") || "started, nothing filled in yet"}
