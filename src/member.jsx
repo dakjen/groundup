@@ -3080,7 +3080,7 @@ export function LibraryPage({ member, onUpgrade }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const rank = member && !member.suspended ? (TIER_RANK[member.tier] ?? 0) : 0;
-  const allowed = member && (rank >= 2 || member.role === "admin");
+  const allowed = !!member;
 
   useEffect(() => {
     if (!allowed) return;
@@ -3126,9 +3126,9 @@ export function LibraryPage({ member, onUpgrade }) {
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
                     {phItems.map(r => {
                       const isTemplate = r.category === "template";
-                      const open = () => { if (r.url) { ping(r.id); window.open(r.url, "_blank", "noreferrer"); } };
+                      const open = () => { if (r.locked) { onUpgrade && onUpgrade(); return; } if (r.url) { ping(r.id); window.open(r.url, "_blank", "noreferrer"); } };
                       return (
-                        <div key={r.id} onClick={open} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 14, padding: "18px 20px", cursor: r.url ? "pointer" : "default", display: "flex", gap: 14, alignItems: "flex-start", transition: "all 0.2s" }}
+                        <div key={r.id} onClick={open} title={r.locked ? `Opens with the ${TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan` : undefined} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 14, padding: "18px 20px", cursor: r.url || r.locked ? "pointer" : "default", display: "flex", gap: 14, alignItems: "flex-start", transition: "all 0.2s", opacity: r.locked ? 0.45 : 1, filter: r.locked ? "grayscale(1)" : "none" }}
                           onMouseEnter={e => { if (r.url) { e.currentTarget.style.borderColor = "#b8010150"; e.currentTarget.style.transform = "translateY(-2px)"; } }}
                           onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a0000"; e.currentTarget.style.transform = "none"; }}>
                           <div style={{ width: 38, height: 38, borderRadius: 10, background: isTemplate ? "#b9bec718" : "#b8010115", border: "1px solid " + (isTemplate ? "#b9bec740" : "#b8010130"), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>{isTemplate ? "📄" : "🔗"}</div>
@@ -3137,7 +3137,7 @@ export function LibraryPage({ member, onUpgrade }) {
                             {r.description && <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font, lineHeight: 1.6, marginBottom: 8, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{r.description}</div>}
                             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                               <span style={{ fontSize: 9, color: isTemplate ? "#b9bec7" : "#8f7070", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font }}>{r.kind_label || (isTemplate ? "Template" : "Resource")}</span>
-                              {r.url && <span style={{ color: "#b80101", fontWeight: 800, fontSize: 12, fontFamily: font, marginLeft: "auto" }}>Open →</span>}
+                              {r.locked ? <span style={{ color: "var(--gu-muted)", fontWeight: 800, fontSize: 11, fontFamily: font, marginLeft: "auto" }}>{TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan</span> : r.url && <span style={{ color: "#b80101", fontWeight: 800, fontSize: 12, fontFamily: font, marginLeft: "auto" }}>Open →</span>}
                             </div>
                           </div>
                         </div>
@@ -3167,7 +3167,7 @@ export function ResourcesPage({ member, onUpgrade }) {
   // Count every resource use — link opens and code copies — for the admin panel
   const ping = (id) => { try { api("/api/resources", { method: "POST", body: JSON.stringify({ action: "resource_click", id }) }).catch(() => {}); } catch {} };
 
-  if (!member || (rank < 2 && member.role !== "admin")) {
+  if (!member) {
     return (
       <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "140px 20px", textAlign: "center" }}>
         <div style={{ marginBottom: 16 }}><Lock size={36} color="#b80101" style={{ display: "inline-block" }} /></div>
@@ -3226,8 +3226,9 @@ export function ResourcesPage({ member, onUpgrade }) {
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {items.map(r => (
-                    <div key={r.id} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 14, padding: "20px 26px", display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: "10px 28px" }}>
+                    <div key={r.id} onClick={r.locked ? onUpgrade : undefined} title={r.locked ? `Opens with the ${TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan` : undefined} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 14, padding: "20px 26px", display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: "10px 28px", opacity: r.locked ? 0.45 : 1, filter: r.locked ? "grayscale(1)" : "none", cursor: r.locked ? "pointer" : "default" }}>
                       <div style={{ flex: 1, minWidth: 260, display: "flex", flexDirection: "column", gap: 8 }}>
+                      {r.locked && <div style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font }}>{TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan</div>}
                       {r.url && !/youtube\.com|youtu\.be/.test(r.url) ? (
                         <a href={r.url} target="_blank" rel="noreferrer" onClick={() => ping(r.id)} style={{ color: "#b80101", fontWeight: 800, fontSize: 16, fontFamily: font, textDecoration: "none" }}>{r.title} ↗</a>
                       ) : (
