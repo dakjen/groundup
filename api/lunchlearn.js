@@ -189,12 +189,13 @@ export default async function handler(req, res) {
       return res.json({
         event, my_rsvp, office_hours,
         // The full upcoming schedule, with this member's RSVP state per session
-        events: upcomingEvents.map(e => ({ ...e, my_rsvp: myRsvpKeys.includes(e.date), joined: joinedKeys.includes(e.date) })),
+        // Each session can carry its own meeting link; the global link is the fallback. Seat holders only.
+        events: upcomingEvents.map(e => { const mine = myRsvpKeys.includes(e.date); return { ...e, my_rsvp: mine, joined: joinedKeys.includes(e.date), has_link: !!(e.link || link), link: mine ? (e.link || link || null) : undefined }; }),
         active: !!access || !!admin,
         expires_at: access?.expires_at || null,
         // The Zoom link is for people who hold a seat — RSVP first
-        link: my_rsvp ? link : null,
-        has_link: !!link,
+        link: my_rsvp ? ((event && event.link) || link || null) : null,
+        has_link: !!((event && event.link) || link),
         recordings,
         discount_until: user?.lnl_discount_until || null,
         has_request: !!reqRow,
