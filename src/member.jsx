@@ -3136,7 +3136,7 @@ export function LibraryPage({ member, onUpgrade }) {
                             <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 14.5, fontFamily: font, lineHeight: 1.35, marginBottom: 4 }}>{r.title}</div>
                             {r.description && <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font, lineHeight: 1.6, marginBottom: 8, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{r.description}</div>}
                             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                              <span style={{ fontSize: 9, color: isTemplate ? "#b9bec7" : "#8f7070", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font }}>{isTemplate ? "Template" : "Resource"}</span>
+                              <span style={{ fontSize: 9, color: isTemplate ? "#b9bec7" : "#8f7070", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font }}>{r.kind_label || (isTemplate ? "Template" : "Resource")}</span>
                               {r.url && <span style={{ color: "#b80101", fontWeight: 800, fontSize: 12, fontFamily: font, marginLeft: "auto" }}>Open →</span>}
                             </div>
                           </div>
