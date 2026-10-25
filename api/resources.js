@@ -128,6 +128,25 @@ export default async function handler(req, res) {
 
     // Member: mark a lesson complete (or un-mark it). Progress is the member's
     // own bookkeeping — nothing is gated on it.
+    // A member's own notes on a lesson — the place to keep the action-item work.
+    // Paid memberships only; the notes are private to the member.
+    if (req.method === 'GET' && req.query.note === '1') {
+      const session = getSession(req);
+      if (!session?.uid) return res.status(401).json({ error: 'Sign in required' });
+      const [row] = await sql`SELECT body, updated_at FROM lesson_notes WHERE user_id = ${session.uid} AND course_id = ${String(req.query.course || '')} AND lesson_id = ${String(req.query.lesson || '')}`;
+      return res.json({ body: row?.body || '', updated_at: row?.updated_at || null });
+    }
+    if (req.method === 'POST' && req.body && req.body.action === 'lesson_note') {
+      const session = getSession(req);
+      if (!session?.uid) return res.status(401).json({ error: 'Sign in required' });
+      const [u] = await sql`SELECT tier, membership_status FROM users WHERE id = ${session.uid}`;
+      if (!u || u.membership_status !== 'active' || (TIER_RANK[u.tier] ?? 0) < 1) return res.status(403).json({ error: 'Lesson notes come with a membership.' });
+      const body = String(req.body.body || '').slice(0, 20000);
+      await sql`INSERT INTO lesson_notes (user_id, course_id, lesson_id, body, updated_at) VALUES (${session.uid}, ${String(req.body.course_id || '')}, ${String(req.body.lesson_id || '')}, ${body}, NOW())
+        ON CONFLICT (user_id, course_id, lesson_id) DO UPDATE SET body = EXCLUDED.body, updated_at = NOW()`;
+      return res.json({ success: true });
+    }
+
     if (req.method === 'POST' && req.body && req.body.action === 'lesson_complete') {
       const session = getSession(req);
       if (!session?.uid) return res.status(401).json({ error: 'Sign in required' });

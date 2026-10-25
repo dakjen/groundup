@@ -428,6 +428,36 @@ function LessonRich({ text, lead }) {
 // phase they open in. Unlisted courses (series, drafts) show no map.
 const COURSE_PHASE = { mc1: "Predevelopment", mc2: "Predevelopment", mc3: "Development", mc5: "Feasibility", mc6: "Predevelopment", mc4: "Construction", mc7: "Stabilization" };
 
+// Your notes on this lesson: where the action-item work lives. Private, per
+// member, saved to the account (Dr. Merritt's review: "a place to keep the
+// information from the action item"). Members on a paid plan write; Free sees why.
+function LessonNotes({ courseId, lessonId, canWrite, onUpgrade }) {
+  const [body, setBody] = useState(""); const [saved, setSaved] = useState(true); const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    setLoaded(false); setBody(""); setSaved(true);
+    if (!getMemberToken()) return;
+    fetch(`/api/resources?note=1&course=${encodeURIComponent(courseId)}&lesson=${encodeURIComponent(lessonId)}`, { headers: { Authorization: "Bearer " + getMemberToken() } })
+      .then(r => r.ok ? r.json() : null).then(d => { if (d) setBody(d.body || ""); setLoaded(true); }).catch(() => setLoaded(true));
+  }, [courseId, lessonId]);
+  const save = () => fetch("/api/resources", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "lesson_note", course_id: courseId, lesson_id: lessonId, body }) }).then(r => { if (r.ok) setSaved(true); }).catch(() => {});
+  return (
+    <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 14, padding: "20px 24px", marginTop: 14 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+        <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>Your notes on this lesson</div>
+        <span style={{ color: "#8f7070", fontSize: 11.5, fontFamily: "'DM Sans', sans-serif" }}>Private to you. Saved to your account.</span>
+      </div>
+      {canWrite ? (<>
+        <textarea value={body} onChange={e => { setBody(e.target.value); setSaved(false); }} onBlur={() => { if (!saved) save(); }} rows={6} maxLength={20000} placeholder="Work the action item here: the site, the numbers, the people, what you decided." style={{ width: "100%", boxSizing: "border-box", background: "#0a0505", border: "1px solid #2a0000", borderRadius: 10, padding: "12px 14px", color: "#f5e8e8", fontFamily: "'DM Sans', sans-serif", fontSize: 14, lineHeight: 1.7, outline: "none", resize: "vertical", opacity: loaded ? 1 : 0.6 }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8 }}>
+          <button onClick={save} disabled={saved} style={{ background: saved ? "transparent" : "#b80101", color: saved ? "#8f7070" : "#fff", border: "1px solid " + (saved ? "#2a0000" : "#b80101"), borderRadius: 8, padding: "8px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12, cursor: saved ? "default" : "pointer" }}>{saved ? "Saved" : "Save notes"}</button>
+        </div>
+      </>) : (
+        <div style={{ color: "#a88888", fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>Members keep their action-item work here, lesson by lesson, saved to their account. <button onClick={onUpgrade} style={{ background: "none", border: "none", color: "#e08a8a", cursor: "pointer", fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, padding: 0 }}>See plans →</button></div>
+      )}
+    </div>
+  );
+}
+
 function MiniCoursePage({ course, onBack, backLabel, member, onUpgrade, onMemberUpdate }) {
   const pageBg = "#000";
   // Paid members (Basic+) get every lesson. Free members get ONE lesson total across
@@ -701,6 +731,7 @@ function MiniCoursePage({ course, onBack, backLabel, member, onUpgrade, onMember
               <p style={{ color: "#9a9ba2", fontSize: 14, lineHeight: 1.75, fontFamily: "'DM Sans', sans-serif" }}>{lesson.actionItem}</p>
             </div>
           )}
+          {member && <LessonNotes courseId={course.id} lessonId={String(lesson.id ?? activeLesson)} canWrite={memberRank >= 1 || member.role === "admin"} onUpgrade={onUpgrade} />}
           {/* Progress: mark it done and move on */}
           <div style={{ background: isDone(activeLesson) ? "#061a0d" : "#0d0404", border: "1px solid " + (isDone(activeLesson) ? "#4ade8040" : "#2a0000"), borderRadius: 16, padding: "22px 26px", margin: "36px 0 28px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
             <div style={{ flex: 1, minWidth: 220 }}>
@@ -1008,14 +1039,14 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
   // Waitlist heads the People group until the public launch passes; then Users does.
   const launched = !!(window.__guLaunchAt && new Date(window.__guLaunchAt).getTime() <= Date.now());
   const ADMIN_GROUPS = [
-    { label: "GroundUp", items: [["courses", "Courses"], ["admin-drops", "Lesson Drops"], ["community", "Community"], ["resources", "Resources"]] },
+    { label: "GroundUp", items: [["courses", "Courses"], ["community", "Community"], ["resources", "Resources"]] },
     { label: "Advisory", items: [["admin-retainers", "Advisory Clients"], ["admin-bookings", "Intake & Bookings"]] },
     { label: launched ? "Users" : "Waitlist", items: launched
       ? [["admin-users", "Users"], ["admin-contacts", "Contacts"], ["admin-waitlist", "Waitlist"], ["admin-referrals", "Referrals"], ["admin-invites", "Gifts & Invites"]]
       : [["admin-waitlist", "Waitlist"], ["admin-contacts", "Contacts"], ["admin-users", "Users"], ["admin-referrals", "Referrals"], ["admin-invites", "Gifts & Invites"]] },
     { label: "Events", items: [["lunchlearn", "Lunch & Learns"], ["admin-office", "Office Hours"]] },
     { label: "Revenue", items: [["admin-revenue", "Revenue"]] },
-    { label: "Admin", items: [["admin-email", "Email"], ["admin-team", "Team"], ["admin-shop", "Shop"], ["admin-courses", "All Courses"], ["admin-status", "System Status"]] },
+    { label: "Admin", items: [["admin-drops", "Lesson Drops"], ["admin-email", "Email"], ["admin-team", "Team"], ["admin-shop", "Shop"], ["admin-courses", "All Courses"], ["admin-status", "System Status"]] },
   ];
   const ADMIN_TOOLS = ADMIN_GROUPS.flatMap(g => g.items).filter(([id]) => id.startsWith("admin-"));
   const [adminOpen, setAdminOpen] = useState(false);
