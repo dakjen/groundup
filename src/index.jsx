@@ -4706,7 +4706,7 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
                             <input id={"mat-url-" + dataKey} placeholder="Link or YouTube URL (or upload →)" style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1, minWidth: 200 }} />
                             <label style={{ ...btnGhost, cursor: "pointer" }}>
                               {uploading ? "Uploading…" : "Upload file"}
-                              <input type="file" accept=".pdf,.docx,.xlsx,.pptx" style={{ display: "none" }} onChange={async e => {
+                              <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.xlsm,.csv,.ppt,.pptx" style={{ display: "none" }} onChange={async e => {
                                 const file = e.target.files?.[0]; if (!file) return;
                                 setUploading(true);
                                 try {
@@ -6874,12 +6874,12 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
             <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="DakJen Creative — Marketing" style={{ ...inp, maxWidth: "none", marginBottom: 0 }} />
           </div>
           <div>
-            <label style={lbl}>Link — or upload a file (PDF, Word, Excel, PowerPoint)</label>
+            <label style={lbl}>Link — or upload a file (PDF, Word, Excel, CSV, PowerPoint)</label>
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
               <input value={form.url} onChange={e => setForm({ ...form, url: e.target.value })} placeholder="https://… (Excel, Drive, anything)" style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1 }} />
               <label style={{ ...btnGhost, cursor: "pointer", whiteSpace: "nowrap", padding: "10px 14px" }}>
                 {uploading ? "Uploading…" : "Upload file"}
-                <input type="file" accept=".pdf,.docx,.xlsx,.pptx" style={{ display: "none" }} onChange={e => uploadPdf(e.target.files[0])} />
+                <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.xlsm,.csv,.ppt,.pptx" style={{ display: "none" }} onChange={e => uploadPdf(e.target.files[0])} />
               </label>
             </div>
           </div>

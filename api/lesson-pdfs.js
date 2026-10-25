@@ -28,7 +28,7 @@ export default async function handler(req, res) {
       for await (const chunk of req) chunks.push(chunk);
       const body = JSON.parse(Buffer.concat(chunks).toString() || '{}');
       const kind = String(req.query.kind || 'lesson');
-      const DOCS = { '.pdf': 'application/pdf', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation' };
+      const DOCS = { '.pdf': 'application/pdf', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.doc': 'application/msword', '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', '.xlsm': 'application/vnd.ms-excel.sheet.macroEnabled.12', '.xls': 'application/vnd.ms-excel', '.csv': 'text/csv', '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation', '.ppt': 'application/vnd.ms-powerpoint' };
       const PREP = { ...DOCS, '.doc': 'application/msword', '.xls': 'application/vnd.ms-excel', '.csv': 'text/csv', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg' };
       const MB = 1024 * 1024;
       const RULES = {
@@ -84,7 +84,7 @@ export default async function handler(req, res) {
 
       // kind=file (shop deliverable PDF), kind=cover (shop image), kind=avatar
       // (member profile picture), default: lesson PDF
-      const kind = ['cover', 'file', 'avatar', 'prep', 'page', 'deal'].includes(req.query.kind) ? req.query.kind : 'lesson';
+      const kind = ['cover', 'file', 'avatar', 'prep', 'page', 'deal', 'material'].includes(req.query.kind) ? req.query.kind : 'lesson';
       const lower = filePart.filename.toLowerCase();
       const IMG = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp' };
       const imgExt = Object.keys(IMG).find(e => lower.endsWith(e));
@@ -111,10 +111,10 @@ export default async function handler(req, res) {
         if (!imgExt) return res.status(400).json({ error: 'Covers must be PNG, JPG, or WEBP' });
         folder = 'shop-covers'; contentType = IMG[imgExt];
       } else {
-        const DOC_TYPES = { '.pdf': 'application/pdf', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation' };
+        const DOC_TYPES = { '.pdf': 'application/pdf', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.doc': 'application/msword', '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', '.xlsm': 'application/vnd.ms-excel.sheet.macroEnabled.12', '.xls': 'application/vnd.ms-excel', '.csv': 'text/csv', '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation', '.ppt': 'application/vnd.ms-powerpoint' };
         const ext = Object.keys(DOC_TYPES).find(e => lower.endsWith(e));
         if (kind === 'material') {
-          if (!ext) return res.status(400).json({ error: 'Materials can be PDF, Word, Excel, or PowerPoint files' });
+          if (!ext) return res.status(400).json({ error: 'Materials can be PDF, Word, Excel, CSV or PowerPoint files' });
           folder = 'lesson-pdfs'; contentType = DOC_TYPES[ext];
         } else {
           if (!lower.endsWith('.pdf')) return res.status(400).json({ error: 'Only PDF files are allowed' });
