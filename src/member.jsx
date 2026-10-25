@@ -3123,23 +3123,21 @@ export function LibraryPage({ member, onUpgrade }) {
                 {phItems.length === 0 ? (
                   <div style={{ color: "var(--gu-faint)", fontSize: 12.5, fontFamily: font, padding: "4px 0 4px 36px" }}>Nothing filed here yet.</div>
                 ) : (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {phItems.map(r => {
                       const isTemplate = r.category === "template";
                       const open = () => { if (r.locked) { onUpgrade && onUpgrade(); return; } if (r.url) { ping(r.id); window.open(r.url, "_blank", "noreferrer"); } };
                       return (
-                        <div key={r.id} onClick={open} title={r.locked ? `Opens with the ${TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan` : undefined} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 14, padding: "18px 20px", cursor: r.url || r.locked ? "pointer" : "default", display: "flex", gap: 14, alignItems: "flex-start", transition: "all 0.2s", opacity: r.locked ? 0.45 : 1, filter: r.locked ? "grayscale(1)" : "none" }}
+                        <div key={r.id} onClick={open} title={r.locked ? `Opens with the ${TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan` : undefined} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 12, padding: "14px 18px", cursor: r.url || r.locked ? "pointer" : "default", display: "flex", gap: 14, alignItems: "center", transition: "all 0.2s", opacity: r.locked ? 0.45 : 1, filter: r.locked ? "grayscale(1)" : "none" }}
                           onMouseEnter={e => { if (r.url) { e.currentTarget.style.borderColor = "#b8010150"; e.currentTarget.style.transform = "translateY(-2px)"; } }}
                           onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a0000"; e.currentTarget.style.transform = "none"; }}>
-                          <div style={{ width: 38, height: 38, borderRadius: 10, background: isTemplate ? "#b9bec718" : "#b8010115", border: "1px solid " + (isTemplate ? "#b9bec740" : "#b8010130"), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>{isTemplate ? "📄" : "🔗"}</div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 14.5, fontFamily: font, lineHeight: 1.35, marginBottom: 4 }}>{r.title}</div>
-                            {r.description && <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font, lineHeight: 1.6, marginBottom: 8, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{r.description}</div>}
-                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                              <span style={{ fontSize: 9, color: isTemplate ? "#b9bec7" : "#8f7070", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font }}>{r.kind_label || (isTemplate ? "Template" : "Resource")}</span>
-                              {r.locked ? <span style={{ color: "var(--gu-muted)", fontWeight: 800, fontSize: 11, fontFamily: font, marginLeft: "auto" }}>{TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan</span> : r.url && <span style={{ color: "#b80101", fontWeight: 800, fontSize: 12, fontFamily: font, marginLeft: "auto" }}>Open →</span>}
-                            </div>
+                          <FileTextIcon />
+                          <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+                            <span style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 14.5, fontFamily: font, lineHeight: 1.35 }}>{r.title}</span>
+                            {r.description && <span style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font, lineHeight: 1.5, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60%" }}>{r.description}</span>}
                           </div>
+                          <span style={{ fontSize: 9, color: isTemplate ? "#b9bec7" : "#8f7070", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, whiteSpace: "nowrap" }}>{r.kind_label || (isTemplate ? "Template" : "Resource")}</span>
+                          {r.locked ? <span style={{ color: "var(--gu-muted)", fontWeight: 800, fontSize: 11, fontFamily: font, whiteSpace: "nowrap" }}>{TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan</span> : r.url && <span style={{ color: "#b80101", fontWeight: 800, fontSize: 12, fontFamily: font, whiteSpace: "nowrap" }}>Open →</span>}
                         </div>
                       );
                     })}
