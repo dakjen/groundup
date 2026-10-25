@@ -3947,7 +3947,7 @@ export function DropsAdminPage() {
         {/* New drop */}
         <div style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 14, padding: "18px 22px", marginBottom: 22, display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
           <div style={{ flex: "1 1 220px" }}><label style={lbl}>New drop</label><input value={form.label} onChange={e => setForm({ ...form, label: e.target.value })} placeholder="e.g. December drop" style={field} /></div>
-          <div style={{ flex: "0 1 260px" }}><label style={lbl}>Goes live (your local time)</label><input type="datetime-local" value={form.at} onChange={e => setForm({ ...form, at: e.target.value })} style={{ ...field, colorScheme: "dark" }} /></div>
+          <div style={{ flex: "0 1 260px" }}><label style={lbl}>Goes live (your local time)</label><input type="datetime-local" value={form.at} onChange={e => setForm({ ...form, at: e.target.value })} style={{ ...field, colorScheme: "light" }} /></div>
           <button onClick={() => act(() => post({ action: "drop_save", label: form.label, at: form.at ? new Date(form.at).toISOString() : null }).then(() => setForm({ label: "", at: "" })), "Drop created.")} style={btnRed}>Create drop</button>
         </div>
 
@@ -3968,7 +3968,7 @@ export function DropsAdminPage() {
                 <div style={{ padding: "0 22px 18px", borderTop: "1px solid var(--gu-border2)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "14px 0 4px" }}>
                     <input defaultValue={d.label} onBlur={e => { if (e.target.value.trim() && e.target.value.trim() !== d.label) act(() => post({ action: "drop_save", id: d.id, label: e.target.value.trim() }), "Renamed."); }} style={{ ...field, width: "auto", flex: "1 1 200px", padding: "7px 10px", fontSize: 13 }} />
-                    <input type="datetime-local" defaultValue={toLocal(d.at)} onChange={e => { if (e.target.value) act(() => post({ action: "drop_save", id: d.id, at: new Date(e.target.value).toISOString() }), "Date saved. Every lesson in the drop follows it."); }} style={{ ...field, width: "auto", padding: "7px 10px", fontSize: 13, colorScheme: "dark" }} />
+                    <input type="datetime-local" defaultValue={toLocal(d.at)} onChange={e => { if (e.target.value) act(() => post({ action: "drop_save", id: d.id, at: new Date(e.target.value).toISOString() }), "Date saved. Every lesson in the drop follows it."); }} style={{ ...field, width: "auto", padding: "7px 10px", fontSize: 13, colorScheme: "light" }} />
                     <button onClick={() => { if (window.confirm(`Remove "${d.label}"? Its lessons stay unpublished, just not scheduled.`)) act(() => post({ action: "drop_remove", id: d.id }), "Drop removed."); }} style={{ ...ghost, marginLeft: "auto" }}>Remove drop</button>
                   </div>
                   {items.length === 0 ? <div style={{ color: "var(--gu-muted)", fontSize: 13.5, fontFamily: font, padding: "10px 0" }}>Nothing in this drop yet. Add lessons from the list below.</div> : byCourse(items).map(courseGroup)}
