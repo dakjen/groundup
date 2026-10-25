@@ -7030,14 +7030,14 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
         <div style={{ background: "#ececec", border: "1px solid #2a1010", borderRadius: 14, padding: 40, textAlign: "center", color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No resources yet — add your first one above.</div>
       ) : rows.map(r => (
         <div key={r.id} style={{ background: "#ffffff", border: "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          <div style={{ flex: 1, minWidth: 180 }}>
+          <div style={{ flex: "1 1 260px", minWidth: 0 }}>
             <div style={{ color: "#222222", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{r.title}</div>
-            <div style={{ color: "#777777", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{r.url || "no link"}{r.code ? ` · code ${r.code}` : ""}</div>
+            <div style={{ color: "#777777", fontSize: 12, fontFamily: "'DM Sans', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.url || "no link"}{r.code ? ` · code ${r.code}` : ""}</div>
             <div style={{ color: r.clicks ? "#b80101" : "#9a9a9a", fontSize: 11.5, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>
               {r.clicks ? `${r.clicks} click${r.clicks === 1 ? "" : "s"} · ${r.clickers} member${r.clickers === 1 ? "" : "s"} · last ${new Date(r.last_click).toLocaleDateString()}` : "No clicks yet"}
             </div>
           </div>
-          <span style={{ color: "#666666", fontSize: 10, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{CAT_LABEL[r.category]}{r.category === "partner" ? ` · ${r.partner_type || "untyped"}` : ""}</span>
+          <span style={{ color: "#666666", fontSize: 10, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap", flexShrink: 0 }}>{CAT_LABEL[r.category]}{r.category === "partner" ? ` · ${r.partner_type || "untyped"}` : ""}</span>
           <select value={r.min_tier} onChange={e => patch(r.id, { min_tier: e.target.value })} style={{ background: "#ececec", color: "#b80101", border: "1px solid #2a1010", borderRadius: 6, padding: "5px 8px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 11, cursor: "pointer", outline: "none" }}>
             <option value="Premium">Premium</option><option value="Elite">Owner</option>
           </select>
