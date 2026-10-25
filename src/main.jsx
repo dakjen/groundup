@@ -13,6 +13,32 @@ if (PIXEL) {
   window.fbq('init', PIXEL); window.fbq('track', 'PageView')
 }
 
+// A session token lasts fourteen days. When one has quietly expired the page
+// used to keep showing you signed in while every request came back 401 —
+// uploads "refusing" files, lists not loading. Now the first 401 on our own
+// API signs you out and brings you back to a fresh sign-in.
+const _fetch = window.fetch.bind(window);
+let _bounced = false;
+window.fetch = async (...args) => {
+  const res = await _fetch(...args);
+  try {
+    const url = typeof args[0] === 'string' ? args[0] : args[0]?.url || '';
+    const hadToken = !!(localStorage.getItem('guToken') || sessionStorage.getItem('adminToken'));
+    if (res.status === 401 && hadToken && !_bounced && /^\/api\//.test(url) && !/\/api\/auth$/.test(url.split('?')[0]) ) {
+      const h = (args[1] && args[1].headers) || {};
+      const sent = h.Authorization || h.authorization || (h.get && h.get('Authorization'));
+      if (sent) {
+        _bounced = true;
+        localStorage.removeItem('guMember'); localStorage.removeItem('guToken');
+        sessionStorage.removeItem('adminToken'); sessionStorage.removeItem('isAdmin'); sessionStorage.removeItem('currentUser');
+        alert('Your session expired. Please sign in again.');
+        window.location.href = '/';
+      }
+    }
+  } catch {}
+  return res;
+};
+
 // The static copy crawlers read (scripts/prerender.mjs) comes out the moment the app mounts
 for (const id of ['seo-content', 'seo-style']) { const el = document.getElementById(id); if (el) el.remove(); }
 // The splash holds the screen black for a beat, then fades once the app has painted —
