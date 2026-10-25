@@ -4549,10 +4549,14 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
 
   const authHeaders = () => ({ Authorization: "Bearer " + sessionStorage.getItem("adminToken") });
   const load = () => fetch("/api/resources?attachments=1", { headers: authHeaders() }).then(r => r.json()).then(d => setAttachments(d.attachments || {})).catch(() => setAttachments({}));
+  // The document library (Resources tab): upload everything there once, then
+  // attach any of it to a lesson from here.
+  const [library, setLibrary] = useState([]);
   // Full lesson content for the team's preview — the admin token unlocks it
   const [fullCourses, setFullCourses] = useState(null);
   useEffect(() => {
     load();
+    fetch("/api/resources", { headers: authHeaders() }).then(r => r.ok ? r.json() : null).then(d => setLibrary((d?.resources || []).filter(r => r.url && r.category !== "partner"))).catch(() => {});
     fetch("/api/resources?courses=1", { headers: authHeaders() })
       .then(r => r.json()).then(d => d?.courses?.length && setFullCourses(d.courses)).catch(() => {});
   }, []);
@@ -4720,6 +4724,19 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
                               <option value="">Phase: general</option>
                               {DEV_PHASES.map((p, i) => <option key={i} value={i + 1}>{`Phase ${i + 1} — ${p}`}</option>)}
                             </select>
+                            {library.length > 0 && (
+                              <select defaultValue="" onChange={e => {
+                                const r = library.find(x => String(x.id) === e.target.value); if (!r) return;
+                                document.getElementById("mat-title-" + dataKey).value = r.title || "";
+                                document.getElementById("mat-url-" + dataKey).value = r.url || "";
+                                document.getElementById("mat-kind-" + dataKey).value = r.category === "template" ? "Template" : "Deliverable";
+                                if (r.phase) document.getElementById("mat-phase-" + dataKey).value = String(r.phase);
+                                e.target.value = "";
+                              }} style={{ ...inp, maxWidth: 260, marginBottom: 0, cursor: "pointer" }}>
+                                <option value="">Attach from the library…</option>
+                                {library.map(r => <option key={r.id} value={r.id}>{r.title}{r.phase ? ` (Phase ${r.phase})` : ""}</option>)}
+                              </select>
+                            )}
                             <input id={"mat-title-" + dataKey} placeholder="Name members will see" style={{ ...inp, maxWidth: 220, marginBottom: 0 }} />
                             <input id={"mat-url-" + dataKey} placeholder="Link or YouTube URL (or upload →)" style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1, minWidth: 200 }} />
                             <label style={{ ...btnGhost, cursor: "pointer" }}>
@@ -6882,7 +6899,7 @@ function ResourcesTab({ btnRed, btnGhost, inp, lbl }) {
   return (
     <div style={{ maxWidth: 760 }}>
       <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: "#161616", marginBottom: 8 }}>Resources & Templates</h2>
-      <p style={{ color: "#666666", fontSize: 13, marginBottom: 28 }}>Everything on the member Resources page is edited here — links, templates, and the Owner partner network with referral codes.</p>
+      <p style={{ color: "#666666", fontSize: 13, marginBottom: 28 }}>The document library. Upload every template and tool here once, with its development phase; it shows on the member Library and Resources pages, and the Courses tab can attach any of it to a lesson later.</p>
       {msg && <div style={{ background: msg.ok ? "#eef7ee" : "#fdf0f0", border: `1px solid ${msg.ok ? "#22c55e40" : "#b8010140"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", marginBottom: 16 }}>{msg.text}</div>}
 
       <div style={{ background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 14, padding: "28px 32px", marginBottom: 28 }}>
