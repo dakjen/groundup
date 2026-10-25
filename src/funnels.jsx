@@ -114,6 +114,17 @@ export function FunnelPage({ offer }) {
   const [err, setErr] = useState(null);
   const [done, setDone] = useState(() => { try { return new URLSearchParams(window.location.search).get("success") === "1"; } catch { return false; } });
   const [sessionInfo, setSessionInfo] = useState(null);
+  const [seatCode, setSeatCode] = useState(null);
+  const [nextSession, setNextSession] = useState(null);
+  const [formVisible, setFormVisible] = useState(false);
+  // The next live session, on the page before anyone fills anything in
+  useEffect(() => { if (o?.page !== "lunch") return; fetch("/api/lunchlearn?next=1").then(r => r.ok ? r.json() : null).then(d => setNextSession(d?.session || null)).catch(() => {}); }, [o?.page]);
+  // The sticky button steps aside while the form itself is on screen
+  useEffect(() => {
+    const el = document.getElementById("fn-form-mobile"); if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([e]) => setFormVisible(e.isIntersecting), { threshold: 0.25 });
+    io.observe(el); return () => io.disconnect();
+  }, [done]);
   const acq = useMemo(() => acquisitionTag(o?.page || "x"), [o?.page]);
   const member = getMember();
   useEffect(() => { window.scrollTo(0, 0); pixel("ViewContent", { content_name: o?.page }); if (done) pixel(o?.mode === "buy" ? "Purchase" : "Lead", { content_name: o?.page, currency: "USD", value: o?.item === "retainer_onboarding" ? 1500 : undefined }); }, [o?.page, done]);
@@ -131,7 +142,7 @@ export function FunnelPage({ offer }) {
       } else if (o.mode === "lead") {
         const r = await fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "free_seat", name: form.name, email: form.email, website: form.website, acquisition: acq }) });
         const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || "Something went wrong");
-        setSessionInfo(d.session || null); setDone(true); pixel("Lead", { content_name: o.page });
+        setSessionInfo(d.session || null); setSeatCode(d.code || null); setDone(true); pixel("Lead", { content_name: o.page });
         try { history.replaceState(null, "", window.location.pathname + "?success=1"); } catch {}
       } else {
         pixel("InitiateCheckout", { content_name: o.page });
@@ -148,6 +159,20 @@ export function FunnelPage({ offer }) {
     <div style={{ background: "#0d0404", border: "1px solid #22c55e50", borderRadius: 18, padding: compact ? "22px 20px" : "30px 28px" }}>
       <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 26, color: "#f5e8e8", marginBottom: 8 }}>{o.success.title}</div>
       <div style={{ color: "#c8a8a8", fontSize: 14.5, fontFamily: font, lineHeight: 1.7 }}>{o.success.body}{sessionInfo?.date ? ` Next session: ${sessionInfo.title}, ${new Date(sessionInfo.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}${sessionInfo.time ? " · " + sessionInfo.time + " ET" : ""}.` : ""}</div>
+      {seatCode && (
+        <div style={{ marginTop: 16, background: "#120808", border: "1px dashed #b8010180", borderRadius: 12, padding: "14px 16px" }}>
+          <div style={{ fontSize: 9.5, color: RED, fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Your seat code</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <code style={{ color: "#f5e8e8", fontSize: 22, letterSpacing: "2px", fontWeight: 700 }}>{seatCode}</code>
+            <button onClick={() => { try { navigator.clipboard.writeText(seatCode); } catch {} }} style={{ background: "none", border: "1px solid #3a1a1a", color: "#e0c4c4", borderRadius: 8, padding: "6px 12px", fontFamily: font, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>Copy</button>
+          </div>
+          <ol style={{ color: "#c8a8a8", fontSize: 13.5, fontFamily: font, lineHeight: 1.7, margin: "10px 0 0", paddingLeft: 18 }}>
+            <li>Create your free account at <a href="/?join=Free" style={{ color: "#e08a8a", fontWeight: 700 }}>community.drginamerritt.net</a></li>
+            <li>Open Lunch & Learns and enter the code</li>
+            <li>RSVP to the session. The link arrives once you hold the seat.</li>
+          </ol>
+        </div>
+      )}
       {bookLink && <a href={bookLink} target="_blank" rel="noreferrer" style={{ ...btn, display: "block", textAlign: "center", textDecoration: "none", marginTop: 16, boxSizing: "border-box" }}>Pick a time →</a>}
       <a href="/" style={{ display: "inline-block", marginTop: 16, color: "#e08a8a", fontFamily: font, fontWeight: 800, fontSize: 13, textDecoration: "none" }}>See everything else inside GroundUp →</a>
     </div>
@@ -210,6 +235,12 @@ export function FunnelPage({ offer }) {
             <div style={{ fontSize: 10.5, color: RED, fontWeight: 800, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font }}>{o.eyebrow}</div>
             <h1 className="fn-h1">{o.headline[0]}<br /><span style={{ color: "#e0c4c4", fontStyle: "italic", fontWeight: 600 }}>{o.headline[1]}</span></h1>
             <p style={{ color: "#c8a8a8", fontSize: 16.5, fontFamily: font, lineHeight: 1.75, margin: 0, maxWidth: 520 }}>{o.sub}</p>
+            {o.page === "lunch" && nextSession?.date && (
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 10, marginTop: 16, background: "#120808", border: "1px solid #b8010160", borderRadius: 999, padding: "8px 14px 8px 10px" }}>
+                <span style={{ width: 7, height: 7, borderRadius: 4, background: RED, display: "inline-block" }} />
+                <span style={{ color: "#f0d8d8", fontSize: 13, fontFamily: font, fontWeight: 800 }}>Next session: {new Date(nextSession.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}{nextSession.time ? ` · ${nextSession.time} ET` : ""}</span>
+              </div>
+            )}
             <div className="fn-proof">
               {o.proof.map(([n, l]) => (
                 <div key={l} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 14, padding: "14px 10px", textAlign: "center" }}>
@@ -235,7 +266,7 @@ export function FunnelPage({ offer }) {
           </div>
           <div>
             <div style={{ display: "flex", gap: 14, alignItems: "center", background: "#0d0404", border: "1px solid #2a0000", borderRadius: 18, padding: "18px 20px", marginBottom: 18 }}>
-              <img src="/opt/gina-9410.webp" alt="Dr. Gina Merritt" width={64} height={64} style={{ width: 64, height: 64, borderRadius: 32, objectFit: "cover", flexShrink: 0 }} />
+              <img src="/GM Headshot.webp" alt="Dr. Gina Merritt" width={64} height={64} style={{ width: 64, height: 64, borderRadius: 32, objectFit: "cover", flexShrink: 0 }} />
               <div>
                 <div style={{ color: "#f5e8e8", fontFamily: font, fontWeight: 800, fontSize: 14 }}>Built by a working developer</div>
                 <div style={{ color: "#8f7070", fontFamily: font, fontSize: 12.5, lineHeight: 1.6 }}>GroundUp is taught by Dr. Gina Merritt: thirty years in affordable housing, a $390M+ portfolio across DC, Baltimore and Cleveland, and $6B+ underwritten. Every lesson comes from a deal that closed.</div>
@@ -257,7 +288,7 @@ export function FunnelPage({ offer }) {
       </div>
 
       {!done && (
-        <div className="fn-sticky">
+        <div className="fn-sticky" style={{ display: formVisible || done ? "none" : undefined }}>
           <button onClick={() => { const el = document.getElementById("fn-form-mobile"); if (el) { el.scrollIntoView({ behavior: "smooth", block: "start" }); const i = el.querySelector("input"); if (i) setTimeout(() => i.focus(), 400); } }} style={{ ...btn, padding: "15px 20px" }}>
             {o.cta}{o.priceNote ? <span style={{ fontWeight: 600, opacity: 0.85 }}> · {o.priceNote.split(" · ")[0]}</span> : null}
           </button>
