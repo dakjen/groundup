@@ -493,15 +493,18 @@ export default async function handler(req, res) {
       try {
         const [attRow] = await sql`SELECT value FROM settings WHERE key = 'lesson_attachments'`;
         const atts = attRow?.value ? JSON.parse(attRow.value) : {};
-        const courses = await sql`SELECT id, title, lessons FROM courses`;
+        const courses = await sql`SELECT id, title, lessons, hidden, available_at FROM courses`;
         const byId = Object.fromEntries(courses.map(c => [c.id, c]));
         for (const [key, v] of Object.entries(atts)) {
           for (const [i, m] of (v.materials || []).entries()) {
             if (!m || !m.url || m.kind === 'Video') continue;
             const [cid, lid] = key.split(':');
             const course = byId[cid];
-            const lessons = course ? (typeof course.lessons === 'string' ? JSON.parse(course.lessons) : course.lessons) || [] : [];
+            // Unpublished course or draft lesson: its templates stay unpublished too
+            if (!course || course.hidden || (course.available_at && new Date(course.available_at) > new Date())) continue;
+            const lessons = (typeof course.lessons === 'string' ? JSON.parse(course.lessons) : course.lessons) || [];
             const lesson = lessons.find(l => String(l.id) === String(lid)) || lessons.find(l => String(l.id) === String(lid).replace(/^l/, ''));
+            if (!lesson || lesson.draft) continue;
             visible.push({ id: `att:${key}:${i}`, title: String(m.title || '').replace(/_/g, ' '), url: m.url, category: m.kind === 'Template' ? 'template' : 'resource',
               kind_label: m.kind, min_tier: 'Premium', phase: m.phase || null, position: 999,
               description: course ? `From ${course.title}${lesson ? ` · ${lesson.title}` : ''}` : null, from_lesson: true });
