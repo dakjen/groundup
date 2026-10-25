@@ -210,7 +210,8 @@ export function FunnelPage({ offer }) {
         .fn-wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px 120px; }
         .fn-hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: center; padding: 48px 0 24px; }
         .fn-img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 22px; display: block; border: 1px solid #2a0000; }
-        .fn-h1 { font-family: ${serif}; font-weight: 700; font-size: clamp(38px, 6.5vw, 64px); line-height: 1.02; margin: 12px 0 16px; letter-spacing: -0.5px; }
+        .fn-h1 { font-family: ${serif}; font-weight: 700; font-size: clamp(30px, 5.2vw, 54px); line-height: 1.06; margin: 12px 0 16px; letter-spacing: -0.3px; text-wrap: balance; max-width: 14ch; }
+        @media (max-width: 760px) { .fn-h1 { font-size: clamp(28px, 8vw, 38px); max-width: none; } }
         .fn-proof { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 22px 0; }
         .fn-two { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; margin-top: 8px; }
         .fn-sticky { display: none; }
@@ -237,7 +238,7 @@ export function FunnelPage({ offer }) {
         <div className="fn-hero">
           <div>
             <div style={{ fontSize: 10.5, color: RED, fontWeight: 800, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font }}>{o.eyebrow}</div>
-            <h1 className="fn-h1">{o.headline[0]}<br /><span style={{ color: "#e0c4c4", fontStyle: "italic", fontWeight: 600 }}>{o.headline[1]}</span></h1>
+            <h1 className="fn-h1">{o.headline[0]} <span style={{ color: "#e0c4c4", fontStyle: "italic", fontWeight: 600 }}>{o.headline[1]}</span></h1>
             <p style={{ color: "#c8a8a8", fontSize: 16.5, fontFamily: font, lineHeight: 1.75, margin: 0, maxWidth: 520 }}>{o.sub}</p>
             {o.page === "lunch" && nextSession?.date && (
               <div style={{ display: "inline-flex", alignItems: "center", gap: 10, marginTop: 16, background: "#120808", border: "1px solid #b8010160", borderRadius: 999, padding: "8px 14px 8px 10px" }}>
