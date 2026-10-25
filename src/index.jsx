@@ -7680,7 +7680,7 @@ export default function App() {
     fetch("/api/auth", { headers: { Authorization: `Bearer ${getMemberToken()}` } })
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(data => { saveMember(data.user); setMember(data.user); if (data.user.role === "admin") sessionStorage.setItem("adminToken", getMemberToken()); })
-      .catch(() => { clearMember(); setMember(null); });
+      .catch(() => { clearMember(); setMember(null); sessionStorage.removeItem("adminToken"); sessionStorage.removeItem("isAdmin"); setIsAdmin(false); });
   }, []);
 
   useEffect(() => {
