@@ -101,6 +101,14 @@ export default async function handler(req, res) {
   if (admin?.viewer && req.method !== 'GET') return res.status(403).json({ error: 'Your admin access is view-only — ask Dakotah to make this change.' });
 
   try {
+    // ── Public: the next live session, for the ad funnel's headline ──
+    if (req.method === 'GET' && req.query.next === '1') {
+      const events = await getEvents(sql);
+      const next = events.filter(e => (e.kind || 'lnl') === 'lnl' && stillLive(e)).sort((a, b) => a.date.localeCompare(b.date))[0] || null;
+      res.setHeader('Cache-Control', 'public, max-age=300');
+      return res.json({ session: next ? { title: next.title, date: next.date, time: next.time || null } : null });
+    }
+
     // ── Admin: dashboard data ──
     if (req.method === 'GET' && req.query.admin === '1') {
       if (!admin) return res.status(401).json({ error: 'Unauthorized' });
@@ -393,7 +401,8 @@ export default async function handler(req, res) {
       const mail = freeSeatEmail(name, code, next);
       const ok = await sendEmail(email, mail.subject, mail.html);
       try { await addLnlContact?.(email, name); } catch {}
-      return res.status(201).json({ success: true, sent: !!ok, session: next ? { title: next.title, date: next.date, time: next.time } : null });
+      // The code comes back on the page too, so a missed email never costs the seat
+      return res.status(201).json({ success: true, sent: !!ok, code, session: next ? { title: next.title, date: next.date, time: next.time } : null });
     }
 
     if (action === 'create_coupon') {
