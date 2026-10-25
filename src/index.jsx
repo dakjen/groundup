@@ -1528,17 +1528,6 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Your learning home</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap", margin: "0 0 12px" }}>
             <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(38px,5vw,52px)", color: "#f5e8e8", margin: 0, lineHeight: 1.1 }}>Welcome back{member?.name ? `, ${firstName(member.name)}` : ""}.</h1>
-            {/* The Underwriting Series is still unpublished — announce it here, next to
-                their name, rather than interrupting the curriculum further down. */}
-            {(catalog || catalogFailed) && !seriesGroups["The Underwriting Series"] && (() => { const up = upcoming.find(u => u.series === "The Underwriting Series"); const when = up?.available_at ? new Date(up.available_at).toLocaleDateString(undefined, { month: "long", year: "numeric" }) : null; return (
-              <span title="Underwriting the Project Budget & The Closing Draw — Dr. Merritt's own method, line by line." style={{ display: "inline-flex", alignItems: "stretch", borderRadius: 3, overflow: "hidden", border: "1px solid #b8010155", whiteSpace: "nowrap", alignSelf: "center", marginLeft: "auto" }}>
-                <span style={{ background: "#b80101", color: "#ffffff", fontSize: 9, fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", padding: "6px 10px", display: "flex", alignItems: "center" }}>{when ? `Coming ${when}` : "Coming"}</span>
-                <span style={{ background: "#150000", padding: "5px 12px", display: "flex", alignItems: "baseline", gap: 8 }}>
-                  <span style={{ color: "#f0d8d8", fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 15.5 }}>The Underwriting Series</span>
-                  <span style={{ color: "#8a7070", fontFamily: "'DM Sans', sans-serif", fontSize: 11.5 }}>her own method, line by line</span>
-                </span>
-              </span>
-            ); })()}
           </div>
           <p style={{ color: "#8a7070", fontSize: 15, maxWidth: 620, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif", margin: 0 }}>Everything you learn with lives here — the courses, the library, the glossary, and the rooms where your questions get answered.</p>
         </div>
@@ -1593,6 +1582,20 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
             </div>
           ))}
         </div>
+
+        {/* ── Coming next: the Underwriting Series, announced where the series will live ── */}
+        {catalog && !seriesGroups["The Underwriting Series"] && (() => { const up = upcoming.find(u => u.series === "The Underwriting Series"); const when = up?.available_at ? new Date(up.available_at).toLocaleDateString(undefined, { month: "long", year: "numeric" }) : null; return (
+          <div style={{ marginTop: 72, borderTop: "1px solid #2c2214", paddingTop: 48 }}>
+            <div style={{ fontSize: 10, color: "#b9bec7", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>✦ Deep-Dive Series · {when ? `Coming ${when}` : "Coming soon"}</div>
+            <div style={{ background: "linear-gradient(160deg, #101011 0%, #0a0a0b 100%)", border: "1px solid #b9bec740", borderRadius: 20, padding: "28px 30px", display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap" }}>
+              <div style={{ flex: "1 1 320px" }}>
+                <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(26px,3.5vw,36px)", color: "#f0e6c8", margin: "0 0 8px", lineHeight: 1.15 }}>The Underwriting Series</h2>
+                <p style={{ color: "#9a9ba2", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8, margin: 0, maxWidth: 560 }}>Underwriting the Project Budget and The Closing Draw: Dr. Merritt's own method, line by line. Premium and Owner members.</p>
+              </div>
+              <span style={{ background: "#b80101", color: "#fff", fontSize: 10, fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", padding: "8px 14px", borderRadius: 4, whiteSpace: "nowrap" }}>{when ? `Coming ${when}` : "Coming soon"}</span>
+            </div>
+          </div>
+        ); })()}
 
         {/* ── Series: focused deep-dives, distinct from the main curriculum ── */}
         {Object.entries(seriesGroups).map(([name, list]) => (
