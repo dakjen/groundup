@@ -7580,7 +7580,7 @@ export default function App() {
       contact: ["Book a 1:1 Session — GroundUp", "Work directly with Dr. Gina Merritt: deal review, strategy, capital stack review and community development sessions."],
       terms: ["Terms of Use — GroundUp", "The GroundUp Terms of Use: content license, memberships, billing, refunds, and community rules."],
       privacy: ["Privacy Policy — GroundUp", "What GroundUp collects, how it is used, who processes it, and how deletion works."],
-      "go/playbook": ["The Developer's Playbook — GroundUp by Dr. Gina Merritt", "A $390M practitioner's sequence for everything between application and conversion: construction closing, draws, equity pay-in, cost certification, permanent loan conversion."],
+      "go/playbook": ["The Developer's Playbook — GroundUp by Dr. Gina Merritt", "The reference for developers with deals in motion: thirty years and $390M of closings organized so you open the phase you are in and run the checklist. Always current in your account."],
       "go/lunch": ["A free seat at a live Lunch & Learn with Dr. Gina Merritt", "One closed deal, every number on the table: sources and uses, basis and credit pricing, the gap, the lender's conditions. For people who already underwrite. First seat free."],
       "get-started": ["What kind of help do you need? — GroundUp by Dr. Gina Merritt", "Ten questions, one honest answer: nothing yet, a course, a membership, live time with Dr. Merritt, or one-on-one advisory work."],
       "go/call": ["A free 20-minute scoping call with the GroundUp team", "A gap that opened when pricing moved, a lender wanting more equity, a partner's decision rights against your guarantee. Twenty minutes to size it and route it to the right expertise."],

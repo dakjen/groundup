@@ -25,25 +25,26 @@ const pixel = (event, data) => { try { if (typeof window.fbq === "function") win
 
 const OFFERS = {
   playbook: {
-    page: "playbook", eyebrow: "The Developer's Playbook",
-    headline: ["Every closing runs on", "a checklist. This is hers."],
-    sub: "You already underwrite. What you may not have is a $390M practitioner's sequence for the parts that go wrong between application and conversion: what has to be true at construction closing, which draws the lender inspects, how the equity pay-in schedule meets the construction loan, what cost certification needs before the investor's final capital contribution, and the conditions precedent to permanent loan conversion. The Developer's Playbook is that sequence, written down.",
+    page: "playbook", eyebrow: "The Developer's Playbook · the reference",
+    headline: ["The book you open", "before the lender calls."],
+    sub: "Not a course. A reference. Thirty years and $390M of closings organized so you can go straight to the page you need: what has to be true at construction closing, which draws the lender inspects, how the equity pay-in meets the construction loan, what cost certification needs before the final capital contribution, the conditions precedent to conversion. Keep it open on the second screen. Every deal you run from it is tighter than the last.",
     image: "/opt/nannie-helen.webp", imageAlt: "Nannie Helen at 4800, Washington, DC",
     proof: [["$6B+", "underwritten"], ["8,000+", "units built"], ["30+", "years in the work"]],
     bullets: [
-      "Nine phases in execution order, from site control and the predevelopment draw schedule through the fifteen-year compliance period",
+      "Organized to be looked up, not read once: nine phases in execution order, from site control and the predevelopment draw schedule through year fifteen",
       "The pre-closing, pre-construction and pre-conversion checklists, as run on 9410 Hough (fourteen sources) and the Beacon Center (three closings, one building)",
-      "Predevelopment discipline: what goes hard, what can wait, and how far to carry drawings before the capital stack is committed",
-      "Yours to read in the GroundUp portal anytime, tied to your account",
+      "The judgment that is not in any QAP: what goes hard and when, how far to carry drawings before the stack is committed, what to concede to a lender and what never to",
+      "Always current in your GroundUp account. When the practice changes, the page changes, and you have the new one",
     ],
-    cta: "Get the Playbook →", priceNote: "For developers with a deal in motion", mode: "buy", item: "playbook",
+    cta: "Get the Playbook →", priceNote: "The reference for developers with deals in motion", mode: "buy", item: "playbook",
     faq: [
-      ["Who is this for?", "Developers who have been to at least one closing, and the owner's reps, lenders and syndicators who work beside them. It assumes you know what basis, DSCR and a conversion test are."],
-      ["Is it a download?", "It opens in your GroundUp account and you read it there. Owner members can download it; everyone else reads it in the portal."],
+      ["Who is this for?", "Developers who have been to at least one closing, and the owner's reps, lenders and syndicators who work beside them. It assumes you know what basis, DSCR and a conversion test are, and it is built to make you better at them."],
+      ["How do I use it?", "Like a reference. You do not read it front to back; you open the phase you are in and run the checklist. Before a lender call, before a closing, before a draw, before conversion."],
+      ["Is it a download?", "It lives in your GroundUp account and you read it there, so it stays current. Owner members can also download it."],
       ["Do I need a membership?", "No. Buy it on its own. If you join later, it is already in your account."],
       ["Refunds?", "Digital products are non-refundable once access is delivered."],
     ],
-    success: { title: "The Playbook is yours.", body: "Check your email: we made you a GroundUp account and sent a link to set your password. The Playbook is waiting under Shop → My documents." },
+    success: { title: "The Playbook is yours.", body: "Check your email: we made you a GroundUp account and sent a link to set your password. The Playbook is waiting under Shop → My documents. Open it to the phase you are in." },
   },
   lunch: {
     page: "lunch", eyebrow: "A free seat · live Lunch & Learn",
