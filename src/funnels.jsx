@@ -48,7 +48,7 @@ const OFFERS = {
   },
   lunch: {
     page: "lunch", eyebrow: "A free seat · live Lunch & Learn",
-    headline: ["One closed deal.", "Every number on the table."],
+    headline: ["A live session on one real deal.", "The numbers, the problems, and how it closed."],
     sub: "A live Lunch & Learn takes one real project apart: the sources and uses as they actually closed, where the gap opened when credit pricing moved, the term the lender would not give, the downward adjuster in the LP agreement, and what the developer did about each one. Worked through by the developer who closed it, with the model on screen. For people who already underwrite and want to see the judgment calls. Normally $39.99. Your first seat is free.",
     image: "/opt/hough-exterior.webp", imageAlt: "9410 Hough, Cleveland — a real deal, taken apart live",
     proof: [["$390M+", "portfolio behind it"], ["116", "apartments on one deal"], ["Live", "Q&A on the call"]],
@@ -157,11 +157,11 @@ export function FunnelPage({ offer }) {
     } catch (e2) { setErr(e2.message); } finally { setBusy(false); }
   };
 
-  const inp = { width: "100%", boxSizing: "border-box", background: "#120808", border: "1px solid #3a1a1a", borderRadius: 12, padding: "15px 16px", color: "#f5e8e8", fontFamily: font, fontSize: 16, outline: "none" };
-  const btn = { width: "100%", background: RED, color: "#fff", border: "none", borderRadius: 12, padding: "17px 20px", fontFamily: font, fontWeight: 800, fontSize: 16, cursor: "pointer", letterSpacing: "0.2px" };
+  const inp = { width: "100%", boxSizing: "border-box", background: "#120808", border: "1px solid #3a1a1a", borderRadius: 10, padding: "13px 14px", color: "#f5e8e8", fontFamily: font, fontSize: 15, outline: "none" };
+  const btn = { width: "100%", background: RED, color: "#fff", border: "none", borderRadius: 10, padding: "15px 18px", fontFamily: font, fontWeight: 800, fontSize: 15, cursor: "pointer", letterSpacing: "0.2px" };
   const formBlock = (compact) => done ? (
-    <div style={{ background: "#0d0404", border: "1px solid #22c55e50", borderRadius: 18, padding: compact ? "22px 20px" : "30px 28px" }}>
-      <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 26, color: "#f5e8e8", marginBottom: 8 }}>{o.success.title}</div>
+    <div style={{ background: "#0b0505", border: "1px solid #22c55e50", borderRadius: 14, padding: compact ? "20px 18px" : "24px 22px" }}>
+      <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "#f5e8e8", marginBottom: 8 }}>{o.success.title}</div>
       <div style={{ color: "#c8a8a8", fontSize: 14.5, fontFamily: font, lineHeight: 1.7 }}>{o.success.body}{sessionInfo?.date ? ` Next session: ${sessionInfo.title}, ${new Date(sessionInfo.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}${sessionInfo.time ? " · " + sessionInfo.time + " ET" : ""}.` : ""}</div>
       {seatCode && (
         <div style={{ marginTop: 16, background: "#120808", border: "1px dashed #b8010180", borderRadius: 12, padding: "14px 16px" }}>
@@ -181,8 +181,8 @@ export function FunnelPage({ offer }) {
       <a href="/" style={{ display: "inline-block", marginTop: 16, color: "#e08a8a", fontFamily: font, fontWeight: 800, fontSize: 13, textDecoration: "none" }}>See everything else inside GroundUp →</a>
     </div>
   ) : (
-    <form onSubmit={submit} id="funnel-form" style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 18, padding: compact ? "20px 18px" : "28px", display: "grid", gap: 12 }}>
-      {o.priceNote && <div style={{ color: "#e0c4c4", fontSize: 13, fontFamily: font, fontWeight: 800, letterSpacing: "0.5px" }}>{o.priceNote}</div>}
+    <form onSubmit={submit} id="funnel-form" style={{ background: "#0b0505", border: "1px solid #241010", borderRadius: 14, padding: compact ? "18px 16px" : "22px", display: "grid", gap: 10 }}>
+      {o.priceNote && <div style={{ color: "#d9bcbc", fontSize: 12.5, fontFamily: font, fontWeight: 800, letterSpacing: "0.3px" }}>{o.priceNote}</div>}
       <input style={inp} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Your name" required maxLength={120} autoComplete="name" />
       <input style={inp} type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="Email" required maxLength={200} autoComplete="email" inputMode="email" />
       {o.mode === "call" && (<>
@@ -207,39 +207,55 @@ export function FunnelPage({ offer }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 200, overflowY: "auto", background: "#000", color: "#f5e8e8", WebkitOverflowScrolling: "touch" }}>
       <style>{`
-        .fn-wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px 120px; }
-        .fn-hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: center; padding: 48px 0 24px; }
-        .fn-img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 22px; display: block; border: 1px solid #2a0000; }
-        .fn-h1 { font-family: ${serif}; font-weight: 700; font-size: clamp(30px, 5.2vw, 54px); line-height: 1.06; margin: 12px 0 16px; letter-spacing: -0.3px; text-wrap: balance; max-width: 14ch; }
-        @media (max-width: 760px) { .fn-h1 { font-size: clamp(28px, 8vw, 38px); max-width: none; } }
-        .fn-proof { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 22px 0; }
-        .fn-two { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; margin-top: 8px; }
+        .fn-wrap { max-width: 980px; margin: 0 auto; padding: 0 24px 100px; }
+        .fn-top { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid #1c0b0b; }
+        .fn-hero { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr); gap: 44px; align-items: start; padding: 40px 0 28px; }
+        .fn-img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 14px; display: block; border: 1px solid #241010; }
+        .fn-eyebrow { font-family: ${font}; font-size: 10px; color: ${RED}; font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; }
+        .fn-h1 { font-family: ${serif}; font-weight: 700; font-size: 40px; line-height: 1.1; margin: 10px 0 14px; letter-spacing: -0.2px; text-wrap: balance; max-width: 18ch; }
+        .fn-sub { color: #b9a3a3; font-size: 15.5px; font-family: ${font}; line-height: 1.7; margin: 0; max-width: 56ch; }
+        .fn-proof { display: flex; gap: 0; margin: 20px 0 22px; border: 1px solid #241010; border-radius: 12px; overflow: hidden; background: #0b0505; }
+        .fn-proof > div { flex: 1; padding: 12px 14px; border-left: 1px solid #241010; }
+        .fn-proof > div:first-child { border-left: none; }
+        .fn-proof b { display: block; font-family: ${serif}; font-weight: 700; font-size: 22px; color: #f5e8e8; line-height: 1.05; }
+        .fn-proof span { display: block; color: #8f7070; font-size: 10px; font-family: ${font}; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
+        .fn-card { background: #0b0505; border: 1px solid #241010; border-radius: 14px; padding: 20px 22px; }
+        .fn-label { font-family: ${font}; font-size: 10px; color: ${RED}; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+        .fn-two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; margin-top: 8px; }
         .fn-sticky { display: none; }
+        @media (max-width: 920px) {
+          .fn-hero { grid-template-columns: 1fr; gap: 24px; padding: 28px 0 16px; }
+          .fn-img { aspect-ratio: 16 / 9; }
+          .fn-h1 { font-size: 34px; max-width: none; }
+        }
         @media (max-width: 760px) {
-          .fn-wrap { padding: 0 16px 140px; }
-          .fn-hero { grid-template-columns: 1fr; gap: 18px; padding: 16px 0 8px; }
-          .fn-img { aspect-ratio: 4 / 3; border-radius: 16px; }
-          .fn-two { grid-template-columns: 1fr; gap: 18px; }
+          .fn-wrap { padding: 0 18px 120px; }
+          .fn-hero { padding: 20px 0 8px; gap: 18px; }
+          .fn-img { aspect-ratio: 4 / 3; border-radius: 12px; }
+          .fn-h1 { font-size: 29px; }
+          .fn-sub { font-size: 15px; }
+          .fn-proof > div { padding: 10px 8px; } .fn-proof b { font-size: 19px; } .fn-proof span { font-size: 9px; letter-spacing: .8px; }
+          .fn-two { grid-template-columns: 1fr; gap: 14px; }
           .fn-desktop-form { display: none; }
           .fn-byline { display: none; }
-          .fn-sticky { display: block; position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); background: rgba(0,0,0,0.92); backdrop-filter: blur(12px); border-top: 1px solid #2a0000; z-index: 205; }
+          .fn-sticky { display: block; position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); background: rgba(0,0,0,0.92); backdrop-filter: blur(12px); border-top: 1px solid #241010; z-index: 205; }
         }
       `}</style>
       <div className="fn-wrap">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 0 0" }}>
+        <div className="fn-top">
           <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-            <img src="/gu-icon-red.png" alt="" width={28} height={28} style={{ display: "block" }} />
-            <span style={{ fontFamily: serif, fontWeight: 700, fontSize: 17, color: "#fff", letterSpacing: "1px" }}>GROUNDUP</span>
-            <span className="fn-byline" style={{ fontFamily: font, fontWeight: 700, fontSize: 8.5, letterSpacing: "1.8px", textTransform: "uppercase", color: "#c8a8a8", whiteSpace: "nowrap" }}>by Dr. Gina Merritt</span>
+            <img src="/gu-icon-red.png" alt="" width={24} height={24} style={{ display: "block" }} />
+            <span style={{ fontFamily: serif, fontWeight: 700, fontSize: 16, color: "#fff", letterSpacing: "1px" }}>GROUNDUP</span>
+            <span className="fn-byline" style={{ fontFamily: font, fontWeight: 700, fontSize: 8.5, letterSpacing: "1.8px", textTransform: "uppercase", color: "#9a7e7e", whiteSpace: "nowrap" }}>by Dr. Gina Merritt</span>
           </a>
-          <span style={{ color: "#8a7070", fontSize: 11, fontFamily: font, fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" }}>{o.mode === "buy" ? "Secure checkout" : o.mode === "call" ? "Free call" : "Free seat"}</span>
+          <span style={{ color: "#7a6060", fontSize: 10, fontFamily: font, fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" }}>{o.mode === "buy" ? "Secure checkout" : o.mode === "call" ? "Free call" : "Free seat"}</span>
         </div>
 
         <div className="fn-hero">
           <div>
-            <div style={{ fontSize: 10.5, color: RED, fontWeight: 800, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font }}>{o.eyebrow}</div>
-            <h1 className="fn-h1">{o.headline[0]} <span style={{ color: "#e0c4c4", fontStyle: "italic", fontWeight: 600 }}>{o.headline[1]}</span></h1>
-            <p style={{ color: "#c8a8a8", fontSize: 16.5, fontFamily: font, lineHeight: 1.75, margin: 0, maxWidth: 520 }}>{o.sub}</p>
+            <div className="fn-eyebrow">{o.eyebrow}</div>
+            <h1 className="fn-h1">{o.headline[0]} <span style={{ color: "#d9bcbc", fontStyle: "italic", fontWeight: 500 }}>{o.headline[1]}</span></h1>
+            <p className="fn-sub">{o.sub}</p>
             {o.page === "lunch" && nextSession?.date && (
               <div style={{ display: "inline-flex", alignItems: "center", gap: 10, marginTop: 16, background: "#120808", border: "1px solid #b8010160", borderRadius: 999, padding: "8px 14px 8px 10px" }}>
                 <span style={{ width: 7, height: 7, borderRadius: 4, background: RED, display: "inline-block" }} />
@@ -247,12 +263,7 @@ export function FunnelPage({ offer }) {
               </div>
             )}
             <div className="fn-proof">
-              {o.proof.map(([n, l]) => (
-                <div key={l} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 14, padding: "14px 10px", textAlign: "center" }}>
-                  <div style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(22px, 5vw, 30px)", color: "#f5e8e8", lineHeight: 1 }}>{n}</div>
-                  <div style={{ color: "#8f7070", fontSize: 10, fontFamily: font, fontWeight: 700, letterSpacing: "1.2px", textTransform: "uppercase", marginTop: 6 }}>{l}</div>
-                </div>
-              ))}
+              {o.proof.map(([n, l]) => (<div key={l}><b>{n}</b><span>{l}</span></div>))}
             </div>
             <div className="fn-desktop-form">{formBlock(false)}</div>
           </div>
@@ -260,36 +271,36 @@ export function FunnelPage({ offer }) {
         </div>
 
         <div className="fn-two">
-          <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 18, padding: "24px 22px" }}>
-            <div style={{ fontSize: 10, color: RED, fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>What you get</div>
+          <div className="fn-card">
+            <div className="fn-label">What you get</div>
             {o.bullets.map((b, i) => (
-              <div key={i} style={{ display: "flex", gap: 12, padding: "9px 0", borderTop: i ? "1px solid #1a0a0a" : "none" }}>
-                <span style={{ color: RED, fontWeight: 800, fontFamily: font, flexShrink: 0 }}>→</span>
-                <span style={{ color: "#e2cfcf", fontSize: 14.5, fontFamily: font, lineHeight: 1.65 }}>{b}</span>
+              <div key={i} style={{ display: "flex", gap: 12, padding: "9px 0", borderTop: i ? "1px solid #1a0b0b" : "none" }}>
+                <span style={{ color: RED, fontWeight: 800, fontFamily: font, flexShrink: 0, fontSize: 13, lineHeight: 1.7 }}>→</span>
+                <span style={{ color: "#dcc9c9", fontSize: 14, fontFamily: font, lineHeight: 1.65 }}>{b}</span>
               </div>
             ))}
           </div>
-          <div>
-            <div style={{ display: "flex", gap: 14, alignItems: "center", background: "#0d0404", border: "1px solid #2a0000", borderRadius: 18, padding: "18px 20px", marginBottom: 18 }}>
-              <img src="/GM Headshot.webp" alt="Dr. Gina Merritt" width={64} height={64} style={{ width: 64, height: 64, borderRadius: 32, objectFit: "cover", flexShrink: 0 }} />
+          <div style={{ display: "grid", gap: 14 }}>
+            <div className="fn-card" style={{ display: "flex", gap: 14, alignItems: "center" }}>
+              <img src="/GM Headshot.webp" alt="Dr. Gina Merritt" width={56} height={56} style={{ width: 56, height: 56, borderRadius: 28, objectFit: "cover", flexShrink: 0 }} />
               <div>
-                <div style={{ color: "#f5e8e8", fontFamily: font, fontWeight: 800, fontSize: 14 }}>Built by a working developer</div>
-                <div style={{ color: "#8f7070", fontFamily: font, fontSize: 12.5, lineHeight: 1.6 }}>GroundUp is taught by Dr. Gina Merritt: thirty years in affordable housing, a $390M+ portfolio across DC, Baltimore and Cleveland, and $6B+ underwritten. Every lesson comes from a deal that closed.</div>
+                <div style={{ color: "#f5e8e8", fontFamily: font, fontWeight: 800, fontSize: 13.5 }}>Built by a working developer</div>
+                <div style={{ color: "#8f7070", fontFamily: font, fontSize: 12.5, lineHeight: 1.6 }}>Dr. Gina Merritt: thirty years in affordable housing, a $390M+ portfolio across DC, Baltimore and Cleveland, $6B+ underwritten. Every lesson comes from a deal that closed.</div>
               </div>
             </div>
-            <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 18, padding: "20px 22px" }}>
+            <div className="fn-card">
               {o.faq.map(([q, a], i) => (
-                <div key={i} style={{ padding: "10px 0", borderTop: i ? "1px solid #1a0a0a" : "none" }}>
-                  <div style={{ color: "#f0d8d8", fontFamily: font, fontWeight: 800, fontSize: 13.5, marginBottom: 4 }}>{q}</div>
-                  <div style={{ color: "#a88888", fontFamily: font, fontSize: 13, lineHeight: 1.65 }}>{a}</div>
+                <div key={i} style={{ padding: "9px 0", borderTop: i ? "1px solid #1a0b0b" : "none" }}>
+                  <div style={{ color: "#f0d8d8", fontFamily: font, fontWeight: 800, fontSize: 13.5, marginBottom: 3 }}>{q}</div>
+                  <div style={{ color: "#a08585", fontFamily: font, fontSize: 13, lineHeight: 1.65 }}>{a}</div>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        <div id="fn-form-mobile" style={{ marginTop: 22 }}>{formBlock(true)}</div>
-        <div style={{ color: "#5a4040", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 26, lineHeight: 1.7 }}>© {new Date().getFullYear()} GroundUp by Dr. Gina Merritt · Northern Real Estate Urban Ventures · <a href="/terms" style={{ color: "#7a5a5a" }}>Terms</a> · <a href="/privacy" style={{ color: "#7a5a5a" }}>Privacy</a></div>
+        <div id="fn-form-mobile" style={{ marginTop: 20 }}>{formBlock(true)}</div>
+        <div style={{ color: "#5a4040", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 28, lineHeight: 1.7, borderTop: "1px solid #1c0b0b", paddingTop: 18 }}>© {new Date().getFullYear()} GroundUp by Dr. Gina Merritt · Northern Real Estate Urban Ventures · <a href="/terms" style={{ color: "#7a5a5a" }}>Terms</a> · <a href="/privacy" style={{ color: "#7a5a5a" }}>Privacy</a></div>
       </div>
 
       {!done && (
