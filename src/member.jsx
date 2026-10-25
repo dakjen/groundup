@@ -3891,6 +3891,99 @@ export function AdvisoryAdminPage() {
 }
 
 // ─── INTAKE & BOOKINGS — the front door, kept apart from client work ────────
+// ─── LESSON DROPS — the team's release calendar ─────────────────────────────
+// Unpublished lessons are bundled into named drops with a date. On that date
+// the daily run publishes the bundle and emails paid members once.
+export function DropsAdminPage() {
+  const [data, setData] = useState(null);
+  const [msg, setMsg] = useState(null);
+  const [form, setForm] = useState({ label: "", at: "" });
+  const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 5000); };
+  const load = () => api("/api/resources?drops=1").then(setData).catch(e => setMsg({ ok: false, text: e.message }));
+  useEffect(() => { load(); }, []);
+  const post = (body) => api("/api/resources", { method: "POST", body: JSON.stringify(body) });
+  const act = async (fn, ok) => { try { await fn(); if (ok) flash(true, ok); await load(); } catch (e) { flash(false, e.message); } };
+  const toLocal = (iso) => { if (!iso) return ""; const d = new Date(iso); const p = (n) => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
+  const when = (iso) => iso ? new Date(iso).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "no date yet";
+  const eyebrow = (t) => <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>{t}</div>;
+  const card = { background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "26px 28px", marginBottom: 18 };
+  const field = { ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0 };
+  const ghost = { ...btnGhost, color: "var(--gu-text2)", borderColor: "var(--gu-border)", padding: "8px 14px", fontSize: 12.5, background: "var(--gu-card)" };
+  const drops = (data?.drops || []).slice().sort((a, b) => (a.at || "9").localeCompare(b.at || "9"));
+  const unpublished = data?.unpublished || [];
+  const inDrop = (id) => unpublished.filter(l => l.drop === id);
+  const loose = unpublished.filter(l => !l.drop);
+  const byCourse = (list) => { const m = new Map(); for (const l of list) { if (!m.has(l.course_id)) m.set(l.course_id, { course: l.course, stage: l.stage, hidden: l.course_hidden, items: [] }); m.get(l.course_id).items.push(l); } return [...m.values()]; };
+  const lessonRow = (l) => (
+    <div key={l.course_id + ":" + l.lesson_id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--gu-border2)", fontFamily: font, fontSize: 13 }}>
+      <span style={{ color: "#b80101", fontWeight: 800, fontSize: 11, minWidth: 22 }}>{l.n}.</span>
+      <span style={{ color: "var(--gu-text2)", fontWeight: 700, flex: 1, minWidth: 0 }}>{l.title}</span>
+      <select value={l.drop || ""} onChange={e => act(() => post({ action: "lesson_drop", course_id: l.course_id, lesson_id: l.lesson_id, drop_id: e.target.value || null }))} style={{ ...field, width: "auto", minWidth: 170, padding: "6px 10px", fontSize: 12, cursor: "pointer" }}>
+        <option value="">Not in a drop</option>
+        {drops.map(d => <option key={d.id} value={d.id}>{d.label}{d.at ? ` · ${new Date(d.at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : ""}</option>)}
+      </select>
+      <button onClick={() => { if (window.confirm(`Publish "${l.title}" right now?`)) act(() => post({ action: "lesson_release", course_id: l.course_id, lesson_id: l.lesson_id, publish: true }), "Published."); }} style={{ ...ghost, padding: "6px 10px", fontSize: 11.5 }}>Publish now</button>
+    </div>
+  );
+  return (
+    <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(20px,5vw,60px) 70px" }}>
+      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Curriculum</div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 16, flexWrap: "wrap", marginBottom: 8 }}>
+          <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4.5vw,42px)", color: "var(--gu-text)", margin: 0 }}>Lesson Drops</h1>
+          {msg && <span style={{ marginLeft: "auto", color: msg.ok ? "#22c55e" : "#ff6b6b", fontSize: 13, fontFamily: font }}>{msg.text}</span>}
+        </div>
+        <p style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.7, maxWidth: 680, marginBottom: 28 }}>Bundle unpublished lessons into a drop, give the drop a date, and the whole bundle goes live that morning with one email to paid members. Until then members see the lesson title and "Coming" with the date. Lessons in a hidden course wait for the course to be published too.</p>
+        {!data ? <div style={{ color: "var(--gu-muted)", fontFamily: font }}>Loading…</div> : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 18, alignItems: "start" }}>
+            <div>
+              <div style={card}>
+                {eyebrow("New drop")}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                  <div><label style={lbl}>Name</label><input value={form.label} onChange={e => setForm({ ...form, label: e.target.value })} placeholder="e.g. December drop" style={field} /></div>
+                  <div><label style={lbl}>Goes live (your local time)</label><input type="datetime-local" value={form.at} onChange={e => setForm({ ...form, at: e.target.value })} style={{ ...field, colorScheme: "dark" }} /></div>
+                </div>
+                <button onClick={() => act(() => post({ action: "drop_save", label: form.label, at: form.at ? new Date(form.at).toISOString() : null }).then(() => setForm({ label: "", at: "" })), "Drop created.")} style={btnRed}>Create drop</button>
+              </div>
+              {drops.length === 0 && <div style={{ ...card, color: "var(--gu-muted)", fontSize: 13.5, fontFamily: font }}>No drops yet. Create one, then add lessons to it from the list on the right.</div>}
+              {drops.map(d => { const items = inDrop(d.id); const past = d.at && new Date(d.at) <= new Date(); return (
+                <div key={d.id} style={{ ...card, border: "1px solid " + (past ? "#22c55e50" : "#b8010150") }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+                    <input defaultValue={d.label} onBlur={e => { if (e.target.value.trim() && e.target.value.trim() !== d.label) act(() => post({ action: "drop_save", id: d.id, label: e.target.value.trim() })); }} style={{ ...field, fontFamily: serif, fontWeight: 700, fontSize: 22, padding: "4px 8px", flex: "1 1 180px" }} />
+                    <span style={{ fontSize: 10, color: past ? "#22c55e" : "#b80101", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font }}>{past ? "Released" : d.at ? "Scheduled" : "No date"}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+                    <input type="datetime-local" defaultValue={toLocal(d.at)} onChange={e => { if (e.target.value) act(() => post({ action: "drop_save", id: d.id, at: new Date(e.target.value).toISOString() }), "Date saved — every lesson in the drop follows it."); }} style={{ ...field, width: "auto", padding: "7px 10px", fontSize: 13, colorScheme: "dark" }} />
+                    <span style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font }}>{when(d.at)}</span>
+                    <button onClick={() => { if (window.confirm(`Remove "${d.label}"? Its lessons stay unpublished, just not scheduled.`)) act(() => post({ action: "drop_remove", id: d.id }), "Drop removed."); }} style={{ ...ghost, marginLeft: "auto", padding: "6px 10px", fontSize: 11.5 }}>Remove</button>
+                  </div>
+                  {items.length === 0 ? <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>Nothing in this drop yet.</div> : byCourse(items).map(g => (
+                    <div key={g.course} style={{ marginBottom: 8 }}>
+                      <div style={{ fontSize: 10, color: "var(--gu-muted)", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, margin: "8px 0 2px" }}>{g.stage} · {g.course}{g.hidden ? " (course unpublished)" : ""}</div>
+                      {g.items.map(lessonRow)}
+                    </div>
+                  ))}
+                </div>
+              ); })}
+            </div>
+            <div>
+              <div style={card}>
+                {eyebrow(`Unpublished, not in a drop (${loose.length})`)}
+                {loose.length === 0 ? <div style={{ color: "var(--gu-muted)", fontSize: 13.5, fontFamily: font }}>Every unpublished lesson is scheduled.</div> : byCourse(loose).map(g => (
+                  <div key={g.course} style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: 10, color: "var(--gu-muted)", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, margin: "10px 0 2px" }}>{g.stage} · {g.course}{g.hidden ? " (course unpublished)" : ""}</div>
+                    {g.items.map(lessonRow)}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function BookingsAdminPage() {
   const [data, setData] = useState(null);
   const [users, setUsers] = useState([]);

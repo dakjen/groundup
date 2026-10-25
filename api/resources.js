@@ -1,6 +1,10 @@
 import { neon } from '@neondatabase/serverless';
 import { getSession, getAdmin, TIER_RANK, benefitGate } from './_utils.js';
 
+// A lesson is live when it is published, or when its scheduled release has arrived.
+const lessonLive = (l) => !l.draft || (l.release_at && new Date(l.release_at) <= new Date());
+const lessonComing = (l) => !!(l.draft && l.release_at && new Date(l.release_at) > new Date());
+
 // Partner types live in settings as a JSON list of short names; blanks and duplicates dropped.
 function parseTypes(v) { try { const a = JSON.parse(v || '[]'); return [...new Set((Array.isArray(a) ? a : []).map(x => String(x).trim().slice(0, 60)).filter(Boolean))].slice(0, 50); } catch { return []; } }
 
@@ -294,7 +298,9 @@ export default async function handler(req, res) {
           // Unpublished lessons (draft: true) exist only for the team. They are
           // always appended after the published ones, so members' lesson indexes
           // (and their progress) are unaffected.
-          lessons: admin ? (c.lessons || []) : (c.lessons || []).filter(l => !l.draft).map(l => ({ id: l.id, title: l.title })),
+          lessons: admin ? (c.lessons || []) : (c.lessons || []).filter(lessonLive).map(l => ({ id: l.id, title: l.title })),
+          // Scheduled drops: members see the title and the date, nothing else
+          coming: admin ? undefined : (c.lessons || []).filter(lessonComing).map(l => ({ id: l.id, title: l.title, release_at: l.release_at })),
         }));
       // Progress per course for the signed-in member — powers the bars on the courses page
       let progress = {};
@@ -319,7 +325,10 @@ export default async function handler(req, res) {
       const shape = (full) => ({
         id: c.id, title: c.title, description: c.description,
         stage: c.stage, stageColor: c.stage_color, duration: c.duration, series: c.series || null,
-        lessons: (c.lessons || []).filter(l => admin || !l.draft).map((l, i) => full(i) ? { ...l, locked: false } : { id: l.id, title: l.title, locked: true }),
+        lessons: [
+          ...(c.lessons || []).filter(l => admin || lessonLive(l)).map((l, i) => full(i) ? { ...l, locked: false } : { id: l.id, title: l.title, locked: true }),
+          ...(admin ? [] : (c.lessons || []).filter(lessonComing).map(l => ({ id: l.id, title: l.title, locked: true, coming: l.release_at }))),
+        ],
       });
       if (admin) return res.json({ course: shape(() => true), access: 'team' });
 
@@ -457,6 +466,92 @@ export default async function handler(req, res) {
       return res.json({ success: true, id: row.id, hidden: row.hidden });
     }
 
+    // Lesson drops: a named bundle with a date. Unpublished lessons are added
+    // to a drop and inherit its date; the daily run publishes them together.
+    const readDrops = async () => { const [r] = await sql`SELECT value FROM settings WHERE key = 'lesson_drops'`; try { return JSON.parse(r?.value || '[]'); } catch { return []; } };
+    const writeDrops = (list) => sql`INSERT INTO settings (key, value) VALUES ('lesson_drops', ${JSON.stringify(list)}) ON CONFLICT (key) DO UPDATE SET value = ${JSON.stringify(list)}`;
+    if (req.method === 'GET' && req.query.drops === '1') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const drops = await readDrops();
+      const courses = await sql`SELECT id, title, stage, lessons, hidden FROM courses ORDER BY position, id`;
+      const unpublished = [];
+      for (const c of courses) {
+        const lessons = (typeof c.lessons === 'string' ? JSON.parse(c.lessons) : c.lessons) || [];
+        lessons.forEach((l, i) => { if (l.draft) unpublished.push({ course_id: c.id, course: c.title, stage: c.stage, course_hidden: !!c.hidden, lesson_id: l.id, n: i + 1, title: l.title, drop: l.drop || null, release_at: l.release_at || null }); });
+      }
+      return res.json({ drops, unpublished });
+    }
+    if (req.method === 'POST' && req.body && req.body.action === 'drop_save') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const drops = await readDrops();
+      const at = req.body.at ? new Date(req.body.at) : null;
+      if (at && isNaN(at)) return res.status(400).json({ error: 'Bad date' });
+      const label = String(req.body.label || '').trim().slice(0, 80);
+      let d = drops.find(x => x.id === req.body.id);
+      if (d) { d.label = label || d.label; d.at = at ? at.toISOString() : d.at; }
+      else { d = { id: 'drop' + Date.now().toString(36), label: label || 'New drop', at: at ? at.toISOString() : null, created_at: new Date().toISOString() }; drops.push(d); }
+      await writeDrops(drops);
+      // every lesson in this drop follows its date
+      const courses = await sql`SELECT id, lessons FROM courses`;
+      for (const c of courses) {
+        const lessons = (typeof c.lessons === 'string' ? JSON.parse(c.lessons) : c.lessons) || [];
+        let changed = false;
+        for (const l of lessons) if (l.drop === d.id && l.draft) { if (d.at) l.release_at = d.at; else delete l.release_at; changed = true; }
+        if (changed) await sql`UPDATE courses SET lessons = ${JSON.stringify(lessons)}::jsonb WHERE id = ${c.id}`;
+      }
+      return res.json({ success: true, drop: d });
+    }
+    if (req.method === 'POST' && req.body && req.body.action === 'drop_remove') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const drops = (await readDrops()).filter(x => x.id !== req.body.id);
+      await writeDrops(drops);
+      const courses = await sql`SELECT id, lessons FROM courses`;
+      for (const c of courses) {
+        const lessons = (typeof c.lessons === 'string' ? JSON.parse(c.lessons) : c.lessons) || [];
+        let changed = false;
+        for (const l of lessons) if (l.drop === req.body.id) { delete l.drop; delete l.release_at; changed = true; }
+        if (changed) await sql`UPDATE courses SET lessons = ${JSON.stringify(lessons)}::jsonb WHERE id = ${c.id}`;
+      }
+      return res.json({ success: true });
+    }
+    // Put a lesson in a drop (or take it out): drop_id null clears it
+    if (req.method === 'POST' && req.body && req.body.action === 'lesson_drop') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const drops = await readDrops();
+      const d = req.body.drop_id ? drops.find(x => x.id === req.body.drop_id) : null;
+      if (req.body.drop_id && !d) return res.status(404).json({ error: 'Drop not found' });
+      const [c] = await sql`SELECT lessons FROM courses WHERE id = ${String(req.body.course_id || '')}`;
+      if (!c) return res.status(404).json({ error: 'Course not found' });
+      const lessons = (typeof c.lessons === 'string' ? JSON.parse(c.lessons) : c.lessons) || [];
+      const l = lessons.find(x => String(x.id) === String(req.body.lesson_id));
+      if (!l) return res.status(404).json({ error: 'Lesson not found' });
+      if (d) { l.drop = d.id; if (d.at) l.release_at = d.at; else delete l.release_at; } else { delete l.drop; delete l.release_at; }
+      await sql`UPDATE courses SET lessons = ${JSON.stringify(lessons)}::jsonb WHERE id = ${String(req.body.course_id)}`;
+      return res.json({ success: true });
+    }
+
+    // One lesson's release: a date (goes live on its own, and the daily run
+    // announces it), publish now, or back to an unscheduled draft.
+    if (req.method === 'POST' && req.body && req.body.action === 'lesson_release') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      const [c] = await sql`SELECT lessons FROM courses WHERE id = ${String(req.body.course_id || '')}`;
+      if (!c) return res.status(404).json({ error: 'Course not found' });
+      const lessons = (typeof c.lessons === 'string' ? JSON.parse(c.lessons) : c.lessons) || [];
+      const idx = lessons.findIndex(l => String(l.id) === String(req.body.lesson_id));
+      if (idx < 0) return res.status(404).json({ error: 'Lesson not found' });
+      const l = { ...lessons[idx] };
+      if (req.body.publish === true) { delete l.draft; delete l.release_at; }
+      else if (req.body.publish === false) { l.draft = true; delete l.release_at; }
+      else if (req.body.release_at !== undefined) {
+        const t = req.body.release_at ? new Date(req.body.release_at) : null;
+        if (t && isNaN(t)) return res.status(400).json({ error: 'Bad date' });
+        l.draft = true; if (t) l.release_at = t.toISOString(); else delete l.release_at;
+      }
+      lessons[idx] = l;
+      await sql`UPDATE courses SET lessons = ${JSON.stringify(lessons)}::jsonb WHERE id = ${String(req.body.course_id)}`;
+      return res.json({ success: true, lesson: l });
+    }
+
     if (req.method === 'POST' && req.body && req.body.action === 'set_attachments') {
       if (!admin) return res.status(401).json({ error: 'Unauthorized' });
       const val = JSON.stringify(req.body.attachments || {});
@@ -508,7 +603,7 @@ export default async function handler(req, res) {
             if (!course || course.hidden || (course.available_at && new Date(course.available_at) > new Date())) continue;
             const lessons = (typeof course.lessons === 'string' ? JSON.parse(course.lessons) : course.lessons) || [];
             const lesson = lessons.find(l => String(l.id) === String(lid)) || lessons.find(l => String(l.id) === String(lid).replace(/^l/, ''));
-            if (!lesson || lesson.draft) continue;
+            if (!lesson || !lessonLive(lesson)) continue;
             // Lesson materials come with the courses: any paid plan opens them
             visible.push(lockRow({ id: `att:${key}:${i}`, title: String(m.title || '').replace(/_/g, ' '), url: m.url, category: m.kind === 'Template' ? 'template' : 'resource',
               kind_label: m.kind, min_tier: 'Basic', phase: m.phase || null, position: 999,

@@ -5,7 +5,7 @@ import { pollVisible } from "./poll.js";
 import { FunnelPage } from "./funnels.jsx";
 import { GetStartedPage } from "./getstarted.jsx";
 import { DocViewerPage } from "./docviewer.jsx";
-import { backdropClose, guUpload, PasswordInput, AuthModal, OnboardingFlow, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, AdvisoryAdminPage, BookingsAdminPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
+import { backdropClose, guUpload, PasswordInput, AuthModal, OnboardingFlow, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, AdvisoryAdminPage, BookingsAdminPage, DropsAdminPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -810,18 +810,20 @@ function MiniCoursePage({ course, onBack, backLabel, member, onUpgrade, onMember
         {COURSE_PHASE[course.id] && <LessonLifecycle current={COURSE_PHASE[course.id]} color={course.stageColor} compact />}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {(content?.lessons?.length ? content.lessons : course.lessons).map((lesson, i) => (
-            <div key={i} onClick={() => openLesson(i)}
-              style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: "22px 28px", cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, opacity: lessonUnlocked(i) ? 1 : 0.5 }}
+            <div key={i} onClick={() => { if (!lesson.coming) openLesson(i); }}
+              style={{ background: "#0d0404", border: "1px solid #1a0000", borderRadius: 14, padding: "22px 28px", cursor: lesson.coming ? "default" : "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, opacity: lesson.coming ? 0.6 : lessonUnlocked(i) ? 1 : 0.5 }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = "#b8010145"; e.currentTarget.style.background = "#130606"; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = "#1a0000"; e.currentTarget.style.background = "#0d0404"; }}>
               <div style={{ display: "flex", alignItems: "center", gap: 16, flex: 1 }}>
                 <div style={{ width: 32, height: 32, borderRadius: "50%", background: isDone(i) ? "#4ade8022" : "#1a0808", border: "1px solid " + (isDone(i) ? "#4ade8060" : "#2a0000"), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: isDone(i) ? "#4ade80" : "#b80101", fontWeight: 800, flexShrink: 0, fontFamily: "'DM Sans', sans-serif" }}>{isDone(i) ? "✓" : i + 1}</div>
                 <div>
                   <div style={{ color: "#f0d8d8", fontSize: 15, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", marginBottom: 4 }}>{lesson.title}</div>
-                  <div style={{ color: "#8f7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{lesson.summary ? lesson.summary.substring(0, 80) + "..." : ""}</div>
+                  <div style={{ color: "#8f7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{lesson.coming ? `Coming ${new Date(lesson.coming).toLocaleDateString(undefined, { month: "long", day: "numeric" })}` : lesson.summary ? lesson.summary.substring(0, 80) + "..." : ""}</div>
                 </div>
               </div>
-              <span style={{ color: "#b80101", fontSize: 18, flexShrink: 0 }}>{lessonUnlocked(i) ? "→" : <Lock size={16} color="#8a7070" />}</span>
+              {lesson.coming
+                ? <span style={{ background: "#b80101", color: "#fff", fontSize: 9, fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", padding: "5px 10px", borderRadius: 4, flexShrink: 0 }}>Coming {new Date(lesson.coming).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+                : <span style={{ color: "#b80101", fontSize: 18, flexShrink: 0 }}>{lessonUnlocked(i) ? "→" : <Lock size={16} color="#8a7070" />}</span>}
             </div>
           ))}
         </div>
@@ -1006,7 +1008,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
   // Waitlist heads the People group until the public launch passes; then Users does.
   const launched = !!(window.__guLaunchAt && new Date(window.__guLaunchAt).getTime() <= Date.now());
   const ADMIN_GROUPS = [
-    { label: "GroundUp", items: [["courses", "Courses"], ["community", "Community"], ["resources", "Resources"]] },
+    { label: "GroundUp", items: [["courses", "Courses"], ["admin-drops", "Lesson Drops"], ["community", "Community"], ["resources", "Resources"]] },
     { label: "Advisory", items: [["admin-retainers", "Advisory Clients"], ["admin-bookings", "Intake & Bookings"]] },
     { label: launched ? "Users" : "Waitlist", items: launched
       ? [["admin-users", "Users"], ["admin-contacts", "Contacts"], ["admin-waitlist", "Waitlist"], ["admin-referrals", "Referrals"], ["admin-invites", "Gifts & Invites"]]
@@ -4645,7 +4647,7 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
                   <button onClick={() => { setOpenLesson(open ? null : uiKey); setVideoUrl(""); }} style={{ display: "flex", gap: 10, padding: "11px 4px", alignItems: "center", width: "100%", background: "transparent", border: "none", cursor: "pointer", textAlign: "left" }}>
                     <span style={{ color: "#b80101", fontSize: 12, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>{i + 1}.</span>
                     <span style={{ color: "#222222", fontSize: 13.5, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", flex: 1 }}>{l.title}</span>
-                    {l.draft && <span title="Unpublished — members can't see this lesson" style={{ color: "#666666", background: "#ececec", border: "1px solid #d8d4cc", borderRadius: 4, padding: "1px 7px", fontSize: 10, fontWeight: 800, letterSpacing: "1px", fontFamily: "'DM Sans', sans-serif" }}>UNPUBLISHED</span>}
+                    {l.draft && <span title={l.release_at ? "Scheduled — goes live with its drop" : "Unpublished — members can't see this lesson"} style={{ color: l.release_at ? "#b80101" : "#666666", background: l.release_at ? "#b8010110" : "#ececec", border: "1px solid " + (l.release_at ? "#b8010140" : "#d8d4cc"), borderRadius: 4, padding: "1px 7px", fontSize: 10, fontWeight: 800, letterSpacing: "1px", fontFamily: "'DM Sans', sans-serif" }}>{l.release_at ? `DROPS ${new Date(l.release_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : "UNPUBLISHED"}</span>}
                     {att.pdf && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#1a7a3a", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}><FileText size={12} /> PDF</span>}
                     {att.video && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#1a7a3a", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}><Video size={12} /> VIDEO</span>}
                     {att.materials?.length > 0 && <span style={{ color: "#1a7a3a", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}>{att.materials.length} file{att.materials.length === 1 ? "" : "s"}</span>}
@@ -7514,7 +7516,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-bookings", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "admin-invites", "admin-team", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "refer", "support", "glossary", "get-started", "doc", "go/playbook", "go/lunch", "go/intake", "go/call"];
+  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-bookings", "admin-drops", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "admin-invites", "admin-team", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "refer", "support", "glossary", "get-started", "doc", "go/playbook", "go/lunch", "go/intake", "go/call"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
     return PAGES.includes(p) ? p : (sessionStorage.getItem("activePage") || "home");
@@ -8039,6 +8041,7 @@ export default function App() {
       {member?.role === "admin" && activePage === "admin-courses" && <TeamPage><CourseAttachmentsAdmin btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-retainers" && <AdvisoryAdminPage />}
       {member?.role === "admin" && activePage === "admin-bookings" && <BookingsAdminPage />}
+      {member?.role === "admin" && activePage === "admin-drops" && <DropsAdminPage />}
       {member?.role === "admin" && activePage === "admin-revenue" && <TeamPage><RevenueTab /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-status" && <TeamPage><SystemStatusTab /></TeamPage>}
       {activePage === "contact" && <ContactPage setActivePage={navigateTo} advisorLink={advisorLink} />}

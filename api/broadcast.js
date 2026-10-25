@@ -70,6 +70,37 @@ export default async function handler(req, res) {
          <a href="https://community.drginamerritt.net/pricing" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">See Memberships</a>`);
     }
 
+    // Scheduled lesson drops: any lesson whose release date has arrived flips
+    // to published, and paid members hear about the day's new lessons in one
+    // email. Idempotent — a flipped lesson is no longer a draft.
+    if (!dripOnly) {
+      try {
+        const courses = await sql`SELECT id, title, lessons, hidden FROM courses`;
+        const dropped = [];
+        for (const c of courses) {
+          const lessons = (typeof c.lessons === 'string' ? JSON.parse(c.lessons) : c.lessons) || [];
+          let changed = false;
+          for (const l of lessons) {
+            if (l.draft && l.release_at && new Date(l.release_at) <= new Date()) { delete l.draft; delete l.drop; delete l.release_at; changed = true; if (!c.hidden) dropped.push({ course: c.title, courseId: c.id, title: l.title }); }
+          }
+          if (changed) await sql`UPDATE courses SET lessons = ${JSON.stringify(lessons)}::jsonb WHERE id = ${c.id}`;
+        }
+        if (dropped.length) {
+          const esc = (x) => String(x || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          const members = await sql`SELECT name, email FROM users WHERE tier IN ('Basic','Builder','Premium','Elite') AND membership_status = 'active' AND COALESCE(role,'member') = 'member'`;
+          const list = dropped.map(d => `<li style="margin:0 0 8px;"><strong style="color:#161616;">${esc(d.title)}</strong><br><span style="color:#7a5050;font-size:12.5px;">${esc(d.course)}</span></li>`).join('');
+          const subject = dropped.length === 1 ? `New lesson: ${dropped[0].title}` : `${dropped.length} new lessons in GroundUp`;
+          for (const m of members) {
+            await sendEmail(m.email, subject,
+              `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${dropped.length === 1 ? 'A new lesson just dropped' : dropped.length + ' new lessons just dropped'}, ${esc(firstName(m.name))}.</h2>
+               <ul style="color:#444444;font-size:14px;line-height:1.7;padding-left:20px;margin:0 0 18px;">${list}</ul>
+               <a href="https://community.drginamerritt.net/courses" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;">Open the courses</a>`, { marketing: true });
+          }
+          console.log('lesson drops announced', dropped.length, 'to', members.length);
+        }
+      } catch (e) { console.error('lesson drop run failed', e.message); }
+    }
+
     // Launch drip, driven by the countdown dates set in the admin: 14 days out
     // a save-the-date countdown, 7 days out each person's plan recommendation,
     // and the launch email (pay link, or the retainer discovery-call invite)
