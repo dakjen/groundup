@@ -7580,10 +7580,10 @@ export default function App() {
       contact: ["Book a 1:1 Session — GroundUp", "Work directly with Dr. Gina Merritt: deal review, strategy, capital stack review and community development sessions."],
       terms: ["Terms of Use — GroundUp", "The GroundUp Terms of Use: content license, memberships, billing, refunds, and community rules."],
       privacy: ["Privacy Policy — GroundUp", "What GroundUp collects, how it is used, who processes it, and how deletion works."],
-      "go/playbook": ["The Developer's Playbook — GroundUp by Dr. Gina Merritt", "For developers with a deal in motion: thirty years of closings written down in the order they happen, with the checklists run before closing, construction and conversion."],
-      "go/lunch": ["A free seat at a live Lunch & Learn with Dr. Gina Merritt", "One real project with the real numbers: where the capital stack broke, what the lender said, and how it closed. For developers with a deal in mind. Your first seat is free."],
+      "go/playbook": ["The Developer's Playbook — GroundUp by Dr. Gina Merritt", "A $390M practitioner's sequence for everything between application and conversion: construction closing, draws, equity pay-in, cost certification, permanent loan conversion."],
+      "go/lunch": ["A free seat at a live Lunch & Learn with Dr. Gina Merritt", "One closed deal, every number on the table: sources and uses, basis and credit pricing, the gap, the lender's conditions. For people who already underwrite. First seat free."],
       "get-started": ["What kind of help do you need? — GroundUp by Dr. Gina Merritt", "Ten questions, one honest answer: nothing yet, a course, a membership, live time with Dr. Merritt, or one-on-one advisory work."],
-      "go/call": ["A free 20-minute scoping call with the GroundUp team", "Your deal has a specific problem. Twenty minutes to size it and match it to the right level of help: office hours, a retainer, or the Full Project Intake with Dr. Merritt."],
+      "go/call": ["A free 20-minute scoping call with the GroundUp team", "A gap that opened when pricing moved, a lender wanting more equity, a partner's decision rights against your guarantee. Twenty minutes to size it and route it to the right expertise."],
       "go/intake": ["A free 20-minute scoping call with the GroundUp team", "Tell us what you're building. We'll tell you honestly what would help: a course, a membership, office hours, or time with Dr. Merritt."],
     };
     const [title, desc] = SEO[activePage] || SEO.home;
