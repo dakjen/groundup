@@ -12,6 +12,7 @@ const RED = "#b80101";
 // Each option carries a few signals: k = knowledge need, d = a live deal, m = money/financing stuck, p = wants people/community, t = wants time with Dr. Merritt
 const QUESTIONS = [
   { id: "where", q: "Where are you right now?", opts: [
+    ["I'm not in real estate development — just exploring", { k: 4, n: 1 }],
     ["Curious — I want to understand how development works", { k: 3 }],
     ["I have a site, a property or an idea, but no numbers", { k: 2, d: 1 }],
     ["I have numbers and I'm trying to get financing lined up", { d: 2, m: 2 }],
@@ -66,7 +67,7 @@ const QUESTIONS = [
 
 // The six honest outcomes, in order of how much help they are
 export const OUTCOMES = {
-  notyet: { key: "notyet", eyebrow: "Our honest read", title: "You don't need to buy anything yet.", body: "You're earlier than our paid work is built for, and that's fine — most developers were. Start with the free parts: every course outline, one free live Lunch & Learn, and the glossary. Come back when you have a site or a number to argue about.", cta: ["Make a free account", "/?join=Free"], alt: ["Read the course outlines", "/courses"] },
+  notyet: { key: "notyet", eyebrow: "Our honest read", title: "You don't need to buy anything yet.", body: "You're not in the work yet, and that's fine — everyone starts there. Begin with the free parts: every course outline, one free live Lunch & Learn, and the glossary. The moment you have a site, a number, or a real question, come back and take this again.", cta: ["Make a free account", "/?join=Free"], alt: ["Read the course outlines", "/courses"] },
   learn: { key: "learn", eyebrow: "Our honest read", title: "Learn the whole process first — then act.", body: "You're smart to want the map before the trip. The Member plan opens every course and written lesson, the case studies and the worksheets. Go stage by stage, and the deal you eventually do will look nothing like the one you'd do today.", cta: ["See the Member plan", "/pricing"], alt: ["Browse the curriculum", "/courses"] },
   room: { key: "room", eyebrow: "Our honest read", title: "You need the courses and the room.", body: "You're past curious: you have something real and you need people who've done it. Builder puts you in the community — post, ask, find partners — with every course and the Lunch & Learn recording library behind you.", cta: ["See the Builder plan", "/pricing"], alt: ["Talk to the team first", "/go/call"] },
   premium: { key: "premium", eyebrow: "Our honest read", title: "Learning plus live time with Dr. Merritt.", body: "Your questions are specific now, and a course answers them halfway. Premium adds office hours with Dr. Merritt, the Opportunity Board, the premium channels and one included session a year. For a developer with a live project, this is the sweet spot.", cta: ["See the Premium plan", "/pricing"], alt: ["Talk to the team first", "/go/call"] },
@@ -75,14 +76,17 @@ export const OUTCOMES = {
 };
 
 export function scoreAnswers(answers) {
-  const s = { k: 0, d: 0, m: 0, p: 0, t: 0 };
+  const s = { k: 0, d: 0, m: 0, p: 0, t: 0, n: 0 };
   for (const q of QUESTIONS) { const i = answers[q.id]; if (i == null) continue; const w = q.opts[i][1]; for (const [key, v] of Object.entries(w)) s[key] += v; }
   // Advisory: a live deal, money on the line, and a wish for one-on-one time
   if (s.d >= 7 && s.t >= 6 && s.m >= 4) return OUTCOMES.advisory;
   if (s.t >= 6 && s.d >= 5) return OUTCOMES.owner;
   if (s.t >= 4 || (s.m >= 5 && s.d >= 4)) return OUTCOMES.premium;
   if (s.p >= 4 || (s.d >= 4 && s.k <= 6)) return OUTCOMES.room;
-  if (s.k >= 9 && s.d <= 2 && s.t === 0 && s.p <= 1) return OUTCOMES.notyet;
+  // "Not yet" is the floor, and rare: only someone outside the business with
+  // no deal in sight, or someone who answered every question as a complete
+  // beginner. Anyone with a site, a number or a question is a Member.
+  if (s.d === 0 && s.t === 0 && s.m === 0 && (s.n > 0 || (s.k >= 14 && s.p === 0))) return OUTCOMES.notyet;
   return OUTCOMES.learn;
 }
 
