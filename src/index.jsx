@@ -1156,22 +1156,27 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited, preLaunc
           <div style={{ flex: 1, minWidth: 300 }}>
             <div className="gu-up" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#7a615118", border: "1px solid #7a615140", borderRadius: 99, padding: "8px 20px", marginBottom: 40 }}>
               <span className="gu-pulse" style={{ width: 6, height: 6, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
-              <span style={{ color: "#7a6151", fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>Built for Underrepresented Developers</span>
+              <span style={{ color: "#7a6151", fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>A school and community for real estate development</span>
             </div>
-            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(48px,8vw,88px)", lineHeight: 1.0, color: "#f5e8e8", marginBottom: 12, letterSpacing: "-1px" }} className="gu-up gu-d1">Build Wealth.</h1>
-            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(48px,8vw,88px)", lineHeight: 1.0, marginBottom: 12, letterSpacing: "-1px", background: "linear-gradient(135deg, #b80101 0%, #570404 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }} className="gu-up gu-d2">Build Legacy.</h1>
-            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontStyle: "italic", fontSize: "clamp(36px,6vw,68px)", lineHeight: 1.0, color: "#6a6b69", marginBottom: 44, letterSpacing: "-1px" }} className="gu-up gu-d3">Build it Right.</h1>
-            <p className="gu-up gu-d4" style={{ fontSize: "clamp(14px,1.8vw,17px)", color: "#9a9a98", lineHeight: 1.9, maxWidth: 520, marginBottom: 48, fontFamily: "'DM Sans', sans-serif" }}>
-              Real development education for underrepresented developers — built from Dr. Gina Merritt's 30+ years of hands-on deal experience.
+            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(40px,6vw,72px)", lineHeight: 1.02, color: "#f5e8e8", marginBottom: 10, letterSpacing: "-1px" }} className="gu-up gu-d1">Learn how buildings<br />actually get built.</h1>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontStyle: "italic", fontSize: "clamp(24px,3.2vw,38px)", lineHeight: 1.1, marginBottom: 26, letterSpacing: "-0.5px", background: "linear-gradient(135deg, #e08a8a 0%, #b80101 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }} className="gu-up gu-d2">From the first site walk to the fifteen-year compliance clock.</h2>
+            <p className="gu-up gu-d3" style={{ fontSize: "clamp(14.5px,1.8vw,17px)", color: "#c4a8a8", lineHeight: 1.85, maxWidth: 540, marginBottom: 22, fontFamily: "'DM Sans', sans-serif" }}>
+              GroundUp is where you learn the whole process of affordable housing and real estate development, in order, from a developer who has closed $390M of it: {courseCount} courses, a community of people doing the work, live Lunch & Learns on real deals, and direct access to Dr. Gina Merritt when your own deal needs an experienced read.
             </p>
+            <div className="gu-up gu-d4" style={{ display: "flex", flexWrap: "wrap", gap: 6, maxWidth: 560, marginBottom: 36 }}>
+              {["Feasibility", "Predevelopment", "Building your team", "Financing & the capital stack", "LIHTC & subsidy", "Zoning & entitlements", "Design & construction", "Compliance after opening day"].map(t => (
+                <span key={t} style={{ fontSize: 11, color: "#c8a8a8", border: "1px solid #2a0000", background: "#0d0404", borderRadius: 20, padding: "5px 11px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{t}</span>
+              ))}
+            </div>
             <div className="gu-up gu-d5" style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
               {/* Before launch there is nothing to buy, so the front door is the
                   waitlist. Browsing the curriculum becomes the second option. */}
               {preLaunch
                 ? <a href="/waitlist" style={{ background: "#b80101", color: "#fff", borderRadius: 10, padding: "15px 36px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, letterSpacing: "0.5px", textDecoration: "none", display: "inline-block" }}>JOIN THE WAITLIST</a>
                 : <button onClick={() => setActivePage("courses")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "15px 36px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", letterSpacing: "0.5px" }}>EXPLORE COURSES</button>}
-              <button onClick={() => setActivePage("about")} style={{ background: "transparent", color: "#6a6b69", border: "1px solid #2a1a1a", borderRadius: 10, padding: "15px 36px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 14, cursor: "pointer", letterSpacing: "0.5px" }}>ABOUT DR. MERRITT</button>
+              <button onClick={() => setActivePage("get-started")} style={{ background: "transparent", color: "#e0c4c4", border: "1px solid #3a1a1a", borderRadius: 10, padding: "15px 36px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 14, cursor: "pointer", letterSpacing: "0.5px" }}>NOT SURE WHERE TO START?</button>
             </div>
+            <div className="gu-up gu-d6" style={{ color: "#8a7070", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", marginTop: 16 }}>Built for underrepresented developers, and for anyone who sits across the table from one. <button onClick={() => setActivePage("about")} style={{ background: "none", border: "none", color: "#c8a8a8", cursor: "pointer", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, padding: 0, textDecoration: "underline" }}>About Dr. Merritt</button></div>
           </div>
           <div className="gu-up gu-d6" style={{ flexShrink: 0, width: "clamp(280px,40%,460px)", position: "relative" }}>
             <div className="gu-float">
