@@ -19,21 +19,21 @@ if (PIXEL) {
 // API signs you out and brings you back to a fresh sign-in.
 const _fetch = window.fetch.bind(window);
 let _bounced = false;
+// Only an actually-expired token signs you out: the token carries its expiry,
+// so we read it instead of guessing from a 401 (which some routes also use
+// for "not allowed", and that was throwing people out right after sign-in).
+const tokenExpired = (tok) => { try { const body = tok.split('.')[0]; const json = JSON.parse(atob(body.replace(/-/g, '+').replace(/_/g, '/'))); return !!json.exp && json.exp < Date.now(); } catch { return false; } };
 window.fetch = async (...args) => {
   const res = await _fetch(...args);
   try {
     const url = typeof args[0] === 'string' ? args[0] : args[0]?.url || '';
-    const hadToken = !!(localStorage.getItem('guToken') || sessionStorage.getItem('adminToken'));
-    if (res.status === 401 && hadToken && !_bounced && /^\/api\//.test(url) && !/\/api\/auth$/.test(url.split('?')[0]) ) {
-      const h = (args[1] && args[1].headers) || {};
-      const sent = h.Authorization || h.authorization || (h.get && h.get('Authorization'));
-      if (sent) {
-        _bounced = true;
-        localStorage.removeItem('guMember'); localStorage.removeItem('guToken');
-        sessionStorage.removeItem('adminToken'); sessionStorage.removeItem('isAdmin'); sessionStorage.removeItem('currentUser');
-        alert('Your session expired. Please sign in again.');
-        window.location.href = '/';
-      }
+    const tok = localStorage.getItem('guToken') || sessionStorage.getItem('adminToken');
+    if (res.status === 401 && tok && !_bounced && /^\/api\//.test(url) && tokenExpired(tok)) {
+      _bounced = true;
+      localStorage.removeItem('guMember'); localStorage.removeItem('guToken');
+      sessionStorage.removeItem('adminToken'); sessionStorage.removeItem('isAdmin'); sessionStorage.removeItem('currentUser');
+      alert('Your session expired. Please sign in again.');
+      window.location.href = '/';
     }
   } catch {}
   return res;
