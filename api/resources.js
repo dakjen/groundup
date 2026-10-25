@@ -488,6 +488,26 @@ export default async function handler(req, res) {
       const rank = TIER_RANK[user.tier] ?? 0;
       const rows = await sql`SELECT * FROM resources ORDER BY category, position, id`;
       const visible = rows.filter(r => rank >= (TIER_RANK[r.min_tier] ?? 2));
+      // Every template and material attached to a lesson is in the library too,
+      // filed under the phase the team picked, labelled with where it came from.
+      try {
+        const [attRow] = await sql`SELECT value FROM settings WHERE key = 'lesson_attachments'`;
+        const atts = attRow?.value ? JSON.parse(attRow.value) : {};
+        const courses = await sql`SELECT id, title, lessons FROM courses`;
+        const byId = Object.fromEntries(courses.map(c => [c.id, c]));
+        for (const [key, v] of Object.entries(atts)) {
+          for (const [i, m] of (v.materials || []).entries()) {
+            if (!m || !m.url || m.kind === 'Video') continue;
+            const [cid, lid] = key.split(':');
+            const course = byId[cid];
+            const lessons = course ? (typeof course.lessons === 'string' ? JSON.parse(course.lessons) : course.lessons) || [] : [];
+            const lesson = lessons.find(l => String(l.id) === String(lid)) || lessons.find(l => String(l.id) === String(lid).replace(/^l/, ''));
+            visible.push({ id: `att:${key}:${i}`, title: String(m.title || '').replace(/_/g, ' '), url: m.url, category: m.kind === 'Template' ? 'template' : 'resource',
+              kind_label: m.kind, min_tier: 'Premium', phase: m.phase || null, position: 999,
+              description: course ? `From ${course.title}${lesson ? ` · ${lesson.title}` : ''}` : null, from_lesson: true });
+          }
+        }
+      } catch (e) { console.error('library merge', e.message); }
       const [pt] = await sql`SELECT value FROM settings WHERE key = 'partner_types'`;
       return res.json({ resources: visible, tier: user.tier, partner_types: parseTypes(pt?.value) });
     }

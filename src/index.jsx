@@ -1156,7 +1156,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited, preLaunc
           <div style={{ flex: 1, minWidth: 300 }}>
             <div className="gu-up" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#7a615118", border: "1px solid #7a615140", borderRadius: 99, padding: "8px 20px", marginBottom: 40 }}>
               <span className="gu-pulse" style={{ width: 6, height: 6, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
-              <span style={{ color: "#7a6151", fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>A school and community for real estate development</span>
+              <span style={{ color: "#7a6151", fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>An educational platform for real estate development</span>
             </div>
             <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(40px,6vw,72px)", lineHeight: 1.02, color: "#f5e8e8", marginBottom: 10, letterSpacing: "-1px" }} className="gu-up gu-d1">Learn how buildings<br />actually get built.</h1>
             <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontStyle: "italic", fontSize: "clamp(24px,3.2vw,38px)", lineHeight: 1.1, marginBottom: 26, letterSpacing: "-0.5px", background: "linear-gradient(135deg, #e08a8a 0%, #b80101 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }} className="gu-up gu-d2">From the first site walk to the fifteen-year compliance clock.</h2>
@@ -4696,6 +4696,15 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
                             <div key={mi} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8, flexWrap: "wrap" }}>
                               <span style={{ background: "#b8010112", color: "#b80101", borderRadius: 4, padding: "2px 8px", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}>{mt.kind}</span>
                               <a href={mt.url} target="_blank" rel="noreferrer" style={{ color: "#222222", fontSize: 13, fontWeight: 600, fontFamily: "'DM Sans', sans-serif", textDecoration: "none" }}>{mt.title} ↗</a>
+                              {/* Which part of the process it belongs to — files it in the Library; change it any time */}
+                              <select value={mt.phase || ""} onChange={async e => {
+                                const phase = e.target.value ? Number(e.target.value) : null;
+                                const next = { ...attachments, [dataKey]: { ...att, materials: att.materials.map((x, i) => i === mi ? { ...x, phase } : x) } };
+                                try { await save(next); } catch (err) { flash(false, err.message); }
+                              }} style={{ ...inp, maxWidth: 230, marginBottom: 0, padding: "5px 8px", fontSize: 12, cursor: "pointer" }}>
+                                <option value="">General — whole process</option>
+                                {DEV_PHASES.map((p, i) => <option key={i} value={i + 1}>{`Phase ${i + 1} — ${p}`}</option>)}
+                              </select>
                               <button onClick={async () => {
                                 const next = { ...attachments, [dataKey]: { ...att, materials: att.materials.filter((_, x) => x !== mi) } };
                                 if (!next[dataKey].materials.length) delete next[dataKey].materials;
@@ -4706,6 +4715,10 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
                           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 10 }}>
                             <select id={"mat-kind-" + dataKey} style={{ ...inp, maxWidth: 150, marginBottom: 0, cursor: "pointer" }} defaultValue="Template">
                               {["Template", "Action Plan", "Worksheet", "Deliverable", "Checklist", "Video"].map(k => <option key={k} value={k}>{k}</option>)}
+                            </select>
+                            <select id={"mat-phase-" + dataKey} style={{ ...inp, maxWidth: 230, marginBottom: 0, cursor: "pointer" }} defaultValue="">
+                              <option value="">Phase: general</option>
+                              {DEV_PHASES.map((p, i) => <option key={i} value={i + 1}>{`Phase ${i + 1} — ${p}`}</option>)}
                             </select>
                             <input id={"mat-title-" + dataKey} placeholder="Name members will see" style={{ ...inp, maxWidth: 220, marginBottom: 0 }} />
                             <input id={"mat-url-" + dataKey} placeholder="Link or YouTube URL (or upload →)" style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1, minWidth: 200 }} />
@@ -4726,11 +4739,12 @@ function CourseAttachmentsAdmin({ btnRed, btnGhost, inp, lbl }) {
                             </label>
                             <button onClick={async () => {
                               const kind = document.getElementById("mat-kind-" + dataKey).value;
+                              const phaseV = document.getElementById("mat-phase-" + dataKey).value; const phase = phaseV ? Number(phaseV) : null;
                               const title = document.getElementById("mat-title-" + dataKey).value.trim();
                               const url = document.getElementById("mat-url-" + dataKey).value.trim();
                               if (!title || !url) { flash(false, "A material needs a name and a link (or uploaded file)."); return; }
                               try {
-                                await save({ ...attachments, [dataKey]: { ...att, materials: [...(att.materials || []), { kind, title, url }] } });
+                                await save({ ...attachments, [dataKey]: { ...att, materials: [...(att.materials || []), { kind, title, url, phase }] } });
                                 document.getElementById("mat-title-" + dataKey).value = "";
                                 document.getElementById("mat-url-" + dataKey).value = "";
                                 flash(true, "Material attached.");
