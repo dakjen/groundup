@@ -39,6 +39,27 @@ window.fetch = async (...args) => {
   return res;
 };
 
+// Private documents live behind /api/file, which needs the session. A link
+// opened in a new tab can't send a header, so the token rides on the URL —
+// added at click time, never stored in the page.
+document.addEventListener('click', (e) => {
+  const a = e.target && e.target.closest && e.target.closest('a[href]');
+  if (!a) return;
+  const href = a.getAttribute('href') || '';
+  if (!href.startsWith('/api/file?') || /[?&]t=/.test(href)) return;
+  const tok = localStorage.getItem('guToken') || sessionStorage.getItem('adminToken');
+  if (tok) a.setAttribute('href', href + '&t=' + encodeURIComponent(tok));
+}, true);
+const _open = window.open.bind(window);
+window.open = (url, ...rest) => {
+  try {
+    const u = String(url || '');
+    const tok = localStorage.getItem('guToken') || sessionStorage.getItem('adminToken');
+    if (u.startsWith('/api/file?') && !/[?&]t=/.test(u) && tok) return _open(u + '&t=' + encodeURIComponent(tok), ...rest);
+  } catch {}
+  return _open(url, ...rest);
+};
+
 // The static copy crawlers read (scripts/prerender.mjs) comes out the moment the app mounts
 for (const id of ['seo-content', 'seo-style']) { const el = document.getElementById(id); if (el) el.remove(); }
 // The splash holds the screen black for a beat, then fades once the app has painted —
