@@ -487,7 +487,11 @@ export default async function handler(req, res) {
       if (!user || user.membership_status !== 'active') return res.status(401).json({ error: 'Sign in required' });
       const rank = TIER_RANK[user.tier] ?? 0;
       const rows = await sql`SELECT * FROM resources ORDER BY category, position, id`;
-      const visible = rows.filter(r => rank >= (TIER_RANK[r.min_tier] ?? 2));
+      // Everyone signed in sees what exists. What they can open depends on the
+      // plan: a locked item keeps its title and loses its link. A pass holder
+      // is still on the Free tier, so templates stay locked for them.
+      const lockRow = (r, need) => rank >= need ? r : { ...r, url: null, code: null, locked: true, unlock_tier: Object.keys(TIER_RANK).find(k => TIER_RANK[k] === need) || 'Premium' };
+      const visible = rows.map(r => lockRow(r, TIER_RANK[r.min_tier] ?? 2));
       // Every template and material attached to a lesson is in the library too,
       // filed under the phase the team picked, labelled with where it came from.
       try {
@@ -505,9 +509,10 @@ export default async function handler(req, res) {
             const lessons = (typeof course.lessons === 'string' ? JSON.parse(course.lessons) : course.lessons) || [];
             const lesson = lessons.find(l => String(l.id) === String(lid)) || lessons.find(l => String(l.id) === String(lid).replace(/^l/, ''));
             if (!lesson || lesson.draft) continue;
-            visible.push({ id: `att:${key}:${i}`, title: String(m.title || '').replace(/_/g, ' '), url: m.url, category: m.kind === 'Template' ? 'template' : 'resource',
-              kind_label: m.kind, min_tier: 'Premium', phase: m.phase || null, position: 999,
-              description: course ? `From ${course.title}${lesson ? ` · ${lesson.title}` : ''}` : null, from_lesson: true });
+            // Lesson materials come with the courses: any paid plan opens them
+            visible.push(lockRow({ id: `att:${key}:${i}`, title: String(m.title || '').replace(/_/g, ' '), url: m.url, category: m.kind === 'Template' ? 'template' : 'resource',
+              kind_label: m.kind, min_tier: 'Basic', phase: m.phase || null, position: 999,
+              description: course ? `From ${course.title}${lesson ? ` · ${lesson.title}` : ''}` : null, from_lesson: true }, 1));
           }
         }
       } catch (e) { console.error('library merge', e.message); }
