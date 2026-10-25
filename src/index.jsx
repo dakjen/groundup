@@ -4,6 +4,7 @@ import COURSE_CATALOG from "./courseCatalog.js";
 import { pollVisible } from "./poll.js";
 import { FunnelPage } from "./funnels.jsx";
 import { GetStartedPage } from "./getstarted.jsx";
+import { DocViewerPage } from "./docviewer.jsx";
 import { backdropClose, guUpload, PasswordInput, AuthModal, OnboardingFlow, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, AdvisoryAdminPage, BookingsAdminPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
@@ -7513,7 +7514,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-bookings", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "admin-invites", "admin-team", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "refer", "support", "glossary", "get-started", "go/playbook", "go/lunch", "go/intake", "go/call"];
+  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-bookings", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "admin-invites", "admin-team", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "refer", "support", "glossary", "get-started", "doc", "go/playbook", "go/lunch", "go/intake", "go/call"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
     return PAGES.includes(p) ? p : (sessionStorage.getItem("activePage") || "home");
@@ -8007,6 +8008,7 @@ export default function App() {
       {activePage === "partner-interest" && <PartnerInterestPage />}
       {activePage === "refer" && <ReferPartnerPage />}
       {activePage === "get-started" && <GetStartedPage setActivePage={navigateTo} onSignIn={() => openSignup("Free")} />}
+      {activePage === "doc" && <DocViewerPage setActivePage={navigateTo} />}
       {activePage.startsWith("go/") && <FunnelPage offer={activePage === "go/intake" ? "call" : activePage.slice(3)} />}
       {activePage === "partner" && <PartnerPage slug={partnerSlug} onSignIn={() => setShowAuth("login")} onExplore={() => navigateTo("courses")} />}
       {activePage === "shop" && <ShopPage member={member} onSignIn={() => openSignup("Free")} />}
