@@ -93,10 +93,14 @@ export default async function handler(req, res) {
     if (blob?.size) res.setHeader('Content-Length', String(blob.size));
     // Private to this viewer, so it must never land in a shared cache.
     res.setHeader('Cache-Control', 'private, max-age=3600');
-    if (req.query.download === '1') {
-      const name = pathname.split('/').pop() || 'download';
-      res.setHeader('Content-Disposition', `attachment; filename="${name.replace(/"/g, '')}"`);
-    }
+    // The stored name carries an upload timestamp and a random suffix; the
+    // browser should see the name the team uploaded. PDFs open in the tab
+    // (inline); Word and Excel can't be shown by a browser, so they save,
+    // under their real name instead of "file".
+    const raw = pathname.split('/').pop() || 'download';
+    const name = raw.replace(/^\d{10,}-/, '').replace(/-[A-Za-z0-9]{20,}(?=\.[A-Za-z0-9]+$)/, '').replace(/_/g, ' ').replace(/["\r\n]/g, '') || 'download';
+    const disp = req.query.download === '1' ? 'attachment' : 'inline';
+    res.setHeader('Content-Disposition', `${disp}; filename="${name}"; filename*=UTF-8''${encodeURIComponent(name)}`);
 
     if (found.statusCode === 304) return res.status(304).end();
 
