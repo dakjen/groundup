@@ -48,7 +48,7 @@ const OFFERS = {
     page: "lunch", eyebrow: "A free seat · live Lunch & Learn",
     headline: ["See how a real deal", "actually gets built."],
     sub: "There is no school for this. A live Lunch & Learn is the next best thing: one real project, the real numbers, what went wrong and how it closed, with a developer who has done it for thirty years answering your questions on the call. Normally $39.99. Your first seat is free.",
-    image: "/opt/sis-gm-speech.jpg", imageAlt: "A live Lunch & Learn session",
+    image: "/opt/hough-exterior.webp", imageAlt: "9410 Hough, Cleveland — a real deal, taken apart live",
     proof: [["$390M+", "portfolio behind it"], ["116", "apartments on one deal"], ["Live", "Q&A on the call"]],
     bullets: [
       "A full session, not a teaser: the deal, the capital stack, what went wrong and how it closed",
