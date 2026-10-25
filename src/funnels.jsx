@@ -71,7 +71,7 @@ const OFFERS = {
     page: "call", eyebrow: "Free scoping call · 20 minutes",
     headline: ["You have a deal and a decision.", "Get it in front of the right expertise."],
     sub: "A gap that opened when pricing moved. A lender conditioning the construction loan on more equity. A JV partner's decision rights against your guarantee. A 9% application you are not sure scores. These are not introductory questions, and they do not get answered by a course. Twenty minutes with the GroundUp team sizes the problem and routes it: office hours with Dr. Merritt, a Senior Advisor retainer, or her Full Project Intake on the whole deal.",
-    image: "/opt/LIIF-Stills1.jpg", imageAlt: "A finished affordable housing development",
+    image: "/opt/beacon-center.webp", imageAlt: "The Beacon Center, Washington, DC",
     proof: [["$390M+", "closed behind the advice"], ["20 min", "to size the problem"], ["$0", "no card, no pitch"]],
     bullets: [
       "A working conversation about the deal: the stack, the term, the partner, the application, whatever is stuck",
@@ -92,7 +92,7 @@ const OFFERS = {
     page: "intake", eyebrow: "Full Project Intake · $1,500",
     headline: ["Your whole deal,", "read by someone who has closed them."],
     sub: "Most developers find out what the lender thinks when the lender says no. The Full Project Intake puts your entire project — pro forma, capital stack, site, timeline — in front of thirty years of experience first, and gives you back what you missed and what to do next.",
-    image: "/opt/LIIF-Stills1.jpg", imageAlt: "A finished affordable housing development",
+    image: "/opt/beacon-center.webp", imageAlt: "The Beacon Center, Washington, DC",
     proof: [["$47M", "9410 Hough, Cleveland"], ["$52M", "Beacon Center, DC"], ["3", "capital stacks on one deal"]],
     bullets: [
       "A working session on your actual numbers, not a consultation about development in general",
