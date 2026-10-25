@@ -7506,7 +7506,7 @@ export default function App() {
       privacy: ["Privacy Policy — GroundUp", "What GroundUp collects, how it is used, who processes it, and how deletion works."],
       "go/playbook": ["The Developer's Playbook — GroundUp by Dr. Gina Merritt", "The step-by-step Dr. Merritt follows on every deal, from the first site walk to the fifteen-year compliance clock. Read it in your GroundUp account."],
       "go/lunch": ["A free seat at a live Lunch & Learn with Dr. Gina Merritt", "Watch a real deal get taken apart, live, and ask your questions. Your first seat is free."],
-      "get-started": ["What kind of help do you need? — GroundUp by Dr. Gina Merritt", "Eight questions, one honest answer: nothing yet, a course, a membership, live time with Dr. Merritt, or one-on-one advisory work."],
+      "get-started": ["What kind of help do you need? — GroundUp by Dr. Gina Merritt", "Ten questions, one honest answer: nothing yet, a course, a membership, live time with Dr. Merritt, or one-on-one advisory work."],
       "go/call": ["A free 20-minute scoping call with the GroundUp team", "Tell us what you're building. We'll tell you honestly what would help: a course, a membership, office hours, or time with Dr. Merritt."],
       "go/intake": ["A free 20-minute scoping call with the GroundUp team", "Tell us what you're building. We'll tell you honestly what would help: a course, a membership, office hours, or time with Dr. Merritt."],
     };

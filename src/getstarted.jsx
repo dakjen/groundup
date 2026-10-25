@@ -11,6 +11,15 @@ const RED = "#b80101";
 
 // Each option carries a few signals: k = knowledge need, d = a live deal, m = money/financing stuck, p = wants people/community, t = wants time with Dr. Merritt
 const QUESTIONS = [
+  { id: "who", q: "Which is closest to you?", opts: [
+    ["I want to become a developer", { k: 2 }],
+    ["I'm a working developer", { d: 1 }],
+    ["I own or inherited a property and don't know what to do with it", { k: 2, d: 1 }],
+    ["I'm a house flipper or small landlord moving into ground-up development", { k: 1, d: 1 }],
+    ["I work at a nonprofit, CDFI, bank, agency or city", { k: 1, p: 1, o: 1 }],
+    ["I work alongside developers — broker, architect, attorney, consultant", { k: 1, p: 1, o: 1 }],
+    ["I'm not in real estate at all — just exploring", { k: 3, n: 1 }],
+  ] },
   { id: "where", q: "Where are you right now?", opts: [
     ["I'm not in real estate development — just exploring", { k: 4, n: 1 }],
     ["Curious — I want to understand how development works", { k: 3 }],
@@ -18,18 +27,30 @@ const QUESTIONS = [
     ["I have numbers and I'm trying to get financing lined up", { d: 2, m: 2 }],
     ["I have a deal in motion and a decision in front of me", { d: 3, m: 2, t: 2 }],
     ["I've developed before and want to go bigger or do it better", { d: 2, k: 1, t: 1 }],
+    ["I'm not developing — I need to understand development to do my job", { k: 2, p: 1, o: 1 }],
   ] },
-  { id: "done", q: "Have you closed a development deal before?", opts: [
-    ["No — this would be my first", { k: 2 }],
-    ["I've been on a team that did", { k: 1 }],
-    ["Yes, one or two", { d: 1 }],
-    ["Yes, several", { d: 1, t: 1 }],
+  { id: "first", q: "If you haven't started yet: what's your first move?", opts: [
+    ["I honestly don't know where to start", { k: 3 }],
+    ["Learn the whole process end to end before I touch anything", { k: 3 }],
+    ["Find my first site", { k: 2, d: 1 }],
+    ["Find a partner who has done this before", { p: 3 }],
+    ["Figure out the money first — how deals get paid for", { k: 2, m: 1 }],
+    ["I've already started — this question isn't for me", {}],
+    ["I'm not looking to develop — I support or work with developers", { k: 1, o: 1 }],
+  ] },
+  { id: "done", q: "How close have you been to a development deal that closed?", opts: [
+    ["Never — I'm new to this", { k: 2 }],
+    ["I've watched one from the outside", { k: 1 }],
+    ["I've been part of a team or organization that did one", { k: 1 }],
+    ["I've closed one or two myself", { d: 1 }],
+    ["I've closed several", { d: 1, t: 1 }],
   ] },
   { id: "control", q: "Do you control a site?", opts: [
     ["No", { k: 1 }],
     ["I'm looking, or talking to an owner", { k: 1, d: 1 }],
     ["Letter of intent, option or contract", { d: 2 }],
     ["I own it", { d: 2 }],
+    ["Not mine to control — I work with the people who do", { k: 1, o: 1 }],
   ] },
   { id: "numbers", q: "What do your numbers look like?", opts: [
     ["I don't have any yet", { k: 2 }],
@@ -37,6 +58,7 @@ const QUESTIONS = [
     ["A pro forma I built myself", { d: 1, m: 1 }],
     ["A full pro forma with sources and uses — and a gap I can't close", { d: 2, m: 3, t: 1 }],
     ["A full pro forma a lender has already seen", { d: 2, m: 2, t: 2 }],
+    ["Not my numbers — I need to read other people's pro formas with confidence", { k: 2, o: 1 }],
   ] },
   { id: "stuck", q: "What's most in the way right now?", opts: [
     ["I don't know what I don't know", { k: 3 }],
@@ -44,11 +66,13 @@ const QUESTIONS = [
     ["Finding partners, a team, or people who've done this", { p: 3 }],
     ["A specific problem on my deal that I need an experienced read on", { d: 2, t: 3 }],
     ["Money — a gap, a lender's answer, a term I'm weighing", { m: 3, d: 1, t: 1 }],
+    ["Speaking the language — I sit across from developers and need to keep up", { k: 2, p: 1, o: 1 }],
   ] },
   { id: "time", q: "How much time can you give this each week?", opts: [
     ["An hour or two — I'm learning on the side", { k: 1 }],
     ["Several hours — this is a real pursuit", { k: 1, p: 1 }],
     ["It's my job, or about to be", { d: 1, t: 1 }],
+    ["It's part of my job — development is what my organization funds, approves or serves", { k: 1, p: 1, o: 1 }],
   ] },
   { id: "help", q: "What kind of help do you want?", opts: [
     ["Teach me — I'll do the work", { k: 3 }],
@@ -56,18 +80,21 @@ const QUESTIONS = [
     ["Answer my questions, live, now and then", { p: 1, t: 2 }],
     ["Work with me on my deal, one on one", { t: 3, d: 1 }],
     ["Honestly, I'm not sure", { k: 1, p: 1 }],
+    ["Train my team or my organization", { k: 1, p: 1, o: 2 }],
   ] },
   { id: "horizon", q: "When does something have to happen?", opts: [
     ["No clock — I'm building toward it", { k: 1 }],
     ["This year", { d: 1 }],
     ["In the next ninety days", { d: 2, t: 1 }],
     ["It's on fire", { d: 2, t: 2, m: 1 }],
+    ["No deal of my own — I just need to be fluent in this, soon", { k: 1, o: 1 }],
   ] },
 ];
 
-// The six honest outcomes, in order of how much help they are
+// The seven honest outcomes, in order of how much help they are
 export const OUTCOMES = {
   notyet: { key: "notyet", eyebrow: "Our honest read", title: "You don't need to buy anything yet.", body: "You're not in the work yet, and that's fine — everyone starts there. Begin with the free parts: every course outline, one free live Lunch & Learn, and the glossary. The moment you have a site, a number, or a real question, come back and take this again.", cta: ["Make a free account", "/?join=Free"], alt: ["Read the course outlines", "/courses"] },
+  org: { key: "org", eyebrow: "Our honest read", title: "You're not building — you need to be fluent in how building works.", body: "Lenders, agencies, nonprofits, brokers and the people around a deal do better work when they understand the developer's side of the table. GroundUp teaches that whole process in order. A Member plan covers one person; the partner program brings a cohort of your staff or your program's developers through together, with their own channel and office hours.", cta: ["Bring GroundUp to your organization", "/partner-interest"], alt: ["Start with a Member plan", "/pricing"] },
   learn: { key: "learn", eyebrow: "Our honest read", title: "Learn the whole process first — then act.", body: "You're smart to want the map before the trip. The Member plan opens every course and written lesson, the case studies and the worksheets. Go stage by stage, and the deal you eventually do will look nothing like the one you'd do today.", cta: ["See the Member plan", "/pricing"], alt: ["Browse the curriculum", "/courses"] },
   room: { key: "room", eyebrow: "Our honest read", title: "You need the courses and the room.", body: "You're past curious: you have something real and you need people who've done it. Builder puts you in the community — post, ask, find partners — with every course and the Lunch & Learn recording library behind you.", cta: ["See the Builder plan", "/pricing"], alt: ["Talk to the team first", "/go/call"] },
   premium: { key: "premium", eyebrow: "Our honest read", title: "Learning plus live time with Dr. Merritt.", body: "Your questions are specific now, and a course answers them halfway. Premium adds office hours with Dr. Merritt, the Opportunity Board, the premium channels and one included session a year. For a developer with a live project, this is the sweet spot.", cta: ["See the Premium plan", "/pricing"], alt: ["Talk to the team first", "/go/call"] },
@@ -76,7 +103,13 @@ export const OUTCOMES = {
 };
 
 export function scoreAnswers(answers) {
-  const s = { k: 0, d: 0, m: 0, p: 0, t: 0, n: 0 };
+  const base = scoreBase(answers);
+  let o = 0; for (const q of QUESTIONS) { const i = answers[q.id]; if (i != null) o += q.opts[i][1].o || 0; }
+  if (o >= 4) return OUTCOMES.org;
+  return o > 0 && base.key !== "advisory" ? { ...base, alt: ["Bring GroundUp to your organization", "/partner-interest"] } : base;
+}
+function scoreBase(answers) {
+  const s = { k: 0, d: 0, m: 0, p: 0, t: 0, n: 0, o: 0 };
   for (const q of QUESTIONS) { const i = answers[q.id]; if (i == null) continue; const w = q.opts[i][1]; for (const [key, v] of Object.entries(w)) s[key] += v; }
   // Advisory: a live deal, money on the line, and a wish for one-on-one time
   if (s.d >= 7 && s.t >= 6 && s.m >= 4) return OUTCOMES.advisory;
@@ -132,7 +165,7 @@ export function GetStartedPage({ setActivePage, onSignIn }) {
         {!done ? (
           <>
             <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,46px)", lineHeight: 1.08, margin: "0 0 10px" }}>What kind of help do you actually need?</h1>
-            <p style={{ color: "#a88888", fontSize: 15, fontFamily: font, lineHeight: 1.75, maxWidth: 560, margin: "0 0 28px" }}>Eight quick questions. At the end we tell you honestly: nothing yet, a course, a membership, live time with Dr. Merritt, or one-on-one advisory work. No email required to see the answer.</p>
+            <p style={{ color: "#a88888", fontSize: 15, fontFamily: font, lineHeight: 1.75, maxWidth: 560, margin: "0 0 28px" }}>Ten quick questions. At the end we tell you honestly: nothing yet, a course, a membership, live time with Dr. Merritt, or one-on-one advisory work. No email required to see the answer.</p>
             <div style={{ display: "flex", gap: 4, marginBottom: 26 }}>
               {QUESTIONS.map((_, i) => <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= step ? RED : "#2a0000" }} />)}
             </div>
