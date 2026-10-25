@@ -34,7 +34,12 @@ export function verifyToken(token) {
 
 export function bearer(req) {
   const auth = req.headers['authorization'] || '';
-  return auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  if (auth.startsWith('Bearer ')) return auth.slice(7);
+  // A document opened in a new tab (a template, a lesson PDF, a deal file)
+  // cannot carry a header, so the file route also takes the token in the URL.
+  // Only there: every other route still wants the header.
+  if (req.query && req.query.t && /^\/api\/file(\?|$)/.test(req.url || '')) return String(req.query.t);
+  return null;
 }
 
 // Returns the token payload if the request carries a valid admin session, else null.
