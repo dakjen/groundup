@@ -81,6 +81,12 @@ export function DocViewerPage({ setActivePage }) {
           {state.status === "pdf" && <a href={state.objectUrl} target="_blank" rel="noreferrer" style={{ ...ghost, textDecoration: "none" }}>Open in a new tab</a>}
         </div>
 
+        {/^(xlsx|xls|xlsm|csv|docx|doc|pptx|ppt)$/.test(ext) && (
+          <div style={{ background: "#0d0404", border: "1px solid #b8010140", borderRadius: 12, padding: "12px 16px", marginBottom: 14, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", fontFamily: font }}>
+            <span style={{ color: "#e0c4c4", fontSize: 13.5, flex: "1 1 260px" }}>Need help using this template on your own deal? Set up a call with Dr. Merritt.</span>
+            <button onClick={() => setActivePage("contact")} style={{ ...btn, padding: "9px 16px", fontSize: 12.5 }}>Book a session →</button>
+          </div>
+        )}
         {state.status === "loading" && <div style={{ color: "#8f7070", fontFamily: font, padding: 40, textAlign: "center" }}>Opening…</div>}
         {state.status === "error" && <div style={{ background: "#0d0404", border: "1px solid #b8010140", borderRadius: 14, padding: 28, color: "#e0c4c4", fontFamily: font }}>{state.error}</div>}
 
