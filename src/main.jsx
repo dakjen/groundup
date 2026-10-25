@@ -39,24 +39,30 @@ window.fetch = async (...args) => {
   return res;
 };
 
-// Private documents live behind /api/file, which needs the session. A link
-// opened in a new tab can't send a header, so the token rides on the URL —
-// added at click time, never stored in the page.
+// Private documents live behind /api/file, which needs the session. Instead
+// of saving straight to Downloads, every document link opens the viewer page
+// (preview + a download button), which fetches the file with the session.
+// Direct downloads (?download=1) and in-page previews (iframes) are untouched.
+const toViewer = (href) => {
+  try {
+    const u = new URL(href, window.location.origin);
+    if (u.pathname !== '/api/file' || u.searchParams.get('download') === '1') return null;
+    const p = u.searchParams.get('p'); if (!p) return null;
+    return '/doc?p=' + encodeURIComponent(p) + '&from=' + encodeURIComponent(window.location.pathname + window.location.search + window.location.hash);
+  } catch { return null; }
+};
 document.addEventListener('click', (e) => {
   const a = e.target && e.target.closest && e.target.closest('a[href]');
   if (!a) return;
-  const href = a.getAttribute('href') || '';
-  if (!href.startsWith('/api/file?') || /[?&]t=/.test(href)) return;
-  const tok = localStorage.getItem('guToken') || sessionStorage.getItem('adminToken');
-  if (tok) a.setAttribute('href', href + '&t=' + encodeURIComponent(tok));
+  const v = toViewer(a.getAttribute('href') || '');
+  if (!v) return;
+  e.preventDefault(); e.stopPropagation();
+  window.location.href = v;
 }, true);
 const _open = window.open.bind(window);
 window.open = (url, ...rest) => {
-  try {
-    const u = String(url || '');
-    const tok = localStorage.getItem('guToken') || sessionStorage.getItem('adminToken');
-    if (u.startsWith('/api/file?') && !/[?&]t=/.test(u) && tok) return _open(u + '&t=' + encodeURIComponent(tok), ...rest);
-  } catch {}
+  const v = toViewer(String(url || ''));
+  if (v) { window.location.href = v; return null; }
   return _open(url, ...rest);
 };
 
