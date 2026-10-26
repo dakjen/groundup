@@ -288,7 +288,7 @@ export function dealSupportNudgeEmail() {
       </div>
       <div style="margin:18px 0;padding:16px 18px;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;">
         <p style="color:#161616;font-size:14px;font-weight:bold;margin:0 0 6px;">2 · Book a free discovery call — Senior Advisor retainer</p>
-        <p style="color:#444444;font-size:13px;line-height:1.7;margin:0;">For whole-deal involvement, Dr. Merritt counsels you on your project, month over month — deal review, capital strategy, negotiation prep. The discovery call is free and there's no obligation. <a href="mailto:groundup@drginamerritt.net?subject=Senior%20Advisor%20%E2%80%94%20discovery%20call" style="color:#b80101;font-weight:bold;">Book your discovery call →</a></p>
+        <p style="color:#444444;font-size:13px;line-height:1.7;margin:0;">For whole-deal involvement, Dr. Merritt works through your project with you, month over month — deal review, capital strategy, negotiation prep. The discovery call is free and there's no obligation. <a href="mailto:groundup@drginamerritt.net?subject=Senior%20Advisor%20%E2%80%94%20discovery%20call" style="color:#b80101;font-weight:bold;">Book your discovery call →</a></p>
       </div>
       <div style="margin:18px 0;padding:16px 18px;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;">
         <p style="color:#161616;font-size:14px;font-weight:bold;margin:0 0 6px;">3 · Start with the \$1,500 Full Project Intake</p>
