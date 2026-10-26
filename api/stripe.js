@@ -2,7 +2,7 @@ import Stripe from 'stripe';
 import crypto from 'crypto';
 import { neon } from '@neondatabase/serverless';
 import { hashPassword, signToken, getSession, getAdmin } from './_utils.js';
-import { sendEmail, siteUrl, addLnlContact, dealSupportBlock, firstName, guestWelcomeEmail } from './_email.js';
+import { sendEmail, siteUrl, addLnlContact, dealSupportBlock, firstName, guestWelcomeEmail, intakeStepsEmail } from './_email.js';
 
 export const config = { api: { bodyParser: false } };
 
@@ -412,12 +412,9 @@ async function fulfill(sql, session) {
     try {
       const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
       if (u) {
-        await sendEmail(u.email, 'Your Full Project Intake is booked in',
-          `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Send it all, ${firstName(u.name)}.</h2>
-           <p style="color:#444444;font-size:14px;line-height:1.8;">Your Full Project Intake with Dr. Merritt is paid. Your advisory workspace is open now \u2014 book your intake call from it (button below), and come ready to share the whole deal — pro forma, capital stack, site, timeline. This is the session where the thing you missed gets found.</p>
-           <p style="color:#7a5050;font-size:12px;line-height:1.7;">A note on the fee: the \$1,500 intake buys Dr. Merritt\u2019s full review of your project and is refundable only at our discretion. If the session happens without a genuine deal on the table, any refund is reduced by \$550 \u2014 the rate of a 1:1 session with her. With a real deal, the full \$1,500 credits against your first retainer month.</p>
-           <p style="color:#444444;font-size:14px;line-height:1.8;">And if you continue into the Senior Advisor retainer, <strong style="color:#161616;">your \$1,500 is credited against your first month</strong> — the intake is never wasted money.</p>
-           <a href="${siteUrl()}/advisory" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Book your intake call</a>`);
+        const [bookRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
+        const steps = intakeStepsEmail(u.name, bookRow?.value || '');
+        await sendEmail(u.email, steps.subject, steps.html);
         await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
           `INTAKE PAID: ${u.name} — \$1,500 Full Project Intake`,
           `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New project intake</h2>
@@ -682,7 +679,7 @@ export default async function handler(req, res) {
               const link = `${siteUrl()}/?reset=${encodeURIComponent(token)}`;
               const isIntake = cs.metadata.item === 'retainer_onboarding';
               const mail = guestWelcomeEmail(gu.name, isIntake ? 'Full Project Intake' : 'Playbook', link,
-                isIntake ? 'Once you are in, the first thing you see is the link to book your intake call with Dr. Merritt. Pick a time, then send your documents through the brief on the same page.' : 'The Playbook opens in your account under Shop → My documents. Read it there anytime; it is tied to your account and watermarked to you.');
+                isIntake ? 'Once you are in, your intake workspace walks you through three steps: book your time with Dr. Merritt, upload your project documents, and fill out the intake form. A separate email has the details.' : 'The Playbook opens in your account under Shop → My documents. Read it there anytime; it is tied to your account and watermarked to you.');
               await sendEmail(gu.email, mail.subject, mail.html);
             }
           } catch (e) { console.error('guest welcome failed', e.message); }

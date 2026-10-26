@@ -392,7 +392,7 @@ export default async function handler(req, res) {
       }
       const token = signToken({ uid: user.id, role: user.role === 'admin' ? 'admin' : 'member', viewer: user.role === 'admin' && user.badge === 'drmerritt' ? true : undefined });
       const { password_hash, ...safe } = user;
-      safe.entitlements = await sql`SELECT course_id, expires_at FROM entitlements WHERE user_id = ${user.id} AND (expires_at IS NULL OR expires_at > NOW())`;
+      safe.entitlements = await sql`SELECT course_id, expires_at, source FROM entitlements WHERE user_id = ${user.id} AND (expires_at IS NULL OR expires_at > NOW())`;
       // Signed, tied to this address, and good for 12 hours — so the next
       // sign-in on this device goes straight through.
       const mfaToken = signToken({ mfa: cleanEmail }, 12 * 60 * 60 * 1000);

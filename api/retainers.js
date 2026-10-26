@@ -73,7 +73,11 @@ export default async function handler(req, res) {
       if (!session?.uid) return res.status(401).json({ error: 'Sign in required' });
       const [r] = await sql`SELECT * FROM retainers WHERE user_id = ${session.uid} AND status IN ('active','offered') ORDER BY created_at DESC LIMIT 1`;
       if (!r) return res.json({ retainer: null });
-      if (r.status === 'offered') return res.json({ retainer: { id: r.id, status: 'offered', notes: r.notes } });
+      if (r.status === 'offered') {
+        // Before the intake call: the form and the documents they are compiling for it.
+        let files = []; try { files = await sql`SELECT id, title, url, kind, size, created_at FROM deal_files WHERE user_id = ${session.uid} AND folder = 'intake' ORDER BY created_at DESC`; } catch {}
+        return res.json({ retainer: { id: r.id, status: 'offered', notes: r.notes, intake: r.intake || null, intake_at: r.intake_at || null, files } });
+      }
       r.used_this_month = await monthUsed(r.id);
       r.log = await sql`SELECT hours, note, logged_on FROM retainer_hours WHERE retainer_id = ${r.id} ORDER BY logged_on DESC LIMIT 12`;
       r.files = await sql`SELECT * FROM retainer_files WHERE retainer_id = ${r.id} ORDER BY created_at DESC`;
@@ -120,6 +124,26 @@ export default async function handler(req, res) {
     }
 
     // The direct line and workspace documents — client or team, on their own retainer
+    // The intake form. Saved on the retainer row so Dr. Merritt reads it on
+    // Intake & Bookings before the call, and it stays with the engagement after.
+    if (action === 'save_intake') {
+      if (!session?.uid) return res.status(401).json({ error: 'Sign in required' });
+      const [own] = await sql`SELECT id FROM retainers WHERE user_id = ${session.uid} AND status IN ('active','offered') ORDER BY created_at DESC LIMIT 1`;
+      if (!own) return res.status(403).json({ error: 'No intake on this account yet' });
+      const KEYS = ['project_name','location','project_type','stage','units_size','help','decision','numbers','capital','deadline','extra'];
+      const intake = {};
+      for (const k of KEYS) { const v = String(req.body.intake?.[k] ?? '').trim().slice(0, 4000); if (v) intake[k] = v; }
+      await sql`UPDATE retainers SET intake = ${JSON.stringify(intake)}::jsonb, intake_at = NOW() WHERE id = ${own.id}`;
+      try {
+        const [u] = await sql`SELECT name, email FROM users WHERE id = ${session.uid}`;
+        const rows = KEYS.filter(k => intake[k]).map(k => `<p style="color:#444444;font-size:13.5px;line-height:1.7;margin:0 0 10px;"><strong style="color:#161616;">${k.replace(/_/g, ' ')}</strong><br/>${String(intake[k]).replace(/</g, '&lt;').replace(/\n/g, '<br/>')}</p>`).join('');
+        await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net', `Intake form: ${u?.name || 'a client'}${intake.project_name ? ' — ' + intake.project_name : ''}`,
+          `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${u?.name || 'A client'} filled out their intake form</h2>
+           <p style="color:#444444;font-size:14px;line-height:1.8;">${u?.email || ''}. The full form and their documents are on Intake &amp; Bookings.</p>${rows}`);
+      } catch (e) { console.error('intake form email failed', e.message); }
+      return res.json({ success: true, intake });
+    }
+
     if (action === 'message' || action === 'add_file' || action === 'remove_file') {
       let rid = Number(req.body.retainer_id) || 0;
       if (!admin) {
