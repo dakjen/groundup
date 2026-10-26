@@ -1010,7 +1010,7 @@ function GULogo({ size = 40, light = false }) {
 
 // ─── NAV ────────────────────────────────────────────────────────────────────
 
-function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread = 0, dots = {} }) {
+function Nav({ activePage, setActivePage, onLogoClick, onSignUp, onSignOut, member, unread = 0, dots = {} }) {
   // A red dot on a team menu item (and its group) when something there is waiting, e.g. an advisory message
   const dot = (id) => dots[id] > 0 ? <span style={{ display: "inline-block", width: 7, height: 7, borderRadius: 4, background: "#b80101", marginLeft: 6, verticalAlign: "middle" }} /> : null;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -1046,7 +1046,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
       : [["admin-waitlist", "Waitlist"], ["admin-contacts", "Contacts"], ["admin-users", "Users"], ["admin-referrals", "Referrals"], ["admin-invites", "Gifts & Invites"]] },
     { label: "Events", items: [["lunchlearn", "Lunch & Learns"], ["admin-office", "Office Hours"]] },
     { label: "Revenue", items: [["admin-revenue", "Revenue"]] },
-    { label: "Admin", items: [["admin-drops", "Lesson Drops"], ["admin-email", "Email"], ["admin-team", "Team"], ["admin-shop", "Shop"], ["admin-courses", "All Courses"], ["admin-status", "System Status"]] },
+    { label: "Admin", items: [["admin-drops", "Lesson Drops"], ["admin-email", "Email"], ["admin-team", "Team"], ["admin-shop", "Shop"], ["admin-courses", "All Courses"], ["admin-status", "System Status"], ["signout", "Sign out"]] },
   ];
   const ADMIN_TOOLS = ADMIN_GROUPS.flatMap(g => g.items).filter(([id]) => id.startsWith("admin-"));
   const [adminOpen, setAdminOpen] = useState(false);
@@ -1093,7 +1093,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
               const active = ids.includes(activePage);
               const single = g.items.length === 1;
               const open = adminOpen === g.label;
-              const go = (id) => { setAdminOpen(false); setActivePage(id); };
+              const go = (id) => { setAdminOpen(false); if (id === "signout") { onSignOut && onSignOut(); return; } setActivePage(id); };
               return (
                 <div key={g.label} style={{ position: "relative" }} data-admin-menu="1">
                   <button onClick={() => single ? go(ids[0]) : setAdminOpen(open ? false : g.label)}
@@ -1142,7 +1142,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, member, unread 
             <div key={g.label}>
               <div style={{ fontSize: 9.5, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", padding: "14px 16px 4px" }}>{g.label}</div>
               {g.items.map(([id, label]) => (
-                <button key={id} onClick={() => { setActivePage(id); setMenuOpen(false); }} style={{ display: "block", width: "100%", background: activePage === id ? "#b8010112" : "transparent", color: activePage === id ? "#b80101" : (lightNav ? "#333333" : "#c8a0a0"), border: "1px solid transparent", borderRadius: 8, padding: "10px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>{label}</button>
+                <button key={id} onClick={() => { setMenuOpen(false); if (id === "signout") { onSignOut && onSignOut(); return; } setActivePage(id); }} style={{ display: "block", width: "100%", background: activePage === id ? "#b8010112" : "transparent", color: activePage === id ? "#b80101" : (lightNav ? "#333333" : "#c8a0a0"), border: "1px solid transparent", borderRadius: 8, padding: "10px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>{label}</button>
               ))}
             </div>
           ))}
@@ -8037,7 +8037,7 @@ export default function App() {
       {/* The nav's Sign In always opens the real login — team and members sign in
           here with their email/password, pre-launch included. Only JOIN buttons
           route to the waitlist before launch. */}
-      <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => { setAuthMode("login"); setSignupTier("Free"); setShowSignup(true); }} member={member} unread={(notif?.unread || 0) + (notif?.dm_unread || 0) + (notif?.advisory_unread || 0)} dots={{ "admin-retainers": notif?.advisory_unread || 0 }} />
+      <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => { setAuthMode("login"); setSignupTier("Free"); setShowSignup(true); }} onSignOut={() => { clearMember(); setMember(null); sessionStorage.removeItem("adminToken"); sessionStorage.removeItem("isAdmin"); setIsAdmin(false); sessionStorage.removeItem("currentUser"); setCurrentUser(null); navigateTo("home"); }} member={member} unread={(notif?.unread || 0) + (notif?.dm_unread || 0) + (notif?.advisory_unread || 0)} dots={{ "admin-retainers": notif?.advisory_unread || 0 }} />
       {activePage === "home" && <HomePage setActivePage={navigateTo} onSignUp={openSignup} currentUser={currentUser} eventInvited={eventInvited} preLaunch={prelaunch} />}
       {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} onGlossary={() => navigateTo("glossary")} onNav={navigateTo} /></div>}
       {activePage === "advisory" && <RetainerPage member={member} setActivePage={navigateTo} />}
