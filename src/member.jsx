@@ -3290,14 +3290,12 @@ export function ResourcesPage({ member, onUpgrade }) {
                   {items.length === 0 ? <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>{ptype ? `No ${ptype} partners yet.` : "Nothing here yet — check back soon."}</div> : (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }} className="lib-partners-grid">
                       {items.map(r => (
-                        <div key={r.id} onClick={() => setPartnerOpen(r)} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 12, padding: "18px 22px", display: "flex", flexDirection: "column", gap: 8, minWidth: 0, cursor: "pointer", transition: "border-color .15s" }}
+                        <div key={r.id} onClick={() => setPartnerOpen(r)} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 12, padding: "16px 20px", display: "flex", flexDirection: "column", gap: 6, minWidth: 0, cursor: "pointer", transition: "border-color .15s" }}
                           onMouseEnter={e => { e.currentTarget.style.borderColor = "#b8010160"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a0000"; }}>
                           <div style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font }}>{r.partner_type || "Partner"}</div>
-                          <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15, fontFamily: font, lineHeight: 1.3 }}>{r.title}</div>
-                          {r.description && <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, lineHeight: 1.55, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{r.description}</div>}
-                          <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 10, paddingTop: 4 }}>
-                            {r.code && <span style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", fontFamily: font }}>MEMBER CODE</span>}
-                            <span style={{ marginLeft: "auto", color: "#b80101", fontSize: 12.5, fontFamily: font, fontWeight: 800 }}>Details →</span>
+                          <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
+                            <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15, fontFamily: font, lineHeight: 1.3, flex: 1, minWidth: 0 }}>{r.title}</div>
+                            <span style={{ color: "#b80101", fontSize: 12.5, fontFamily: font, fontWeight: 800, whiteSpace: "nowrap" }}>Details →</span>
                           </div>
                         </div>
                       ))}
