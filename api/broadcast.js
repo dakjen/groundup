@@ -33,11 +33,38 @@ async function recipients(sql, audience) {
   return sql`SELECT name, email FROM users WHERE membership_status = 'active'`;
 }
 
+// A scheduled send that fails must not fail quietly. Every caught error in the
+// cron goes out as an email to Dakotah and the GroundUp inbox, and as an
+// `error` update to the Vantage automations dashboard (which also emails her).
+const ALERT_TO = [process.env.ALERT_EMAIL || 'dakotah@dakjencreative.com', process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net'];
+async function alertFailure(step, err, extra) {
+  const msg = (err && err.stack) ? err.stack.split('\n').slice(0, 4).join('\n') : String(err);
+  console.error('[cron failure]', step, msg);
+  const esc = (x) => String(x || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  for (const to of [...new Set(ALERT_TO)]) {
+    try { await sendEmail(to, `GroundUp cron FAILED — ${step}`,
+      `<h2 style="color:#b80101;font-size:22px;margin:0 0 14px;">A scheduled job failed: ${esc(step)}</h2>
+       <p style="color:#444444;font-size:14px;line-height:1.8;">The daily run at ${new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })} ET hit an error in <strong>${esc(step)}</strong>. Whatever that step sends did not go out. It will retry on the next run, but the cause needs a look.</p>
+       <pre style="background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;padding:14px 18px;font-size:12px;white-space:pre-wrap;color:#333;">${esc(msg)}${extra ? '\n\n' + esc(JSON.stringify(extra)) : ''}</pre>`); } catch {}
+  }
+  try {
+    await fetch('https://vantage.dakjencreative.com/api/ai-updates', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (process.env.VANTAGE_TOKEN || 'OG0eSn2lcSRbkGda1got2TQYJusucP') },
+      body: JSON.stringify({ automation: 'GroundUp daily cron', category: 'GroundUp', kind: 'error', title: `Failed: ${step}`, body: msg.slice(0, 1500) }) });
+  } catch {}
+}
+
 export default async function handler(req, res) {
   // Vercel daily cron: nudge anyone whose course pass just expired — 7 days to
   // extend, or 15% off an annual membership. Authed by CRON_SECRET, which
   // Vercel attaches to cron requests automatically.
   if (req.method === 'GET' && process.env.CRON_SECRET && req.headers.authorization === `Bearer ${process.env.CRON_SECRET}`) {
+    try { return await cronRun(req, res); } catch (e) { await alertFailure('daily run (uncaught)', e); return res.status(500).json({ error: String(e?.message || e) }); }
+  }
+  return handlerRest(req, res);
+}
+
+async function cronRun(req, res) {
+  {
     const sql = neon(process.env.DATABASE_URL);
     // The 8 AM Eastern run (vercel.json, ?drip=1) sends only the launch emails, so
     // they land in the morning instead of at the 11 AM daily run.
@@ -98,7 +125,7 @@ export default async function handler(req, res) {
           }
           console.log('lesson drops announced', dropped.length, 'to', members.length);
         }
-      } catch (e) { console.error('lesson drop run failed', e.message); }
+      } catch (e) { await alertFailure('lesson drop run failed', e); }
     }
 
     // Launch drip, driven by the countdown dates set in the admin: 14 days out
@@ -141,7 +168,7 @@ export default async function handler(req, res) {
         } else if (msLeft <= 14 * DAY) {
           await sendCountdown('2 weeks', 'drip_countdown14_' + list);
         }
-      } catch (e) { console.error('launch drip failed for ' + list, e.message); }
+      } catch (e) { await alertFailure('launch drip — ' + list, e); }
     }
 
     // Refund reserve sweep. The reserve fills from 20% of each sale (up to the
@@ -171,7 +198,7 @@ export default async function handler(req, res) {
             });
             await sql`UPDATE held_transfers SET status = 'released', released_at = NOW() WHERE id = ${h.id}`;
             total -= h.held_cents; released++; releasedCents += amount;
-          } catch (e) { console.error('reserve release failed', h.charge_id, e.message); break; }
+          } catch (e) { await alertFailure('reserve release ' + h.charge_id, e); break; }
         }
         await sql`INSERT INTO settings (key, value) VALUES (${monthKey}, ${`swept ${released} slices, ${releasedCents}¢ to NREUV, reserve now ${total}¢`}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`;
       }
@@ -205,7 +232,7 @@ export default async function handler(req, res) {
         founding = { window_open: true, sent: fsent, paying: c.paying, reason: c.paying >= 25 ? 'count' : 'launch_close' };
         if (fsent) await sendEmail(process.env.ADMIN_EMAIL || 'djmj@nreuv.com', `Founding email went out to ${fsent} insider${fsent === 1 ? '' : 's'}`, `<p style="color:#444444;font-size:14px;line-height:1.8;">${why}, so the founding email sent itself to ${fsent} ${fsent === 1 ? 'person' : 'people'} who hadn't received it yet — the first 25 who pay from November 1 claim the seats.</p>`);
       } else founding = { window_open: false, paying: c.paying, needed: 25 - c.paying, days_to_launch: Math.ceil(msToLaunch / 86400000) };
-    } catch (e) { console.error('founding auto-send failed', e.message); }
+    } catch (e) { await alertFailure('founding auto-send failed', e); }
 
     // Weekly team digest — Fridays, only once the insider launch has passed.
     // Guarded by a settings flag so a re-run the same day never double-sends.
@@ -218,10 +245,10 @@ export default async function handler(req, res) {
       const [done] = await sql`SELECT value FROM settings WHERE key = 'weekly_digest_sent'`;
       if (nowEt.getDay() === 5 && done?.value !== stamp) {
         weekly = launched ? await sendWeeklyDigest(sql) : await sendWaitlistWeekly(sql);
-        try { weekly.community = await sendCommunityWeekly(sql); } catch (e) { console.error('community weekly failed', e.message); }
+        try { weekly.community = await sendCommunityWeekly(sql); } catch (e) { await alertFailure('community weekly failed', e); }
         await sql`INSERT INTO settings (key, value) VALUES ('weekly_digest_sent', ${stamp}) ON CONFLICT (key) DO UPDATE SET value = ${stamp}`;
       }
-    } catch (e) { console.error('weekly digest failed', e.message); }
+    } catch (e) { await alertFailure('weekly digest failed', e); }
     // Referral ladder — checked daily, because a rung is crossed when a referred
     // member passes the 60-day floor, not when anyone signs up or pays. The
     // reward is applied by hand in Admin → Users, so the alert is the trigger.
@@ -246,7 +273,7 @@ export default async function handler(req, res) {
         }
       }
       if (alerts.length) ladder = alerts;
-    } catch (e) { console.error('referral ladder check failed', e.message); }
+    } catch (e) { await alertFailure('referral ladder check failed', e); }
 
     // Monthly report — the 1st of each month, once the insider launch has passed
     let monthly = null;
@@ -261,10 +288,10 @@ export default async function handler(req, res) {
         // monthly runs from November 1, 2026 regardless, so Dakotah sees
         // October's ledger before launch.
         monthly = launched ? await sendMonthlyReport(sql) : { skipped: 'before launch' };
-        try { monthly.dakjen = await sendDakJenMonthly(sql); } catch (e) { console.error('dakjen monthly failed', e.message); }
+        try { monthly.dakjen = await sendDakJenMonthly(sql); } catch (e) { await alertFailure('dakjen monthly failed', e); }
         await sql`INSERT INTO settings (key, value) VALUES ('monthly_report_sent', ${stamp}) ON CONFLICT (key) DO UPDATE SET value = ${stamp}`;
       }
-    } catch (e) { console.error('monthly report failed', e.message); }
+    } catch (e) { await alertFailure('monthly report failed', e); }
     // Insider window (steps 5 and 6 of the sequence). The window runs
     // `insider_window_days` (default 5) from the insider launch. Midway, insiders
     // who have not joined get a seats-left reminder; when it closes, if founding
@@ -355,7 +382,7 @@ export default async function handler(req, res) {
           }
         }
       }
-    } catch (e) { console.error('insider window drip failed', e.message); }
+    } catch (e) { await alertFailure('insider window drip failed', e); }
     // Engagement reports: three days after each launch-related send, who opened
     // and who clicked (from Brevo), emailed to DakJen Creative. Runs for sends up to
     // the date in settings.engagement_reports_until (default Nov 30, 2026).
@@ -379,7 +406,7 @@ export default async function handler(req, res) {
           await sql`INSERT INTO settings (key, value) VALUES (${flagKey}, ${`sent ${new Date().toISOString()}`}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`;
           drip['engagement_' + b.kind] = report.opened.length;
         }
-      } catch (e) { console.error('engagement reports failed', e.message); }
+      } catch (e) { await alertFailure('engagement reports failed', e); }
     }
 
     // The pre-launch weekly: each issue goes once, on or after its Wednesday,
@@ -399,10 +426,30 @@ export default async function handler(req, res) {
         await sql`INSERT INTO settings (key, value) VALUES (${'nl_sent_' + issue.key}, ${`sent ${n} on ${todayET}`}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`;
         drip['weekly_' + issue.key] = n;
       }
-    } catch (e) { console.error('weekly newsletter failed', e.message); }
+    } catch (e) { await alertFailure('weekly newsletter failed', e); }
+    // Watchdog: if a launch email was due today and anyone on that list is still
+    // unsent, say so loudly instead of waiting for someone to notice.
+    try {
+      for (const list of ['insider', 'general']) {
+        const [lr] = await sql`SELECT value FROM settings WHERE key = ${list === 'insider' ? 'launch_insider_at' : 'launch_at'}`;
+        if (!lr?.value) continue;
+        const msLeft = new Date(lr.value) - Date.now();
+        if (msLeft <= 7 * 86400000 && msLeft > 0) {
+          const [{ n }] = await sql`SELECT COUNT(*)::int AS n FROM waitlist WHERE recommended_notified = FALSE AND NOT COALESCE(comped, FALSE) AND COALESCE(list,'insider') = ${list}`;
+          if (n > 0) await alertFailure(`plan recommendation due — ${list}`, new Error(`${n} people on the ${list} list still have no recommendation email after the run`));
+        }
+        if (msLeft <= 0 && msLeft > -3 * 86400000) {
+          const [{ n }] = await sql`SELECT COUNT(*)::int AS n FROM waitlist WHERE launched_notified = FALSE AND NOT COALESCE(comped, FALSE) AND COALESCE(list,'insider') = ${list}`;
+          if (n > 0) await alertFailure(`launch email due — ${list}`, new Error(`${n} people on the ${list} list still have no launch email after the run`));
+        }
+      }
+    } catch (e) { await alertFailure('send watchdog', e); }
     if (dripOnly) return res.json({ success: true, drip });
     return res.json({ success: true, expired: rows.length, sent, drip, pot_released: released, pot_released_cents: releasedCents, weekly, monthly, founding, ladder });
   }
+}
+
+async function handlerRest(req, res) {
 
   if (!requireAdmin(req, res)) return;
   const sql = neon(process.env.DATABASE_URL);
