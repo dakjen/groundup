@@ -2446,6 +2446,14 @@ function ContactPage({ setActivePage, advisorLink }) {
   // wondering whether the payment worked.
   useEffect(() => {
     const q = new URLSearchParams(window.location.search);
+    // A link straight to one session type (the launch email sends retainer
+    // prospects to ?book=advisor): select it and scroll to it.
+    const want = q.get("book") || (window.location.hash.match(/book=([\w-]+)/) || [])[1];
+    if (want && q.get("checkout") !== "success") {
+      const match = SESSION_TYPES.find(t => t.id === want);
+      if (match) { setSelected(match); setTimeout(() => document.getElementById("gu-booking-step3")?.scrollIntoView({ behavior: "smooth", block: "start" }), 250); }
+      return;
+    }
     if (q.get("checkout") !== "success") return;
     const id = (q.get("item") || "").replace(/^session_/, "");
     const match = SESSION_TYPES.find(t => t.id === id);

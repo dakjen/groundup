@@ -323,16 +323,16 @@ export function passExpiryEmail(name, single) {
 // step: a discovery call with Dr. Merritt. Calls close retainers; emails don't.
 export function retainerInterestEmail(name, callLink) {
   const first = firstName(name);
-  const href = callLink || 'mailto:groundup@drginamerritt.net?subject=' + encodeURIComponent('Senior Advisor — discovery call');
+  const intake = `${siteUrl()}/contact?book=advisor`;
   return {
-    subject: `${first} — let's talk about your project`,
+    subject: `${first} — the doors are open. Here is how we start on your deal.`,
     html: `
       <div style="font-size:10px;color:#b80101;letter-spacing:3px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Senior Advisor Retainer</div>
-      <h2 style="color:#161616;font-size:26px;margin:0 0 14px;">Thank you for your interest, ${first}.</h2>
-      <p style="color:#444444;font-size:14px;line-height:1.9;">You told us you're looking at the <strong style="color:#161616;">Senior Advisor level</strong> — Dr. Merritt working your project with you, month over month. That conversation doesn't start with a checkout page; it starts with a call.</p>
-      <p style="color:#444444;font-size:14px;line-height:1.9;">Set up a <strong style="color:#161616;">free discovery call with Dr. Gina Merritt</strong> to walk through your project and your needs — where the deal stands, what's in the way, and how a partnership could work. No obligation; you'll leave the call knowing your next step either way.</p>
-      <a href="${href}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:14px 30px;font-weight:bold;font-size:14px;text-decoration:none;margin:10px 0 18px;">Set Up Your Discovery Call →</a>
-      <p style="color:#7a5050;font-size:12.5px;line-height:1.8;">Have a live deal and want to go deeper right away? The <strong style="color:#444444;">$1,500 Full Project Intake</strong> is the front door: Dr. Merritt takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. If you continue into the retainer, the $1,500 credits against your first month.</p>`,
+      <h2 style="color:#161616;font-size:26px;margin:0 0 14px;">You asked for deal-specific help, ${first}. The doors are open.</h2>
+      <p style="color:#444444;font-size:14px;line-height:1.9;">You told us you are looking at the <strong style="color:#161616;">Senior Advisor level</strong>: Dr. Merritt on your project, month over month. That does not start with a membership checkout. It starts with the <strong style="color:#161616;">Full Project Intake</strong>: she takes in your entire deal, the pro forma, the capital stack, the site, the timeline, and tells you what you missed and what to do next. Then, if the deal warrants it, the retainer.</p>
+      <p style="color:#444444;font-size:14px;line-height:1.9;">The intake is $1,500. If you continue into the retainer, it is credited in full against your first month. Book it on the site, and the first thing you see after is the link to pick your time with Dr. Merritt.</p>
+      <a href="${intake}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:14px 30px;font-weight:bold;font-size:14px;text-decoration:none;margin:10px 0 18px;">Book your Full Project Intake →</a>
+      <p style="color:#7a5050;font-size:12.5px;line-height:1.8;">Retainer plans after the intake: 5 hours a month at $3,025, 10 at $5,500, 15 at $7,700, everything in Owner included.${callLink ? ` Prefer to talk first? <a href="${callLink}" style="color:#b80101;font-weight:bold;">Set up a free call</a>.` : ''}</p>`,
   };
 }
 
