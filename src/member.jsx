@@ -1668,6 +1668,8 @@ function ChangePasswordCard() {
 export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
   // Back from the $1,500 intake checkout: the next step is the call, so it leads.
   const intakePaid = (() => { const q = new URLSearchParams(window.location.search); return q.get("checkout") === "success" && q.get("item") === "retainer_onboarding"; })();
+  // Paid the intake, not yet a client: the three pre-call steps stay up until the retainer starts.
+  const intakeOpen = (member.entitlements || []).some(e => e.course_id === "intake" && e.source === "intake_paid");
   const [advisorLink, setAdvisorLink] = useState(null);
   useEffect(() => { if (intakePaid || intakeOpen) fetch("/api/waitlist?public=1").then(r => r.ok ? r.json() : null).then(d => setAdvisorLink(d?.advisor_call_link || null)).catch(() => {}); }, [intakePaid, intakeOpen]);
   // Team accounts have no tier or plan — just a clean account view
@@ -1737,8 +1739,6 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
   }, []);
 
   const hasAdvisory = (member.entitlements || []).some(e => e.course_id === "intake");
-  // Paid the intake, not yet a client: the three pre-call steps stay up until the retainer starts.
-  const intakeOpen = (member.entitlements || []).some(e => e.course_id === "intake" && e.source === "intake_paid");
   const H = { fontFamily: serif, fontWeight: 700, fontSize: "clamp(24px,3vw,32px)", color: "var(--gu-text)", marginBottom: 6 };
   const SUB = { color: "var(--gu-body)", fontSize: 14, fontFamily: font, lineHeight: 1.7, marginBottom: 20 };
   const tile = (onClick, locked) => ({
