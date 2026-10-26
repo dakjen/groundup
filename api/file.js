@@ -29,6 +29,18 @@ export default async function handler(req, res) {
   const isImage = OPEN.some(f => pathname.startsWith(f));
   if (!isImage && !session?.uid && !admin) return res.status(401).json({ error: 'Not signed in' });
 
+  // Templates and lesson materials are a paid-plan benefit. A Free account or
+  // a pass holder (still on the Free tier) cannot open one even with the URL.
+  if (pathname.startsWith('lesson-pdfs/') && !admin) {
+    try {
+      const { neon } = await import('@neondatabase/serverless');
+      const { TIER_RANK } = await import('./_utils.js');
+      const sql = neon(process.env.DATABASE_URL);
+      const [u] = await sql`SELECT tier, membership_status FROM users WHERE id = ${session.uid}`;
+      if (!u || u.membership_status !== 'active' || (TIER_RANK[u.tier] ?? 0) < 1) return res.status(403).json({ error: 'Templates and materials come with a paid membership.' });
+    } catch (e) { return res.status(403).json({ error: 'Templates and materials come with a paid membership.' }); }
+  }
+
   // Session prep documents are somebody's pro forma, term sheet or rent roll.
   // Those belong to the person who sent them and to Dr. Merritt — not to every
   // signed-in member, which is all the door above checks.
