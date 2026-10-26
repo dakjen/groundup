@@ -1863,8 +1863,8 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
                 <div style={{ color: "var(--gu-text)", fontFamily: serif, fontWeight: 700, fontSize: 24, marginBottom: 8 }}>Your intake is paid. Three steps before the call.</div>
                 <ol style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.8, margin: "0 0 16px", paddingLeft: 20 }}>
                   <li><strong style={{ color: "var(--gu-text2)" }}>Book your time</strong> with Dr. Merritt.</li>
-                  <li><strong style={{ color: "var(--gu-text2)" }}>Compile your project documents</strong> — pro forma, sources and uses, site control, term sheets — and upload them.</li>
-                  <li><strong style={{ color: "var(--gu-text2)" }}>Fill out the intake form</strong>: what you need help with, the decision in front of you, the numbers.</li>
+                  <li><strong style={{ color: "var(--gu-text2)" }}>Compile what you have</strong> — a pro forma and term sheets if there is a deal, the site or the plan if there isn't one yet — and upload it.</li>
+                  <li><strong style={{ color: "var(--gu-text2)" }}>Fill out the intake form</strong>: where you are, what you want help with, the decision in front of you.</li>
                 </ol>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                   <button style={btnRed} onClick={() => setActivePage("advisory")}>Open your intake workspace →</button>
@@ -1880,7 +1880,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
                 </div>
               ) : (<>
                 <ul style={{ listStyle: "none", padding: 0, margin: "0 0 20px" }}>
-                  {["She takes in your whole project — pro forma, capital stack, site, timeline — and finds what you missed",
+                  {["She takes in wherever you are — a live deal, one you are trying to get off the ground, or the question you need her on — and tells you what you missed and what to do next",
                     "You get it back as a written read, not a conversation you have to remember",
                     "If you continue on retainer, she counsels you on your project month over month, and the $1,500 intake credits against your first month",
                     "A private workspace: your documents, your messages, and every hour logged"].map((t, i) => (
@@ -3420,17 +3420,18 @@ export function DirectLine({ loadMsgs, sendMsg, isAdmin, title, subtitle, height
 // Filled out before the Full Project Intake call. Saved on the retainer row;
 // Dr. Merritt reads it on Intake & Bookings and it stays with the engagement.
 const INTAKE_FIELDS = [
-  ["project_name", "Project name", "text", "e.g. 12th Street Apartments"],
-  ["location", "Location", "text", "City, state"],
-  ["project_type", "Project type", "select", ["Multifamily rental", "Affordable / LIHTC", "Mixed-use", "Senior housing", "Townhomes / for-sale", "Commercial", "Other"]],
-  ["stage", "Where the project is right now", "select", ["Looking at a site", "Site under contract", "Site owned", "Zoning / entitlements", "Predevelopment / design", "Financing / capital raise", "Under construction", "Operating"]],
-  ["units_size", "Units and size", "text", "e.g. 48 units, 52,000 SF"],
-  ["help", "What do you need help with?", "textarea", "Be specific: the structure, the numbers, the lender, the partner, the site. What would make this call worth it?"],
-  ["decision", "The decision in front of you, and when it has to be made", "textarea", "What you are deciding, what the options are, and the date it has to be decided by"],
-  ["numbers", "The numbers as you have them", "textarea", "Total development cost, sources and uses, your equity, the gap, the rents or sale prices you are underwriting to"],
-  ["capital", "Lenders, investors and public funders you are talking to, and where that stands", "textarea", "Who, what they said, and what they asked for"],
+  ["situation", "Where are you right now?", "select", ["I have a live deal", "I am trying to get a deal off the ground", "I am working toward my first deal", "I need help with something else"]],
+  ["stage", "If there is a project, where is it?", "select", ["Looking at a site", "Site under contract", "Site owned", "Zoning / entitlements", "Predevelopment / design", "Financing / capital raise", "Under construction", "Operating", "No project yet"]],
+  ["project_name", "Project name (if there is one)", "text", "e.g. 12th Street Apartments"],
+  ["location", "Location or market", "text", "City, state — or the market you want to be in"],
+  ["project_type", "Project type (if there is one)", "select", ["Multifamily rental", "Affordable / LIHTC", "Mixed-use", "Senior housing", "Townhomes / for-sale", "Commercial", "Not sure yet", "Other"]],
+  ["units_size", "Units and size (if known)", "text", "e.g. 48 units, 52,000 SF"],
+  ["help", "What do you want her help with?", "textarea", "In your own words. A deal, a partnership, a site, getting started, a decision you keep circling — whatever would make this call worth it."],
+  ["decision", "The decision in front of you, and when it has to be made", "textarea", "What you are deciding, what the options are, and any date it has to be decided by"],
+  ["numbers", "The numbers, if you have them", "textarea", "Total development cost, sources and uses, your equity, the gap — or what you have been able to put together so far"],
+  ["capital", "Lenders, investors, partners or public funders you are talking to", "textarea", "Who, what they said, and what they asked for — or none yet"],
   ["deadline", "Hard dates", "text", "Closing, application deadline, option expiration…"],
-  ["extra", "Anything else Dr. Merritt should know", "textarea", "Partners, history, what you have already tried"],
+  ["extra", "Anything else Dr. Merritt should know", "textarea", "Background, partners, what you have already tried, what you want out of this"],
 ];
 export function IntakeForm({ initial, onSave }) {
   const [v, setV] = useState(initial || {});
@@ -3440,7 +3441,7 @@ export function IntakeForm({ initial, onSave }) {
   const lbl = { display: "block", fontSize: 9, color: "var(--gu-muted)", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 };
   const box = { width: "100%", boxSizing: "border-box", background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 9, padding: "10px 13px", color: "var(--gu-text)", fontFamily: font, fontSize: 13.5, outline: "none" };
   const save = async () => {
-    if (!String(v.help || "").trim()) { setNote({ ok: false, text: "Tell her what you need help with — that one is the whole point." }); return; }
+    if (!String(v.help || "").trim()) { setNote({ ok: false, text: "Tell her what you want help with — everything else is optional." }); return; }
     setBusy(true);
     try { await onSave(v); setNote({ ok: true, text: "Saved. Dr. Merritt reads this before your call; come back and update it any time." }); }
     catch (e) { setNote({ ok: false, text: e.message }); } finally { setBusy(false); setTimeout(() => setNote(null), 6000); }
@@ -3520,7 +3521,7 @@ function IntakeSteps({ data, reload }) {
   return (
     <div style={{ textAlign: "left", marginBottom: 40 }}>
       <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(28px,4vw,38px)", color: "var(--gu-text)", margin: "0 0 10px" }}>Your intake is paid. Three steps before the call.</h1>
-      <p style={{ color: "var(--gu-muted)", fontSize: 15, fontFamily: font, lineHeight: 1.8, maxWidth: 640, margin: "0 0 26px" }}>Dr. Merritt takes in your whole deal on this call and tells you what you missed. It is only as good as what she has in front of her.</p>
+      <p style={{ color: "var(--gu-muted)", fontSize: 15, fontFamily: font, lineHeight: 1.8, maxWidth: 640, margin: "0 0 26px" }}>On this call Dr. Merritt takes in wherever you are — a live deal, one you are trying to get off the ground, or the question you need her on — and tells you what you missed and what to do next. It is only as good as what she has in front of her.</p>
       {note && <div style={{ color: note.ok ? "#4ade80" : "#f87171", fontSize: 13, fontFamily: font, marginBottom: 12 }}>{note.text}</div>}
       <div style={card}>
         {step(1, "Book your time with Dr. Merritt", (
@@ -3531,8 +3532,8 @@ function IntakeSteps({ data, reload }) {
         ))}
       </div>
       <div style={card}>
-        {step(2, "Compile your project documents", (<>
-          <p style={sub}>Whatever you have: pro forma, sources and uses, site control, term sheets or LOIs, site plan, timeline, and anything a lender or investor has already sent back. Rough is fine; missing is not.</p>
+        {step(2, "Compile what you have", (<>
+          <p style={sub}>Whatever shows where you are. If there is a deal: pro forma, sources and uses, site control, term sheets or LOIs, site plan, timeline, anything a lender or investor has sent back. If there is not one yet: the site you are looking at, the partnership you are weighing, a business plan, notes on what you have tried. Rough is fine.</p>
           {files.length > 0 && (
             <div style={{ marginBottom: 10 }}>
               {files.map(f => (
@@ -3551,7 +3552,7 @@ function IntakeSteps({ data, reload }) {
       </div>
       <div style={card}>
         {step(3, "Fill out the intake form", (<>
-          <p style={sub}>What you need help with, the decision in front of you, the numbers as you have them, and who you are talking to for capital. It is what she reads first.</p>
+          <p style={sub}>Where you are, what you want help with, and the decision in front of you. Answer what applies and skip the rest. It is what she reads first.</p>
           <IntakeForm initial={data.intake || {}} onSave={(v) => api("/api/retainers", { method: "POST", body: JSON.stringify({ action: "save_intake", intake: v }) }).then(reload)} />
         </>), !!(data.intake && data.intake.help))}
       </div>
@@ -3608,7 +3609,7 @@ export function RetainerPage({ member, setActivePage }) {
             {data.notes || "Following your call with Dr. Merritt — pick the monthly block that fits your project. Billed monthly, cancel anytime. Your workspace opens the moment you're set."}
           </p>
           <div style={{ background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 12, padding: "14px 20px", maxWidth: 520, margin: "0 auto 28px", color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>
-            Already paid the <strong style={{ color: "var(--gu-text2)" }}>$1,500 Full Project Intake</strong>? It credits automatically against your first month at checkout. Haven't yet? The intake — Dr. Merritt reviewing your whole deal before the first working session — is the first step.
+            Already paid the <strong style={{ color: "var(--gu-text2)" }}>$1,500 Full Project Intake</strong>? It credits automatically against your first month at checkout. Haven't yet? The intake — Dr. Merritt taking in wherever you are before the first working session — is the first step.
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
             {PLANS.map(p => (
