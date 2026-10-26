@@ -1766,7 +1766,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
           ))}
           <div style={{ borderTop: "1px solid var(--gu-border2)", marginTop: 12, paddingTop: 10 }}>
             <button onClick={() => setActivePage("pricing")} style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", color: "var(--gu-body)", border: "none", padding: "9px 13px", fontFamily: font, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Plans &amp; pricing</button>
-            <button onClick={onSignOut} style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", color: "var(--gu-muted)", border: "none", padding: "9px 13px", fontFamily: font, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Sign out</button>
+            <button onClick={onSignOut} style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", color: "var(--gu-text)", border: "1px solid var(--gu-border)", borderRadius: 8, padding: "10px 13px", marginTop: 6, fontFamily: font, fontWeight: 800, fontSize: 13.5, cursor: "pointer" }}>Sign out</button>
           </div>
         </aside>
 
