@@ -2034,7 +2034,7 @@ const plans = [
     tier: "Advisor",
     price: "$3,025+",
     period: "/mo",
-    description: "Dr. Merritt embedded on your project — for developers with active deals who need her in their corner every month.",
+    description: "Dr. Merritt counseling you on your project — for developers with active deals who need her in their corner every month.",
     value: "5 hrs — $3,025 · 10 hrs — $5,500 · 15 hrs — $7,700 · $1,500 intake credited",
     accent: "#e0c4c4",
     popular: false,
@@ -2384,7 +2384,7 @@ function PricingPage({ onSignUp }) {
             </table>
           </div>
           <div style={{ padding: "0 28px 20px", color: "#8f7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
-            Senior Advisor includes everything in Owner — plus Dr. Merritt embedded on your project, month over month.
+            Senior Advisor includes everything in Owner — plus Dr. Merritt counseling you on your project, month over month.
           </div>
         </div>
 
@@ -2437,7 +2437,7 @@ function ContactPage({ setActivePage, advisorLink }) {
     { id: "strategy", title: "Strategy Session", desc: "Big picture direction: where to focus, how to grow your pipeline, what JV structures make sense for your stage.", price: "$425", duration: "45 min", Icon: Compass, stripe: "https://buy.stripe.com/placeholder_strategy" },
     { id: "capital", title: "Capital Stack Review", desc: "Deep dive into your financing structure — tax credit sizing, subsidy sequencing, gap analysis, and how to close the deal.", price: "$550", duration: "45 min", Icon: BarChart3, stripe: "https://buy.stripe.com/placeholder_capital" },
     { id: "community", title: "Community Development", desc: "Community engagement strategy, political capital, government relationships, and neighborhood support for your project.", price: "$375", duration: "45 min", Icon: Handshake, stripe: "https://buy.stripe.com/placeholder_community" },
-    { id: "advisor", title: "Senior Advisor — start with the Full Project Intake", desc: "Have a live deal? Send her the whole thing. The $1,500 intake takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. Then the retainer puts Dr. Merritt on your project month over month: 5 hrs/mo — $3,025 · 10 hrs/mo — $5,500 · 15 hrs/mo — $7,700. Continue and the $1,500 credits against your first month.", price: "$1,500", duration: "intake · credited if you continue", Icon: Handshake, advisor: true },
+    { id: "advisor", title: "Senior Advisor — start with the Full Project Intake", desc: "Have a live deal? Send her the whole thing. The $1,500 intake takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. Then the retainer is Dr. Merritt counseling you on your project, month over month: 5 hrs/mo — $3,025 · 10 hrs/mo — $5,500 · 15 hrs/mo — $7,700. Continue and the $1,500 credits against your first month.", price: "$1,500", duration: "intake · credited if you continue", Icon: Handshake, advisor: true },
   ];
 
   const [selected, setSelected] = useState(null);
