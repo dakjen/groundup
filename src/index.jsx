@@ -1046,7 +1046,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, onSignOut, memb
       : [["admin-waitlist", "Waitlist"], ["admin-contacts", "Contacts"], ["admin-users", "Users"], ["admin-referrals", "Referrals"], ["admin-invites", "Gifts & Invites"]] },
     { label: "Events", items: [["lunchlearn", "Lunch & Learns"], ["admin-office", "Office Hours"]] },
     { label: "Revenue", items: [["admin-revenue", "Revenue"]] },
-    { label: "Admin", items: [["admin-drops", "Lesson Drops"], ["admin-email", "Email"], ["admin-team", "Team"], ["admin-shop", "Shop"], ["admin-courses", "All Courses"], ["admin-status", "System Status"], ["signout", "Sign out"]] },
+    { label: "Admin", items: [["admin-drops", "Lesson Drops"], ["admin-email", "Email"], ["admin-team", "Team"], ["admin-shop", "Shop"], ["admin-courses", "All Courses"], ["admin-status", "System Status"]] },
   ];
   const ADMIN_TOOLS = ADMIN_GROUPS.flatMap(g => g.items).filter(([id]) => id.startsWith("admin-"));
   const [adminOpen, setAdminOpen] = useState(false);
