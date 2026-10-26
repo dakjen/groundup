@@ -3185,6 +3185,7 @@ export function ResourcesPage({ member, onUpgrade }) {
   ];
   // The partner network filters by the type of partner (Marketing, Legal…) the team set up.
   const [ptype, setPtype] = useState("");
+  const [partnerOpen, setPartnerOpen] = useState(null);   // the partner whose card was clicked
   const partnerTypes = data?.partner_types || [];
 
   // Display name: drop the "GroundUp " prefix and the file extension the upload left on
@@ -3289,18 +3290,15 @@ export function ResourcesPage({ member, onUpgrade }) {
                   {items.length === 0 ? <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>{ptype ? `No ${ptype} partners yet.` : "Nothing here yet — check back soon."}</div> : (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }} className="lib-partners-grid">
                       {items.map(r => (
-                        <div key={r.id} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 12, padding: "18px 22px", display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
+                        <div key={r.id} onClick={() => setPartnerOpen(r)} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 12, padding: "18px 22px", display: "flex", flexDirection: "column", gap: 8, minWidth: 0, cursor: "pointer", transition: "border-color .15s" }}
+                          onMouseEnter={e => { e.currentTarget.style.borderColor = "#b8010160"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a0000"; }}>
                           <div style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font }}>{r.partner_type || "Partner"}</div>
-                          {r.url ? <a href={r.url} target="_blank" rel="noreferrer" onClick={() => ping(r.id)} style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 14, fontFamily: font, textDecoration: "none", lineHeight: 1.3 }}>{r.title} ↗</a> : <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 14, fontFamily: font }}>{r.title}</div>}
-                          {r.description && <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font, lineHeight: 1.55, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{r.description}</div>}
-                          {r.recommendation && <div style={{ color: "var(--gu-body)", fontSize: 11.5, fontFamily: font, lineHeight: 1.5, borderLeft: "2px solid #b80101", paddingLeft: 8 }}>{r.recommendation}</div>}
-                          {r.code && (
-                            <div style={{ marginTop: "auto", background: "var(--gu-card2)", border: "1px dashed #e0c4c440", borderRadius: 8, padding: "6px 10px", display: "flex", alignItems: "center", gap: 8 }}>
-                              <span style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", fontFamily: font }}>CODE</span>
-                              <code style={{ color: "var(--gu-text2)", fontSize: 12.5, letterSpacing: "1px" }}>{r.code}</code>
-                              <button onClick={() => { ping(r.id); navigator.clipboard && navigator.clipboard.writeText(r.code); }} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 11, fontFamily: font, fontWeight: 700 }}>Copy</button>
-                            </div>
-                          )}
+                          <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15, fontFamily: font, lineHeight: 1.3 }}>{r.title}</div>
+                          {r.description && <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, lineHeight: 1.55, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{r.description}</div>}
+                          <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 10, paddingTop: 4 }}>
+                            {r.code && <span style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", fontFamily: font }}>MEMBER CODE</span>}
+                            <span style={{ marginLeft: "auto", color: "#b80101", fontSize: 12.5, fontFamily: font, fontWeight: 800 }}>Details →</span>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -3328,6 +3326,37 @@ export function ResourcesPage({ member, onUpgrade }) {
           </>)}
         </div>
       </div>
+      {partnerOpen && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} {...backdropClose(() => setPartnerOpen(null))}>
+          <div style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 18, padding: "28px 30px", width: "min(560px, 100%)", maxHeight: "90vh", overflowY: "auto", fontFamily: font }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 6 }}>{partnerOpen.partner_type || "Partner"} · NREUV Partner Network</div>
+                <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 26, color: "var(--gu-text)", lineHeight: 1.15 }}>{partnerOpen.title}</div>
+              </div>
+              <button onClick={() => setPartnerOpen(null)} aria-label="Close" style={{ background: "none", border: "1px solid var(--gu-border)", color: "var(--gu-muted)", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, flexShrink: 0 }}>×</button>
+            </div>
+            {partnerOpen.description && <p style={{ color: "var(--gu-body)", fontSize: 14, lineHeight: 1.75, margin: "16px 0 0", whiteSpace: "pre-wrap" }}>{partnerOpen.description}</p>}
+            {partnerOpen.recommendation && (
+              <div style={{ background: "var(--gu-red-tint)", border: "1px solid #b8010130", borderRadius: 10, padding: "12px 16px", marginTop: 16 }}>
+                <div style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: 4 }}>Why NREUV recommends them</div>
+                <div style={{ color: "var(--gu-body)", fontSize: 13.5, lineHeight: 1.7 }}>{partnerOpen.recommendation}</div>
+              </div>
+            )}
+            {partnerOpen.code && (
+              <div style={{ background: "var(--gu-card2)", border: "1px dashed #e0c4c440", borderRadius: 10, padding: "10px 14px", display: "flex", alignItems: "center", gap: 12, marginTop: 16 }}>
+                <span style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px" }}>MEMBER CODE</span>
+                <code style={{ color: "var(--gu-text2)", fontSize: 15, letterSpacing: "1.5px", fontWeight: 700 }}>{partnerOpen.code}</code>
+                <button onClick={() => { ping(partnerOpen.id); try { navigator.clipboard.writeText(partnerOpen.code); } catch {} }} style={{ marginLeft: "auto", background: "none", border: "1px solid var(--gu-border)", color: "var(--gu-text2)", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>Copy</button>
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 10, marginTop: 22, flexWrap: "wrap" }}>
+              {partnerOpen.url && <a href={partnerOpen.url} target="_blank" rel="noreferrer" onClick={() => ping(partnerOpen.id)} style={{ ...btnRed, textDecoration: "none", display: "inline-block" }}>Visit their site →</a>}
+              <button onClick={() => setPartnerOpen(null)} style={{ ...btnGhost, color: "var(--gu-text2)", borderColor: "var(--gu-border)" }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
       <style>{`@media (max-width: 820px) { .lib-grid { grid-template-columns: 1fr !important; } .lib-side { position: static !important; display: flex; flex-wrap: wrap; gap: 4px; } .lib-side > div > div { display: none; } .lib-lesson { display: none !important; } .lib-partners-grid { grid-template-columns: 1fr !important; } }`}</style>
     </div>
   );
