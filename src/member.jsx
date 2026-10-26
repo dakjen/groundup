@@ -3187,85 +3187,131 @@ export function ResourcesPage({ member, onUpgrade }) {
   const [ptype, setPtype] = useState("");
   const partnerTypes = data?.partner_types || [];
 
-  return (
-    <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(20px,5vw,80px) 80px" }}>
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Member Library</div>
-        <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "var(--gu-text)", marginBottom: 40 }}>Resources & Templates</h1>
-        {error && <div style={{ color: "#ff6b6b", fontFamily: font, fontSize: 13, marginBottom: 20 }}>{error}</div>}
-        {!data ? <div style={{ color: "var(--gu-muted)", fontFamily: font }}>Loading…</div> : groups.map(g => {
-          const all = data.resources.filter(r => r.category === g.key);
-          const items = g.key === "partner" && ptype ? all.filter(r => r.partner_type === ptype) : all;
-          const locked = g.elite && rank < 3 && member.role !== "admin";
-          return (
-            <div key={g.key} style={{ marginBottom: 44 }}>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 6 }}>
-                <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 26, color: "var(--gu-text2)" }}>{g.title}</h2>
-                {g.elite && <TierBadge tier="Elite" small />}
-              </div>
-              <p style={{ color: "var(--gu-muted2)", fontSize: 13, fontFamily: font, marginBottom: 18 }}>{g.desc}</p>
-              {g.key === "partner" && !locked && partnerTypes.length > 0 && (
-                <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 18 }}>
-                  <label style={{ ...lbl, marginBottom: 0 }}>Type of partner</label>
-                  <select value={ptype} onChange={e => setPtype(e.target.value)} style={{ ...inp, width: "auto", minWidth: 220, marginBottom: 0, cursor: "pointer" }}>
-                    <option value="">All types ({all.length})</option>
-                    {partnerTypes.map(t => <option key={t} value={t}>{t} ({all.filter(r => r.partner_type === t).length})</option>)}
-                  </select>
-                </div>
-              )}
-              {locked ? (
-                <div style={{ background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 14, padding: "26px 30px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                  <Lock size={18} color="var(--gu-muted)" />
-                  <span style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, flex: 1 }}>The partner network — marketing, tech, design and more, with member-only referral discounts — is an Owner benefit.</span>
-                  <button style={btnRed} onClick={onUpgrade}>Go Owner →</button>
-                </div>
-              ) : items.length === 0 ? (
-                <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font, background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 12, padding: "20px 24px" }}>{g.key === "partner" && ptype ? `No ${ptype} partners yet.` : "Nothing here yet — check back soon."}</div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {items.map(r => (
-                    <div key={r.id} onClick={r.locked ? onUpgrade : undefined} title={r.locked ? `Opens with the ${TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan` : undefined} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 14, padding: "20px 26px", display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: "10px 28px", opacity: r.locked ? 0.45 : 1, filter: r.locked ? "grayscale(1)" : "none", cursor: r.locked ? "pointer" : "default" }}>
-                      <div style={{ flex: 1, minWidth: 260, display: "flex", flexDirection: "column", gap: 8 }}>
-                      {r.locked && <div style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font }}>{TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan</div>}
-                      {r.url && !/youtube\.com|youtu\.be/.test(r.url) ? (
-                        <a href={r.url} target="_blank" rel="noreferrer" onClick={() => ping(r.id)} style={{ color: "#b80101", fontWeight: 800, fontSize: 16, fontFamily: font, textDecoration: "none" }}>{r.title} ↗</a>
-                      ) : (
-                        <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 16, fontFamily: font }}>{r.title}</div>
-                      )}
-                      {r.description && <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.7, flex: 1 }}>{r.description}</div>}
-                      </div>
-                      <div style={{ width: "min(340px, 100%)", display: "flex", flexDirection: "column", gap: 8 }}>
-                      {r.recommendation && (
-                        <div style={{ background: "var(--gu-red-tint)", border: "1px solid #b8010120", borderRadius: 8, padding: "10px 14px" }}>
-                          <div style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 4 }}>Why NREUV recommends it</div>
-                          <div style={{ color: "var(--gu-body)", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{r.recommendation}</div>
-                        </div>
-                      )}
-                      {r.code && (
-                        <div style={{ background: "var(--gu-card2)", border: "1px dashed #e0c4c440", borderRadius: 8, padding: "8px 12px", display: "flex", alignItems: "center", gap: 10 }}>
-                          <span style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", fontFamily: font }}>CODE</span>
-                          <code style={{ color: "var(--gu-text2)", fontSize: 13, letterSpacing: "1px" }}>{r.code}</code>
-                          <button onClick={() => { ping(r.id); navigator.clipboard && navigator.clipboard.writeText(r.code); }} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 11, fontFamily: font, fontWeight: 700 }}>Copy</button>
-                        </div>
-                      )}
-                      {r.url && (() => {
-                        const yt = r.url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{6,})/);
-                        if (yt) return (
-                          <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, borderRadius: 10, overflow: "hidden", background: "var(--gu-bg)" }}>
-                            <iframe src={`https://www.youtube.com/embed/${yt[1]}`} title={r.title} allowFullScreen allow="accelerometer; encrypted-media; picture-in-picture" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }} />
-                          </div>
-                        );
-                        return <a href={r.url} target="_blank" rel="noreferrer" onClick={() => ping(r.id)} style={{ color: "#b80101", fontSize: 13, fontFamily: font, fontWeight: 800, textDecoration: "none" }}>Open →</a>;
-                      })()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+  // Display name: drop the "GroundUp " prefix and the file extension the upload left on
+  const cleanName = (t) => String(t || "").replace(/^GroundUp[ _]/i, "").replace(/\.(xlsx|xlsm|xls|docx|doc|pptx|pdf|csv)$/i, "").trim();
+  const extOf = (r) => { const m = String(r.url || "").match(/\.(xlsx|xlsm|xls|docx|doc|pptx|ppt|pdf|csv)(?=[^.]*$)/i); return m ? m[1].toUpperCase().replace("XLSX", "XLS").replace("DOCX", "DOC").replace("PPTX", "PPT") : (r.url ? "LINK" : ""); };
+  const stageNum = (r) => { const m = String(r.stage || "").match(/Stage\s+(\d+)/i); return m ? Number(m[1]) : 99; };
+  const jump = (id) => { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); };
+  const tile = (r) => {
+    const locked = !!r.locked; const ext = extOf(r);
+    const open = () => { if (locked) { onUpgrade && onUpgrade(); return; } if (r.url) { ping(r.id); window.open(r.url, "_blank", "noreferrer"); } };
+    return (
+      <div key={r.id} onClick={open} title={locked ? `Opens with the ${TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan` : cleanName(r.title)} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 12, padding: "14px 14px 12px", aspectRatio: "1 / 1", display: "flex", flexDirection: "column", cursor: r.url || locked ? "pointer" : "default", opacity: locked ? 0.45 : 1, filter: locked ? "grayscale(1)" : "none", transition: "border-color .15s, transform .15s", minWidth: 0 }}
+        onMouseEnter={e => { if (!locked) { e.currentTarget.style.borderColor = "#b8010160"; e.currentTarget.style.transform = "translateY(-2px)"; } }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a0000"; e.currentTarget.style.transform = "none"; }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+          <span style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", fontFamily: font, border: "1px solid #b8010140", borderRadius: 4, padding: "2px 6px" }}>{ext}</span>
+          <span style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", fontFamily: font, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{locked ? `${TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan` : (r.kind_label || "")}</span>
+        </div>
+        <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 13.5, fontFamily: font, lineHeight: 1.35, marginTop: 10, display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{cleanName(r.title)}</div>
+        <div style={{ marginTop: "auto", color: "var(--gu-muted)", fontSize: 11, fontFamily: font, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{r.lesson_title || (r.description && !r.from_lesson ? r.description : "")}</div>
       </div>
+    );
+  };
+  const tplItems = data ? data.resources.filter(r => r.category === "template") : [];
+  const byStage = (() => { const m = new Map(); for (const r of tplItems) { const k = r.stage || "General"; if (!m.has(k)) m.set(k, { stage: k, course: r.course_title, items: [] }); m.get(k).items.push(r); } return [...m.values()].sort((a, b) => stageNum(a) - stageNum(b)); })();
+  const grid = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 10 };
+
+  return (
+    <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(20px,5vw,60px) 80px" }}>
+      <div style={{ maxWidth: 1180, margin: "0 auto", display: "grid", gridTemplateColumns: "200px minmax(0,1fr)", gap: 28, alignItems: "start" }} className="lib-grid">
+        {/* Sidebar */}
+        <div style={{ position: "sticky", top: 90 }} className="lib-side">
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Member Library</div>
+          {[["lib-templates", "Templates", tplItems.length], ["lib-resources", "Resources", data ? data.resources.filter(r => r.category === "resource").length : 0], ["lib-partners", "NREUV Partners", data ? data.resources.filter(r => r.category === "partner").length : 0]].map(([id, label, n]) => (
+            <button key={id} onClick={() => jump(id)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", background: "transparent", border: "none", borderLeft: "2px solid #2a0000", color: "var(--gu-text2)", padding: "8px 12px", fontFamily: font, fontWeight: 800, fontSize: 13.5, cursor: "pointer", textAlign: "left" }}>{label}<span style={{ color: "var(--gu-muted)", fontSize: 11, fontWeight: 600 }}>{n}</span></button>
+          ))}
+          {byStage.length > 1 && (
+            <div style={{ marginTop: 6, paddingLeft: 14 }}>
+              {byStage.map(g => <button key={g.stage} onClick={() => jump("lib-" + g.stage.replace(/\W+/g, "-"))} style={{ display: "block", width: "100%", background: "transparent", border: "none", color: "var(--gu-muted)", padding: "5px 0", fontFamily: font, fontWeight: 600, fontSize: 12, cursor: "pointer", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{g.stage === "General" ? "General" : g.stage.replace(/ of 7/, "")}{g.course ? ` · ${g.course.split(":")[0]}` : ""}</button>)}
+            </div>
+          )}
+        </div>
+
+        {/* Main */}
+        <div style={{ minWidth: 0 }}>
+          <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4.5vw,42px)", color: "var(--gu-text)", marginBottom: 6 }}>Resources & Templates</h1>
+          <p style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.7, marginBottom: 30 }}>Every template, tool and partner in one place. Templates are filed by the stage that introduces them.</p>
+          {error && <div style={{ color: "#ff6b6b", fontFamily: font, fontSize: 13, marginBottom: 20 }}>{error}</div>}
+          {!data ? <div style={{ color: "var(--gu-muted)", fontFamily: font }}>Loading…</div> : (<>
+            {/* Templates, by stage */}
+            <div id="lib-templates" style={{ scrollMarginTop: 90, marginBottom: 44 }}>
+              <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "var(--gu-text2)", marginBottom: 4 }}>Templates</h2>
+              <p style={{ color: "var(--gu-muted2)", fontSize: 13, fontFamily: font, marginBottom: 16 }}>Development timelines, worksheets, and working documents.</p>
+              {tplItems.length === 0 && <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>Nothing here yet — check back soon.</div>}
+              {byStage.map(g => (
+                <div key={g.stage} id={"lib-" + g.stage.replace(/\W+/g, "-")} style={{ scrollMarginTop: 90, marginBottom: 22 }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 10 }}>
+                    <span style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font }}>{g.stage === "General" ? "General" : g.stage.replace(/ of 7/, "")}</span>
+                    {g.course && <span style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.course}</span>}
+                    <span style={{ flex: 1, borderTop: "1px solid #1e0000" }} />
+                  </div>
+                  <div style={grid}>{g.items.map(tile)}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Resources */}
+            <div id="lib-resources" style={{ scrollMarginTop: 90, marginBottom: 44 }}>
+              <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "var(--gu-text2)", marginBottom: 4 }}>Resources</h2>
+              <p style={{ color: "var(--gu-muted2)", fontSize: 13, fontFamily: font, marginBottom: 16 }}>Curated tools and reading Dr. Merritt's team actually uses.</p>
+              {(() => { const items = data.resources.filter(r => r.category === "resource"); return items.length === 0 ? <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>Nothing here yet — check back soon.</div> : <div style={grid}>{items.map(tile)}</div>; })()}
+            </div>
+
+            {/* Partners */}
+            <div id="lib-partners" style={{ scrollMarginTop: 90 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 4 }}>
+                <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "var(--gu-text2)" }}>NREUV Partner Network</h2>
+                <TierBadge tier="Elite" small />
+              </div>
+              <p style={{ color: "var(--gu-muted2)", fontSize: 13, fontFamily: font, marginBottom: 16 }}>The firms in our corner, with member referral codes.</p>
+              {(() => {
+                const all = data.resources.filter(r => r.category === "partner");
+                const items = ptype ? all.filter(r => r.partner_type === ptype) : all;
+                const locked = rank < 3 && member.role !== "admin";
+                if (locked) return (
+                  <div style={{ background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 14, padding: "22px 26px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+                    <Lock size={18} color="var(--gu-muted)" />
+                    <span style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, flex: 1 }}>The partner network, with member-only referral discounts, is an Owner benefit.</span>
+                    <button style={btnRed} onClick={onUpgrade}>Go Owner →</button>
+                  </div>
+                );
+                return (<>
+                  {partnerTypes.length > 0 && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
+                      <label style={{ ...lbl, marginBottom: 0 }}>Type</label>
+                      <select value={ptype} onChange={e => setPtype(e.target.value)} style={{ ...inp, width: "auto", minWidth: 220, marginBottom: 0, cursor: "pointer", padding: "8px 12px", fontSize: 13 }}>
+                        <option value="">All types ({all.length})</option>
+                        {partnerTypes.map(t => <option key={t} value={t}>{t} ({all.filter(r => r.partner_type === t).length})</option>)}
+                      </select>
+                    </div>
+                  )}
+                  {items.length === 0 ? <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>{ptype ? `No ${ptype} partners yet.` : "Nothing here yet — check back soon."}</div> : (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 10 }}>
+                      {items.map(r => (
+                        <div key={r.id} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 12, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
+                          <div style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font }}>{r.partner_type || "Partner"}</div>
+                          {r.url ? <a href={r.url} target="_blank" rel="noreferrer" onClick={() => ping(r.id)} style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 14, fontFamily: font, textDecoration: "none", lineHeight: 1.3 }}>{r.title} ↗</a> : <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 14, fontFamily: font }}>{r.title}</div>}
+                          {r.description && <div style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font, lineHeight: 1.55, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{r.description}</div>}
+                          {r.recommendation && <div style={{ color: "var(--gu-body)", fontSize: 11.5, fontFamily: font, lineHeight: 1.5, borderLeft: "2px solid #b80101", paddingLeft: 8 }}>{r.recommendation}</div>}
+                          {r.code && (
+                            <div style={{ marginTop: "auto", background: "var(--gu-card2)", border: "1px dashed #e0c4c440", borderRadius: 8, padding: "6px 10px", display: "flex", alignItems: "center", gap: 8 }}>
+                              <span style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", fontFamily: font }}>CODE</span>
+                              <code style={{ color: "var(--gu-text2)", fontSize: 12.5, letterSpacing: "1px" }}>{r.code}</code>
+                              <button onClick={() => { ping(r.id); navigator.clipboard && navigator.clipboard.writeText(r.code); }} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 11, fontFamily: font, fontWeight: 700 }}>Copy</button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>);
+              })()}
+            </div>
+          </>)}
+        </div>
+      </div>
+      <style>{`@media (max-width: 820px) { .lib-grid { grid-template-columns: 1fr !important; } .lib-side { position: static !important; display: flex; flex-wrap: wrap; gap: 4px; } .lib-side > div { display: none; } }`}</style>
     </div>
   );
 }

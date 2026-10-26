@@ -611,7 +611,7 @@ export default async function handler(req, res) {
       try {
         const [attRow] = await sql`SELECT value FROM settings WHERE key = 'lesson_attachments'`;
         const atts = attRow?.value ? JSON.parse(attRow.value) : {};
-        const courses = await sql`SELECT id, title, lessons, hidden, available_at FROM courses`;
+        const courses = await sql`SELECT id, title, stage, lessons, hidden, available_at FROM courses`;
         const byId = Object.fromEntries(courses.map(c => [c.id, c]));
         for (const [key, v] of Object.entries(atts)) {
           for (const [i, m] of (v.materials || []).entries()) {
@@ -626,7 +626,8 @@ export default async function handler(req, res) {
             // Lesson materials come with the courses: any paid plan opens them
             visible.push(lockRow({ id: `att:${key}:${i}`, title: String(m.title || '').replace(/_/g, ' '), url: m.url, category: m.kind === 'Template' ? 'template' : 'resource',
               kind_label: m.kind, min_tier: 'Basic', phase: m.phase || null, position: 999,
-              description: course ? `From ${course.title}${lesson ? ` · ${lesson.title}` : ''}` : null, from_lesson: true }, 1));
+              description: course ? `From ${course.title}${lesson ? ` · ${lesson.title}` : ''}` : null, from_lesson: true,
+              course_title: course.title, stage: course.stage || null, lesson_title: lesson ? lesson.title : null }, 1));
           }
         }
       } catch (e) { console.error('library merge', e.message); }
