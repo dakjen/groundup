@@ -80,9 +80,9 @@ const DESCRIPTIONS = {
   session_capital: 'A 45-minute one-to-one capital stack review with Dr. Gina Merritt.',
   session_community: 'A 45-minute one-to-one community development session with Dr. Gina Merritt.',
   retainer_onboarding: 'A full project intake with Dr. Merritt, credited against your first retainer month.',
-  retainer_5: 'Dr. Merritt in your corner — five hours a month of senior advisory on your project.',
-  retainer_10: 'Dr. Merritt in your corner — ten hours a month of senior advisory on your project.',
-  retainer_15: 'Dr. Merritt in your corner — fifteen hours a month of senior advisory on your project.',
+  retainer_5: 'Dr. Merritt advising and working with you on your project — five hours a month.',
+  retainer_10: 'Dr. Merritt advising and working with you on your project — ten hours a month.',
+  retainer_15: 'Dr. Merritt advising and working with you on your project — fifteen hours a month.',
 };
 const describe = (item) => DESCRIPTIONS[item] || DESCRIPTIONS[item.replace(/_annual$/, '')] || null;
 
