@@ -1882,7 +1882,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
                 <ul style={{ listStyle: "none", padding: 0, margin: "0 0 20px" }}>
                   {["She takes in your whole project — pro forma, capital stack, site, timeline — and finds what you missed",
                     "You get it back as a written read, not a conversation you have to remember",
-                    "If you continue on retainer, she's on your project month over month, and the $1,500 intake credits against your first month",
+                    "If you continue on retainer, she counsels you on your project month over month, and the $1,500 intake credits against your first month",
                     "A private workspace: your documents, your messages, and every hour logged"].map((t, i) => (
                     <li key={i} style={{ display: "flex", gap: 12, marginBottom: 10, color: "var(--gu-body)", fontSize: 14, lineHeight: 1.7, fontFamily: font, fontWeight: 600 }}>
                       <span style={{ color: "#e01818", flexShrink: 0 }}>·</span><span>{t}</span>
