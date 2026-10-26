@@ -2746,12 +2746,13 @@ export function WaitlistForm({ list = "insider" }) {
       if (budget === "I already know what tier I want" && !wantTier) { setMsg("Pick the tier you want."); return; }
       budgetVal = budget === "I already know what tier I want" ? `I want ${wantTier}` : budget;
     } else {
-      // General list: the single goal question answers everything
+      // General list: the same learn and pain-point questions as insiders, plus the goal (which sets the plan)
+      learnVal = learn === "Other" ? learnOther.trim() : learn;
+      painVal = pain === "Other" ? painOther.trim() : pain;
+      if (!learnVal) { setMsg("Tell us what you hope to learn."); return; }
+      if (!painVal) { setMsg("Tell us your main pain point."); return; }
       if (!goal) { setMsg("Pick your goal."); return; }
       if (goal === "I already know what tier I want" && !wantTier) { setMsg("Pick the tier you want."); return; }
-      const g = GEN_GOALS.find(x => x.value === goal);
-      const goalText = (g?.label || goal).replace(/^\S+\s/, "");
-      learnVal = goalText; painVal = goalText;
       budgetVal = goal === "I already know what tier I want" ? `I want ${wantTier}` : goal;
     }
     setBusy(true); setMsg(null);
@@ -2847,7 +2848,6 @@ export function WaitlistForm({ list = "insider" }) {
                 <label style={lbl}>Phone</label>
                 <input style={inp} type="tel" value={phone} onChange={e => setPhone(e.target.value)} required placeholder="(555) 555-5555" name="tel" autoComplete="tel" />
               </div>
-              {insider ? (<>
               <div style={{ marginBottom: 14 }}>
                 <label style={lbl}>What do you hope to learn?</label>
                 <select style={sel} value={learn} onChange={e => setLearn(e.target.value)} required>
@@ -2870,6 +2870,7 @@ export function WaitlistForm({ list = "insider" }) {
                   </div>
                 )}
               </div>
+              {insider ? (<>
               <div style={{ marginBottom: 14 }}>
                 <label style={lbl}>Monthly budget for a course, community, and access to support</label>
                 <div style={{ color: "#8f7070", fontSize: 11.5, fontFamily: font, lineHeight: 1.6, margin: "2px 0 8px" }}>The lower tiers build your foundation — the courses, the community, the knowledge. The higher tiers add deal-specific support with Dr. Merritt.</div>
