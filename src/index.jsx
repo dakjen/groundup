@@ -2168,12 +2168,12 @@ function HonestRule() {
   return (
     <div style={{ marginTop: 14 }}>
       <div style={{ color: "#8f7070", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
-        Have a live deal? The $1,500 Full Project Intake is the front door — credited to your first retainer month if you continue.{" "}
+        Want Dr. Merritt on your own situation — a live deal, one you are trying to get off the ground, or a question you need her on? The $1,500 Full Project Intake is the front door — credited to your first retainer month if you continue.{" "}
         <button onClick={() => setOpen(o => !o)} style={{ background: "none", border: "none", color: "#b80101", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12.5, cursor: "pointer", padding: 0 }}>{open ? "Less ↑" : "How this works ↓"}</button>
       </div>
       {open && (
         <div style={{ color: "#8f7070", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginTop: 8 }}>
-          {"Member, Builder, and Premium are the industry essentials. \"How do I calculate a rate of return?\" lives there. \"I can't solve the gap on MY deal\" needs Dr. Merritt in the whole deal — so send it to her: she takes in your entire project and finds what you missed. Not ready for Owner? Start at Premium — 10% off 1:1 sessions, and upgrade the moment your deal heats up."}
+          {"Member, Builder, and Premium are the industry essentials. \"How do I calculate a rate of return?\" lives there. \"I can't solve the gap on MY deal\" needs Dr. Merritt on your situation — so bring it to her: she takes in wherever you are and tells you what you missed and what to do next. Not ready for Owner? Start at Premium — 10% off 1:1 sessions, and upgrade the moment your deal heats up."}
         </div>
       )}
     </div>
@@ -2437,7 +2437,7 @@ function ContactPage({ setActivePage, advisorLink }) {
     { id: "strategy", title: "Strategy Session", desc: "Big picture direction: where to focus, how to grow your pipeline, what JV structures make sense for your stage.", price: "$425", duration: "45 min", Icon: Compass, stripe: "https://buy.stripe.com/placeholder_strategy" },
     { id: "capital", title: "Capital Stack Review", desc: "Deep dive into your financing structure — tax credit sizing, subsidy sequencing, gap analysis, and how to close the deal.", price: "$550", duration: "45 min", Icon: BarChart3, stripe: "https://buy.stripe.com/placeholder_capital" },
     { id: "community", title: "Community Development", desc: "Community engagement strategy, political capital, government relationships, and neighborhood support for your project.", price: "$375", duration: "45 min", Icon: Handshake, stripe: "https://buy.stripe.com/placeholder_community" },
-    { id: "advisor", title: "Senior Advisor — start with the Full Project Intake", desc: "Have a live deal? Send her the whole thing. The $1,500 intake takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. Then the retainer is Dr. Merritt counseling you on your project, month over month: 5 hrs/mo — $3,025 · 10 hrs/mo — $5,500 · 15 hrs/mo — $7,700. Continue and the $1,500 credits against your first month.", price: "$1,500", duration: "intake · credited if you continue", Icon: Handshake, advisor: true },
+    { id: "advisor", title: "Senior Advisor — start with the Full Project Intake", desc: "Bring her wherever you are: a live deal, one you are trying to get off the ground, or the question you need her on. The $1,500 intake takes it all in — the pro forma and capital stack if there is a deal, the site or the plan if there isn't one yet — and tells you what you missed and what to do next. Then the retainer is Dr. Merritt counseling you on your project, month over month: 5 hrs/mo — $3,025 · 10 hrs/mo — $5,500 · 15 hrs/mo — $7,700. Continue and the $1,500 credits against your first month.", price: "$1,500", duration: "intake · credited if you continue", Icon: Handshake, advisor: true },
   ];
 
   const [selected, setSelected] = useState(null);
@@ -2644,7 +2644,7 @@ function ContactPage({ setActivePage, advisorLink }) {
             </div>
             {selected.advisor ? (
               <div style={{ marginTop: 12, background: "#0d0d0f", border: "1px solid #24242a", borderRadius: 10, padding: "14px 18px", color: "#9a9ba2", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
-                The Full Project Intake stands on its own: Dr. Merritt takes in your entire project — pro forma, capital stack, site, timeline — and finds what you missed. Retainer pricing: <strong style={{ color: "#e0c4c4" }}>5 hrs/mo — $3,025 · 10 hrs/mo — $5,500 · 15 hrs/mo — $7,700</strong>, everything in Owner included. If you continue into the retainer, <strong style={{ color: "#e0c4c4" }}>the $1,500 is credited against your first month</strong> — it's never wasted money. The intake buys Dr. Merritt's full review of your project — not a conversation. Refunds are at our discretion, and if the call took place without a real deal on the table, <strong style={{ color: "#e0c4c4" }}>$550 — the rate of a 1:1 session with her — is deducted from any refund</strong>. Prefer to talk first? The engagement call is free.
+                The Full Project Intake stands on its own: Dr. Merritt takes in wherever you are — a live deal, one you are trying to get off the ground, or the question you need her on — and tells you what you missed and what to do next. Retainer pricing: <strong style={{ color: "#e0c4c4" }}>5 hrs/mo — $3,025 · 10 hrs/mo — $5,500 · 15 hrs/mo — $7,700</strong>, everything in Owner included. If you continue into the retainer, <strong style={{ color: "#e0c4c4" }}>the $1,500 is credited against your first month</strong> — it's never wasted money. The intake buys Dr. Merritt's full review of your project — not a conversation. Refunds are at our discretion, and if the call took place without a real deal on the table, <strong style={{ color: "#e0c4c4" }}>$550 — the rate of a 1:1 session with her — is deducted from any refund</strong>. Prefer to talk first? The engagement call is free.
               </div>
             ) : (
               <div style={{ marginTop: 10, fontSize: 12, color: "#9a7878", fontFamily: "'DM Sans', sans-serif" }}>After payment, complete the form below so Dr. Merritt can prepare for your session.</div>

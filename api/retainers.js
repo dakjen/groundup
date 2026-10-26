@@ -130,7 +130,7 @@ export default async function handler(req, res) {
       if (!session?.uid) return res.status(401).json({ error: 'Sign in required' });
       const [own] = await sql`SELECT id FROM retainers WHERE user_id = ${session.uid} AND status IN ('active','offered') ORDER BY created_at DESC LIMIT 1`;
       if (!own) return res.status(403).json({ error: 'No intake on this account yet' });
-      const KEYS = ['project_name','location','project_type','stage','units_size','help','decision','numbers','capital','deadline','extra'];
+      const KEYS = ['situation','stage','project_name','location','project_type','units_size','help','decision','numbers','capital','deadline','extra'];
       const intake = {};
       for (const k of KEYS) { const v = String(req.body.intake?.[k] ?? '').trim().slice(0, 4000); if (v) intake[k] = v; }
       await sql`UPDATE retainers SET intake = ${JSON.stringify(intake)}::jsonb, intake_at = NOW() WHERE id = ${own.id}`;
