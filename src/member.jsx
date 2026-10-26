@@ -3192,26 +3192,23 @@ export function ResourcesPage({ member, onUpgrade }) {
   const extOf = (r) => { const m = String(r.url || "").match(/\.(xlsx|xlsm|xls|docx|doc|pptx|ppt|pdf|csv)(?=[^.]*$)/i); return m ? m[1].toUpperCase().replace("XLSX", "XLS").replace("DOCX", "DOC").replace("PPTX", "PPT") : (r.url ? "LINK" : ""); };
   const stageNum = (r) => { const m = String(r.stage || "").match(/Stage\s+(\d+)/i); return m ? Number(m[1]) : 99; };
   const jump = (id) => { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); };
-  const tile = (r) => {
+  const row = (r) => {
     const locked = !!r.locked; const ext = extOf(r);
     const open = () => { if (locked) { onUpgrade && onUpgrade(); return; } if (r.url) { ping(r.id); window.open(r.url, "_blank", "noreferrer"); } };
     return (
-      <div key={r.id} onClick={open} title={locked ? `Opens with the ${TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan` : cleanName(r.title)} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 12, padding: "14px 16px 14px", minHeight: 150, display: "flex", flexDirection: "column", gap: 8, cursor: r.url || locked ? "pointer" : "default", opacity: locked ? 0.45 : 1, filter: locked ? "grayscale(1)" : "none", transition: "border-color .15s, transform .15s", minWidth: 0 }}
-        onMouseEnter={e => { if (!locked) { e.currentTarget.style.borderColor = "#b8010160"; e.currentTarget.style.transform = "translateY(-2px)"; } }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a0000"; e.currentTarget.style.transform = "none"; }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
-          <span style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", fontFamily: font, border: "1px solid #b8010140", borderRadius: 4, padding: "2px 6px" }}>{ext}</span>
-          <span style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", fontFamily: font, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{locked ? `${TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan` : (r.kind_label || "")}</span>
-        </div>
-        <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 14.5, fontFamily: font, lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{cleanName(r.title)}</div>
-        <div style={{ marginTop: "auto", color: "var(--gu-muted)", fontSize: 12, fontFamily: font, lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{r.lesson_title ? `Lesson: ${r.lesson_title}` : (r.description && !r.from_lesson ? r.description : "")}</div>
-        {!locked && r.url && <div style={{ color: "#b80101", fontSize: 12, fontFamily: font, fontWeight: 800 }}>Open →</div>}
+      <div key={r.id} onClick={open} title={locked ? `Opens with the ${TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan` : cleanName(r.title)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", borderTop: "1px solid #1e0000", cursor: r.url || locked ? "pointer" : "default", opacity: locked ? 0.45 : 1, fontFamily: font, minWidth: 0 }}
+        onMouseEnter={e => { if (!locked) e.currentTarget.style.background = "var(--gu-card2)"; }} onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>
+        <span style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1px", border: "1px solid #b8010140", borderRadius: 4, padding: "1px 5px", flexShrink: 0, minWidth: 30, textAlign: "center" }}>{ext}</span>
+        <span style={{ color: "var(--gu-text2)", fontWeight: 700, fontSize: 13, flex: "1 1 200px", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cleanName(r.title)}</span>
+        {r.lesson_title && <span style={{ color: "var(--gu-muted)", fontSize: 12, flex: "1 1 160px", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} className="lib-lesson">{r.lesson_title}</span>}
+        <span style={{ color: locked ? "var(--gu-muted)" : "#b80101", fontSize: 11.5, fontWeight: 800, flexShrink: 0 }}>{locked ? `${TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan` : "Open →"}</span>
       </div>
     );
   };
+  const tile = row;
   const tplItems = data ? data.resources.filter(r => r.category === "template") : [];
   const byStage = (() => { const m = new Map(); for (const r of tplItems) { const k = r.stage || "General"; if (!m.has(k)) m.set(k, { stage: k, course: r.course_title, items: [] }); m.get(k).items.push(r); } return [...m.values()].sort((a, b) => stageNum(a) - stageNum(b)); })();
-  const grid = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 12 };
+  const grid = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 10 };
 
   return (
     <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(20px,5vw,60px) 80px" }}>
@@ -3219,14 +3216,16 @@ export function ResourcesPage({ member, onUpgrade }) {
         {/* Sidebar */}
         <div style={{ position: "sticky", top: 90 }} className="lib-side">
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Member Library</div>
-          {[["lib-templates", "Templates", tplItems.length], ["lib-resources", "Resources", data ? data.resources.filter(r => r.category === "resource").length : 0], ["lib-partners", "NREUV Partners", data ? data.resources.filter(r => r.category === "partner").length : 0]].map(([id, label, n]) => (
-            <button key={id} onClick={() => jump(id)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", background: "transparent", border: "none", borderLeft: "2px solid #2a0000", color: "var(--gu-text2)", padding: "8px 12px", fontFamily: font, fontWeight: 800, fontSize: 13.5, cursor: "pointer", textAlign: "left" }}>{label}<span style={{ color: "var(--gu-muted)", fontSize: 11, fontWeight: 600 }}>{n}</span></button>
-          ))}
-          {byStage.length > 1 && (
-            <div style={{ marginTop: 6, paddingLeft: 14 }}>
-              {byStage.map(g => <button key={g.stage} onClick={() => jump("lib-" + g.stage.replace(/\W+/g, "-"))} style={{ display: "block", width: "100%", background: "transparent", border: "none", color: "var(--gu-muted)", padding: "5px 0", fontFamily: font, fontWeight: 600, fontSize: 12, cursor: "pointer", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{g.stage === "General" ? "General" : g.stage.replace(/ of 7/, "")}{g.course ? ` · ${g.course.split(":")[0]}` : ""}</button>)}
+          {[["lib-resources", "Resources", data ? data.resources.filter(r => r.category === "resource").length : 0], ["lib-partners", "NREUV Partners", data ? data.resources.filter(r => r.category === "partner").length : 0], ["lib-templates", "Templates", tplItems.length]].map(([id, label, n]) => (
+            <div key={id}>
+              <button onClick={() => jump(id)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", background: "transparent", border: "none", borderLeft: "2px solid #2a0000", color: "var(--gu-text2)", padding: "8px 12px", fontFamily: font, fontWeight: 800, fontSize: 13.5, cursor: "pointer", textAlign: "left" }}>{label}<span style={{ color: "var(--gu-muted)", fontSize: 11, fontWeight: 600 }}>{n}</span></button>
+              {id === "lib-templates" && byStage.length > 1 && (
+                <div style={{ padding: "2px 0 4px 14px", borderLeft: "2px solid #2a0000" }}>
+                  {byStage.map(g => <button key={g.stage} onClick={() => jump("lib-" + g.stage.replace(/\W+/g, "-"))} style={{ display: "block", width: "100%", background: "transparent", border: "none", color: "var(--gu-muted)", padding: "4px 0", fontFamily: font, fontWeight: 600, fontSize: 12, cursor: "pointer", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{g.stage === "General" ? "General" : g.stage.replace(/ of 7/, "")}</button>)}
+                </div>
+              )}
             </div>
-          )}
+          ))}
         </div>
 
         {/* Main */}
@@ -3235,23 +3234,6 @@ export function ResourcesPage({ member, onUpgrade }) {
           <p style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.7, marginBottom: 30 }}>Every template, tool and partner in one place. Templates are filed by the stage that introduces them.</p>
           {error && <div style={{ color: "#ff6b6b", fontFamily: font, fontSize: 13, marginBottom: 20 }}>{error}</div>}
           {!data ? <div style={{ color: "var(--gu-muted)", fontFamily: font }}>Loading…</div> : (<>
-            {/* Templates, by stage */}
-            <div id="lib-templates" style={{ scrollMarginTop: 90, marginBottom: 44 }}>
-              <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "var(--gu-text2)", marginBottom: 4 }}>Templates</h2>
-              <p style={{ color: "var(--gu-muted2)", fontSize: 13, fontFamily: font, marginBottom: 16 }}>Development timelines, worksheets, and working documents.</p>
-              {tplItems.length === 0 && <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>Nothing here yet — check back soon.</div>}
-              {byStage.map(g => (
-                <div key={g.stage} id={"lib-" + g.stage.replace(/\W+/g, "-")} style={{ scrollMarginTop: 90, marginBottom: 22 }}>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 10 }}>
-                    <span style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font }}>{g.stage === "General" ? "General" : g.stage.replace(/ of 7/, "")}</span>
-                    {g.course && <span style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.course}</span>}
-                    <span style={{ flex: 1, borderTop: "1px solid #1e0000" }} />
-                  </div>
-                  <div style={grid}>{g.items.map(tile)}</div>
-                </div>
-              ))}
-            </div>
-
             {/* Resources */}
             <div id="lib-resources" style={{ scrollMarginTop: 90, marginBottom: 44 }}>
               <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "var(--gu-text2)", marginBottom: 4 }}>Resources</h2>
@@ -3260,7 +3242,7 @@ export function ResourcesPage({ member, onUpgrade }) {
             </div>
 
             {/* Partners */}
-            <div id="lib-partners" style={{ scrollMarginTop: 90 }}>
+            <div id="lib-partners" style={{ scrollMarginTop: 90, marginBottom: 44 }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 4 }}>
                 <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "var(--gu-text2)" }}>NREUV Partner Network</h2>
                 <TierBadge tier="Elite" small />
@@ -3309,10 +3291,27 @@ export function ResourcesPage({ member, onUpgrade }) {
                 </>);
               })()}
             </div>
+            {/* Templates, by stage */}
+            <div id="lib-templates" style={{ scrollMarginTop: 90 }}>
+              <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "var(--gu-text2)", marginBottom: 4 }}>Templates</h2>
+              <p style={{ color: "var(--gu-muted2)", fontSize: 13, fontFamily: font, marginBottom: 16 }}>Development timelines, worksheets, and working documents.</p>
+              {tplItems.length === 0 && <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>Nothing here yet — check back soon.</div>}
+              {byStage.map(g => (
+                <div key={g.stage} id={"lib-" + g.stage.replace(/\W+/g, "-")} style={{ scrollMarginTop: 90, marginBottom: 16 }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 10 }}>
+                    <span style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font }}>{g.stage === "General" ? "General" : g.stage.replace(/ of 7/, "")}</span>
+                    {g.course && <span style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.course}</span>}
+                    <span style={{ flex: 1, borderTop: "1px solid #1e0000" }} />
+                  </div>
+                  <div style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 10, overflow: "hidden" }}>{g.items.map(row)}</div>
+                </div>
+              ))}
+            </div>
+
           </>)}
         </div>
       </div>
-      <style>{`@media (max-width: 820px) { .lib-grid { grid-template-columns: 1fr !important; } .lib-side { position: static !important; display: flex; flex-wrap: wrap; gap: 4px; } .lib-side > div { display: none; } }`}</style>
+      <style>{`@media (max-width: 820px) { .lib-grid { grid-template-columns: 1fr !important; } .lib-side { position: static !important; display: flex; flex-wrap: wrap; gap: 4px; } .lib-side > div > div { display: none; } .lib-lesson { display: none !important; } }`}</style>
     </div>
   );
 }
