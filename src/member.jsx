@@ -3239,15 +3239,19 @@ export function ResourcesPage({ member, onUpgrade }) {
               <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "var(--gu-text2)", marginBottom: 4 }}>Resources</h2>
               <p style={{ color: "var(--gu-muted2)", fontSize: 13, fontFamily: font, marginBottom: 16 }}>Curated tools and reading Dr. Merritt's team actually uses.</p>
               {(() => { const items = data.resources.filter(r => r.category === "resource"); return items.length === 0 ? <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>Nothing here yet — check back soon.</div> : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {items.map(r => { const locked = !!r.locked; const open = () => { if (locked) { onUpgrade && onUpgrade(); return; } if (r.url) { ping(r.id); window.open(r.url, "_blank", "noreferrer"); } }; return (
-                    <div key={r.id} onClick={open} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 12, padding: "18px 20px", display: "flex", flexDirection: "column", gap: 8, cursor: r.url || locked ? "pointer" : "default", opacity: locked ? 0.45 : 1, minWidth: 0 }}
+                    <div key={r.id} onClick={open} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 12, padding: "16px 20px", display: "flex", alignItems: "center", gap: 18, cursor: r.url || locked ? "pointer" : "default", opacity: locked ? 0.45 : 1, minWidth: 0 }}
                       onMouseEnter={e => { if (!locked) e.currentTarget.style.borderColor = "#b8010160"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a0000"; }}>
-                      <div style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font }}>{locked ? `${TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan` : (extOf(r) === "LINK" ? "Resource" : extOf(r))}</div>
-                      <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15.5, fontFamily: font, lineHeight: 1.3 }}>{cleanName(r.title)}</div>
-                      {r.description && <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.6, display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{r.description}</div>}
-                      {r.code && <div style={{ color: "var(--gu-text2)", fontSize: 12.5, fontFamily: font }}><span style={{ color: "#b80101", fontWeight: 800, fontSize: 9, letterSpacing: "1.5px" }}>CODE </span><code style={{ letterSpacing: "1px" }}>{r.code}</code></div>}
-                      {!locked && r.url && <div style={{ marginTop: "auto", color: "#b80101", fontSize: 12.5, fontFamily: font, fontWeight: 800 }}>Open →</div>}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+                          <span style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 15.5, fontFamily: font, lineHeight: 1.3 }}>{cleanName(r.title)}</span>
+                          <span style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font }}>{locked ? `${TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan` : (extOf(r) === "LINK" ? "Resource" : extOf(r))}</span>
+                        </div>
+                        {r.description && <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font, lineHeight: 1.6, marginTop: 4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{r.description}</div>}
+                        {r.code && <div style={{ color: "var(--gu-text2)", fontSize: 12.5, fontFamily: font, marginTop: 4 }}><span style={{ color: "#b80101", fontWeight: 800, fontSize: 9, letterSpacing: "1.5px" }}>CODE </span><code style={{ letterSpacing: "1px" }}>{r.code}</code></div>}
+                      </div>
+                      {!locked && r.url && <span style={{ color: "#b80101", fontSize: 12.5, fontFamily: font, fontWeight: 800, whiteSpace: "nowrap" }}>Open →</span>}
                     </div>
                   ); })}
                 </div>
