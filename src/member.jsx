@@ -3287,7 +3287,7 @@ export function ResourcesPage({ member, onUpgrade }) {
                     </div>
                   )}
                   {items.length === 0 ? <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>{ptype ? `No ${ptype} partners yet.` : "Nothing here yet — check back soon."}</div> : (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 12 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 12 }} className="lib-partners-grid">
                       {items.map(r => (
                         <div key={r.id} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 12, padding: "18px 22px", display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
                           <div style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font }}>{r.partner_type || "Partner"}</div>
@@ -3328,7 +3328,7 @@ export function ResourcesPage({ member, onUpgrade }) {
           </>)}
         </div>
       </div>
-      <style>{`@media (max-width: 820px) { .lib-grid { grid-template-columns: 1fr !important; } .lib-side { position: static !important; display: flex; flex-wrap: wrap; gap: 4px; } .lib-side > div > div { display: none; } .lib-lesson { display: none !important; } }`}</style>
+      <style>{`@media (max-width: 820px) { .lib-grid { grid-template-columns: 1fr !important; } .lib-side { position: static !important; display: flex; flex-wrap: wrap; gap: 4px; } .lib-side > div > div { display: none; } .lib-lesson { display: none !important; } .lib-partners-grid { grid-template-columns: 1fr !important; } } @media (min-width: 821px) and (max-width: 1100px) { .lib-partners-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }`}</style>
     </div>
   );
 }
