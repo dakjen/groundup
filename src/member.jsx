@@ -3196,21 +3196,22 @@ export function ResourcesPage({ member, onUpgrade }) {
     const locked = !!r.locked; const ext = extOf(r);
     const open = () => { if (locked) { onUpgrade && onUpgrade(); return; } if (r.url) { ping(r.id); window.open(r.url, "_blank", "noreferrer"); } };
     return (
-      <div key={r.id} onClick={open} title={locked ? `Opens with the ${TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan` : cleanName(r.title)} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 12, padding: "14px 14px 12px", aspectRatio: "1 / 1", display: "flex", flexDirection: "column", cursor: r.url || locked ? "pointer" : "default", opacity: locked ? 0.45 : 1, filter: locked ? "grayscale(1)" : "none", transition: "border-color .15s, transform .15s", minWidth: 0 }}
+      <div key={r.id} onClick={open} title={locked ? `Opens with the ${TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan` : cleanName(r.title)} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 12, padding: "14px 16px 14px", minHeight: 150, display: "flex", flexDirection: "column", gap: 8, cursor: r.url || locked ? "pointer" : "default", opacity: locked ? 0.45 : 1, filter: locked ? "grayscale(1)" : "none", transition: "border-color .15s, transform .15s", minWidth: 0 }}
         onMouseEnter={e => { if (!locked) { e.currentTarget.style.borderColor = "#b8010160"; e.currentTarget.style.transform = "translateY(-2px)"; } }}
         onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a0000"; e.currentTarget.style.transform = "none"; }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
           <span style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "1.5px", fontFamily: font, border: "1px solid #b8010140", borderRadius: 4, padding: "2px 6px" }}>{ext}</span>
           <span style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", fontFamily: font, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{locked ? `${TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan` : (r.kind_label || "")}</span>
         </div>
-        <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 13.5, fontFamily: font, lineHeight: 1.35, marginTop: 10, display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{cleanName(r.title)}</div>
-        <div style={{ marginTop: "auto", color: "var(--gu-muted)", fontSize: 11, fontFamily: font, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{r.lesson_title || (r.description && !r.from_lesson ? r.description : "")}</div>
+        <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 14.5, fontFamily: font, lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{cleanName(r.title)}</div>
+        <div style={{ marginTop: "auto", color: "var(--gu-muted)", fontSize: 12, fontFamily: font, lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{r.lesson_title ? `Lesson: ${r.lesson_title}` : (r.description && !r.from_lesson ? r.description : "")}</div>
+        {!locked && r.url && <div style={{ color: "#b80101", fontSize: 12, fontFamily: font, fontWeight: 800 }}>Open →</div>}
       </div>
     );
   };
   const tplItems = data ? data.resources.filter(r => r.category === "template") : [];
   const byStage = (() => { const m = new Map(); for (const r of tplItems) { const k = r.stage || "General"; if (!m.has(k)) m.set(k, { stage: k, course: r.course_title, items: [] }); m.get(k).items.push(r); } return [...m.values()].sort((a, b) => stageNum(a) - stageNum(b)); })();
-  const grid = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 10 };
+  const grid = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 12 };
 
   return (
     <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "110px clamp(20px,5vw,60px) 80px" }}>
