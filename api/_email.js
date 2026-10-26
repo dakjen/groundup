@@ -485,14 +485,14 @@ const seqRecCard = (rec) => `
       ${rec.stretch ? `<div style="border:1px solid #b8010140;background:#fdf6f6;border-radius:12px;padding:18px 22px;margin:0 0 20px;">
         <div style="font-family:${SANS};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:6px;">✦ A special offer, just for you</div>
         ${seqP(`Based on what you're working through, we think <strong style="color:#161616;">${rec.stretch.label}</strong> would serve you better — so we're offering it at <strong style="color:#b80101;">${rec.stretch.offer}</strong>.`, { size: 14, mb: 8 })}
-        ${rec.stretch.extras.map(f => `<div style="font-family:${SANS};color:#444444;font-size:13px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}
+        ${(rec.stretch.extras || rec.stretch.features || []).map(f => `<div style="font-family:${SANS};color:#444444;font-size:13px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}
       </div>` : ''}
       ${rec.next ? `<div style="border:1px solid #e5dccf;border-radius:12px;padding:16px 22px;margin:0 0 20px;">
         <div style="font-family:${SANS};font-size:11px;color:#666666;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:6px;">One step up, if you want it</div>
         ${(() => { const pl = PLANS.find(x => x[0] === rec.next.label); return pl
           ? `<div style="font-family:${SANS};color:#161616;font-size:15px;font-weight:bold;margin-bottom:2px;">${rec.next.label} · <span style="color:#8a8a8a;text-decoration:line-through;font-weight:normal;">${usd(pl[1])}/mo</span> <span style="color:#b80101;">${usd(pl[1] * 0.75)}/mo</span> <span style="color:#8a8a8a;font-weight:normal;font-size:13px;">founding rate</span></div><div style="font-family:${SANS};color:#666666;font-size:12.5px;margin-bottom:8px;">${rec.next.delta} than ${rec.label}</div>`
           : `<div style="font-family:${SANS};color:#161616;font-size:15px;font-weight:bold;margin-bottom:6px;">${rec.next.label} · ${rec.next.price}</div>`; })()}
-        ${rec.next.extras.map(f => `<div style="font-family:${SANS};color:#444444;font-size:13px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}
+        ${(rec.next.extras || rec.next.features || []).map(f => `<div style="font-family:${SANS};color:#444444;font-size:13px;line-height:1.9;"><span style="color:#b80101;">+</span> ${f}</div>`).join('')}
       </div>` : ''}`;
 
 // Newsletter pieces: a note from Dr. Merritt, a lesson preview with one of
