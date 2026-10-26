@@ -2689,7 +2689,7 @@ const WL_PAIN = [
   "No network in the industry",
   "Other",
 ];
-const WL_SOURCE = ["Dr. Merritt / NREUV", "A Lunch & Learn", "LinkedIn", "Instagram", "Word of mouth", "An event or conference", "Other"];
+const WL_SOURCE = ["Dr. Merritt / NREUV", "A Lunch & Learn", "A membership group or referral", "LinkedIn", "Instagram", "Word of mouth", "An event or conference", "Other"];
 const WL_BUDGETS = ["$50", "$50–$150", "$150–$500", "$500+", "I already know what tier I want", "I need general support & guidance", "I need specific, customized deal help", "$3,000+"];
 
 // Two lists, one form. "insider" is the secret /waitlist page (first access);
