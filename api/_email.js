@@ -341,11 +341,12 @@ export function retainerInterestEmail(name, callLink) {
 export function intakeStepsEmail(name, bookLink) {
   const first = firstName(name);
   const ws = `${siteUrl()}/advisory`;
+  // Tables, not flex: email clients squash flex rows into nothing.
   const step = (n, title, body) => `
-      <div style="display:flex;gap:14px;margin:0 0 18px;">
-        <div style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:#b80101;color:#fff;font-weight:bold;font-size:14px;text-align:center;line-height:30px;">${n}</div>
-        <div><div style="color:#161616;font-weight:bold;font-size:15px;margin-bottom:4px;">${title}</div><div style="color:#444444;font-size:14px;line-height:1.8;">${body}</div></div>
-      </div>`;
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:0 0 18px;"><tr>
+        <td style="width:44px;vertical-align:top;padding:0 14px 0 0;"><div style="width:30px;height:30px;border-radius:15px;background:#b80101;color:#ffffff;font-weight:bold;font-size:14px;text-align:center;line-height:30px;">${n}</div></td>
+        <td style="vertical-align:top;"><div style="color:#161616;font-weight:bold;font-size:15px;margin-bottom:4px;">${title}</div><div style="color:#444444;font-size:14px;line-height:1.8;">${body}</div></td>
+      </tr></table>`;
   return {
     subject: `${first ? first + ', y' : 'Y'}our intake is paid. Three steps before the call.`,
     html: `
@@ -353,7 +354,7 @@ export function intakeStepsEmail(name, bookLink) {
       <h2 style="color:#161616;font-size:26px;margin:0 0 14px;">Your intake with Dr. Merritt is paid, ${first}.</h2>
       <p style="color:#444444;font-size:14px;line-height:1.9;margin:0 0 22px;">This is the session where she takes in wherever you are, a live deal, a project you are trying to get off the ground, or the question you need her on, and tells you what you missed and what to do next. It is only as good as what she has in front of her, so three things before you meet:</p>
       ${step(1, 'Book your time with Dr. Merritt', bookLink ? `Pick the slot that works. <a href="${bookLink}" style="color:#b80101;font-weight:bold;">Book the intake call →</a>` : 'The booking link is in your intake workspace, below.')}
-      ${step(2, 'Compile your project documents', 'Whatever shows where you are. If there is a deal: pro forma, sources and uses, site control, term sheets or LOIs, site plan, timeline, anything a lender or investor has sent back. If there is not one yet: the site you are looking at, the partnership you are weighing, a business plan, notes on what you have tried. Upload them in your intake workspace. Rough is fine.')}
+      ${step(2, 'Compile what you have', 'Whatever shows where you are. If there is a deal: pro forma, sources and uses, site control, term sheets or LOIs, site plan, timeline, anything a lender or investor has sent back. If there is not one yet: the site you are looking at, the partnership you are weighing, a business plan, notes on what you have tried. Upload them in your intake workspace. Rough is fine.')}
       ${step(3, 'Fill out the intake form', 'In the same workspace: where you are, what you want help with, and the decision in front of you. Answer what applies and skip the rest. Ten minutes, and it is what she reads first.')}
       <a href="${ws}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:14px 30px;font-weight:bold;font-size:14px;text-decoration:none;margin:6px 0 20px;">Open your intake workspace →</a>
       <p style="color:#444444;font-size:14px;line-height:1.8;">If you continue into the Senior Advisor retainer after the call, <strong style="color:#161616;">the $1,500 credits in full against your first month</strong>.</p>
