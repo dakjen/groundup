@@ -6563,7 +6563,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
       if (r.startsWith("Lifetime Pass")) return "$5,000 once";
       return "";
     };
-    const cols = [["Name", "name"], ["Email", "email"], ["Phone", "phone"], ["List", "list"], ["Monthly budget", "budget"], ["Recommended plan", "_rec"], ["Anticipated value", "_fit"], ["Wants to learn", "learn"], ["Pain point", "reason"], ["Heard about us", "source"], ["Founding 25", "founding_lnl"], ["First 10", "first10"], ["Notified", "launched_notified"], ["Joined", "created_at"]];
+    const cols = [["Name", "name"], ["Email", "email"], ["Phone", "phone"], ["List", "list"], ["Monthly budget", "budget"], ["Recommended plan", "_rec"], ["Anticipated value", "_fit"], ["Wants to learn", "learn"], ["Pain point", "reason"], ["Heard about us", "source"], ["Founding 25", "founding_lnl"], ["First 10", "first10"], ["Recommendation email sent", "recommended_notified"], ["Launch email sent", "launched_notified"], ["Joined", "created_at"]];
     const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const csv = [cols.map(c => esc(c[0])).join(",")]
       .concat(rows.map(r => cols.map(([, k]) => esc(k === "_rec" ? recFor(r) : k === "_fit" ? csvValue(r) : k === "created_at" ? new Date(r[k]).toLocaleString() : k === "list" ? (r[k] || "insider") : typeof r[k] === "boolean" ? (r[k] ? "yes" : "no") : r[k])).join(",")))
@@ -6798,7 +6798,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
           </div>
         ))}
         <p style={{ color: "#8d847a", fontSize: 11.5, marginTop: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
-          Every send is once-ever per person ({(data.entries || []).filter(e => e.launched_notified).length} of {(data.entries || []).length} have their launch email). Sends land in the record below. Preview every email from the Email tab; changing a launch date shifts the whole schedule with it.
+          Every send is once-ever per person ({(data.entries || []).filter(e => e.recommended_notified).length} of {(data.entries || []).length} have their recommendation email, {(data.entries || []).filter(e => e.launched_notified).length} have their launch email). Sends land in the record below. Preview every email from the Email tab; changing a launch date shifts the whole schedule with it.
         </p>
       </div>
 
@@ -6848,7 +6848,8 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
               {e.founding_lnl && <BadgeChips badges={["founding25"]} small />}
               {e.first10 && <BadgeChips badges={["first10"]} small />}
               {e.comped && <span style={{ background: "#1a7a3a14", color: "#1a7a3a", border: "1px solid #1a7a3a40", borderRadius: 5, padding: "2px 9px", fontSize: 9, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>Comp planned</span>}
-              {e.launched_notified && <span style={{ color: "#22c55e", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px" }}>NOTIFIED</span>}
+              {e.recommended_notified && <span title="7-day plan recommendation email sent" style={{ color: "#22c55e", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px" }}>RECOMMENDATION SENT</span>}
+              {e.launched_notified && <span title="Launch-day email sent" style={{ color: "#22c55e", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px" }}>LAUNCH SENT</span>}
               <span style={{ color: "#9a9a9a", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>{new Date(e.created_at).toLocaleDateString()}</span>
               <button onClick={() => removeEntry(e)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "5px 12px" }}>Remove</button>
               {openEntry === e.id && (

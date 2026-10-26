@@ -336,6 +336,31 @@ export function retainerInterestEmail(name, callLink) {
   };
 }
 
+// Sent the moment the Full Project Intake is paid: the three things to do
+// before the call. The intake workspace (/advisory) holds steps 2 and 3.
+export function intakeStepsEmail(name, bookLink) {
+  const first = firstName(name);
+  const ws = `${siteUrl()}/advisory`;
+  const step = (n, title, body) => `
+      <div style="display:flex;gap:14px;margin:0 0 18px;">
+        <div style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:#b80101;color:#fff;font-weight:bold;font-size:14px;text-align:center;line-height:30px;">${n}</div>
+        <div><div style="color:#161616;font-weight:bold;font-size:15px;margin-bottom:4px;">${title}</div><div style="color:#444444;font-size:14px;line-height:1.8;">${body}</div></div>
+      </div>`;
+  return {
+    subject: `${first ? first + ', y' : 'Y'}our intake is paid. Three steps before the call.`,
+    html: `
+      <div style="font-size:10px;color:#b80101;letter-spacing:3px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Full Project Intake</div>
+      <h2 style="color:#161616;font-size:26px;margin:0 0 14px;">Your intake with Dr. Merritt is paid, ${first}.</h2>
+      <p style="color:#444444;font-size:14px;line-height:1.9;margin:0 0 22px;">This is the session where she takes in your whole deal and tells you what you missed. It is only as good as what she has in front of her, so three things before you meet:</p>
+      ${step(1, 'Book your time with Dr. Merritt', bookLink ? `Pick the slot that works. <a href="${bookLink}" style="color:#b80101;font-weight:bold;">Book the intake call →</a>` : 'The booking link is in your intake workspace, below.')}
+      ${step(2, 'Compile your project documents', 'Whatever you have: pro forma, sources and uses, site control, term sheets or LOIs, site plan, timeline, and anything a lender or investor has already sent back. Upload them in your intake workspace. Rough is fine; missing is not.')}
+      ${step(3, 'Fill out the intake form', 'In the same workspace: what you need help with, the decision in front of you, the numbers as you have them, and who you are talking to for capital. Ten minutes, and it is what she reads first.')}
+      <a href="${ws}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:14px 30px;font-weight:bold;font-size:14px;text-decoration:none;margin:6px 0 20px;">Open your intake workspace →</a>
+      <p style="color:#444444;font-size:14px;line-height:1.8;">If you continue into the Senior Advisor retainer after the call, <strong style="color:#161616;">the $1,500 credits in full against your first month</strong>.</p>
+      <p style="color:#7a5050;font-size:12px;line-height:1.7;">The intake fee buys Dr. Merritt's full review of your project and is refundable only at our discretion. If the session happens without a genuine deal on the table, any refund is reduced by $550, the rate of a 1:1 session with her.</p>`,
+  };
+}
+
 export function broadcastEmail(subject, message) {
   const paragraphs = message.split(/\\n{2,}/).map(p =>
     `<p style="color:#444444;font-size:14px;line-height:1.8;">${p.replace(/\\n/g, '<br/>')}</p>`).join('');

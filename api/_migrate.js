@@ -274,6 +274,9 @@ const STATEMENTS = [
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_mode TEXT DEFAULT 'all'`,
   `CREATE TABLE IF NOT EXISTS mentions (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, message_id INTEGER NOT NULL, channel_id INTEGER NOT NULL, by_user_id INTEGER, created_at TIMESTAMP DEFAULT NOW(), UNIQUE (user_id, message_id))`,
   `ALTER TABLE retainers ADD COLUMN IF NOT EXISTS private_notes TEXT`,
+  // The intake form: what the client needs help with, filled out before the intake call
+  `ALTER TABLE retainers ADD COLUMN IF NOT EXISTS intake JSONB`,
+  `ALTER TABLE retainers ADD COLUMN IF NOT EXISTS intake_at TIMESTAMP`,
   // Advisory clients can have more than one project; each carries its own details and documents
   `CREATE TABLE IF NOT EXISTS projects (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, name TEXT NOT NULL, details JSONB, created_at TIMESTAMP DEFAULT NOW(), updated_at TIMESTAMP DEFAULT NOW())`,
   `ALTER TABLE deal_files ADD COLUMN IF NOT EXISTS project_id INTEGER`,

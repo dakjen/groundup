@@ -1669,7 +1669,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
   // Back from the $1,500 intake checkout: the next step is the call, so it leads.
   const intakePaid = (() => { const q = new URLSearchParams(window.location.search); return q.get("checkout") === "success" && q.get("item") === "retainer_onboarding"; })();
   const [advisorLink, setAdvisorLink] = useState(null);
-  useEffect(() => { if (intakePaid) fetch("/api/waitlist?public=1").then(r => r.ok ? r.json() : null).then(d => setAdvisorLink(d?.advisor_call_link || null)).catch(() => {}); }, [intakePaid]);
+  useEffect(() => { if (intakePaid || intakeOpen) fetch("/api/waitlist?public=1").then(r => r.ok ? r.json() : null).then(d => setAdvisorLink(d?.advisor_call_link || null)).catch(() => {}); }, [intakePaid, intakeOpen]);
   // Team accounts have no tier or plan — just a clean account view
   if (member && member.role === "admin") {
     return (
@@ -1737,6 +1737,8 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
   }, []);
 
   const hasAdvisory = (member.entitlements || []).some(e => e.course_id === "intake");
+  // Paid the intake, not yet a client: the three pre-call steps stay up until the retainer starts.
+  const intakeOpen = (member.entitlements || []).some(e => e.course_id === "intake" && e.source === "intake_paid");
   const H = { fontFamily: serif, fontWeight: 700, fontSize: "clamp(24px,3vw,32px)", color: "var(--gu-text)", marginBottom: 6 };
   const SUB = { color: "var(--gu-body)", fontSize: 14, fontFamily: font, lineHeight: 1.7, marginBottom: 20 };
   const tile = (onClick, locked) => ({
@@ -1855,14 +1857,19 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
             <p style={SUB}>{hasAdvisory
               ? "Your project is with Dr. Merritt. Your workspace has the documents, the messages and the hours logged."
               : "A membership teaches you the work. Advisory is Dr. Merritt doing it with you, on your actual deal."}</p>
-            {intakePaid && (
+            {(intakePaid || intakeOpen) && (
               <div style={{ background: "#160404", border: "1px solid #b80101", borderRadius: 16, padding: "24px 28px", marginBottom: 16 }}>
-                <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>Step 1 of 1 — book your intake call</div>
-                <div style={{ color: "var(--gu-text)", fontFamily: serif, fontWeight: 700, fontSize: 24, marginBottom: 8 }}>Your intake is paid. Now pick a time with Dr. Merritt.</div>
-                <p style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.8, margin: "0 0 16px" }}>On the call you walk her through the whole project — pro forma, capital stack, site, timeline. Book it now; everything else waits on this.</p>
-                {advisorLink
-                  ? <a href={advisorLink} target="_blank" rel="noreferrer" style={{ ...btnRed, display: "inline-block", textDecoration: "none" }}>Book the intake call →</a>
-                  : <span style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>The booking link isn't set yet — email groundup@drginamerritt.net and the team will schedule it with you.</span>}
+                <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>Before the intake call</div>
+                <div style={{ color: "var(--gu-text)", fontFamily: serif, fontWeight: 700, fontSize: 24, marginBottom: 8 }}>Your intake is paid. Three steps before the call.</div>
+                <ol style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.8, margin: "0 0 16px", paddingLeft: 20 }}>
+                  <li><strong style={{ color: "var(--gu-text2)" }}>Book your time</strong> with Dr. Merritt.</li>
+                  <li><strong style={{ color: "var(--gu-text2)" }}>Compile your project documents</strong> — pro forma, sources and uses, site control, term sheets — and upload them.</li>
+                  <li><strong style={{ color: "var(--gu-text2)" }}>Fill out the intake form</strong>: what you need help with, the decision in front of you, the numbers.</li>
+                </ol>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <button style={btnRed} onClick={() => setActivePage("advisory")}>Open your intake workspace →</button>
+                  {advisorLink && <a href={advisorLink} target="_blank" rel="noreferrer" style={{ ...btnGhost, display: "inline-block", textDecoration: "none" }}>Book the intake call →</a>}
+                </div>
               </div>
             )}
             <div style={{ background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "26px 30px" }}>
@@ -3409,6 +3416,151 @@ export function DirectLine({ loadMsgs, sendMsg, isAdmin, title, subtitle, height
   );
 }
 
+// ── The intake form ───────────────────────────────────────────────────────────
+// Filled out before the Full Project Intake call. Saved on the retainer row;
+// Dr. Merritt reads it on Intake & Bookings and it stays with the engagement.
+const INTAKE_FIELDS = [
+  ["project_name", "Project name", "text", "e.g. 12th Street Apartments"],
+  ["location", "Location", "text", "City, state"],
+  ["project_type", "Project type", "select", ["Multifamily rental", "Affordable / LIHTC", "Mixed-use", "Senior housing", "Townhomes / for-sale", "Commercial", "Other"]],
+  ["stage", "Where the project is right now", "select", ["Looking at a site", "Site under contract", "Site owned", "Zoning / entitlements", "Predevelopment / design", "Financing / capital raise", "Under construction", "Operating"]],
+  ["units_size", "Units and size", "text", "e.g. 48 units, 52,000 SF"],
+  ["help", "What do you need help with?", "textarea", "Be specific: the structure, the numbers, the lender, the partner, the site. What would make this call worth it?"],
+  ["decision", "The decision in front of you, and when it has to be made", "textarea", "What you are deciding, what the options are, and the date it has to be decided by"],
+  ["numbers", "The numbers as you have them", "textarea", "Total development cost, sources and uses, your equity, the gap, the rents or sale prices you are underwriting to"],
+  ["capital", "Lenders, investors and public funders you are talking to, and where that stands", "textarea", "Who, what they said, and what they asked for"],
+  ["deadline", "Hard dates", "text", "Closing, application deadline, option expiration…"],
+  ["extra", "Anything else Dr. Merritt should know", "textarea", "Partners, history, what you have already tried"],
+];
+export function IntakeForm({ initial, onSave }) {
+  const [v, setV] = useState(initial || {});
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState(null);
+  useEffect(() => { setV(initial || {}); }, [initial]);
+  const lbl = { display: "block", fontSize: 9, color: "var(--gu-muted)", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 };
+  const box = { width: "100%", boxSizing: "border-box", background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 9, padding: "10px 13px", color: "var(--gu-text)", fontFamily: font, fontSize: 13.5, outline: "none" };
+  const save = async () => {
+    if (!String(v.help || "").trim()) { setNote({ ok: false, text: "Tell her what you need help with — that one is the whole point." }); return; }
+    setBusy(true);
+    try { await onSave(v); setNote({ ok: true, text: "Saved. Dr. Merritt reads this before your call; come back and update it any time." }); }
+    catch (e) { setNote({ ok: false, text: e.message }); } finally { setBusy(false); setTimeout(() => setNote(null), 6000); }
+  };
+  return (
+    <div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 14 }}>
+        {INTAKE_FIELDS.map(([k, label, type, ph]) => (
+          <div key={k} style={{ gridColumn: type === "textarea" ? "1 / -1" : "auto" }}>
+            <label style={lbl}>{label}</label>
+            {type === "select"
+              ? <select value={v[k] || ""} onChange={e => setV({ ...v, [k]: e.target.value })} style={box}><option value="">Choose…</option>{ph.map(o => <option key={o} value={o}>{o}</option>)}</select>
+              : type === "textarea"
+                ? <textarea value={v[k] || ""} onChange={e => setV({ ...v, [k]: e.target.value })} maxLength={4000} placeholder={ph} style={{ ...box, minHeight: 90, resize: "vertical", lineHeight: 1.6 }} />
+                : <input value={v[k] || ""} onChange={e => setV({ ...v, [k]: e.target.value })} maxLength={300} placeholder={ph} style={box} />}
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginTop: 16 }}>
+        <button onClick={save} disabled={busy} style={btnRed}>{busy ? "Saving…" : initial && Object.keys(initial).length ? "Update intake form" : "Send to Dr. Merritt"}</button>
+        {note && <span style={{ color: note.ok ? "#4ade80" : "#f87171", fontSize: 13, fontFamily: font }}>{note.text}</span>}
+      </div>
+    </div>
+  );
+}
+// Dr. Merritt's read of the form.
+export function IntakeReadout({ intake, at }) {
+  if (!intake || !Object.keys(intake).length) return <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>Not filled out yet.</div>;
+  return (
+    <div style={{ display: "grid", gap: 10 }}>
+      {at && <div style={{ color: "var(--gu-faint)", fontSize: 11.5, fontFamily: font }}>Filled out {new Date(at).toLocaleString()}</div>}
+      {INTAKE_FIELDS.filter(([k]) => intake[k]).map(([k, label]) => (
+        <div key={k}>
+          <div style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 3 }}>{label}</div>
+          <div style={{ color: "var(--gu-body)", fontSize: 13.5, fontFamily: font, lineHeight: 1.65, whiteSpace: "pre-wrap" }}>{intake[k]}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+// The three steps before the intake call: book the time, compile the
+// documents, fill out the form. Shown on /advisory while the intake is paid
+// and the call hasn't happened (retainer status 'offered').
+function IntakeSteps({ data, reload }) {
+  const [bookLink, setBookLink] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState(null);
+  useEffect(() => { fetch("/api/waitlist?public=1").then(r => r.ok ? r.json() : null).then(d => setBookLink(d?.advisor_call_link || "")).catch(() => setBookLink("")); }, []);
+  const flash = (ok, text) => { setNote({ ok, text }); setTimeout(() => setNote(null), 5000); };
+  const upload = async (list) => {
+    const arr = [...(list || [])]; if (!arr.length) return;
+    setBusy(true);
+    try {
+      for (const file of arr) {
+        const fd = new FormData(); fd.append("file", file);
+        const res = await guUpload("deal", fd, { Authorization: "Bearer " + (localStorage.getItem("guToken") || "") });
+        const u = await res.json(); if (!res.ok) throw new Error(u.error || "Upload failed");
+        await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "deal_file_add", folder: "intake", title: file.name, url: u.url, kind: "file", size: file.size }) });
+      }
+      flash(true, arr.length > 1 ? `${arr.length} documents added.` : "Added — she has it before the call."); await reload();
+    } catch (e) { flash(false, e.message); } finally { setBusy(false); }
+  };
+  const remove = async (id) => { try { await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "deal_file_remove", id }) }); await reload(); } catch (e) { flash(false, e.message); } };
+  const files = data.files || [];
+  const done = (n) => <span style={{ fontSize: 9, color: "#4ade80", fontWeight: 800, letterSpacing: "1.5px", marginLeft: 10 }}>DONE</span>;
+  const step = (n, title, body, isDone) => (
+    <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 8 }}>
+      <div style={{ flexShrink: 0, width: 30, height: 30, borderRadius: "50%", background: isDone ? "#1a7a3a" : "#b80101", color: "#fff", fontWeight: 800, fontSize: 14, textAlign: "center", lineHeight: "30px", fontFamily: font }}>{n}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ color: "var(--gu-text)", fontWeight: 800, fontSize: 16, fontFamily: font, marginBottom: 4 }}>{title}{isDone && done()}</div>
+        {body}
+      </div>
+    </div>
+  );
+  const sub = { color: "var(--gu-muted)", fontSize: 13.5, fontFamily: font, lineHeight: 1.75, margin: "0 0 10px" };
+  const card = { background: "var(--gu-card2)", border: "1px solid var(--gu-border)", borderRadius: 16, padding: "22px 24px", marginBottom: 16 };
+  return (
+    <div style={{ textAlign: "left", marginBottom: 40 }}>
+      <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(28px,4vw,38px)", color: "var(--gu-text)", margin: "0 0 10px" }}>Your intake is paid. Three steps before the call.</h1>
+      <p style={{ color: "var(--gu-muted)", fontSize: 15, fontFamily: font, lineHeight: 1.8, maxWidth: 640, margin: "0 0 26px" }}>Dr. Merritt takes in your whole deal on this call and tells you what you missed. It is only as good as what she has in front of her.</p>
+      {note && <div style={{ color: note.ok ? "#4ade80" : "#f87171", fontSize: 13, fontFamily: font, marginBottom: 12 }}>{note.text}</div>}
+      <div style={card}>
+        {step(1, "Book your time with Dr. Merritt", (
+          bookLink === null ? <div style={sub}>Loading the booking link…</div>
+            : bookLink
+              ? <a href={bookLink} target="_blank" rel="noreferrer" style={{ ...btnRed, display: "inline-block", textDecoration: "none" }}>Book the intake call →</a>
+              : <div style={sub}>The booking link isn't set yet — email groundup@drginamerritt.net and the team will schedule it with you.</div>
+        ))}
+      </div>
+      <div style={card}>
+        {step(2, "Compile your project documents", (<>
+          <p style={sub}>Whatever you have: pro forma, sources and uses, site control, term sheets or LOIs, site plan, timeline, and anything a lender or investor has already sent back. Rough is fine; missing is not.</p>
+          {files.length > 0 && (
+            <div style={{ marginBottom: 10 }}>
+              {files.map(f => (
+                <div key={f.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "7px 0", borderBottom: "1px solid var(--gu-border2)" }}>
+                  <a href={f.url} target="_blank" rel="noreferrer" style={{ color: "#e0a0a0", fontSize: 13.5, fontFamily: font, fontWeight: 700, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>📄 {f.title}</a>
+                  <button onClick={() => remove(f.id)} style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 12, fontFamily: font }}>Remove</button>
+                </div>
+              ))}
+            </div>
+          )}
+          <label style={{ ...btnGhost, display: "inline-block", cursor: busy ? "wait" : "pointer", color: "var(--gu-text2)", borderColor: "var(--gu-border)" }}>
+            {busy ? "Uploading…" : files.length ? "Add more documents" : "Upload documents"}
+            <input type="file" multiple onChange={e => { upload(e.target.files); e.target.value = ""; }} disabled={busy} style={{ display: "none" }} />
+          </label>
+        </>), files.length > 0)}
+      </div>
+      <div style={card}>
+        {step(3, "Fill out the intake form", (<>
+          <p style={sub}>What you need help with, the decision in front of you, the numbers as you have them, and who you are talking to for capital. It is what she reads first.</p>
+          <IntakeForm initial={data.intake || {}} onSave={(v) => api("/api/retainers", { method: "POST", body: JSON.stringify({ action: "save_intake", intake: v }) }).then(reload)} />
+        </>), !!(data.intake && data.intake.help))}
+      </div>
+      <div style={{ borderTop: "1px solid var(--gu-border)", margin: "34px 0 30px" }} />
+      <p style={{ color: "var(--gu-faint)", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, margin: 0 }}>After the call, if you continue into the Senior Advisor retainer, you choose your monthly block below and the $1,500 intake credits against the first month.</p>
+    </div>
+  );
+}
+
 export function RetainerPage({ member, setActivePage }) {
   const [data, setData] = useState(undefined);
   const [msg, setMsg] = useState(null);
@@ -3450,7 +3602,8 @@ export function RetainerPage({ member, setActivePage }) {
       <div style={{ background: "var(--gu-bg)", minHeight: "100vh", padding: "120px clamp(20px,5vw,60px) 80px" }}>
         <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>Senior Advisor Retainer</div>
-          <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4.5vw,42px)", color: "var(--gu-text)", marginBottom: 12 }}>Choose your hours.</h1>
+          <IntakeSteps data={data} reload={load} />
+          <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4.5vw,42px)", color: "var(--gu-text)", marginBottom: 12 }}>After the call: choose your hours.</h1>
           <p style={{ color: "var(--gu-muted)", fontSize: 15, fontFamily: font, lineHeight: 1.8, maxWidth: 520, margin: "0 auto 34px" }}>
             {data.notes || "Following your call with Dr. Merritt — pick the monthly block that fits your project. Billed monthly, cancel anytime. Your workspace opens the moment you're set."}
           </p>
@@ -3926,6 +4079,12 @@ export function AdvisoryAdminPage() {
         )}
 
         {sub === "docs" && (<>
+          {r.intake && Object.keys(r.intake).length > 0 && (
+            <div style={card}>
+              {eyebrow("Intake form · what they came in with")}
+              <IntakeReadout intake={r.intake} at={r.intake_at} />
+            </div>
+          )}
           <div style={{ ...card, background: "var(--gu-card2)", border: "1px solid var(--gu-border)" }}>
             {eyebrow("Engagement documents")}
             <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, margin: "0 0 10px" }}>The agreement, the scope, anything formalized. Both sides see these.</p>
@@ -4144,6 +4303,31 @@ export function BookingsAdminPage() {
               <div style={card}>
                 {eyebrow("Paid, not yet booked")}
                 {waiting.length === 0 ? <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>Everyone who paid has booked.</div> : waiting.map(bookingRow)}
+              </div>
+              <div style={card}>
+                {eyebrow("Intake forms · before the call")}
+                <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, margin: "0 0 12px" }}>Everyone who paid the intake and hasn't started a retainer: what they said they need, and the documents they compiled.</p>
+                {(data.retainers || []).filter(r => r.status === "offered").length === 0
+                  ? <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>No one waiting on an intake call.</div>
+                  : (data.retainers || []).filter(r => r.status === "offered").map(r => {
+                    const docs = (r.deal_files || []).filter(f => f.folder === "intake");
+                    return (
+                      <details key={r.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--gu-border2)" }}>
+                        <summary style={{ cursor: "pointer", fontFamily: font, fontSize: 13, color: "var(--gu-text2)", fontWeight: 700 }}>
+                          {r.name} <span style={{ color: "var(--gu-muted)", fontWeight: 400, fontSize: 12 }}>· {r.email} · {r.intake?.help ? "form filled out" : "no form yet"} · {docs.length} document{docs.length === 1 ? "" : "s"}</span>
+                        </summary>
+                        <div style={{ paddingTop: 12 }}>
+                          <IntakeReadout intake={r.intake} at={r.intake_at} />
+                          {docs.length > 0 && (
+                            <div style={{ marginTop: 12 }}>
+                              <div style={{ fontSize: 9, color: "var(--gu-muted)", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 4 }}>Documents</div>
+                              {docs.map(f => <div key={f.id}><a href={f.url} target="_blank" rel="noreferrer" style={{ color: "#e0a0a0", fontSize: 13, fontFamily: font, fontWeight: 700, textDecoration: "none" }}>📄 {f.title}</a></div>)}
+                            </div>
+                          )}
+                        </div>
+                      </details>
+                    );
+                  })}
               </div>
               <div style={card}>
                 {eyebrow("All bookings")}
