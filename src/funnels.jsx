@@ -36,12 +36,14 @@ const OFFERS = {
       "The judgment that is not in any QAP: what goes hard and when, how far to carry drawings before the stack is committed, what to concede to a lender and what never to",
       "Always current in your GroundUp account. When the practice changes, the page changes, and you have the new one",
     ],
-    cta: "Get the Playbook →", priceNote: "The working reference for developers with deals in motion", mode: "buy", item: "playbook",
+    // Not on sale yet (no playbook product exists). "soon" mode shows a
+    // coming-soon card in place of the buy form and points at the waitlist.
+    cta: "Coming soon", priceNote: "Coming soon · the working reference for developers with deals in motion", mode: "soon", item: "playbook",
     faq: [
       ["Who is this for?", "Developers who have been to at least one closing, and the owner's reps, lenders and syndicators who work beside them. It assumes you know what basis, DSCR and a conversion test are, and it is built to make you better at them."],
       ["How do I use it?", "Like a reference. You do not read it front to back; you open the phase you are in and run the checklist. Before a closing, before a draw, before conversion, before the next hard conversation."],
       ["Is it a download?", "It lives in your GroundUp account and you read it there, so it stays current. Owner members can also download it."],
-      ["Do I need a membership?", "No. Buy it on its own. If you join later, it is already in your account."],
+      ["Do I need a membership?", "No. Once it is out you can buy it on its own. If you join later, it is already in your account."],
       ["Refunds?", "Digital products are non-refundable once access is delivered."],
     ],
     success: { title: "The Playbook is yours.", body: "Check your email: we made you a GroundUp account and sent a link to set your password. The Playbook is waiting under Shop → My documents. Open it to the phase you are in." },
@@ -160,7 +162,14 @@ export function FunnelPage({ offer }) {
 
   const inp = { width: "100%", boxSizing: "border-box", background: "#120808", border: "1px solid #3a1a1a", borderRadius: 10, padding: "13px 14px", color: "#f5e8e8", fontFamily: font, fontSize: 15, outline: "none" };
   const btn = { width: "100%", background: RED, color: "#fff", border: "none", borderRadius: 10, padding: "15px 18px", fontFamily: font, fontWeight: 800, fontSize: 15, cursor: "pointer", letterSpacing: "0.2px" };
-  const formBlock = (compact) => done ? (
+  const formBlock = (compact) => o.mode === "soon" ? (
+    <div style={{ background: "#0b0505", border: "1px solid #b8010160", borderRadius: 14, padding: compact ? "20px 18px" : "24px 22px" }}>
+      <div style={{ fontSize: 9.5, color: RED, fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>Coming soon</div>
+      <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "#f5e8e8", marginBottom: 8 }}>The Playbook is not on sale yet.</div>
+      <div style={{ color: "#c8a8a8", fontSize: 14.5, fontFamily: font, lineHeight: 1.7 }}>It is being finished for launch. Join the GroundUp waitlist and you will hear the day it is out, with first access.</div>
+      <a href="/" style={{ ...btn, display: "block", textAlign: "center", textDecoration: "none", marginTop: 16, boxSizing: "border-box" }}>Join the waitlist →</a>
+    </div>
+  ) : done ? (
     <div style={{ background: "#0b0505", border: "1px solid #22c55e50", borderRadius: 14, padding: compact ? "20px 18px" : "24px 22px" }}>
       <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "#f5e8e8", marginBottom: 8 }}>{o.success.title}</div>
       <div style={{ color: "#c8a8a8", fontSize: 14.5, fontFamily: font, lineHeight: 1.7 }}>{o.success.body}{sessionInfo?.date ? ` Next session: ${sessionInfo.title}, ${new Date(sessionInfo.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}${sessionInfo.time ? " · " + sessionInfo.time + " ET" : ""}.` : ""}</div>
@@ -304,7 +313,7 @@ export function FunnelPage({ offer }) {
         <div style={{ color: "#5a4040", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 28, lineHeight: 1.7, borderTop: "1px solid #1c0b0b", paddingTop: 18 }}>© {new Date().getFullYear()} GroundUp by Dr. Gina Merritt · Northern Real Estate Urban Ventures · <a href="/terms" style={{ color: "#7a5a5a" }}>Terms</a> · <a href="/privacy" style={{ color: "#7a5a5a" }}>Privacy</a></div>
       </div>
 
-      {!done && (
+      {!done && o.mode !== "soon" && (
         <div className="fn-sticky" style={{ display: formVisible || done ? "none" : undefined }}>
           <button onClick={() => { const el = document.getElementById("fn-form-mobile"); if (el) { el.scrollIntoView({ behavior: "smooth", block: "start" }); const i = el.querySelector("input"); if (i) setTimeout(() => i.focus(), 400); } }} style={{ ...btn, padding: "15px 20px" }}>
             {o.cta}{o.priceNote ? <span style={{ fontWeight: 600, opacity: 0.85 }}> · {o.priceNote.split(" · ")[0]}</span> : null}
