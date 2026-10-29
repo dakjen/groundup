@@ -940,7 +940,7 @@ export default async function handler(req, res) {
       if (openAt && Date.now() < openAt) {
         const [me] = await sql`SELECT role FROM users WHERE id = ${user.id}`;
         if (me?.role !== 'admin') {
-          const when = new Date(openAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+          const when = new Date(openAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'America/New_York' });
           return res.status(409).json({ error: `Sessions with Dr. Merritt open ${when}. Join the waitlist and you'll hear the moment they do.`, opens_at: opens.value });
         }
       }

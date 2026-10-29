@@ -2434,7 +2434,7 @@ function ContactPage({ setActivePage, advisorLink, opensAt, isAdmin }) {
   // Before that the cards still show what is coming, but nothing can be bought
   // (the API refuses too). Admins see the live buttons so the flow can be tested.
   const locked = !isAdmin && !!opensAt && Date.now() < new Date(opensAt).getTime();
-  const opensLabel = opensAt ? new Date(opensAt).toLocaleDateString("en-US", { month: "long", day: "numeric" }) : "";
+  const opensLabel = opensAt ? new Date(opensAt).toLocaleDateString("en-US", { month: "long", day: "numeric", timeZone: "America/New_York" }) : "";
   // Arrived from a lesson's "Send her your deal"? Offer the way back to it.
   const [returnTo] = useState(() => { try { return JSON.parse(sessionStorage.getItem("guReturnTo") || "null"); } catch { return null; } });
   const SESSION_TYPES = [
