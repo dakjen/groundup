@@ -27,7 +27,7 @@ const OFFERS = {
   playbook: {
     page: "playbook", eyebrow: "The Developer's Playbook",
     headline: ["The guide experienced developers", "keep to themselves."],
-    sub: "Thirty years and $390M of closings, written down as a working reference: what has to be true at construction closing, which draws the lender inspects, how the equity pay-in meets the construction loan, what cost certification needs before the final capital contribution, the conditions precedent to conversion. The judgment that is not in any QAP or textbook, organized so you can open the phase you are in and find it. Developers who have it do not usually share it.",
+    sub: "Thirty years and $2B of closings, written down as a working reference: what has to be true at construction closing, which draws the lender inspects, how the equity pay-in meets the construction loan, what cost certification needs before the final capital contribution, the conditions precedent to conversion. The judgment that is not in any QAP or textbook, organized so you can open the phase you are in and find it. Developers who have it do not usually share it.",
     image: "/opt/nannie-helen.webp", imageAlt: "Nannie Helen at 4800, Washington, DC",
     proof: [["$6B+", "underwritten"], ["8,000+", "units built"], ["30+", "years in the work"]],
     bullets: [
@@ -53,7 +53,7 @@ const OFFERS = {
     headline: ["An hour on one topic,", "with someone who has done it."],
     sub: "Each live Lunch & Learn takes one subject a working developer actually struggles with: sizing the gap when credit pricing moves, what a lender will and will not give on a construction loan, structuring a JV so your guarantee is protected, reading a QAP for score. Dr. Gina Merritt works it through from deals she has closed, then takes your questions on your own situation. For people who already know the vocabulary and need the judgment. Normally $39.99. Your first seat is free.",
     image: "/opt/hough-exterior.webp", imageAlt: "9410 Hough, Cleveland — a real deal, taken apart live",
-    proof: [["$390M+", "closed behind the advice"], ["1 hr", "one topic, live"], ["Q&A", "on your situation"]],
+    proof: [["$2B+", "closed behind the advice"], ["1 hr", "one topic, live"], ["Q&A", "on your situation"]],
     bullets: [
       "One topic per session, taught from real closings, with the numbers that go with it",
       "Bring your own situation. The Q&A is for your deal: your gap, your term sheet, your partner question",
@@ -75,7 +75,7 @@ const OFFERS = {
     headline: ["You have a deal and a decision.", "Get it in front of the right expertise."],
     sub: "A gap that opened when pricing moved. A lender conditioning the construction loan on more equity. A JV partner's decision rights against your guarantee. A 9% application you are not sure scores. These are not introductory questions, and they do not get answered by a course. Twenty minutes with the GroundUp team sizes the problem and routes it: office hours with Dr. Merritt, a Senior Advisor retainer, or her Full Project Intake on the whole deal.",
     image: "/opt/beacon-center.webp", imageAlt: "The Beacon Center, Washington, DC",
-    proof: [["$390M+", "closed behind the advice"], ["20 min", "to size the problem"], ["$0", "no card, no pitch"]],
+    proof: [["$2B+", "closed behind the advice"], ["20 min", "to size the problem"], ["$0", "no card, no pitch"]],
     bullets: [
       "A working conversation about the deal: the stack, the term, the partner, the application, whatever is stuck",
       "A read on the level of help it needs: office hours, a Senior Advisor retainer, or the Full Project Intake with Dr. Merritt",
@@ -295,7 +295,7 @@ export function FunnelPage({ offer }) {
               <img src="/GM Headshot.webp" alt="Dr. Gina Merritt" width={56} height={56} style={{ width: 56, height: 56, borderRadius: 28, objectFit: "cover", flexShrink: 0 }} />
               <div>
                 <div style={{ color: "#f5e8e8", fontFamily: font, fontWeight: 800, fontSize: 13.5 }}>Built by a working developer</div>
-                <div style={{ color: "#8f7070", fontFamily: font, fontSize: 12.5, lineHeight: 1.6 }}>Dr. Gina Merritt: thirty years in affordable housing, a $390M+ portfolio across DC, Baltimore and Cleveland, $6B+ underwritten. Every lesson comes from a deal that closed.</div>
+                <div style={{ color: "#8f7070", fontFamily: font, fontSize: 12.5, lineHeight: 1.6 }}>Dr. Gina Merritt: thirty years in affordable housing, $2B of deals closed, a $390M+ ownership pipeline across DC, Baltimore and Cleveland, $6B+ underwritten. Every lesson comes from a deal that closed.</div>
               </div>
             </div>
             <div className="fn-card">

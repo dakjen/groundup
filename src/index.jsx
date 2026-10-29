@@ -1196,7 +1196,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited, preLaunc
             <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(44px,7vw,80px)", lineHeight: 1.0, marginBottom: 8, letterSpacing: "-1px", background: "linear-gradient(135deg, #b80101 0%, #570404 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }} className="gu-up gu-d2">Build Legacy.</h1>
             <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontStyle: "italic", fontSize: "clamp(34px,5.5vw,62px)", lineHeight: 1.0, color: "#8a7070", marginBottom: 24, letterSpacing: "-1px" }} className="gu-up gu-d3">Build it Right.</h1>
             <p className="gu-up gu-d3" style={{ fontSize: "clamp(14.5px,1.8vw,17px)", color: "#c4a8a8", lineHeight: 1.85, maxWidth: 540, marginBottom: 22, fontFamily: "'DM Sans', sans-serif" }}>
-              GroundUp is an educational platform for real estate development: the whole process of getting a building built, in order, from a developer who has closed $390M of it. {courseCount} courses, a community of people doing the work, live Lunch & Learns on real deals, and direct access to Dr. Gina Merritt when your own deal needs an experienced read. For people learning the business, and for people already in it who want to do it right.
+              GroundUp is an educational platform for real estate development: the whole process of getting a building built, in order, from a developer who has closed $2B of it. {courseCount} courses, a community of people doing the work, live Lunch & Learns on real deals, and direct access to Dr. Gina Merritt when your own deal needs an experienced read. For people learning the business, and for people already in it who want to do it right.
             </p>
             <div className="gu-up gu-d4" style={{ display: "flex", flexWrap: "wrap", gap: 6, maxWidth: 560, marginBottom: 36 }}>
               {["Feasibility", "Predevelopment", "Building your team", "Financing & the capital stack", "LIHTC & subsidy", "Zoning & entitlements", "Design & construction", "Compliance after opening day"].map(t => (
@@ -1220,7 +1220,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited, preLaunc
               <div style={{ padding: "24px 28px 28px" }}>
                 <div style={{ fontSize: 11, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Dr. Gina Merritt</div>
                 <p style={{ fontSize: 13, color: "#c4a8a8", lineHeight: 1.75, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>
-                  Raised in the Bronx. Bootstrapped from public housing to $390M+ portfolio of development deals across DC, Baltimore & Cleveland.
+                  Raised in the Bronx. Bootstrapped from public housing to $2B in deals, with a $390M+ ownership pipeline across DC, Baltimore & Cleveland.
                 </p>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {["Howard Grad", "Darden MBA", "USC Doctorate", "$6B+ Underwritten", "8,000 Units Built"].map(t => (
@@ -1830,9 +1830,10 @@ function AboutPage({ setActivePage }) {
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14, marginTop: 28 }}>
             {[
+              { val: "$2B+", label: "Deals Closed" },
               { val: "8,000+", label: "Units Built" },
               { val: "$6B+", label: "Underwritten" },
-              { val: "$390M+", label: "Portfolio" },
+              { val: "$390M+", label: "Ownership Pipeline" },
               { val: "$310M+", label: "Raised Since 2021" },
               { val: "817", label: "Units in Pipeline" },
               { val: "19", label: "Buildings in Pipeline" },
@@ -4040,7 +4041,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
             <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 14 }}>The Real Value</div>
             <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(30px,4vw,44px)", color: "#f5e8e8", lineHeight: 1.15, marginBottom: 18 }}>You're not just buying courses.<br />You're buying expertise.</h2>
             <p style={{ color: "#a89080", fontSize: 15, lineHeight: 1.9, fontFamily: font, marginBottom: 22 }}>
-              This is bigger than one person. GroundUp runs through Dr. Merritt — Bronx-raised, public housing to $390M+ in deals — but it exists for you: the knowledge, the community, and the resources to build wealth from the ground up. What she fought to learn alone, you get handed with people in your corner.
+              This is bigger than one person. GroundUp runs through Dr. Merritt — Bronx-raised, public housing to $2B in deals — but it exists for you: the knowledge, the community, and the resources to build wealth from the ground up. What she fought to learn alone, you get handed with people in your corner.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
@@ -7614,12 +7615,12 @@ export default function App() {
       home: ["GroundUp by Dr. Gina Merritt — Affordable Housing Development Courses & Community", "Learn affordable housing development from Dr. Gina Merritt — 30+ years and billions in real deals. Courses, community, and direct access for underrepresented developers."],
       courses: ["The Curriculum — GroundUp", "Seven courses across the full development lifecycle: predevelopment, teams & JVs, financing & LIHTC, zoning, design & construction, and after opening day — taught from deals that closed."],
       pricing: ["Plans & Pricing — GroundUp", "Member $49.99, Builder $149.99, Premium $249.99, Owner $499.99 — plus one-time course passes and Lunch & Learn access. Every plan includes the full course library."],
-      about: ["About Dr. Gina Merritt — GroundUp", "From public housing in the Bronx to $390M+ portfolio in real estate development. The story behind GroundUp and Northern Real Estate Urban Ventures."],
+      about: ["About Dr. Gina Merritt — GroundUp", "From public housing in the Bronx to $2B in real estate development deals. The story behind GroundUp and Northern Real Estate Urban Ventures."],
       lunchlearn: ["Lunch & Learns — GroundUp", "Live monthly sessions with Dr. Gina Merritt — real deals, real numbers, live Q&A, plus a recording library."],
       contact: ["Book a 1:1 Session — GroundUp", "Work directly with Dr. Gina Merritt: deal review, strategy, capital stack review and community development sessions."],
       terms: ["Terms of Use — GroundUp", "The GroundUp Terms of Use: content license, memberships, billing, refunds, and community rules."],
       privacy: ["Privacy Policy — GroundUp", "What GroundUp collects, how it is used, who processes it, and how deletion works."],
-      "go/playbook": ["The Developer's Playbook — GroundUp by Dr. Gina Merritt", "The guide experienced developers keep to themselves: thirty years and $390M of closings written down as a working reference, organized by phase. Lives in your GroundUp account."],
+      "go/playbook": ["The Developer's Playbook — GroundUp by Dr. Gina Merritt", "The guide experienced developers keep to themselves: thirty years and $2B of closings written down as a working reference, organized by phase. Lives in your GroundUp account."],
       "go/lunch": ["A free seat at a live Lunch & Learn with Dr. Gina Merritt", "An hour on one topic working developers struggle with, taught from closed deals, then Q&A on your own situation. For people who already know the vocabulary. First seat free."],
       "get-started": ["What kind of help do you need? — GroundUp by Dr. Gina Merritt", "Ten questions, one honest answer: nothing yet, a course, a membership, live time with Dr. Merritt, or one-on-one advisory work."],
       "go/call": ["A free 20-minute scoping call with the GroundUp team", "A gap that opened when pricing moved, a lender wanting more equity, a partner's decision rights against your guarantee. Twenty minutes to size it and route it to the right expertise."],
