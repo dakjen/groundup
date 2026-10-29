@@ -8,6 +8,11 @@
 
 const BREVO = 'https://api.brevo.com/v3';
 
+// Replies to anything we send go to the NREUV inbox until GroundUp has a
+// mailbox of its own: the GroundUp sender addresses bounce.
+function replyTo() {
+  return { email: process.env.BREVO_REPLY_TO || 'djmj@nreuv.com', name: process.env.BREVO_REPLY_NAME || 'Dr. Gina Merritt — GroundUp' };
+}
 function sender() {
   return {
     email: process.env.BREVO_SENDER_EMAIL || 'groundup@drginamerritt.net',
@@ -103,6 +108,7 @@ export async function sendEmail(to, subject, innerHtml, opts = {}) {
   if (opts.marketing && await isOptedOut(to)) return false;
   const r = await brevo('/smtp/email', {
     sender: sender(),
+    replyTo: replyTo(),
     to: [{ email: to }],
     subject,
     htmlContent: opts.raw ? innerHtml : wrap(innerHtml, to, opts.light),
