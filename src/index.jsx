@@ -4459,7 +4459,22 @@ function PartnerInterestPage() {
       <div style={{ maxWidth: 640, margin: "0 auto" }}>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12, textAlign: "center" }}>Partner With GroundUp</div>
         <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(32px,4.5vw,46px)", color: "#f5e8e8", textAlign: "center", lineHeight: 1.15, marginBottom: 14 }}>Bring GroundUp to<br />your cohort.</h1>
-        <p style={{ color: "#8a7070", fontSize: 14.5, fontFamily: font, lineHeight: 1.8, textAlign: "center", maxWidth: 520, margin: "0 auto 36px" }}>For agencies, CDFIs, and nonprofit developer programs: sponsor your cohort's first year at a group discount with personalized access to the courses they need — plus a branded page with your logo. After the sponsored year, your developers continue as individual members. Tell us about your program and we'll get right back to you.</p>
+        <p style={{ color: "#8a7070", fontSize: 14.5, fontFamily: font, lineHeight: 1.8, textAlign: "center", maxWidth: 520, margin: "0 auto 36px" }}>For agencies, CDFIs, nonprofit developer programs, schools and industry partners: sponsor your cohort's first year at a group discount with personalized access to the courses they need — plus a branded page with your logo. After the sponsored year, your developers continue as individual members. Tell us about your program and we'll get right back to you.</p>
+        {/* The three partner shapes, from Dakotah's partnering notes (Oct 29, 2026).
+            What Dr. Merritt gives in exchange is lectures or group advisory
+            sessions, and the time commitment stays bounded. */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 14, marginBottom: 36 }}>
+          {[
+            ["Professor or school cohort", "Bring a cohort of students and Dr. Merritt gives a group lecture, office hours, or a case-study workshop in return. The time commitment stays bounded."],
+            ["Municipality or nonprofit", "A tailored cohort for your emerging developers, with a defined number of seats and a defined number of group advisory sessions."],
+            ["Industry partner", "Co-host a lecture or workshop for your network, then give the people who want more a path into GroundUp."],
+          ].map(([t, d]) => (
+            <div key={t} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 14, padding: "20px 20px" }}>
+              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 20, color: "#f0d8d8", marginBottom: 8, lineHeight: 1.2 }}>{t}</div>
+              <div style={{ color: "#8a7070", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>{d}</div>
+            </div>
+          ))}
+        </div>
         {done ? (
           <div style={{ background: "#0d0404", border: "1px solid #22c55e50", borderRadius: 18, padding: "44px 36px", textAlign: "center" }}>
             <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#f5e8e8", marginBottom: 10 }}>We got it.</h2>
