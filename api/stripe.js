@@ -930,6 +930,22 @@ export default async function handler(req, res) {
     const product = CATALOG[item];
     if (!product) return res.status(400).json({ error: 'Unknown item' });
 
+    // 1:1 sessions and the Full Project Intake open with the insider launch
+    // (settings.launch_insider_at). Until then nobody can buy them — the page
+    // hides the buttons, and this is the backstop for a direct API call or a
+    // stale tab. Admins are let through so the flow can be tested.
+    if (item.startsWith('session_') || item === 'retainer_onboarding') {
+      const [opens] = await sql`SELECT value FROM settings WHERE key = 'launch_insider_at'`;
+      const openAt = opens?.value ? new Date(opens.value).getTime() : 0;
+      if (openAt && Date.now() < openAt) {
+        const [me] = await sql`SELECT role FROM users WHERE id = ${user.id}`;
+        if (me?.role !== 'admin') {
+          const when = new Date(openAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+          return res.status(409).json({ error: `Sessions with Dr. Merritt open ${when}. Join the waitlist and you'll hear the moment they do.`, opens_at: opens.value });
+        }
+      }
+    }
+
     // Lifetime Passes are a numbered run — sold out (or cap 0) means not for sale.
     if (item === 'pass_lifetime') {
       const lt = await lifetimeSeats(sql);

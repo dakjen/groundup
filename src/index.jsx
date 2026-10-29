@@ -2429,7 +2429,12 @@ function PricingPage({ onSignUp }) {
 
 // ─── CONTACT / BOOKING PAGE ──────────────────────────────────────────────────
 
-function ContactPage({ setActivePage, advisorLink }) {
+function ContactPage({ setActivePage, advisorLink, opensAt, isAdmin }) {
+  // 1:1 sessions and the Full Project Intake open with the insider launch.
+  // Before that the cards still show what is coming, but nothing can be bought
+  // (the API refuses too). Admins see the live buttons so the flow can be tested.
+  const locked = !isAdmin && !!opensAt && Date.now() < new Date(opensAt).getTime();
+  const opensLabel = opensAt ? new Date(opensAt).toLocaleDateString("en-US", { month: "long", day: "numeric" }) : "";
   // Arrived from a lesson's "Send her your deal"? Offer the way back to it.
   const [returnTo] = useState(() => { try { return JSON.parse(sessionStorage.getItem("guReturnTo") || "null"); } catch { return null; } });
   const SESSION_TYPES = [
@@ -2543,6 +2548,11 @@ function ContactPage({ setActivePage, advisorLink }) {
           <p style={{ color: "#8a7070", fontSize: 15, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif" }}>
             45 minutes with Dr. Gina Merritt. Select a session type, pay to reserve, then tell her what you're working on.
           </p>
+          {locked && (
+            <div style={{ marginTop: 18, background: "#1a0808", border: "1px solid #b80101", borderRadius: 12, padding: "14px 18px", color: "#f0d8d8", fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
+              <strong>Sessions and the Full Project Intake open {opensLabel}.</strong> Look through what is on offer below; booking opens with the launch, and the waitlist hears first.
+            </div>
+          )}
 
         </div>
 
@@ -2634,7 +2644,12 @@ function ContactPage({ setActivePage, advisorLink }) {
                     </div>
                   );
                 })()}
-                {selected.advisor ? (
+                {locked ? (
+                  <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+                    <div style={{ background: "#1a0808", border: "1px solid #b80101", borderRadius: 10, padding: "12px 20px", color: "#f0d8d8", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13 }}>Opens {opensLabel}</div>
+                    <a href="/" onClick={e => { e.preventDefault(); setActivePage("home"); }} style={{ color: "#e0c4c4", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>join the waitlist to hear first →</a>
+                  </div>
+                ) : selected.advisor ? (
                   <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
                     <button onClick={() => startCheckout("retainer_onboarding")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "13px 24px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Buy the Intake — $1,500 →</button>
                     <a href={advisorLink || ("mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("Senior Advisor — engagement call"))} {...(advisorLink ? { target: "_blank", rel: "noreferrer" } : {})} style={{ color: "#e0c4c4", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>or book a free engagement call →</a>
@@ -8087,7 +8102,7 @@ export default function App() {
       {member?.role === "admin" && activePage === "admin-drops" && <DropsAdminPage />}
       {member?.role === "admin" && activePage === "admin-revenue" && <TeamPage><RevenueTab /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-status" && <TeamPage><SystemStatusTab /></TeamPage>}
-      {activePage === "contact" && <ContactPage setActivePage={navigateTo} advisorLink={advisorLink} />}
+      {activePage === "contact" && <ContactPage setActivePage={navigateTo} advisorLink={advisorLink} opensAt={insiderAt} isAdmin={member?.role === "admin"} />}
       {activePage === "support" && <SupportPage />}
       {activePage === "glossary" && <GlossaryPage member={member} onSignIn={() => setShowSignup(true)} setActivePage={navigateTo} />}
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>
