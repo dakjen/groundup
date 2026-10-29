@@ -26,43 +26,43 @@ const pixel = (event, data) => { try { if (typeof window.fbq === "function") win
 const OFFERS = {
   playbook: {
     page: "playbook", eyebrow: "The Developer's Playbook",
-    headline: ["The guide experienced developers", "keep to themselves."],
-    sub: "Thirty years and $2B of deals worked on, written down as a working reference: what has to be true at construction closing, which draws the lender inspects, how the equity pay-in meets the construction loan, what cost certification needs before the final capital contribution, the conditions precedent to conversion. The judgment that is not in any QAP or textbook, organized so you can open the phase you are in and find it. Developers who have it do not usually share it.",
+    headline: ["Everything you need to get your deal done,", "in one place, in your hands."],
+    sub: "Thirty years and $2B of deals worked on, written down so you never have to guess again. What has to be true at construction closing, which draws the lender inspects, how the equity pay-in meets the construction loan, what cost certification needs, the conditions to conversion. The judgment that is not in any QAP or textbook, organized so you open the phase you are in and know exactly what to do next. Experienced developers keep this to themselves. We are putting it in your hands.",
     image: "/opt/nannie-helen.webp", imageAlt: "Nannie Helen at 4800, Washington, DC",
     proof: [["$6B+", "underwritten"], ["8,000+", "units built"], ["30+", "years in the work"]],
     bullets: [
-      "Organized to be looked up, not read once: nine phases in execution order, from site control and the predevelopment draw schedule through year fifteen",
-      "The pre-closing, pre-construction and pre-conversion checklists, as run on 9410 Hough (fourteen sources) and the Beacon Center (three closings, one building)",
-      "The judgment that is not in any QAP: what goes hard and when, how far to carry drawings before the stack is committed, what to concede to a lender and what never to",
-      "Always current in your GroundUp account. When the practice changes, the page changes, and you have the new one",
+      "Organized to be looked up, not read once: nine phases in execution order, so you always know your next move, from site control through year fifteen",
+      "The pre-closing, pre-construction and pre-conversion checklists, exactly as run on 9410 Hough (fourteen sources) and the Beacon Center (three closings, one building), so you walk into every milestone prepared",
+      "The judgment nobody teaches: what goes hard and when, how far to carry drawings before the stack is committed, what to concede to a lender and what never to. Confidence in every hard conversation",
+      "Always current in your GroundUp account. When the practice changes, your Playbook changes with it. You are never working from old information",
     ],
     // Not on sale yet (no playbook product exists). "soon" mode shows a
     // coming-soon card in place of the buy form and points at the waitlist.
     cta: "Coming soon", priceNote: "Coming soon · the working reference for developers with deals in motion", mode: "soon", item: "playbook",
     faq: [
-      ["Who is this for?", "Developers who have been to at least one closing, and the owner's reps, lenders and syndicators who work beside them. It assumes you know what basis, DSCR and a conversion test are, and it is built to make you better at them."],
+      ["Who is this for?", "Anyone building, or getting ready to build. If you have been to a closing it will sharpen you. If you have not, it shows you what the room expects before you walk in. Owner's reps, lenders and syndicators use it too."],
       ["How do I use it?", "Like a reference. You do not read it front to back; you open the phase you are in and run the checklist. Before a closing, before a draw, before conversion, before the next hard conversation."],
       ["Is it a download?", "It lives in your GroundUp account and you read it there, so it stays current. Owner members can also download it."],
       ["Do I need a membership?", "No. Once it is out you can buy it on its own. If you join later, it is already in your account."],
       ["Refunds?", "Digital products are non-refundable once access is delivered."],
     ],
-    success: { title: "The Playbook is yours.", body: "Check your email: we made you a GroundUp account and sent a link to set your password. The Playbook is waiting under Shop → My documents. Open it to the phase you are in." },
+    success: { title: "The Playbook is yours.", body: "Check your email: we made you a GroundUp account and sent a link to set your password. The Playbook is waiting under Shop → My documents. Open it to the phase you are in and get moving." },
   },
   lunch: {
     page: "lunch", eyebrow: "A free seat · live Lunch & Learn",
-    headline: ["An hour on one topic,", "with someone who has done it."],
-    sub: "Each live Lunch & Learn takes one subject a working developer actually struggles with: sizing the gap when credit pricing moves, what a lender will and will not give on a construction loan, structuring a JV so your guarantee is protected, reading a QAP for score. Dr. Gina Merritt works it through from deals she has closed, then takes your questions on your own situation. For people who already know the vocabulary and need the judgment. Normally $39.99. Your first seat is free.",
+    headline: ["One hour, one topic,", "and you leave knowing exactly what to do."],
+    sub: "Every live Lunch & Learn takes one thing that stands between a developer and the next closing: sizing the gap when credit pricing moves, what a lender will and will not give on a construction loan, structuring a JV so your guarantee is protected, reading a QAP for score. Dr. Gina Merritt, thirty years and $2B of deals worked on, takes it apart from buildings she has built, then takes your questions on your own situation. You walk out with the answer and the standing to act on it. Normally $39.99. Your first seat is free.",
     image: "/opt/hough-exterior.webp", imageAlt: "9410 Hough, Cleveland — a real deal, taken apart live",
     proof: [["$2B+", "in deals behind the advice"], ["1 hr", "one topic, live"], ["Q&A", "on your situation"]],
     bullets: [
-      "One topic per session, taught from real closings, with the numbers that go with it",
-      "Bring your own situation. The Q&A is for your deal: your gap, your term sheet, your partner question",
-      "The recording is yours after",
-      "Attend and get 25% off your first month if you ever join GroundUp",
+      "One topic per session, taught from real buildings with the real numbers, by someone who has sat on every side of the table",
+      "Bring your own situation. The Q&A is for your deal: your gap, your term sheet, your partner question. You will leave with an answer",
+      "The recording is yours after, to come back to the day you need it",
+      "Attend and get 25% off your first month if you join GroundUp. This hour is the start",
     ],
     cta: "Save my free seat →", priceNote: "Free · normally $39.99", mode: "lead", item: "lnl",
     faq: [
-      ["Who is this for?", "Developers who have been through at least part of a deal, and the lenders, syndicators and consultants who work with them. Sessions assume you know what a capital stack, a QAP and a conversion are. If you are new to the work, the courses are the better door."],
+      ["Who is this for?", "Anyone serious about getting a deal done: developers at any stage, and the lenders, syndicators and consultants beside them. If some of the vocabulary is new, come anyway. You will pick it up fast, and the courses inside GroundUp fill in the rest."],
       ["What are the topics?", "They change each session and are posted on the Lunch & Learn page: financing, structuring, entitlements, construction, operations. The next session's topic is in its title."],
       ["Is it really free?", "Yes. You get a one-time code by email, create a free account, enter the code, and RSVP. No card."],
       ["When is it?", "Dates are on the Lunch & Learn page once you are in. Sessions run about an hour, 11 AM Eastern, on Zoom."],
@@ -72,44 +72,44 @@ const OFFERS = {
   },
   call: {
     page: "call", eyebrow: "Free scoping call · 20 minutes",
-    headline: ["You have a deal and a decision.", "Get it in front of the right expertise."],
-    sub: "A gap that opened when pricing moved. A lender conditioning the construction loan on more equity. A JV partner's decision rights against your guarantee. A 9% application you are not sure scores. These are not introductory questions, and they do not get answered by a course. Twenty minutes with the GroundUp team sizes the problem and routes it: office hours with Dr. Merritt, a Senior Advisor retainer, or her Full Project Intake on the whole deal.",
+    headline: ["Your deal can get done.", "Twenty minutes shows you how."],
+    sub: "A gap that opened when pricing moved. A lender conditioning the construction loan on more equity. A JV partner's decision rights against your guarantee. A 9% application you are not sure scores. Or a site, an idea, and no clear next step. Whatever is in front of you, someone on this team has already been through it on a real building. Twenty minutes with the GroundUp team and you leave with the problem sized, the next step named, and the right level of help behind you: office hours with Dr. Merritt, a Senior Advisor retainer, or her Full Project Intake on the whole deal.",
     image: "/opt/beacon-center.webp", imageAlt: "The Beacon Center, Washington, DC",
-    proof: [["$2B+", "in deals behind the advice"], ["20 min", "to size the problem"], ["$0", "no card, no pitch"]],
+    proof: [["$2B+", "in deals behind the advice"], ["20 min", "to a clear next step"], ["$0", "no card, no pitch"]],
     bullets: [
-      "A working conversation about the deal: the stack, the term, the partner, the application, whatever is stuck",
-      "A read on the level of help it needs: office hours, a Senior Advisor retainer, or the Full Project Intake with Dr. Merritt",
-      "If it is the intake, you arrive prepared: pro forma, sources and uses, term sheets and the LP agreement she will read first",
-      "If it is smaller than that, we say so",
+      "A working conversation about your deal: the stack, the term, the partner, the application, whatever is stuck",
+      "A clear read on what it needs and who should be on it: office hours, a Senior Advisor retainer, or the Full Project Intake with Dr. Merritt",
+      "If it is the intake, you arrive prepared and confident: pro forma, sources and uses, term sheets and the LP agreement she will read first",
+      "If it needs less than that, we say so and point you to the fastest path. Nobody gets sold what they do not need",
     ],
     cta: "Book my free call →", priceNote: "Free · 20 minutes · with the GroundUp team", mode: "call", item: "scoping",
     faq: [
-      ["Who is this for?", "Developers with a deal in motion, or a specific decision in front of them. If you are at the start, the courses and the free Lunch & Learn are the better door."],
-      ["Who will I talk to?", "A member of the GroundUp team who works alongside Dr. Merritt's advisory practice and can tell you which level of help fits the problem."],
-      ["Is this a call with Dr. Merritt?", "No. Her time is booked through the Full Project Intake and the Senior Advisor retainer. This call is how you get to her prepared, or find out you do not need to yet."],
+      ["Who is this for?", "Anyone with a deal, a site, an idea, or a decision in front of them. Just getting started? Come anyway. We will tell you honestly where you stand and what gets you to the next milestone."],
+      ["Who will I talk to?", "A member of the GroundUp team who works inside Dr. Merritt's advisory practice and knows which level of help fits the problem."],
+      ["Is this a call with Dr. Merritt?", "Not this one. Her time is booked through the Full Project Intake and the Senior Advisor retainer. This call is how you get to her prepared, with the right documents and the right question, so her time on your deal counts."],
       ["What should I bring?", "Your pro forma, your sources and uses, the lender's term sheet or the investor's LOI, and the specific question. Whatever the problem lives in."],
     ],
-    success: { title: "You're on the list.", body: "Check your email for the booking link and pick a time that works. Come with whatever you have." },
+    success: { title: "You're on the list.", body: "Check your email for the booking link and pick a time that works. Come with whatever you have. By the end of the call you will know your next step." },
   },
   intake: {
     page: "intake", eyebrow: "Full Project Intake · $1,500",
-    headline: ["Your whole deal,", "read by someone who has closed them."],
-    sub: "Most developers find out what the lender thinks when the lender says no. The Full Project Intake puts your entire project — pro forma, capital stack, site, timeline — in front of thirty years of experience first, and gives you back what you missed and what to do next.",
+    headline: ["Your whole deal, in expert hands", "before the lender ever sees it."],
+    sub: "Most developers find out what the lender thinks when the lender says no. You will not. The Full Project Intake puts your entire project — pro forma, capital stack, site, timeline — in front of thirty years of experience first. You get back what you missed, what to fix, and the exact order of operations from here, so you walk into every room already knowing the answer.",
     image: "/opt/beacon-center.webp", imageAlt: "The Beacon Center, Washington, DC",
     proof: [["$47M", "9410 Hough, Cleveland"], ["$52M", "Beacon Center, DC"], ["3", "capital stacks on one deal"]],
     bullets: [
-      "A working session on your actual numbers, not a consultation about development in general",
-      "A written read-back: the gaps, the risks, the order of operations from here",
-      "Your documents go through a private brief before the call, so the review arrives prepared",
-      "The $1,500 credits in full against your first month if you continue on a Senior Advisor retainer",
+      "A working session with Dr. Merritt on your actual numbers, not a consultation about development in general",
+      "A written read-back you can build from: the gaps, the risks, and the order of operations from here",
+      "Your documents go through a private brief before the call, so the review arrives prepared and nothing gets missed",
+      "The $1,500 credits in full against your first month if you continue on a Senior Advisor retainer. If you want her on the whole deal, this is where it starts",
     ],
     cta: "Book the intake →", priceNote: "$1,500 · one time · credits toward a retainer", mode: "buy", item: "retainer_onboarding",
     faq: [
-      ["Who is this for?", "A developer with a deal in motion: a site under control, numbers on paper, a financing question in front of them."],
+      ["Who is this for?", "A developer with a deal in motion: a site under control, numbers on paper, a financing question in front of you. If that is you, this is the fastest way to get the whole thing right."],
       ["What happens after I pay?", "You get an account and a link to book the call, then a brief to attach your documents."],
       ["Refund?", "The intake is refundable only at NREUV's discretion. If a session happens with no real deal on the table, any refund is reduced by $550."],
     ],
-    success: { title: "You're booked in.", body: "Check your email: we made you a GroundUp account and sent a link to set your password. Once you are in, the first thing you see is the link to pick a time for your intake call." },
+    success: { title: "You're booked in.", body: "Check your email: we made you a GroundUp account and sent a link to set your password. Once you are in, the first thing you see is the link to pick a time for your intake call. Your deal just got thirty years of experience on it." },
   },
 };
 
@@ -166,7 +166,7 @@ export function FunnelPage({ offer }) {
     <div style={{ background: "#0b0505", border: "1px solid #b8010160", borderRadius: 14, padding: compact ? "20px 18px" : "24px 22px" }}>
       <div style={{ fontSize: 9.5, color: RED, fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>Coming soon</div>
       <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "#f5e8e8", marginBottom: 8 }}>The Playbook is not on sale yet.</div>
-      <div style={{ color: "#c8a8a8", fontSize: 14.5, fontFamily: font, lineHeight: 1.7 }}>It is being finished for launch. Join the GroundUp waitlist and you will hear the day it is out, with first access.</div>
+      <div style={{ color: "#c8a8a8", fontSize: 14.5, fontFamily: font, lineHeight: 1.7 }}>It is being finished for launch. Join the waitlist and you are first in line the day it is out. Until then, everything else inside GroundUp is ready for you.</div>
       <a href="/" style={{ ...btn, display: "block", textAlign: "center", textDecoration: "none", marginTop: 16, boxSizing: "border-box" }}>Join the waitlist →</a>
     </div>
   ) : done ? (
@@ -295,7 +295,7 @@ export function FunnelPage({ offer }) {
               <img src="/GM Headshot.webp" alt="Dr. Gina Merritt" width={56} height={56} style={{ width: 56, height: 56, borderRadius: 28, objectFit: "cover", flexShrink: 0 }} />
               <div>
                 <div style={{ color: "#f5e8e8", fontFamily: font, fontWeight: 800, fontSize: 13.5 }}>Built by a working developer</div>
-                <div style={{ color: "#8f7070", fontFamily: font, fontSize: 12.5, lineHeight: 1.6 }}>Dr. Gina Merritt: thirty years in affordable housing, $2B of deals worked on, a $390M+ ownership pipeline across DC, Baltimore and Cleveland, $6B+ underwritten. Every lesson comes from a deal that closed.</div>
+                <div style={{ color: "#8f7070", fontFamily: font, fontSize: 12.5, lineHeight: 1.6 }}>Dr. Gina Merritt: thirty years in affordable housing, $2B of deals worked on, a $390M+ ownership pipeline across DC, Baltimore and Cleveland, $6B+ underwritten. Every lesson comes from a real building, and now that experience is working for you.</div>
               </div>
             </div>
             <div className="fn-card">
