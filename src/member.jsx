@@ -3119,12 +3119,12 @@ export function LibraryPage({ member, onUpgrade }) {
         {!data ? <div style={{ color: "var(--gu-muted)", fontFamily: font }}>Loading…</div> : (
           [...Array.from({ length: 9 }, (_, i) => i + 1), null].map(ph => {
             const phItems = items.filter(r => (r.phase || null) === ph);
-            const name = ph ? `Phase ${ph} — ${DEV_PHASES[ph - 1]}` : "General — the whole process";
+            const name = ph ? `Phase ${ph} — ${DEV_PHASES[ph - 1]}` : "Services you may need";
             return (
               <div key={String(ph)} style={{ marginBottom: 28 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
                   {ph && <span style={{ fontFamily: serif, fontWeight: 700, fontSize: 26, color: "#b80101", opacity: 0.55, lineHeight: 1, minWidth: 24 }}>{ph}</span>}
-                  <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 22, color: "var(--gu-text2)", margin: 0 }}>{ph ? DEV_PHASES[ph - 1] : "The Whole Process"}</h2>
+                  <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 22, color: "var(--gu-text2)", margin: 0 }}>{ph ? DEV_PHASES[ph - 1] : "Services you may need"}</h2>
                   <span style={{ flex: 1, borderTop: "1px solid #1e0000" }} />
                   <span style={{ color: "var(--gu-faint)", fontSize: 12, fontFamily: font }}>{phItems.length || "—"}</span>
                 </div>
