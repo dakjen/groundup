@@ -7593,6 +7593,7 @@ export default function App() {
   const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-bookings", "admin-drops", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "admin-invites", "admin-team", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "refer", "support", "glossary", "library", "cohort", "get-started", "doc", "go/playbook", "go/lunch", "go/intake", "go/call"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
+    if (!p) return "home";
     return PAGES.includes(p) ? p : (sessionStorage.getItem("activePage") || "home");
   };
   const [activePage, setActivePageRaw] = useState(pathPage);
@@ -7600,15 +7601,20 @@ export default function App() {
   // exactly that. Each in-app navigation pushes the page it left; the browser's
   // back button (popstate) pops it so the two stay in step.
   const [backStack, setBackStack] = useState([]);
-  const setActivePage = (page) => {
+  const setActivePage = (page, { back = false } = {}) => {
     sessionStorage.setItem("activePage", page);
     const path = page === "home" ? "/" : "/" + page;
-    if (window.location.pathname !== path) {
-      window.history.pushState({}, "", path);
-      setBackStack(s => [...s, activePage]);
-    }
+    const moved = window.location.pathname !== path;
+    if (moved) window.history.pushState({}, "", path);
+    // Going back pops the page we return to; going forward records the one we leave
+    if (back) setBackStack(s => s.slice(0, -1));
+    else if (moved) setBackStack(s => [...s, activePage]);
     setActivePageRaw(page);
   };
+  // The back pill goes straight to the recorded previous page. (Not
+  // history.back(): pages that keep tab state in the URL hash add history
+  // entries of their own, so one step back could land on the same page.)
+  const goBack = () => setActivePage(backStack[backStack.length - 1] || "home", { back: true });
   // Every page change starts at the top — no inheriting the last page's scroll
   useEffect(() => { window.scrollTo(0, 0); }, [activePage]);
   useEffect(() => {
@@ -8092,9 +8098,8 @@ export default function App() {
         const LABELS = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learn", contact: "Advisory", community: "Community", membership: "Membership", resources: "Resources", advisory: "Advisory", shop: "Shop", officehours: "Office Hours", terms: "Terms", privacy: "Privacy", partner: "Partner", "partner-interest": "Partner", refer: "Refer", support: "Support", glossary: "Glossary", library: "The Library", cohort: "My Cohort", "get-started": "Get Started", doc: "Document" };
         const prev = backStack[backStack.length - 1];
         const label = prev ? (LABELS[prev] || (prev.startsWith("admin-") ? "Admin" : "Back")) : "Home";
-        const go = () => { if (prev) window.history.back(); else navigateTo("home"); };
         return (
-          <button onClick={go} aria-label={"Back to " + label} style={{ position: "fixed", top: 72, left: "clamp(12px,3vw,40px)", zIndex: 99, display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", color: "#e08a8a", border: "1px solid #b8010150", borderRadius: 999, padding: "6px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12, cursor: "pointer", letterSpacing: "0.2px" }}>← {label}</button>
+          <button onClick={goBack} aria-label={"Back to " + label} style={{ position: "fixed", top: 72, left: "clamp(12px,3vw,40px)", zIndex: 99, display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", color: "#e08a8a", border: "1px solid #b8010150", borderRadius: 999, padding: "6px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12, cursor: "pointer", letterSpacing: "0.2px" }}>← {label}</button>
         );
       })()}
       {activePage === "home" && <HomePage setActivePage={navigateTo} onSignUp={openSignup} currentUser={currentUser} eventInvited={eventInvited} preLaunch={prelaunch} />}
