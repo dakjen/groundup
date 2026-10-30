@@ -597,9 +597,12 @@ export default async function handler(req, res) {
       }
       const session = getSession(req);
       if (!session || !session.uid) return res.status(401).json({ error: 'Sign in required' });
-      const [user] = await sql`SELECT tier, membership_status FROM users WHERE id = ${session.uid}`;
+      const [user] = await sql`SELECT tier, membership_status, role FROM users WHERE id = ${session.uid}`;
       if (!user || user.membership_status !== 'active') return res.status(401).json({ error: 'Sign in required' });
-      const rank = TIER_RANK[user.tier] ?? 0;
+      // The team sees the whole library, open, including templates on lessons
+      // and courses that have not been published yet (marked as such below).
+      const team = user.role === 'admin';
+      const rank = team ? 99 : (TIER_RANK[user.tier] ?? 0);
       const rows = await sql`SELECT * FROM resources ORDER BY category, position, id`;
       // Everyone signed in sees what exists. What they can open depends on the
       // plan: a locked item keeps its title and loses its link. A pass holder
@@ -618,15 +621,20 @@ export default async function handler(req, res) {
             if (!m || !m.url || m.kind === 'Video') continue;
             const [cid, lid] = key.split(':');
             const course = byId[cid];
-            // Unpublished course or draft lesson: its templates stay unpublished too
-            if (!course || course.hidden || (course.available_at && new Date(course.available_at) > new Date())) continue;
+            // Unpublished course or draft lesson: its templates stay unpublished
+            // too, for members. The team sees them, flagged.
+            if (!course) continue;
+            const courseLive = !course.hidden && !(course.available_at && new Date(course.available_at) > new Date());
+            if (!courseLive && !team) continue;
             const lessons = (typeof course.lessons === 'string' ? JSON.parse(course.lessons) : course.lessons) || [];
             const lesson = lessons.find(l => String(l.id) === String(lid)) || lessons.find(l => String(l.id) === String(lid).replace(/^l/, ''));
-            if (!lesson || !lessonLive(lesson)) continue;
+            if (!lesson) continue;
+            if (!lessonLive(lesson) && !team) continue;
+            const unpublished = !courseLive || !lessonLive(lesson);
             // Lesson materials come with the courses: any paid plan opens them
             visible.push(lockRow({ id: `att:${key}:${i}`, title: String(m.title || '').replace(/_/g, ' '), url: m.url, category: m.kind === 'Template' ? 'template' : 'resource',
               kind_label: m.kind, min_tier: 'Basic', phase: m.phase || null, position: 999,
-              description: course ? `From ${course.title}${lesson ? ` · ${lesson.title}` : ''}` : null, from_lesson: true,
+              description: course ? `From ${course.title}${lesson ? ` · ${lesson.title}` : ''}` : null, from_lesson: true, unpublished,
               course_title: course.title, stage: course.stage || null, lesson_title: lesson ? lesson.title : null }, 1));
           }
         }

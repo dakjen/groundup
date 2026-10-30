@@ -3144,6 +3144,7 @@ export function LibraryPage({ member, onUpgrade }) {
                             <span style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 14.5, fontFamily: font, lineHeight: 1.35 }}>{r.title}</span>
                             {r.description && <span style={{ color: "var(--gu-muted)", fontSize: 12, fontFamily: font, lineHeight: 1.5, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60%" }}>{r.description}</span>}
                           </div>
+                          {r.unpublished && <span title="On a lesson or course that is not published yet. Members do not see this." style={{ fontSize: 9, color: "#e0a030", border: "1px solid #e0a03060", borderRadius: 999, padding: "2px 8px", fontWeight: 800, letterSpacing: "1.2px", textTransform: "uppercase", fontFamily: font, whiteSpace: "nowrap" }}>Unpublished · team only</span>}
                           <span style={{ fontSize: 9, color: isTemplate ? "#b9bec7" : "#8f7070", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, whiteSpace: "nowrap" }}>{r.kind_label || (isTemplate ? "Template" : "Resource")}</span>
                           {r.locked ? <span style={{ color: "var(--gu-muted)", fontWeight: 800, fontSize: 11, fontFamily: font, whiteSpace: "nowrap" }}>{TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan</span> : r.url && <span style={{ color: "#b80101", fontWeight: 800, fontSize: 12, fontFamily: font, whiteSpace: "nowrap" }}>Open →</span>}
                         </div>
