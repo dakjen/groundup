@@ -8085,9 +8085,9 @@ export default function App() {
           here with their email/password, pre-launch included. Only JOIN buttons
           route to the waitlist before launch. */}
       <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => { setAuthMode("login"); setSignupTier("Free"); setShowSignup(true); }} onSignOut={() => { clearMember(); setMember(null); sessionStorage.removeItem("adminToken"); sessionStorage.removeItem("isAdmin"); setIsAdmin(false); sessionStorage.removeItem("currentUser"); setCurrentUser(null); navigateTo("home"); }} member={member} unread={(notif?.unread || 0) + (notif?.dm_unread || 0) + (notif?.advisory_unread || 0)} dots={{ "admin-retainers": notif?.advisory_unread || 0 }} />
-      {activePage !== "home" && !activePage.startsWith("go/") && !showAgreement && (() => {
-        // Wherever you are, one step back to where you came from. Lands on home
-        // when you arrived here directly (a shared link, a bookmark).
+      {["courses", "glossary"].includes(activePage) && !showAgreement && (() => {
+        // In the courses area, one step back to where you came from. Lands on
+        // home when you arrived here directly (a shared link, a bookmark).
         const LABELS = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learn", contact: "Advisory", community: "Community", membership: "Membership", resources: "Resources", advisory: "Advisory", shop: "Shop", officehours: "Office Hours", terms: "Terms", privacy: "Privacy", partner: "Partner", "partner-interest": "Partner", refer: "Refer", support: "Support", glossary: "Glossary", "get-started": "Get Started", doc: "Document" };
         const prev = backStack[backStack.length - 1];
         const label = prev ? (LABELS[prev] || (prev.startsWith("admin-") ? "Admin" : "Back")) : "Home";
