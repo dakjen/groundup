@@ -6191,6 +6191,19 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl, mode = 'referrals' }) {
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: "", email: "" });
   const [msg, setMsg] = useState(null);
+  // Founding-member referrals: who holds a link, who came through it, milestones
+  const [founders, setFounders] = useState(null);
+  const loadFounders = () => fetch("/api/referrals?founders=1", { headers: { Authorization: "Bearer " + sessionStorage.getItem("adminToken") } }).then(r => r.ok ? r.json() : null).then(setFounders).catch(() => {});
+  useEffect(() => { if (mode === "invites") loadFounders(); }, [mode]);
+  const grantMilestone = async (m) => {
+    const note = window.prompt("What did they get? (shown only to the team)", m.note || "");
+    if (note === null) return;
+    try {
+      const r = await fetch("/api/referrals", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + sessionStorage.getItem("adminToken") }, body: JSON.stringify({ action: "milestone_granted", id: m.id, note }) });
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || "Failed");
+      await loadFounders();
+    } catch (e) { setMsg({ ok: false, text: e.message }); setTimeout(() => setMsg(null), 5000); }
+  };
 
   const call = async (method, body) => {
     const res = await fetch("/api/referrals", {
@@ -6452,6 +6465,46 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl, mode = 'referrals' }) {
       </div>}
 
       {/* Month-free gifts */}
+      {showInvites && <div style={{ background: "#ffffff", border: "1px solid #e0c4c4", borderRadius: 14, padding: 28, marginBottom: 28 }}>
+        <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>✦ Founding referrals</div>
+        <p style={{ color: "#666666", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 18 }}>
+          Every founding member gets a personal link the moment their first payment lands. A referral <strong>counts when the person they sent becomes a paying member</strong>. Milestones are at {founders?.ladder ? founders.ladder.join(", ") : "1, 3, 5, 10, 25"} paid referrals; when one is crossed you get an email, decide the reward, and mark it granted here. The rewards are not published to members.
+        </p>
+        {!founders ? <div style={{ color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>Loading…</div>
+          : founders.founders.length === 0 ? <div style={{ color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No founding members yet. Links are granted at the first paid membership after the insider launch.</div>
+          : founders.founders.map(f => {
+            const mine = founders.referred.filter(r => r.referred_by === f.id);
+            const ms = founders.milestones.filter(m => m.user_id === f.id);
+            const isPaid = (r) => ["Basic", "Builder", "Premium", "Elite"].includes(r.tier) && r.membership_status === "active" && !r.comped;
+            return (
+              <div key={f.id} style={{ border: "1px solid #e0dbd2", borderRadius: 12, padding: "14px 18px", marginBottom: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+                  <div style={{ flex: 1, minWidth: 180 }}>
+                    <div style={{ color: "#222222", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{f.name} <span style={{ color: "#9a9a9a", fontWeight: 600 }}>· {f.tier}</span></div>
+                    <div style={{ color: "#777777", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{f.email} · <code style={{ color: "#b80101" }}>/invite/{f.referral_code}</code></div>
+                  </div>
+                  <div style={{ textAlign: "center", minWidth: 70 }}><div style={{ fontSize: 22, fontWeight: 700, color: "#161616", fontFamily: "'Cormorant Garamond', serif", lineHeight: 1 }}>{f.signed_up}</div><div style={{ fontSize: 10, color: "#9a9a9a", letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>Signed up</div></div>
+                  <div style={{ textAlign: "center", minWidth: 70 }}><div style={{ fontSize: 22, fontWeight: 700, color: "#b80101", fontFamily: "'Cormorant Garamond', serif", lineHeight: 1 }}>{f.paid}</div><div style={{ fontSize: 10, color: "#9a9a9a", letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>Paid</div></div>
+                </div>
+                {ms.length > 0 && (
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+                    {ms.map(m => (
+                      <div key={m.id} style={{ display: "inline-flex", alignItems: "center", gap: 8, border: `1px solid ${m.granted_at ? "#22c55e60" : "#e0a03080"}`, background: m.granted_at ? "#f1faf3" : "#fff8ea", borderRadius: 999, padding: "5px 12px", fontSize: 12, fontFamily: "'DM Sans', sans-serif", color: "#333333" }}>
+                        <strong>{m.milestone}</strong> paid · {m.granted_at ? `granted${m.note ? ": " + m.note : ""}` : "reward owed"}
+                        {!m.granted_at && <button onClick={() => grantMilestone(m)} style={{ ...btnGhost, padding: "3px 10px", fontSize: 11 }}>Mark granted</button>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {mine.length > 0 && (
+                  <div style={{ marginTop: 10, color: "#666666", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8 }}>
+                    {mine.map(r => <span key={r.id} style={{ display: "inline-block", marginRight: 14 }}>{isPaid(r) ? "●" : "○"} {r.name} <span style={{ color: "#9a9a9a" }}>({isPaid(r) ? r.tier : "not paying yet"})</span></span>)}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+      </div>}
       {showInvites && <div style={{ background: "#ffffff", border: "1px solid #b8010140", borderRadius: 14, padding: 28, marginBottom: 28 }}>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Month-Free Gifts</div>
         <p style={{ color: "#666666", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 18 }}>

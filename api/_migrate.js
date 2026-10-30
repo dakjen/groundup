@@ -178,6 +178,16 @@ const STATEMENTS = [
   // partner attribution impossible to store and the referred-member discount
   // impossible to fire.
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS referred_code TEXT`,
+  // Founding-member referral milestones: one row per (member, paid-referral
+  // count crossed). granted_at is set by the team once the reward is delivered.
+  `CREATE TABLE IF NOT EXISTS referral_milestones (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    milestone INTEGER NOT NULL,
+    reached_at TIMESTAMPTZ DEFAULT NOW(),
+    granted_at TIMESTAMPTZ,
+    note TEXT,
+    UNIQUE (user_id, milestone))`,
   // First-run onboarding: the same questions the waitlist asks, so a member who
   // never joined the list still gets a real recommendation. Every answer is
   // optional; only the plan choice is required, and onboarded_at records that

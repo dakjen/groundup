@@ -453,6 +453,8 @@ async function fulfill(sql, session) {
         const eligible = seats.open && !has && !u?.comped && (u?.role || 'member') === 'member';
         if (eligible) {
           await sql`UPDATE users SET badges = COALESCE(badges, '[]'::jsonb) || '["founding25"]'::jsonb WHERE id = ${userId}`;
+          // ...and their personal referral link (see _referral.js)
+          try { const { assignReferralCode } = await import('./_referral.js'); await assignReferralCode(sql, userId); } catch (e) { console.error('referral code grant failed', e.message); }
           // Founding members get their first year of LIVE Lunch & Learns free
           await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at)
             VALUES (${userId}, 'lunchlearn', 'founding25', NOW() + interval '1 year', NOW())`;
@@ -476,6 +478,9 @@ async function fulfill(sql, session) {
     if (tier) {
       // cancelled_at = NULL stops the 15-day deletion clock for members who rejoin
       await sql`UPDATE users SET tier_since = CASE WHEN tier IS DISTINCT FROM ${tier} THEN NOW() ELSE tier_since END, tier = ${tier}, membership_status = 'active', cancelled_at = NULL, stripe_customer_id = ${session.customer || null} WHERE id = ${userId}`;
+      // If a founding member referred them, this payment is what makes the
+      // referral count (and may cross one of the referrer's milestones).
+      try { const { recordReferralPaid } = await import('./_referral.js'); await recordReferralPaid(sql, userId); } catch (e) { console.error('referral count failed', e.message); }
     }
     if (md.gift) {
       await sql`UPDATE referrals SET used = TRUE, used_at = NOW(), status = 'used' WHERE code = ${md.gift} AND kind = 'month_free'`;

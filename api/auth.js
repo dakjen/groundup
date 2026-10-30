@@ -55,6 +55,10 @@ export default async function handler(req, res) {
       const [usedTrial] = await sql`SELECT course_id, expires_at FROM entitlements WHERE user_id = ${user.id} AND source = 'referral_trial' LIMIT 1`;
       user.trial = usedTrial ? { course_id: usedTrial.course_id, expires_at: usedTrial.expires_at } : null;
       user.benefit_gate = await benefitGate(sql, user);
+      // Founding members: how their referral link is doing
+      if (user.referral_code) {
+        try { const { referralStats } = await import('./_referral.js'); user.referrals = await referralStats(sql, user.id); } catch (e) { console.error('referral stats failed', e.message); }
+      }
       user.trial_available = trialEligible && !usedTrial && user.membership_status === 'active';
       const allowance = user.tier === 'Elite' ? 3 : user.tier === 'Premium' ? 1 : 0;
       const [{ used }] = await sql`SELECT COUNT(*)::int AS used FROM session_requests WHERE user_id = ${user.id} AND status != 'declined'`;
@@ -312,19 +316,11 @@ export default async function handler(req, res) {
         // paid first or last.
         if (wl?.founding_lnl) founding = true;
         // First 10 on the waitlist: their own 14-day one-course trial (claimed on
-        // the course of their choice) plus a personal referral link to share.
+        // the course of their choice). The personal referral link used to come
+        // with this; it now belongs to founding members (granted at their first
+        // payment, see _referral.js).
         if (wl?.first10) {
-          // Personal, name-based referral code: "dakotah-jennifer" — with a
-          // numeric suffix only if two people share the exact name
-          const slug = String(user.name).toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
-            .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || ('member-' + user.id);
-          let code = slug;
-          for (let n = 2; n < 50; n++) {
-            const [taken] = await sql`SELECT id FROM users WHERE LOWER(referral_code) = ${code} AND id != ${user.id}`;
-            if (!taken) break;
-            code = `${slug}-${n}`;
-          }
-          await sql`UPDATE users SET badges = COALESCE(badges, '[]'::jsonb) || '["first10"]'::jsonb, referral_code = ${code} WHERE id = ${user.id}`;
+          await sql`UPDATE users SET badges = COALESCE(badges, '[]'::jsonb) || '["first10"]'::jsonb WHERE id = ${user.id}`;
         }
       } catch (e) { console.error('waitlist perk grant failed', e.message); }
       // Came through a member's referral link → eligible for the same 14-day trial

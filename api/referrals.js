@@ -189,6 +189,33 @@ export default async function handler(req, res) {
       return res.json({ success: true });
     }
 
+    // Founding-member referrals: every member holding a referral link, with
+    // who came through it, how many pay, and which milestones are reached and
+    // granted. Rewards are decided by the team case by case (not published).
+    if (req.method === 'GET' && req.query.founders === '1') {
+      const founders = await sql`
+        SELECT u.id, u.name, u.email, u.tier, u.referral_code, u.badges,
+               COUNT(r.id)::int AS signed_up,
+               COUNT(r.id) FILTER (WHERE r.tier IN ('Basic','Builder','Premium','Elite') AND r.membership_status = 'active' AND NOT COALESCE(r.comped, FALSE))::int AS paid
+        FROM users u LEFT JOIN users r ON r.referred_by = u.id
+        WHERE u.referral_code IS NOT NULL
+        GROUP BY u.id ORDER BY paid DESC, signed_up DESC, u.name`;
+      const referred = await sql`
+        SELECT id, name, email, tier, membership_status, comped, referred_by, created_at, tier_since
+        FROM users WHERE referred_by IS NOT NULL ORDER BY created_at DESC`;
+      let milestones = [];
+      try { milestones = await sql`SELECT id, user_id, milestone, reached_at, granted_at, note FROM referral_milestones ORDER BY user_id, milestone`; } catch { /* pre-migration */ }
+      const { MILESTONES } = await import('./_referral.js');
+      return res.json({ founders, referred, milestones, ladder: MILESTONES });
+    }
+    if (req.method === 'POST' && req.body.action === 'milestone_granted') {
+      const id = Number(req.body.id);
+      const note = String(req.body.note || '').trim().slice(0, 500) || null;
+      const [row] = await sql`UPDATE referral_milestones SET granted_at = NOW(), note = ${note} WHERE id = ${id} RETURNING id`;
+      if (!row) return res.status(404).json({ error: 'Milestone not found' });
+      return res.json({ ok: true });
+    }
+
     if (req.method === 'GET') {
       const referrals = await sql`SELECT * FROM referrals ORDER BY created_at DESC LIMIT 200`;
       return res.json(referrals);
