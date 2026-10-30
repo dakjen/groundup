@@ -7596,16 +7596,23 @@ export default function App() {
     return PAGES.includes(p) ? p : (sessionStorage.getItem("activePage") || "home");
   };
   const [activePage, setActivePageRaw] = useState(pathPage);
+  // Where you came from, page by page, so every page can offer a way back to
+  // exactly that. Each in-app navigation pushes the page it left; the browser's
+  // back button (popstate) pops it so the two stay in step.
+  const [backStack, setBackStack] = useState([]);
   const setActivePage = (page) => {
     sessionStorage.setItem("activePage", page);
     const path = page === "home" ? "/" : "/" + page;
-    if (window.location.pathname !== path) window.history.pushState({}, "", path);
+    if (window.location.pathname !== path) {
+      window.history.pushState({}, "", path);
+      setBackStack(s => [...s, activePage]);
+    }
     setActivePageRaw(page);
   };
   // Every page change starts at the top — no inheriting the last page's scroll
   useEffect(() => { window.scrollTo(0, 0); }, [activePage]);
   useEffect(() => {
-    const onPop = () => setActivePageRaw(pathPage());
+    const onPop = () => { setActivePageRaw(pathPage()); setBackStack(s => s.slice(0, -1)); };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
@@ -8078,6 +8085,17 @@ export default function App() {
           here with their email/password, pre-launch included. Only JOIN buttons
           route to the waitlist before launch. */}
       <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => { setAuthMode("login"); setSignupTier("Free"); setShowSignup(true); }} onSignOut={() => { clearMember(); setMember(null); sessionStorage.removeItem("adminToken"); sessionStorage.removeItem("isAdmin"); setIsAdmin(false); sessionStorage.removeItem("currentUser"); setCurrentUser(null); navigateTo("home"); }} member={member} unread={(notif?.unread || 0) + (notif?.dm_unread || 0) + (notif?.advisory_unread || 0)} dots={{ "admin-retainers": notif?.advisory_unread || 0 }} />
+      {activePage !== "home" && !activePage.startsWith("go/") && !showAgreement && (() => {
+        // Wherever you are, one step back to where you came from. Lands on home
+        // when you arrived here directly (a shared link, a bookmark).
+        const LABELS = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learn", contact: "Advisory", community: "Community", membership: "Membership", resources: "Resources", advisory: "Advisory", shop: "Shop", officehours: "Office Hours", terms: "Terms", privacy: "Privacy", partner: "Partner", "partner-interest": "Partner", refer: "Refer", support: "Support", glossary: "Glossary", "get-started": "Get Started", doc: "Document" };
+        const prev = backStack[backStack.length - 1];
+        const label = prev ? (LABELS[prev] || (prev.startsWith("admin-") ? "Admin" : "Back")) : "Home";
+        const go = () => { if (prev) window.history.back(); else navigateTo("home"); };
+        return (
+          <button onClick={go} aria-label={"Back to " + label} style={{ position: "fixed", top: 72, left: "clamp(12px,3vw,40px)", zIndex: 99, display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", color: "#e08a8a", border: "1px solid #b8010150", borderRadius: 999, padding: "6px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12, cursor: "pointer", letterSpacing: "0.2px" }}>← {label}</button>
+        );
+      })()}
       {activePage === "home" && <HomePage setActivePage={navigateTo} onSignUp={openSignup} currentUser={currentUser} eventInvited={eventInvited} preLaunch={prelaunch} />}
       {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} onGlossary={() => navigateTo("glossary")} onNav={navigateTo} /></div>}
       {activePage === "advisory" && <RetainerPage member={member} setActivePage={navigateTo} />}
