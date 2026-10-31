@@ -1156,14 +1156,15 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, onSignOut, memb
         </div>
       )}
       <style>{`
-        /* The bar holds a wordmark, seven links and a CTA. Below this it cannot
+        /* The bar holds a wordmark, eight links and a CTA. Below this it cannot
            fit them, and the links used to run off the right edge of the page
-           rather than collapsing. */
-        @media (max-width: 1040px) {
+           rather than collapsing (the Sign in button was the first casualty on
+           a landscape tablet). */
+        @media (max-width: 1180px) {
           .desktop-nav { display: none !important; }
           .mobile-menu-btn { display: flex !important; }
         }
-        @media (min-width: 1041px) {
+        @media (min-width: 1181px) {
           .desktop-nav { display: flex !important; }
           .mobile-menu-btn { display: none !important; }
         }
