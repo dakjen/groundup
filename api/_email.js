@@ -385,7 +385,14 @@ export function waitlistConfirmEmail(name, founding, first10, list = 'insider') 
   const perks = `
       ${founding ? `<div style="background:#faf7f7;border:1px solid #e5dccf;border-radius:12px;padding:16px 20px;margin:14px 0;">
         <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">✦ Founding 25</div>
-        <p style="color:#444444;font-size:14px;line-height:1.8;margin:0;">Your first <strong style="color:#161616;">YEAR of LIVE Lunch & Learn sessions with Dr. Merritt is on us</strong> — free, on any plan. It attaches to your account automatically the moment you create it at launch.</p>
+        <p style="color:#444444;font-size:14px;line-height:1.8;margin:0 0 8px;">The first 25 people to join a paid plan at launch become Founding Members, and being on this list is how you get there first. A founding seat comes with:</p>
+        <p style="color:#444444;font-size:13.5px;line-height:1.9;margin:0;">
+          <span style="color:#b80101;">→</span> <strong style="color:#161616;">25% off any plan for your entire first year</strong><br/>
+          <span style="color:#b80101;">→</span> <strong style="color:#161616;">A full year of live Lunch &amp; Learns with Dr. Merritt, free</strong> (normally $39.99 a seat)<br/>
+          <span style="color:#b80101;">→</span> <strong style="color:#161616;">An invitation to the launch party</strong>, December 5 in Washington, DC<br/>
+          <span style="color:#b80101;">→</span> <strong style="color:#161616;">Your own referral link</strong>, with rewards at milestones we keep a surprise<br/>
+          <span style="color:#b80101;">→</span> <strong style="color:#161616;">15% off a Senior Advisor retainer</strong> for your first three months<br/>
+          <span style="color:#b80101;">→</span> <strong style="color:#161616;">The Founding Member badge</strong>. Only 25 will ever exist.</p>
       </div>` : ''}
       ${first10 ? `<div style="background:#faf7f7;border:1px solid #e5dccf;border-radius:12px;padding:16px 20px;margin:14px 0;">
         <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:6px;">✦ First 10</div>

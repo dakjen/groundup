@@ -432,6 +432,54 @@ export function firstName(full) {
   if (/^(Dr|Mr|Mrs|Ms|Prof|Rev)\.?$/i.test(parts[0]) && parts[1]) return parts[0] + " " + parts[1];
   return parts[0] || "";
 }
+// What a Founding 25 seat comes with — the one list every signup surface uses
+// (home page, waitlist form, confirmation email, the welcome popup), so no
+// surface underpromises. Rewards for referral milestones are deliberately
+// unnamed: the team decides them case by case.
+export const FOUNDING_PERKS = [
+  ["25% off any plan for your entire first year", "Founding pricing on Basic, Builder, Premium or Owner, for twelve months."],
+  ["A full year of live Lunch & Learns, free", "Every live session with Dr. Merritt for a year. Normally $39.99 a seat."],
+  ["An invitation to the launch party", "December 5 in Washington, DC. Your invitation arrives the moment your seat is claimed."],
+  ["Your own referral link", "People you send join through it, and it counts on your account. There are rewards at milestones. We keep those a surprise."],
+  ["15% off a Senior Advisor retainer", "Your first three months, if you ever bring Dr. Merritt onto your deal."],
+  ["The Founding Member badge", "On your profile and everywhere you post. Only 25 will ever exist."],
+];
+
+// One-time popup after an account is created: what GroundUp is about to open,
+// and what the first 25 to pay are walking into. Shown once per account.
+export function FoundingWelcomeModal({ user, seats, launchAt, onPlans, onClose }) {
+  const opens = launchAt ? new Date(launchAt).toLocaleDateString("en-US", { month: "long", day: "numeric", timeZone: "America/New_York" }) : null;
+  const left = seats && Number.isFinite(seats.remaining) ? seats.remaining : null;
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 330, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, overflowY: "auto" }} {...backdropClose(onClose)}>
+      <div style={{ background: "#0d0404", border: "1px solid #e0c4c455", borderRadius: 18, padding: "clamp(24px,4vw,40px)", width: "100%", maxWidth: 560, position: "relative", boxShadow: "0 30px 80px rgba(0,0,0,0.7)" }}>
+        <button onClick={onClose} aria-label="Close" style={{ position: "absolute", top: 14, right: 16, background: "none", border: "none", color: "#8a7070", fontSize: 20, cursor: "pointer" }}>✕</button>
+        <div style={{ fontSize: 10, color: "#e0c4c4", fontWeight: 800, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>✦ You're in{user?.name ? `, ${firstName(user.name)}` : ""}</div>
+        <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(28px,4.5vw,38px)", color: "#f5e8e8", margin: "0 0 10px", lineHeight: 1.1 }}>Here is what is coming.</h2>
+        <p style={{ color: "#c8a8a8", fontSize: 14.5, fontFamily: font, lineHeight: 1.75, margin: "0 0 20px" }}>
+          {opens ? <>GroundUp opens its doors on <strong style={{ color: "#f0d8d8" }}>{opens}</strong>. </> : null}
+          The first <strong style={{ color: "#f0d8d8" }}>25 people to join a paid plan</strong> become Founding Members{left !== null && left > 0 ? <>, and <strong style={{ color: "#f0d8d8" }}>{left} of those seats {left === 1 ? "is" : "are"} still open</strong></> : null}. A founding seat comes with:
+        </p>
+        <div style={{ display: "grid", gap: 10, marginBottom: 22 }}>
+          {FOUNDING_PERKS.map(([t, d]) => (
+            <div key={t} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+              <span style={{ color: "#b80101", fontWeight: 800, fontFamily: font, flexShrink: 0, lineHeight: 1.6 }}>→</span>
+              <div>
+                <div style={{ color: "#f0d8d8", fontWeight: 800, fontSize: 14, fontFamily: font, lineHeight: 1.5 }}>{t}</div>
+                <div style={{ color: "#9a8080", fontSize: 12.5, fontFamily: font, lineHeight: 1.6 }}>{d}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button onClick={onPlans} style={btnRed}>See the plans →</button>
+          <button onClick={onClose} style={{ ...btnGhost, color: "#e0c4c4", borderColor: "#e0c4c450" }}>I'll look around first</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export const DEV_PHASES = ["Feasibility", "Predevelopment", "Program Development", "Acquisition", "Development (Financing, Construction)", "Community Engagement", "Construction", "Stabilization", "Compliance"];
 
 export function getMember() {
@@ -2856,7 +2904,10 @@ export function WaitlistForm({ list = "insider" }) {
             {insider && (
               <div style={{ background: "#e0c4c410", border: "1px solid #e0c4c445", borderRadius: 12, padding: "14px 18px", marginBottom: 22 }}>
                 <div style={{ color: "#e0c4c4", fontSize: 11, fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>✦ Founding 25</div>
-                <div style={{ color: "#c8a8a8", fontSize: 13, fontFamily: font, lineHeight: 1.7 }}>The first 25 people on this list lock in <strong style={{ color: "#f0d8d8" }}>founding rates for their entire first year</strong> — plus a year of Lunch & Learns with Dr. Merritt, free. The rates reveal at launch; being early is what earns them.</div>
+                <div style={{ color: "#c8a8a8", fontSize: 13, fontFamily: font, lineHeight: 1.7, marginBottom: 8 }}>The first 25 people to join a paid plan at launch become Founding Members. Being on this list is how you get there first. A founding seat comes with:</div>
+                <div style={{ display: "grid", gap: 4 }}>
+                  {FOUNDING_PERKS.map(([t]) => <div key={t} style={{ color: "#f0d8d8", fontSize: 12.5, fontFamily: font, fontWeight: 700, lineHeight: 1.6 }}><span style={{ color: "#b80101" }}>→</span> {t}</div>)}
+                </div>
               </div>
             )}
             <form onSubmit={submit}>

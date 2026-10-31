@@ -5,7 +5,7 @@ import { pollVisible } from "./poll.js";
 import { FunnelPage } from "./funnels.jsx";
 import { GetStartedPage } from "./getstarted.jsx";
 import { DocViewerPage } from "./docviewer.jsx";
-import { backdropClose, guUpload, PasswordInput, AuthModal, OnboardingFlow, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, AdvisoryAdminPage, BookingsAdminPage, DropsAdminPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
+import { backdropClose, guUpload, PasswordInput, AuthModal, OnboardingFlow, FoundingWelcomeModal, FOUNDING_PERKS, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, AdvisoryAdminPage, BookingsAdminPage, DropsAdminPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -4207,8 +4207,11 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
             <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#12060a", border: "1px solid #b8010150", borderRadius: 10, padding: "10px 20px", marginBottom: 18 }}>
               <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
               <span style={{ color: "#e0c4c4", fontSize: 13, fontFamily: font, fontWeight: 800, letterSpacing: "0.5px" }}>
-                The first 25 to join at launch get founding rates for a full year
+                The first 25 to join at launch become Founding Members
               </span>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 18px", maxWidth: 760, margin: "0 auto 22px" }}>
+              {FOUNDING_PERKS.map(([t]) => <span key={t} style={{ color: "#c8a8a8", fontSize: 12.5, fontFamily: font, fontWeight: 700 }}><span style={{ color: "#b80101" }}>✦</span> {t}</span>)}
             </div>
             {/* Owner is capped at 15. Nobody can buy a seat yet, so this counts
                 how many of them are still unspoken-for by people already on the
@@ -7705,6 +7708,15 @@ export default function App() {
   // First-run onboarding. Holds the pending credentials — the account is not
   // created until the flow finishes, so abandoning it leaves nothing behind.
   const [onboarding, setOnboarding] = useState(null);
+  // The what-is-coming popup, once per account, right after signup
+  const [foundingWelcome, setFoundingWelcome] = useState(null);
+  const [foundingSeats, setFoundingSeats] = useState(null);
+  const welcomeOnce = (user) => {
+    if (!user?.id) return;
+    const key = "guFoundingSeen:" + user.id;
+    try { if (localStorage.getItem(key)) return; localStorage.setItem(key, "1"); } catch {}
+    setFoundingWelcome(user);
+  };
   const [signupTier, setSignupTier] = useState("Free");
   const [authMode, setAuthMode] = useState("signup");
   const [member, setMember] = useState(() => getMember());
@@ -7821,7 +7833,7 @@ export default function App() {
 
   useEffect(() => {
     fetch("/api/waitlist?public=1").then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) { if (d.launch_at) { setLaunchAt(d.launch_at); window.__guLaunchAt = d.launch_at; try { localStorage.setItem("guLaunchAt", d.launch_at); } catch {} } if (d.launch_insider_at) setInsiderAt(d.launch_insider_at); if (d.insider_closes_at) setInsiderClosesAt(d.insider_closes_at); if (d.advisor_call_link) setAdvisorLink(d.advisor_call_link); if (d.elite) setEliteSpots(d.elite); } })
+      .then(d => { if (d) { if (d.launch_at) { setLaunchAt(d.launch_at); window.__guLaunchAt = d.launch_at; try { localStorage.setItem("guLaunchAt", d.launch_at); } catch {} } if (d.launch_insider_at) setInsiderAt(d.launch_insider_at); if (d.insider_closes_at) setInsiderClosesAt(d.insider_closes_at); if (d.advisor_call_link) setAdvisorLink(d.advisor_call_link); if (d.elite) setEliteSpots(d.elite); if (d.founding) setFoundingSeats(d.founding); } })
       .catch(() => {})
       .finally(() => setLaunchChecked(true));
   }, []);
@@ -8085,7 +8097,8 @@ export default function App() {
           </div>
         </div>
       )}
-      {onboarding && <OnboardingFlow pending={onboarding} onDone={(user) => { setOnboarding(null); setMember(user); sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); }} />}
+      {onboarding && <OnboardingFlow pending={onboarding} onDone={(user) => { setOnboarding(null); setMember(user); sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); welcomeOnce(user); }} />}
+      {foundingWelcome && <FoundingWelcomeModal user={foundingWelcome} seats={foundingSeats} launchAt={insiderAt} onPlans={() => { setFoundingWelcome(null); navigateTo("pricing"); }} onClose={() => setFoundingWelcome(null)} />}
       {showSignup && <AuthModal allowSignup={!prelaunch} startMode={authMode} onClose={() => { setShowSignup(false); setAuthMode("signup"); }} defaultTier={signupTier} onSignupIntent={(creds) => { setShowSignup(false); setOnboarding(creds); }} onAuthed={(user, how) => { setMember(user); setShowSignup(false); if (user.role === "admin") sessionStorage.setItem("adminToken", localStorage.getItem("guToken") || ""); sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); }} />}
       {trialBanner && (
         <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "#0d0d0f", border: "1px solid #b8010140", borderRadius: 14, padding: "18px 28px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 8px 40px rgba(184,1,1,0.2)", maxWidth: 520, width: "calc(100% - 48px)" }}>
