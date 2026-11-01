@@ -773,7 +773,7 @@ export function insiderEveningEmail(name, opts = {}) {
       ${seqKicker('Founding seats are going')}
       ${seqH1(`We'd love to have you in GroundUp, ${first}.`)}
       ${seqP(`The founding seats are going${taken > 0 ? ` — <strong style="color:#161616;">${taken} of 25 ${taken === 1 ? 'is' : 'are'} already claimed</strong>` : ''}, and we are excited about who is walking in first. If you are reading this, your seat is still open.`)}
-      ${seqP(`<strong style="color:#161616;">The list is open to you, an insider!</strong> We launched last night, and the platform is now open for insiders. Your link below takes you straight in: choose your plan, create your account, and you are a member tonight.`)}
+      ${seqP(`<strong style="color:#161616;">The list is open to you, an insider!</strong> We launched last night, and the platform is now open for insiders. Your link below takes you straight in: choose your plan, create your account, and you are a member tonight. <strong style="color:#161616;">Use the email you joined the waitlist with to claim your founding member spot.</strong>`)}
       ${btn('Claim my founding seat →')}
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px;"><tr>
         <td bgcolor="#161616" width="150" align="center" style="background-color:#161616;border-radius:12px;padding:18px 20px;">
