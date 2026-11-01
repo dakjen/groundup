@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { FileText, Send, Hourglass, FolderOpen, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2, BadgePercent } from "lucide-react";
+import { FileText, Send, Hourglass, Megaphone, FolderOpen, MessagesSquare, Video, Handshake, Calendar, Inbox, Link2, Users as UsersIcon, DollarSign, Lock, Play, Gift, Ticket, CreditCard, RefreshCw, GraduationCap, Compass, BarChart3, Building2, BadgePercent } from "lucide-react";
 import COURSE_CATALOG from "./courseCatalog.js";
 import { pollVisible } from "./poll.js";
 import { FunnelPage } from "./funnels.jsx";
