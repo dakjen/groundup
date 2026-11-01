@@ -54,40 +54,32 @@ async function alertFailure(step, err, extra) {
 }
 
 export default async function handler(req, res) {
-  // One-off, launch day: resend to every insider who has not joined, now that
-  // the plan buttons actually work. Authed by a token in settings.ops_token,
-  // set from the terminal for this send and removed right after.
-  if (req.method === 'GET' && req.query.resend === 'doors' && req.query.key) {
+  // Read-only, launch day: open/click counts per subject, from Brevo, for the
+  // launch emails. Authed by settings.ops_token, set and removed from the terminal.
+  if (req.method === 'GET' && req.query.stats === 'launch' && req.query.key) {
     const sql = neon(process.env.DATABASE_URL);
     const [tok] = await sql`SELECT value FROM settings WHERE key = 'ops_token'`;
     if (!tok?.value || tok.value !== String(req.query.key)) return res.status(403).json({ error: 'forbidden' });
-    try {
-      const { insiderDoorsOpenEmail } = await import('./_email.js');
-      const seats = await foundingSeats(sql);
-      const [ins] = await sql`SELECT value FROM settings WHERE key = 'launch_insider_at'`;
-      const [wd] = await sql`SELECT value FROM settings WHERE key = 'insider_window_days'`;
-      const closesAt = new Date(ins.value).getTime() + (Math.max(1, parseInt(wd?.value, 10) || 5)) * 86400000;
-      const closesText = new Date(closesAt).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
-      const joined = new Set((await sql`SELECT LOWER(email) AS email FROM users WHERE membership_status = 'active' AND tier IS DISTINCT FROM 'Free'`).map(r => r.email));
-      const rows = (await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = 'insider' AND NOT COALESCE(comped, FALSE)`).filter(r => !joined.has(String(r.email).toLowerCase()));
-      // ?preview=<address>: one copy to that address, nothing to the list.
-      if (req.query.preview) {
-        const to = String(req.query.preview).trim();
-        const mail = insiderDoorsOpenEmail('Dakotah Jennifer', { seatsLeft: seats.remaining, closesText, link: `${siteUrl()}/?join=1&email=${encodeURIComponent(to)}` });
-        const ok = await sendEmail(to, '[PREVIEW] ' + mail.subject, mail.html, { marketing: true });
-        return res.json({ success: true, preview: to, ok: !!ok, wouldSendTo: rows.length });
-      }
-      const only = req.query.only ? String(req.query.only).toLowerCase() : null;
-      let n = 0; const sent = [];
-      for (const r of rows) {
-        if (only && String(r.email).toLowerCase() !== only) continue;
-        const mail = insiderDoorsOpenEmail(r.name, { seatsLeft: seats.remaining, closesText, link: `${siteUrl()}/?join=1&email=${encodeURIComponent(r.email)}` });
-        const ok = await sendEmail(r.email, mail.subject, mail.html, { marketing: true }); if (ok) n++;
-        sent.push({ email: r.email, ok: !!ok });
-        await logEmails(sql, 'doors open resend', 'insider', mail.subject, [{ name: r.name, email: r.email, ok: !!ok }]);
-      }
-      return res.json({ success: true, sent: n, of: rows.length, detail: sent });
-    } catch (e) { return res.status(500).json({ error: String(e?.message || e) }); }
+    const key = process.env.BREVO_API_KEY;
+    if (!key) return res.status(502).json({ error: 'Brevo is not configured' });
+    const H = { 'api-key': key, accept: 'application/json' };
+    const events = [];
+    for (let off = 0; off < 5000; off += 500) {
+      const r = await fetch(`https://api.brevo.com/v3/smtp/statistics/events?limit=500&offset=${off}&days=2&sort=desc`, { headers: H });
+      if (!r.ok) break;
+      const j = await r.json(); const ev = j.events || []; events.push(...ev); if (ev.length < 500) break;
+    }
+    const by = {};
+    for (const e of events) {
+      const k = (e.subject || '').replace(/^[^,]*, /, '').replace(/\d+ left$/, 'N left');
+      const b = by[k] ||= { delivered: new Set(), opened: new Set(), clicked: new Set(), bounced: new Set() };
+      if (e.event === 'delivered') b.delivered.add(e.email);
+      else if (e.event === 'opened' || e.event === 'uniqueOpened') b.opened.add(e.email);
+      else if (e.event === 'clicks' || e.event === 'clicked') b.clicked.add(e.email);
+      else if (/bounce/i.test(e.event)) b.bounced.add(e.email);
+    }
+    const out = Object.fromEntries(Object.entries(by).map(([k, b]) => [k, { delivered: b.delivered.size, opened: b.opened.size, clicked: b.clicked.size, bounced: b.bounced.size, openedBy: [...b.opened], clickedBy: [...b.clicked] }]));
+    return res.json({ v: 'stats2', events: events.length, bySubject: out });
   }
   // Vercel daily cron: nudge anyone whose course pass just expired — 7 days to
   // extend, or 15% off an annual membership. Authed by CRON_SECRET, which
