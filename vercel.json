@@ -35,6 +35,10 @@
       "schedule": "0 13 * * *"
     },
     {
+      "path": "/api/stripe?reconcile=1",
+      "schedule": "20 * * * *"
+    },
+    {
       "path": "/api/broadcast?report=1",
       "schedule": "0 11 * * *"
     },

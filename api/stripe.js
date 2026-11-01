@@ -692,10 +692,14 @@ export default async function handler(req, res) {
     // missing from the ledger. Dry by default (reports only); dry=0 records them:
     // a charge whose NREUV transfer already exists gets its ledger row only, a
     // charge that never split gets the transfer and the row.
+    // Runs every hour from the Vercel cron (authed by CRON_SECRET), recording
+    // anything the webhook missed, so the ledger rolls up on its own; the Admin
+    // → Revenue button is the same check on demand.
     if (req.query.reconcile === '1') {
-      const admin = getAdmin(req);
-      if (!admin || admin.viewer) return res.status(403).json({ error: 'Admin only' });
-      const dry = req.query.dry !== '0';
+      const cron = !!process.env.CRON_SECRET && req.headers.authorization === `Bearer ${process.env.CRON_SECRET}`;
+      const admin = cron ? null : getAdmin(req);
+      if (!cron && (!admin || admin.viewer)) return res.status(403).json({ error: 'Admin only' });
+      const dry = cron ? false : req.query.dry !== '0';
       const since = Math.floor(Date.now() / 1000) - 30 * 86400;
       const dest = process.env.NREUV_CONNECT_ACCOUNT || null;
       const transferred = new Set();
