@@ -99,7 +99,47 @@ async function dailyReport(sql) {
   return { purchases: purchases.length, paid: paidMembers.length, emails: emailTotal };
 }
 
+// Launch day, 2 PM Eastern (vercel.json, ?launchday=1, Nov 1 only): if anyone
+// has bought anything since the doors opened, Gina gets a note with the
+// numbers and a congratulations. No purchases, no email. Sends once.
+async function launchDayUpdate(sql) {
+  const [done] = await sql`SELECT value FROM settings WHERE key = 'launchday_update_sent'`;
+  if (done?.value) return { skipped: 'already sent' };
+  const [ins] = await sql`SELECT value FROM settings WHERE key = 'launch_insider_at'`;
+  const since = ins?.value ? new Date(ins.value) : new Date(Date.now() - 14 * 3600000);
+  const purchases = await sql`SELECT l.item, l.gross_cents, l.status, l.created_at, u.name FROM revenue_ledger l LEFT JOIN users u ON u.stripe_customer_id = l.customer_id
+    WHERE l.created_at >= ${since} AND l.status IS DISTINCT FROM 'refunded' ORDER BY l.created_at`;
+  if (!purchases.length) return { skipped: 'no purchases yet' };
+  const money = (c) => '$' + (Number(c || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2 });
+  const esc = (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const [{ n: emailsSent }] = await sql`SELECT COUNT(*)::int AS n FROM email_log WHERE created_at >= ${since} AND ok`;
+  const paid = await sql`SELECT name, tier, badges FROM users WHERE tier_since >= ${since} AND tier IN ('Basic','Builder','Premium','Elite') AND NOT COALESCE(comped, FALSE) ORDER BY tier_since`;
+  const seats = await foundingSeats(sql);
+  const gross = purchases.reduce((a, p) => a + Number(p.gross_cents || 0), 0);
+  const founding = paid.filter(m => (Array.isArray(m.badges) ? m.badges : []).includes('founding25')).length;
+  const html = `
+    <h2 style="color:#161616;font-size:24px;line-height:1.2;margin:0 0 12px;">Congratulations, Dr. Merritt. GroundUp is open, and people are buying.</h2>
+    <p style="color:#444444;font-size:14px;line-height:1.8;">Fourteen hours in, here is where launch day stands as of 2 PM Eastern.</p>
+    <table style="border-collapse:collapse;margin:14px 0 18px;">
+      <tr><td style="padding:6px 14px 6px 0;color:#8a7070;font-size:12px;letter-spacing:1px;text-transform:uppercase;">Purchases</td><td style="padding:6px 0;color:#161616;font-size:16px;font-weight:bold;">${purchases.length} · ${money(gross)}</td></tr>
+      <tr><td style="padding:6px 14px 6px 0;color:#8a7070;font-size:12px;letter-spacing:1px;text-transform:uppercase;">New paid members</td><td style="padding:6px 0;color:#161616;font-size:16px;font-weight:bold;">${paid.length}${founding ? ` (${founding} founding)` : ''}</td></tr>
+      <tr><td style="padding:6px 14px 6px 0;color:#8a7070;font-size:12px;letter-spacing:1px;text-transform:uppercase;">Founding seats</td><td style="padding:6px 0;color:#161616;font-size:16px;font-weight:bold;">${seats.taken} of ${seats.cap} taken</td></tr>
+      <tr><td style="padding:6px 14px 6px 0;color:#8a7070;font-size:12px;letter-spacing:1px;text-transform:uppercase;">Emails sent since midnight</td><td style="padding:6px 0;color:#161616;font-size:16px;font-weight:bold;">${emailsSent}</td></tr>
+    </table>
+    <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin:6px 0 6px;">What was bought</div>
+    ${purchases.map(p => `<p style="color:#444444;font-size:13.5px;line-height:1.7;margin:0 0 4px;"><strong style="color:#161616;">${esc(p.name || 'A member')}</strong> · ${esc(p.item)} · ${money(p.gross_cents)} · ${esc(new Date(p.created_at).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' }))}</p>`).join('')}
+    <p style="color:#444444;font-size:14px;line-height:1.8;margin-top:18px;">Thirty years of work, and the first people just paid to learn from it. The insider window stays open through Thursday night. Dakotah's daily 6 AM report carries the running totals from here.</p>`;
+  const ok = await sendEmail('gmerritt@nreuv.com', `Launch day: ${purchases.length} purchase${purchases.length === 1 ? '' : 's'} so far. Congratulations.`, html);
+  await sql`INSERT INTO settings (key, value) VALUES ('launchday_update_sent', ${new Date().toISOString()}) ON CONFLICT (key) DO UPDATE SET value = ${new Date().toISOString()}`;
+  return { sent: !!ok, purchases: purchases.length, emailsSent };
+}
+
 async function cronRun(req, res) {
+  if (req.query.launchday === '1') {
+    const sql = neon(process.env.DATABASE_URL);
+    try { return res.json({ success: true, launchday: await launchDayUpdate(sql) }); }
+    catch (e) { await alertFailure('launch day update failed', e); return res.status(500).json({ error: String(e?.message || e) }); }
+  }
   if (req.query.report === '1') {
     const sql = neon(process.env.DATABASE_URL);
     try { return res.json({ success: true, report: await dailyReport(sql) }); }
