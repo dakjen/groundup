@@ -624,6 +624,11 @@ export function AuthModal({ onClose, onAuthed, onSignupIntent, defaultTier = "Fr
       // no orphan account. Check the email is free first, so nobody fills in
       // three screens and is told at the end that it's taken.
       if (mode === "signup" && tier === "Free" && onSignupIntent) {
+        // Before the public launch there are no free accounts — early access
+        // is for paying founding members only.
+        if (typeof window !== "undefined" && window.__guPublicAt && new Date(window.__guPublicAt).getTime() > Date.now()) {
+          throw new Error("Before December 1, an account comes with a paid plan. Choose your plan on the Pricing page to claim your founding seat — free accounts open at the public launch.");
+        }
         await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "check_email", email }) });
         onSignupIntent({ name, email, password });
         setBusy(false);
@@ -632,7 +637,7 @@ export function AuthModal({ onClose, onAuthed, onSignupIntent, defaultTier = "Fr
       // Accounts are always created Free — a paid tier only comes from Stripe
       // checkout (below) or an admin. The picker records intent, nothing more.
       const data = mode === "signup"
-        ? await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "signup", name, email, password, ref: localStorage.getItem("guRef") || undefined }) })
+        ? await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "signup", name, email, password, tier, ref: localStorage.getItem("guRef") || undefined }) })
         : await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "login", email, password, ...(mfa ? { code: mfaCode } : {}), mfa_token: localStorage.getItem("guMfa") || undefined }) });
       // Team accounts get a second step: the emailed 6-digit sign-in code
       if (data.mfa) { setMfa(true); setBusy(false); return; }

@@ -531,6 +531,13 @@ export default async function handler(req, res) {
         // The first RSVP grants access through that session; after that, it's a
         // membership or a purchase.
         if (!access && req.body.going) {
+          // Before the public launch an unpaid account gets nothing — the
+          // free taste opens December 1 (early access is for paying founding
+          // members only).
+          const [pub] = await sql`SELECT value FROM settings WHERE key = 'launch_at'`;
+          if (pub?.value && new Date(pub.value).getTime() > Date.now()) {
+            return res.status(403).json({ error: 'Your free Lunch & Learn seat opens with the public launch on December 1. Founding members have live sessions included now.' });
+          }
           const [taste] = await sql`SELECT id FROM entitlements WHERE user_id = ${session.uid} AND course_id = 'lunchlearn' AND source = 'free_taste' LIMIT 1`;
           if (!taste) {
             const until = new Date(new Date(target.date).getTime() + 24 * 3600 * 1000).toISOString();

@@ -104,6 +104,12 @@ if (typeof window !== "undefined") window.startCheckout = (item, extra) => start
 if (typeof window !== "undefined" && !window.__guLaunchAt) {
   try { const v = localStorage.getItem("guLaunchAt"); if (v) window.__guLaunchAt = v; } catch {}
 }
+// The PUBLIC launch date (Dec 1). Before it, early access is for paying
+// founding members only: no free accounts.
+if (typeof window !== "undefined" && !window.__guPublicAt) {
+  try { const v = localStorage.getItem("guPublicLaunchAt"); if (v) window.__guPublicAt = v; } catch {}
+}
+const beforePublicLaunch = () => typeof window !== "undefined" && !!window.__guPublicAt && new Date(window.__guPublicAt).getTime() > Date.now();
 // datetime-local inputs speak LOCAL wall-clock time; we store UTC ISO strings.
 // Always convert at the boundary — feeding an ISO string's first 16 chars back
 // into the input shifts the time by the UTC offset on every render.
@@ -2153,7 +2159,7 @@ function PlanCard({ plan, onSelect, seats, compact, recommended }) {
   // Pre-launch every plan button joins the waitlist, so it should say so
   // rather than promising an account that cannot be created yet.
   const preLaunch = typeof window !== "undefined" && window.__guLaunchAt && new Date(window.__guLaunchAt).getTime() > Date.now();
-  const cta = seats?.full ? "Join the Owner waitlist" : preLaunch ? "Join the waitlist" : plan.cta;
+  const cta = seats?.full ? "Join the Owner waitlist" : preLaunch ? "Join the waitlist" : (plan.tier === "Free" && beforePublicLaunch()) ? "Free accounts open December 1" : plan.cta;
   return (
     <div style={{ background: plan.popular || recommended ? "#0d0404" : "#080404", border: "1px solid " + (recommended ? "#b80101" : plan.popular ? "#b8010130" : "#150000"), borderRadius: 20, padding: "40px 32px", position: "relative", boxShadow: plan.popular ? "0 0 60px rgba(184,1,1,0.08)" : "none" }}>
       {plan.popular && <div style={{ position: "absolute", top: -1, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, transparent, #b80101, transparent)", borderRadius: "20px 20px 0 0" }} />}
@@ -8049,7 +8055,7 @@ export default function App() {
   useEffect(() => {
     fetch("/api/waitlist?public=1").then(r => r.ok ? r.json() : null)
       .then(d => { if (d) {
-        if (d.launch_at) { setLaunchAt(d.launch_at); try { localStorage.setItem("guPublicLaunchAt", d.launch_at); } catch {} }
+        if (d.launch_at) { setLaunchAt(d.launch_at); window.__guPublicAt = d.launch_at; try { localStorage.setItem("guPublicLaunchAt", d.launch_at); } catch {} }
         // Doors: the insider launch once it has passed, else the public launch.
         const insiderPassed = d.launch_insider_at && new Date(d.launch_insider_at).getTime() <= Date.now();
         const doors = insiderPassed ? d.launch_insider_at : (d.launch_at || d.launch_insider_at || null);
@@ -8193,6 +8199,13 @@ export default function App() {
     // the waitlist) and keeps signing in underneath for the team and anyone
     // who already has an account. Redirecting straight to /waitlist instead
     // meant nobody could sign in at all.
+    if (tier === "Free" && beforePublicLaunch()) {
+      const key = "freegate:" + Date.now();
+      setToasts(t => [{ key, id: key, title: "Free accounts open December 1", body: "Before then, an account comes with a paid plan. Choose a plan to claim your founding seat." }, ...t].slice(0, 4));
+      setTimeout(() => setToasts(t => t.filter(x => x.key !== key)), 9000);
+      setActivePage("pricing");
+      return;
+    }
     setSignupTier(tier); setShowSignup(true);
   };
 

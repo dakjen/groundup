@@ -253,6 +253,21 @@ export default async function handler(req, res) {
                 : "We haven't launched yet — join the waitlist to be first in.",
             });
           }
+          // Before the public launch, early access is for paying founding
+          // members only (Dakotah, Nov 1). An account is created only with a
+          // paid plan chosen — it goes straight to checkout — and only while a
+          // founding seat is still open. Free accounts wait for December 1.
+          // The tier here is intent only; the account is still written Free and
+          // paid tiers still come solely from Stripe.
+          const intent = String(req.body.tier || '');
+          if (!['Basic', 'Builder', 'Premium', 'Elite'].includes(intent)) {
+            return res.status(403).json({ error: 'Before December 1, an account comes with a paid plan. Choose your plan to claim your founding seat.' });
+          }
+          const { foundingSeats } = await import('./stripe.js');
+          const seats = await foundingSeats(sql);
+          if (seats.remaining <= 0) {
+            return res.status(403).json({ error: "Sorry, the founding member seats are all taken. You can make an account at the launch on December 1." });
+          }
         }
       }
       const { name, email, password } = req.body;
