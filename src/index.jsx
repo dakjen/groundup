@@ -2387,7 +2387,7 @@ function PricingPage({ onSignUp }) {
                 <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 20, color: "#8a8a8a" }}>$0</span>
               </div>
               <span style={{ color: "#8f7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, flex: 1, minWidth: 260 }}>See every course's outline (the lessons themselves stay locked), join one free live Lunch & Learn with Dr. Merritt, and set up your community profile — no card required.</span>
-              <button onClick={e => { e.stopPropagation(); onSignUp && onSignUp("Free"); }} style={{ background: "transparent", color: "#f0d8d8", border: "1px solid #8a8a8a70", borderRadius: 8, padding: "10px 24px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", flexShrink: 0 }}>Start Free →</button>
+              <button onClick={e => { e.stopPropagation(); onSignUp && onSignUp("Free"); }} style={{ background: "transparent", color: "#f0d8d8", border: "1px solid #8a8a8a70", borderRadius: 8, padding: "10px 24px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", flexShrink: 0 }}>{beforePublicLaunch() ? "Free accounts open Dec 1" : "Start Free →"}</button>
             </div>
           );
         })()}
