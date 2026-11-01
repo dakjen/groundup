@@ -480,6 +480,34 @@ export function FoundingWelcomeModal({ user, seats, launchAt, onPlans, onClose }
   );
 }
 
+// Arriving from a launch email (/?join=1), before any account exists: the
+// welcome. One button opens Create Account with their plan pre-selected; the
+// other closes it and leaves the plans on the page behind.
+export function InsiderWelcomeModal({ seats, onChoose, onClose }) {
+  const left = seats && Number.isFinite(seats.remaining) ? seats.remaining : null;
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 330, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, overflowY: "auto" }} {...backdropClose(onClose)}>
+      <div style={{ background: "#0d0404", border: "1px solid #b8010166", borderRadius: 18, padding: "clamp(24px,4vw,40px)", width: "100%", maxWidth: 520, position: "relative", boxShadow: "0 30px 80px rgba(0,0,0,0.7)" }}>
+        <button onClick={onClose} aria-label="Close" style={{ position: "absolute", top: 14, right: 16, background: "none", border: "none", color: "#8a7070", fontSize: 20, cursor: "pointer" }}>✕</button>
+        <div style={{ fontSize: 10, color: "#e0c4c4", fontWeight: 800, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>✦ Welcome, insider!</div>
+        <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(28px,4.5vw,38px)", color: "#f5e8e8", margin: "0 0 12px", lineHeight: 1.1 }}>Choose your plan and join the GroundUp community.</h2>
+        <p style={{ color: "#c8a8a8", fontSize: 14.5, fontFamily: font, lineHeight: 1.75, margin: "0 0 10px" }}>
+          The doors are open to insiders only until December 1, and you are one of them. Pick your plan, create your account, and you are in.
+        </p>
+        {left !== null && left > 0 && (
+          <p style={{ color: "#c8a8a8", fontSize: 14.5, fontFamily: font, lineHeight: 1.75, margin: "0 0 22px" }}>
+            The first <strong style={{ color: "#f0d8d8" }}>25 to join a paid plan</strong> become Founding Members: 25% off your whole first year, a year of live Lunch &amp; Learns, the launch party, your referral link, and the badge. <strong style={{ color: "#f0d8d8" }}>{left} {left === 1 ? "seat is" : "seats are"} still open.</strong>
+          </p>
+        )}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button onClick={onChoose} style={btnRed}>Choose my plan →</button>
+          <button onClick={onClose} style={{ ...btnGhost, color: "#e0c4c4", borderColor: "#e0c4c450" }}>Let me see all the plans first</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export const DEV_PHASES = ["Feasibility", "Predevelopment", "Program Development", "Acquisition", "Development (Financing, Construction)", "Community Engagement", "Construction", "Stabilization", "Compliance"];
 
 export function getMember() {

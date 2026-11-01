@@ -5,7 +5,7 @@ import { pollVisible } from "./poll.js";
 import { FunnelPage } from "./funnels.jsx";
 import { GetStartedPage } from "./getstarted.jsx";
 import { DocViewerPage } from "./docviewer.jsx";
-import { backdropClose, guUpload, PasswordInput, AuthModal, OnboardingFlow, FoundingWelcomeModal, FOUNDING_PERKS, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, AdvisoryAdminPage, BookingsAdminPage, DropsAdminPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
+import { backdropClose, guUpload, PasswordInput, AuthModal, OnboardingFlow, FoundingWelcomeModal, InsiderWelcomeModal, FOUNDING_PERKS, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, AdvisoryAdminPage, BookingsAdminPage, DropsAdminPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -8033,6 +8033,8 @@ export default function App() {
     try { return localStorage.getItem("guLaunchAt") || null; } catch { return null; }
   });
   const [insiderAt, setInsiderAt] = useState(null);
+  // "Welcome, insider!" — shown to someone arriving from a launch email link
+  const [insiderWelcome, setInsiderWelcome] = useState(null);
   // Seeded like the launch date. Without it the first paint has no close date,
   // renders the INSIDER waitlist, then flips to the general one — which is the
   // flash of the old waitlist on refresh.
@@ -8110,7 +8112,7 @@ export default function App() {
       // The launch emails say "create your account": open that flow straight
       // away, plan pre-selected, with the pricing page behind it. Signed-in
       // members just land on the plans.
-      if (!getMember()) openSignup(["Basic", "Builder", "Premium", "Elite"].includes(plan) ? plan : "Basic");
+      if (!getMember()) setInsiderWelcome({ plan: ["Basic", "Builder", "Premium", "Elite"].includes(plan) ? plan : "Basic" });
     }
     const ref = params.get("ref");
     if (ref) {
@@ -8321,6 +8323,7 @@ export default function App() {
         </div>
       )}
       {onboarding && <OnboardingFlow pending={onboarding} onDone={(user) => { setOnboarding(null); setMember(user); sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); welcomeOnce(user); }} />}
+      {insiderWelcome && !member && <InsiderWelcomeModal seats={foundingSeats} onChoose={() => { const p = insiderWelcome.plan; setInsiderWelcome(null); openSignup(p); }} onClose={() => setInsiderWelcome(null)} />}
       {foundingWelcome && <FoundingWelcomeModal user={foundingWelcome} seats={foundingSeats} launchAt={insiderAt} onPlans={() => { setFoundingWelcome(null); navigateTo("pricing"); }} onClose={() => setFoundingWelcome(null)} />}
       {showSignup && <AuthModal allowSignup={!prelaunch} startMode={authMode} onClose={() => { setShowSignup(false); setAuthMode("signup"); }} defaultTier={signupTier} onSignupIntent={(creds) => { setShowSignup(false); setOnboarding(creds); }} onAuthed={(user, how) => { setMember(user); setShowSignup(false); if (user.role === "admin") { sessionStorage.setItem("adminToken", localStorage.getItem("guToken") || ""); } else { sessionStorage.removeItem("adminToken"); sessionStorage.removeItem("isAdmin"); setIsAdmin(false); } sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); }} />}
       {trialBanner && (
