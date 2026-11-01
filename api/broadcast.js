@@ -329,6 +329,24 @@ async function cronRun(req, res) {
             await sql`INSERT INTO settings (key, value) VALUES ('drip_general_headsup', 'sent') ON CONFLICT (key) DO UPDATE SET value = 'sent'`;
           }
         }
+        // Launch morning, 10 AM Eastern: a second note to every insider who has
+        // not joined yet, now that the doors have been open since midnight.
+        // (The 15:00 UTC cron lands this; the midnight run sends "we're live".)
+        if (now >= opened + 10 * H && now < opened + DAY) {
+          const [done] = await sql`SELECT value FROM settings WHERE key = 'drip_insider_launch_morning'`;
+          if (!done?.value) {
+            const seats = await foundingSeats(sql);
+            const rows = (await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = 'insider' AND NOT COALESCE(comped, FALSE)`).filter(r => !joined.has(String(r.email).toLowerCase()));
+            let n = 0;
+            for (const r of rows) {
+              const mail = insiderReminderEmail(r.name, { seatsLeft: seats.remaining, closesText, closesShort: new Date(closesAt).toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'long', day: 'numeric' }), closesKey: new Date(closesAt - 1).toISOString().slice(0, 10), link: `${siteUrl()}/?join=1&email=${encodeURIComponent(r.email)}` });
+              const ok = await sendEmail(r.email, mail.subject, mail.html, { marketing: true }); if (ok) n++;
+              await logEmails(sql, 'launch morning follow-up', 'insider', mail.subject, [{ name: r.name, email: r.email, ok: !!ok }]);
+            }
+            drip.insider_launch_morning = n;
+            await sql`INSERT INTO settings (key, value) VALUES ('drip_insider_launch_morning', 'sent') ON CONFLICT (key) DO UPDATE SET value = 'sent'`;
+          }
+        }
         // Step 5 — midpoint of the window
         if (now >= opened + Math.floor(days / 2) * DAY && now < closesAt) {
           const [done] = await sql`SELECT value FROM settings WHERE key = 'drip_insider_reminder'`;

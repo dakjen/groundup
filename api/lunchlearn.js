@@ -1,7 +1,8 @@
 import { neon } from '@neondatabase/serverless';
 import { getSession, getAdmin, TIER_RANK, benefitGate } from './_utils.js';
-import { sendEmail, lnlAccessEmail, addLnlContact, freeSeatEmail } from './_email.js';
+import { sendEmail, lnlAccessEmail, addLnlContact, freeSeatEmail, siteUrl } from './_email.js';
 import { wallToUtc, partsIn } from './_gcal.js';
+import { OUTCOMES, OUTCOME_PLAN } from '../shared/outcomes.js';
 
 // Lunch & Learn onboarding: $69.99 buys 6 months of access (entitlement
 // course_id 'lunchlearn'); comp coupons grant the same. Access also starts a
@@ -107,6 +108,14 @@ export default async function handler(req, res) {
       const next = events.filter(e => (e.kind || 'lnl') === 'lnl' && stillLive(e)).sort((a, b) => a.date.localeCompare(b.date))[0] || null;
       res.setHeader('Cache-Control', 'public, max-age=300');
       return res.json({ session: next ? { title: next.title, date: next.date, time: next.time || null } : null });
+    }
+
+    // ── Admin: every completed Get Started quiz, newest first ──
+    if (req.method === 'GET' && req.query.quiz === '1') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      let rows = [];
+      try { rows = await sql`SELECT id, name, email, outcome, answers, acquisition, created_at FROM quiz_results ORDER BY created_at DESC LIMIT 500`; } catch { /* before the migration */ }
+      return res.json({ results: rows.map(r => ({ ...r, plan: OUTCOME_PLAN[r.outcome] || r.outcome, title: OUTCOMES[r.outcome]?.title || r.outcome })) });
     }
 
     // ── Admin: dashboard data ──
@@ -381,6 +390,40 @@ export default async function handler(req, res) {
          ${link ? `<p style="margin:22px 0;"><a href="${esc(link)}" style="display:inline-block;background:#b80101;color:#ffffff;text-decoration:none;font-weight:700;padding:13px 26px;border-radius:8px;">Pick a time →</a></p>` : `<p style="color:#444444;font-size:14px;line-height:1.8;">We'll reach out within one business day with times.</p>`}
          <p style="color:#7a5050;font-size:12px;line-height:1.7;">Come with whatever you have — a site, a napkin pro forma, a question. That's plenty.</p>`);
       return res.status(201).json({ success: true, link: link || null });
+    }
+
+    // Get Started quiz: save the answers and the read, email the person their
+    // recommendation, and keep them on the general list. Public, honeypot-guarded.
+    if (action === 'quiz_result') {
+      const email = String(req.body.email || '').trim().toLowerCase().slice(0, 200);
+      const name = String(req.body.name || '').trim().slice(0, 120);
+      if ((req.body.website && String(req.body.website).trim())) return res.status(201).json({ success: true });
+      if (!name || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'Your name and a real email, please' });
+      const outcome = OUTCOMES[String(req.body.outcome || '')];
+      if (!outcome) return res.status(400).json({ error: 'No recommendation to send' });
+      const answers = Array.isArray(req.body.answers) ? req.body.answers.slice(0, 12).map(a => ({ q: String(a?.q || '').slice(0, 200), a: String(a?.a || '').slice(0, 200) })).filter(a => a.q && a.a) : [];
+      const acq = String(req.body.acquisition || '').slice(0, 120) || 'get-started';
+      try { await sql`INSERT INTO quiz_results (name, email, outcome, answers, acquisition) VALUES (${name}, ${email}, ${outcome.key}, ${JSON.stringify(answers)}::jsonb, ${acq})`; } catch (e) { console.error('quiz insert', e.message); }
+      try { await sql`INSERT INTO waitlist (name, email, list, source, acquisition, created_at) VALUES (${name}, ${email}, 'general', ${'quiz:' + outcome.key}, ${acq}, NOW()) ON CONFLICT DO NOTHING`; } catch {}
+      const esc = (x) => String(x || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const site = siteUrl();
+      const href = (h) => h.startsWith('/?join=') ? site + '/' : site + h;
+      const first = esc(name.split(' ')[0]);
+      try {
+        await sendEmail(email, `Your GroundUp read: ${outcome.title}`,
+          `<div style="font-size:10px;color:#b80101;letter-spacing:3px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">${esc(outcome.eyebrow)}</div>
+           <h2 style="color:#161616;font-size:24px;line-height:1.2;margin:0 0 14px;">${esc(outcome.title)}</h2>
+           <p style="color:#444444;font-size:14px;line-height:1.8;">${first}, here is the honest read from your ten answers.</p>
+           <p style="color:#444444;font-size:14px;line-height:1.8;">${esc(outcome.body)}</p>
+           <p style="margin:22px 0 8px;"><a href="${esc(href(outcome.cta[1]))}" style="display:inline-block;background:#b80101;color:#ffffff;text-decoration:none;font-weight:700;padding:13px 26px;border-radius:8px;">${esc(outcome.cta[0])} →</a></p>
+           <p style="margin:0 0 22px;"><a href="${esc(href(outcome.alt[1]))}" style="color:#b80101;font-weight:700;text-decoration:none;">${esc(outcome.alt[0])} →</a></p>
+           ${answers.length ? `<div style="background:#faf7f7;border:1px solid #e5dccf;border-radius:12px;padding:16px 20px;margin:14px 0;">
+             <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:8px;">What you told us</div>
+             ${answers.map(a => `<p style="color:#444444;font-size:13px;line-height:1.7;margin:0 0 6px;"><span style="color:#8a7070;">${esc(a.q)}</span><br/><strong style="color:#161616;">${esc(a.a)}</strong></p>`).join('')}
+           </div>` : ''}
+           <p style="color:#7a5050;font-size:12px;line-height:1.7;">Reply to this email and a person on the GroundUp team answers. Want a human to check the read? <a href="${esc(site)}/go/call" style="color:#b80101;font-weight:700;">Book a free 20-minute scoping call</a>.</p>`);
+      } catch (e) { console.error('quiz email', e.message); }
+      return res.status(201).json({ success: true });
     }
 
     // Ad funnel: a free seat at the next live session, no account needed yet.

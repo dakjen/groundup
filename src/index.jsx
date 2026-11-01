@@ -6714,6 +6714,15 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
   const [now, setNow] = useState(Date.now());
   const [listFilter, setListFilter] = useState("all");
   const [openEntry, setOpenEntry] = useState(null);
+  // Get Started quiz results: who took it, what we told them, their answers
+  const [quiz, setQuiz] = useState(null);
+  const [quizOpen, setQuizOpen] = useState(null);
+  useEffect(() => { fetch("/api/lunchlearn?quiz=1", { headers: { Authorization: "Bearer " + sessionStorage.getItem("adminToken") } }).then(r => r.ok ? r.json() : null).then(d => setQuiz(d?.results || [])).catch(() => setQuiz([])); }, []);
+  const quizCsv = () => {
+    const rows = (quiz || []).map(r => [r.name, r.email, r.plan, r.title, new Date(r.created_at).toLocaleString("en-US", { timeZone: "America/New_York" }), (r.answers || []).map(a => `${a.q} ${a.a}`).join(" | ")]);
+    const csv = [["Name", "Email", "Plan", "Read", "Date", "Answers"], ...rows].map(r => r.map(c => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "get-started-results.csv"; a.click();
+  };
 
   // Mirrors recommendPlan() in api/waitlist.js — budget decides:
   // $500+ → Elite · $150–$500 → Premium · below $150 → Member
@@ -7033,7 +7042,7 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
       ) : (
         <div>
           {entries.map(e => (
-            <div key={e.id} style={{ background: "#ffffff", border: openEntry === e.id ? "1px solid #b8010150" : "1px solid #2a1010", borderRadius: 12, padding: "14px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+            <div key={e.id} style={{ background: "#ffffff", border: openEntry === e.id ? "1px solid #b8010150" : "1px solid #e6e0d6", borderRadius: 10, padding: "10px 16px", marginBottom: 6, display: "flex", alignItems: "center", gap: "6px 12px", flexWrap: "wrap", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}>
               <div onClick={() => setOpenEntry(openEntry === e.id ? null : e.id)} style={{ flex: 1, minWidth: 170, cursor: "pointer" }} title="Click to see their full form">
                 <div style={{ color: "#222222", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{e.name} <span style={{ color: "#9a9a9a", fontSize: 11, transform: openEntry === e.id ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.15s" }}>▾</span></div>
                 <div style={{ color: "#777777", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{e.email}</div>
@@ -7080,6 +7089,35 @@ function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
           ))}
         </div>
       )}
+      {/* Get Started quiz: everyone who finished it, what they were told, and their answers */}
+      <div style={{ background: "#ffffff", border: "1px solid #e0dbd2", borderRadius: 14, padding: 28, marginTop: 28 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 8 }}>
+          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>Get Started quiz results{quiz ? ` (${quiz.length})` : ""}</div>
+          {quiz && quiz.length > 0 && <button onClick={quizCsv} style={{ ...btnGhost, fontSize: 11, padding: "5px 12px", marginLeft: "auto" }}>Download CSV</button>}
+        </div>
+        <p style={{ color: "#666666", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 16 }}>Every completed quiz, newest first. Each person got the same read by email, and they are on the general list.</p>
+        {!quiz ? <div style={{ color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>Loading…</div>
+          : quiz.length === 0 ? <div style={{ color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>Nobody has finished the quiz yet.</div>
+          : quiz.map(r => (
+            <div key={r.id} style={{ border: "1px solid #eee8de", borderRadius: 10, padding: "10px 14px", marginBottom: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", cursor: "pointer" }} onClick={() => setQuizOpen(o => o === r.id ? null : r.id)}>
+                <div style={{ flex: 1, minWidth: 180 }}>
+                  <div style={{ color: "#222222", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{r.name || "(no name)"}</div>
+                  <div style={{ color: "#777777", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{r.email}</div>
+                </div>
+                <span style={{ background: "#b8010112", color: "#b80101", border: "1px solid #b8010130", borderRadius: 999, padding: "4px 12px", fontSize: 11.5, fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}>{r.plan}</span>
+                <span style={{ color: "#555555", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", flex: "1 1 240px" }}>{r.title}</span>
+                <span style={{ color: "#9a9a9a", fontSize: 11.5, fontFamily: "'DM Sans', sans-serif" }}>{new Date(r.created_at).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
+                <span style={{ color: "#9a9a9a", fontSize: 11 }}>{quizOpen === r.id ? "▲" : "▼"}</span>
+              </div>
+              {quizOpen === r.id && (
+                <div style={{ marginTop: 10, borderTop: "1px solid #eee8de", paddingTop: 10, display: "grid", gap: 6 }}>
+                  {(r.answers || []).map((a, i) => <div key={i} style={{ fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.5 }}><span style={{ color: "#8a8a8a" }}>{a.q}</span><br /><strong style={{ color: "#222222" }}>{a.a}</strong></div>)}
+                </div>
+              )}
+            </div>
+          ))}
+      </div>
     </div>
   );
 }

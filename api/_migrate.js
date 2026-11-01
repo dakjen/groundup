@@ -202,6 +202,16 @@ const STATEMENTS = [
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS current_project TEXT`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS project_stage TEXT`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS groundup_win TEXT`,
+  // Get Started quiz: every completed quiz, with the answers and the read it
+  // produced, so the team can see who came through and what they were told.
+  `CREATE TABLE IF NOT EXISTS quiz_results (
+    id SERIAL PRIMARY KEY,
+    name TEXT, email TEXT NOT NULL,
+    outcome TEXT NOT NULL,
+    answers JSONB NOT NULL DEFAULT '[]'::jsonb,
+    acquisition TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW())`,
+  `CREATE INDEX IF NOT EXISTS quiz_results_email_idx ON quiz_results (email)`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS onb_learn TEXT`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS onb_pain TEXT`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS onb_budget TEXT`,

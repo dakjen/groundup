@@ -4,6 +4,8 @@
 // the lead when they book a scoping call, so the team arrives prepared.
 import React, { useEffect, useMemo, useState } from "react";
 import { getMember } from "./member.jsx";
+import { OUTCOMES } from "../shared/outcomes.js";
+export { OUTCOMES };
 
 const font = "'DM Sans', sans-serif";
 const serif = "'Cormorant Garamond', serif";
@@ -92,15 +94,7 @@ const QUESTIONS = [
 ];
 
 // The seven honest outcomes, in order of how much help they are
-export const OUTCOMES = {
-  notyet: { key: "notyet", eyebrow: "Our honest read", title: "You don't need to buy anything yet.", body: "You're not in the work yet, and that's fine — everyone starts there. Begin with the free parts: every course outline, one free live Lunch & Learn, and the glossary. The moment you have a site, a number, or a real question, come back and take this again.", cta: ["Make a free account", "/?join=Free"], alt: ["Read the course outlines", "/courses"] },
-  org: { key: "org", eyebrow: "Our honest read", title: "You're not building — you need to be fluent in how building works.", body: "Lenders, agencies, nonprofits, brokers and the people around a deal do better work when they understand the developer's side of the table. GroundUp teaches that whole process in order. A Member plan covers one person; the partner program brings a cohort of your staff or your program's developers through together, with their own channel and office hours.", cta: ["Bring GroundUp to your organization", "/partner-interest"], alt: ["Start with a Member plan", "/pricing"] },
-  learn: { key: "learn", eyebrow: "Our honest read", title: "Learn the whole process first — then act.", body: "You're smart to want the map before the trip. The Member plan opens every course and written lesson, the case studies and the worksheets. Go stage by stage, and the deal you eventually do will look nothing like the one you'd do today.", cta: ["See the Member plan", "/pricing"], alt: ["Browse the curriculum", "/courses"] },
-  room: { key: "room", eyebrow: "Our honest read", title: "You need the courses and the room.", body: "You're past curious: you have something real and you need people who've done it. Builder puts you in the community — post, ask, find partners — with every course and the Lunch & Learn recording library behind you.", cta: ["See the Builder plan", "/pricing"], alt: ["Talk to the team first", "/go/call"] },
-  premium: { key: "premium", eyebrow: "Our honest read", title: "Learning plus live time with Dr. Merritt.", body: "Your questions are specific now, and a course answers them halfway. Premium adds office hours with Dr. Merritt, the Opportunity Board, the premium channels and one included session a year. For a developer with a live project, this is the sweet spot.", cta: ["See the Premium plan", "/pricing"], alt: ["Talk to the team first", "/go/call"] },
-  owner: { key: "owner", eyebrow: "Our honest read", title: "You're an Owner: direct access, downloads, three calls a year.", body: "You're working deals and you need a line to someone who has closed them. Owner gives you direct messages to Dr. Merritt and the team, the Developer's Playbook to download, three advisory calls a year and the Owner lounge.", cta: ["See the Owner plan", "/pricing"], alt: ["Talk to the team first", "/go/call"] },
-  advisory: { key: "advisory", eyebrow: "Our honest read", title: "This is advisory work — a deal with a decision in front of it.", body: "A course won't do it and a message won't do it. Your deal needs an experienced read of the actual numbers, then someone in your corner month to month. The path: a free scoping call with the team, then the Full Project Intake with Dr. Merritt, then a Senior Advisor retainer if the deal warrants it.", cta: ["Book a free scoping call", "/go/call"], alt: ["Read about the intake", "/contact"] },
-};
+// OUTCOMES live in shared/outcomes.js (the API emails the same words).
 
 export function scoreAnswers(answers) {
   const base = scoreBase(answers);
@@ -129,6 +123,10 @@ export function GetStartedPage({ setActivePage, onSignIn }) {
   const [done, setDone] = useState(false);
   const [lead, setLead] = useState({ name: "", email: "", website: "" });
   const [sent, setSent] = useState(false); const [busy, setBusy] = useState(false); const [err, setErr] = useState(null);
+  // The read is shown once we have a name and email: the answers are saved
+  // for the team and the recommendation goes to their inbox. A signed-in
+  // member's details are used without asking.
+  const [saved, setSaved] = useState(false); const [saving, setSaving] = useState(false); const [saveErr, setSaveErr] = useState(null);
   const member = getMember();
   useEffect(() => { window.scrollTo(0, 0); }, [step, done]);
   useEffect(() => { if (member && !lead.email) setLead(l => ({ ...l, name: member.name || "", email: member.email || "" })); }, [member?.id]);
@@ -145,6 +143,18 @@ export function GetStartedPage({ setActivePage, onSignIn }) {
     setActivePage(page || "home");
   };
   const summary = () => QUESTIONS.map(x => answers[x.id] != null ? `${x.q} ${x.opts[answers[x.id]][0]}` : null).filter(Boolean).join("\n");
+  const answerList = () => QUESTIONS.map(x => answers[x.id] != null ? { q: x.q, a: x.opts[answers[x.id]][0] } : null).filter(Boolean);
+  const saveResult = async (name, email) => {
+    setSaving(true); setSaveErr(null);
+    try {
+      const r = await fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "quiz_result", name, email, website: lead.website, outcome: result.key, answers: answerList(), acquisition: "get-started" }) });
+      const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || "Something went wrong");
+      setLead(l => ({ ...l, name, email }));
+      setSaved(true);
+    } catch (e2) { setSaveErr(e2.message); } finally { setSaving(false); }
+  };
+  // Signed-in members skip the form
+  useEffect(() => { if (done && result && !saved && !saving && member?.email) saveResult(member.name || "", member.email); }, [done, result?.key, member?.email]);
   const submit = async (e) => {
     e.preventDefault(); setBusy(true); setErr(null);
     try {
@@ -165,7 +175,7 @@ export function GetStartedPage({ setActivePage, onSignIn }) {
         {!done ? (
           <>
             <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,46px)", lineHeight: 1.08, margin: "0 0 10px" }}>What kind of help do you actually need?</h1>
-            <p style={{ color: "#a88888", fontSize: 15, fontFamily: font, lineHeight: 1.75, maxWidth: 560, margin: "0 0 28px" }}>Ten quick questions. At the end we tell you honestly: nothing yet, a course, a membership, live time with Dr. Merritt, or one-on-one advisory work. No email required to see the answer.</p>
+            <p style={{ color: "#a88888", fontSize: 15, fontFamily: font, lineHeight: 1.75, maxWidth: 560, margin: "0 0 28px" }}>Ten quick questions, two minutes. At the end we tell you honestly: nothing yet, a course, a membership, live time with Dr. Merritt, or one-on-one advisory work. We email you the read so you have it.</p>
             <div style={{ display: "flex", gap: 4, marginBottom: 26 }}>
               {QUESTIONS.map((_, i) => <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= step ? RED : "#2a0000" }} />)}
             </div>
@@ -177,6 +187,26 @@ export function GetStartedPage({ setActivePage, onSignIn }) {
               ))}
             </div>
             {step > 0 && <button onClick={() => setStep(step - 1)} style={{ background: "none", border: "none", color: "#8f7070", cursor: "pointer", fontSize: 13, fontFamily: font, fontWeight: 700, padding: "18px 0 0" }}>← Back</button>}
+          </>
+        ) : !saved ? (
+          <>
+            <div style={{ display: "flex", gap: 4, marginBottom: 26 }}>
+              {QUESTIONS.map((_, i) => <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: RED }} />)}
+            </div>
+            <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,46px)", lineHeight: 1.08, margin: "0 0 10px" }}>Your read is ready.</h1>
+            <p style={{ color: "#a88888", fontSize: 15, fontFamily: font, lineHeight: 1.75, maxWidth: 560, margin: "0 0 22px" }}>{member?.email ? "One moment, saving your answers…" : "Tell us where to send it. You see it here the moment you do, and it lands in your inbox with your answers, so you have it when you are ready to act."}</p>
+            {!member?.email && (
+              <form onSubmit={e => { e.preventDefault(); saveResult(lead.name, lead.email); }} style={{ display: "grid", gap: 10, maxWidth: 480 }}>
+                <input style={inp} value={lead.name} onChange={e => setLead({ ...lead, name: e.target.value })} placeholder="Your name" required maxLength={120} autoComplete="name" />
+                <input style={inp} type="email" value={lead.email} onChange={e => setLead({ ...lead, email: e.target.value })} placeholder="Email" required maxLength={200} autoComplete="email" inputMode="email" />
+                <input value={lead.website} onChange={e => setLead({ ...lead, website: e.target.value })} tabIndex={-1} autoComplete="off" style={{ position: "absolute", left: -9999, opacity: 0, height: 0 }} aria-hidden="true" />
+                {saveErr && <div style={{ color: "#ff6b6b", fontSize: 13, fontFamily: font }}>{saveErr}</div>}
+                <button type="submit" disabled={saving} style={{ ...btn, opacity: saving ? 0.6 : 1 }}>{saving ? "One moment…" : "Show my read →"}</button>
+                <div style={{ color: "#6a5050", fontSize: 11.5, fontFamily: font, lineHeight: 1.6 }}>No spam. One email with your recommendation, and the GroundUp team can see it so we start where you are.</div>
+              </form>
+            )}
+            {member?.email && saveErr && <div style={{ color: "#ff6b6b", fontSize: 13, fontFamily: font }}>{saveErr} <button onClick={() => saveResult(member.name || "", member.email)} style={{ background: "none", border: "none", color: "#e08a8a", cursor: "pointer", fontFamily: font, fontWeight: 800 }}>Try again</button></div>}
+            <button onClick={() => { setDone(false); setStep(0); setAnswers({}); }} style={{ background: "none", border: "none", color: "#8f7070", cursor: "pointer", fontSize: 13, fontFamily: font, fontWeight: 700, padding: "22px 0 0" }}>Start over</button>
           </>
         ) : (
           <>
@@ -205,7 +235,8 @@ export function GetStartedPage({ setActivePage, onSignIn }) {
                 </form>
               )}
             </div>
-            <button onClick={() => { setDone(false); setStep(0); setAnswers({}); setSent(false); }} style={{ background: "none", border: "none", color: "#8f7070", cursor: "pointer", fontSize: 13, fontFamily: font, fontWeight: 700, padding: "22px 0 0" }}>Start over</button>
+            <div style={{ color: "#6a5050", fontSize: 12.5, fontFamily: font, marginTop: 18, lineHeight: 1.6 }}>A copy of this read is on its way to {lead.email || "your inbox"}.</div>
+            <button onClick={() => { setDone(false); setStep(0); setAnswers({}); setSent(false); setSaved(false); }} style={{ background: "none", border: "none", color: "#8f7070", cursor: "pointer", fontSize: 13, fontFamily: font, fontWeight: 700, padding: "22px 0 0" }}>Start over</button>
           </>
         )}
       </div>

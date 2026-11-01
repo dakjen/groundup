@@ -2635,7 +2635,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 32 }}>
                 <div style={{ maxWidth: 420, textAlign: "center" }}>
                   <Lock size={28} style={{ color: "#b80101", marginBottom: 14 }} />
-                  <div style={{ color: "var(--gu-text2)", fontFamily: serif, fontWeight: 700, fontSize: 26, marginBottom: 8 }}>#{active.name} is a {TIER_LABELS[active.min_tier] || active.min_tier} channel</div>
+                  <div style={{ color: "var(--gu-text2)", fontFamily: serif, fontWeight: 700, fontSize: 26, marginBottom: 8 }}>#{active.name} is {/^[aeiou]/i.test(TIER_LABELS[active.min_tier] || active.min_tier || "") ? "an" : "a"} {TIER_LABELS[active.min_tier] || active.min_tier} channel</div>
                   <p style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.8, margin: "0 0 18px" }}>{active.description}{active.description ? " " : ""}Members on {TIER_LABELS[active.min_tier] || active.min_tier} and above read and post here. Move up a plan to open it.</p>
                   <a href="/pricing" style={{ display: "inline-block", background: "#b80101", color: "#fff", borderRadius: 10, padding: "12px 22px", fontFamily: font, fontWeight: 800, fontSize: 13, textDecoration: "none" }}>See the plans →</a>
                 </div>
@@ -4348,6 +4348,8 @@ export function DropsAdminPage() {
 }
 
 export function BookingsAdminPage() {
+  // Light page: the shared inp style is for the dark member pages
+  const inpA = { ...inp, background: "#ffffff", color: "#161616", border: "1px solid #d8ccb6" };
   const [data, setData] = useState(null);
   const [users, setUsers] = useState([]);
   const [form, setForm] = useState({ user_id: "", hours_per_month: 10, monthly_amount: 5500, notes: "", status: "offered" });
@@ -4391,7 +4393,7 @@ export function BookingsAdminPage() {
                 {eyebrow("Free scoping calls")}
                 <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, marginBottom: 12 }}>From the /go/call funnel: people who asked for twenty minutes with the team before anything is sold. The booking link below goes out in their confirmation email.</div>
                 <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 14 }}>
-                  <input value={scopeLink} onChange={e => setScopeLink(e.target.value)} placeholder="Booking link for scoping calls (Google appointment, Calendly…)" style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, flex: "1 1 260px" }} />
+                  <input value={scopeLink} onChange={e => setScopeLink(e.target.value)} placeholder="Booking link for scoping calls (Google appointment, Calendly…)" style={{ ...inpA, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, flex: "1 1 260px" }} />
                   <button onClick={() => act(() => post({ action: "set_scoping_link", url: scopeLink }), "Scoping link saved.")} style={ghost}>Save</button>
                 </div>
                 {(data.scoping || []).length === 0 ? <div style={{ color: "var(--gu-muted)", fontSize: 13, fontFamily: font }}>No requests yet.</div> : data.scoping.map(r => (
@@ -4445,27 +4447,27 @@ export function BookingsAdminPage() {
               <div style={card}>
                 {eyebrow("After the intake call: make them a client")}
                 <label style={lbl}>Member</label>
-                <select value={form.user_id} onChange={e => setForm({ ...form, user_id: e.target.value })} style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 10, cursor: "pointer" }}>
+                <select value={form.user_id} onChange={e => setForm({ ...form, user_id: e.target.value })} style={{ ...inpA, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 10, cursor: "pointer" }}>
                   <option value="">Choose…</option>
                   {users.filter(u => u.role !== "admin").map(u => <option key={u.id} value={u.id}>{u.name} — {u.email}</option>)}
                 </select>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
-                  <div><label style={lbl}>Hours / month</label><input type="number" value={form.hours_per_month} onChange={e => setForm({ ...form, hours_per_month: e.target.value })} style={inp} /></div>
-                  <div><label style={lbl}>Monthly amount ($)</label><input type="number" value={form.monthly_amount} onChange={e => setForm({ ...form, monthly_amount: e.target.value })} style={inp} /></div>
+                  <div><label style={lbl}>Hours / month</label><input type="number" value={form.hours_per_month} onChange={e => setForm({ ...form, hours_per_month: e.target.value })} style={inpA} /></div>
+                  <div><label style={lbl}>Monthly amount ($)</label><input type="number" value={form.monthly_amount} onChange={e => setForm({ ...form, monthly_amount: e.target.value })} style={inpA} /></div>
                 </div>
                 <label style={lbl}>How</label>
-                <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 10, cursor: "pointer" }}>
+                <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} style={{ ...inpA, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 10, cursor: "pointer" }}>
                   <option value="offered">Invite them to choose a block and pay</option>
                   <option value="active">Activate now (paid elsewhere) — makes them an Owner</option>
                 </select>
                 <label style={lbl}>Note for the client (optional)</label>
-                <input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Great talking today — here's what we discussed…" style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 14 }} />
+                <input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Great talking today — here's what we discussed…" style={{ ...inpA, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 14 }} />
                 <button onClick={() => act(() => post({ action: "create", ...form }).then(() => setForm({ user_id: "", hours_per_month: 10, monthly_amount: 5500, notes: "", status: "offered" })), form.status === "offered" ? "Invitation sent — they choose a block and pay." : "Client added at Owner level — see Advisory Clients.")} style={btnRed}>{form.status === "offered" ? "Send invitation" : "Add client"}</button>
               </div>
               <div style={card}>
                 {eyebrow("Intake call booking link")}
                 <p style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, margin: "0 0 12px" }}>Dr. Merritt's Google Appointment or Calendly link. Someone who pays the intake is sent here to book; reminders use it too.</p>
-                <input value={callLink} onChange={e => setCallLink(e.target.value)} placeholder="https://calendar.app.google/…" style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 12 }} />
+                <input value={callLink} onChange={e => setCallLink(e.target.value)} placeholder="https://calendar.app.google/…" style={{ ...inpA, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 12 }} />
                 <button onClick={() => act(() => post({ action: "set_call_link", url: callLink }), "Booking link saved.")} style={btnRed}>Save link</button>
               </div>
             </div>
