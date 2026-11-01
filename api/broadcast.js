@@ -63,7 +63,48 @@ export default async function handler(req, res) {
   return handlerRest(req, res);
 }
 
+// 6 AM Eastern, every day (vercel.json, ?report=1): what the last 24 hours
+// brought in and what went out, to Dakotah. Purchases, new paid members,
+// founding seats, every email by kind, quiz results and scoping requests.
+async function dailyReport(sql) {
+  const since = new Date(Date.now() - 24 * 3600000);
+  const money = (c) => '$' + (Number(c || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2 });
+  const esc = (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const purchases = await sql`SELECT l.item, l.category, l.gross_cents, l.net_cents, l.status, l.created_at, u.name, u.email
+    FROM revenue_ledger l LEFT JOIN users u ON u.stripe_customer_id = l.customer_id WHERE l.created_at >= ${since} ORDER BY l.created_at DESC`;
+  const paidMembers = await sql`SELECT name, email, tier, badges, tier_since FROM users WHERE tier_since >= ${since} AND tier IN ('Basic','Builder','Premium','Elite') AND NOT COALESCE(comped, FALSE) ORDER BY tier_since DESC`;
+  const seats = await foundingSeats(sql);
+  const emails = await sql`SELECT kind, list, COUNT(*)::int AS n, SUM(CASE WHEN ok THEN 1 ELSE 0 END)::int AS ok FROM email_log WHERE created_at >= ${since} GROUP BY kind, list ORDER BY n DESC`;
+  const emailTotal = emails.reduce((a, r) => a + r.n, 0);
+  let quizzes = [], scoping = [];
+  try { quizzes = await sql`SELECT name, email, outcome FROM quiz_results WHERE created_at >= ${since} ORDER BY created_at DESC`; } catch {}
+  try { scoping = await sql`SELECT name, email, stage FROM scoping_requests WHERE created_at >= ${since} ORDER BY created_at DESC`; } catch {}
+  const signups = await sql`SELECT COUNT(*)::int AS n FROM users WHERE created_at >= ${since}`;
+  const gross = purchases.reduce((a, p) => a + Number(p.gross_cents || 0), 0);
+  const dateText = new Date().toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric' });
+  const row = (cells) => `<tr>${cells.map(c => `<td style="padding:6px 10px;border-top:1px solid #eee8de;font-size:13px;color:#333333;">${c}</td>`).join('')}</tr>`;
+  const table = (head, rows) => rows.length ? `<table style="border-collapse:collapse;width:100%;margin:8px 0 18px;"><tr>${head.map(h => `<th style="text-align:left;padding:6px 10px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#8a7070;">${h}</th>`).join('')}</tr>${rows.join('')}</table>` : `<p style="color:#8a8a8a;font-size:13px;margin:4px 0 18px;">None.</p>`;
+  const h = (t) => `<div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin:18px 0 4px;">${t}</div>`;
+  const html = `
+    <h2 style="color:#161616;font-size:22px;margin:0 0 6px;">GroundUp, last 24 hours</h2>
+    <p style="color:#666666;font-size:13px;margin:0 0 14px;">${esc(dateText)}, 6 AM Eastern. ${purchases.length} purchase${purchases.length === 1 ? '' : 's'} (${money(gross)} gross), ${paidMembers.length} new paid member${paidMembers.length === 1 ? '' : 's'}, ${signups[0]?.n || 0} new account${(signups[0]?.n || 0) === 1 ? '' : 's'}, ${emailTotal} email${emailTotal === 1 ? '' : 's'} sent. Founding seats: ${seats.taken} of ${seats.cap} taken.</p>
+    ${h('Purchases')}${table(['When (ET)', 'Who', 'Item', 'Gross', 'Net', 'Status'], purchases.map(p => row([esc(new Date(p.created_at).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })), esc(p.name || p.email || p.customer_id || '?'), esc(p.item), money(p.gross_cents), money(p.net_cents), esc(p.status)])))}
+    ${h('New paid members')}${table(['Name', 'Email', 'Plan', 'Founding'], paidMembers.map(m => row([esc(m.name), esc(m.email), esc(m.tier), (Array.isArray(m.badges) ? m.badges : []).includes('founding25') ? '✦ yes' : ''])))}
+    ${h('Emails sent')}${table(['Kind', 'List', 'Sent', 'Delivered to Brevo'], emails.map(e => row([esc(e.kind), esc(e.list || ''), e.n, e.ok])))}
+    ${h('Get Started quiz')}${table(['Name', 'Email', 'Read'], quizzes.map(q => row([esc(q.name), esc(q.email), esc(q.outcome)])))}
+    ${h('Scoping call requests')}${table(['Name', 'Email', 'Where they are'], scoping.map(s => row([esc(s.name), esc(s.email), esc(s.stage || '')])))}
+    <p style="color:#7a5050;font-size:12px;line-height:1.7;">Full detail: Admin → Revenue, Users, Waitlist and Email. This report comes every morning at 6 AM Eastern.</p>`;
+  const to = process.env.REPORT_EMAIL || 'dakotah@dakjencreative.com';
+  await sendEmail(to, `GroundUp daily: ${purchases.length} purchase${purchases.length === 1 ? '' : 's'}, ${paidMembers.length} new paid, ${emailTotal} emails`, html);
+  return { purchases: purchases.length, paid: paidMembers.length, emails: emailTotal };
+}
+
 async function cronRun(req, res) {
+  if (req.query.report === '1') {
+    const sql = neon(process.env.DATABASE_URL);
+    try { return res.json({ success: true, report: await dailyReport(sql) }); }
+    catch (e) { await alertFailure('daily report failed', e); return res.status(500).json({ error: String(e?.message || e) }); }
+  }
   {
     const sql = neon(process.env.DATABASE_URL);
     // The 8 AM Eastern run (vercel.json, ?drip=1) sends only the launch emails, so
