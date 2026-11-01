@@ -193,6 +193,15 @@ const STATEMENTS = [
   // optional; only the plan choice is required, and onboarded_at records that
   // they reached the end rather than that they answered anything.
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarded_at TIMESTAMPTZ`,
+  // The member profile Dr. Merritt reads before office hours and 1:1s:
+  // LinkedIn, years in the business and what came before, the deal they are
+  // on now and its stage, and what a win from GroundUp looks like to them.
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS linkedin_url TEXT`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS years_in_re TEXT`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS background TEXT`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS current_project TEXT`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS project_stage TEXT`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS groundup_win TEXT`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS onb_learn TEXT`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS onb_pain TEXT`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS onb_budget TEXT`,

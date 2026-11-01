@@ -1442,10 +1442,19 @@ function ProfileCard({ member }) {
   const [title, setTitle] = useState(member.title || "");
   const [location, setLocation] = useState(member.location || "");
   const [bio, setBio] = useState(member.bio || "");
+  // What Dr. Merritt reads before she meets you
+  const [linkedin, setLinkedin] = useState(member.linkedin_url || "");
+  const [years, setYears] = useState(member.years_in_re || "");
+  const [background, setBackground] = useState(member.background || "");
+  const [project, setProject] = useState(member.current_project || "");
+  const [stage, setStage] = useState(member.project_stage || "");
+  const [win, setWin] = useState(member.groundup_win || "");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
   const flash = (ok, text) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 5000); };
   const inp = { width: "100%", boxSizing: "border-box", background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 10, padding: "12px 14px", color: "var(--gu-text)", fontFamily: font, fontSize: 14, outline: "none" };
+  const PROFILE_PARTS = [["photo", !!avatar], ["company and title", !!(company && title)], ["LinkedIn", !!linkedin], ["where you develop", !!location], ["your current project", !!project], ["years and background", !!(years || background)], ["what a win looks like", !!win]];
+  const filled = PROFILE_PARTS.filter(([, ok]) => ok).length;
   const upload = async (file) => {
     if (!file) return;
     setBusy(true);
@@ -1470,16 +1479,22 @@ function ProfileCard({ member }) {
   const save = async () => {
     setBusy(true);
     try {
-      const saved = await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "update_profile", name, headline, bio, company, title, location }) });
+      const saved = await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "update_profile", name, headline, bio, company, title, location, linkedin_url: linkedin, years_in_re: years, background, current_project: project, project_stage: stage, groundup_win: win }) });
       // Trust what the server says it stored, not what we sent.
-      const me = getMember(); if (me) saveMember({ ...me, name: saved.name ?? me.name, headline: saved.headline, bio: saved.bio, company: saved.company, title: saved.title, location: saved.location });
-      flash(true, "Profile saved — members see it when they hover your messages.");
+      const me = getMember(); if (me) saveMember({ ...me, name: saved.name ?? me.name, headline: saved.headline, bio: saved.bio, company: saved.company, title: saved.title, location: saved.location, linkedin_url: saved.linkedin_url, years_in_re: saved.years_in_re, background: saved.background, current_project: saved.current_project, project_stage: saved.project_stage, groundup_win: saved.groundup_win });
+      if (saved.linkedin_url !== undefined) setLinkedin(saved.linkedin_url || "");
+      flash(true, "Profile saved. Dr. Merritt reads this before you meet.");
     } catch (e) { flash(false, e.message); } finally { setBusy(false); }
   };
   return (
     <div style={{ background: "var(--gu-card2)", border: "1px solid #1e0000", borderRadius: 16, padding: "24px 28px", marginBottom: 28 }}>
-      <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Your Community Profile</div>
-      <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 16 }}>Your photo shows next to your messages, and members who hover see who you are and what you do.</div>
+      <div style={{ fontSize: 9, color: "#b80101", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Your Profile</div>
+      <div style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, marginBottom: 10, lineHeight: 1.6 }}>Dr. Merritt reads this before office hours and every 1:1, so she knows who you are and what you are building before you say a word. Your photo and headline also show next to your messages in the community.</div>
+      {filled < PROFILE_PARTS.length && (
+        <div style={{ background: "#e0c4c410", border: "1px solid #e0c4c440", borderRadius: 10, padding: "10px 14px", marginBottom: 14, color: "#e0c4c4", fontSize: 12.5, fontFamily: font, lineHeight: 1.6 }}>
+          <strong>{filled} of {PROFILE_PARTS.length} filled in.</strong> Still missing: {PROFILE_PARTS.filter(([, ok]) => !ok).map(([l]) => l).join(", ")}.
+        </div>
+      )}
       {msg && <div style={{ background: msg.ok ? "#22c55e12" : "#b8010115", border: `1px solid ${msg.ok ? "#22c55e50" : "#b8010150"}`, color: msg.ok ? "#22c55e" : "#ff6b6b", borderRadius: 8, padding: "9px 13px", fontSize: 12.5, fontFamily: font, marginBottom: 12 }}>{msg.text}</div>}
       <div style={{ display: "flex", gap: 18, alignItems: "flex-start", flexWrap: "wrap" }}>
         <div style={{ textAlign: "center" }}>
@@ -1497,6 +1512,17 @@ function ProfileCard({ member }) {
           </div>
           <input style={{ ...inp, marginBottom: 10 }} value={location} onChange={e => setLocation(e.target.value)} maxLength={120} placeholder="Where you work — e.g. DC · Baltimore" name="city" autoComplete="address-level2" />
           <input style={{ ...inp, marginBottom: 10 }} value={headline} onChange={e => setHeadline(e.target.value)} maxLength={120} placeholder="What you do — e.g. Affordable multifamily · 12 units" />
+          <input style={{ ...inp, marginBottom: 10 }} value={linkedin} onChange={e => setLinkedin(e.target.value)} maxLength={200} placeholder="LinkedIn profile link — linkedin.com/in/…" inputMode="url" autoComplete="url" />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+            <input style={inp} value={years} onChange={e => setYears(e.target.value)} maxLength={60} placeholder="Years in real estate — e.g. 4" />
+            <select style={{ ...inp, cursor: "pointer" }} value={stage} onChange={e => setStage(e.target.value)}>
+              <option value="">Stage of your current project…</option>
+              {["Looking for a site", "Site identified, not under control", "Under contract or LOI", "Predevelopment and financing", "Closing", "Under construction", "Lease-up", "Stabilized and operating", "No project yet"].map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <textarea style={{ ...inp, resize: "vertical", marginBottom: 10 }} rows={2} value={project} onChange={e => setProject(e.target.value)} maxLength={500} placeholder="Your current project or deal, in a sentence or two — units, market, what kind of housing." />
+          <textarea style={{ ...inp, resize: "vertical", marginBottom: 10 }} rows={2} value={background} onChange={e => setBackground(e.target.value)} maxLength={500} placeholder="Your background before real estate — what you did, and what brought you to development." />
+          <textarea style={{ ...inp, resize: "vertical", marginBottom: 10 }} rows={2} value={win} onChange={e => setWin(e.target.value)} maxLength={500} placeholder="What would a win from GroundUp look like for you? A closed deal, a first site, a clear capital stack…" />
           <textarea style={{ ...inp, resize: "vertical", marginBottom: 10 }} rows={3} value={bio} onChange={e => setBio(e.target.value)} maxLength={500} placeholder="A few sentences about you, your projects, and what you're building toward." />
           <button style={{ ...btnRed, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={save}>Save Profile</button>
         </div>
@@ -3878,6 +3904,8 @@ export function RetainerPage({ member, setActivePage }) {
 // that tab the whole engagement — the timesheet, the engagement documents, the
 // client's projects and deal rooms, her private notes, and the direct line.
 export function AdvisoryAdminPage() {
+  // The advisory workspace is a light page; the shared inp style is for the dark member pages
+  const inpA = { ...inp, background: "#ffffff", color: "#161616", border: "1px solid #d8ccb6" };
   const [data, setData] = useState(null);
   const [sel, setSel] = useState("dashboard");      // "dashboard" | retainer id
   const [sub, setSub] = useState("overview");       // client page: overview | room | messages | time | docs | notes
@@ -3931,8 +3959,8 @@ export function AdvisoryAdminPage() {
   const addDocs = (rr, kind) => (
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
       <label style={{ ...ghost, display: "inline-block", cursor: busy ? "wait" : "pointer" }}>{busy ? "Uploading…" : "Upload"}<input type="file" accept={DEAL_ACCEPT} style={{ display: "none" }} onChange={e => { uploadDoc(rr, kind, e.target.files?.[0]); e.target.value = ""; }} /></label>
-      <input value={(docForm[rr.id + kind] || {}).title || ""} onChange={e => setDocForm({ ...docForm, [rr.id + kind]: { ...(docForm[rr.id + kind] || {}), title: e.target.value } })} placeholder="Document name" style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, padding: "9px 11px", fontSize: 13, flex: "1 1 130px" }} />
-      <input value={(docForm[rr.id + kind] || {}).url || ""} onChange={e => setDocForm({ ...docForm, [rr.id + kind]: { ...(docForm[rr.id + kind] || {}), url: e.target.value } })} placeholder="or paste a link (Drive, DocuSign…)" style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, padding: "9px 11px", fontSize: 13, flex: "2 1 200px" }} />
+      <input value={(docForm[rr.id + kind] || {}).title || ""} onChange={e => setDocForm({ ...docForm, [rr.id + kind]: { ...(docForm[rr.id + kind] || {}), title: e.target.value } })} placeholder="Document name" style={{ ...inpA, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, padding: "9px 11px", fontSize: 13, flex: "1 1 130px" }} />
+      <input value={(docForm[rr.id + kind] || {}).url || ""} onChange={e => setDocForm({ ...docForm, [rr.id + kind]: { ...(docForm[rr.id + kind] || {}), url: e.target.value } })} placeholder="or paste a link (Drive, DocuSign…)" style={{ ...inpA, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, padding: "9px 11px", fontSize: 13, flex: "2 1 200px" }} />
       <button onClick={() => addLink(rr, kind)} style={ghost}>Add link</button>
     </div>
   );
@@ -4028,7 +4056,7 @@ export function AdvisoryAdminPage() {
                 <span style={{ fontSize: 9, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase" }}>{m.scheduled_at ? "Next meeting" : "Meeting requested"}</span>
                 <span style={{ color: "var(--gu-text2)", fontSize: 13.5, fontWeight: 700 }}>{m.scheduled_at ? new Date(m.scheduled_at).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "not on the calendar yet"} · {m.minutes} min</span>
                 {m.topic && <span style={{ color: "var(--gu-body)", fontSize: 13, flex: "1 1 240px" }}>{m.topic}</span>}
-                <input type="datetime-local" defaultValue={m.scheduled_at ? new Date(new Date(m.scheduled_at).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""} onChange={e => e.target.value && act(() => post({ action: "meeting_update", id: m.id, scheduled_at: new Date(e.target.value).toISOString() }), "Meeting time saved — the client sees it.")} style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, width: "auto", padding: "7px 10px", fontSize: 12.5 }} />
+                <input type="datetime-local" defaultValue={m.scheduled_at ? new Date(new Date(m.scheduled_at).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""} onChange={e => e.target.value && act(() => post({ action: "meeting_update", id: m.id, scheduled_at: new Date(e.target.value).toISOString() }), "Meeting time saved — the client sees it.")} style={{ ...inpA, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, width: "auto", padding: "7px 10px", fontSize: 12.5 }} />
                 <button onClick={() => act(() => post({ action: "meeting_update", id: m.id, status: "done" }))} style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 12, fontFamily: font, fontWeight: 700 }}>Done</button>
               </div>
             ))}
@@ -4140,9 +4168,9 @@ export function AdvisoryAdminPage() {
             </div>
             <div style={{ height: 10, background: "var(--gu-card2)", borderRadius: 99, overflow: "hidden", marginBottom: 18 }}><div style={{ width: `${pct}%`, height: "100%", background: "#b80101", borderRadius: 99 }} /></div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-              <input type="number" step="0.25" min="0" placeholder="Hours" value={(logForm[r.id] || {}).hours || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), hours: e.target.value } })} style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, width: 90, padding: "9px 11px", fontSize: 13 }} />
-              <input type="date" value={(logForm[r.id] || {}).date || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), date: e.target.value } })} style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, width: 150, padding: "9px 11px", fontSize: 13 }} />
-              <input placeholder="What you worked on" value={(logForm[r.id] || {}).note || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), note: e.target.value } })} style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, flex: "1 1 180px", padding: "9px 11px", fontSize: 13 }} />
+              <input type="number" step="0.25" min="0" placeholder="Hours" value={(logForm[r.id] || {}).hours || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), hours: e.target.value } })} style={{ ...inpA, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, width: 90, padding: "9px 11px", fontSize: 13 }} />
+              <input type="date" value={(logForm[r.id] || {}).date || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), date: e.target.value } })} style={{ ...inpA, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, width: 150, padding: "9px 11px", fontSize: 13 }} />
+              <input placeholder="What you worked on" value={(logForm[r.id] || {}).note || ""} onChange={e => setLogForm({ ...logForm, [r.id]: { ...(logForm[r.id] || {}), note: e.target.value } })} style={{ ...inpA, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 0, flex: "1 1 180px", padding: "9px 11px", fontSize: 13 }} />
               <button onClick={() => logHours(r)} style={btnRed}>Log hours</button>
             </div>
             <div style={{ marginTop: 18, borderTop: "1px solid var(--gu-border2)", paddingTop: 10 }}>
@@ -4190,7 +4218,7 @@ export function AdvisoryAdminPage() {
         {sub === "notes" && (
           <div style={card}>
             {eyebrow("Private notes · yours only")}
-            <textarea value={notes[r.id] ?? ""} onChange={e => setNotes({ ...notes, [r.id]: e.target.value })} rows={10} placeholder="What you think, what you're watching, what to raise next time. The client never sees this." style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", resize: "vertical", marginBottom: 10 }} />
+            <textarea value={notes[r.id] ?? ""} onChange={e => setNotes({ ...notes, [r.id]: e.target.value })} rows={10} placeholder="What you think, what you're watching, what to raise next time. The client never sees this." style={{ ...inpA, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", resize: "vertical", marginBottom: 10 }} />
             <button onClick={() => act(() => post({ action: "private_notes", id: r.id, notes: notes[r.id] || "" }), "Notes saved.")} style={btnRed}>Save notes</button>
           </div>
         )}

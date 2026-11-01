@@ -1606,7 +1606,9 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
 
   if (activeMiniCourse) {
     const fromGlossary = /from=glossary/.test(window.location.hash);
-    return <MiniCoursePage course={activeMiniCourse} backLabel={fromGlossary ? "← Back to the glossary" : undefined} onBack={() => { if (fromGlossary) { window.location.href = "/glossary"; return; } setActiveMiniCourse(null); window.history.replaceState({}, "", window.location.pathname + window.location.search); }} member={member} onUpgrade={onUpgrade} onMemberUpdate={onMemberUpdate} />;
+    // One back button: the course's own goes to the course list; returning to
+    // the glossary is the site-wide back button's job (it knows you came from there).
+    return <MiniCoursePage course={activeMiniCourse} onBack={() => { setActiveMiniCourse(null); window.history.replaceState({}, "", window.location.pathname + window.location.search); }} member={member} onUpgrade={onUpgrade} onMemberUpdate={onMemberUpdate} />;
   }
 
   return (
@@ -5929,8 +5931,54 @@ function RevenueTab() {
 const TIERS = ["Free", "Basic", "Builder", "Premium", "Elite"];
 const TIER_COLORS = { Free: "#8a8a8a", Basic: "#b80101", Builder: "#a03030", Premium: "#b80101", Elite: "#570404" };
 
+// The one-page member profile Dr. Merritt pulls up before office hours or a
+// 1:1: photo, who they are, where they develop, the deal they are on, what
+// they came for. Opens under the member's row in Users.
+function MemberProfileSheet({ user }) {
+  const font = "'DM Sans', sans-serif";
+  const Row = ({ label, children }) => children ? (
+    <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", gap: 12, padding: "8px 0", borderTop: "1px solid #eee8de" }}>
+      <div style={{ fontSize: 10, color: "#8a8a8a", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, paddingTop: 2 }}>{label}</div>
+      <div style={{ color: "#222222", fontSize: 13.5, fontFamily: font, lineHeight: 1.65, whiteSpace: "pre-wrap" }}>{children}</div>
+    </div>
+  ) : null;
+  const filled = ["avatar_url", "company", "title", "linkedin_url", "location", "current_project", "years_in_re", "background", "groundup_win"].filter(k => user[k]).length;
+  return (
+    <div style={{ flexBasis: "100%", background: "#faf8f5", border: "1px solid #e0dbd2", borderRadius: 12, padding: "18px 20px", marginTop: 6 }}>
+      <div style={{ display: "flex", gap: 18, alignItems: "flex-start", flexWrap: "wrap" }}>
+        {user.avatar_url
+          ? <img src={user.avatar_url} alt="" style={{ width: 88, height: 88, borderRadius: 14, objectFit: "cover", flexShrink: 0, border: "1px solid #e0dbd2" }} />
+          : <div style={{ width: 88, height: 88, borderRadius: 14, background: "#efe9df", color: "#9a8a7a", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 34, flexShrink: 0 }}>{(user.name || "?").trim()[0]}</div>}
+        <div style={{ flex: 1, minWidth: 260 }}>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 24, color: "#161616", lineHeight: 1.1 }}>{user.name}</div>
+          <div style={{ color: "#555555", fontSize: 13.5, fontFamily: font, marginTop: 4 }}>{[user.title, user.company].filter(Boolean).join(" · ") || <span style={{ color: "#b0a69a" }}>No title or company yet</span>}</div>
+          <div style={{ color: "#777777", fontSize: 12.5, fontFamily: font, marginTop: 2 }}>{[user.location, user.headline].filter(Boolean).join(" · ")}</div>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8, fontSize: 12, fontFamily: font }}>
+            {user.linkedin_url && <a href={user.linkedin_url} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontWeight: 800, textDecoration: "none" }}>Open LinkedIn ↗</a>}
+            <a href={"mailto:" + user.email} style={{ color: "#555555", textDecoration: "none" }}>{user.email}</a>
+            <span style={{ color: "#9a9a9a" }}>{user.tier}{user.created_at ? ` · joined ${new Date(user.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}</span>
+            <span style={{ color: filled >= 7 ? "#22a55a" : "#b08a3a" }}>{filled} of 9 profile fields filled</span>
+          </div>
+        </div>
+      </div>
+      <div style={{ marginTop: 14 }}>
+        <Row label="Current project">{[user.current_project, user.project_stage ? `Stage: ${user.project_stage}` : null].filter(Boolean).join("\n")}</Row>
+        <Row label="Years in real estate">{user.years_in_re}</Row>
+        <Row label="Background">{user.background}</Row>
+        <Row label="A win looks like">{user.groundup_win}</Row>
+        <Row label="About">{user.bio}</Row>
+        <Row label="From onboarding">{[user.onb_role, user.onb_experience, user.onb_phase, user.onb_focus].filter(Boolean).join(" · ")}</Row>
+        <Row label="Wants to learn">{user.onb_learn}</Row>
+        <Row label="Pain point">{user.onb_pain}</Row>
+        <Row label="Goal">{user.onb_goal}</Row>
+      </div>
+    </div>
+  );
+}
+
 function UsersTab({ btnRed, btnGhost, inp, lbl, teamOnly = false }) {
   const [users, setUsers] = useState([]);
+  const [profileOpen, setProfileOpen] = useState(null); // user id whose one-page profile is open
   const [loading, setLoading] = useState(true);
   const [addForm, setAddForm] = useState({ name: "", email: "", tier: "Free", team: false, password: "" });
   const [addMsg, setAddMsg] = useState("");
@@ -6181,7 +6229,9 @@ function UsersTab({ btnRed, btnGhost, inp, lbl, teamOnly = false }) {
                   alert(`Reset link emailed to ${user.email} — valid for one hour.`);
                 } catch (e) { alert(e.message); }
               }} style={{ ...btnGhost, fontSize: 11, padding: "6px 12px", flexShrink: 0 }}>Email reset link</button>
+              <button onClick={() => setProfileOpen(p => p === user.id ? null : user.id)} style={{ ...btnGhost, fontSize: 11, padding: "6px 12px", flexShrink: 0, color: profileOpen === user.id ? "#b80101" : undefined }}>{profileOpen === user.id ? "Hide profile" : "Profile"}</button>
               <button onClick={() => removeUser(user.id)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "6px 12px", flexShrink: 0 }}>Remove</button>
+              {profileOpen === user.id && <MemberProfileSheet user={user} />}
             </div>
           ))}
         </div>

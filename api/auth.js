@@ -35,7 +35,7 @@ export default async function handler(req, res) {
       // out. That happened: a new column was selected here before its migration
       // had run, and every member was logged out on refresh. Run the migrations
       // and retry once rather than dropping the session on the floor.
-      const loadUser = () => sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, comped, badges, referral_code, referred_by, referred_code, tier_since, ip_agreed_at, avatar_url, headline, bio, company, title, location, partner_slug, onboarded_at, created_at, deal_profile, notify_mode FROM users WHERE id = ${session.uid}`;
+      const loadUser = () => sql`SELECT id, name, email, tier, role, membership_status, free_lesson_key, lnl_discount_until, comped, badges, referral_code, referred_by, referred_code, tier_since, ip_agreed_at, avatar_url, headline, bio, company, title, location, linkedin_url, years_in_re, background, current_project, project_stage, groundup_win, partner_slug, onboarded_at, created_at, deal_profile, notify_mode FROM users WHERE id = ${session.uid}`;
       let user;
       try {
         [user] = await loadUser();
@@ -624,8 +624,15 @@ export default async function handler(req, res) {
       const location = String(req.body.location ?? '').trim().slice(0, 120) || null;
       // Name is optional here; an empty one keeps what is on file.
       const name = String(req.body.name ?? '').trim().slice(0, 120) || null;
-      const [row] = await sql`UPDATE users SET name = COALESCE(${name}, name), headline = ${headline}, bio = ${bio}, company = ${company}, title = ${title}, location = ${location}
-        WHERE id = ${session.uid} RETURNING name, headline, bio, company, title, location`;
+      // The before-we-meet profile (see _migrate.js). LinkedIn must be a link.
+      const str = (k, n) => String(req.body[k] ?? '').trim().slice(0, n) || null;
+      let linkedin_url = str('linkedin_url', 200);
+      if (linkedin_url && !/^https?:\/\//i.test(linkedin_url)) linkedin_url = 'https://' + linkedin_url;
+      if (linkedin_url && !/^https?:\/\/([a-z]+\.)?linkedin\.com\//i.test(linkedin_url)) return res.status(400).json({ error: 'The LinkedIn link should start with linkedin.com/in/…' });
+      const years_in_re = str('years_in_re', 60), background = str('background', 500), current_project = str('current_project', 500), project_stage = str('project_stage', 80), groundup_win = str('groundup_win', 500);
+      const [row] = await sql`UPDATE users SET name = COALESCE(${name}, name), headline = ${headline}, bio = ${bio}, company = ${company}, title = ${title}, location = ${location},
+          linkedin_url = ${linkedin_url}, years_in_re = ${years_in_re}, background = ${background}, current_project = ${current_project}, project_stage = ${project_stage}, groundup_win = ${groundup_win}
+        WHERE id = ${session.uid} RETURNING name, headline, bio, company, title, location, linkedin_url, years_in_re, background, current_project, project_stage, groundup_win`;
       if (!row) return res.status(404).json({ error: 'Account not found' });
       return res.json({ success: true, ...row });
     }
