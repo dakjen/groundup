@@ -348,7 +348,29 @@ function potWindowDays() { return 45; } // informational only — the 7th-of-the
 // Revenue category per the services agreement, from the item's split rate.
 export const categoryOf = (item) => { const r = splitRate(item); return r >= 1 ? 'lunch_learn' : r >= 0.9 ? 'advisory' : 'course_membership'; };
 
-async function splitCharge(stripe, chargeId, item, sql) {
+// Stripe's 2025+ API versions moved the charge off the invoice (it now sits under
+// invoice.payments) and the subscription metadata under invoice.parent. The
+// webhook reads both shapes, so a subscription payment splits and lands in the
+// revenue ledger whichever version the account is on.
+const invoiceMeta = (inv) => inv?.parent?.subscription_details?.metadata || inv?.subscription_details?.metadata || inv?.lines?.data?.[0]?.metadata || {};
+const idOf = (x) => (typeof x === 'string' ? x : x?.id || null);
+async function invoiceChargeId(stripe, inv) {
+  if (!inv) return null;
+  if (idOf(inv.charge)) return idOf(inv.charge);
+  try {
+    const full = await stripe.invoices.retrieve(inv.id, { expand: ['payments'] });
+    if (idOf(full.charge)) return idOf(full.charge);
+    const payments = full.payments?.data || [];
+    const paid = payments.find(p => p.status === 'paid') || payments[0];
+    const pay = paid?.payment || {};
+    if (idOf(pay.charge)) return idOf(pay.charge);
+    const piId = idOf(pay.payment_intent);
+    if (piId) { const pi = await stripe.paymentIntents.retrieve(piId); return idOf(pi.latest_charge); }
+  } catch (e) { console.error('invoice charge lookup failed', inv.id, e.message); }
+  return null;
+}
+
+async function splitCharge(stripe, chargeId, item, sql, opts = {}) {
   const dest = process.env.NREUV_CONNECT_ACCOUNT;
   if (!dest || !chargeId) return;
   const rate = splitRate(item);
@@ -370,7 +392,9 @@ async function splitCharge(stripe, chargeId, item, sql) {
       } catch { held = 0; }
     } else if (!sql) held = 0;
     const share = Math.max(0, Math.min(Math.floor((net - held) * rate), net - held));
-    if (share > 0) {
+    // skipTransfer: the money already moved (reconcile found the transfer); only
+    // the ledger row is missing.
+    if (share > 0 && !opts.skipTransfer) {
       await stripe.transfers.create({
         amount: share, currency: 'usd', destination: dest,
         source_transaction: chargeId,
@@ -663,6 +687,43 @@ export default async function handler(req, res) {
       return res.json({ success: true, ...out });
     }
 
+    // ── Admin: reconcile the revenue ledger against Stripe ──
+    // Lists every paid invoice from the last 30 days and reports which ones are
+    // missing from the ledger. Dry by default (reports only); dry=0 records them:
+    // a charge whose NREUV transfer already exists gets its ledger row only, a
+    // charge that never split gets the transfer and the row.
+    if (req.query.reconcile === '1') {
+      const admin = getAdmin(req);
+      if (!admin || admin.viewer) return res.status(403).json({ error: 'Admin only' });
+      const dry = req.query.dry !== '0';
+      const since = Math.floor(Date.now() / 1000) - 30 * 86400;
+      const dest = process.env.NREUV_CONNECT_ACCOUNT || null;
+      const transferred = new Set();
+      if (dest) {
+        try {
+          const tr = await stripe.transfers.list({ destination: dest, limit: 100, created: { gte: since } });
+          for (const t of tr.data) if (t.source_transaction) transferred.add(idOf(t.source_transaction));
+        } catch (e) { console.error('transfer list failed', e.message); }
+      }
+      const invoices = await stripe.invoices.list({ status: 'paid', limit: 100, created: { gte: since } });
+      const out = [];
+      for (const inv of invoices.data) {
+        if (!inv.amount_paid) continue;
+        const meta = invoiceMeta(inv);
+        const chargeId = await invoiceChargeId(stripe, inv);
+        const [have] = chargeId ? await sql`SELECT 1 FROM revenue_ledger WHERE charge_id = ${chargeId}` : [];
+        const alreadyMoved = chargeId ? transferred.has(chargeId) : false;
+        let status = !chargeId ? 'no charge found' : have ? 'in ledger' : dry ? (alreadyMoved ? 'would record (transfer exists)' : 'would split and record') : null;
+        if (chargeId && !have && !dry) {
+          await splitCharge(stripe, chargeId, meta.item, sql, { skipTransfer: alreadyMoved });
+          const [now] = await sql`SELECT 1 FROM revenue_ledger WHERE charge_id = ${chargeId}`;
+          status = now ? (alreadyMoved ? 'recorded (transfer existed)' : 'split and recorded') : 'failed — see logs';
+        }
+        out.push({ invoice: inv.id, paid_at: new Date(inv.created * 1000).toISOString(), customer_email: inv.customer_email || null, amount_cents: inv.amount_paid, item: meta.item || null, charge: chargeId, status });
+      }
+      return res.json({ dry, invoices: out, missing: out.filter(r => r.status && r.status.startsWith('would')).length });
+    }
+
     // ── Webhook (raw body + signature) ──
     if (req.query.webhook === '1') {
       const raw = await readRawBody(req);
@@ -697,10 +758,13 @@ export default async function handler(req, res) {
       } else if (event.type === 'invoice.payment_succeeded') {
         // First subscription invoice AND every monthly renewal: split + keep tier active
         const inv = event.data.object;
-        const invItem = inv.subscription_details?.metadata?.item || inv.lines?.data?.[0]?.metadata?.item;
-        if (inv.charge) await splitCharge(stripe, inv.charge, invItem, sql);
+        const meta = invoiceMeta(inv);
+        const invItem = meta.item;
+        const chargeId = await invoiceChargeId(stripe, inv);
+        if (chargeId) await splitCharge(stripe, chargeId, invItem, sql);
+        else console.error('invoice without a charge', inv.id);
         const item = invItem;
-        const uid = Number(inv.subscription_details?.metadata?.user_id || inv.lines?.data?.[0]?.metadata?.user_id);
+        const uid = Number(meta.user_id);
         if (uid && item && CATALOG[item]?.tier) {
           await sql`UPDATE users SET tier = ${CATALOG[item].tier}, membership_status = 'active', stripe_customer_id = ${inv.customer} WHERE id = ${uid}`;
         }
@@ -710,8 +774,9 @@ export default async function handler(req, res) {
       } else if (event.type === 'invoice.payment_failed') {
         // Payment failed: suspend access immediately and tell everyone
         const inv = event.data.object;
-        const uid = Number(inv.subscription_details?.metadata?.user_id || inv.lines?.data?.[0]?.metadata?.user_id);
-        const failItem = inv.subscription_details?.metadata?.item || inv.lines?.data?.[0]?.metadata?.item || '';
+        const failMeta = invoiceMeta(inv);
+        const uid = Number(failMeta.user_id);
+        const failItem = failMeta.item || '';
         if (uid) {
           if (failItem.startsWith('retainer_')) {
             await sql`UPDATE retainers SET status = 'paused' WHERE user_id = ${uid} AND status = 'active'`;
@@ -786,7 +851,8 @@ export default async function handler(req, res) {
             try {
               const inv = sub.latest_invoice ? await stripe.invoices.retrieve(sub.latest_invoice) : null;
               paid = inv?.amount_paid || 0;
-              if (inv?.charge) { const [row] = await sql`SELECT held_cents FROM held_transfers WHERE charge_id = ${inv.charge} AND status = 'held'`; held = row?.held_cents || 0; }
+              const invCharge = await invoiceChargeId(stripe, inv);
+              if (invCharge) { const [row] = await sql`SELECT held_cents FROM held_transfers WHERE charge_id = ${invCharge} AND status = 'held'`; held = row?.held_cents || 0; }
             } catch {}
             const d = (c) => '$' + (c / 100).toFixed(2);
             if (ru) await sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com',

@@ -5706,6 +5706,22 @@ function RevenueTab() {
 
   const [retainers, setRetainers] = useState({ active_count: 0, retainer_mrr: 0 });
   const [actual, setActual] = useState(null);     // { statement: { current, previous }, reserve }
+  const [recon, setRecon] = useState(null);       // last reconcile result from /api/stripe?reconcile=1
+  const [reconBusy, setReconBusy] = useState(false);
+  const reconcile = async (record) => {
+    setReconBusy(true);
+    try {
+      const r = await fetch(`/api/stripe?reconcile=1${record ? "&dry=0" : ""}`, { headers: { Authorization: "Bearer " + sessionStorage.getItem("adminToken") } });
+      const j = await r.json().catch(() => null);
+      if (!r.ok) throw new Error(j?.error || "Stripe check failed");
+      setRecon(j);
+      if (record) {
+        const rev = await fetch("/api/revenue", { headers: { Authorization: "Bearer " + sessionStorage.getItem("adminToken") } }).then(x => x.ok ? x.json() : null).catch(() => null);
+        if (rev?.statement) setActual({ statement: rev.statement, reserve: rev.reserve });
+      }
+    } catch (e) { setRecon({ error: e.message }); }
+    setReconBusy(false);
+  };
   useEffect(() => {
     const hdrs = { Authorization: "Bearer " + sessionStorage.getItem("adminToken") };
     Promise.all([
@@ -5854,6 +5870,23 @@ function RevenueTab() {
             <p style={{ color: "#8d847a", fontSize: 12, fontFamily: F, lineHeight: 1.7, margin: "0 0 16px" }}>Per Section 3 of the services agreement. Platform revenue is gross less refunds, chargebacks and processing fees; the fee is calculated on platform revenue in each category. Figures come from the revenue ledger, written at the moment each payment splits.</p>
             {table(cur, label(now) + " so far")}
             {table(prev, label(new Date(now.getFullYear(), now.getMonth() - 1, 1)))}
+            <div style={{ background: "#faf7f2", border: "1px solid #e5dccf", borderRadius: 12, padding: "14px 18px", marginBottom: 16 }}>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                <button onClick={() => reconcile(false)} disabled={reconBusy} style={{ background: "#ffffff", color: "#161616", border: "1px solid #2a1010", borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 800, fontFamily: F, cursor: reconBusy ? "wait" : "pointer" }}>{reconBusy ? "Checking Stripe…" : "Check Stripe for missing payments"}</button>
+                {recon && !recon.error && recon.missing > 0 && (
+                  <button onClick={() => reconcile(true)} disabled={reconBusy} style={{ background: "#b80101", color: "#ffffff", border: "none", borderRadius: 8, padding: "9px 14px", fontSize: 12, fontWeight: 800, fontFamily: F, cursor: reconBusy ? "wait" : "pointer" }}>Record {recon.missing} missing payment{recon.missing === 1 ? "" : "s"}</button>
+                )}
+                <span style={{ color: "#8d847a", fontSize: 12, fontFamily: F }}>Compares the last 30 days of paid Stripe invoices with the ledger above.</span>
+              </div>
+              {recon?.error && <div style={{ color: "#b80101", fontSize: 12.5, fontFamily: F, marginTop: 10 }}>{recon.error}</div>}
+              {recon && !recon.error && (
+                <div style={{ marginTop: 10, fontSize: 12.5, fontFamily: F, color: "#444444", lineHeight: 1.8 }}>
+                  {recon.invoices.length === 0 ? "No paid invoices in the last 30 days." : recon.invoices.map((r, i) => (
+                    <div key={i}>{new Date(r.paid_at).toLocaleString()} · {r.customer_email || r.customer || "—"} · {r.item || "subscription"} · {m(r.amount_cents)} · <strong style={{ color: r.status === "in ledger" || (r.status || "").includes("recorded") ? "#1a7a3a" : "#b80101" }}>{r.status}</strong></div>
+                  ))}
+                </div>
+              )}
+            </div>
             {rs && (
               <div style={{ background: "#faf7f2", border: "1px solid #e5dccf", borderRadius: 12, padding: "16px 18px" }}>
                 <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: F, marginBottom: 8 }}>Refund reserve</div>
