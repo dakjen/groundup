@@ -1010,10 +1010,20 @@ function GULogo({ size = 40, light = false }) {
 
 // ─── NAV ────────────────────────────────────────────────────────────────────
 
+// One name per page, used by the menu AND by the back button, so a back button
+// always reads exactly like the menu item for the page it returns to.
+const PAGE_LABELS = { home: "Home", "get-started": "Get started", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", officehours: "Office Hours", contact: "Book with Dr. Gina", support: "Contact Us", glossary: "Glossary", community: "Community", library: "The Library", membership: "Membership", resources: "Resources", advisory: "Advisory", cohort: "My Cohort", shop: "Shop", refer: "Refer", partner: "Partner", "partner-interest": "Partner", terms: "Terms", privacy: "Privacy", doc: "Document", "admin-users": "Users", "admin-contacts": "Contacts", "admin-waitlist": "Waitlist", "admin-referrals": "Referrals", "admin-invites": "Gifts & Invites", "admin-retainers": "Advisory Clients", "admin-bookings": "Intake & Bookings", "admin-office": "Office Hours", "admin-revenue": "Revenue", "admin-drops": "Lesson Drops", "admin-email": "Email", "admin-team": "Team", "admin-shop": "Shop", "admin-courses": "All Courses", "admin-status": "System Status" };
+
 function Nav({ activePage, setActivePage, onLogoClick, onSignUp, onSignOut, member, unread = 0, dots = {} }) {
   // A red dot on a team menu item (and its group) when something there is waiting, e.g. an advisory message
   const dot = (id) => dots[id] > 0 ? <span style={{ display: "inline-block", width: 7, height: 7, borderRadius: 4, background: "#b80101", marginLeft: 6, verticalAlign: "middle" }} /> : null;
   const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const esc = (e) => { if (e.key === "Escape") setMenuOpen(false); };
+    document.addEventListener("keydown", esc);
+    return () => document.removeEventListener("keydown", esc);
+  }, [menuOpen]);
   const isTeam = member?.role === "admin";
   // Members get the session-type tabs folded into one "With Dr. Gina" dropdown,
   // and cohort members get their own tab.
@@ -1058,21 +1068,25 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, onSignOut, memb
   }, [adminOpen]);
   const lightNav = member?.role === "admin";
   const navInactive = lightNav ? "#5a5a5a" : "#6a6b69";
-  const pageLabels = { home: "Home", "get-started": "Get started", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", officehours: "Office Hours", contact: "Book with Dr. Gina", support: "Contact Us", glossary: "Glossary", community: "Community", library: "The Library", membership: "Membership", resources: "Resources", advisory: "Advisory", cohort: "My Cohort" };
+  const pageLabels = PAGE_LABELS;
+  // Picking anything from the menu, or the logo, starts a fresh trail: the
+  // back button then only tracks moves made inside the pages from there.
+  const go = (page) => { setActivePage(page, { reset: true }); };
+  const drawerBtn = (active, extra = {}) => ({ display: "block", width: "100%", background: active ? "#57040418" : "transparent", color: active ? "#b80101" : (lightNav ? "#333333" : "#c8a0a0"), border: active ? "1px solid #57040440" : "1px solid transparent", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left", ...extra });
   return (
     <>
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: lightNav ? "rgba(255,255,255,0.97)" : "rgba(0,0,0,0.97)", backdropFilter: "blur(16px)", borderBottom: lightNav ? "1px solid #d8ccb6" : "1px solid #1a0000", padding: "0 clamp(16px,4vw,48px)", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", marginRight: 28, flexShrink: 0 }} onClick={() => { setActivePage("home"); setMenuOpen(false); onLogoClick && onLogoClick(); }}>
+        <div className="nav-logo" style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", marginRight: 28, flexShrink: 0 }} onClick={() => { go("home"); setMenuOpen(false); onLogoClick && onLogoClick(); }}>
           <GULogo size={38} light={lightNav} />
           <div>
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 20, color: lightNav ? "#161616" : "#fff", lineHeight: 1, letterSpacing: "1px" }}>GROUNDUP</div>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 8.5, letterSpacing: "1.8px", textTransform: "uppercase", color: lightNav ? "#8a6a6a" : "#c8a8a8", lineHeight: 1, marginTop: 4, whiteSpace: "nowrap" }}>by Dr. Gina Merritt</div>
+            <div className="nav-byline" style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 8.5, letterSpacing: "1.8px", textTransform: "uppercase", color: lightNav ? "#8a6a6a" : "#c8a8a8", lineHeight: 1, marginTop: 4, whiteSpace: "nowrap" }}>by Dr. Gina Merritt</div>
           </div>
         </div>
         {/* Desktop nav */}
-        <div style={{ display: "flex", gap: 2, alignItems: "center", minWidth: 0, flexShrink: 0 }} className="desktop-nav">
+        <div style={{ display: "flex", gap: 2, alignItems: "center", minWidth: 0, flexShrink: 1 }} className="desktop-nav">
           {pages.map(page => (
-            <button key={page} onClick={() => setActivePage(page)} style={{ background: activePage === page ? "#57040418" : "transparent", color: activePage === page ? "#b80101" : navInactive, border: activePage === page ? "1px solid #b8010130" : "1px solid transparent", borderRadius: 7, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }}>{pageLabels[page] || page}</button>
+            <button key={page} onClick={() => go(page)} style={{ background: activePage === page ? "#57040418" : "transparent", color: activePage === page ? "#b80101" : navInactive, border: activePage === page ? "1px solid #b8010130" : "1px solid transparent", borderRadius: 7, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }}>{pageLabels[page] || page}</button>
           ))}
           {member && !isTeam && (
             <div data-gina-menu style={{ position: "relative" }}>
@@ -1080,7 +1094,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, onSignOut, memb
               {sessionsOpen && (
                 <div style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 12, padding: 6, minWidth: 190, boxShadow: "0 12px 40px rgba(0,0,0,0.5)", zIndex: 200 }}>
                   {SESSION_PAGES.map(([id, label]) => (
-                    <button key={id} onClick={() => { setSessionsOpen(false); setActivePage(id); }} style={{ display: "block", width: "100%", textAlign: "left", background: activePage === id ? "#57040430" : "transparent", color: activePage === id ? "#b80101" : "#c8a0a0", border: "none", borderRadius: 8, padding: "10px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>{label}</button>
+                    <button key={id} onClick={() => { setSessionsOpen(false); go(id); }} style={{ display: "block", width: "100%", textAlign: "left", background: activePage === id ? "#57040430" : "transparent", color: activePage === id ? "#b80101" : "#c8a0a0", border: "none", borderRadius: 8, padding: "10px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>{label}</button>
                   ))}
                 </div>
               )}
@@ -1093,7 +1107,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, onSignOut, memb
               const active = ids.includes(activePage);
               const single = g.items.length === 1;
               const open = adminOpen === g.label;
-              const go = (id) => { setAdminOpen(false); if (id === "signout") { onSignOut && onSignOut(); return; } setActivePage(id); };
+              const go = (id) => { setAdminOpen(false); if (id === "signout") { onSignOut && onSignOut(); return; } setActivePage(id, { reset: true }); };
               return (
                 <div key={g.label} style={{ position: "relative" }} data-admin-menu="1">
                   <button onClick={() => single ? go(ids[0]) : setAdminOpen(open ? false : g.label)}
@@ -1110,7 +1124,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, onSignOut, memb
                 </div>
               );
             })}
-            <button onClick={() => setActivePage("membership")} style={{ background: lightNav ? "#00000008" : "transparent", color: lightNav ? "#161616" : "#f0d8d8", border: lightNav ? "1px solid #b8a88a" : "1px solid #57040440", borderRadius: 99, padding: "8px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer", marginLeft: 8 }}>{firstName(member.name)} · {member.role === "admin" ? "Team" : (TIER_LABELS[member.tier] || member.tier)}</button>
+            <button onClick={() => go("membership")} style={{ background: lightNav ? "#00000008" : "transparent", color: lightNav ? "#161616" : "#f0d8d8", border: lightNav ? "1px solid #b8a88a" : "1px solid #57040440", borderRadius: 99, padding: "8px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer", marginLeft: 8, whiteSpace: "nowrap", flexShrink: 0 }}>{firstName(member.name)} · {member.role === "admin" ? "Team" : (TIER_LABELS[member.tier] || member.tier)}</button>
             </>
           ) : (
             // Before launch this goes straight to the waitlist. It used to run
@@ -1129,46 +1143,62 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, onSignOut, memb
           <span style={{ display: "block", width: 18, height: 2, background: menuOpen ? "#b80101" : "#6a6b69", transition: "all 0.2s", transform: menuOpen ? "rotate(-45deg) translate(4px,-4px)" : "none" }} />
         </button>
       </nav>
-      {/* Mobile menu */}
+      {/* Phone menu: a panel that slides in from the left and scrolls, with the
+          page still visible (dimmed) beside it. Tap outside, Escape or ✕ closes. */}
       {menuOpen && (
-        <div style={{ position: "fixed", top: 64, left: 0, right: 0, zIndex: 99, background: lightNav ? "#f7f7f7" : "#050202", borderBottom: lightNav ? "1px solid #d8ccb6" : "1px solid #1a0000", padding: "16px 20px calc(24px + env(safe-area-inset-bottom, 0px))", display: "flex", flexDirection: "column", gap: 4, maxHeight: "calc(100vh - 64px)", overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
-          {pages.map(page => (
-            <button key={page} onClick={() => { setActivePage(page); setMenuOpen(false); }} style={{ background: activePage === page ? "#57040418" : "transparent", color: activePage === page ? "#b80101" : "#c8a0a0", border: activePage === page ? "1px solid #57040440" : "1px solid transparent", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>{pageLabels[page] || page}</button>
-          ))}
-          {member && !isTeam && SESSION_PAGES.map(([id, label]) => (
-            <button key={id} onClick={() => { setActivePage(id); setMenuOpen(false); }} style={{ background: activePage === id ? "#57040418" : "transparent", color: activePage === id ? "#b80101" : "#c8a0a0", border: "1px solid transparent", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>{label}{dot(id)}</button>
-          ))}
-          {isTeam && ADMIN_GROUPS.map(g => (
-            <div key={g.label}>
-              <div style={{ fontSize: 9.5, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", padding: "14px 16px 4px" }}>{g.label}</div>
-              {g.items.map(([id, label]) => (
-                <button key={id} onClick={() => { setMenuOpen(false); if (id === "signout") { onSignOut && onSignOut(); return; } setActivePage(id); }} style={{ display: "block", width: "100%", background: activePage === id ? "#b8010112" : "transparent", color: activePage === id ? "#b80101" : (lightNav ? "#333333" : "#c8a0a0"), border: "1px solid transparent", borderRadius: 8, padding: "10px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>{label}</button>
-              ))}
+        <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 101, background: "rgba(0,0,0,0.45)" }}>
+          <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: 0, bottom: 0, left: 0, width: "min(320px, 86vw)", background: lightNav ? "#f7f7f7" : "#050202", borderRight: lightNav ? "1px solid #d8ccb6" : "1px solid #1a0000", padding: "14px 14px calc(24px + env(safe-area-inset-bottom, 0px))", paddingTop: "calc(14px + env(safe-area-inset-top, 0px))", display: "flex", flexDirection: "column", gap: 4, overflowY: "auto", WebkitOverflowScrolling: "touch", boxShadow: "12px 0 40px rgba(0,0,0,0.5)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 4px 14px", borderBottom: lightNav ? "1px solid #e0dbd2" : "1px solid #1a0000", marginBottom: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => { go("home"); setMenuOpen(false); }}>
+                <GULogo size={30} light={lightNav} />
+                <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 17, color: lightNav ? "#161616" : "#fff", letterSpacing: "1px" }}>GROUNDUP</span>
+              </div>
+              <button onClick={() => setMenuOpen(false)} aria-label="Close menu" style={{ background: "none", border: "none", color: lightNav ? "#666666" : "#8a7070", fontSize: 20, cursor: "pointer", padding: "4px 8px" }}>✕</button>
             </div>
-          ))}
-          {member ? (
-            <button onClick={() => { setMenuOpen(false); setActivePage("membership"); }} style={{ background: "transparent", color: lightNav ? "#161616" : "#f0d8d8", border: lightNav ? "1px solid #b8a88a" : "1px solid #57040440", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 15, cursor: "pointer", marginTop: 8, textAlign: "left" }}>{firstName(member.name)} · {member.role === "admin" ? "Team" : (TIER_LABELS[member.tier] || member.tier)}</button>
-          ) : (
-            launched
-              ? <button onClick={() => { setMenuOpen(false); onSignUp(); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 15, cursor: "pointer", marginTop: 8 }}>{launched ? "Sign In / Join" : "Join the Waitlist"} →</button>
-              : <button onClick={() => { setMenuOpen(false); onSignUp(); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", width: "100%" }}>Sign in</button>
-          )}
+            {pages.map(page => (
+              <button key={page} onClick={() => { go(page); setMenuOpen(false); }} style={drawerBtn(activePage === page)}>{pageLabels[page] || page}</button>
+            ))}
+            {member && !isTeam && (
+              <>
+                <div style={{ fontSize: 9.5, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", padding: "14px 16px 4px" }}>With Dr. Gina</div>
+                {SESSION_PAGES.map(([id, label]) => (
+                  <button key={id} onClick={() => { go(id); setMenuOpen(false); }} style={drawerBtn(activePage === id)}>{label}{dot(id)}</button>
+                ))}
+              </>
+            )}
+            {isTeam && ADMIN_GROUPS.map(g => (
+              <div key={g.label}>
+                <div style={{ fontSize: 9.5, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", padding: "14px 16px 4px" }}>{g.label}</div>
+                {g.items.map(([id, label]) => (
+                  <button key={id} onClick={() => { setMenuOpen(false); if (id === "signout") { onSignOut && onSignOut(); return; } go(id); }} style={drawerBtn(activePage === id, { padding: "10px 16px" })}>{label}{dot(id)}</button>
+                ))}
+              </div>
+            ))}
+            {member ? (
+              <button onClick={() => { setMenuOpen(false); go("membership"); }} style={drawerBtn(activePage === "membership", { color: lightNav ? "#161616" : "#f0d8d8", border: lightNav ? "1px solid #b8a88a" : "1px solid #57040440", fontWeight: 700, marginTop: 10 })}>{firstName(member.name)} · {member.role === "admin" ? "Team" : (TIER_LABELS[member.tier] || member.tier)}</button>
+            ) : (
+              <button onClick={() => { setMenuOpen(false); onSignUp(); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 15, cursor: "pointer", marginTop: 10, width: "100%" }}>{launched ? "Sign In / Join →" : "Sign in"}</button>
+            )}
+          </div>
         </div>
       )}
       <style>{`
-        /* The bar holds a wordmark, eight links and a CTA. Below this it cannot
-           fit them, and the links used to run off the right edge of the page
-           rather than collapsing. Between here and ~1180px the links tighten
-           their padding (below) so the Sign in button is never clipped. */
-        @media (max-width: 1040px) {
+        /* Tabs across the top on every computer and tablet; the menu button is
+           for phones only. Between phone width and ~1240px the tabs tighten so
+           the whole row, Sign in / profile included, fits without clipping. */
+        @media (max-width: 820px) {
           .desktop-nav { display: none !important; }
           .mobile-menu-btn { display: flex !important; }
         }
-        @media (min-width: 1041px) and (max-width: 1240px) {
-          .desktop-nav > button, .desktop-nav > div > button { padding-left: 8px !important; padding-right: 8px !important; font-size: 12.5px !important; }
+        @media (min-width: 821px) and (max-width: 1240px) {
+          .desktop-nav > button, .desktop-nav > div > button { padding-left: 7px !important; padding-right: 7px !important; font-size: 12px !important; }
           .desktop-nav { gap: 0 !important; }
+          .nav-logo { margin-right: 12px !important; }
         }
-        @media (min-width: 1041px) {
+        @media (min-width: 821px) and (max-width: 1000px) {
+          .nav-byline { display: none !important; }
+        }
+        @media (min-width: 821px) {
           .desktop-nav { display: flex !important; }
           .mobile-menu-btn { display: none !important; }
         }
@@ -2215,7 +2245,7 @@ function PricingPage({ onSignUp }) {
           <p style={{ color: "#7a6151", fontSize: 15, maxWidth: 420, margin: "0 auto", lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif" }}>Start free. Upgrade when you're ready. Cancel anytime.</p>
           <div style={{ marginTop: 18, display: "inline-flex", alignItems: "center", gap: 10, background: "#0d0404", border: "1px solid #b8010130", borderRadius: 12, padding: "12px 20px" }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
-            <span style={{ color: "#c8a8a8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>The waitlist opens October 1.</span>
+            <span style={{ color: "#c8a8a8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>The waitlist is open.</span>
           </div>
         </div>
 
@@ -7661,21 +7691,44 @@ export default function App() {
   // Where you came from, page by page, so every page can offer a way back to
   // exactly that. Each in-app navigation pushes the page it left; the browser's
   // back button (popstate) pops it so the two stay in step.
-  const [backStack, setBackStack] = useState([]);
-  const setActivePage = (page, { back = false } = {}) => {
+  // Each entry is a page you left by a link inside a page, with its full
+  // address (a template's name, a community channel), so "back" reopens the
+  // exact thing. Picking from the top menu or the logo clears the trail. The
+  // trail survives a full reload (a few links are plain hrefs).
+  const [backStack, setBackStack] = useState(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem("guBackStack") || "[]");
+      const stack = Array.isArray(saved) ? saved.filter(e => e && e.page && e.url) : [];
+      // Arrived by a plain link from one of our own pages: that page is the way back
+      const ref = document.referrer ? new URL(document.referrer) : null;
+      if (ref && ref.origin === window.location.origin && ref.pathname !== window.location.pathname) {
+        const p = ref.pathname.replace(/^\/+|\/+$/g, "") || "home";
+        if (PAGES.includes(p) && stack[stack.length - 1]?.url !== ref.pathname + ref.search + ref.hash) stack.push({ page: p, url: ref.pathname + ref.search + ref.hash });
+      }
+      return stack;
+    } catch { return []; }
+  });
+  useEffect(() => { try { sessionStorage.setItem("guBackStack", JSON.stringify(backStack.slice(-20))); } catch {} }, [backStack]);
+  const setActivePage = (page, { back = false, reset = false } = {}) => {
     sessionStorage.setItem("activePage", page);
     const path = page === "home" ? "/" : "/" + page;
     const moved = window.location.pathname !== path;
+    const leaving = { page: activePage, url: window.location.pathname + window.location.search + window.location.hash };
     if (moved) window.history.pushState({}, "", path);
-    // Going back pops the page we return to; going forward records the one we leave
-    if (back) setBackStack(s => s.slice(0, -1));
-    else if (moved) setBackStack(s => [...s, activePage]);
+    if (reset) setBackStack([]);
+    else if (back) setBackStack(s => s.slice(0, -1));
+    else if (moved && !(activePage === "doc" && !new URLSearchParams(window.location.search).get("p"))) setBackStack(s => [...s, leaving]);
     setActivePageRaw(page);
   };
-  // The back pill goes straight to the recorded previous page. (Not
-  // history.back(): pages that keep tab state in the URL hash add history
-  // entries of their own, so one step back could land on the same page.)
-  const goBack = () => setActivePage(backStack[backStack.length - 1] || "home", { back: true });
+  // The back button reopens the recorded address. (Not history.back(): pages
+  // that keep tab state in the URL hash add history entries of their own, so
+  // one browser step back could land on the same page.)
+  const goBack = () => {
+    const prev = backStack[backStack.length - 1];
+    if (!prev) return;
+    setActivePage(prev.page, { back: true });
+    try { window.history.replaceState({}, "", prev.url); } catch {}
+  };
   // Every page change starts at the top — no inheriting the last page's scroll
   useEffect(() => { window.scrollTo(0, 0); }, [activePage]);
   useEffect(() => {
@@ -7988,7 +8041,7 @@ export default function App() {
   }, [activePage, member?.role]);
 
   // IP agreement is now collected at signup — no popup gate
-  const navigateTo = (page) => { setActivePage(page); };
+  const navigateTo = (page, opts) => { setActivePage(page, opts); };
   const handleAgree = () => {
     sessionStorage.setItem("contentAgreed", "true");
     setContentAgreed(true);
@@ -8162,15 +8215,16 @@ export default function App() {
           here with their email/password, pre-launch included. Only JOIN buttons
           route to the waitlist before launch. */}
       <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => { setAuthMode("login"); setSignupTier("Free"); setShowSignup(true); }} onSignOut={() => { clearMember(); setMember(null); sessionStorage.removeItem("adminToken"); sessionStorage.removeItem("isAdmin"); setIsAdmin(false); sessionStorage.removeItem("currentUser"); setCurrentUser(null); navigateTo("home"); }} member={member} unread={(notif?.unread || 0) + (notif?.dm_unread || 0) + (notif?.advisory_unread || 0)} dots={{ "admin-retainers": notif?.advisory_unread || 0 }} />
-      {["courses", "glossary", "doc", "library", "cohort", "officehours", "lunchlearn", "resources", "shop", "community", "membership", "advisory", "contact", "support", "refer"].includes(activePage) && !showAgreement && (() => {
-        // On the inner (member-area) pages, one step back to where you came
-        // from. Lands on home when you arrived directly (a shared link, a
-        // bookmark). Marketing pages and the funnels have no pill.
-        const LABELS = { home: "Home", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learn", contact: "Advisory", community: "Community", membership: "Membership", resources: "Resources", advisory: "Advisory", shop: "Shop", officehours: "Office Hours", terms: "Terms", privacy: "Privacy", partner: "Partner", "partner-interest": "Partner", refer: "Refer", support: "Support", glossary: "Glossary", library: "The Library", cohort: "My Cohort", "get-started": "Get Started", doc: "Document" };
+      {backStack.length > 0 && activePage !== "home" && activePage !== "doc" && !activePage.startsWith("go/") && !showAgreement && (() => {
+        // One back button, everywhere, named after the page it returns to.
+        // It appears only when you got here by a link inside a page: picking
+        // from the top menu starts fresh, and the logo is the way home. The
+        // document viewer has its own back button, so it is skipped here.
         const prev = backStack[backStack.length - 1];
-        const label = prev ? (LABELS[prev] || (prev.startsWith("admin-") ? "Admin" : "Back")) : "Home";
+        const label = PAGE_LABELS[prev.page] || "Back";
+        const light = member?.role === "admin";
         return (
-          <button onClick={goBack} aria-label={"Back to " + label} style={{ position: "fixed", top: 72, left: "clamp(12px,3vw,40px)", zIndex: 99, display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", color: "#e08a8a", border: "1px solid #b8010150", borderRadius: 999, padding: "6px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12, cursor: "pointer", letterSpacing: "0.2px" }}>← {label}</button>
+          <button onClick={goBack} aria-label={"Back to " + label} style={{ position: "fixed", top: 70, left: "clamp(12px,3vw,40px)", zIndex: 98, display: "inline-flex", alignItems: "center", gap: 6, background: light ? "rgba(255,255,255,0.92)" : "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", color: light ? "#b80101" : "#e08a8a", border: "1px solid #b8010150", borderRadius: 999, padding: "5px 13px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12, cursor: "pointer", letterSpacing: "0.2px", boxShadow: "0 4px 16px rgba(0,0,0,0.25)" }}>← {label}</button>
         );
       })()}
       {activePage === "home" && <HomePage setActivePage={navigateTo} onSignUp={openSignup} currentUser={currentUser} eventInvited={eventInvited} preLaunch={prelaunch} />}
