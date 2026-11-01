@@ -474,13 +474,15 @@ const seqFoundingBlock = () => seqBlock('What a founding seat means', `
         ${seqP('The first <strong style="color:#161616;">twenty-five people to purchase a membership</strong> become founding members. It is earned at checkout, first come first served, and it comes with:', { size: 14, mb: 12 })}
         <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 4px;">
           ${seqRow('25% off', 'Member, Builder, Premium or Owner, for your entire first year — memberships only; passes and advisory retainers are not discounted')}
-          ${seqRow('Lunch &amp; Learn', 'your first year of LIVE sessions with Dr. Merritt, included')}
-          ${seqRow('The launch party', 'an invitation to the GroundUp launch party in Washington, DC')}
-          ${seqRow('The badge', 'Founding Member on your profile, for as long as you are here')}
+          ${seqRow('Lunch &amp; Learn', 'your first year of LIVE sessions with Dr. Merritt, included — normally $39.99 a seat')}
+          ${seqRow('The launch party', 'an invitation to the GroundUp launch party, December 5 in Washington, DC — it arrives the moment your seat is claimed')}
+          ${seqRow('Your referral link', 'people you send join through it and it counts on your account; there are rewards at milestones, and we keep those a surprise')}
+          ${seqRow('15% off a retainer', 'your first three months of a Senior Advisor retainer, if you ever bring Dr. Merritt onto your deal')}
+          ${seqRow('The badge', 'Founding Member on your profile and beside everything you post — only twenty-five will ever exist')}
         </table>`);
 const seqCurriculum = () => seqBlock('What opens', `
         <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0;">
-          ${seqRow('The curriculum', '15 courses and 60 lessons — the nine-phase Development Overview, Stages 1–7 of a deal from predevelopment to the fifteen-year compliance clock, the Underwriting Series, three of Dr. Merritt\'s own deals as case studies')}
+          ${seqRow('The curriculum', 'the nine-phase Development Overview and Stages 1–7 of a deal, from predevelopment to the fifteen-year compliance clock — 36 lessons live today, with new lessons dropping through 2027')}
           ${seqRow('The community', 'General and GroundUp channels for every member; Financial Structuring, Financial Modeling, JV &amp; Partnerships and the Opportunity Board on Premium; the Owner Lounge and Deal Room on Owner; direct messages to Dr. Merritt on Owner')}
           ${seqRow('Lunch &amp; Learn', 'quarterly live sessions with Dr. Merritt, recorded for members')}
           ${seqRow('The library', 'guides, action plans and working documents from real deals — read on every plan, downloadable on Owner')}
