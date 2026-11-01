@@ -725,12 +725,12 @@ export function insiderDoorsOpenEmail(name, opts = {}) {
   const closes = opts.closesText || 'Thursday night';
   const link = opts.link || `${siteUrl()}/?join=1`;
   return {
-    subject: `${first}, you can now choose your plan! Claim your founding seat`,
+    subject: `${first}, the gates are open — but only for you. Choose your plan.`,
     html: `
       ${seqHero('/opt/ui-home.jpg', 'GroundUp — the home page')}
-      ${seqKicker('GroundUp is open · insiders only')}
-      ${seqH1(`You can now choose your plan, ${first}!`)}
-      ${seqP(`The site is open to you. Earlier today it wasn't letting you in.`)}
+      ${seqKicker('The gates are open · insiders only')}
+      ${seqH1(`The gates are open, ${first}. But only for you.`)}
+      ${seqP(`You can now choose your plan! GroundUp is open to insiders only until the public launch on December 1, and you are one of them. Earlier today the site wasn't letting you in.`)}
       ${seqP(`If you clicked through this morning and every plan still said <em>Join the waitlist</em>, that was a mistake on our side, not yours. The doors were meant to open to insiders at midnight; the site was still showing the December 1 public date. <strong style="color:#161616;">It is fixed.</strong> Your link now takes you to the plans, you pick the one that fits, create your account, and you are at checkout.`)}
       ${seqBtn(link, 'Choose my plan →')}
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 22px;"><tr>

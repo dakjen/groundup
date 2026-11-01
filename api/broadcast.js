@@ -70,6 +70,13 @@ export default async function handler(req, res) {
       const closesText = new Date(closesAt).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
       const joined = new Set((await sql`SELECT LOWER(email) AS email FROM users WHERE membership_status = 'active' AND tier IS DISTINCT FROM 'Free'`).map(r => r.email));
       const rows = (await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = 'insider' AND NOT COALESCE(comped, FALSE)`).filter(r => !joined.has(String(r.email).toLowerCase()));
+      // ?preview=<address>: one copy to that address, nothing to the list.
+      if (req.query.preview) {
+        const to = String(req.query.preview).trim();
+        const mail = insiderDoorsOpenEmail('Dakotah Jennifer', { seatsLeft: seats.remaining, closesText, link: `${siteUrl()}/?join=1&email=${encodeURIComponent(to)}` });
+        const ok = await sendEmail(to, '[PREVIEW] ' + mail.subject, mail.html, { marketing: true });
+        return res.json({ success: true, preview: to, ok: !!ok, wouldSendTo: rows.length });
+      }
       const only = req.query.only ? String(req.query.only).toLowerCase() : null;
       let n = 0; const sent = [];
       for (const r of rows) {
