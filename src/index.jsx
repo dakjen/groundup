@@ -1034,7 +1034,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, onSignOut, memb
     ? []
     : member
     ? ["courses", ...(member.partner_slug ? ["cohort"] : []), "community", "resources", "advisory", "support"]
-    : ["home", "get-started", "courses", "about", "pricing", "lunchlearn", "contact", "support"];
+    : ["get-started", "courses", "pricing", "lunchlearn", "contact", "about", "support"];
   // The admin menu, grouped the way the team thinks about the work.
   // Waitlist heads the People group until the public launch passes; then Users does.
   const launched = !!(window.__guLaunchAt && new Date(window.__guLaunchAt).getTime() <= Date.now());
@@ -1131,7 +1131,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, onSignOut, memb
       </nav>
       {/* Mobile menu */}
       {menuOpen && (
-        <div style={{ position: "fixed", top: 64, left: 0, right: 0, zIndex: 99, background: lightNav ? "#f7f7f7" : "#050202", borderBottom: lightNav ? "1px solid #d8ccb6" : "1px solid #1a0000", padding: "16px 20px 24px", display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ position: "fixed", top: 64, left: 0, right: 0, zIndex: 99, background: lightNav ? "#f7f7f7" : "#050202", borderBottom: lightNav ? "1px solid #d8ccb6" : "1px solid #1a0000", padding: "16px 20px calc(24px + env(safe-area-inset-bottom, 0px))", display: "flex", flexDirection: "column", gap: 4, maxHeight: "calc(100vh - 64px)", overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
           {pages.map(page => (
             <button key={page} onClick={() => { setActivePage(page); setMenuOpen(false); }} style={{ background: activePage === page ? "#57040418" : "transparent", color: activePage === page ? "#b80101" : "#c8a0a0", border: activePage === page ? "1px solid #57040440" : "1px solid transparent", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", textAlign: "left" }}>{pageLabels[page] || page}</button>
           ))}
@@ -1158,13 +1158,17 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, onSignOut, memb
       <style>{`
         /* The bar holds a wordmark, eight links and a CTA. Below this it cannot
            fit them, and the links used to run off the right edge of the page
-           rather than collapsing (the Sign in button was the first casualty on
-           a landscape tablet). */
-        @media (max-width: 1180px) {
+           rather than collapsing. Between here and ~1180px the links tighten
+           their padding (below) so the Sign in button is never clipped. */
+        @media (max-width: 1040px) {
           .desktop-nav { display: none !important; }
           .mobile-menu-btn { display: flex !important; }
         }
-        @media (min-width: 1181px) {
+        @media (min-width: 1041px) and (max-width: 1240px) {
+          .desktop-nav > button, .desktop-nav > div > button { padding-left: 8px !important; padding-right: 8px !important; font-size: 12.5px !important; }
+          .desktop-nav { gap: 0 !important; }
+        }
+        @media (min-width: 1041px) {
           .desktop-nav { display: flex !important; }
           .mobile-menu-btn { display: none !important; }
         }
@@ -2595,7 +2599,7 @@ function ContactPage({ setActivePage, advisorLink, opensAt, isAdmin }) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 14 }}>
             {SESSION_TYPES.map(s => (
               <div key={s.id} onClick={() => setSelected(s)}
-                style={{ background: selected && selected.id === s.id ? "#1a0808" : "#0d0404", border: "1px solid " + (selected && selected.id === s.id ? "#b80101" : "#2a0000"), borderRadius: 14, padding: "22px 24px", cursor: "pointer", transition: "all 0.2s", position: "relative" }}>
+                style={{ background: selected && selected.id === s.id ? "#1a0808" : "#0d0404", border: "1px solid " + (selected && selected.id === s.id ? "#b80101" : "#2a0000"), borderRadius: 14, padding: "22px 24px", cursor: "pointer", transition: "all 0.2s", position: "relative", gridColumn: s.id === "advisor" ? "1 / -1" : undefined }}>
                 {selected && selected.id === s.id && <div style={{ position: "absolute", top: 14, right: 14, width: 20, height: 20, borderRadius: "50%", background: "#b80101", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "#fff", fontWeight: 900 }}>✓</div>}
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
                   <div style={{ width: 42, height: 42, borderRadius: 10, background: "#1a0808", border: "1px solid #2a0000", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><s.Icon size={20} color="#b80101" /></div>
