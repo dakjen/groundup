@@ -317,7 +317,9 @@ export default async function handler(req, res) {
           // Unpublished lessons (draft: true) exist only for the team. They are
           // always appended after the published ones, so members' lesson indexes
           // (and their progress) are unaffected.
-          lessons: admin ? (c.lessons || []) : (c.lessons || []).filter(lessonLive).map(l => ({ id: l.id, title: l.title })),
+          // release_at rides along so the course page can tell a lesson that
+          // dropped later from one that was there all along ("complete · 2 new")
+          lessons: admin ? (c.lessons || []) : (c.lessons || []).filter(lessonLive).map(l => ({ id: l.id, title: l.title, ...(l.release_at ? { release_at: l.release_at } : {}) })),
           // Scheduled drops: members see the title and the date, nothing else
           coming: admin ? undefined : (c.lessons || []).filter(lessonComing).map(l => ({ id: l.id, title: l.title, release_at: l.release_at })),
         }));

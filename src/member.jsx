@@ -492,9 +492,14 @@ export function saveMember(user, token) {
   localStorage.setItem("guMember", JSON.stringify(user));
   if (token) localStorage.setItem("guToken", token);
 }
+// One account per browser at a time. A member sign-in and a team sign-in used
+// to live in different stores and could both be present, so a page could act
+// as one account and the admin tools as the other.
 export function clearMember() {
   localStorage.removeItem("guMember");
   localStorage.removeItem("guToken");
+  sessionStorage.removeItem("adminToken");
+  sessionStorage.removeItem("isAdmin");
 }
 
 async function api(path, opts = {}) {
@@ -2259,7 +2264,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
   const hasAccess = isAdmin || rank >= 1;
   const canEngage = isAdmin || rank >= 2;               // Basic (Member) is read-only
   useEffect(() => { if (hasAccess) api("/api/community?resource=members").then(d => setMentionable(d.members || [])).catch(() => {}); }, [hasAccess]);
-  const canDm = isAdmin || rank >= 3;                   // DMs are an Owner benefit
+  const canDm = isAdmin || rank >= 4;                   // DMs are an Owner benefit (the API enforces Elite too)
 
   const loadChannels = useCallback(async () => {
     const data = await api("/api/community?resource=channels");
@@ -3184,7 +3189,7 @@ export function LibraryPage({ member, onUpgrade }) {
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>The Library</div>
         <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", color: "var(--gu-text)", marginBottom: 10 }}>Filed the way a deal runs</h1>
-        <p style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.8, maxWidth: 600, marginBottom: 44 }}>Every template and tool in the member collection, organized by the nine phases of the development process — so when you're in construction, you look under construction. The same materials also live topic-by-topic on the Resources page.</p>
+        <p style={{ color: "var(--gu-muted)", fontSize: 14, fontFamily: font, lineHeight: 1.8, maxWidth: 600, marginBottom: 44 }}>Every template and tool in the member collection, organized by the nine phases of the development process — so when you're in construction, you look under construction. The same templates also sit on the Resources page, arranged by course stage. One file, two ways to find it; an update shows in both.</p>
         {error && <div style={{ color: "#ff6b6b", fontFamily: font, fontSize: 13, marginBottom: 20 }}>{error}</div>}
         {!data ? <div style={{ color: "var(--gu-muted)", fontFamily: font }}>Loading…</div> : (
           [...Array.from({ length: 9 }, (_, i) => i + 1), null].map(ph => {
@@ -3204,7 +3209,8 @@ export function LibraryPage({ member, onUpgrade }) {
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {phItems.map(r => {
                       const isTemplate = r.category === "template";
-                      const open = () => { if (r.locked) { onUpgrade && onUpgrade(); return; } if (r.url) { ping(r.id); window.open(r.url, "_blank", "noreferrer"); } };
+                      // The viewer gets this section's list so you can step to the next template without coming back
+                      const open = () => { if (r.locked) { onUpgrade && onUpgrade(); return; } if (r.url) { ping(r.id); try { sessionStorage.setItem("guDocList", JSON.stringify({ section: name, items: phItems.filter(x => x.url && !x.locked).map(x => ({ url: x.url, title: x.title })) })); } catch {} window.open(r.url, "_blank", "noreferrer"); } };
                       return (
                         <div key={r.id} onClick={open} title={r.locked ? `Opens with the ${TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan` : undefined} style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 12, padding: "14px 18px", cursor: r.url || r.locked ? "pointer" : "default", display: "flex", gap: 14, alignItems: "center", transition: "all 0.2s", opacity: r.locked ? 0.45 : 1, filter: r.locked ? "grayscale(1)" : "none" }}
                           onMouseEnter={e => { if (r.url) { e.currentTarget.style.borderColor = "#b8010150"; e.currentTarget.style.transform = "translateY(-2px)"; } }}
@@ -3258,7 +3264,7 @@ export function ResourcesPage({ member, onUpgrade }) {
   }
 
   const groups = [
-    { key: "template", title: "Templates", desc: "Development timelines, worksheets, and working documents." },
+    { key: "template", title: "Templates", desc: "Development timelines, worksheets, and working documents, arranged by course stage. The same templates are in The Library, arranged by development phase. One file, two ways to find it." },
     { key: "resource", title: "Resources", desc: "Curated tools and reading Dr. Merritt's team actually uses." },
     { key: "partner", title: "NREUV Partner Network", desc: "The firms in our corner — with member referral codes.", elite: true },
   ];
@@ -3272,9 +3278,10 @@ export function ResourcesPage({ member, onUpgrade }) {
   const extOf = (r) => { const m = String(r.url || "").match(/\.(xlsx|xlsm|xls|docx|doc|pptx|ppt|pdf|csv)(?=[^.]*$)/i); return m ? m[1].toUpperCase().replace("XLSX", "XLS").replace("DOCX", "DOC").replace("PPTX", "PPT") : (r.url ? "LINK" : ""); };
   const stageNum = (r) => { const m = String(r.stage || "").match(/Stage\s+(\d+)/i); return m ? Number(m[1]) : 99; };
   const jump = (id) => { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); };
-  const row = (r) => {
+  const row = (r, group) => {
     const locked = !!r.locked; const ext = extOf(r);
-    const open = () => { if (locked) { onUpgrade && onUpgrade(); return; } if (r.url) { ping(r.id); window.open(r.url, "_blank", "noreferrer"); } };
+    // The viewer gets this stage's list so you can step to the next template without coming back
+    const open = () => { if (locked) { onUpgrade && onUpgrade(); return; } if (r.url) { ping(r.id); try { if (group) sessionStorage.setItem("guDocList", JSON.stringify({ section: group.stage, items: group.items.filter(x => x.url && !x.locked).map(x => ({ url: x.url, title: x.title })) })); } catch {} window.open(r.url, "_blank", "noreferrer"); } };
     return (
       <div key={r.id} onClick={open} title={locked ? `Opens with the ${TIER_LABELS[r.unlock_tier] || r.unlock_tier} plan` : cleanName(r.title)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", borderTop: "1px solid #1e0000", cursor: r.url || locked ? "pointer" : "default", opacity: locked ? 0.45 : 1, fontFamily: font, minWidth: 0 }}
         onMouseEnter={e => { if (!locked) e.currentTarget.style.background = "var(--gu-card2)"; }} onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>
@@ -3386,7 +3393,7 @@ export function ResourcesPage({ member, onUpgrade }) {
             {/* Templates, by stage */}
             <div id="lib-templates" style={{ scrollMarginTop: 90 }}>
               <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "var(--gu-text2)", marginBottom: 4 }}>Templates</h2>
-              <p style={{ color: "var(--gu-muted2)", fontSize: 13, fontFamily: font, marginBottom: 16 }}>Development timelines, worksheets, and working documents.</p>
+              <p style={{ color: "var(--gu-muted2)", fontSize: 13, fontFamily: font, marginBottom: 16 }}>Development timelines, worksheets, and working documents, arranged by course stage. The same templates are in The Library, arranged by development phase. One file, two ways to find it.</p>
               {tplItems.length === 0 && <div style={{ color: "var(--gu-faint)", fontSize: 13, fontFamily: font }}>Nothing here yet — check back soon.</div>}
               {byStage.map(g => (
                 <div key={g.stage} id={"lib-" + g.stage.replace(/\W+/g, "-")} style={{ scrollMarginTop: 90, marginBottom: 16 }}>
@@ -3395,7 +3402,7 @@ export function ResourcesPage({ member, onUpgrade }) {
                     {g.course && <span style={{ color: "var(--gu-muted)", fontSize: 12.5, fontFamily: font, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.course}</span>}
                     <span style={{ flex: 1, borderTop: "1px solid #1e0000" }} />
                   </div>
-                  <div style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 10, overflow: "hidden" }}>{g.items.map(row)}</div>
+                  <div style={{ background: "var(--gu-card)", border: "1px solid #2a0000", borderRadius: 10, overflow: "hidden" }}>{g.items.map(r => row(r, g))}</div>
                 </div>
               ))}
             </div>

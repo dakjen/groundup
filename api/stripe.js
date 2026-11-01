@@ -56,6 +56,7 @@ const CATALOG = {
   session_strategy:  { mode: 'payment', name: '1:1 Strategy Session (45 min)',   amount: 42500 },
   session_capital:   { mode: 'payment', name: '1:1 Capital Stack Review (45 min)', amount: 55000 },
   session_community: { mode: 'payment', name: '1:1 Community Development (45 min)', amount: 37500 },
+  session_template:  { mode: 'payment', name: '1:1 Template & Checklist Review (30 min)', amount: 25000 },
   retainer_onboarding: { mode: 'payment', name: 'Full Project Intake with Dr. Merritt', amount: 150000 },
   retainer_5:  { mode: 'subscription', name: 'Senior Advisor Retainer — 5 hrs/month',  amount: 302500, retainerHours: 5 },
   retainer_10: { mode: 'subscription', name: 'Senior Advisor Retainer — 10 hrs/month', amount: 550000, retainerHours: 10 },

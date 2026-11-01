@@ -58,6 +58,22 @@ export function DocViewerPage({ setActivePage }) {
   };
   const goBack = () => { if (back) { window.location.href = back; return; } if (window.history.length > 1) window.history.back(); else setActivePage("resources"); };
 
+  // Step through the section you opened this from (the Library or Resources
+  // page leaves its list here), like clicking through a folder.
+  const nav = (() => {
+    try {
+      const d = JSON.parse(sessionStorage.getItem("guDocList") || "null");
+      if (!d || !Array.isArray(d.items) || d.items.length < 2) return null;
+      const pOf = (url) => { try { return new URL(url, window.location.origin).searchParams.get("p"); } catch { return null; } };
+      const idx = d.items.findIndex(x => pOf(x.url) === p);
+      if (idx < 0) return null;
+      const link = (x) => `/doc?p=${encodeURIComponent(pOf(x.url))}${back ? `&from=${encodeURIComponent(back)}` : ""}`;
+      return { section: d.section, idx, count: d.items.length, prev: idx > 0 ? link(d.items[idx - 1]) : null, next: idx < d.items.length - 1 ? link(d.items[idx + 1]) : null, prevTitle: d.items[idx - 1]?.title, nextTitle: d.items[idx + 1]?.title };
+    } catch { return null; }
+  })();
+  // Book a Template & Checklist Review with this template in hand
+  const bookReview = () => { setActivePage("contact"); try { window.history.replaceState({}, "", "/contact?book=template"); } catch {} };
+
   const btn = { background: RED, color: "#fff", border: "none", borderRadius: 10, padding: "11px 20px", fontFamily: font, fontWeight: 800, fontSize: 13, cursor: "pointer" };
   const ghost = { background: "transparent", color: "#e0c4c4", border: "1px solid #3a1a1a", borderRadius: 10, padding: "11px 18px", fontFamily: font, fontWeight: 700, fontSize: 13, cursor: "pointer" };
 
@@ -80,11 +96,18 @@ export function DocViewerPage({ setActivePage }) {
           {state.objectUrl && <button onClick={download} style={btn}>Download</button>}
           {state.status === "pdf" && <a href={state.objectUrl} target="_blank" rel="noreferrer" style={{ ...ghost, textDecoration: "none" }}>Open in a new tab</a>}
         </div>
+        {nav && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 14, fontFamily: font, fontSize: 12.5 }}>
+            {nav.prev ? <a href={nav.prev} title={nav.prevTitle} style={{ ...ghost, padding: "8px 14px", textDecoration: "none", fontSize: 12.5 }}>← Previous</a> : <span style={{ ...ghost, padding: "8px 14px", opacity: 0.35, fontSize: 12.5 }}>← Previous</span>}
+            <span style={{ color: "#8f7070", fontWeight: 700 }}>{nav.idx + 1} of {nav.count}{nav.section ? ` in ${nav.section}` : ""}</span>
+            {nav.next ? <a href={nav.next} title={nav.nextTitle} style={{ ...ghost, padding: "8px 14px", textDecoration: "none", fontSize: 12.5 }}>Next →</a> : <span style={{ ...ghost, padding: "8px 14px", opacity: 0.35, fontSize: 12.5 }}>Next →</span>}
+          </div>
+        )}
 
         {/^(xlsx|xls|xlsm|csv|docx|doc|pptx|ppt)$/.test(ext) && (
           <div style={{ background: "#0d0404", border: "1px solid #b8010140", borderRadius: 12, padding: "12px 16px", marginBottom: 14, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", fontFamily: font }}>
-            <span style={{ color: "#e0c4c4", fontSize: 13.5, flex: "1 1 260px" }}>Need help using this template on your own deal? Set up a call with Dr. Merritt.</span>
-            <button onClick={() => setActivePage("contact")} style={{ ...btn, padding: "9px 16px", fontSize: 12.5 }}>Book a session →</button>
+            <span style={{ color: "#e0c4c4", fontSize: 13.5, flex: "1 1 260px" }}>Need help using this template on your own deal? Book a 30-minute Template & Checklist Review with Dr. Merritt ($250).</span>
+            <button onClick={bookReview} style={{ ...btn, padding: "9px 16px", fontSize: 12.5 }}>Book a review →</button>
           </div>
         )}
         {state.status === "loading" && <div style={{ color: "#8f7070", fontFamily: font, padding: 40, textAlign: "center" }}>Opening…</div>}

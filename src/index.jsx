@@ -350,13 +350,17 @@ function LessonCalc({ kind, color }) {
   const [v, setV] = useState(kind === "gap"
     ? { tdc: 12000000, debt: 5500000, lihtc: 4200000, subsidy: 1000000, equity: 300000 }
     : { noi: 520000, rate: 6.5, years: 35, loan: 5500000 });
-  const num = (x) => Number(x) || 0;
+  const num = (x) => Number(String(x).replace(/[^0-9.\-]/g, "")) || 0;
   const money = (n) => "$" + Math.round(n).toLocaleString();
-  const field = (label, key, step = 100000) => (
+  // Dollar fields show as "$12,000,000" while you type (the result already
+  // did); rates and years stay plain. Typing strips everything but digits.
+  const MONEY = { tdc: 1, debt: 1, lihtc: 1, subsidy: 1, equity: 1, noi: 1, loan: 1 };
+  const show = (key) => { const raw = v[key]; if (raw === "" || raw === null || raw === undefined) return ""; return MONEY[key] ? "$" + Math.round(num(raw)).toLocaleString() : String(raw); };
+  const field = (label, key) => (
     <label key={key} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       <span style={{ fontSize: 9, color: "#8a7070", fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font }}>{label}</span>
-      <input type="number" step={step} value={v[key]} onChange={e => setV({ ...v, [key]: e.target.value })}
-        style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 8, padding: "10px 12px", color: "#f0d8d8", fontSize: 14, fontFamily: font, outline: "none", width: "100%", boxSizing: "border-box" }} />
+      <input type="text" inputMode="decimal" value={show(key)} onChange={e => { const t = e.target.value; setV({ ...v, [key]: MONEY[key] ? t.replace(/[^0-9]/g, "") : t.replace(/[^0-9.]/g, "") }); }}
+        style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 8, padding: "10px 12px", color: "#f0d8d8", fontSize: 14, fontFamily: font, outline: "none", width: "100%", boxSizing: "border-box", fontVariantNumeric: "tabular-nums" }} />
     </label>
   );
   let inputs, result;
@@ -558,6 +562,13 @@ function MiniCoursePage({ course, onBack, backLabel, member, onUpgrade, onMember
   };
   const total = course.lessons.length;
   const doneCount = completed.filter(i => i < total).length;
+  // A course a member finished stays "complete" when new lessons drop later;
+  // it just says how many are new. The bar goes back to counting the moment
+  // they finish one of the new ones and more remain, or if a never-finished
+  // lesson is still open.
+  const undone = course.lessons.map((l, i) => ({ l, i })).filter(({ i }) => !completed.includes(i));
+  const newOnly = undone.length > 0 && doneCount > 0 && undone.every(({ l }) => l.release_at);
+  const courseDone = total > 0 && (doneCount === total || newOnly);
   // Next lesson the member can actually open (skips locked ones)
   const nextOpenable = (from) => { for (let j = from + 1; j < total; j++) if (lessonAt(j)) return j; return null; };
   const prevOpenable = (from) => { for (let j = from - 1; j >= 0; j--) if (lessonAt(j)) return j; return null; };
@@ -831,10 +842,10 @@ function MiniCoursePage({ course, onBack, backLabel, member, onUpgrade, onMember
           <div style={{ marginBottom: 36 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
               <span style={{ fontSize: 10, color: "#8f7070", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>Your progress</span>
-              <span style={{ fontSize: 13, color: doneCount === total && total > 0 ? "#4ade80" : "#f0d8d8", fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}>{doneCount === total && total > 0 ? "✓ Course complete" : `${doneCount} of ${total} lessons`}</span>
+              <span style={{ fontSize: 13, color: courseDone ? "#4ade80" : "#f0d8d8", fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}>{courseDone ? (newOnly ? `✓ Course complete · ${undone.length} new lesson${undone.length === 1 ? "" : "s"} added` : "✓ Course complete") : `${doneCount} of ${total} lessons`}</span>
             </div>
             <div style={{ height: 8, background: "#1a0808", borderRadius: 99, overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${total ? (doneCount / total) * 100 : 0}%`, background: doneCount === total && total > 0 ? "#4ade80" : `linear-gradient(90deg, ${course.stageColor}, ${course.stageColor}aa)`, borderRadius: 99, transition: "width 0.5s ease" }} />
+              <div style={{ height: "100%", width: `${total ? (doneCount / total) * 100 : 0}%`, background: courseDone ? "#4ade80" : `linear-gradient(90deg, ${course.stageColor}, ${course.stageColor}aa)`, borderRadius: 99, transition: "width 0.5s ease" }} />
             </div>
           </div>
         )}
@@ -1209,7 +1220,10 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, onSignOut, memb
 
 // ─── HOME PAGE ──────────────────────────────────────────────────────────────
 
-function HomePage({ setActivePage, onSignUp, currentUser, eventInvited, preLaunch = false }) {
+function HomePage({ setActivePage, onSignUp, currentUser, eventInvited, preLaunch: preLaunchProp = false }) {
+  // Someone already signed in (an insider let in early) has no use for the
+  // waitlist: their buttons go to the courses. Visitors still get the waitlist.
+  const preLaunch = preLaunchProp && !currentUser;
   // The course count grows with the curriculum — published courses only
   const [courseCount, setCourseCount] = useState(miniCourses.length);
   useEffect(() => {
@@ -1539,6 +1553,11 @@ function GlossaryPage({ member, onSignIn, setActivePage }) {
 function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, onNav }) {
   const [activeMiniCourse, setActiveMiniCourse] = useState(null);
   const [topicReq, setTopicReq] = useState("");
+  // What they are asking for: a course topic, a template, or a glossary term.
+  // The kind travels as a prefix on the request so the team's inbox and CSV
+  // show it without a schema change.
+  const [topicKind, setTopicKind] = useState("Course topic");
+  const REQUEST_KINDS = [["Course topic", "e.g. How to read a construction draw schedule"], ["Template", "e.g. A sources-and-uses template for a 4% bond deal"], ["Glossary term", "e.g. What does 'downward adjuster' mean?"]];
   const [topicBusy, setTopicBusy] = useState(false);
   const [topicDone, setTopicDone] = useState(false);
   // Survive refresh: reopen the course named in the URL hash once the catalog is in
@@ -1698,18 +1717,23 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
         {/* ── Request a course topic: members tell Dr. Merritt what to teach next ── */}
         <div style={{ marginTop: 72, background: "#0d0404", border: "1px solid #2a0000", borderRadius: 18, padding: "32px 36px" }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>What should she teach next?</div>
-          <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(22px,3vw,30px)", color: "#f0d8d8", marginBottom: 8 }}>Request a course topic</h3>
+          <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(22px,3vw,30px)", color: "#f0d8d8", marginBottom: 8 }}>Request a course topic, a template, or a glossary term</h3>
           <p style={{ color: "#8a7070", fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8, maxWidth: 560, marginBottom: 18 }}>Stuck on something the curriculum doesn't cover yet? Tell us — new, more specific courses launch based on what members ask for.</p>
           {topicDone ? (
             <div style={{ color: "#4ade80", fontSize: 14, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>✓ Got it — your request is in front of the team.</div>
           ) : (
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <input value={topicReq} onChange={e => setTopicReq(e.target.value)} placeholder="e.g. How to read a construction draw schedule" maxLength={500}
+              <div style={{ width: "100%", display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {REQUEST_KINDS.map(([k]) => (
+                  <button key={k} type="button" onClick={() => setTopicKind(k)} style={{ background: topicKind === k ? "#b8010122" : "transparent", color: topicKind === k ? "#f0d8d8" : "#8a7070", border: "1px solid " + (topicKind === k ? "#b80101" : "#2a0000"), borderRadius: 999, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12.5, cursor: "pointer" }}>{k}</button>
+                ))}
+              </div>
+              <input value={topicReq} onChange={e => setTopicReq(e.target.value)} placeholder={(REQUEST_KINDS.find(([k]) => k === topicKind) || REQUEST_KINDS[0])[1]} maxLength={500}
                 style={{ flex: 1, minWidth: 240, background: "#000", border: "1px solid #2a0000", borderRadius: 10, padding: "13px 16px", color: "#f0d8d8", fontSize: 14, fontFamily: "'DM Sans', sans-serif", outline: "none" }} />
               <button disabled={topicBusy || !topicReq.trim()} onClick={async () => {
                 setTopicBusy(true);
                 try {
-                  const res = await fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "request", body: "[Course topic] " + topicReq.trim() }) });
+                  const res = await fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + getMemberToken() }, body: JSON.stringify({ action: "request", body: "[" + topicKind + "] " + topicReq.trim() }) });
                   if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Couldn't send — try again.");
                   setTopicDone(true);
                 } catch (e) { alert(e.message); } finally { setTopicBusy(false); }
@@ -2252,7 +2276,8 @@ function PricingPage({ onSignUp }) {
         {/* Two doors: recurring memberships, or pay-once passes */}
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
           {[["plans", "Memberships"], ["onetime", "One-Time Purchases"]].map(([id, label], i) => (
-            <button key={id} onClick={() => setTab(id)} style={{ background: tab === id ? "#b80101" : "#0d0404", color: tab === id ? "#fff" : "#8a7070", border: "1px solid " + (tab === id ? "#b80101" : "#2a0000"), borderRadius: i === 0 ? "12px 0 0 12px" : "0 12px 12px 0", padding: "13px 30px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>{label}</button>
+            // A two-way switch: the lit side is what you are looking at, the dim side is the other view
+            <button key={id} onClick={() => setTab(id)} aria-pressed={tab === id} title={tab === id ? `You are viewing ${label}` : `Switch to ${label}`} style={{ background: tab === id ? "#b80101" : "#0d0404", color: tab === id ? "#fff" : "#c8a8a8", border: "1px solid " + (tab === id ? "#b80101" : "#3a1a1a"), borderRadius: i === 0 ? "12px 0 0 12px" : "0 12px 12px 0", padding: "13px 30px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: tab === id ? "default" : "pointer" }}>{tab === id ? "✓ " : ""}{label}</button>
           ))}
         </div>
         {tab === "plans" && (
@@ -2478,6 +2503,7 @@ function ContactPage({ setActivePage, advisorLink, opensAt, isAdmin }) {
     { id: "strategy", title: "Strategy Session", desc: "Big picture direction: where to focus, how to grow your pipeline, what JV structures make sense for your stage.", price: "$425", duration: "45 min", Icon: Compass, stripe: "https://buy.stripe.com/placeholder_strategy" },
     { id: "capital", title: "Capital Stack Review", desc: "Deep dive into your financing structure — tax credit sizing, subsidy sequencing, gap analysis, and how to close the deal.", price: "$550", duration: "45 min", Icon: BarChart3, stripe: "https://buy.stripe.com/placeholder_capital" },
     { id: "community", title: "Community Development", desc: "Community engagement strategy, political capital, government relationships, and neighborhood support for your project.", price: "$375", duration: "45 min", Icon: Handshake, stripe: "https://buy.stripe.com/placeholder_community" },
+    { id: "template", title: "Template & Checklist Review", desc: "Bring a GroundUp template or checklist you are working through on your own deal. Dr. Merritt walks it with you, line by line, and tells you what to change.", price: "$250", duration: "30 min", Icon: FileText, stripe: "" },
     { id: "advisor", title: "Senior Advisor — start with the Full Project Intake", desc: "Bring her wherever you are: a live deal, one you are trying to get off the ground, or the question you need her on. The $1,500 intake takes it all in — the pro forma and capital stack if there is a deal, the site or the plan if there isn't one yet — and tells you what you missed and what to do next. Then the retainer: Dr. Merritt advising, guiding and working with you on it, month over month: 5 hrs/mo — $3,025 · 10 hrs/mo — $5,500 · 15 hrs/mo — $7,700. Continue and the $1,500 credits against your first month.", price: "$1,500", duration: "intake · credited if you continue", Icon: Handshake, advisor: true },
   ];
 
@@ -2582,7 +2608,7 @@ function ContactPage({ setActivePage, advisorLink, opensAt, isAdmin }) {
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Work with Dr. Merritt</div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(36px,5vw,56px)", color: "#f5e8e8", marginBottom: 16, lineHeight: 1.1 }}>Book a 1-on-1 Session</h1>
           <p style={{ color: "#8a7070", fontSize: 15, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif" }}>
-            45 minutes with Dr. Gina Merritt. Select a session type, pay to reserve, then tell her what you're working on.
+            30 or 45 minutes with Dr. Gina Merritt. Select a session type, pay to reserve, then tell her what you're working on.
           </p>
           {locked && (
             <div style={{ marginTop: 18, background: "#1a0808", border: "1px solid #b80101", borderRadius: 12, padding: "14px 18px", color: "#f0d8d8", fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>
@@ -2596,7 +2622,7 @@ function ContactPage({ setActivePage, advisorLink, opensAt, isAdmin }) {
           <img loading="lazy" src="/opt/LIIF-Stills3.webp" alt="Dr. Gina Merritt in a one-on-one session" style={{ width: "100%", height: 380, objectFit: "cover", objectPosition: "center top", display: "block" }} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.8) 100%)" }} />
           <div style={{ position: "absolute", bottom: 16, left: 24 }}>
-            <div style={{ color: "#f0d8d8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>45 minutes, one-on-one, with the person other developers ask for advice.</div>
+            <div style={{ color: "#f0d8d8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>30 or 45 minutes, one-on-one, with the person other developers ask for advice.</div>
           </div>
         </div>
 
@@ -2663,7 +2689,7 @@ function ContactPage({ setActivePage, advisorLink, opensAt, isAdmin }) {
             <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 14, padding: "24px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
               <div>
                 <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 22, color: "#f0d8d8", marginBottom: 4 }}>{selected.title}</div>
-                <div style={{ fontSize: 13, color: "#8f7070", fontFamily: "'DM Sans', sans-serif" }}>{selected.advisor ? "Monthly retainer · starts with a 30-min engagement call" : "45 min · Dr. Gina Merritt · Zoom"}</div>
+                <div style={{ fontSize: 13, color: "#8f7070", fontFamily: "'DM Sans', sans-serif" }}>{selected.advisor ? "Monthly retainer · starts with a 30-min engagement call" : `${selected.duration || "45 min"} · Dr. Gina Merritt · Zoom`}</div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
                 {/* Show what they will actually be charged. This used to print the
@@ -7813,6 +7839,28 @@ export default function App() {
   // sign-in only primes the list, so nothing old pops up.
   const shownRef = useRef(null);
   const [toasts, setToasts] = useState([]); // in-site pop-ups, newest first
+  // A new version of the site went out while this tab was open: say so once,
+  // with a one-tap refresh, instead of leaving people on stale code. Checks
+  // every 10 minutes and when the tab comes back into view.
+  useEffect(() => {
+    const current = (document.querySelector('script[src*="/assets/main-"]') || {}).src || "";
+    if (!current) return;
+    let told = false;
+    const check = async () => {
+      if (told || document.hidden) return;
+      try {
+        const html = await (await fetch("/?v=" + Date.now(), { cache: "no-store" })).text();
+        const m = html.match(/\/assets\/main-[^"']+\.js/);
+        if (m && !current.endsWith(m[0])) {
+          told = true;
+          setToasts(x => [{ id: "update-" + Date.now(), key: "update", reload: true, title: "GroundUp was updated", body: "A new version is ready. Refresh to pick it up; nothing you typed is lost until you do." }, ...x]);
+        }
+      } catch {}
+    };
+    const t = setInterval(check, 10 * 60 * 1000);
+    document.addEventListener("visibilitychange", check);
+    return () => { clearInterval(t); document.removeEventListener("visibilitychange", check); };
+  }, []);
   const loadNotif = () => {
     if (!getMember()) return;
     fetch("/api/community?resource=notifications", { headers: { Authorization: "Bearer " + getMemberToken() } })
@@ -7931,7 +7979,7 @@ export default function App() {
     if (!getMemberToken() || !getMember()) return;
     fetch("/api/auth", { headers: { Authorization: `Bearer ${getMemberToken()}` } })
       .then(r => r.ok ? r.json() : Promise.reject())
-      .then(data => { saveMember(data.user); setMember(data.user); if (data.user.role === "admin") sessionStorage.setItem("adminToken", getMemberToken()); })
+      .then(data => { saveMember(data.user); setMember(data.user); if (data.user.role === "admin") { sessionStorage.setItem("adminToken", getMemberToken()); } else { sessionStorage.removeItem("adminToken"); sessionStorage.removeItem("isAdmin"); } })
       .catch(() => { clearMember(); setMember(null); sessionStorage.removeItem("adminToken"); sessionStorage.removeItem("isAdmin"); setIsAdmin(false); });
   }, []);
 
@@ -8080,7 +8128,7 @@ export default function App() {
   // Pre-launch, the site is fully BROWSABLE — home, courses, pricing, all of it.
   // What's gated is DOING anything: any join/sign-in/enroll click pops the
   // general waitlist instead (see openSignup). /waitlist stays the insider page.
-  if (showAdminLogin && !isAdmin) return <AdminLoginPage onLogin={(token) => { sessionStorage.setItem("isAdmin", "true"); sessionStorage.setItem("adminToken", token || ""); setIsAdmin(true); setShowAdminLogin(false); }} />;
+  if (showAdminLogin && !isAdmin) return <AdminLoginPage onLogin={(token) => { clearMember(); setMember(null); sessionStorage.setItem("isAdmin", "true"); sessionStorage.setItem("adminToken", token || ""); setIsAdmin(true); setShowAdminLogin(false); }} />;
   if (isAdmin) return <AdminPanel
     onExit={member ? () => { sessionStorage.removeItem("isAdmin"); setIsAdmin(false); setActivePage("courses"); } : undefined}
     onLogout={() => { sessionStorage.removeItem("isAdmin"); if (!member) sessionStorage.removeItem("adminToken"); setIsAdmin(false); setActivePage(member ? "courses" : "home"); }} />;
@@ -8133,11 +8181,11 @@ export default function App() {
       {toasts.length > 0 && (
         <div style={{ position: "fixed", top: 76, right: 16, zIndex: 340, display: "flex", flexDirection: "column", gap: 8, width: "min(340px, calc(100vw - 32px))" }}>
           {toasts.map(t => (
-            <button key={t.id} onClick={() => { setToasts(x => x.filter(y => y.id !== t.id)); if (t.page) { setActivePage(t.page); if (t.retainer) window.location.hash = `adv=${t.retainer}&tab=messages`; return; } if (t.slug) window.location.hash = `ch=${encodeURIComponent(t.slug)}${t.thread ? `&t=${t.thread}` : ""}`; else if (t.key.startsWith("dm:")) window.location.hash = "dm"; setActivePage("community"); }}
+            <button key={t.id} onClick={() => { setToasts(x => x.filter(y => y.id !== t.id)); if (t.reload) { window.location.reload(); return; } if (t.page) { setActivePage(t.page); if (t.retainer) window.location.hash = `adv=${t.retainer}&tab=messages`; return; } if (t.slug) window.location.hash = `ch=${encodeURIComponent(t.slug)}${t.thread ? `&t=${t.thread}` : ""}`; else if (t.key.startsWith("dm:")) window.location.hash = "dm"; setActivePage("community"); }}
               style={{ textAlign: "left", background: "#0d0404", border: "1px solid #b8010160", borderLeft: "3px solid #b80101", borderRadius: 10, padding: "10px 14px", cursor: "pointer", boxShadow: "0 10px 30px rgba(0,0,0,0.5)" }}>
               <div style={{ color: "#f5e8e8", fontSize: 12.5, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", marginBottom: 2 }}>{t.title}</div>
               <div style={{ color: "#c8a8a8", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{t.body}</div>
-              <div style={{ color: "#e08a8a", fontSize: 11.5, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", marginTop: 6 }}>Reply →</div>
+              <div style={{ color: "#e08a8a", fontSize: 11.5, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", marginTop: 6 }}>{t.reload ? "Refresh now →" : "Reply →"}</div>
             </button>
           ))}
         </div>
@@ -8157,7 +8205,7 @@ export default function App() {
       )}
       {onboarding && <OnboardingFlow pending={onboarding} onDone={(user) => { setOnboarding(null); setMember(user); sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); welcomeOnce(user); }} />}
       {foundingWelcome && <FoundingWelcomeModal user={foundingWelcome} seats={foundingSeats} launchAt={insiderAt} onPlans={() => { setFoundingWelcome(null); navigateTo("pricing"); }} onClose={() => setFoundingWelcome(null)} />}
-      {showSignup && <AuthModal allowSignup={!prelaunch} startMode={authMode} onClose={() => { setShowSignup(false); setAuthMode("signup"); }} defaultTier={signupTier} onSignupIntent={(creds) => { setShowSignup(false); setOnboarding(creds); }} onAuthed={(user, how) => { setMember(user); setShowSignup(false); if (user.role === "admin") sessionStorage.setItem("adminToken", localStorage.getItem("guToken") || ""); sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); }} />}
+      {showSignup && <AuthModal allowSignup={!prelaunch} startMode={authMode} onClose={() => { setShowSignup(false); setAuthMode("signup"); }} defaultTier={signupTier} onSignupIntent={(creds) => { setShowSignup(false); setOnboarding(creds); }} onAuthed={(user, how) => { setMember(user); setShowSignup(false); if (user.role === "admin") { sessionStorage.setItem("adminToken", localStorage.getItem("guToken") || ""); } else { sessionStorage.removeItem("adminToken"); sessionStorage.removeItem("isAdmin"); setIsAdmin(false); } sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); }} />}
       {trialBanner && (
         <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "#0d0d0f", border: "1px solid #b8010140", borderRadius: 14, padding: "18px 28px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 8px 40px rgba(184,1,1,0.2)", maxWidth: 520, width: "calc(100% - 48px)" }}>
           <span style={{ flexShrink: 0, display: "flex" }}><Gift size={26} color="#e0c4c4" /></span>
