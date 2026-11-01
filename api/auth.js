@@ -21,9 +21,9 @@ export default async function handler(req, res) {
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         return res.send(`<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title} — GroundUp</title></head><body style="background:#000;color:#e8d8d8;font-family:Arial,Helvetica,sans-serif;margin:0;padding:60px 20px;text-align:center;"><div style="max-width:480px;margin:0 auto;background:#0d0404;border:1px solid #2a0000;border-radius:16px;padding:40px 32px;"><div style="font-size:20px;font-weight:bold;color:#fff;letter-spacing:1px;">GROUNDUP</div><div style="margin-bottom:24px;"></div><h1 style="font-size:22px;color:#161616;margin:0 0 12px;">${title}</h1><p style="color:#444444;font-size:14px;line-height:1.8;">${body}</p><a href="/" style="color:#b80101;font-weight:bold;font-size:13px;">← Back to GroundUp</a></div></body></html>`);
       };
-      if (!email || req.query.t !== unsubToken(email)) return page('That link didn’t work', 'The unsubscribe link looks incomplete — try the link from a newer email, or write to groundup@drginamerritt.net and we’ll take you off by hand.');
+      if (!email || req.query.t !== unsubToken(email)) return page('That link didn’t work', 'The unsubscribe link looks incomplete — try the link from a newer email, or write to admin@nreuv.com and we’ll take you off by hand.');
       await sql`INSERT INTO email_optouts (email, created_at) VALUES (${email}, NOW()) ON CONFLICT (email) DO NOTHING`;
-      return page('You’re unsubscribed', `${email} won’t receive marketing email from GroundUp anymore. Account emails like password resets and receipts still arrive. Unsubscribed by mistake? Email groundup@drginamerritt.net.`);
+      return page('You’re unsubscribed', `${email} won’t receive marketing email from GroundUp anymore. Account emails like password resets and receipts still arrive. Unsubscribed by mistake? Email admin@nreuv.com.`);
     }
 
     // GET /api/auth  → current session's user
@@ -504,7 +504,7 @@ export default async function handler(req, res) {
       if (!recent) {
         try {
           const [u] = await sql`SELECT name, email, tier FROM users WHERE id = ${session.uid}`;
-          if (u) await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
+          if (u) await sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com',
             `CONTENT CAPTURE SIGNAL: ${u.name} (${kind})`,
             `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Possible content capture</h2>
              <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u.name}</strong> (${u.email}, ${u.tier}) triggered a capture signal — <strong style="color:#161616;">${kind}</strong>${where ? ` on ${where}` : ''}. Their lesson view carries their email watermarked across the content, so any leaked screenshot traces back to this account. Further signals from them today are logged silently (capture_log table).</p>

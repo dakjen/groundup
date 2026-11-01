@@ -86,7 +86,7 @@ export default async function handler(req, res) {
         RETURNING id, booking_id, title, url, kind, created_at`;
       // She prepares from these, so tell her one arrived rather than hoping she looks.
       const [u] = await sql`SELECT name, email FROM users WHERE id = ${booking.user_id}`;
-      sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
+      sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com',
         `${u?.name || 'A member'} added a document for their ${booking.label || 'session'}`,
         `<p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u?.name || 'A member'}</strong> (${u?.email || ''}) attached <strong style="color:#161616;">${title}</strong> ahead of their <strong style="color:#161616;">${booking.label || 'session'}</strong>.</p>`
       ).catch(() => {});

@@ -83,7 +83,7 @@ async function startCheckout(item, extra = {}) {
     if (!res.ok || !d.url) {
       redirectOverlay(false);
       console.error("checkout failed", res.status, d);
-      alert((d.error || "We couldn't start checkout just now.") + "\n\nIf this keeps happening, email groundup@drginamerritt.net and we'll take the payment directly.");
+      alert((d.error || "We couldn't start checkout just now.") + "\n\nIf this keeps happening, email admin@nreuv.com and we'll take the payment directly.");
       return false;
     }
     window.location.href = d.url;
@@ -94,7 +94,7 @@ async function startCheckout(item, extra = {}) {
     redirectOverlay(false);
     console.error("checkout error", e);
     alert("We couldn't reach the payment system. Opening an email to the team instead.");
-    window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("GroundUp purchase: " + item);
+    window.location.href = "mailto:admin@nreuv.com?subject=" + encodeURIComponent("GroundUp purchase: " + item);
     return false;
   }
 }
@@ -2404,7 +2404,7 @@ function PricingPage({ onSignUp }) {
               if (window.__guLaunchAt && new Date(window.__guLaunchAt).getTime() > Date.now()) { window.location.href = "/waitlist"; return; }
               if (plan.tier === "Advisor") { window.location.href = "/contact"; return; }
               // Elite is capped — send full-cohort visitors to the waitlist, not to checkout
-              if (plan.limited && elite?.full) { window.location.href = "mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("Owner waitlist — notify me when a seat opens"); return; }
+              if (plan.limited && elite?.full) { window.location.href = "mailto:admin@nreuv.com?subject=" + encodeURIComponent("Owner waitlist — notify me when a seat opens"); return; }
               if (plan.tier === "Free") { onSignUp && onSignUp("Free"); return; }
               if (getMember()) { startCheckout("sub_" + plan.tier + (annual && ANNUAL_PRICES[plan.tier] ? "_annual" : ""), { gift: localStorage.getItem("guGift") || undefined, promo: localStorage.getItem("guPromo") || undefined }); return; }
               onSignUp && onSignUp(plan.tier);
@@ -2722,7 +2722,7 @@ function ContactPage({ setActivePage, advisorLink, opensAt, isAdmin }) {
                 ) : selected.advisor ? (
                   <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
                     <button onClick={() => startCheckout("retainer_onboarding")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "13px 24px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Buy the Intake — $1,500 →</button>
-                    <a href={advisorLink || ("mailto:groundup@drginamerritt.net?subject=" + encodeURIComponent("Senior Advisor — engagement call"))} {...(advisorLink ? { target: "_blank", rel: "noreferrer" } : {})} style={{ color: "#e0c4c4", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>or book a free engagement call →</a>
+                    <a href={advisorLink || ("mailto:admin@nreuv.com?subject=" + encodeURIComponent("Senior Advisor — engagement call"))} {...(advisorLink ? { target: "_blank", rel: "noreferrer" } : {})} style={{ color: "#e0c4c4", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>or book a free engagement call →</a>
                   </div>
                 ) : <button onClick={() => startCheckout("session_" + selected.id)} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "13px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Pay & Reserve →</button>}
               </div>
@@ -3723,7 +3723,7 @@ function TermsPage() {
       <p style={S.p}>GroundUp is provided “as is.” We work hard to keep it available and accurate but don't warrant uninterrupted or error-free operation, and we may add, change, or retire features. To the fullest extent permitted by law, NREUV's total liability for any claim is limited to the amounts you paid us in the 12 months before the claim; we are not liable for indirect, incidental, or consequential damages. Nothing here limits liability that cannot be limited by law.</p>
 
       <h2 style={S.h2}>10. Changes &amp; contact</h2>
-      <p style={S.p}>We may update these Terms; material changes will be announced on the site or by email, and continued use after the effective date is acceptance. Questions: <strong style={S.strong}>groundup@drginamerritt.net</strong> · Northern Real Estate Urban Ventures, 825 10th St NW, Suite 981, Washington, DC 20001.</p>
+      <p style={S.p}>We may update these Terms; material changes will be announced on the site or by email, and continued use after the effective date is acceptance. Questions: <strong style={S.strong}>admin@nreuv.com</strong> · Northern Real Estate Urban Ventures, 825 10th St NW, Suite 981, Washington, DC 20001.</p>
     </div></div>
   );
 }
@@ -3748,7 +3748,7 @@ function PrivacyPage() {
       <p style={S.p}>Your data lives as long as your account does. If you cancel your membership, your posts, messages, and progress are <strong style={S.strong}>permanently deleted 15 days</strong> after it ends, and your account identity is scrubbed; rejoin within 15 days and nothing is lost. Financial and purchase records are kept as long as tax law requires (generally 7 years) even after deletion. Security logs purge within about a day.</p>
 
       <h2 style={S.h2}>5. Your choices</h2>
-      <p style={S.p}>You can update your password on your member page, cancel self-service (which triggers the deletion timeline above), unsubscribe from marketing email via the link in any message, or email us to ask what we hold about you or to request deletion. We answer at <strong style={S.strong}>groundup@drginamerritt.net</strong>.</p>
+      <p style={S.p}>You can update your password on your member page, cancel self-service (which triggers the deletion timeline above), unsubscribe from marketing email via the link in any message, or email us to ask what we hold about you or to request deletion. We answer at <strong style={S.strong}>admin@nreuv.com</strong>.</p>
 
       <h2 style={S.h2}>6. Security, children & changes</h2>
       <p style={S.p}>Passwords are stored hashed, sessions are signed, sign-ins are rate-limited, and access to content is enforced server-side. GroundUp is for adults building real estate careers — it is not directed to children under 18. We'll post any material changes to this policy here. Northern Real Estate Urban Ventures, 825 10th St NW, Suite 981, Washington, DC 20001.</p>
@@ -4302,7 +4302,7 @@ function LaunchPage({ launchAt, onAdmin, list = "insider", eliteSpots }) {
       </div>
 
       <footer style={{ borderTop: "1px solid #0f0000", padding: "28px clamp(20px,5vw,80px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "#000" }}>
-        <div style={{ fontFamily: font, fontSize: 12, color: "#8a7575" }}>© {new Date().getFullYear()} GroundUp by Dr. Gina Merritt · Northern Real Estate Urban Ventures<span style={{ margin: "0 8px" }}>·</span><a href="/terms" style={{ color: "#9a7878", fontSize: 12, textDecoration: "none" }}>Terms</a><span style={{ margin: "0 6px" }}>·</span><a href="/privacy" style={{ color: "#9a7878", fontSize: 12, textDecoration: "none" }}>Privacy</a><span style={{ margin: "0 6px" }}>·</span><a href="mailto:groundup@drginamerritt.net?subject=Tech%20support%20—%20GroundUp" style={{ color: "#9a7878", fontSize: 12, textDecoration: "none" }}>Tech Support</a><span style={{ margin: "0 8px" }}>·</span><a href="https://gobenotable.com" target="_blank" rel="noreferrer" style={{ color: "#4a3535", textDecoration: "none" }}>Powered by Notable Services</a></div>
+        <div style={{ fontFamily: font, fontSize: 12, color: "#8a7575" }}>© {new Date().getFullYear()} GroundUp by Dr. Gina Merritt · Northern Real Estate Urban Ventures<span style={{ margin: "0 8px" }}>·</span><a href="/terms" style={{ color: "#9a7878", fontSize: 12, textDecoration: "none" }}>Terms</a><span style={{ margin: "0 6px" }}>·</span><a href="/privacy" style={{ color: "#9a7878", fontSize: 12, textDecoration: "none" }}>Privacy</a><span style={{ margin: "0 6px" }}>·</span><a href="mailto:admin@nreuv.com?subject=Tech%20support%20—%20GroundUp" style={{ color: "#9a7878", fontSize: 12, textDecoration: "none" }}>Tech Support</a><span style={{ margin: "0 8px" }}>·</span><a href="https://gobenotable.com" target="_blank" rel="noreferrer" style={{ color: "#4a3535", textDecoration: "none" }}>Powered by Notable Services</a></div>
         <button onClick={onAdmin} style={{ background: "transparent", border: "none", color: "#2a1a1a", fontFamily: font, fontSize: 11, cursor: "pointer", letterSpacing: "1px" }}>Admin</button>
       </footer>
     </div>

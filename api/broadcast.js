@@ -36,7 +36,7 @@ async function recipients(sql, audience) {
 // A scheduled send that fails must not fail quietly. Every caught error in the
 // cron goes out as an email to Dakotah and the GroundUp inbox, and as an
 // `error` update to the Vantage automations dashboard (which also emails her).
-const ALERT_TO = [process.env.ALERT_EMAIL || 'dakotah@dakjencreative.com', process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net'];
+const ALERT_TO = [process.env.ALERT_EMAIL || 'dakotah@dakjencreative.com', process.env.ADMIN_EMAIL || 'admin@nreuv.com'];
 async function alertFailure(step, err, extra) {
   const msg = (err && err.stack) ? err.stack.split('\n').slice(0, 4).join('\n') : String(err);
   console.error('[cron failure]', step, msg);
@@ -264,7 +264,7 @@ async function cronRun(req, res) {
         if (rung > (pc.tier_alerted || 0)) {
           await sql`UPDATE partner_codes SET tier_alerted = ${rung} WHERE id = ${pc.id}`;
           const money = '$' + (r.mrr_cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2 });
-          await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net',
+          await sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com',
             `REFERRAL TIER REACHED: ${pc.owner_name} (${pc.code}) — ${earned.name}`,
             `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${pc.owner_name} reached ${earned.name}</h2>
              <p style="color:#444444;font-size:14px;line-height:1.9;">Their code <strong style="color:#161616;">${pc.code}</strong> is now carrying <strong style="color:#161616;">${money}/mo</strong> in referred revenue at list price, across <strong style="color:#161616;">${r.paid_members}</strong> paid member${r.paid_members === 1 ? '' : 's'} past the 60-day mark.</p>

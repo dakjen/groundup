@@ -213,7 +213,7 @@ export default async function handler(req, res) {
            <p style="color:#444444;font-size:14px;line-height:1.8;margin:22px 0 0;">A calendar invite is on its way. ${b.brief ? 'Dr. Merritt has your brief.' : '<strong style="color:#161616;">Add your brief before the session</strong> — it\'s what makes the 45 minutes count.'}</p>`
         ).catch(() => {});
       }
-      sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net', `Session booked — ${u?.name || 'member'}, ${when}`,
+      sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com', `Session booked — ${u?.name || 'member'}, ${when}`,
         `<p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u?.name || 'A member'}</strong> booked <strong style="color:#161616;">${b.label || 'a session'}</strong> for ${when}.${b.brief ? ' Their brief is on the calendar invite.' : ' No brief yet.'}</p>`
       ).catch(() => {});
 

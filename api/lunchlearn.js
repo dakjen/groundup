@@ -378,7 +378,7 @@ export default async function handler(req, res) {
       const [linkRow] = await sql`SELECT value FROM settings WHERE key = 'scoping_call_link'`;
       const link = linkRow?.value || '';
       const esc = (x) => String(x || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      const teamTo = [...new Set([process.env.SCOPING_EMAIL || 'dakotah@dakjencreative.com', process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net'])];
+      const teamTo = [...new Set([process.env.SCOPING_EMAIL || 'dakotah@dakjencreative.com', process.env.ADMIN_EMAIL || 'admin@nreuv.com'])];
       for (const addr of teamTo) await sendEmail(addr, `Scoping call request — ${name}`,
         `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${esc(name)} wants a scoping call</h2>
          <p style="color:#444444;font-size:14px;line-height:1.8;">${esc(email)}${phone ? ' · ' + esc(phone) : ''}<br>Where they are: <strong>${esc(stage || 'not said')}</strong><br>Came in from: ${esc(acq)}</p>

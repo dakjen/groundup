@@ -114,7 +114,7 @@ export default async function handler(req, res) {
       const [linkRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
       const link = linkRow?.value || '';
       const [gina] = await sql`SELECT email FROM users WHERE badge = 'drmerritt' LIMIT 1`;
-      const to = gina?.email ? [gina.email] : [process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net'];
+      const to = gina?.email ? [gina.email] : [process.env.ADMIN_EMAIL || 'admin@nreuv.com'];
       for (const addr of to) await sendEmail(addr,
         `Meeting request — ${u.name} (${minutes} min)`,
         `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">An advisory client would like a meeting</h2>
@@ -137,7 +137,7 @@ export default async function handler(req, res) {
       try {
         const [u] = await sql`SELECT name, email FROM users WHERE id = ${session.uid}`;
         const rows = KEYS.filter(k => intake[k]).map(k => `<p style="color:#444444;font-size:13.5px;line-height:1.7;margin:0 0 10px;"><strong style="color:#161616;">${k.replace(/_/g, ' ')}</strong><br/>${String(intake[k]).replace(/</g, '&lt;').replace(/\n/g, '<br/>')}</p>`).join('');
-        await sendEmail(process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net', `Intake form: ${u?.name || 'a client'}${intake.project_name ? ' — ' + intake.project_name : ''}`,
+        await sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com', `Intake form: ${u?.name || 'a client'}${intake.project_name ? ' — ' + intake.project_name : ''}`,
           `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${u?.name || 'A client'} filled out their intake form</h2>
            <p style="color:#444444;font-size:14px;line-height:1.8;">${u?.email || ''}. The full form and their documents are on Intake &amp; Bookings.</p>${rows}`);
       } catch (e) { console.error('intake form email failed', e.message); }
@@ -171,7 +171,7 @@ export default async function handler(req, res) {
         } else if (r) {
           // The advisory direct line is Dr. Merritt's alone — not the team inbox
           const [gina] = await sql`SELECT email FROM users WHERE badge = 'drmerritt' LIMIT 1`;
-          const to = gina?.email ? [gina.email] : [process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net'];
+          const to = gina?.email ? [gina.email] : [process.env.ADMIN_EMAIL || 'admin@nreuv.com'];
           for (const addr of to) await sendEmail(addr,
             `Advisory client — ${r.name}`,
             `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${r.name} wrote in their advisory workspace</h2>

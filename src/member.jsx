@@ -1599,7 +1599,7 @@ function ManageMembershipCard({ member, rank }) {
       const d = await api("/api/stripe", { method: "POST", body: JSON.stringify({ action: "portal" }) });
       window.location.href = d.url;
     } catch (e) {
-      setErr(e.message || "Couldn't open billing — email groundup@drginamerritt.net and we'll sort it.");
+      setErr(e.message || "Couldn't open billing — email admin@nreuv.com and we'll sort it.");
       setBusy(false);
     }
   };
@@ -3632,7 +3632,7 @@ function IntakeSteps({ data, reload }) {
           bookLink === null ? <div style={sub}>Loading the booking link…</div>
             : bookLink
               ? <a href={bookLink} target="_blank" rel="noreferrer" style={{ ...btnRed, display: "inline-block", textDecoration: "none" }}>Book the intake call →</a>
-              : <div style={sub}>The booking link isn't set yet — email groundup@drginamerritt.net and the team will schedule it with you.</div>
+              : <div style={sub}>The booking link isn't set yet — email admin@nreuv.com and the team will schedule it with you.</div>
         ))}
       </div>
       <div style={card}>

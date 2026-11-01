@@ -347,7 +347,7 @@ export default async function handler(req, res) {
         // Member sent a DM → Dr. Merritt and the team both hear about it
         try {
           const [gina] = await sql`SELECT email FROM users WHERE badge = 'drmerritt' LIMIT 1`;
-          const to = [...new Set([process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net', gina?.email].filter(Boolean))];
+          const to = [...new Set([process.env.ADMIN_EMAIL || 'admin@nreuv.com', gina?.email].filter(Boolean))];
           const html = `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New direct message</h2>
              <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${user.name}</strong> (${user.email}, ${user.tier}) sent a DM:</p>
              <p style="color:#444444;font-size:14px;line-height:1.8;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;padding:14px 18px;">${text.slice(0, 500)}</p>

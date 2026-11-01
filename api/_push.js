@@ -12,7 +12,7 @@ export const PUSH_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || '';
 
 function configured() {
   if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return false;
-  webpush.setVapidDetails('mailto:' + (process.env.ADMIN_EMAIL || 'groundup@drginamerritt.net'), process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
+  webpush.setVapidDetails('mailto:' + (process.env.ADMIN_EMAIL || 'admin@nreuv.com'), process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
   return true;
 }
 
