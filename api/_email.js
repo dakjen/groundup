@@ -683,6 +683,39 @@ export function insiderReminderEmail(name, opts = {}) {
   };
 }
 
+// Launch morning, 10 AM, to insiders who have NOT joined yet: the doors have
+// been open since midnight, the first twenty-five to join become founding
+// members, here is everything that comes with it, and here is your link.
+export function insiderLaunchMorningEmail(name, opts = {}) {
+  const first = firstName(name);
+  const left = Number(opts.seatsLeft ?? 0);
+  const taken = Number(opts.seatsTaken ?? 0);
+  const closes = opts.closesText || 'Thursday night';
+  const link = opts.link || `${siteUrl()}/?join=1`;
+  return {
+    subject: left > 0 ? `${first}, you haven't claimed your founding seat yet — ${left} left` : `${first}, the doors are open`,
+    html: `
+      ${seqHero('/opt/beacon-center.jpg', 'The Beacon Center, Washington DC')}
+      ${seqKicker('GroundUp is open')}
+      ${seqH1(`The doors opened at midnight, ${first}. Your seat is still empty.`)}
+      ${seqP(`You are on the insider list, which means you can join before anyone else. The <strong style="color:#161616;">first twenty-five people to join a paid plan become Founding Members</strong>, and that is earned at checkout, first come first served.${taken > 0 ? ` <strong style="color:#161616;">${taken} ${taken === 1 ? 'seat is' : 'seats are'} already gone this morning.</strong>` : ''}`)}
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 22px;"><tr>
+        <td style="background:#161616;border-radius:12px;padding:18px 26px;text-align:center;">
+          <div style="font-family:${SERIF};color:#ffffff;font-size:44px;font-weight:700;line-height:1;">${left}</div>
+          <div style="font-family:${SANS};color:#c8a8a8;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-top:6px;">founding seats left</div>
+        </td>
+        <td style="padding-left:20px;font-family:${SANS};color:#444444;font-size:14px;line-height:1.8;">Join now and you lock in everything below for your whole first year. Join after the twenty-fifth person and you join at list price, with none of it.</td>
+      </tr></table>
+      ${seqBtn(link, 'Claim my founding seat →')}
+      ${seqFoundingBlock()}
+      ${seqBlock('Your founding rate, locked for a year', seqPlanTable(true))}
+      ${seqP(`Your insider window closes <strong style="color:#161616;">${closes}</strong>. After that, whatever seats are left open to the whole waitlist, and the founding rate goes with them.`)}
+      ${seqBtn(link, 'Claim my founding seat →')}
+      ${seqP('Already joined this morning? Then you are in, your seat is yours, and this is just a thank-you.', { size: 13, color: '#8a8a8a' })}
+      ${seqSign()}`,
+  };
+}
+
 // 6 — after the window: the general list hears how many seats are left.
 // Launch day, to the GENERAL list: insiders are in today; a fixed date for
 // when founding seats, if any remain, open to them.

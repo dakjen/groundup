@@ -4,7 +4,7 @@ import { requireAdmin } from './_utils.js';
 import { sendBulk, sendEmail, siteUrl, broadcastEmail, eventEmail, lnlReminderEmail, meetingEmail, dealSupportNudgeEmail, passExpiryEmail, waitlistConfirmEmail, retainerInterestEmail, countdownEmail, recommendEmail, launchEmail, foundingThanksEmail, firstName } from './_email.js';
 import { recommendPlan, sendRecommendBatch, sendLaunchBatch, logEmails } from './waitlist.js';
 import { foundingSeats } from './stripe.js';
-import { insiderReminderEmail, generalFoundingEmail, generalHeadsUpEmail, generalSeatsTomorrowEmail, NEWSLETTER_ISSUES, newsletterEmail } from './_email.js';
+import { insiderReminderEmail, insiderLaunchMorningEmail, generalFoundingEmail, generalHeadsUpEmail, generalSeatsTomorrowEmail, NEWSLETTER_ISSUES, newsletterEmail } from './_email.js';
 import { referredRevenue, rungFor } from './referrals.js';
 
 // Team email tools: send a custom email or an event announcement to a segment.
@@ -420,7 +420,7 @@ async function cronRun(req, res) {
             const rows = (await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = 'insider' AND NOT COALESCE(comped, FALSE)`).filter(r => !joined.has(String(r.email).toLowerCase()));
             let n = 0;
             for (const r of rows) {
-              const mail = insiderReminderEmail(r.name, { seatsLeft: seats.remaining, closesText, closesShort: new Date(closesAt).toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'long', day: 'numeric' }), closesKey: new Date(closesAt - 1).toISOString().slice(0, 10), link: `${siteUrl()}/?join=1&email=${encodeURIComponent(r.email)}` });
+              const mail = insiderLaunchMorningEmail(r.name, { seatsLeft: seats.remaining, seatsTaken: seats.taken, closesText, link: `${siteUrl()}/?join=1&email=${encodeURIComponent(r.email)}` });
               const ok = await sendEmail(r.email, mail.subject, mail.html, { marketing: true }); if (ok) n++;
               await logEmails(sql, 'launch morning follow-up', 'insider', mail.subject, [{ name: r.name, email: r.email, ok: !!ok }]);
             }
