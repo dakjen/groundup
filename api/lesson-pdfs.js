@@ -1,6 +1,6 @@
 import { put, del } from '@vercel/blob';
 import crypto from 'crypto';
-import { getAdmin, getSession } from './_utils.js';
+import { getAdmin, getSession, requireAdmin } from './_utils.js';
 import { neon } from '@neondatabase/serverless';
 
 export const config = {
@@ -163,6 +163,14 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'DELETE') {
+    // The kind=avatar/prep/deal door at the top of this handler admits an
+    // ordinary member, because uploading a profile picture or a document for
+    // their own session is something members do. Deleting is not: the allow-list
+    // below covers lesson material and shop files, which belong to the team
+    // alone — and a member who knew a pathname (they come back from the
+    // attachments and shop endpoints) could erase the course library. So this
+    // branch asks for an admin of its own, view-only accounts included.
+    if (!requireAdmin(req, res)) return;
     try {
       const chunks = [];
       for await (const chunk of req) chunks.push(chunk);
