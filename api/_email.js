@@ -790,6 +790,27 @@ export function insiderEveningEmail(name, opts = {}) {
   };
 }
 
+// Launch day, 4 PM, to the four insiders who clicked a launch email while the
+// plan buttons were still broken: the website is open to you now.
+export function clickerOpenEmail(name, opts = {}) {
+  const first = firstName(name);
+  const left = Math.max(1, Number(opts.seatsLeft ?? 25) - 5);
+  const link = opts.link || `${siteUrl()}/?join=1`;
+  const p = (t, c = '#444444', sz = 15) => `<p style="font-family:${SANS};color:${c};font-size:${sz}px;line-height:1.85;margin:0 0 18px;">${t}</p>`;
+  return {
+    subject: `${first}, the website is now open to you`,
+    html: `
+      <div style="font-family:${SANS};font-size:11px;color:#b80101;font-weight:bold;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 12px;">Open to you, an insider</div>
+      <h1 style="font-family:${SERIF};color:#161616;font-size:34px;line-height:1.15;font-weight:700;margin:0 0 12px;">The website is now open to you, ${first}.</h1>
+      ${p(`Thank you for being one of the first to click. There was a technical difficulty this morning. It is fixed.`)}
+      ${p(`We launched last night, and the platform is open to insiders. We would love for you to be a founding member: one of the first twenty-five, with 25% off your whole first year, a year of live Lunch &amp; Learns with Dr. Merritt, the launch party on December 5, your referral link, and the Founding Member badge.`)}
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px;"><tr><td bgcolor="#b80101" style="background-color:#b80101;border-radius:10px;"><a href="${link}" style="display:inline-block;padding:15px 34px;color:#ffffff;font-weight:bold;font-size:15px;text-decoration:none;font-family:${SANS};"><font color="#ffffff">Claim my founding spot →</font></a></td></tr></table>
+      ${p(`Use the email you joined the waitlist with. Choose your plan, create your account, and you are in tonight. <strong style="color:#161616;">${left} founding seats are left.</strong>`)}
+      ${p(`Something not working? <a href="${siteUrl()}/support" style="color:#b80101;font-weight:bold;"><font color="#b80101">I'm experiencing technical difficulties →</font></a> Or just reply to this email; replies reach Dr. Merritt's team directly.`, '#8a8a8a', 13)}
+      ${seqSign()}`,
+  };
+}
+
 // 6 — after the window: the general list hears how many seats are left.
 // Launch day, to the GENERAL list: insiders are in today; a fixed date for
 // when founding seats, if any remain, open to them.

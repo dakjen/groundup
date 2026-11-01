@@ -54,6 +54,26 @@ async function alertFailure(step, err, extra) {
 }
 
 export default async function handler(req, res) {
+  // Launch day, 4 PM: the four insiders who clicked while the buttons were
+  // broken. ?dry=1 returns the version marker and the list without sending.
+  if (req.method === 'GET' && req.query.send === 'clickers' && req.query.key) {
+    const sql = neon(process.env.DATABASE_URL);
+    const [tok] = await sql`SELECT value FROM settings WHERE key = 'ops_token'`;
+    if (!tok?.value || tok.value !== String(req.query.key)) return res.status(403).json({ error: 'forbidden' });
+    const EMAILS = ['latrenda.perry@live.com', 'modular@roahousing.com', 'brit@blaholdingsllc.com', 'jason.paulateer@53.com'];
+    const rows = await sql`SELECT name, email FROM waitlist WHERE LOWER(email) = ANY(${EMAILS})`;
+    if (req.query.dry === '1') return res.json({ v: 'clickers1', to: rows });
+    const { clickerOpenEmail } = await import('./_email.js');
+    const seats = await foundingSeats(sql);
+    const out = [];
+    for (const r of rows) {
+      const mail = clickerOpenEmail(r.name, { seatsLeft: seats.remaining, link: `${siteUrl()}/?join=1&email=${encodeURIComponent(r.email)}` });
+      const ok = await sendEmail(r.email, mail.subject, mail.html, { marketing: true });
+      out.push({ email: r.email, name: r.name, ok: !!ok });
+      await logEmails(sql, 'launch clickers — open to you', 'insider', mail.subject, [{ name: r.name, email: r.email, ok: !!ok }]);
+    }
+    return res.json({ v: 'clickers1', sent: out });
+  }
   // Read-only, launch day: open/click counts per subject, from Brevo, for the
   // launch emails. Authed by settings.ops_token, set and removed from the terminal.
   if (req.method === 'GET' && req.query.stats === 'launch' && req.query.key) {
