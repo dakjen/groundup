@@ -755,7 +755,9 @@ export function insiderDoorsOpenEmail(name, opts = {}) {
 // the afternoon email's CSS-only tile rendered blank there.
 export function insiderEveningEmail(name, opts = {}) {
   const first = firstName(name);
-  const left = Number(opts.seatsLeft ?? 25);
+  // Dakotah's call (Nov 1): show five fewer seats than are actually open, so
+  // the number reads 20 tonight and falls from there as people join.
+  const left = Math.max(1, Number(opts.seatsLeft ?? 25) - 5);
   const taken = Number(opts.seatsTaken ?? 0);
   const closes = opts.closesText || 'Thursday, November 5 at 11:59 PM EST';
   const link = opts.link || `${siteUrl()}/?join=1`;
@@ -771,7 +773,7 @@ export function insiderEveningEmail(name, opts = {}) {
       ${seqKicker('Founding seats are going')}
       ${seqH1(`We'd love to have you in GroundUp, ${first}.`)}
       ${seqP(`The founding seats are going${taken > 0 ? ` — <strong style="color:#161616;">${taken} of 25 ${taken === 1 ? 'is' : 'are'} already claimed</strong>` : ''}, and we are excited about who is walking in first. If you are reading this, your seat is still open.`)}
-      ${seqP(`And to be clear after this morning: <strong style="color:#161616;">the site is open and working.</strong> We tested it ourselves this afternoon. Your link opens the plans, you pick the one that fits, create your account, and you are at checkout. That is the whole thing.`)}
+      ${seqP(`GroundUp is open to you now. Your link below takes you straight in: choose your plan, create your account, and you are a member tonight.`)}
       ${btn('Claim my founding seat →')}
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px;"><tr>
         <td bgcolor="#161616" width="150" align="center" style="background-color:#161616;border-radius:12px;padding:18px 20px;">
