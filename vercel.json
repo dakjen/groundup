@@ -15,6 +15,22 @@
       "schedule": "0 15 * * *"
     },
     {
+      "path": "/api/broadcast",
+      "schedule": "0 4 1 11 *"
+    },
+    {
+      "path": "/api/broadcast",
+      "schedule": "6 4 1 11 *"
+    },
+    {
+      "path": "/api/broadcast",
+      "schedule": "0 5 1 12 *"
+    },
+    {
+      "path": "/api/broadcast",
+      "schedule": "6 5 1 12 *"
+    },
+    {
       "path": "/api/broadcast?drip=1",
       "schedule": "0 13 * * *"
     }
