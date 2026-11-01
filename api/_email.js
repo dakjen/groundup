@@ -716,6 +716,38 @@ export function insiderLaunchMorningEmail(name, opts = {}) {
   };
 }
 
+// Launch afternoon, insiders only: earlier today the site's plan buttons still
+// read "Join the waitlist" to anyone arriving from the launch emails, so nobody
+// could buy. Fixed — this note says so plainly and sends them back in.
+export function insiderDoorsOpenEmail(name, opts = {}) {
+  const first = firstName(name);
+  const left = Number(opts.seatsLeft ?? 0);
+  const closes = opts.closesText || 'Thursday night';
+  const link = opts.link || `${siteUrl()}/?join=1`;
+  return {
+    subject: `${first}, the plans are open now — pick yours and claim your founding seat`,
+    html: `
+      ${seqHero('/opt/ui-home.jpg', 'GroundUp — the home page')}
+      ${seqKicker('GroundUp is open · insiders only')}
+      ${seqH1(`The site is open to you now, ${first}. Earlier today it wasn't letting you in.`)}
+      ${seqP(`If you clicked through this morning and every plan still said <em>Join the waitlist</em>, that was a mistake on our side, not yours. The doors were meant to open to insiders at midnight; the site was still showing the December 1 public date. <strong style="color:#161616;">It is fixed.</strong> Your link now takes you to the plans, you pick the one that fits, create your account, and you are at checkout.`)}
+      ${seqBtn(link, 'Choose my plan →')}
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 22px;"><tr>
+        <td style="background:#161616;border-radius:12px;padding:18px 26px;text-align:center;">
+          <div style="font-family:${SERIF};color:#ffffff;font-size:44px;font-weight:700;line-height:1;">${left}</div>
+          <div style="font-family:${SANS};color:#c8a8a8;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-top:6px;">founding seats left</div>
+        </td>
+        <td style="padding-left:20px;font-family:${SANS};color:#444444;font-size:14px;line-height:1.8;">Nobody has been able to take one yet, so every seat is still open. The first twenty-five people to join a paid plan become Founding Members, earned at checkout, first come first served.</td>
+      </tr></table>
+      ${seqFoundingBlock()}
+      ${seqBlock('Your founding rate, locked for a year', seqPlanTable(true))}
+      ${seqP(`Your insider window still closes <strong style="color:#161616;">${closes}</strong>. After that, whatever seats are left open to the whole waitlist.`)}
+      ${seqBtn(link, 'Choose my plan →')}
+      ${seqP('We are sorry for the false start this morning. The doors are open, and we would love to have you in first.', { size: 13, color: '#8a8a8a' })}
+      ${seqSign()}`,
+  };
+}
+
 // 6 — after the window: the general list hears how many seats are left.
 // Launch day, to the GENERAL list: insiders are in today; a fixed date for
 // when founding seats, if any remain, open to them.

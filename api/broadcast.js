@@ -54,6 +54,34 @@ async function alertFailure(step, err, extra) {
 }
 
 export default async function handler(req, res) {
+  // One-off, launch day: resend to every insider who has not joined, now that
+  // the plan buttons actually work. Authed by a token in settings.ops_token,
+  // set from the terminal for this send and removed right after.
+  if (req.method === 'GET' && req.query.resend === 'doors' && req.query.key) {
+    const sql = neon(process.env.DATABASE_URL);
+    const [tok] = await sql`SELECT value FROM settings WHERE key = 'ops_token'`;
+    if (!tok?.value || tok.value !== String(req.query.key)) return res.status(403).json({ error: 'forbidden' });
+    try {
+      const { insiderDoorsOpenEmail } = await import('./_email.js');
+      const seats = await foundingSeats(sql);
+      const [ins] = await sql`SELECT value FROM settings WHERE key = 'launch_insider_at'`;
+      const [wd] = await sql`SELECT value FROM settings WHERE key = 'insider_window_days'`;
+      const closesAt = new Date(ins.value).getTime() + (Math.max(1, parseInt(wd?.value, 10) || 5)) * 86400000;
+      const closesText = new Date(closesAt).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+      const joined = new Set((await sql`SELECT LOWER(email) AS email FROM users WHERE membership_status = 'active' AND tier IS DISTINCT FROM 'Free'`).map(r => r.email));
+      const rows = (await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = 'insider' AND NOT COALESCE(comped, FALSE)`).filter(r => !joined.has(String(r.email).toLowerCase()));
+      const only = req.query.only ? String(req.query.only).toLowerCase() : null;
+      let n = 0; const sent = [];
+      for (const r of rows) {
+        if (only && String(r.email).toLowerCase() !== only) continue;
+        const mail = insiderDoorsOpenEmail(r.name, { seatsLeft: seats.remaining, closesText, link: `${siteUrl()}/?join=1&email=${encodeURIComponent(r.email)}` });
+        const ok = await sendEmail(r.email, mail.subject, mail.html, { marketing: true }); if (ok) n++;
+        sent.push({ email: r.email, ok: !!ok });
+        await logEmails(sql, 'doors open resend', 'insider', mail.subject, [{ name: r.name, email: r.email, ok: !!ok }]);
+      }
+      return res.json({ success: true, sent: n, of: rows.length, detail: sent });
+    } catch (e) { return res.status(500).json({ error: String(e?.message || e) }); }
+  }
   // Vercel daily cron: nudge anyone whose course pass just expired — 7 days to
   // extend, or 15% off an annual membership. Authed by CRON_SECRET, which
   // Vercel attaches to cron requests automatically.
