@@ -785,6 +785,7 @@ export function insiderEveningEmail(name, opts = {}) {
       ${seqP(`Your insider window closes <strong style="color:#161616;">${closes}</strong>. After that, whatever seats remain open to the whole waitlist.`)}
       ${btn('Claim my founding seat →')}
       ${seqP('If you already joined today, thank you. You are in, and your seat is yours.', { size: 13, color: '#8a8a8a' })}
+      ${seqP(`Something not working? <a href="${siteUrl()}/support" style="color:#b80101;font-weight:bold;">I'm experiencing technical difficulties →</a>`, { size: 13, color: '#8a8a8a' })}
       ${seqSign()}`,
   };
 }
