@@ -2279,7 +2279,7 @@ function PricingPage({ onSignUp }) {
           <p style={{ color: "#7a6151", fontSize: 15, maxWidth: 420, margin: "0 auto", lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif" }}>Start free. Upgrade when you're ready. Cancel anytime.</p>
           <div style={{ marginTop: 18, display: "inline-flex", alignItems: "center", gap: 10, background: "#0d0404", border: "1px solid #b8010130", borderRadius: 12, padding: "12px 20px" }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
-            <span style={{ color: "#c8a8a8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>The waitlist is open.</span>
+            <span style={{ color: "#c8a8a8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{typeof window !== "undefined" && window.__guLaunchAt && new Date(window.__guLaunchAt).getTime() > Date.now() ? "The waitlist is open." : "The doors are open. Founding seats are being claimed now."}</span>
           </div>
         </div>
 
@@ -8022,6 +8022,14 @@ export default function App() {
   // paint has no launch date, renders the site as though it had launched, and
   // corrects itself a moment later — the flash of the old waitlist.
   const [launchAt, setLaunchAt] = useState(() => {
+    try { return localStorage.getItem("guPublicLaunchAt") || null; } catch { return null; }
+  });
+  // When the DOORS open — which is the insider launch once it has passed, and
+  // the public launch otherwise. Every "can anyone join or buy yet" check on
+  // the site reads this (window.__guLaunchAt), not the public date: insiders
+  // are let in a month early, and the API decides by email who is an insider.
+  // The public date stays in launchAt for the waitlist page and its countdown.
+  const [doorsAt, setDoorsAt] = useState(() => {
     try { return localStorage.getItem("guLaunchAt") || null; } catch { return null; }
   });
   const [insiderAt, setInsiderAt] = useState(null);
@@ -8038,7 +8046,13 @@ export default function App() {
 
   useEffect(() => {
     fetch("/api/waitlist?public=1").then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) { if (d.launch_at) { setLaunchAt(d.launch_at); window.__guLaunchAt = d.launch_at; try { localStorage.setItem("guLaunchAt", d.launch_at); } catch {} } if (d.launch_insider_at) setInsiderAt(d.launch_insider_at); if (d.insider_closes_at) setInsiderClosesAt(d.insider_closes_at); if (d.advisor_call_link) setAdvisorLink(d.advisor_call_link); if (d.elite) setEliteSpots(d.elite); if (d.founding) setFoundingSeats(d.founding); } })
+      .then(d => { if (d) {
+        if (d.launch_at) { setLaunchAt(d.launch_at); try { localStorage.setItem("guPublicLaunchAt", d.launch_at); } catch {} }
+        // Doors: the insider launch once it has passed, else the public launch.
+        const insiderPassed = d.launch_insider_at && new Date(d.launch_insider_at).getTime() <= Date.now();
+        const doors = insiderPassed ? d.launch_insider_at : (d.launch_at || d.launch_insider_at || null);
+        if (doors) { setDoorsAt(doors); window.__guLaunchAt = doors; try { localStorage.setItem("guLaunchAt", doors); } catch {} }
+        if (d.launch_insider_at) setInsiderAt(d.launch_insider_at); if (d.insider_closes_at) setInsiderClosesAt(d.insider_closes_at); if (d.advisor_call_link) setAdvisorLink(d.advisor_call_link); if (d.elite) setEliteSpots(d.elite); if (d.founding) setFoundingSeats(d.founding); } })
       .catch(() => {})
       .finally(() => setLaunchChecked(true));
   }, []);
@@ -8047,7 +8061,7 @@ export default function App() {
   // Until the API answers, assume we have NOT launched. Briefly showing the
   // waitlist to someone who could have bought is a much smaller error than
   // briefly showing a buyable site to someone who cannot buy anything yet.
-  const prelaunch = launchAt ? new Date(launchAt).getTime() > Date.now() : !launchChecked;
+  const prelaunch = doorsAt ? new Date(doorsAt).getTime() > Date.now() : !launchChecked;
   const [contentAgreed, setContentAgreed] = useState(() => sessionStorage.getItem("contentAgreed") === "true");
   const [showAgreement, setShowAgreement] = useState(false);
   const [pendingPage, setPendingPage] = useState(null);
