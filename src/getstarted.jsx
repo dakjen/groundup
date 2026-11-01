@@ -139,7 +139,7 @@ export function GetStartedPage({ setActivePage, onSignIn }) {
   const go = (href) => {
     if (href.startsWith("/?join=")) { onSignIn && onSignIn(); return; }
     const page = href.replace(/^\//, "");
-    if (page.startsWith("go/")) { window.location.href = href; return; }
+    if (page.startsWith("go/") || page.includes("?")) { window.location.href = href; return; }
     setActivePage(page || "home");
   };
   const summary = () => QUESTIONS.map(x => answers[x.id] != null ? `${x.q} ${x.opts[answers[x.id]][0]}` : null).filter(Boolean).join("\n");
@@ -217,7 +217,8 @@ export function GetStartedPage({ setActivePage, onSignIn }) {
               <button onClick={() => go(result.cta[1])} style={btn}>{result.cta[0]} →</button>
               <button onClick={() => go(result.alt[1])} style={ghost}>{result.alt[0]}</button>
             </div>
-            <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 18, padding: "24px 24px" }}>
+            {/* Advisory reads go straight to the intake; there is no free call on that path */}
+            {result.key !== "advisory" && <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 18, padding: "24px 24px" }}>
               {sent ? (
                 <>
                   <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, marginBottom: 6 }}>Got it. We'll be in touch.</div>
@@ -234,7 +235,7 @@ export function GetStartedPage({ setActivePage, onSignIn }) {
                   <button type="submit" disabled={busy} style={{ ...btn, opacity: busy ? 0.6 : 1 }}>{busy ? "One moment…" : "Book a free scoping call →"}</button>
                 </form>
               )}
-            </div>
+            </div>}
             <div style={{ color: "#6a5050", fontSize: 12.5, fontFamily: font, marginTop: 18, lineHeight: 1.6 }}>A copy of this read is on its way to {lead.email || "your inbox"}.</div>
             <button onClick={() => { setDone(false); setStep(0); setAnswers({}); setSent(false); setSaved(false); }} style={{ background: "none", border: "none", color: "#8f7070", cursor: "pointer", fontSize: 13, fontFamily: font, fontWeight: 700, padding: "22px 0 0" }}>Start over</button>
           </>

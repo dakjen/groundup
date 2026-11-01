@@ -421,7 +421,7 @@ export default async function handler(req, res) {
              <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:8px;">What you told us</div>
              ${answers.map(a => `<p style="color:#444444;font-size:13px;line-height:1.7;margin:0 0 6px;"><span style="color:#8a7070;">${esc(a.q)}</span><br/><strong style="color:#161616;">${esc(a.a)}</strong></p>`).join('')}
            </div>` : ''}
-           <p style="color:#7a5050;font-size:12px;line-height:1.7;">Reply to this email and a person on the GroundUp team answers. Want a human to check the read? <a href="${esc(site)}/go/call" style="color:#b80101;font-weight:700;">Book a free 20-minute scoping call</a>.</p>`);
+           <p style="color:#7a5050;font-size:12px;line-height:1.7;">Reply to this email and a person on the GroundUp team answers.${outcome.key === 'advisory' ? '' : ` Want a human to check the read? <a href="${esc(site)}/go/call" style="color:#b80101;font-weight:700;">Book a free 20-minute scoping call</a>.`}</p>`);
       } catch (e) { console.error('quiz email', e.message); }
       return res.status(201).json({ success: true });
     }
