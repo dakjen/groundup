@@ -1625,13 +1625,16 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
           </div>
           <p style={{ color: "#8a7070", fontSize: 15, maxWidth: 620, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif", margin: 0 }}>Everything you learn with lives here — the courses, the library, the glossary, and the rooms where your questions get answered.</p>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 64 }}>
+        {/* Six doors, always an even grid: 6 across on a wide screen, 3 x 2 on a laptop, 2 x 3 on a phone */}
+        <div className="gu-hub-grid" style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0, 1fr))", gap: 14, marginBottom: 64 }}>
+          <style>{`@media (max-width: 1100px) { .gu-hub-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } } @media (max-width: 560px) { .gu-hub-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }`}</style>
           {[
             { Icon: FolderOpen, title: "The Library", desc: "Templates & tools, filed by development phase", go: () => onNav("library"), color: "#b80101" },
             { Icon: Link2, title: "Resources", desc: "The same templates by course stage, plus curated tools", go: () => onNav("resources"), color: "#b9bec7" },
-            { Icon: FileText, title: "The Glossary", desc: "Every term, explained", go: onGlossary, color: "#b9bec7" },
-            { Icon: MessagesSquare, title: "The Community", desc: "Ask, answer, connect", go: () => onNav("community"), color: "#b80101" },
-            { Icon: Calendar, title: "Office Hours", desc: "Group sessions with Dr. Gina", go: () => onNav("officehours"), color: "#b9bec7" },
+            { Icon: FileText, title: "The Glossary", desc: "Every term, explained", go: onGlossary, color: "#b80101" },
+            { Icon: MessagesSquare, title: "The Community", desc: "Ask, answer, connect", go: () => onNav("community"), color: "#b9bec7" },
+            { Icon: Calendar, title: "Office Hours", desc: "Group sessions with Dr. Gina", go: () => onNav("officehours"), color: "#b80101" },
+            { Icon: Video, title: "Lunch & Learns", desc: "Live sessions and the recording library", go: () => onNav("lunchlearn"), color: "#b9bec7" },
           ].map(t => (
             <div key={t.title} onClick={t.go}
               style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "22px 20px", cursor: "pointer", transition: "all 0.25s" }}
