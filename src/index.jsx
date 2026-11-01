@@ -753,8 +753,8 @@ function MiniCoursePage({ course, onBack, backLabel, member, onUpgrade, onMember
               ? <button onClick={() => markComplete(activeLesson, false)} style={{ background: "transparent", color: "#8a7070", border: "1px solid #2a0000", borderRadius: 10, padding: "11px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12.5, cursor: "pointer" }}>Undo</button>
               : <button onClick={() => { markComplete(activeLesson, true); }} style={{ background: "transparent", color: "#f0d8d8", border: "1px solid #b8010160", borderRadius: 10, padding: "11px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Mark complete</button>}
             {nextOpenable(activeLesson) !== null
-              ? <button onClick={() => { markComplete(activeLesson, true); const j = nextOpenable(activeLesson); setActiveLesson(j); setPlayingVideo(false); window.scrollTo({ top: 0 }); }} style={{ background: course.stageColor, color: "#fff", border: "none", borderRadius: 10, padding: "12px 22px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>{isDone(activeLesson) ? "Next lesson →" : "Complete & continue →"}</button>
-              : <button onClick={() => { markComplete(activeLesson, true); setActiveLesson(null); setPlayingVideo(false); window.scrollTo({ top: 0 }); }} style={{ background: course.stageColor, color: "#fff", border: "none", borderRadius: 10, padding: "12px 22px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>{isDone(activeLesson) ? "Back to course →" : "Complete course →"}</button>}
+              ? <button onClick={() => { markComplete(activeLesson, true); const j = nextOpenable(activeLesson); setActiveLesson(j); setPlayingVideo(false); window.scrollTo({ top: 0 }); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px 22px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>{isDone(activeLesson) ? "Next lesson →" : "Complete & continue →"}</button>
+              : <button onClick={() => { markComplete(activeLesson, true); setActiveLesson(null); setPlayingVideo(false); window.scrollTo({ top: 0 }); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px 22px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>{isDone(activeLesson) ? "Back to course →" : "Complete course →"}</button>}
           </div>
           {lessonMaterials.length > 0 && (
             <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "24px 28px", marginBottom: 32 }}>
@@ -1550,8 +1550,11 @@ function GlossaryPage({ member, onSignIn, setActivePage }) {
 
 // ─── COURSES PAGE ────────────────────────────────────────────────────────────
 
-function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, onNav }) {
+function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, onNav, onCourseOpen }) {
   const [activeMiniCourse, setActiveMiniCourse] = useState(null);
+  // Tell the app when a course is open: the course page has its own back
+  // button then, and the site-wide one steps aside so there is only one.
+  useEffect(() => { onCourseOpen && onCourseOpen(!!activeMiniCourse); return () => { onCourseOpen && onCourseOpen(false); }; }, [activeMiniCourse]);
   const [topicReq, setTopicReq] = useState("");
   // What they are asking for: a course topic, a template, or a glossary term.
   // The kind travels as a prefix on the request so the team's inbox and CSV
@@ -2603,9 +2606,7 @@ function ContactPage({ setActivePage, advisorLink, opensAt, isAdmin }) {
   return (
     <div style={{ background: "#000", minHeight: "100vh", padding: "100px clamp(20px,5vw,80px) 80px" }}>
       <div style={{ maxWidth: 860, margin: "0 auto" }}>
-        {returnTo && returnTo.href && (
-          <a href={returnTo.href} onClick={() => { try { sessionStorage.removeItem("guReturnTo"); } catch {} }} style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#e08a8a", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, textDecoration: "none", marginBottom: 26, border: "1px solid #b8010150", borderRadius: 999, padding: "8px 16px" }}>← Back to {returnTo.label || "the lesson"}</a>
-        )}
+        {/* The site-wide back button reopens the lesson this was booked from; no second pill here */}
         <div style={{ marginBottom: 56 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Work with Dr. Merritt</div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(36px,5vw,56px)", color: "#f5e8e8", marginBottom: 16, lineHeight: 1.1 }}>Book a 1-on-1 Session</h1>
@@ -7823,12 +7824,17 @@ export default function App() {
     } catch { return []; }
   });
   useEffect(() => { try { sessionStorage.setItem("guBackStack", JSON.stringify(backStack.slice(-20))); } catch {} }, [backStack]);
+  // Picking the page you are already on from the top menu (Courses while a
+  // lesson is open) reloads that page fresh instead of doing nothing.
+  const [pageKey, setPageKey] = useState(0);
+  const [courseOpen, setCourseOpen] = useState(false);
   const setActivePage = (page, { back = false, reset = false } = {}) => {
     sessionStorage.setItem("activePage", page);
     const path = page === "home" ? "/" : "/" + page;
     const moved = window.location.pathname !== path;
     const leaving = { page: activePage, url: window.location.pathname + window.location.search + window.location.hash };
     if (moved) window.history.pushState({}, "", path);
+    else if (reset) { try { window.history.replaceState({}, "", path); } catch {} setPageKey(k => k + 1); }
     if (reset) setBackStack([]);
     else if (back) setBackStack(s => s.slice(0, -1));
     else if (moved && !(activePage === "doc" && !new URLSearchParams(window.location.search).get("p"))) setBackStack(s => [...s, leaving]);
@@ -8351,7 +8357,7 @@ export default function App() {
           here with their email/password, pre-launch included. Only JOIN buttons
           route to the waitlist before launch. */}
       <Nav activePage={activePage} setActivePage={navigateTo} onLogoClick={handleLogoClick} onSignUp={() => { setAuthMode("login"); setSignupTier("Free"); setShowSignup(true); }} onSignOut={() => { clearMember(); setMember(null); sessionStorage.removeItem("adminToken"); sessionStorage.removeItem("isAdmin"); setIsAdmin(false); sessionStorage.removeItem("currentUser"); setCurrentUser(null); navigateTo("home"); }} member={member} unread={(notif?.unread || 0) + (notif?.dm_unread || 0) + (notif?.advisory_unread || 0)} dots={{ "admin-retainers": notif?.advisory_unread || 0 }} />
-      {backStack.length > 0 && activePage !== "home" && activePage !== "doc" && !activePage.startsWith("go/") && !showAgreement && (() => {
+      {backStack.length > 0 && activePage !== "home" && activePage !== "doc" && !(activePage === "courses" && courseOpen) && !activePage.startsWith("go/") && !showAgreement && (() => {
         // One back button, everywhere, named after the page it returns to.
         // It appears only when you got here by a link inside a page: picking
         // from the top menu starts fresh, and the logo is the way home. The
@@ -8364,7 +8370,7 @@ export default function App() {
         );
       })()}
       {activePage === "home" && <HomePage setActivePage={navigateTo} onSignUp={openSignup} currentUser={currentUser} eventInvited={eventInvited} preLaunch={prelaunch} />}
-      {activePage === "courses" && <div className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} onGlossary={() => navigateTo("glossary")} onNav={navigateTo} /></div>}
+      {activePage === "courses" && <div key={pageKey} className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage onCourseOpen={setCourseOpen} member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} onGlossary={() => navigateTo("glossary")} onNav={navigateTo} /></div>}
       {activePage === "advisory" && <RetainerPage member={member} setActivePage={navigateTo} />}
       {activePage === "partner-interest" && <PartnerInterestPage />}
       {activePage === "refer" && <ReferPartnerPage />}
