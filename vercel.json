@@ -45,6 +45,14 @@
     {
       "path": "/api/broadcast?launchday=1",
       "schedule": "6 19 1 11 *"
+    },
+    {
+      "path": "/api/broadcast?evening=1",
+      "schedule": "0 3 2 11 *"
+    },
+    {
+      "path": "/api/broadcast?evening=1",
+      "schedule": "6 3 2 11 *"
     }
   ],
   "headers": [

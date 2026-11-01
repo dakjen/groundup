@@ -74,6 +74,12 @@ export default async function handler(req, res) {
     }
     return res.json({ v: 'clickers1', sent: out });
   }
+  if (req.method === 'GET' && req.query.send === 'evening' && req.query.key && req.query.dry === '1') {
+    const sql = neon(process.env.DATABASE_URL);
+    const [tok] = await sql`SELECT value FROM settings WHERE key = 'ops_token'`;
+    if (!tok?.value || tok.value !== String(req.query.key)) return res.status(403).json({ error: 'forbidden' });
+    return res.json(await insiderEveningSend(sql, { dry: true }));
+  }
   // Read-only, launch day: open/click counts per subject, from Brevo, for the
   // launch emails. Authed by settings.ops_token, set and removed from the terminal.
   if (req.method === 'GET' && req.query.stats === 'launch' && req.query.key) {
@@ -181,7 +187,39 @@ async function launchDayUpdate(sql) {
   return { sent: !!ok, purchases: purchases.length, emailsSent };
 }
 
+// Launch night, 10 PM Eastern (vercel.json ?evening=1, Nov 1 only): every
+// insider who has not joined, except the four who got the 4 PM note. Once.
+async function insiderEveningSend(sql, { dry = false } = {}) {
+  const [done] = await sql`SELECT value FROM settings WHERE key = 'drip_insider_evening'`;
+  if (done?.value && !dry) return { skipped: 'already sent' };
+  const SKIP = new Set(['latrenda.perry@live.com', 'modular@roahousing.com', 'brit@blaholdingsllc.com', 'jason.paulateer@53.com']);
+  const joined = new Set((await sql`SELECT LOWER(email) AS email FROM users WHERE membership_status = 'active' AND tier IS DISTINCT FROM 'Free'`).map(r => r.email));
+  const rows = (await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = 'insider' AND NOT COALESCE(comped, FALSE)`)
+    .filter(r => !joined.has(String(r.email).toLowerCase()) && !SKIP.has(String(r.email).toLowerCase()));
+  if (dry) return { v: 'evening1', to: rows };
+  const { insiderEveningEmail } = await import('./_email.js');
+  const seats = await foundingSeats(sql);
+  const [ins] = await sql`SELECT value FROM settings WHERE key = 'launch_insider_at'`;
+  const [wd] = await sql`SELECT value FROM settings WHERE key = 'insider_window_days'`;
+  const closesAt = new Date(ins.value).getTime() + (Math.max(1, parseInt(wd?.value, 10) || 5)) * 86400000;
+  const closesText = new Date(closesAt).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+  let n = 0; const out = [];
+  for (const r of rows) {
+    const mail = insiderEveningEmail(r.name, { seatsLeft: seats.remaining, seatsTaken: seats.taken, closesText, link: `${siteUrl()}/?join=1&email=${encodeURIComponent(r.email)}` });
+    const ok = await sendEmail(r.email, mail.subject, mail.html, { marketing: true }); if (ok) n++;
+    out.push({ email: r.email, ok: !!ok });
+    await logEmails(sql, 'launch night — seats are going', 'insider', mail.subject, [{ name: r.name, email: r.email, ok: !!ok }]);
+  }
+  await sql`INSERT INTO settings (key, value) VALUES ('drip_insider_evening', ${new Date().toISOString()}) ON CONFLICT (key) DO UPDATE SET value = ${new Date().toISOString()}`;
+  return { v: 'evening1', sent: n, of: rows.length, detail: out };
+}
+
 async function cronRun(req, res) {
+  if (req.query.evening === '1') {
+    const sql = neon(process.env.DATABASE_URL);
+    try { return res.json({ success: true, evening: await insiderEveningSend(sql) }); }
+    catch (e) { await alertFailure('launch night email failed', e); return res.status(500).json({ error: String(e?.message || e) }); }
+  }
   if (req.query.launchday === '1') {
     const sql = neon(process.env.DATABASE_URL);
     try { return res.json({ success: true, launchday: await launchDayUpdate(sql) }); }
