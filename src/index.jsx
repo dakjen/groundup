@@ -2604,10 +2604,10 @@ function ContactPage({ setActivePage, advisorLink, opensAt, isAdmin }) {
         {returnTo && returnTo.href && (
           <a href={returnTo.href} onClick={() => { try { sessionStorage.removeItem("guReturnTo"); } catch {} }} style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#e08a8a", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 800, textDecoration: "none", marginBottom: 26, border: "1px solid #b8010150", borderRadius: 999, padding: "8px 16px" }}>← Back to {returnTo.label || "the lesson"}</a>
         )}
-        <div style={{ marginBottom: 56, maxWidth: 600 }}>
+        <div style={{ marginBottom: 56 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Work with Dr. Merritt</div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(36px,5vw,56px)", color: "#f5e8e8", marginBottom: 16, lineHeight: 1.1 }}>Book a 1-on-1 Session</h1>
-          <p style={{ color: "#8a7070", fontSize: 15, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif" }}>
+          <p style={{ color: "#8a7070", fontSize: 15, lineHeight: 1.85, fontFamily: "'DM Sans', sans-serif", maxWidth: 600 }}>
             30 or 45 minutes with Dr. Gina Merritt. Select a session type, pay to reserve, then tell her what you're working on.
           </p>
           {locked && (
