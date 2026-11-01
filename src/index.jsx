@@ -1628,6 +1628,7 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 64 }}>
           {[
             { Icon: FolderOpen, title: "The Library", desc: "Templates & tools, filed by development phase", go: () => onNav("library"), color: "#b80101" },
+            { Icon: Link2, title: "Resources", desc: "The same templates by course stage, plus curated tools", go: () => onNav("resources"), color: "#b9bec7" },
             { Icon: FileText, title: "The Glossary", desc: "Every term, explained", go: onGlossary, color: "#b9bec7" },
             { Icon: MessagesSquare, title: "The Community", desc: "Ask, answer, connect", go: () => onNav("community"), color: "#b80101" },
             { Icon: Calendar, title: "Office Hours", desc: "Group sessions with Dr. Gina", go: () => onNav("officehours"), color: "#b9bec7" },
