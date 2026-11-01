@@ -8107,6 +8107,10 @@ export default function App() {
       if (["Basic", "Builder", "Premium", "Elite"].includes(plan)) { try { sessionStorage.setItem("guRecommended", plan); } catch {} }
       setActivePage("pricing");
       window.history.replaceState({}, "", window.location.pathname);
+      // The launch emails say "create your account": open that flow straight
+      // away, plan pre-selected, with the pricing page behind it. Signed-in
+      // members just land on the plans.
+      if (!getMember()) openSignup(["Basic", "Builder", "Premium", "Elite"].includes(plan) ? plan : "Basic");
     }
     const ref = params.get("ref");
     if (ref) {

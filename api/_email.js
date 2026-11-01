@@ -749,6 +749,44 @@ export function insiderDoorsOpenEmail(name, opts = {}) {
   };
 }
 
+// Launch night, 10 PM Eastern, insiders who have not joined: the seats are
+// going, the site is open and tested, here is your link. Every colored box in
+// this one uses bgcolor attributes and table buttons, which Gmail honors —
+// the afternoon email's CSS-only tile rendered blank there.
+export function insiderEveningEmail(name, opts = {}) {
+  const first = firstName(name);
+  const left = Number(opts.seatsLeft ?? 25);
+  const taken = Number(opts.seatsTaken ?? 0);
+  const closes = opts.closesText || 'Thursday, November 5 at 11:59 PM EST';
+  const link = opts.link || `${siteUrl()}/?join=1`;
+  const btn = (label) => `
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px;"><tr>
+        <td bgcolor="#b80101" style="background-color:#b80101;border-radius:10px;">
+          <a href="${link}" style="display:inline-block;padding:15px 34px;color:#ffffff;font-weight:bold;font-size:15px;text-decoration:none;font-family:'DM Sans',Arial,Helvetica,sans-serif;">${label}</a>
+        </td>
+      </tr></table>`;
+  return {
+    subject: `${first}, founding seats are going — GroundUp is open and your link works`,
+    html: `
+      ${seqKicker('Founding seats are going')}
+      ${seqH1(`We'd love to have you in GroundUp, ${first}.`)}
+      ${seqP(`The founding seats are going${taken > 0 ? ` — <strong style="color:#161616;">${taken} of 25 ${taken === 1 ? 'is' : 'are'} already claimed</strong>` : ''}, and we are excited about who is walking in first. If you are reading this, your seat is still open.`)}
+      ${seqP(`And to be clear after this morning: <strong style="color:#161616;">the site is open and working.</strong> We tested it ourselves this afternoon. Your link opens the plans, you pick the one that fits, create your account, and you are at checkout. That is the whole thing.`)}
+      ${btn('Claim my founding seat →')}
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px;"><tr>
+        <td bgcolor="#161616" width="150" align="center" style="background-color:#161616;border-radius:12px;padding:18px 20px;">
+          <div style="font-family:'Cormorant Garamond',Georgia,serif;color:#ffffff;font-size:44px;font-weight:bold;line-height:1;"><font color="#ffffff">${left}</font></div>
+          <div style="font-family:'DM Sans',Arial,Helvetica,sans-serif;color:#f5e8e8;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-top:6px;"><font color="#f5e8e8">seats left</font></div>
+        </td>
+        <td style="padding-left:20px;font-family:'DM Sans',Arial,Helvetica,sans-serif;color:#444444;font-size:14px;line-height:1.8;">The first twenty-five people to join a paid plan become Founding Members: 25% off your whole first year, a year of live Lunch &amp; Learns with Dr. Merritt, the launch party on December 5, your referral link, 15% off a retainer, and the Founding Member badge. Earned at checkout, first come first served.</td>
+      </tr></table>
+      ${seqP(`Your insider window closes <strong style="color:#161616;">${closes}</strong>. After that, whatever seats remain open to the whole waitlist.`)}
+      ${btn('Claim my founding seat →')}
+      ${seqP('If you already joined today, thank you. You are in, and your seat is yours.', { size: 13, color: '#8a8a8a' })}
+      ${seqSign()}`,
+  };
+}
+
 // 6 — after the window: the general list hears how many seats are left.
 // Launch day, to the GENERAL list: insiders are in today; a fixed date for
 // when founding seats, if any remain, open to them.
