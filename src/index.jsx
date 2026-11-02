@@ -6092,7 +6092,8 @@ function UsersTab({ btnRed, btnGhost, inp, lbl, teamOnly = false }) {
   };
 
   const filtered = users.filter(u => {
-    if (teamOnly ? u.role !== "admin" : false) return false;
+    // Team lives on the Team page, members on Users — never both in one list.
+    if (teamOnly ? u.role !== "admin" : u.role === "admin") return false;
     const matchSearch = !search || u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
     const matchTier = filterTier === "All" || u.tier === filterTier;
     return matchSearch && matchTier;
