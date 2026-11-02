@@ -5741,9 +5741,10 @@ function RevenueTab() {
 
   if (loading) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
 
-  // Team accounts are not members: they never count, in any figure here.
-  const members = users.filter(u => (u.role || "member") !== "admin");
-  const paying = members.filter(u => u.tier !== "Free" && !u.comped);
+  // Team accounts and comped accounts are not members: neither counts in any
+  // figure here. This page is about who is paying.
+  const members = users.filter(u => (u.role || "member") !== "admin" && !u.comped);
+  const paying = members.filter(u => u.tier !== "Free");
   // Founding members bill at 25% off list through their first year — the
   // FOUNDING25PCT coupon on their subscription
   const FOUNDING_PRICES = { Basic: 37.49, Builder: 112.49, Premium: 187.49, Elite: 374.99 };
