@@ -263,6 +263,8 @@ const STATEMENTS = [
   `ALTER TABLE bookings ADD COLUMN IF NOT EXISTS calendar_event_id TEXT`,
   `ALTER TABLE bookings ADD COLUMN IF NOT EXISTS meet_link TEXT`,
   `ALTER TABLE bookings ADD COLUMN IF NOT EXISTS event_link TEXT`,
+  // The Zoom meeting behind the join link, so cancelling removes it too.
+  `ALTER TABLE bookings ADD COLUMN IF NOT EXISTS zoom_meeting_id TEXT`,
   // One reaction per person per message per kind — the primary key enforces it,
   // so clicking twice removes rather than stacking.
   `CREATE TABLE IF NOT EXISTS message_reactions (

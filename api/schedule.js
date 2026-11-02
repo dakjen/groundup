@@ -2,6 +2,7 @@ import { neon } from '@neondatabase/serverless';
 import { getSession, getAdmin, benefitGate } from './_utils.js';
 import { sendEmail, siteUrl, firstName } from './_email.js';
 import { gcalConfigured, freeBusy, createEvent, deleteEvent, wallToUtc, partsIn } from './_gcal.js';
+import { zoomConfigured, zoomHost, createMeeting, deleteMeeting } from './_zoom.js';
 
 // Booking a session with Dr. Merritt, through our own server rather than a
 // public calendar link. That is the point: a slot can only be taken against a
@@ -97,6 +98,11 @@ export default async function handler(req, res) {
       const busy = await freeBusy(new Date().toISOString(), new Date(Date.now() + 7 * 864e5).toISOString());
       out.calendar = `ok — ${busy.length} busy blocks in the next 7 days`;
     } catch (e) { out.calendar = 'FAILED — ' + e.message; }
+    if (!zoomConfigured()) out.zoom = 'not configured — sessions get a Google Meet link';
+    else {
+      try { const h = await zoomHost(); out.zoom = `ok — meetings hosted by ${h.email || process.env.ZOOM_HOST_EMAIL} (${h.type === 1 ? 'Basic' : 'Licensed'} account)`; }
+      catch (e) { out.zoom = 'FAILED — ' + e.message; }
+    }
     return res.json(out);
   }
 
@@ -185,22 +191,35 @@ export default async function handler(req, res) {
         `\nTheir workspace: ${siteUrl()}/membership#meetings`,
       ].filter(Boolean).join('\n');
 
+      const summary = `${b.label || 'GroundUp session'} — ${u?.name || 'member'}`;
+
+      // The room: a Zoom meeting of its own on Dr. Merritt's account when Zoom
+      // is connected. If Zoom is down the booking still goes through on a Meet
+      // link rather than failing the member at the last step.
+      let zoom = null;
+      if (zoomConfigured()) {
+        try {
+          zoom = await createMeeting({ topic: summary, startIso: start.toISOString(), duration: R.duration, timeZone: TZ, agenda: desc });
+        } catch (e) { console.error('zoom meeting failed, falling back to Meet', e.message); }
+      }
+
       // Gina is invited so it lands on her own calendar too, and the member gets
-      // the invite and the Meet link without anyone sending anything by hand.
+      // the invite and the join link without anyone sending anything by hand.
       const ev = await createEvent({
-        summary: `${b.label || 'GroundUp session'} — ${u?.name || 'member'}`,
-        description: desc,
+        summary,
+        description: zoom ? `Join Zoom: ${zoom.join_url}\n\n${desc}` : desc,
         startIso: start.toISOString(), endIso: end.toISOString(),
         attendees: [process.env.GOOGLE_SUBJECT || 'gmerritt@nreuv.com', u?.email].filter(Boolean),
         timeZone: TZ,
+        joinUrl: zoom?.join_url || null,
       });
 
       const when = start.toLocaleString('en-US', { timeZone: TZ, weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
-      const meet = ev.hangoutLink || ev.conferenceData?.entryPoints?.find(e => e.entryPointType === 'video')?.uri || '';
+      const meet = zoom?.join_url || ev.hangoutLink || ev.conferenceData?.entryPoints?.find(e => e.entryPointType === 'video')?.uri || '';
       // htmlLink opens the event in Google Calendar — the member gets an invite,
       // but a link they can click beats hunting for the email later.
       await sql`UPDATE bookings SET scheduled_at = ${start.toISOString()}, status = 'booked',
-        booked_at = NOW(), calendar_event_id = ${ev.id || null},
+        booked_at = NOW(), calendar_event_id = ${ev.id || null}, zoom_meeting_id = ${zoom?.id || null},
         meet_link = ${meet || null}, event_link = ${ev.htmlLink || null} WHERE id = ${b.id}`;
       if (u?.email) {
         sendEmail(u.email, `Booked — ${b.label || 'your session'} on ${when}`,
@@ -225,6 +244,7 @@ export default async function handler(req, res) {
       const [b] = await sql`SELECT * FROM bookings WHERE id = ${Number(req.body.booking_id)} AND user_id = ${session.uid}`;
       if (!b) return res.status(404).json({ error: 'Session not found' });
       await deleteEvent(b.calendar_event_id);
+      try { await deleteMeeting(b.zoom_meeting_id); } catch (e) { console.error('zoom delete failed', e.message); }
       if (b.item === 'advisory_included') {
         // Hand the allowance back rather than charging someone a call for a
         // meeting that never happened.
@@ -233,7 +253,7 @@ export default async function handler(req, res) {
         await sql`DELETE FROM bookings WHERE id = ${b.id}`;
         return res.json({ success: true, released: true });
       }
-      await sql`UPDATE bookings SET scheduled_at = NULL, calendar_event_id = NULL, status = 'awaiting_booking' WHERE id = ${b.id}`;
+      await sql`UPDATE bookings SET scheduled_at = NULL, calendar_event_id = NULL, zoom_meeting_id = NULL, meet_link = NULL, event_link = NULL, status = 'awaiting_booking' WHERE id = ${b.id}`;
       return res.json({ success: true });
     }
 

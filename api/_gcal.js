@@ -142,16 +142,19 @@ export async function freeBusy(fromIso, toIso, opts = {}) {
   return blocks.sort((a, b) => a[0] - b[0]);
 }
 
-export async function createEvent({ summary, description, startIso, endIso, attendees, timeZone }) {
+export async function createEvent({ summary, description, startIso, endIso, attendees, timeZone, joinUrl }) {
   return api(`/calendars/${encodeURIComponent(SESSION_CALENDAR())}/events?sendUpdates=all&conferenceDataVersion=1`, {
     method: 'POST',
     body: JSON.stringify({
       summary, description,
       start: { dateTime: startIso, timeZone }, end: { dateTime: endIso, timeZone },
       attendees: (attendees || []).map(email => ({ email })),
-      // A session with no way to join is not a booking, so ask Google for a Meet
-      // link rather than leaving both sides to work it out by email.
-      conferenceData: { createRequest: { requestId: crypto.randomUUID(), conferenceSolutionKey: { type: 'hangoutsMeet' } } },
+      // A session with no way to join is not a booking. With a Zoom link in
+      // hand it goes in the location field, where every calendar shows it as
+      // the way in; otherwise ask Google for a Meet link.
+      ...(joinUrl
+        ? { location: joinUrl }
+        : { conferenceData: { createRequest: { requestId: crypto.randomUUID(), conferenceSolutionKey: { type: 'hangoutsMeet' } } } }),
       reminders: { useDefault: true },
     }),
   });
