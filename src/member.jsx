@@ -1801,8 +1801,6 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
   const intakePaid = (() => { const q = new URLSearchParams(window.location.search); return q.get("checkout") === "success" && q.get("item") === "retainer_onboarding"; })();
   // Paid the intake, not yet a client: the three pre-call steps stay up until the retainer starts.
   const intakeOpen = (member?.entitlements || []).some(e => e.course_id === "intake" && e.source === "intake_paid");
-  const [advisorLink, setAdvisorLink] = useState(null);
-  useEffect(() => { if (intakePaid || intakeOpen) fetch("/api/waitlist?public=1").then(r => r.ok ? r.json() : null).then(d => setAdvisorLink(d?.advisor_call_link || null)).catch(() => {}); }, [intakePaid, intakeOpen]);
   // Team accounts have no tier or plan — just a clean account view
   if (member && member.role === "admin") {
     return (
@@ -1999,7 +1997,7 @@ export function MemberPage({ member, setActivePage, onSignOut, onSignIn }) {
                 </ol>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                   <button style={btnRed} onClick={() => setActivePage("advisory")}>Open your intake workspace →</button>
-                  {advisorLink && <a href={advisorLink} target="_blank" rel="noreferrer" style={{ ...btnGhost, display: "inline-block", textDecoration: "none" }}>Book the intake call →</a>}
+                  <button style={btnGhost} onClick={() => setActivePage("advisory")}>Book the intake call →</button>
                 </div>
               </div>
             )}
@@ -3623,10 +3621,15 @@ export function IntakeReadout({ intake, at }) {
 // documents, fill out the form. Shown on /advisory while the intake is paid
 // and the call hasn't happened (retainer status 'offered').
 function IntakeSteps({ data, reload }) {
-  const [bookLink, setBookLink] = useState(null);
+  // The call is booked on Dr. Merritt's own calendar, through our scheduler,
+  // against the paid intake booking — the same way every paid session books.
+  const [bookings, setBookings] = useState(null);
+  const [cal, setCal] = useState(false);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState(null);
-  useEffect(() => { fetch("/api/waitlist?public=1").then(r => r.ok ? r.json() : null).then(d => setBookLink(d?.advisor_call_link || "")).catch(() => setBookLink("")); }, []);
+  const loadBookings = () => api("/api/bookings").then(d => setBookings(d.bookings || [])).catch(() => setBookings([]));
+  useEffect(() => { loadBookings(); }, []);
+  const intakeBooking = (bookings || []).find(b => b.item === "retainer_onboarding");
   const flash = (ok, text) => { setNote({ ok, text }); setTimeout(() => setNote(null), 5000); };
   const upload = async (list) => {
     const arr = [...(list || [])]; if (!arr.length) return;
@@ -3662,11 +3665,21 @@ function IntakeSteps({ data, reload }) {
       {note && <div style={{ color: note.ok ? "#4ade80" : "#f87171", fontSize: 13, fontFamily: font, marginBottom: 12 }}>{note.text}</div>}
       <div style={card}>
         {step(1, "Book your time with Dr. Merritt", (
-          bookLink === null ? <div style={sub}>Loading the booking link…</div>
-            : bookLink
-              ? <a href={bookLink} target="_blank" rel="noreferrer" style={{ ...btnRed, display: "inline-block", textDecoration: "none" }}>Book the intake call →</a>
-              : <div style={sub}>The booking link isn't set yet — email admin@nreuv.com and the team will schedule it with you.</div>
-        ))}
+          bookings === null ? <div style={sub}>Loading her calendar…</div>
+            : intakeBooking?.scheduled_at ? (<>
+                <p style={sub}>{new Date(intakeBooking.scheduled_at).toLocaleString(undefined, { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })}</p>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {intakeBooking.meet_link && <a href={intakeBooking.meet_link} target="_blank" rel="noreferrer" style={{ ...btnRed, textDecoration: "none", display: "inline-block" }}>Join the meeting</a>}
+                  {intakeBooking.event_link && <a href={intakeBooking.event_link} target="_blank" rel="noreferrer" style={{ ...btnGhost, textDecoration: "none", display: "inline-block", color: "var(--gu-text2)", borderColor: "var(--gu-border)" }}>Add to calendar</a>}
+                </div>
+              </>)
+            : intakeBooking ? (<>
+                <p style={sub}>Pick a slot on Dr. Merritt's calendar. The invite and the meeting link come straight to your inbox.</p>
+                <button style={btnRed} onClick={() => setCal(true)}>Book the intake call →</button>
+                {cal && <SlotPicker bookingId={intakeBooking.id} title="Full Project Intake" onClose={() => setCal(false)} onBooked={() => { setCal(false); loadBookings(); }} />}
+              </>)
+            : <div style={sub}>Your intake isn't showing a booking yet — email admin@nreuv.com and the team will schedule it with you.</div>
+        ), !!intakeBooking?.scheduled_at)}
       </div>
       <div style={card}>
         {step(2, "Compile what you have", (<>

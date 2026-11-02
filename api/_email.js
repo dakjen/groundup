@@ -344,7 +344,7 @@ export function retainerInterestEmail(name, callLink) {
 
 // Sent the moment the Full Project Intake is paid: the three things to do
 // before the call. The intake workspace (/advisory) holds steps 2 and 3.
-export function intakeStepsEmail(name, bookLink) {
+export function intakeStepsEmail(name) {
   const first = firstName(name);
   const ws = `${siteUrl()}/advisory`;
   // Tables, not flex: email clients squash flex rows into nothing.
@@ -359,7 +359,7 @@ export function intakeStepsEmail(name, bookLink) {
       <div style="font-size:10px;color:#b80101;letter-spacing:3px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">Full Project Intake</div>
       <h2 style="color:#161616;font-size:26px;margin:0 0 14px;">Your intake with Dr. Merritt is paid, ${first}.</h2>
       <p style="color:#444444;font-size:14px;line-height:1.9;margin:0 0 22px;">This is the session where she takes in wherever you are, a live deal, a project you are trying to get off the ground, or the question you need her on, and tells you what you missed and what to do next. It is only as good as what she has in front of her, so three things before you meet:</p>
-      ${step(1, 'Book your time with Dr. Merritt', bookLink ? `Pick the slot that works. <a href="${bookLink}" style="color:#b80101;font-weight:bold;">Book the intake call →</a>` : 'The booking link is in your intake workspace, below.')}
+      ${step(1, 'Book your time with Dr. Merritt', `Her calendar is in your intake workspace. Pick the slot that works and the invite comes straight to your inbox. <a href="${ws}" style="color:#b80101;font-weight:bold;">Book the intake call →</a>`)}
       ${step(2, 'Compile what you have', 'Whatever shows where you are. If there is a deal: pro forma, sources and uses, site control, term sheets or LOIs, site plan, timeline, anything a lender or investor has sent back. If there is not one yet: the site you are looking at, the partnership you are weighing, a business plan, notes on what you have tried. Upload them in your intake workspace. Rough is fine.')}
       ${step(3, 'Fill out the intake form', 'In the same workspace: where you are, what you want help with, and the decision in front of you. Answer what applies and skip the rest. Ten minutes, and it is what she reads first.')}
       <a href="${ws}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:14px 30px;font-weight:bold;font-size:14px;text-decoration:none;margin:6px 0 20px;">Open your intake workspace →</a>

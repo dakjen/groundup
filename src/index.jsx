@@ -5086,8 +5086,8 @@ function LnLManager({ btnRed, btnGhost, inp, lbl }) {
 
       {/* Session link */}
       <div style={section}>
-        <div style={heading}><Link2 size={13} color="#b80101" /> Live Session Link</div>
-        <p style={{ color: "#666666", fontSize: 12, marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>Everyone with Lunch & Learn access sees this link on their page. Update it before each session.</p>
+        <div style={heading}><Link2 size={13} color="#b80101" /> Default Session Link</div>
+        <p style={{ color: "#666666", fontSize: 12, marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>Only used for a session that has no link of its own above. Sessions marked "Own link set" ignore it, so once every session has its own link this one does nothing.</p>
         <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <input value={link} onChange={e => setLink(e.target.value)} placeholder="https://zoom.us/j/..." style={{ ...inp, maxWidth: "none", marginBottom: 0, flex: 1, minWidth: 240 }} />
           <button onClick={saveLink} style={btnRed}>Save Link</button>

@@ -434,11 +434,17 @@ async function fulfill(sql, session) {
     const [existing] = await sql`SELECT id FROM retainers WHERE user_id = ${userId} AND status IN ('active','offered') LIMIT 1`;
     if (!existing) await sql`INSERT INTO retainers (user_id, hours_per_month, monthly_amount, status, notes, started_at, created_at)
       VALUES (${userId}, 10, 5500, 'offered', 'Your intake is paid — book the call below. On it, you and Dr. Merritt will settle the scope and the monthly block that fits; start it here after and your \$1,500 credits against the first month.', NOW(), NOW())`;
+    // The call itself is a booking like any paid session: it is scheduled
+    // through our own calendar (api/schedule.js) against this paid row, so
+    // only the person who paid can take Dr. Merritt's time.
+    const [openBooking] = await sql`SELECT id FROM bookings WHERE user_id = ${userId} AND item = 'retainer_onboarding'
+      AND COALESCE(status, '') NOT IN ('refunded', 'cancelled', 'void') LIMIT 1`;
+    if (!openBooking) await sql`INSERT INTO bookings (user_id, item, label, amount, status, charge_id, created_at)
+      VALUES (${userId}, 'retainer_onboarding', 'Full Project Intake', ${(session.amount_total ?? 150000) / 100}, 'awaiting_booking', ${session.payment_intent || null}, NOW())`;
     try {
       const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
       if (u) {
-        const [bookRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
-        const steps = intakeStepsEmail(u.name, bookRow?.value || '');
+        const steps = intakeStepsEmail(u.name);
         await sendEmail(u.email, steps.subject, steps.html);
         await sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com',
           `INTAKE PAID: ${u.name} — \$1,500 Full Project Intake`,

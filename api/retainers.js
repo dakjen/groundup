@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { getSession, getAdmin } from './_utils.js';
-import { sendEmail, firstName } from './_email.js';
+import { sendEmail, firstName, siteUrl } from './_email.js';
 import { sendPush } from './_push.js';
 
 // Senior Advisor retainers: clients see their own workspace; the team sees the roster.
@@ -52,14 +52,16 @@ export default async function handler(req, res) {
           SELECT b.*, u.name, u.email FROM bookings b JOIN users u ON u.id = b.user_id
           ORDER BY (b.status = 'awaiting_booking') DESC, b.created_at DESC LIMIT 100`;
         // Auto-nudge: anyone who paid 48h+ ago, never booked, max 2 nudges, 72h apart
-        const link = callRow?.value || '';
-        if (link) {
+        // Every paid call books on our own calendar, so the reminder points
+        // there: the intake workspace for the intake, Your meetings for the rest.
+        {
           const stale = await sql`
             SELECT b.*, u.name, u.email FROM bookings b JOIN users u ON u.id = b.user_id
             WHERE b.status = 'awaiting_booking' AND b.created_at < NOW() - interval '48 hours'
               AND COALESCE(b.nudges, 0) < 2
               AND (b.last_nudge_at IS NULL OR b.last_nudge_at < NOW() - interval '72 hours')`;
           for (const b of stale) {
+            const link = siteUrl() + (b.item === 'retainer_onboarding' ? '/advisory' : '/membership#meetings');
             await sendEmail(b.email, `Reminder: book your ${b.label}`,
               `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">You haven't picked a time yet</h2>
                <p style="color:#444444;font-size:14px;line-height:1.8;">Hi ${firstName(b.name)} — your <strong style="color:#161616;">${b.label}</strong> is paid and waiting. Grab a slot on Dr. Merritt's calendar so she can prepare for you.</p>
