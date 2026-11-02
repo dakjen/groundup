@@ -5741,7 +5741,9 @@ function RevenueTab() {
 
   if (loading) return <div style={{ color: "#b80101", fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>;
 
-  const paying = users.filter(u => u.tier !== "Free" && !u.comped && (u.role || "member") === "member");
+  // Team accounts are not members: they never count, in any figure here.
+  const members = users.filter(u => (u.role || "member") !== "admin");
+  const paying = members.filter(u => u.tier !== "Free" && !u.comped);
   // Founding members bill at 25% off list through their first year — the
   // FOUNDING25PCT coupon on their subscription
   const FOUNDING_PRICES = { Basic: 37.49, Builder: 112.49, Premium: 187.49, Elite: 374.99 };
@@ -5752,7 +5754,7 @@ function RevenueTab() {
   const arr = mrr * 12;
 
   const tierCounts = { Free: 0, Basic: 0, Builder: 0, Premium: 0, Elite: 0 };
-  users.forEach(u => { tierCounts[u.tier] = (tierCounts[u.tier] || 0) + 1; });
+  members.forEach(u => { tierCounts[u.tier] = (tierCounts[u.tier] || 0) + 1; });
 
   const tierRevenue = { Basic: 0, Builder: 0, Premium: 0, Elite: 0 };
   paying.forEach(u => { tierRevenue[u.tier] = (tierRevenue[u.tier] || 0) + priceFor(u); });
@@ -5765,7 +5767,7 @@ function RevenueTab() {
   });
   const signupsByMonth = months.map(m => ({
     ...m,
-    count: users.filter(u => {
+    count: members.filter(u => {
       const d = new Date(u.joinedAt);
       return d.getFullYear() === m.year && d.getMonth() === m.month;
     }).length,
@@ -5806,7 +5808,7 @@ function RevenueTab() {
             </div>
           );
         })()}
-        {statCard("Total Members", users.length, `${tierCounts.Free} on free tier`, "#8a8a8a")}
+        {statCard("Total Members", members.length, `${tierCounts.Free} on free tier`, "#8a8a8a")}
         {statCard("Trial Conversions", trialConversions, `${trialPending} invites pending`, "#7d6d6d")}
       </div>
 
