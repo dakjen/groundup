@@ -1315,7 +1315,7 @@ function HomePage({ setActivePage, onSignUp, currentUser, eventInvited, preLaunc
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 20 }}>
           {miniCourses.slice(0, 3).map((course) => (
-            <div key={course.id} onClick={() => setActivePage("courses")}
+            <div key={course.id} onClick={() => { try { window.history.replaceState({}, "", window.location.pathname + window.location.search + "#c=" + course.id); } catch {} setActivePage("courses"); }}
               style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: 28, cursor: "pointer", transition: "all 0.25s" }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = "#b8010145"; e.currentTarget.style.transform = "translateY(-4px)"; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a0000"; e.currentTarget.style.transform = "none"; }}>
@@ -1560,7 +1560,7 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
   const [activeMiniCourse, setActiveMiniCourse] = useState(null);
   // Tell the app when a course is open: the course page has its own back
   // button then, and the site-wide one steps aside so there is only one.
-  useEffect(() => { onCourseOpen && onCourseOpen(!!activeMiniCourse); return () => { onCourseOpen && onCourseOpen(false); }; }, [activeMiniCourse]);
+  useEffect(() => { onCourseOpen && onCourseOpen(!!activeMiniCourse); if (activeMiniCourse) window.scrollTo(0, 0); return () => { onCourseOpen && onCourseOpen(false); }; }, [activeMiniCourse]);
   const [topicReq, setTopicReq] = useState("");
   // What they are asking for: a course topic, a template, or a glossary term.
   // The kind travels as a prefix on the request so the team's inbox and CSV
@@ -1589,7 +1589,7 @@ function CoursesPage({ member, onSignIn, onUpgrade, onMemberUpdate, onGlossary, 
   useEffect(() => {
     if (hashCourseId && !activeMiniCourse) {
       const found = allCourses.find(c => c.id === hashCourseId);
-      if (found) setActiveMiniCourse(found);
+      if (found) { setActiveMiniCourse(found); try { window.history.replaceState({}, "", window.location.pathname + window.location.search); } catch {} }
     }
   }, [catalog]);
   const regular = allCourses.filter(c => !c.series);
@@ -6191,7 +6191,9 @@ function UsersTab({ btnRed, btnGhost, inp, lbl, teamOnly = false }) {
             {filtered.length} user{filtered.length !== 1 ? "s" : ""}
           </div>
           {filtered.map(user => (
-            <div key={user.id} style={{ background: "#ffffff", border: "1px solid " + (user.role === "admin" ? "#b8010140" : "#e6e6e6"), borderRadius: 12, padding: "16px 20px", marginBottom: 8, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+            <div key={user.id} style={{ background: "#ffffff", border: "1px solid " + (user.role === "admin" ? "#b8010140" : "#e6e6e6"), borderRadius: 12, padding: "16px 20px", marginBottom: 8, display: "flex", flexDirection: "column", gap: 12 }}>
+              {/* Line one: who they are. Line two: every control, in one even row. */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
               <div style={{ flex: 1, minWidth: 180 }}>
                 <div style={{ color: "#222222", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
                   {user.name}
@@ -6224,6 +6226,8 @@ function UsersTab({ btnRed, btnGhost, inp, lbl, teamOnly = false }) {
               <div style={{ fontSize: 10, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif" }}>
                 Joined {new Date(user.created_at).toLocaleDateString()}
               </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               {user.role === "admin" ? (
                 <span style={{ color: "#8a8a8a", fontSize: 12, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>Team — no tier</span>
               ) : (
@@ -6279,6 +6283,7 @@ function UsersTab({ btnRed, btnGhost, inp, lbl, teamOnly = false }) {
               }} style={{ ...btnGhost, fontSize: 11, padding: "6px 12px", flexShrink: 0 }}>Email reset link</button>
               <button onClick={() => setProfileOpen(p => p === user.id ? null : user.id)} style={{ ...btnGhost, fontSize: 11, padding: "6px 12px", flexShrink: 0, color: profileOpen === user.id ? "#b80101" : undefined }}>{profileOpen === user.id ? "Hide profile" : "Profile"}</button>
               <button onClick={() => removeUser(user.id)} style={{ ...btnGhost, color: "#b80101", borderColor: "#b8010130", fontSize: 11, padding: "6px 12px", flexShrink: 0 }}>Remove</button>
+              </div>
               {profileOpen === user.id && <MemberProfileSheet user={user} />}
             </div>
           ))}
