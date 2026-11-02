@@ -5729,8 +5729,11 @@ function RevenueTab() {
       fetch("/api/referrals", { headers: hdrs }).then(r => r.ok ? r.json() : null).catch(() => null),
       fetch("/api/revenue", { headers: hdrs }).then(r => r.ok ? r.json() : null).catch(() => null),
     ]).then(([u, r, rev]) => {
-      if (u?.users) setUsers(u.users.map(x => ({ ...x, joinedAt: x.created_at })));
-      if (r?.referrals) setReferrals(r.referrals);
+      // Both endpoints answer with a bare list; accept a wrapped one too.
+      const ul = Array.isArray(u) ? u : (u?.users || []);
+      const rl = Array.isArray(r) ? r : (r?.referrals || []);
+      setUsers(ul.map(x => ({ ...x, joinedAt: x.created_at })));
+      setReferrals(rl);
       if (rev?.retainerStats) setRetainers({ active_count: Number(rev.retainerStats.active_count) || 0, retainer_mrr: Number(rev.retainerStats.retainer_mrr) || 0 });
       if (rev?.statement) setActual({ statement: rev.statement, reserve: rev.reserve });
     }).finally(() => setLoading(false));
