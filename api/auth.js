@@ -14,9 +14,16 @@ export default async function handler(req, res) {
     // GET /api/auth?unsubscribe=<email>&t=<token> — the link in every email
     // footer. Signed per-address, no login needed; lands in email_optouts and
     // marketing sends skip that address from then on.
-    if (req.method === 'GET' && req.query.unsubscribe) {
+    // Gmail and Yahoo also POST here (RFC 8058 one-click, from the
+    // List-Unsubscribe header) — same link, no page needed, just the opt-out.
+    if ((req.method === 'GET' || req.method === 'POST') && req.query.unsubscribe) {
       const { unsubToken } = await import('./_email.js');
       const email = String(req.query.unsubscribe).trim().toLowerCase();
+      if (req.method === 'POST') {
+        if (!email || req.query.t !== unsubToken(email)) return res.status(400).json({ error: 'bad link' });
+        await sql`INSERT INTO email_optouts (email, created_at) VALUES (${email}, NOW()) ON CONFLICT (email) DO NOTHING`;
+        return res.status(200).json({ success: true });
+      }
       const page = (title, body) => {
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         return res.send(`<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title} — GroundUp</title></head><body style="background:#000;color:#e8d8d8;font-family:Arial,Helvetica,sans-serif;margin:0;padding:60px 20px;text-align:center;"><div style="max-width:480px;margin:0 auto;background:#0d0404;border:1px solid #2a0000;border-radius:16px;padding:40px 32px;"><div style="font-size:20px;font-weight:bold;color:#fff;letter-spacing:1px;">GROUNDUP</div><div style="margin-bottom:24px;"></div><h1 style="font-size:22px;color:#161616;margin:0 0 12px;">${title}</h1><p style="color:#444444;font-size:14px;line-height:1.8;">${body}</p><a href="/" style="color:#b80101;font-weight:bold;font-size:13px;">← Back to GroundUp</a></div></body></html>`);

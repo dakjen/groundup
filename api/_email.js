@@ -104,15 +104,56 @@ export function firstName(full, fallback = 'there') {
   return parts[0];
 }
 
+// A plain-text twin of the HTML, for the text/plain part. Mail without one
+// reads as machine-made to Gmail; with one it reads as mail. Links are kept
+// as "label (url)" so the text version is usable on its own.
+export function htmlToText(html) {
+  return String(html || '')
+    .replace(/<link[^>]*>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<a\b[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, (m, href, label) => {
+      const t = label.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+      return t ? `${t} (${href})` : href;
+    })
+    .replace(/<\/(p|div|h[1-6]|tr|li|table)>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/td>/gi, ' ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&rsquo;/g, '’').replace(/&mdash;/g, '—')
+    .split('\n').map(l => l.replace(/[ \t]+/g, ' ').trim()).join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+// Sends are spaced out rather than fired ten at once: a burst of identical
+// mail from a young domain is what bulk filters key on. One send every
+// PACE_MS, across the whole function invocation.
+const PACE_MS = 250;
+let paceChain = Promise.resolve();
+function paced(fn) {
+  const run = paceChain.then(fn);
+  paceChain = run.catch(() => {}).then(() => new Promise(r => setTimeout(r, PACE_MS)));
+  return run;
+}
+
 export async function sendEmail(to, subject, innerHtml, opts = {}) {
   if (opts.marketing && await isOptedOut(to)) return false;
-  const r = await brevo('/smtp/email', {
+  const html = opts.raw ? innerHtml : wrap(innerHtml, to, opts.light);
+  const payload = {
     sender: sender(),
     replyTo: replyTo(),
     to: [{ email: to }],
     subject,
-    htmlContent: opts.raw ? innerHtml : wrap(innerHtml, to, opts.light),
-  });
+    htmlContent: html,
+    textContent: htmlToText(html),
+  };
+  if (opts.marketing) {
+    // The one-click headers Gmail and Yahoo require of bulk senders. The URL
+    // is the same signed per-address link as the footer.
+    const u = unsubLink(to);
+    payload.headers = { 'List-Unsubscribe': `<${u}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
+  }
+  const r = await paced(() => brevo('/smtp/email', payload));
   return !!r;
 }
 
@@ -174,7 +215,7 @@ export async function sendBulk(recipients, subject, innerHtml) {
   let sent = 0;
   for (let i = 0; i < recipients.length; i += 10) {
     const chunk = recipients.slice(i, i + 10);
-    const results = await Promise.allSettled(chunk.map(r => sendEmail(r.email, subject, innerHtml.replaceAll('{{FIRSTNAME}}', firstName(r.name)))));
+    const results = await Promise.allSettled(chunk.map(r => sendEmail(r.email, subject, innerHtml.replaceAll('{{FIRSTNAME}}', firstName(r.name)), { marketing: true })));
     sent += results.filter(x => x.status === 'fulfilled' && x.value).length;
   }
   return sent;
@@ -785,6 +826,42 @@ export function insiderEveningEmail(name, opts = {}) {
       ${seqP(`Your insider window closes <strong style="color:#161616;">${closes}</strong>. After that, whatever seats remain open to the whole waitlist.`)}
       ${btn('Claim my founding seat →')}
       ${seqP('If you already joined today, thank you. You are in, and your seat is yours.', { size: 13, color: '#8a8a8a' })}
+      ${seqP(`Something not working? <a href="${siteUrl()}/support" style="color:#b80101;font-weight:bold;">I'm experiencing technical difficulties →</a> Or just reply to this email; replies reach Dr. Merritt's team directly.`, { size: 13, color: '#8a8a8a' })}
+      ${seqSign()}`,
+  };
+}
+
+// Nov 3, to every insider who has not joined: the founding discount ends
+// Thursday night. One ask, one date, one button.
+export function insiderDeadlineEmail(name, opts = {}) {
+  const first = firstName(name);
+  // Same seat maths as the launch-night email: five fewer than are open.
+  const left = Math.max(1, Number(opts.seatsLeft ?? 25) - 5);
+  const closes = opts.closesText || 'Thursday, November 5 at 11:59 PM Eastern';
+  const link = opts.link || `${siteUrl()}/?join=1`;
+  const btn = (label) => `
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px;"><tr>
+        <td bgcolor="#b80101" style="background-color:#b80101;border-radius:10px;">
+          <a href="${link}" style="display:inline-block;padding:15px 34px;color:#ffffff;font-weight:bold;font-size:15px;text-decoration:none;font-family:'DM Sans',Arial,Helvetica,sans-serif;">${label}</a>
+        </td>
+      </tr></table>`;
+  return {
+    subject: `${first}, your founding discount ends Thursday`,
+    html: `
+      ${seqKicker('Two days left')}
+      ${seqH1(`${first}, your founding membership discount ends ${closes.split(' at ')[0]}.`)}
+      ${seqP(`A quick one. The insider window closes <strong style="color:#161616;">${closes}</strong>. Until then, your link gives you 25% off any plan for your entire first year, a year of live Lunch &amp; Learns with Dr. Merritt, an invitation to the launch party in Washington, DC, and the Founding Member badge. After Thursday the founding rate is gone and the public price applies.`)}
+      ${btn('Claim my founding seat →')}
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px;"><tr>
+        <td bgcolor="#161616" width="150" align="center" style="background-color:#161616;border-radius:12px;padding:18px 20px;">
+          <div style="font-family:'Cormorant Garamond',Georgia,serif;color:#ffffff;font-size:44px;font-weight:bold;line-height:1;"><font color="#ffffff">${left}</font></div>
+          <div style="font-family:'DM Sans',Arial,Helvetica,sans-serif;color:#f5e8e8;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-top:6px;"><font color="#f5e8e8">seats left</font></div>
+        </td>
+        <td style="padding-left:20px;font-family:'DM Sans',Arial,Helvetica,sans-serif;color:#444444;font-size:14px;line-height:1.8;">Founding rates, your first year: <strong style="color:#161616;">Member $37.49</strong>, <strong style="color:#161616;">Builder $112.49</strong>, <strong style="color:#161616;">Premium $187.49</strong>, <strong style="color:#161616;">Owner $374.99</strong> a month, instead of $49.99, $149.99, $249.99 and $499.99.</td>
+      </tr></table>
+      ${seqP(`Your link takes you straight in: choose your plan, create your account, and you are a founding member tonight.`)}
+      ${btn('Claim my founding seat →')}
+      ${seqP('Already joined? Then this is not for you, and thank you. Your seat is yours.', { size: 13, color: '#8a8a8a' })}
       ${seqP(`Something not working? <a href="${siteUrl()}/support" style="color:#b80101;font-weight:bold;">I'm experiencing technical difficulties →</a> Or just reply to this email; replies reach Dr. Merritt's team directly.`, { size: 13, color: '#8a8a8a' })}
       ${seqSign()}`,
   };

@@ -82,5 +82,11 @@
       ]
     }
   ],
+  "functions": {
+    "api/broadcast.js": { "maxDuration": 60 },
+    "api/waitlist.js": { "maxDuration": 60 },
+    "api/lunchlearn.js": { "maxDuration": 60 },
+    "api/retainers.js": { "maxDuration": 60 }
+  },
   "buildCommand": "npm run build"
 }
