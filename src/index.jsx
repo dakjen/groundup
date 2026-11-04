@@ -6134,7 +6134,7 @@ function UsersTab({ btnRed, btnGhost, inp, lbl, teamOnly = false }) {
       )}
 
       {/* Tier summary */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 32 }}>
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${TIERS.length}, minmax(0, 1fr))`, gap: 10, marginBottom: 32 }}>
         {TIERS.map(t => (
           <div key={t} onClick={() => setFilterTier(filterTier === t ? "All" : t)} style={{ background: filterTier === t ? "#f0f0f0" : "#ececec", border: "1px solid " + (filterTier === t ? TIER_COLORS[t] + "60" : "#e6e6e6"), borderRadius: 12, padding: "16px 14px", textAlign: "center", cursor: "pointer", transition: "all 0.2s" }}>
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 32, color: TIER_COLORS[t], lineHeight: 1 }}>{tierCounts[t]}</div>
