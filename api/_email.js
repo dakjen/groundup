@@ -157,6 +157,16 @@ export async function sendEmail(to, subject, innerHtml, opts = {}) {
   return !!r;
 }
 
+// Team alerts (a purchase, a refund, a chargeback) go to the team inbox AND to
+// Dakotah — ADMIN_EMAIL can be an alias nobody reads day to day.
+export function teamAlertTo() {
+  return [...new Set([process.env.ADMIN_EMAIL || 'admin@nreuv.com', 'dakotah@dakjencreative.com'].map(e => String(e).trim().toLowerCase()).filter(Boolean))];
+}
+export async function teamAlert(subject, innerHtml, opts = {}) {
+  const r = await Promise.allSettled(teamAlertTo().map(to => sendEmail(to, subject, innerHtml, opts)));
+  return r.some(x => x.status === 'fulfilled' && x.value);
+}
+
 async function isOptedOut(email) {
   try {
     if (!process.env.DATABASE_URL) return false;

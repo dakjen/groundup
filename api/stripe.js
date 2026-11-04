@@ -2,7 +2,7 @@ import Stripe from 'stripe';
 import crypto from 'crypto';
 import { neon } from '@neondatabase/serverless';
 import { hashPassword, signToken, getSession, getAdmin } from './_utils.js';
-import { sendEmail, siteUrl, addLnlContact, dealSupportBlock, firstName, guestWelcomeEmail, intakeStepsEmail } from './_email.js';
+import { sendEmail, teamAlert, siteUrl, addLnlContact, dealSupportBlock, firstName, guestWelcomeEmail, intakeStepsEmail } from './_email.js';
 
 export const config = { api: { bodyParser: false } };
 
@@ -446,8 +446,7 @@ async function fulfill(sql, session) {
       if (u) {
         const steps = intakeStepsEmail(u.name);
         await sendEmail(u.email, steps.subject, steps.html);
-        await sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com',
-          `INTAKE PAID: ${u.name} — \$1,500 Full Project Intake`,
+        await teamAlert(`INTAKE PAID: ${u.name} — \$1,500 Full Project Intake`,
           `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New project intake</h2>
            <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u.name}</strong> (${u.email}) paid for the Full Project Intake. When they book, ask for the full deal package up front. If they continue to a retainer, their first month checkout auto-credits the \$1,500.</p>`);
       }
@@ -468,21 +467,24 @@ async function fulfill(sql, session) {
     }
     await sql`UPDATE users SET stripe_customer_id = ${session.customer || null} WHERE id = ${userId}`;
     const [c] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
-    await sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com',
-      `NEW RETAINER CLIENT: ${c?.name} — ${spec.retainerHours} hrs/mo`,
+    await teamAlert(`NEW RETAINER CLIENT: ${c?.name} — ${spec.retainerHours} hrs/mo`,
       `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New Senior Advisor retainer</h2>
        <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${c?.name}</strong> (${c?.email}) started a <strong style="color:#161616;">${spec.retainerHours} hours/month</strong> retainer at $${(spec.amount / 100).toLocaleString()}/mo. They're on the Retainer Clients roster now.</p>`);
   } else if (item.startsWith('sub_')) {
     const tier = CATALOG[item]?.tier;
     // Claim a founding seat: paying is what earns it, so the grant happens here
     // and not at signup. First 25 after the insider launch, once each.
+    let foundingNote = '', foundingLeft = null, foundingOpen = false, foundingCap = 25;
     if (tier && tier !== 'Free') {
       try {
         const seats = await foundingSeats(sql);
         const [u] = await sql`SELECT badges, comped, role FROM users WHERE id = ${userId}`;
         const has = (Array.isArray(u?.badges) ? u.badges : []).includes('founding25');
+        foundingOpen = seats.open; foundingCap = seats.cap;
         const eligible = seats.open && !has && !u?.comped && (u?.role || 'member') === 'member';
         if (eligible) {
+          foundingNote = ` · founding seat ${seats.taken + 1} of ${seats.cap}`;
+          foundingLeft = Math.max(0, seats.remaining - 1);
           await sql`UPDATE users SET badges = COALESCE(badges, '[]'::jsonb) || '["founding25"]'::jsonb WHERE id = ${userId}`;
           // ...and their personal referral link (see _referral.js)
           try { const { assignReferralCode } = await import('./_referral.js'); await assignReferralCode(sql, userId); } catch (e) { console.error('referral code grant failed', e.message); }
@@ -499,12 +501,23 @@ async function fulfill(sql, session) {
             const mail = launchPartyInviteEmail(fu?.name, { details: prow.find(r => r.key === 'launch_party_details')?.value, rsvp: prow.find(r => r.key === 'launch_party_rsvp')?.value });
             if (fu?.email) await sendEmail(fu.email, mail.subject, mail.html);
           } catch (e) { console.error('launch party invite failed', e.message); }
-          const left = Math.max(0, seats.remaining - 1);
-          await sendEmail(process.env.ADMIN_EMAIL || 'djmj@nreuv.com',
-            `Founding seat ${seats.taken + 1} of ${seats.cap} claimed`,
-            `<p style="color:#444444;font-size:14px;line-height:1.8;">A founding seat was just claimed at checkout. <strong style="color:#161616;">${left} of ${seats.cap} remain.</strong></p>`);
         }
       } catch (e) { console.error('founding seat grant failed', e.message); }
+      // Tell the team who just paid — every paid plan, seat or no seat.
+      try {
+        const [nu] = await sql`SELECT name, email, comped FROM users WHERE id = ${userId}`;
+        const spec = CATALOG[item] || {};
+        const paid = (session.amount_total ?? spec.amount ?? 0) / 100;
+        const plan = (spec.name || tier).replace(/^GroundUp /, '') + (item.endsWith('_annual') ? ' (annual)' : '');
+        await teamAlert(`NEW MEMBER: ${nu?.name || 'member'} — ${plan}, $${paid.toLocaleString('en-US', { minimumFractionDigits: 2 })}${foundingNote}`,
+          `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New paid membership</h2>
+           <p style="color:#444444;font-size:14px;line-height:1.9;">
+             <strong style="color:#161616;">${nu?.name || 'Member'}</strong> — ${nu?.email || ''}<br/>
+             Plan: <strong style="color:#161616;">${plan}</strong> · Paid: <strong style="color:#161616;">$${paid.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>${md.gift ? ' · gift month applied' : ''}${nu?.comped ? ' · comped account' : ''}<br/>
+             ${foundingNote ? `Founding seat earned — <strong style="color:#161616;">${foundingLeft} of ${foundingCap} remain.</strong>` : (foundingOpen ? 'No founding seat (already held, comped, or team).' : 'Founding window closed.')}
+           </p>
+           <a href="${siteUrl()}/admin" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Open Admin</a>`);
+      } catch (e) { console.error('new member alert failed', e.message); }
     }
     if (tier) {
       // cancelled_at = NULL stops the 15-day deletion clock for members who rejoin
@@ -522,8 +535,7 @@ async function fulfill(sql, session) {
       const seats = await eliteSeats(sql);
       if (seats.taken > seats.cap) {
         const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
-        await sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com',
-          `OWNER OVER CAP: ${seats.taken} of ${seats.cap} seats`,
+        await teamAlert(`OWNER OVER CAP: ${seats.taken} of ${seats.cap} seats`,
           `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Owner went over cap</h2>
            <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u?.name}</strong> (${u?.email}) completed Owner checkout at the same moment as someone else, putting Elite at <strong style="color:#161616;">${seats.taken} of ${seats.cap}</strong>. Their payment went through and their access is live. Either raise the cap in Admin, or reach out to arrange a refund.</p>`);
       }
@@ -609,8 +621,7 @@ async function fulfill(sql, session) {
            <p style="color:#444444;font-size:14px;line-height:1.8;">Your Lifetime Pass is active: <strong style="color:#161616;">every course, forever</strong> — including each new one we add — plus <strong style="color:#161616;">a full year of Builder membership on us</strong>, <strong style="color:#161616;">office hours with Dr. Merritt through your first five years</strong>, and <strong style="color:#161616;">every Lunch & Learn — live and recorded — for life</strong>.</p>
            <p style="color:#7a5050;font-size:12px;line-height:1.7;">When your Builder year ends, your courses and Lunch & Learns continue forever and office hours run through year five; community access continues with any membership.</p>
            <a href="${siteUrl()}/courses" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Start Learning</a>`);
-        await sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com',
-          `LIFETIME PASS: ${u.name} — \$5,000`,
+        await teamAlert(`LIFETIME PASS: ${u.name} — \$5,000`,
           `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Lifetime Pass sold</h2>
            <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u.name}</strong> (${u.email}) bought the \$5,000 Lifetime Pass — courses in perpetuity, Builder free for a year (auto-reverts after), office hours for 5 years at the Premium allowance, Lunch & Learns for life.</p>`);
       }
@@ -640,9 +651,7 @@ async function fulfill(sql, session) {
     await sql`INSERT INTO bookings (user_id, item, label, amount, status, charge_id, created_at)
       VALUES (${userId}, ${item}, ${spec?.name || item}, ${paid}, 'awaiting_booking', ${session.payment_intent || null}, NOW())`;
     const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
-    await sendEmail(
-      process.env.ADMIN_EMAIL || 'admin@nreuv.com',
-      `PAID: ${CATALOG[item]?.name || item} — ${u?.name || 'member'}`,
+    await teamAlert(`PAID: ${CATALOG[item]?.name || item} — ${u?.name || 'member'}`,
       `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New paid session</h2>
        <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u?.name}</strong> (${u?.email}) paid for <strong style="color:#161616;">${CATALOG[item]?.name}</strong>. Reach out to schedule, then send the meeting email from the back office.</p>`
     );
@@ -799,8 +808,7 @@ export default async function handler(req, res) {
               `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">We couldn\u2019t process your payment</h2>
                <p style="color:#444444;font-size:14px;line-height:1.8;">Hi ${firstName(u.name)} — your card was declined, so your access is paused until it's sorted. Update your card and everything comes right back on.</p>
                <a href="${siteUrl()}/membership" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin-top:8px;">Fix My Payment</a>`);
-            await sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com',
-              `PAYMENT FAILED: ${u.name}`,
+            await teamAlert(`PAYMENT FAILED: ${u.name}`,
               `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Payment failed</h2>
                <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u.name}</strong> (${u.email}) — ${failItem || 'subscription'} declined. Access suspended automatically.</p>`);
           }
@@ -812,8 +820,7 @@ export default async function handler(req, res) {
         try {
           const [lg] = await sql`SELECT item, category, rate_pct, gross_cents, nreuv_cents, held_cents FROM revenue_ledger WHERE charge_id = ${ch.id}`;
           const d = (c) => '$' + ((c || 0) / 100).toFixed(2);
-          await sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com',
-            `REFUND ISSUED — reverse the NREUV share: ${d(ch.amount_refunded)} on ${lg?.item || 'a payment'}`,
+          await teamAlert(`REFUND ISSUED — reverse the NREUV share: ${d(ch.amount_refunded)} on ${lg?.item || 'a payment'}`,
             `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">A refund was issued in Stripe</h2>
              <p style="color:#444444;font-size:14px;line-height:1.8;">Charge ${ch.id} — ${lg?.item || 'unknown item'} (${lg?.category || 'uncategorized'}, NREUV ${lg?.rate_pct ?? '?'}%). Refunded <strong style="color:#161616;">${d(ch.amount_refunded)}</strong> of ${d(ch.amount)}.</p>
              <p style="color:#444444;font-size:14px;line-height:1.8;">Per the services agreement a refund under the published terms reverses the split: reverse <strong style="color:#161616;">${lg ? d(Math.round((lg.nreuv_cents || 0) * Math.min(1, (ch.amount_refunded || 0) / Math.max(1, ch.amount)))) : 'the matching share'}</strong> of the NREUV transfer on this charge${lg?.held_cents ? `; the reserve was holding ${d(lg.held_cents)} of it` : ''}. A discretionary refund (an approved annual refund) comes out of NREUV's share alone — reverse the whole refunded amount from the transfer instead.</p>`);
@@ -823,8 +830,7 @@ export default async function handler(req, res) {
           WHERE charge_id = ${ch.payment_intent} AND status != 'refunded' RETURNING *`;
         if (b) {
           const [u] = await sql`SELECT name, email FROM users WHERE id = ${b.user_id}`;
-          await sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com',
-            `REFUNDED — remove calendar booking for ${u?.name || 'client'}`,
+          await teamAlert(`REFUNDED — remove calendar booking for ${u?.name || 'client'}`,
             `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Payment refunded — cancel their slot</h2>
              <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u?.name}</strong> (${u?.email}) was refunded for <strong style="color:#161616;">${b.label}</strong>. If they already booked on the calendar, remove that appointment.</p>`);
         }
@@ -837,8 +843,7 @@ export default async function handler(req, res) {
           const [lg] = await sql`SELECT item, category, rate_pct, gross_cents, nreuv_cents FROM revenue_ledger WHERE charge_id = ${dp.charge}`;
           const [pot] = await sql`SELECT COALESCE(SUM(held_cents), 0)::int AS total FROM held_transfers WHERE status = 'held'`;
           const d = (c) => '$' + ((c || 0) / 100).toFixed(2);
-          await sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com',
-            event.type === 'charge.dispute.created' ? `CHARGEBACK — ${d(dp.amount)} disputed on ${lg?.item || 'a payment'}` : `Chargeback ${dp.status} — ${d(dp.amount)} on ${lg?.item || 'a payment'}`,
+          await teamAlert(event.type === 'charge.dispute.created' ? `CHARGEBACK — ${d(dp.amount)} disputed on ${lg?.item || 'a payment'}` : `Chargeback ${dp.status} — ${d(dp.amount)} on ${lg?.item || 'a payment'}`,
             `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${event.type === 'charge.dispute.created' ? 'A bank dispute landed' : `Dispute ${dp.status}`}</h2>
              <p style="color:#444444;font-size:14px;line-height:1.8;">Charge ${dp.charge} — ${lg?.item || 'unknown item'} (${lg?.category || 'uncategorized'}). Amount <strong style="color:#161616;">${d(dp.amount)}</strong>, reason: ${dp.reason || 'not given'}. Respond in Stripe → Disputes${dp.evidence_details?.due_by ? ` by ${new Date(dp.evidence_details.due_by * 1000).toLocaleDateString('en-US')}` : ''}.</p>
              <p style="color:#444444;font-size:14px;line-height:1.8;">The reserve currently holds <strong style="color:#161616;">${d(pot?.total)}</strong>. Per the agreement, a chargeback the reserve cannot cover reduces Platform Revenue for the month it is issued and is borne by both parties in proportion to their shares of the ${lg?.category || 'applicable'} category; amounts already distributed are not clawed back. It is recorded on the ledger for the monthly statement.</p>`);
@@ -865,8 +870,7 @@ export default async function handler(req, res) {
               if (invCharge) { const [row] = await sql`SELECT held_cents FROM held_transfers WHERE charge_id = ${invCharge} AND status = 'held'`; held = row?.held_cents || 0; }
             } catch {}
             const d = (c) => '$' + (c / 100).toFixed(2);
-            if (ru) await sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com',
-              `ANNUAL CANCELLATION — refund subject to your approval: ${ru.name}`,
+            if (ru) await teamAlert(`ANNUAL CANCELLATION — refund subject to your approval: ${ru.name}`,
               `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">An annual member cancelled</h2>
                <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${ru.name}</strong> (${ru.email}, ${ru.tier}) cancelled an ANNUAL membership about ${monthsIn.toFixed(1)} months in. They paid <strong style="color:#161616;">${d(paid)}</strong>. Annual plans carry no automatic refund — any refund is at your discretion, and they have been told the team will review and reply.</p>
                <p style="color:#444444;font-size:14px;line-height:1.8;">If you approve a refund, it comes out of NREUV's share alone — process it on their annual invoice in Stripe and reverse the matching NREUV transfer; the platform fee stays as it was. The reserve is not used for annual refunds.</p>`);
@@ -898,8 +902,7 @@ export default async function handler(req, res) {
                  <li>Reverse <strong style="color:#161616;">${d(reverse)}</strong> of the NREUV transfer on this payment (their ${rate}% share of the refund beyond what the pot covers).</li>
                </ul>`;
             } catch (e) { console.error('refund math failed', e.message); }
-            if (ru) await sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com',
-              isAnnual ? `REFUND DUE: ${ru.name} cancelled an annual plan inside 6 months` : `REFUND DUE: ${ru.name} cancelled before the 5th`,
+            if (ru) await teamAlert(isAnnual ? `REFUND DUE: ${ru.name} cancelled an annual plan inside 6 months` : `REFUND DUE: ${ru.name} cancelled before the 5th`,
               `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Refund to process</h2>
                <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${ru.name}</strong> (${ru.email}, ${ru.tier}) ${isAnnual ? `cancelled an ANNUAL membership about ${monthsIn.toFixed(1)} months in — inside the 6-month window (10-day grace included), so HALF the annual payment (6 months) is refundable per the Terms.` : 'cancelled before the 5th of the month, so this month\'s payment is refundable per the Terms.'} In Stripe: process the ${isAnnual ? 'partial (50%) refund on their annual invoice payment' : 'refund on their latest subscription invoice payment'} AND <strong style="color:#161616;">reverse the stated share of the NREUV transfer</strong> so the split doesn't come out of the platform's pocket.</p>${money}`);
           } catch (e) { console.error('refund alert failed', e.message); }
