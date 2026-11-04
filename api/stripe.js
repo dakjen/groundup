@@ -317,8 +317,8 @@ async function ensureLnlCoupon(stripe) {
   }
 }
 
-// Revenue split — NREUV's share is a % of net (gross less Stripe's fee, which
-// both parties bear pro rata).
+// Revenue split — NREUV's share is a % of GROSS, and Stripe's card fee on each
+// payment is split 50-50 between NREUV and DakJen (Dakotah, Nov 4, 2026).
 //
 // HOLD UNTIL THE 5TH: every payment stays whole in the platform balance until
 // the 5th of the following month, because a monthly member can cancel for a
