@@ -69,8 +69,8 @@ export default async function handler(req, res) {
         const [capRow] = await sql`SELECT value FROM settings WHERE key = ${`pot_cap_${y}-${m}`}`;
         const [sweep] = await sql`SELECT value FROM settings WHERE key = ${`pot_sweep_${y}-${m}`}`;
         const [paying] = await sql`SELECT COUNT(*)::int AS n FROM users WHERE membership_status = 'active' AND tier IN ('Basic','Builder','Premium','Elite') AND COALESCE(comped, FALSE) = FALSE AND COALESCE(role,'member') = 'member'`;
-        const nextSweep = d < 7 ? new Date(Number(y), Number(m) - 1, 7) : new Date(Number(y), Number(m), 7);
-        reserve = { held_cents: h?.t || 0, slices: h?.n || 0, cap_cents: capRow?.value ? Number(capRow.value) : 100000 * Math.max(1, Math.ceil((paying?.n || 0) / 10)), floor_cents: 100000, paying: paying?.n || 0, swept_this_month: sweep?.value || null, next_sweep: nextSweep.toISOString() };
+        const nextSweep = d < 6 ? new Date(Number(y), Number(m) - 1, 6) : new Date(Number(y), Number(m), 6);
+        reserve = { held_cents: h?.t || 0, slices: h?.n || 0, cap_cents: capRow?.value ? Number(capRow.value) : 100000 * Math.max(1, Math.ceil((paying?.n || 0) / 10)), floor_cents: capRow?.value ? Number(capRow.value) : 100000 * Math.max(1, Math.ceil((paying?.n || 0) / 10)), paying: paying?.n || 0, swept_this_month: sweep?.value || null, next_sweep: nextSweep.toISOString() };
       } catch (e) { console.error('revenue actuals failed', e.message); }
       return res.json({ userStats, retainerStats, signupsByMonth, referralStats, statement, reserve });
     }

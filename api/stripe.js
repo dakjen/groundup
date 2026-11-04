@@ -317,24 +317,31 @@ async function ensureLnlCoupon(stripe) {
   }
 }
 
-// Revenue split — NREUV's share is a % of GROSS (the sticker price). The platform
-// absorbs Stripe's processing fee out of its own share.
+// Revenue split — NREUV's share is a % of net (gross less Stripe's fee, which
+// both parties bear pro rata).
 //
-// THE REFUND RESERVE: Stripe's fee comes off first (borne pro rata), then 20% of the
-// payment stays in the platform balance; only the remainder is split immediately. The reserve is capped at $1,000 per
-// ten paying members and swept on the 7th of each month down to the $1,000 floor
-// (api/broadcast.js), oldest slices first, each split at its own rate. A monthly
-// cancellation before the 5th consumes its slice, so the reserve funds the refund.
+// HOLD UNTIL THE 5TH: every payment stays whole in the platform balance until
+// the 5th of the following month, because a monthly member can cancel for a
+// refund until the 5th. On the 6th the settlement (api/broadcast.js) releases every
+// payment from before the 1st, oldest first, sending NREUV its share of each —
+// but never below the reserve ($1,000 per ten paying members, or settings.reserve_floor_cents), which stays in
+// the balance permanently as the refund buffer. A cancellation before the 5th
+// consumes its own payment's slice, so the refund comes out of money that never
+// left. Nothing is transferred at purchase.
+// POT_PCT is only used to describe payments that went out under the old
+// immediate-split rule (before Nov 4, 2026) when reconcile finds one.
 const POT_PCT = 0.20;
 // The pot's ceiling grows with the membership: $1,000 for every ten paying
 // members (rounded up), never less than $1,000. Twenty members → $2,000;
 // twenty-one → $3,000. The settings key refund_pot_per_10_cents overrides the step.
 // Per the services agreement the maximum is measured on the first of the month
 // and applies for that month, so the first computation each month is kept.
-async function potCapCents(sql) {
+export async function potCapCents(sql) {
   const et = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit' }).formatToParts(new Date());
   const key = `pot_cap_${et.find(p => p.type === 'year').value}-${et.find(p => p.type === 'month').value}`;
   try { const [r] = await sql`SELECT value FROM settings WHERE key = ${key}`; const v = parseInt(r?.value, 10); if (Number.isFinite(v) && v > 0) return v; } catch {}
+  // A fixed floor set by the team wins over the per-ten-members step.
+  try { const [r] = await sql`SELECT value FROM settings WHERE key = 'reserve_floor_cents'`; const v = parseInt(r?.value, 10); if (Number.isFinite(v) && v >= 0) { try { await sql`INSERT INTO settings (key, value) VALUES (${key}, ${String(v)}) ON CONFLICT (key) DO NOTHING`; } catch {} return v; } } catch {}
   let per = 100000;
   try { const [r] = await sql`SELECT value FROM settings WHERE key = 'refund_pot_per_10_cents'`; const v = parseInt(r?.value, 10); if (Number.isFinite(v) && v > 0) per = v; } catch {}
   let paying = 0;
@@ -343,7 +350,7 @@ async function potCapCents(sql) {
   try { await sql`INSERT INTO settings (key, value) VALUES (${key}, ${String(cap)}) ON CONFLICT (key) DO NOTHING`; } catch {}
   return cap;
 }
-function potWindowDays() { return 45; } // informational only — the 7th-of-the-month sweep decides releases
+function potWindowDays() { return 45; } // informational only — the 5th-of-the-month sweep decides releases
 
 // Revenue category per the services agreement, from the item's split rate.
 export const categoryOf = (item) => { const r = splitRate(item); return r >= 1 ? 'lunch_learn' : r >= 0.9 ? 'advisory' : 'course_membership'; };
@@ -381,35 +388,26 @@ async function splitCharge(stripe, chargeId, item, sql, opts = {}) {
     const gross = charge.amount;      // what the customer paid
     const fee = bt.fee || 0;          // Stripe's processing fee
     const net = bt.net;               // what landed after the fee
-    // Per the agreement: processing fees come off before the split (both parties
-    // bear them pro rata), then 20% of the payment is held for the refund reserve
-    // up to the cap ($1,000 per ten paying members), and the rest is split.
-    let held = Math.floor(net * POT_PCT);
-    if (sql && held > 0) {
-      try {
-        const [pot] = await sql`SELECT COALESCE(SUM(held_cents), 0)::int AS total FROM held_transfers WHERE status = 'held'`;
-        held = Math.max(0, Math.min(held, (await potCapCents(sql)) - (pot?.total || 0)));
-      } catch { held = 0; }
-    } else if (!sql) held = 0;
-    const share = Math.max(0, Math.min(Math.floor((net - held) * rate), net - held));
-    // skipTransfer: the money already moved (reconcile found the transfer); only
-    // the ledger row is missing.
-    if (share > 0 && !opts.skipTransfer) {
-      await stripe.transfers.create({
-        amount: share, currency: 'usd', destination: dest,
-        source_transaction: chargeId,
-        description: `NREUV ${Math.round(rate * 100)}% of net less reserve — ${item || 'purchase'} (gross ${gross}¢, fee ${fee}¢, reserve ${held}¢)`,
-      });
-    }
+    // NOTHING MOVES AT PURCHASE. The whole net payment stays in the platform
+    // balance until the 5th of the following month — refunds can come in until
+    // then. On the 6th the settlement (api/broadcast.js) sends NREUV its share of
+    // everything above the reserve, oldest payments first; the reserve itself
+    // ($1,000 per ten paying members) stays put.
+    //
+    // skipTransfer: reconcile found a transfer that already went out under the
+    // old immediate-split rule; only the ledger row is missing, so record it
+    // as paid rather than holding it.
+    const legacyShare = opts.skipTransfer ? Math.max(0, Math.min(Math.floor(net * (1 - POT_PCT) * rate), net)) : 0;
+    const held = opts.skipTransfer ? Math.floor(net * POT_PCT) : net;
     if (sql) {
       if (held > 0) {
         await sql`INSERT INTO held_transfers (charge_id, customer_id, item, gross_cents, held_cents, rate_pct, release_after, status, created_at)
-          VALUES (${chargeId}, ${charge.customer || null}, ${item || null}, ${gross}, ${held}, ${Math.round(rate * 100)}, NOW() + interval '45 days', 'held', NOW())
+          VALUES (${chargeId}, ${charge.customer || null}, ${item || null}, ${gross}, ${held}, ${Math.round(rate * 100)}, NOW() + interval '45 days', 'held', to_timestamp(${charge.created}))
           ON CONFLICT (charge_id) DO NOTHING`;
       }
       try {
         await sql`INSERT INTO revenue_ledger (charge_id, customer_id, item, category, rate_pct, gross_cents, fee_cents, net_cents, held_cents, nreuv_cents, status, created_at)
-          VALUES (${chargeId}, ${charge.customer || null}, ${item || null}, ${categoryOf(item)}, ${Math.round(rate * 100)}, ${gross}, ${fee}, ${net}, ${held}, ${share}, 'paid', to_timestamp(${charge.created}))
+          VALUES (${chargeId}, ${charge.customer || null}, ${item || null}, ${categoryOf(item)}, ${Math.round(rate * 100)}, ${gross}, ${fee}, ${net}, ${held}, ${legacyShare}, 'paid', to_timestamp(${charge.created}))
           ON CONFLICT (charge_id) DO NOTHING`;
       } catch (e) { console.error('ledger write failed', e.message); }
     }
@@ -893,13 +891,15 @@ export default async function handler(req, res) {
                   WHERE charge_id = ${chargeId} AND status = 'held' RETURNING held_cents, rate_pct`;
                 if (row) { held = row.held_cents; rate = row.rate_pct; }
               }
-              const reverse = Math.max(0, Math.round((refund - held) * (rate / 100)));
+              // A payment still held had not been settled, so nothing was transferred
+              // and there is nothing to reverse; the refund comes out of the held money.
+              const reverse = held > 0 ? 0 : Math.max(0, Math.round(refund * (rate / 100)));
               const d = (c) => '$' + (c / 100).toFixed(2);
               money = `<p style="color:#444444;font-size:14px;line-height:1.8;">The math, done for you:</p>
                <ul style="color:#444444;font-size:14px;line-height:1.9;">
                  <li>They paid <strong style="color:#161616;">${d(paid)}</strong> — refund them <strong style="color:#161616;">${d(refund)}</strong>${isAnnual ? ' (half the annual payment)' : ''}.</li>
-                 <li>${held > 0 ? `The refund pot was still holding <strong style="color:#161616;">${d(held)}</strong> of this payment — it has been kept automatically (it will never transfer to NREUV) and funds that much of the refund.` : 'The pot slice for this payment had already been released, so the pot covers none of it.'}</li>
-                 <li>Reverse <strong style="color:#161616;">${d(reverse)}</strong> of the NREUV transfer on this payment (their ${rate}% share of the refund beyond what the pot covers).</li>
+                 <li>${held > 0 ? `This payment had not settled yet — <strong style="color:#161616;">${d(held)}</strong> of it was still held in the balance and has been kept back from the settlement, so the refund comes out of held money and nothing was ever transferred to NREUV.` : 'This payment had already settled, so NREUV received its share and DakJen was paid out.'}</li>
+                 ${reverse > 0 ? `<li>Reverse <strong style="color:#161616;">${d(reverse)}</strong> of the NREUV transfer on this payment (their ${rate}% share of the refund).</li>` : '<li>Nothing to reverse.</li>'}
                </ul>`;
             } catch (e) { console.error('refund math failed', e.message); }
             if (ru) await teamAlert(isAnnual ? `REFUND DUE: ${ru.name} cancelled an annual plan inside 6 months` : `REFUND DUE: ${ru.name} cancelled before the 5th`,

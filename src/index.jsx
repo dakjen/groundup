@@ -5841,7 +5841,7 @@ function RevenueTab() {
               <div style={{ width: `${pct}%`, background: "linear-gradient(90deg, #570404, #7a1010)" }} />
               <div style={{ flex: 1, background: "#7d6d6d" }} />
             </div>
-            <div style={{ fontSize: 12, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>Memberships split <strong>75% to NREUV</strong> · retainers, 1:1s & intakes <strong>90%</strong> · Lunch & Learn <strong>100%</strong> (one-time revenue like L&L and passes isn't in MRR, so it isn't shown here). This is the recurring base at list price; per the services agreement, Stripe's fees come off before the split and are borne pro rata, and 20% of each payment sits in the refund reserve until the sweep on the 7th — the actual figures are in the statement below.</div>
+            <div style={{ fontSize: 12, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>Memberships split <strong>75% to NREUV</strong> · retainers, 1:1s & intakes <strong>90%</strong> · Lunch & Learn <strong>100%</strong> (one-time revenue like L&L and passes isn't in MRR, so it isn't shown here). This is the recurring base at list price; per the services agreement, Stripe's fees come off before the split and are borne pro rata. Every payment is held whole until the 5th of the next month (the last day to ask for a refund); on the 6th everything above the reserve settles — NREUV's share is transferred and DakJen's share is paid out to the bank. The actual figures are in the statement below.</div>
           </div>
         );
       })()}
@@ -5895,14 +5895,14 @@ function RevenueTab() {
             </div>
             {rs && (
               <div style={{ background: "#faf7f2", border: "1px solid #e5dccf", borderRadius: 12, padding: "16px 18px" }}>
-                <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: F, marginBottom: 8 }}>Refund reserve</div>
+                <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: F, marginBottom: 8 }}>Held in the balance · refund reserve</div>
                 <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "baseline", marginBottom: 8 }}>
-                  <div><span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#161616" }}>{m(rs.held_cents)}</span> <span style={{ color: "#8a8a8a", fontSize: 12, fontFamily: F }}>held · {rs.slices} payment{rs.slices === 1 ? "" : "s"}</span></div>
-                  <div style={{ color: "#444444", fontSize: 12.5, fontFamily: F }}>Maximum this month <strong>{m(rs.cap_cents)}</strong> ($1,000 per ten paying members · {rs.paying} paying)</div>
-                  <div style={{ color: "#444444", fontSize: 12.5, fontFamily: F }}>Floor <strong>{m(rs.floor_cents)}</strong></div>
+                  <div><span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#161616" }}>{m(rs.held_cents)}</span> <span style={{ color: "#8a8a8a", fontSize: 12, fontFamily: F }}>held · {rs.slices} payment{rs.slices === 1 ? "" : "s"} awaiting settlement</span></div>
+                  <div style={{ color: "#444444", fontSize: 12.5, fontFamily: F }}>Reserve floor <strong>{m(rs.cap_cents)}</strong> ($1,000 per ten paying members · {rs.paying} paying)</div>
+                  
                 </div>
                 <div style={{ height: 8, background: "#efe9e2", borderRadius: 99, overflow: "hidden", marginBottom: 8 }}><div style={{ width: `${pct}%`, height: "100%", background: "linear-gradient(90deg, #b80101, #570404)", borderRadius: 99 }} /></div>
-                <div style={{ color: "#8d847a", fontSize: 12, fontFamily: F, lineHeight: 1.6 }}>{rs.swept_this_month ? `Swept this month: ${rs.swept_this_month}.` : `Next sweep ${new Date(rs.next_sweep).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}: released down to the floor, oldest payments first, each at its own rate.`} 20% of each payment is held until the cap; past the cap, payments split in full.</div>
+                <div style={{ color: "#8d847a", fontSize: 12, fontFamily: F, lineHeight: 1.6 }}>{rs.swept_this_month ? `This month: ${rs.swept_this_month}.` : `Next settlement ${new Date(rs.next_sweep).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}: last month's payments settle oldest first down to the floor — NREUV's share transferred, DakJen's share paid out.`} The whole of every payment is held until then, so a refund comes out of held money, never out of money already paid to either side. Needs Stripe payouts set to manual.</div>
               </div>
             )}
           </div>

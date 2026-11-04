@@ -141,7 +141,7 @@ export async function sendEmail(to, subject, innerHtml, opts = {}) {
   const html = opts.raw ? innerHtml : wrap(innerHtml, to, opts.light);
   const payload = {
     sender: sender(),
-    replyTo: replyTo(),
+    ...(opts.noReplyTo ? {} : { replyTo: replyTo() }),
     to: [{ email: to }],
     subject,
     htmlContent: html,
@@ -838,6 +838,27 @@ export function insiderEveningEmail(name, opts = {}) {
       ${seqP('If you already joined today, thank you. You are in, and your seat is yours.', { size: 13, color: '#8a8a8a' })}
       ${seqP(`Something not working? <a href="${siteUrl()}/support" style="color:#b80101;font-weight:bold;">I'm experiencing technical difficulties →</a> Or just reply to this email; replies reach Dr. Merritt's team directly.`, { size: 13, color: '#8a8a8a' })}
       ${seqSign()}`,
+  };
+}
+
+// Nov 4, to every insider who has not joined: a plain note, no design, no
+// header, no button — the designed ones have been landing in Promotions.
+// Send with { raw: true, noReplyTo: true, marketing: true }.
+export function insiderPlainDeadlineEmail(name, opts = {}) {
+  const first = firstName(name);
+  const link = opts.link || `${siteUrl()}/?join=1`;
+  const p = (t) => `<p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#222222;">${t}</p>`;
+  return {
+    subject: 'Tomorrow',
+    html: `<div style="max-width:560px;margin:0;padding:8px 0;">
+      ${p(`Hi ${first},`)}
+      ${p(`Quick note, sent plain because our emails this week may have been going to your spam or promotions folder.`)}
+      ${p(`Tomorrow, Thursday, is the last day to get your founding membership. Your link:`)}
+      ${p(`<a href="${link}" style="color:#b80101;">${link}</a>`)}
+      ${p(`That's it. Thank you.`)}
+      ${p(`Gina`)}
+      <p style="margin:28px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.5;color:#999999;">Northern Real Estate Urban Ventures · 825 10th St NW, Suite 981, Washington, DC 20001${opts.to ? ` · <a href="${unsubLink(opts.to)}" style="color:#999999;">Unsubscribe</a>` : ''}</p>
+    </div>`,
   };
 }
 

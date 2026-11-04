@@ -337,36 +337,68 @@ async function cronRun(req, res) {
       } catch (e) { await alertFailure('launch drip — ' + list, e); }
     }
 
-    // Refund reserve sweep. The reserve fills from 20% of each sale (up to the
-    // cap: $1,000 per ten paying members). On the 7th of each month — two days
-    // after the monthly refund window closes on the 5th — it is swept down to the
-    // $1,000 floor, oldest slices first, each released at its own payment's rate.
+    // THE 6TH-OF-THE-MONTH SETTLEMENT. Every payment is held whole in the
+    // balance until the 5th of the following month — the 5th is the last day a
+    // member can ask for that month's refund. On the 6th, each payment from
+    // before the 1st settles, oldest first, as long as what stays behind is at
+    // or above the reserve ($1,000 per ten paying members, measured on the 1st;
+    // override with settings.reserve_floor_cents). Of every settled payment,
+    // NREUV's share is transferred to its account and DakJen's share is paid
+    // out to the bank. The reserve never leaves the balance: it is the refund
+    // buffer, so a refund comes out of it and not out of money already paid to
+    // either side. Requires Stripe payouts set to MANUAL — on automatic, Stripe
+    // sweeps the whole balance (reserve included) to the bank by itself.
     let released = 0, releasedCents = 0;
     if (!dripOnly && process.env.STRIPE_SECRET_KEY && process.env.NREUV_CONNECT_ACCOUNT) {
       const et = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
       const etDay = Number(et.find(p => p.type === 'day').value);
-      const monthKey = `pot_sweep_${et.find(p => p.type === 'year').value}-${et.find(p => p.type === 'month').value}`;
+      const etYear = et.find(p => p.type === 'year').value, etMonth = et.find(p => p.type === 'month').value;
+      const monthKey = `pot_sweep_${etYear}-${etMonth}`;
       const [sweptRow] = await sql`SELECT value FROM settings WHERE key = ${monthKey}`;
-      if (etDay >= 7 && !sweptRow?.value) {
-        const FLOOR = 100000;
+      if (etDay >= 6 && !sweptRow?.value) {
+        const { potCapCents } = await import('./stripe.js');
+        const FLOOR = await potCapCents(sql);
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+        let manual = null;
+        try { const acct = await stripe.accounts.retrieve(); manual = acct.settings?.payouts?.schedule?.interval === 'manual'; } catch {}
         const [tot] = await sql`SELECT COALESCE(SUM(held_cents), 0)::int AS total FROM held_transfers WHERE status = 'held'`;
         let total = tot?.total || 0;
-        const held = await sql`SELECT id, charge_id, item, held_cents, rate_pct FROM held_transfers WHERE status = 'held' ORDER BY created_at ASC LIMIT 500`;
+        // Only payments from before the 1st (ET) — this month's wait for next month's 6th.
+        const monthStartIso = new Date(`${etYear}-${etMonth}-01T05:00:00.000Z`).toISOString();
+        const held = await sql`SELECT id, charge_id, item, held_cents, rate_pct FROM held_transfers WHERE status = 'held' AND created_at < ${monthStartIso} ORDER BY created_at ASC LIMIT 500`;
+        let dakjenCents = 0; const lines = [];
         for (const h of held) {
           if (total - h.held_cents < FLOOR) break;
-          const amount = Math.floor(h.held_cents * (h.rate_pct / 100));
+          const nreuv = Math.floor(h.held_cents * (h.rate_pct / 100));
+          const dakjen = h.held_cents - nreuv;
           try {
-            if (amount > 0) await stripe.transfers.create({
-              amount, currency: 'usd', destination: process.env.NREUV_CONNECT_ACCOUNT,
+            if (nreuv > 0) await stripe.transfers.create({
+              amount: nreuv, currency: 'usd', destination: process.env.NREUV_CONNECT_ACCOUNT,
               source_transaction: h.charge_id,
-              description: `NREUV ${h.rate_pct}% of reserve release — ${h.item || 'purchase'} (reserve ${h.held_cents}¢)`,
+              description: `NREUV ${h.rate_pct}% — settlement on the 6th — ${h.item || 'purchase'} (payment net ${h.held_cents}¢)`,
             });
             await sql`UPDATE held_transfers SET status = 'released', released_at = NOW() WHERE id = ${h.id}`;
-            total -= h.held_cents; released++; releasedCents += amount;
-          } catch (e) { await alertFailure('reserve release ' + h.charge_id, e); break; }
+            total -= h.held_cents; released++; releasedCents += nreuv; dakjenCents += dakjen;
+            lines.push(`${h.item || 'purchase'}: net $${(h.held_cents / 100).toFixed(2)} → NREUV $${(nreuv / 100).toFixed(2)}, DakJen $${(dakjen / 100).toFixed(2)}`);
+          } catch (e) { await alertFailure('settlement ' + h.charge_id, e); break; }
         }
-        await sql`INSERT INTO settings (key, value) VALUES (${monthKey}, ${`swept ${released} slices, ${releasedCents}¢ to NREUV, reserve now ${total}¢`}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`;
+        // DakJen's share of everything settled goes to the bank as one payout.
+        let payoutNote = 'no payout (nothing settled)';
+        if (dakjenCents > 0) {
+          try {
+            const po = await stripe.payouts.create({ amount: dakjenCents, currency: 'usd', description: `DakJen share — settlement on the 6th (${etYear}-${etMonth})`, statement_descriptor: 'GROUNDUP SETTLE' });
+            payoutNote = `payout ${po.id} $${(dakjenCents / 100).toFixed(2)} to the bank`;
+          } catch (e) { payoutNote = `PAYOUT FAILED: ${e.message}`; await alertFailure('DakJen payout', e); }
+        }
+        const summary = `settled ${released} payments: $${(releasedCents / 100).toFixed(2)} to NREUV, ${payoutNote}; reserve now $${(total / 100).toFixed(2)} (floor $${(FLOOR / 100).toFixed(2)})${manual === false ? '; WARNING: Stripe payouts are AUTOMATIC — the reserve cannot be held until they are set to manual' : ''}`;
+        await sql`INSERT INTO settings (key, value) VALUES (${monthKey}, ${summary}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`;
+        try {
+          const { teamAlert } = await import('./_email.js');
+          await teamAlert(`Settlement ${etYear}-${etMonth}: $${(releasedCents / 100).toFixed(2)} to NREUV · $${(dakjenCents / 100).toFixed(2)} to DakJen`,
+            `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Monthly settlement ran</h2>
+             <p style="color:#444444;font-size:14px;line-height:1.8;">${summary}</p>
+             ${lines.length ? `<ul style="color:#444444;font-size:13px;line-height:1.8;">${lines.map(l => `<li>${l}</li>`).join('')}</ul>` : '<p style="color:#8a8a8a;font-size:13px;">Nothing settled this month: the held total is not yet above the reserve floor.</p>'}`);
+        } catch (e) { console.error('settlement alert failed', e.message); }
       }
     }
     // Founding email — fires itself the day the insider waitlist reaches 25
@@ -923,9 +955,9 @@ export function statementHtml(st, monthName, S = "'DM Sans',Arial,Helvetica,sans
     </table>
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:12px;">
       <tr>${td('Payments counted', false)}${td(String(st.totals.count), true, true)}</tr>
-      <tr>${td('Actually transferred to NREUV this month (immediate splits + reserve releases)', false)}${td(m(st.cats.reduce((a, c) => a + c.nreuvPaid, 0) + st.reserve.releasedNreuv), true, true)}</tr>
-      <tr>${td('Held in the refund reserve at month end', false)}${td(m(st.reserve.heldEnd), true, true)}</tr>
-      <tr>${td('Released from the reserve during the month', false)}${td(st.reserve.releasedInMonth ? `${m(st.reserve.releasedInMonth)} <span style="color:#8a8a8a;font-weight:normal;">(${m(st.reserve.releasedNreuv)} to NREUV)</span>` : '—', true, true)}</tr>
+      <tr>${td('Transferred to NREUV this month (settlement on the 6th)', false)}${td(m(st.cats.reduce((a, c) => a + c.nreuvPaid, 0) + st.reserve.releasedNreuv), true, true)}</tr>
+      <tr>${td('Held in the balance at month end (reserve + payments awaiting settlement)', false)}${td(m(st.reserve.heldEnd), true, true)}</tr>
+      <tr>${td('Settled on the 6th during the month', false)}${td(st.reserve.releasedInMonth ? `${m(st.reserve.releasedInMonth)} <span style="color:#8a8a8a;font-weight:normal;">(${m(st.reserve.releasedNreuv)} to NREUV)</span>` : '—', true, true)}</tr>
       ${st.reserve.cap ? `<tr>${td('Reserve maximum for the month', false)}${td(m(st.reserve.cap), true, true)}</tr>` : ''}
     </table>`;
 }
