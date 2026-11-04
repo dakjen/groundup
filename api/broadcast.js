@@ -372,13 +372,9 @@ async function cronRun(req, res) {
         let dakjenCents = 0; const lines = [];
         for (const h of held) {
           if (total - h.held_cents < FLOOR) break;
-          // The card fee is split 50-50; the gross splits at the item's rate.
-          // NREUV = rate × gross − half the fee. A legacy 20% slice (held before
-          // Nov 4, 2026, when the fee came off the top) keeps its old maths.
-          const whole = h.net_cents != null && h.held_cents === h.net_cents;
-          const nreuv = whole
-            ? Math.max(0, Math.min(h.held_cents, Math.round(h.gross_cents * (h.rate_pct / 100) - (h.fee_cents || 0) / 2)))
-            : Math.floor(h.held_cents * (h.rate_pct / 100));
+          // Per the services agreement, Stripe's fee comes off before the split and
+          // both parties bear it in proportion to their shares: NREUV = rate × net.
+          const nreuv = Math.floor(h.held_cents * (h.rate_pct / 100));
           const dakjen = h.held_cents - nreuv;
           try {
             if (nreuv > 0) await stripe.transfers.create({
@@ -938,8 +934,7 @@ export async function revenueStatement(sql, start, end) {
   const cats = CATS.map(([key, label, fee]) => {
     const r = by[key] || { n: 0, gross: 0, fees: 0, refunds: 0, chargebacks: 0, nreuv_paid: 0 };
     const platform = Math.max(0, r.gross - r.refunds - r.chargebacks - r.fees);   // Platform Revenue per the agreement
-    // The card fee is split 50-50; the fee percentage applies to receipts before it.
-    const notable = Math.max(0, Math.round((r.gross - r.refunds - r.chargebacks) * fee / 100) - Math.round(r.fees / 2));
+    const notable = Math.round(platform * fee / 100);
     return { key, label, feePct: fee, count: r.n, gross: r.gross, refunds: r.refunds, chargebacks: r.chargebacks, fees: r.fees, platform, notable, nreuv: platform - notable, nreuvPaid: r.nreuv_paid };
   });
   let heldEnd = 0, releasedInMonth = 0, releasedNreuv = 0, cap = null;
@@ -957,7 +952,7 @@ export function statementHtml(st, monthName, S = "'DM Sans',Arial,Helvetica,sans
   const row = (c, strong) => `<tr>${td(c.label, false, strong)}${td(m(c.gross), true)}${td(c.refunds || c.chargebacks ? '(' + m(c.refunds + c.chargebacks) + ')' : '—', true)}${td('(' + m(c.fees) + ')', true)}${td(m(c.platform), true, true)}${td(c.feePct === undefined ? m(c.notable) : `${m(c.notable)} <span style="color:#8a8a8a;font-weight:normal;">(${c.feePct}%)</span>`, true)}${td(m(c.nreuv), true, true)}</tr>`;
   return `
     <div style="font-family:${S};font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#b80101;font-weight:bold;margin:26px 0 8px;">Revenue statement — ${monthName}</div>
-    <p style="font-family:${S};color:#8a8a8a;font-size:12px;margin:0 0 10px;line-height:1.6;">Per Section 3 of the services agreement. Platform Revenue is gross receipts less refunds, chargebacks and processing fees. The fee percentage applies to receipts in each category, and Stripe's card fees are split 50-50 between the two parties. A record of the split, not a bill.</p>
+    <p style="font-family:${S};color:#8a8a8a;font-size:12px;margin:0 0 10px;line-height:1.6;">Per Section 3 of the services agreement. Platform Revenue is gross receipts less refunds, chargebacks and processing fees; the fee is calculated on Platform Revenue in each category, so both parties bear processing fees in proportion to their shares. A record of the split, not a bill.</p>
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;">
       <tr>${th('Category')}${th('Gross', 1)}${th('Refunds / CB', 1)}${th('Stripe fees', 1)}${th('Platform revenue', 1)}${th('Notable fee', 1)}${th('NREUV share', 1)}</tr>
       ${st.cats.map(c => row(c)).join('')}
