@@ -6118,6 +6118,14 @@ function UsersTab({ btnRed, btnGhost, inp, lbl, teamOnly = false }) {
           const csv = [header.join(",")].concat(rows.map(r => r.map(esc).join(","))).join("\n");
           const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" })); a.download = `groundup-members-onboarding-${new Date().toISOString().slice(0, 10)}.csv`; a.click(); URL.revokeObjectURL(a.href);
         }} style={{ ...btnGhost, fontSize: 12, padding: "7px 14px" }}>Download CSV with onboarding answers</button>}
+        {!teamOnly && users.length > 0 && <button onClick={() => {
+          const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+          const TD = { Free: "Free", Basic: "Member", Builder: "Builder", Premium: "Premium", Elite: "Owner" };
+          const header = ["Name", "Email", "Plan", "Status", "Paid or comped", "Joined", "Company", "Location"];
+          const rows = users.filter(u => (u.role || "member") === "member").map(u => [u.name, u.email, TD[u.tier] || u.tier, u.membership_status || "", u.comped ? "comped" : (u.tier && u.tier !== "Free" ? "paid" : "free"), u.created_at ? new Date(u.created_at).toLocaleDateString() : "", u.company, u.location]);
+          const csv = [header.join(",")].concat(rows.map(r => r.map(esc).join(","))).join("\n");
+          const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" })); a.download = `groundup-members-${new Date().toISOString().slice(0, 10)}.csv`; a.click(); URL.revokeObjectURL(a.href);
+        }} style={{ ...btnGhost, fontSize: 12, padding: "7px 14px" }}>Download members CSV</button>}
       </div>
       <p style={{ color: "#666666", fontSize: 13, marginBottom: 32 }}>Manage members, plan tiers, team access, and password resets.</p>
 
