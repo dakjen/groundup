@@ -5,11 +5,20 @@
 // their account (users.referred_by). A referral COUNTS when the referred person
 // makes their first membership payment; signups alone are shown but do not
 // move the milestone count. The rewards at each milestone are deliberately not
-// published: the team is emailed when a member reaches one and decides what to
-// do, then marks it granted in Admin → Gifts & Invites.
-import { sendEmail } from './_email.js';
+// published. The first milestone's reward is a thank-you email from Dr. Merritt,
+// sent and marked granted on the spot (Dakotah, Nov 6, 2026). At 5, 10 and 25
+// the team is emailed, decides what to do, then marks it granted in
+// Admin → Gifts & Invites.
+import { sendEmail, teamAlert } from './_email.js';
 
-export const MILESTONES = [1, 3, 5, 10, 25];
+export const MILESTONES = [1, 5, 10, 25];
+// What the team grants at each milestone (not shown to members). Blank = not decided yet.
+export const MILESTONE_REWARDS = {
+  1: 'A thank-you email from Dr. Merritt (sent automatically)',
+  5: 'A GroundUp shop item of their choice (comp it to them in Admin → Shop)',
+  10: 'A free hour with Dr. Merritt (book it as a comped 60-minute session)',
+  25: '',
+};
 
 // Personal, name-based code: "dakotah-jennifer", with a numeric suffix only
 // if two people share the exact name. Keeps an existing code if there is one.
@@ -57,19 +66,34 @@ export async function recordReferralPaid(sql, paidUserId) {
     await sql`INSERT INTO referral_milestones (user_id, milestone, reached_at) VALUES (${referrerId}, ${m}, NOW()) ON CONFLICT (user_id, milestone) DO NOTHING`;
   }
   const top = Math.max(...reached);
+  const firstOnly = top === 1;
   try {
-    await sendEmail(process.env.ADMIN_EMAIL || 'djmj@nreuv.com',
+    await teamAlert(
       `Referral milestone: ${ref?.name} has ${stats.paid} paid referral${stats.paid === 1 ? '' : 's'}`,
       `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Referral milestone reached</h2>
        <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${ref?.name}</strong> (${ref?.email}) now has <strong style="color:#161616;">${stats.paid} paid referral${stats.paid === 1 ? '' : 's'}</strong> and ${stats.signed_up} signed up through their link. Milestone: <strong style="color:#161616;">${top}</strong>.</p>
-       <p style="color:#444444;font-size:14px;line-height:1.8;">Decide the reward, deliver it, then mark it granted in Admin → Gifts & Invites → Founding referrals.</p>`);
+       ${firstOnly
+         ? `<p style="color:#444444;font-size:14px;line-height:1.8;">The reward at the first milestone is a thank-you from Dr. Merritt. It has been sent and marked granted. Nothing to do.</p>`
+         : `<p style="color:#444444;font-size:14px;line-height:1.8;">Reward at ${top}: <strong style="color:#161616;">${MILESTONE_REWARDS[top] || 'not decided yet'}</strong>. Deliver it, then mark it granted in Admin → Gifts & Invites → Founding referrals.</p>`}`);
   } catch (e) { console.error('milestone email failed', e.message); }
   if (ref?.email) {
+    const first = String(ref.name || '').trim().split(/\s+/)[0] || 'there';
     try {
-      await sendEmail(ref.email, `You just reached a referral milestone`,
-        `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${stats.paid} of the people you sent us ${stats.paid === 1 ? 'is' : 'are'} now members.</h2>
-         <p style="color:#444444;font-size:14px;line-height:1.8;">That is a milestone, and milestones come with something from us. Dr. Merritt's team will be in touch with what it is.</p>
-         <p style="color:#444444;font-size:14px;line-height:1.8;">Thank you for building this with us.</p>`);
+      if (firstOnly) {
+        // The first milestone's reward is this note itself.
+        await sendEmail(ref.email, `Thank you, ${first}`,
+          `<p style="color:#444444;font-size:15px;line-height:1.9;">Hi ${first},</p>
+           <p style="color:#444444;font-size:15px;line-height:1.9;">Someone you sent to GroundUp just became a member. I wanted to say thank you myself.</p>
+           <p style="color:#444444;font-size:15px;line-height:1.9;">A recommendation from someone doing the work means more than anything we could put in an ad. You vouched for us, and we will take care of them.</p>
+           <p style="color:#444444;font-size:15px;line-height:1.9;">Your link keeps working, and there is more from us as the people you send keep joining.</p>
+           <p style="color:#444444;font-size:15px;line-height:1.9;">Gina</p>`);
+        await sql`UPDATE referral_milestones SET granted_at = NOW() WHERE user_id = ${referrerId} AND milestone = 1 AND granted_at IS NULL`;
+      } else {
+        await sendEmail(ref.email, `You just reached a referral milestone`,
+          `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">${stats.paid} of the people you sent us are now members.</h2>
+           <p style="color:#444444;font-size:14px;line-height:1.8;">That is a milestone, and milestones come with something from us. Dr. Merritt's team will be in touch with what it is.</p>
+           <p style="color:#444444;font-size:14px;line-height:1.8;">Thank you for building this with us.</p>`);
+      }
     } catch (e) { console.error('milestone member email failed', e.message); }
   }
 }
