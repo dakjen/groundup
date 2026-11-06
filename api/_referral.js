@@ -17,7 +17,7 @@ export const MILESTONE_REWARDS = {
   1: 'A thank-you email from Dr. Merritt (sent automatically)',
   5: 'A GroundUp shop item of their choice (comp it to them in Admin → Shop)',
   10: 'A free hour with Dr. Merritt (book it as a comped 60-minute session)',
-  25: '',
+  25: 'Free months on their plan: 3 for Premium and Owner, 4 for Member and Builder (comp them in Admin → Users)',
 };
 
 // Personal, name-based code: "dakotah-jennifer", with a numeric suffix only
