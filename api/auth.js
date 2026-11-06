@@ -248,8 +248,13 @@ export default async function handler(req, res) {
             // may join early for whatever founding seats remain.
             const [wd] = await sql`SELECT value FROM settings WHERE key = 'insider_window_days'`;
             const windowOver = Date.now() >= new Date(at('launch_insider_at')).getTime() + Math.max(1, parseInt(wd?.value, 10) || 5) * 86400000;
+            // The waitlist froze at midnight ET, Nov 7, 2026 (Dakotah): only
+            // people who were on it by then may join before the public launch.
+            // Later waitlist signups still get the Dec 1 email; they wait.
+            const [fr] = await sql`SELECT value FROM settings WHERE key = 'waitlist_freeze_at'`;
+            const freeze = fr?.value && !isNaN(Date.parse(fr.value)) ? new Date(fr.value) : new Date('2026-11-07T05:00:00.000Z');
             const [wl] = windowOver
-              ? await sql`SELECT id FROM waitlist WHERE LOWER(email) = LOWER(${tryEmail}) LIMIT 1`
+              ? await sql`SELECT id FROM waitlist WHERE LOWER(email) = LOWER(${tryEmail}) AND created_at < ${freeze.toISOString()} LIMIT 1`
               : await sql`SELECT id FROM waitlist WHERE LOWER(email) = LOWER(${tryEmail}) AND COALESCE(list, 'insider') = 'insider' LIMIT 1`;
             isInsider = !!wl;
           }
