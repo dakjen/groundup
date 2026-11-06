@@ -6133,6 +6133,22 @@ function UsersTab({ btnRed, btnGhost, inp, lbl, teamOnly = false }) {
         </div>
       )}
 
+      {/* Totals — paid and comped counted apart */}
+      {!teamOnly && (() => {
+        const m = users.filter(u => (u.role || "member") !== "admin");
+        const comped = m.filter(u => u.comped).length;
+        const paid = m.filter(u => !u.comped && u.tier && u.tier !== "Free").length;
+        const free = m.length - comped - paid;
+        return (
+          <div style={{ display: "flex", alignItems: "baseline", gap: 18, flexWrap: "wrap", marginBottom: 14, fontFamily: "'DM Sans', sans-serif" }}>
+            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 30, color: "#161616", lineHeight: 1 }}>{m.length} <span style={{ fontSize: 14, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, color: "#666666", letterSpacing: "1.5px", textTransform: "uppercase" }}>users</span></span>
+            <span style={{ fontSize: 13, color: "#161616", fontWeight: 700 }}>{paid} paid</span>
+            <span style={{ fontSize: 13, color: "#1a7a3a", fontWeight: 700 }}>{comped} comped</span>
+            <span style={{ fontSize: 13, color: "#666666", fontWeight: 700 }}>{free} free</span>
+          </div>
+        );
+      })()}
+
       {/* Tier summary */}
       <div style={{ display: "grid", gridTemplateColumns: `repeat(${TIERS.length}, minmax(0, 1fr))`, gap: 10, marginBottom: 32 }}>
         {TIERS.map(t => (
