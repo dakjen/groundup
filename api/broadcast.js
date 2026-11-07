@@ -611,16 +611,19 @@ async function cronRun(req, res) {
       try {
         const [untilRow] = await sql`SELECT value FROM settings WHERE key = 'engagement_reports_until'`;
         const until = untilRow?.value || '2026-11-30';
-        const batches = await sql`SELECT kind, list, subject, DATE(created_at) AS day, MIN(created_at) AS first_at, COUNT(*)::int AS n
+        const batches = await sql`SELECT kind, list, DATE(created_at) AS day, MIN(created_at) AS first_at, COUNT(*)::int AS n,
+            CASE WHEN COUNT(DISTINCT subject) = 1 THEN MIN(subject) ELSE REGEXP_REPLACE(MIN(subject), '^[^,]+, ', '') END AS subject
           FROM email_log WHERE ok = TRUE AND created_at > '2026-10-17' AND created_at <= ${until + ' 23:59:59'}
             AND created_at < NOW() - interval '3 days' AND kind NOT ILIKE 'preview%'
-          GROUP BY kind, list, subject, DATE(created_at) ORDER BY first_at ASC`;
+          GROUP BY kind, list, DATE(created_at) ORDER BY first_at ASC`;
         for (const b of batches) {
           const flagKey = `engagement_report_${b.kind}_${b.list}_${String(b.day).slice(0, 10)}`.replace(/[^a-z0-9_:-]/gi, '_').slice(0, 120);
           const [done] = await sql`SELECT value FROM settings WHERE key = ${flagKey}`;
           if (done?.value) continue;
-          const recips = await sql`SELECT recipient_name AS name, LOWER(recipient_email) AS email FROM email_log WHERE kind = ${b.kind} AND COALESCE(list,'all') = ${b.list || 'all'} AND DATE(created_at) = ${b.day} AND ok = TRUE`;
-          const report = await engagementFor(b.subject, new Date(b.first_at), recips);
+          const recips = await sql`SELECT recipient_name AS name, LOWER(recipient_email) AS email, subject FROM email_log WHERE kind = ${b.kind} AND COALESCE(list,'all') = ${b.list || 'all'} AND DATE(created_at) = ${b.day} AND ok = TRUE`;
+          // Personalized subjects ("Kanyi, your founding discount ends Thursday") differ per
+          // person, so match Brevo events on every subject in the batch, not just the first.
+          const report = await engagementFor([...new Set(recips.map(r => r.subject).filter(Boolean))], new Date(b.first_at), recips);
           const html = engagementHtml(b, report);
           const to = ['dakotah@dakjencreative.com'];
           let ok = false; for (const addr of to) ok = (await sendEmail(addr, `Opens report — ${b.kind} (${b.list || 'all'}) sent ${new Date(b.first_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}: ${report.opened.length} of ${recips.length} opened`, html, { light: true })) || ok;
@@ -1289,6 +1292,7 @@ export async function sendCommunityWeekly(sql, opts = {}) {
 // ── Who opened and clicked a send, from Brevo's event log ───────────────────
 export async function engagementFor(subject, sentAt, recipients) {
   const key = process.env.BREVO_API_KEY;
+  const subjects = new Set(Array.isArray(subject) ? subject : [subject]);
   const set = new Map(recipients.map(r => [String(r.email).toLowerCase(), { name: r.name || '', email: String(r.email).toLowerCase(), opens: 0, first: null, clicks: 0, delivered: false, bounced: false }]));
   if (key) {
     const days = Math.max(1, Math.min(30, Math.ceil((Date.now() - sentAt.getTime()) / 86400000) + 1));
@@ -1299,7 +1303,7 @@ export async function engagementFor(subject, sentAt, recipients) {
         if (!r.ok) break;
         const d = await r.json(); const evs = d.events || [];
         for (const e of evs) {
-          if (e.subject !== subject) continue;
+          if (!subjects.has(e.subject)) continue;
           const row = set.get(String(e.email).toLowerCase()); if (!row) continue;
           if (ev === 'delivered') row.delivered = true;
           else if (ev === 'opened') { row.opens++; if (!row.first || e.date < row.first) row.first = e.date; }
