@@ -129,6 +129,22 @@ async function dailyReport(sql) {
   const seats = await foundingSeats(sql);
   const emails = await sql`SELECT kind, list, COUNT(*)::int AS n, SUM(CASE WHEN ok THEN 1 ELSE 0 END)::int AS ok FROM email_log WHERE created_at >= ${since} GROUP BY kind, list ORDER BY n DESC`;
   const emailTotal = emails.reduce((a, r) => a + r.n, 0);
+  // Every member/waitlist email batch of the past 7 days, with clicks from Brevo.
+  // Clicks, not opens: Apple Mail hides opens, and an open the second a mail lands
+  // is the app pre-loading images. Personalized subjects are matched one by one.
+  const weekAgo = new Date(Date.now() - 7 * 86400000);
+  let clickRows = [];
+  try {
+    const batches = await sql`SELECT kind, list, DATE(created_at) AS day, MIN(created_at) AS first_at, COUNT(*)::int AS n
+      FROM email_log WHERE ok = TRUE AND created_at >= ${weekAgo} AND kind NOT ILIKE 'preview%'
+        AND recipient_email NOT IN ('dakotah@dakjencreative.com', 'djmj@nreuv.com', 'admin@nreuv.com', 'gmerritt@nreuv.com')
+      GROUP BY kind, list, DATE(created_at) ORDER BY first_at DESC`;
+    for (const b of batches) {
+      const recips = await sql`SELECT recipient_name AS name, LOWER(recipient_email) AS email, subject FROM email_log WHERE kind = ${b.kind} AND COALESCE(list,'all') = ${b.list || 'all'} AND DATE(created_at) = ${b.day} AND ok = TRUE`;
+      const rep = await engagementFor([...new Set(recips.map(r => r.subject).filter(Boolean))], new Date(b.first_at), recips);
+      clickRows.push({ ...b, sent: recips.length, clicked: rep.clicked.length, who: rep.clicked.map(r => r.name || r.email) });
+    }
+  } catch (e) { console.error('daily clicks failed', e.message); }
   let quizzes = [], scoping = [];
   try { quizzes = await sql`SELECT name, email, outcome FROM quiz_results WHERE created_at >= ${since} ORDER BY created_at DESC`; } catch {}
   try { scoping = await sql`SELECT name, email, stage FROM scoping_requests WHERE created_at >= ${since} ORDER BY created_at DESC`; } catch {}
@@ -144,6 +160,7 @@ async function dailyReport(sql) {
     ${h('Purchases')}${table(['When (ET)', 'Who', 'Item', 'Gross', 'Net', 'Status'], purchases.map(p => row([esc(new Date(p.created_at).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })), esc(p.name || p.email || p.customer_id || '?'), esc(p.item), money(p.gross_cents), money(p.net_cents), esc(p.status)])))}
     ${h('New paid members')}${table(['Name', 'Email', 'Plan', 'Founding'], paidMembers.map(m => row([esc(m.name), esc(m.email), esc(m.tier), (Array.isArray(m.badges) ? m.badges : []).includes('founding25') ? '✦ yes' : ''])))}
     ${h('Emails sent')}${table(['Kind', 'List', 'Sent', 'Delivered to Brevo'], emails.map(e => row([esc(e.kind), esc(e.list || ''), e.n, e.ok])))}
+    ${h('Clicks, last 7 days of sends')}${table(['Sent (ET)', 'Email', 'List', 'Sent to', 'Clicked', 'Who clicked'], clickRows.map(c => row([esc(new Date(c.first_at).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })), esc(c.kind), esc(c.list || ''), c.sent, `<strong style="color:${c.clicked ? '#1a7a3a' : '#333333'};">${c.clicked}</strong>`, esc(c.who.join(', ') || '—')])))}
     ${h('Get Started quiz')}${table(['Name', 'Email', 'Read'], quizzes.map(q => row([esc(q.name), esc(q.email), esc(q.outcome)])))}
     ${h('Scoping call requests')}${table(['Name', 'Email', 'Where they are'], scoping.map(s => row([esc(s.name), esc(s.email), esc(s.stage || '')])))}
     <p style="color:#7a5050;font-size:12px;line-height:1.7;">Full detail: Admin → Revenue, Users, Waitlist and Email. This report comes every morning at 6 AM Eastern.</p>`;
@@ -604,34 +621,8 @@ async function cronRun(req, res) {
         }
       }
     } catch (e) { await alertFailure('insider window drip failed', e); }
-    // Engagement reports: three days after each launch-related send, who opened
-    // and who clicked (from Brevo), emailed to DakJen Creative. Runs for sends up to
-    // the date in settings.engagement_reports_until (default Nov 30, 2026).
-    if (!dripOnly) {
-      try {
-        const [untilRow] = await sql`SELECT value FROM settings WHERE key = 'engagement_reports_until'`;
-        const until = untilRow?.value || '2026-11-30';
-        const batches = await sql`SELECT kind, list, DATE(created_at) AS day, MIN(created_at) AS first_at, COUNT(*)::int AS n,
-            CASE WHEN COUNT(DISTINCT subject) = 1 THEN MIN(subject) ELSE REGEXP_REPLACE(MIN(subject), '^[^,]+, ', '') END AS subject
-          FROM email_log WHERE ok = TRUE AND created_at > '2026-10-17' AND created_at <= ${until + ' 23:59:59'}
-            AND created_at < NOW() - interval '3 days' AND kind NOT ILIKE 'preview%'
-          GROUP BY kind, list, DATE(created_at) ORDER BY first_at ASC`;
-        for (const b of batches) {
-          const flagKey = `engagement_report_${b.kind}_${b.list}_${String(b.day).slice(0, 10)}`.replace(/[^a-z0-9_:-]/gi, '_').slice(0, 120);
-          const [done] = await sql`SELECT value FROM settings WHERE key = ${flagKey}`;
-          if (done?.value) continue;
-          const recips = await sql`SELECT recipient_name AS name, LOWER(recipient_email) AS email, subject FROM email_log WHERE kind = ${b.kind} AND COALESCE(list,'all') = ${b.list || 'all'} AND DATE(created_at) = ${b.day} AND ok = TRUE`;
-          // Personalized subjects ("Kanyi, your founding discount ends Thursday") differ per
-          // person, so match Brevo events on every subject in the batch, not just the first.
-          const report = await engagementFor([...new Set(recips.map(r => r.subject).filter(Boolean))], new Date(b.first_at), recips);
-          const html = engagementHtml(b, report);
-          const to = ['dakotah@dakjencreative.com'];
-          let ok = false; for (const addr of to) ok = (await sendEmail(addr, `Opens report — ${b.kind} (${b.list || 'all'}) sent ${new Date(b.first_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}: ${report.opened.length} of ${recips.length} opened`, html, { light: true })) || ok;
-          await sql`INSERT INTO settings (key, value) VALUES (${flagKey}, ${`sent ${new Date().toISOString()}`}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`;
-          drip['engagement_' + b.kind] = report.opened.length;
-        }
-      } catch (e) { await alertFailure('engagement reports failed', e); }
-    }
+    // Per-send "Opens report" emails are retired (Dakotah, Nov 8, 2026): the 6 AM
+    // daily report carries clicks for every email batch of the past week instead.
 
     // The pre-launch weekly: each issue goes once, on or after its Wednesday,
     // to the whole waitlist (both lists, comped and opted-out excluded), and
