@@ -1065,6 +1065,7 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, onSignOut, memb
   // The admin menu, grouped the way the team thinks about the work.
   // Waitlist heads the People group until the public launch passes; then Users does.
   const launched = !!(window.__guLaunchAt && new Date(window.__guLaunchAt).getTime() <= Date.now());
+  const publicPending = !!(window.__guPublicAt && new Date(window.__guPublicAt).getTime() > Date.now());
   const ADMIN_GROUPS = [
     { label: "GroundUp", items: [["courses", "Courses"], ["community", "Community"], ["resources", "Resources"]] },
     { label: "Advisory", items: [["admin-retainers", "Advisory Clients"], ["admin-bookings", "Intake & Bookings"]] },
@@ -1149,7 +1150,12 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, onSignOut, memb
             // anyone carrying a stale admin flag, so the one button meant to
             // sell the waitlist opened a sign-in box instead.
             launched
-              ? <button onClick={onSignUp} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 7, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", marginLeft: 8, whiteSpace: "nowrap" }}>Sign In / Join</button>
+              ? <>
+                  {/* Doors open to insiders and the waitlist, but not to the public until
+                      Dec 1 — so a newcomer still needs the waitlist, right in the nav. */}
+                  {publicPending && <a href="/waitlist" style={{ color: lightNav ? "#161616" : "#f0d8d8", border: lightNav ? "1px solid #b8a88a" : "1px solid #57040440", borderRadius: 7, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13, textDecoration: "none", marginLeft: 8, whiteSpace: "nowrap" }}>Join the waitlist</a>}
+                  <button onClick={onSignUp} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 7, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", marginLeft: 8, whiteSpace: "nowrap" }}>Sign In / Join</button>
+                </>
               : <button onClick={onSignUp} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 7, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", marginLeft: 8, whiteSpace: "nowrap" }}>Sign in</button>
           )}
         </div>
@@ -1194,7 +1200,10 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, onSignOut, memb
             {member ? (
               <button onClick={() => { setMenuOpen(false); go("membership"); }} style={drawerBtn(activePage === "membership", { color: lightNav ? "#161616" : "#f0d8d8", border: lightNav ? "1px solid #b8a88a" : "1px solid #57040440", fontWeight: 700, marginTop: 10 })}>{firstName(member.name)} · {member.role === "admin" ? "Team" : (TIER_LABELS[member.tier] || member.tier)}</button>
             ) : (
-              <button onClick={() => { setMenuOpen(false); onSignUp(); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 15, cursor: "pointer", marginTop: 10, width: "100%" }}>{launched ? "Sign In / Join →" : "Sign in"}</button>
+              <>
+                {launched && publicPending && <a href="/waitlist" style={{ display: "block", textAlign: "center", color: lightNav ? "#161616" : "#f0d8d8", border: lightNav ? "1px solid #b8a88a" : "1px solid #57040440", borderRadius: 8, padding: "12px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 15, textDecoration: "none", marginTop: 10 }}>Join the waitlist</a>}
+                <button onClick={() => { setMenuOpen(false); onSignUp(); }} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 8, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 15, cursor: "pointer", marginTop: 10, width: "100%" }}>{launched ? "Sign In / Join →" : "Sign in"}</button>
+              </>
             )}
           </div>
         </div>
@@ -1952,7 +1961,7 @@ function AboutPage({ setActivePage }) {
         </div>
 
         <div style={{ textAlign: "center" }}>
-          {typeof window !== "undefined" && window.__guLaunchAt && new Date(window.__guLaunchAt).getTime() > Date.now()
+          {typeof window !== "undefined" && window.__guPublicAt && new Date(window.__guPublicAt).getTime() > Date.now()
             ? <a href="/waitlist" style={{ background: "#b80101", color: "#fff", borderRadius: 10, padding: "15px 36px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, textDecoration: "none", display: "inline-block" }}>Join the Waitlist →</a>
             : <button onClick={() => setActivePage("courses")} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "15px 36px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Explore the Courses →</button>}
         </div>
@@ -8143,6 +8152,10 @@ export default function App() {
   // waitlist to someone who could have bought is a much smaller error than
   // briefly showing a buyable site to someone who cannot buy anything yet.
   const prelaunch = doorsAt ? new Date(doorsAt).getTime() > Date.now() : !launchChecked;
+  // The PUBLIC launch (Dec 1). Until then a visitor who is not on the waitlist
+  // cannot join, so the homepage keeps selling the waitlist even though the
+  // doors are open to insiders and the waitlist (Dakotah, Nov 9, 2026).
+  const publicPrelaunch = launchAt ? new Date(launchAt).getTime() > Date.now() : prelaunch;
   const [contentAgreed, setContentAgreed] = useState(() => sessionStorage.getItem("contentAgreed") === "true");
   const [showAgreement, setShowAgreement] = useState(false);
   const [pendingPage, setPendingPage] = useState(null);
@@ -8481,7 +8494,7 @@ export default function App() {
           <button onClick={goBack} aria-label={"Back to " + label} style={{ position: "fixed", top: 70, left: "clamp(12px,3vw,40px)", zIndex: 98, display: "inline-flex", alignItems: "center", gap: 6, background: light ? "rgba(255,255,255,0.92)" : "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", color: light ? "#b80101" : "#e08a8a", border: "1px solid #b8010150", borderRadius: 999, padding: "5px 13px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 12, cursor: "pointer", letterSpacing: "0.2px", boxShadow: "0 4px 16px rgba(0,0,0,0.25)" }}>← {label}</button>
         );
       })()}
-      {activePage === "home" && <HomePage setActivePage={navigateTo} onSignUp={openSignup} currentUser={currentUser} eventInvited={eventInvited} preLaunch={prelaunch} />}
+      {activePage === "home" && <HomePage setActivePage={navigateTo} onSignUp={openSignup} currentUser={currentUser} eventInvited={eventInvited} preLaunch={publicPrelaunch} />}
       {activePage === "courses" && <div key={pageKey} className="content-protected" onContextMenu={e => e.preventDefault()}><CoursesPage onCourseOpen={setCourseOpen} member={member} onSignIn={() => openSignup("Free")} onUpgrade={() => navigateTo("pricing")} onMemberUpdate={setMember} onGlossary={() => navigateTo("glossary")} onNav={navigateTo} /></div>}
       {activePage === "advisory" && <RetainerPage member={member} setActivePage={navigateTo} />}
       {activePage === "partner-interest" && <PartnerInterestPage />}
