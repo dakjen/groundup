@@ -115,7 +115,12 @@ const OFFERS = {
 
 export function FunnelPage({ offer }) {
   const o = OFFERS[offer];
-  const [form, setForm] = useState({ name: "", email: "", website: "", phone: "", stage: "", about: "" });
+  // A personal link can carry the person's name and email, and for the intake a
+  // percent off that the team has set for them on the server (?offer=50).
+  const linkParams = useMemo(() => { try { const q = new URLSearchParams(window.location.search); return { name: q.get("name") || "", email: q.get("email") || "", offer: Math.max(0, Math.min(99, parseInt(q.get("offer") || "0", 10) || 0)) }; } catch { return { name: "", email: "", offer: 0 }; } }, []);
+  const [form, setForm] = useState({ name: linkParams.name, email: linkParams.email, website: "", phone: "", stage: "", about: "" });
+  const offerPrice = o?.item === "retainer_onboarding" && linkParams.offer ? Math.round(1500 * (100 - linkParams.offer) / 100) : null;
+  const priceNote = offerPrice ? `$${offerPrice.toLocaleString()} for you · ${linkParams.offer}% off the $1,500 intake · credits toward a retainer` : o?.priceNote;
   const [bookLink, setBookLink] = useState(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
@@ -192,7 +197,7 @@ export function FunnelPage({ offer }) {
     </div>
   ) : (
     <form onSubmit={submit} id="funnel-form" style={{ background: "#0b0505", border: "1px solid #241010", borderRadius: 14, padding: compact ? "18px 16px" : "22px", display: "grid", gap: 10 }}>
-      {o.priceNote && <div style={{ color: "#d9bcbc", fontSize: 12.5, fontFamily: font, fontWeight: 800, letterSpacing: "0.3px" }}>{o.priceNote}</div>}
+      {priceNote && <div style={{ color: offerPrice ? "#f5e8e8" : "#d9bcbc", fontSize: 12.5, fontFamily: font, fontWeight: 800, letterSpacing: "0.3px" }}>{priceNote}</div>}
       <input style={inp} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Your name" required maxLength={120} autoComplete="name" />
       <input style={inp} type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="Email" required maxLength={200} autoComplete="email" inputMode="email" />
       {o.mode === "call" && (<>
@@ -263,7 +268,7 @@ export function FunnelPage({ offer }) {
 
         <div className="fn-hero">
           <div>
-            <div className="fn-eyebrow">{o.eyebrow}</div>
+            <div className="fn-eyebrow">{offerPrice ? `Full Project Intake · $${offerPrice.toLocaleString()} for you` : o.eyebrow}</div>
             <h1 className="fn-h1">{o.headline[0]} <span style={{ color: "#d9bcbc", fontStyle: "italic", fontWeight: 500 }}>{o.headline[1]}</span></h1>
             <p className="fn-sub">{o.sub}</p>
             {o.page === "lunch" && nextSession?.date && (

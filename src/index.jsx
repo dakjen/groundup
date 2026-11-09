@@ -7889,7 +7889,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-bookings", "admin-drops", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "admin-invites", "admin-team", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "refer", "support", "glossary", "library", "cohort", "get-started", "doc", "go/playbook", "go/lunch", "go/intake", "go/call"];
+  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-bookings", "admin-drops", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "admin-invites", "admin-team", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "refer", "support", "glossary", "library", "cohort", "get-started", "doc", "go/playbook", "go/lunch", "go/intake", "go/call", "go/project-intake"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
     if (!p) return "home";
@@ -7965,6 +7965,7 @@ export default function App() {
       "get-started": ["What kind of help do you need? — GroundUp by Dr. Gina Merritt", "Ten questions, one honest answer: nothing yet, a course, a membership, live time with Dr. Merritt, or one-on-one advisory work."],
       "go/call": ["A free 20-minute scoping call with the GroundUp team", "A gap that opened when pricing moved, a lender wanting more equity, a partner's decision rights against your guarantee. Twenty minutes to size it and route it to the right expertise."],
       "go/intake": ["A free 20-minute scoping call with the GroundUp team", "Tell us what you're building. We'll tell you honestly what would help: a course, a membership, office hours, or time with Dr. Merritt."],
+      "go/project-intake": ["Full Project Intake with Dr. Gina Merritt", "Your whole deal in front of thirty years of experience before the lender sees it: pro forma, capital stack, site and timeline. You get back what you missed and the order of operations from here."],
     };
     const [title, desc] = SEO[activePage] || SEO.home;
     document.title = title;
@@ -8501,7 +8502,7 @@ export default function App() {
       {activePage === "refer" && <ReferPartnerPage />}
       {activePage === "get-started" && <GetStartedPage setActivePage={navigateTo} onSignIn={() => openSignup("Free")} />}
       {activePage === "doc" && <DocViewerPage setActivePage={navigateTo} />}
-      {activePage.startsWith("go/") && <FunnelPage offer={activePage === "go/intake" ? "call" : activePage.slice(3)} />}
+      {activePage.startsWith("go/") && <FunnelPage offer={activePage === "go/intake" ? "call" : activePage === "go/project-intake" ? "intake" : activePage.slice(3)} />}
       {activePage === "partner" && <PartnerPage slug={partnerSlug} onSignIn={() => setShowAuth("login")} onExplore={() => navigateTo("courses")} />}
       {activePage === "shop" && <ShopPage member={member} onSignIn={() => openSignup("Free")} />}
       {activePage === "terms" && <TermsPage />}

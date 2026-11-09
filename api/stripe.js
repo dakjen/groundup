@@ -1084,11 +1084,24 @@ export default async function handler(req, res) {
         if (!intake) foundingSpec = { id: 'FOUNDRET15X3', percent_off: 15, duration: 'repeating', months: 3 };
       }
     }
-    const unitAmount = memberPrice(item, user.tier);
+    let unitAmount = memberPrice(item, user.tier);
+    // A personal intake offer: settings "intake_offer:<email>" = percent off the
+    // Full Project Intake for that one person (Keisha, 50%, Nov 9 2026). Set by
+    // the team in the DB; the funnel page shows it when the link carries ?offer=.
+    let intakeOffer = 0;
+    if (item === 'retainer_onboarding') {
+      try {
+        const [io] = await sql`SELECT value FROM settings WHERE key = ${'intake_offer:' + String(user.email).toLowerCase()}`;
+        const pct = parseInt(io?.value, 10);
+        if (Number.isFinite(pct) && pct > 0 && pct < 100) { intakeOffer = pct; unitAmount = Math.round(product.amount * (100 - pct) / 100); }
+      } catch {}
+    }
     const grandfathered = !!foundingSpec;
     const saved = product.amount - unitAmount;
     const productName = grandfathered
       ? `${product.name} — Founding Member`
+      : intakeOffer
+        ? `${product.name} — ${intakeOffer}% off, for ${firstName(user.name)}`
       : saved > 0
         // State the advertised rate, not the effective one. Prices round DOWN to
         // the nearest $5 in the member's favour, so a 10% discount off $425 lands
