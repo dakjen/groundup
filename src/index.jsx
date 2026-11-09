@@ -5897,12 +5897,16 @@ function RevenueTab() {
               <div style={{ background: "#faf7f2", border: "1px solid #e5dccf", borderRadius: 12, padding: "16px 18px" }}>
                 <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: F, marginBottom: 8 }}>Held in the balance · refund reserve</div>
                 <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "baseline", marginBottom: 8 }}>
-                  <div><span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#161616" }}>{m(rs.held_cents)}</span> <span style={{ color: "#8a8a8a", fontSize: 12, fontFamily: F }}>held · {rs.slices} payment{rs.slices === 1 ? "" : "s"} awaiting settlement</span></div>
-                  <div style={{ color: "#444444", fontSize: 12.5, fontFamily: F }}>Reserve floor <strong>{m(rs.cap_cents)}</strong> ($1,000 per ten paying members · {rs.paying} paying)</div>
-                  
+                  <div><span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#161616" }}>{m(rs.held_cents)}</span> <span style={{ color: "#8a8a8a", fontSize: 12, fontFamily: F }}>held by the site</span></div>
+                  <div style={{ color: "#444444", fontSize: 12.5, fontFamily: F }}>Reserve floor <strong>{m(rs.cap_cents)}</strong>{rs.floor_fixed ? " (set by the team)" : ` ($1,000 per ten paying members · ${rs.paying} paying)`}</div>
+                  {rs.stripe && <div style={{ color: "#444444", fontSize: 12.5, fontFamily: F }}>Stripe balance <strong>{m(rs.stripe.available_cents)}</strong> available{rs.stripe.pending_cents ? ` · ${m(rs.stripe.pending_cents)} pending` : ""}</div>}
+                </div>
+                <div style={{ color: "#444444", fontSize: 12.5, fontFamily: F, marginBottom: 8, lineHeight: 1.6 }}>
+                  {rs.whole_n > 0 && <span>{rs.whole_n} payment{rs.whole_n === 1 ? "" : "s"} held whole, {m(rs.whole_cents)}, awaiting the {new Date(rs.next_sweep).toLocaleDateString(undefined, { month: "long", day: "numeric" })} settlement. </span>}
+                  {rs.slice_n > 0 && <span>Plus {m(rs.slice_cents)} of reserve left from {rs.slice_n} launch payment{rs.slice_n === 1 ? "" : "s"} that were already split and paid to both sides.</span>}
                 </div>
                 <div style={{ height: 8, background: "#efe9e2", borderRadius: 99, overflow: "hidden", marginBottom: 8 }}><div style={{ width: `${pct}%`, height: "100%", background: "linear-gradient(90deg, #b80101, #570404)", borderRadius: 99 }} /></div>
-                <div style={{ color: "#8d847a", fontSize: 12, fontFamily: F, lineHeight: 1.6 }}>{rs.swept_this_month ? `This month: ${rs.swept_this_month}.` : `Next settlement ${new Date(rs.next_sweep).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}: last month's payments settle oldest first down to the floor — NREUV's share transferred, DakJen's share paid out.`} The whole of every payment is held until then, so a refund comes out of held money, never out of money already paid to either side. Needs Stripe payouts set to manual.</div>
+                <div style={{ color: "#8d847a", fontSize: 12, fontFamily: F, lineHeight: 1.6 }}>{rs.swept_this_month ? `This month: ${rs.swept_this_month}.` : `Next settlement ${new Date(rs.next_sweep).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}.`} On the 6th, last month's payments settle oldest first while the pot stays at or above the floor. What settles splits 75/25: NREUV's share transferred, DakJen's paid to the bank. A refund comes out of the held pot, so both sides bear it.</div>
               </div>
             )}
           </div>
@@ -6663,7 +6667,7 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl, mode = 'referrals' }) {
       {showInvites && <div style={{ background: "#ffffff", border: "1px solid #e0c4c4", borderRadius: 14, padding: 28, marginBottom: 28 }}>
         <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>✦ Founding referrals</div>
         <p style={{ color: "#666666", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, marginBottom: 18 }}>
-          Every founding member gets a personal link the moment their first payment lands. A referral <strong>counts when the person they sent becomes a paying member</strong>. Milestones are at {founders?.ladder ? founders.ladder.join(", ") : "1, 5, 10, 25"} paid referrals. At 1 the reward is a thank-you email from Dr. Merritt, sent and marked granted on its own. At 5 it is a shop item of their choice, at 10 a free hour with Dr. Merritt; when one of those is crossed you get an email, deliver it, and mark it granted here. The rewards are not published to members.
+          Every founding member gets a personal link the moment their first payment lands. A referral <strong>counts when the person they sent becomes a paying member</strong>. Milestones are at {founders?.ladder ? founders.ladder.join(", ") : "1, 5, 10, 25"} paid referrals. At 1 the reward is a personal email from Dr. Merritt; she gets an alert with a draft and sends it from her own inbox. At 5 it is a shop item of their choice, at 10 a free hour with Dr. Merritt; when one of those is crossed you get an email, deliver it, and mark it granted here. The rewards are not published to members.
         </p>
         {!founders ? <div style={{ color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>Loading…</div>
           : founders.founders.length === 0 ? <div style={{ color: "#9a9a9a", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>No founding members yet. Links are granted at the first paid membership after the insider launch.</div>
