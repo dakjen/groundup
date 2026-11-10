@@ -220,10 +220,13 @@ function LessonChart({ chart, color }) {
 // and the signed-in member's email tiled faintly across the content so a
 // screenshot identifies the account it came from. (True screenshot BLOCKING
 // is not possible on the web — this is deterrence plus traceability.)
-function ProtectedContent({ email, label, children }) {
+function ProtectedContent({ email, label, exempt, children }) {
   const labelRef = useRef(label);
   labelRef.current = label;
+  // Team accounts are exempt from all of it (Dakotah, Nov 10, 2026): no blocking,
+  // no reporting, no veil, no watermark. Protection is for members.
   useEffect(() => {
+    if (exempt) return;
     const style = document.createElement("style");
     style.textContent = "@media print { .gu-protected { display: none !important; } body::after { content: 'GroundUp course content is not printable.'; color: #000; font-size: 18px; } }";
     document.head.appendChild(style);
@@ -251,6 +254,7 @@ function ProtectedContent({ email, label, children }) {
   // be pre-empted; the watermark covers those.
   const [veiled, setVeiled] = useState(false);
   useEffect(() => {
+    if (exempt) return;
     let timer = null, away = false;
     const hold = (ms) => { setVeiled(true); clearTimeout(timer); timer = setTimeout(() => { if (!away) setVeiled(false); }, ms); };
     const onKeyDown = (e) => { if ((e.metaKey && e.shiftKey) || e.key === "PrintScreen") hold(10000); };
@@ -267,6 +271,7 @@ function ProtectedContent({ email, label, children }) {
     document.addEventListener("visibilitychange", onVis);
     return () => { clearTimeout(timer); document.removeEventListener("keydown", onKeyDown, true); document.removeEventListener("keyup", onKeyUp, true); window.removeEventListener("blur", onBlur); window.removeEventListener("focus", onFocus); document.removeEventListener("visibilitychange", onVis); };
   }, []);
+  if (exempt) return <>{children}</>;
   const marks = [];
   if (email) for (let i = 0; i < 12; i++) marks.push(<div key={i} style={{ position: "absolute", top: `${Math.floor(i / 3) * 26 + 6}%`, left: `${(i % 3) * 34 + 2}%`, transform: "rotate(-24deg)", color: "rgba(200,160,160,0.055)", fontSize: 15, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, whiteSpace: "nowrap", pointerEvents: "none", userSelect: "none", zIndex: 3 }}>{email} · GroundUp</div>);
   return (
@@ -664,7 +669,7 @@ function MiniCoursePage({ course, onBack, backLabel, member, onUpgrade, onMember
     const lessonMaterials = lessonMats[pdfKey] || [];
     return (
       <div style={{ background: pageBg, minHeight: "100vh", padding: "100px clamp(20px,5vw,60px) 80px" }}>
-        <ProtectedContent email={member?.email} label={`${course.title} › ${lesson.title}`}>
+        <ProtectedContent email={member?.email} exempt={member?.role === "admin"} label={`${course.title} › ${lesson.title}`}>
         <div style={{ maxWidth: 760, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 40, flexWrap: "wrap" }}>
             <button onClick={() => { setActiveLesson(null); setPlayingVideo(false); }} style={{ background: "transparent", color: "#6a6b69", border: "1px solid #1a0000", borderRadius: 8, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>← Back to lessons</button>

@@ -524,6 +524,9 @@ export default async function handler(req, res) {
     if (action === 'capture_event') {
       const session = getSession(req);
       if (!session || !session.uid) return res.json({ success: true });
+      // Team accounts are never logged, alerted on or reminded.
+      if (session.role === 'admin') return res.json({ success: true });
+      { const [who] = await sql`SELECT role FROM users WHERE id = ${session.uid}`; if ((who?.role || 'member') === 'admin') return res.json({ success: true }); }
       const kind = String(req.body.kind || 'unknown').slice(0, 40);
       const where = String(req.body.where || '').slice(0, 120);
       // What they were looking at: "Course › Lesson", sent by the lesson page.
