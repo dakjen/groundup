@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { neon } from '@neondatabase/serverless';
 import { signToken, getSession, hashPassword, verifyPassword, benefitGate } from './_utils.js';
-import { sendEmail, addContact, addLnlContact, welcomeEmail, resetEmail, siteUrl } from './_email.js';
+import { sendEmail, addContact, addLnlContact, welcomeEmail, resetEmail, siteUrl, captureReminderEmail } from './_email.js';
 import { verifyToken } from './_utils.js';
 
 const PUBLIC_FIELDS = 'id, name, email, tier, role, membership_status, created_at';
@@ -273,7 +273,7 @@ export default async function handler(req, res) {
           // paid tiers still come solely from Stripe.
           const intent = String(req.body.tier || '');
           if (!['Basic', 'Builder', 'Premium', 'Elite'].includes(intent)) {
-            return res.status(403).json({ error: 'Before December 1, an account comes with a paid plan. Choose your plan to claim your founding seat.' });
+            return res.status(403).json({ error: 'Before December 1, an account comes with a paid plan. Choose your plan to join.' });
           }
           const { foundingSeats } = await import('./stripe.js');
           const seats = await foundingSeats(sql);
@@ -526,17 +526,31 @@ export default async function handler(req, res) {
       if (!session || !session.uid) return res.json({ success: true });
       const kind = String(req.body.kind || 'unknown').slice(0, 40);
       const where = String(req.body.where || '').slice(0, 120);
-      const [recent] = await sql`SELECT id FROM capture_log WHERE user_id = ${session.uid} AND created_at > NOW() - interval '1 day' LIMIT 1`;
-      await sql`INSERT INTO capture_log (user_id, kind, place, created_at) VALUES (${session.uid}, ${kind}, ${where}, NOW())`;
+      // What they were looking at: "Course › Lesson", sent by the lesson page.
+      const what = String(req.body.what || '').replace(/[<>]/g, '').slice(0, 240);
+      const did = { printscreen_key: 'pressed the PrintScreen key', copy_attempt: 'tried to copy or save (Ctrl/Cmd + C, X or S)', print_attempt: 'tried to print' }[kind] || kind;
+      // Every signal alerts the team and reminds the member (Dakotah, Nov 10, 2026).
+      // The only guard is one minute, so a burst of key presses is one email, not five.
+      const [recent] = await sql`SELECT id FROM capture_log WHERE user_id = ${session.uid} AND created_at > NOW() - interval '1 minute' LIMIT 1`;
+      await sql`INSERT INTO capture_log (user_id, kind, place, created_at) VALUES (${session.uid}, ${kind}, ${what ? `${what} (${where})` : where}, NOW())`;
       if (!recent) {
         try {
           const [u] = await sql`SELECT name, email, tier FROM users WHERE id = ${session.uid}`;
           if (u) await sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com',
-            `CONTENT CAPTURE SIGNAL: ${u.name} (${kind})`,
+            `CONTENT CAPTURE SIGNAL: ${u.name}${what ? ' — ' + what : ''} (${kind})`,
             `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Possible content capture</h2>
-             <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u.name}</strong> (${u.email}, ${u.tier}) triggered a capture signal — <strong style="color:#161616;">${kind}</strong>${where ? ` on ${where}` : ''}. Their lesson view carries their email watermarked across the content, so any leaked screenshot traces back to this account. Further signals from them today are logged silently (capture_log table).</p>
+             <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u.name}</strong> (${u.email}, ${u.tier}) ${did}${what ? ` while viewing <strong style="color:#161616;">${what}</strong>` : ''}${where ? ` (page ${where})` : ''}. They were sent the automatic content reminder. Their lesson view carries their email watermarked across the content, so any leaked screenshot traces back to this account. </p>
              <p style="color:#7a5050;font-size:12px;line-height:1.7;">Caveat: browsers can only see PrintScreen keys and blocked copy/print attempts — macOS and phone screenshots are invisible to any website, which is why the watermark is the real protection.</p>`);
         } catch (e) { console.error('capture alert failed', e.message); }
+        // The member gets a light reminder too, automatically, every time.
+        // Team accounts are skipped.
+        try {
+          const [m] = await sql`SELECT name, email, role FROM users WHERE id = ${session.uid}`;
+          if (m?.email && (m.role || 'member') !== 'admin') {
+            const mail = captureReminderEmail(m.name);
+            await sendEmail(m.email, mail.subject, mail.html);
+          }
+        } catch (e) { console.error('capture reminder failed', e.message); }
       }
       return res.json({ success: true });
     }

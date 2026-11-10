@@ -220,16 +220,19 @@ function LessonChart({ chart, color }) {
 // and the signed-in member's email tiled faintly across the content so a
 // screenshot identifies the account it came from. (True screenshot BLOCKING
 // is not possible on the web — this is deterrence plus traceability.)
-function ProtectedContent({ email, children }) {
+function ProtectedContent({ email, label, children }) {
+  const labelRef = useRef(label);
+  labelRef.current = label;
   useEffect(() => {
     const style = document.createElement("style");
     style.textContent = "@media print { .gu-protected { display: none !important; } body::after { content: 'GroundUp course content is not printable.'; color: #000; font-size: 18px; } }";
     document.head.appendChild(style);
-    let reported = false;
+    // Every attempt is reported; one a minute at most, so a burst of key presses is one report.
+    let lastReport = 0;
     const report = (kind) => {
-      if (reported) return; reported = true;
+      if (Date.now() - lastReport < 60000) return; lastReport = Date.now();
       const token = getMemberToken();
-      if (token) fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ action: "capture_event", kind, where: window.location.pathname }) }).catch(() => {});
+      if (token) fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ action: "capture_event", kind, where: window.location.pathname, what: labelRef.current || "" }) }).catch(() => {});
     };
     const blockKeys = (e) => {
       const k = (e.key || "").toLowerCase();
@@ -240,13 +243,47 @@ function ProtectedContent({ email, children }) {
     document.addEventListener("keyup", printScreen);
     return () => { document.head.removeChild(style); document.removeEventListener("keydown", blockKeys); document.removeEventListener("keyup", printScreen); };
   }, []);
+  // The veil: blur the lesson in the moments a screenshot usually happens
+  // (Dakotah, Nov 10, 2026). A website cannot black out a capture, so this is
+  // deterrence: the page hides itself when the screenshot shortcut goes down
+  // (Cmd+Shift on a Mac, Win+Shift on Windows) and whenever the window is not
+  // the one in front. Phone screenshots and the PrintScreen key itself cannot
+  // be pre-empted; the watermark covers those.
+  const [veiled, setVeiled] = useState(false);
+  useEffect(() => {
+    let timer = null, away = false;
+    const hold = (ms) => { setVeiled(true); clearTimeout(timer); timer = setTimeout(() => { if (!away) setVeiled(false); }, ms); };
+    const onKeyDown = (e) => { if ((e.metaKey && e.shiftKey) || e.key === "PrintScreen") hold(10000); };
+    const onKeyUp = (e) => { if (e.key === "PrintScreen") hold(10000); };
+    // Clicking into the lesson's own PDF or video frame also blurs the window;
+    // that is the member reading, not leaving, so it does not count.
+    const onBlur = () => setTimeout(() => { if (document.activeElement && document.activeElement.tagName === "IFRAME") return; away = true; clearTimeout(timer); setVeiled(true); }, 0);
+    const onFocus = () => { away = false; clearTimeout(timer); timer = setTimeout(() => setVeiled(false), 300); };
+    const onVis = () => { if (document.hidden) { away = true; setVeiled(true); } };
+    document.addEventListener("keydown", onKeyDown, true);
+    document.addEventListener("keyup", onKeyUp, true);
+    window.addEventListener("blur", onBlur);
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
+    return () => { clearTimeout(timer); document.removeEventListener("keydown", onKeyDown, true); document.removeEventListener("keyup", onKeyUp, true); window.removeEventListener("blur", onBlur); window.removeEventListener("focus", onFocus); document.removeEventListener("visibilitychange", onVis); };
+  }, []);
   const marks = [];
   if (email) for (let i = 0; i < 12; i++) marks.push(<div key={i} style={{ position: "absolute", top: `${Math.floor(i / 3) * 26 + 6}%`, left: `${(i % 3) * 34 + 2}%`, transform: "rotate(-24deg)", color: "rgba(200,160,160,0.055)", fontSize: 15, fontFamily: "'DM Sans', sans-serif", fontWeight: 700, whiteSpace: "nowrap", pointerEvents: "none", userSelect: "none", zIndex: 3 }}>{email} · GroundUp</div>);
   return (
     <div className="gu-protected" onContextMenu={(e) => e.preventDefault()} onCopy={(e) => e.preventDefault()} onCut={(e) => e.preventDefault()} onDragStart={(e) => e.preventDefault()}
       style={{ position: "relative", userSelect: "none", WebkitUserSelect: "none" }}>
       {marks}
-      {children}
+      <div style={{ filter: veiled ? "blur(22px)" : "none", opacity: veiled ? 0.35 : 1, pointerEvents: veiled ? "none" : "auto" }} aria-hidden={veiled ? "true" : undefined}>
+        {children}
+      </div>
+      {veiled && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, pointerEvents: "none" }}>
+          <div style={{ maxWidth: 420, textAlign: "center", background: "#0d0404", border: "1px solid #3a1010", borderRadius: 14, padding: "22px 26px" }}>
+            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Lesson hidden</div>
+            <div style={{ color: "#f0d8d8", fontSize: 14, lineHeight: 1.7, fontFamily: "'DM Sans', sans-serif" }}>GroundUp content is proprietary and protected. It hides while this window is not in front or a capture shortcut is pressed, and comes back on its own.</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -627,7 +664,7 @@ function MiniCoursePage({ course, onBack, backLabel, member, onUpgrade, onMember
     const lessonMaterials = lessonMats[pdfKey] || [];
     return (
       <div style={{ background: pageBg, minHeight: "100vh", padding: "100px clamp(20px,5vw,60px) 80px" }}>
-        <ProtectedContent email={member?.email}>
+        <ProtectedContent email={member?.email} label={`${course.title} › ${lesson.title}`}>
         <div style={{ maxWidth: 760, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 40, flexWrap: "wrap" }}>
             <button onClick={() => { setActiveLesson(null); setPlayingVideo(false); }} style={{ background: "transparent", color: "#6a6b69", border: "1px solid #1a0000", borderRadius: 8, padding: "8px 18px", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>← Back to lessons</button>

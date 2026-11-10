@@ -281,6 +281,24 @@ export function giftEmail(name, link, personalMessage) {
   };
 }
 
+// A light reminder to a member whose lesson page reported a capture or copy
+// attempt (Dakotah, Nov 10, 2026). Friendly on purpose: the signal cannot tell
+// intent. Sent at most once a day per member, alongside the team alert.
+export function captureReminderEmail(name) {
+  const p = (t) => `<p style="color:#444444;font-size:14.5px;line-height:1.85;margin:0 0 16px;">${t}</p>`;
+  return {
+    subject: 'A quick note about GroundUp content',
+    html: `
+      <h2 style="color:#161616;font-size:24px;margin:0 0 16px;">A friendly reminder, ${firstName(name)}.</h2>
+      ${p(`We're glad you're digging into the lessons. That's exactly what they're for.`)}
+      ${p(`Our system picked up what looked like a screenshot or copy on a lesson page from your account today. It may well have been an accident, so this is just a light reminder of how the content works.`)}
+      ${p(`Everything inside GroundUp, the lessons, templates, recordings and documents, is proprietary and protected as the intellectual property of Dr. Gina Merritt and Northern Real Estate Urban Ventures. Your membership is for your own learning and your own deals, so we ask that the content not be captured, copied or shared outside your account.`)}
+      ${p(`If you need something from a lesson for a deal you're working on, just reply to this email. We're happy to help you get it the right way.`)}
+      ${p(`Thank you for being part of this, and for helping us protect it.`)}
+      <p style="color:#777777;font-size:13px;line-height:1.8;margin:22px 0 0;"><strong style="color:#161616;">The GroundUp team</strong></p>`,
+  };
+}
+
 export function dmReplyEmail(name) {
   return {
     subject: 'Dr. Merritt\\u2019s team replied to your message',
