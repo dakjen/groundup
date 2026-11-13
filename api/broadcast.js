@@ -6,6 +6,7 @@ import { recommendPlan, sendRecommendBatch, sendLaunchBatch, logEmails } from '.
 import { foundingSeats } from './stripe.js';
 import { insiderReminderEmail, insiderLaunchMorningEmail, generalFoundingEmail, generalHeadsUpEmail, generalSeatsTomorrowEmail, NEWSLETTER_ISSUES, newsletterEmail } from './_email.js';
 import { referredRevenue, rungFor } from './referrals.js';
+import { foundingDaily } from './_founding_daily.js';
 
 // Team email tools: send a custom email or an event announcement to a segment.
 // Audiences: all | Free | Basic | Premium | Elite | lnl (active Lunch & Learn access)
@@ -56,6 +57,14 @@ async function alertFailure(step, err, extra) {
 export default async function handler(req, res) {
   // Launch day, 4 PM: the four insiders who clicked while the buttons were
   // broken. ?dry=1 returns the version marker and the list without sending.
+  // Daily founding notes: a look at what a given day would send, and to whom.
+  // Never sends. /api/broadcast?send=foundingdaily&key=<ops token>&day=2026-11-14
+  if (req.method === 'GET' && req.query.send === 'foundingdaily' && req.query.key) {
+    const sql = neon(process.env.DATABASE_URL);
+    const [tok] = await sql`SELECT value FROM settings WHERE key = 'ops_token'`;
+    if (!tok?.value || tok.value !== String(req.query.key)) return res.status(403).json({ error: 'forbidden' });
+    return res.json(await foundingDaily(sql, { dry: true, ...(req.query.day ? { day: String(req.query.day) } : {}) }));
+  }
   if (req.method === 'GET' && req.query.send === 'clickers' && req.query.key) {
     const sql = neon(process.env.DATABASE_URL);
     const [tok] = await sql`SELECT value FROM settings WHERE key = 'ops_token'`;
@@ -236,6 +245,11 @@ async function cronRun(req, res) {
     const sql = neon(process.env.DATABASE_URL);
     try { return res.json({ success: true, evening: await insiderEveningSend(sql) }); }
     catch (e) { await alertFailure('launch night email failed', e); return res.status(500).json({ error: String(e?.message || e) }); }
+  }
+  if (req.query.foundingdaily === '1') {
+    const sql = neon(process.env.DATABASE_URL);
+    try { return res.json({ success: true, foundingdaily: await foundingDaily(sql) }); }
+    catch (e) { await alertFailure('daily founding note failed', e); return res.status(500).json({ error: String(e?.message || e) }); }
   }
   if (req.query.launchday === '1') {
     const sql = neon(process.env.DATABASE_URL);
