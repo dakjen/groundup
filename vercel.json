@@ -32,7 +32,7 @@
     },
     {
       "path": "/api/broadcast?foundingwelcome=1",
-      "schedule": "0 14 14 11 *"
+      "schedule": "0 14 14-20 11 *"
     },
     {
       "path": "/api/broadcast?foundingdaily=1",

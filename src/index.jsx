@@ -5,7 +5,7 @@ import { pollVisible } from "./poll.js";
 import { FunnelPage } from "./funnels.jsx";
 import { GetStartedPage } from "./getstarted.jsx";
 import { DocViewerPage } from "./docviewer.jsx";
-import { backdropClose, guUpload, PasswordInput, AuthModal, OnboardingFlow, FoundingWelcomeModal, InsiderWelcomeModal, FOUNDING_PERKS, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, AdvisoryAdminPage, BookingsAdminPage, DropsAdminPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
+import { backdropClose, guUpload, PasswordInput, AuthModal, OnboardingFlow, FoundingWelcomeModal, InsiderWelcomeModal, TrialInviteModal, FOUNDING_PERKS, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, AdvisoryAdminPage, BookingsAdminPage, DropsAdminPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -8166,6 +8166,21 @@ export default function App() {
   const [insiderAt, setInsiderAt] = useState(null);
   // "Welcome, insider!" — shown to someone arriving from a launch email link
   const [insiderWelcome, setInsiderWelcome] = useState(null);
+  // An invite link the team opened early (Dr. Merritt's): its guests may make
+  // a free account before Dec 1 and start their 14-day one-course trial.
+  const [trialInvite, setTrialInvite] = useState(null);
+  useEffect(() => {
+    let code = "";
+    try { code = localStorage.getItem("guRef") || ""; } catch {}
+    if (!code || getMember()) return;
+    fetch("/api/referrals?invite=" + encodeURIComponent(code)).then(r => r.json()).then(d => {
+      if (!d?.open) return;
+      window.__guTrialInvite = true;
+      let seen = false;
+      try { seen = sessionStorage.getItem("guTrialInviteSeen") === "1"; sessionStorage.setItem("guTrialInviteSeen", "1"); } catch {}
+      if (!seen) setTrialInvite({ from: d.name || "" });
+    }).catch(() => {});
+  }, []);
   // Seeded like the launch date. Without it the first paint has no close date,
   // renders the INSIDER waitlist, then flips to the general one — which is the
   // flash of the old waitlist on refresh.
@@ -8328,7 +8343,7 @@ export default function App() {
     // the waitlist) and keeps signing in underneath for the team and anyone
     // who already has an account. Redirecting straight to /waitlist instead
     // meant nobody could sign in at all.
-    if (tier === "Free" && beforePublicLaunch()) {
+    if (tier === "Free" && beforePublicLaunch() && !window.__guTrialInvite) {
       const key = "freegate:" + Date.now();
       setToasts(t => [{ key, id: key, title: "Free accounts open December 1", body: "Before then, an account comes with a paid plan. Choose a plan to claim your founding seat." }, ...t].slice(0, 4));
       setTimeout(() => setToasts(t => t.filter(x => x.key !== key)), 9000);
@@ -8465,6 +8480,7 @@ export default function App() {
         </div>
       )}
       {onboarding && <OnboardingFlow pending={onboarding} onDone={(user) => { setOnboarding(null); setMember(user); sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); welcomeOnce(user); }} />}
+      {trialInvite && !member && !showSignup && !onboarding && <TrialInviteModal from={trialInvite.from} onStart={() => { setTrialInvite(null); setAuthMode("signup"); setSignupTier("Free"); setShowSignup(true); }} onClose={() => setTrialInvite(null)} />}
       {insiderWelcome && !member && <InsiderWelcomeModal seats={foundingSeats} onChoose={() => { const p = insiderWelcome.plan; setInsiderWelcome(null); openSignup(p); }} onClose={() => setInsiderWelcome(null)} />}
       {foundingWelcome && <FoundingWelcomeModal user={foundingWelcome} seats={foundingSeats} launchAt={insiderAt} onPlans={() => { setFoundingWelcome(null); navigateTo("pricing"); }} onClose={() => setFoundingWelcome(null)} />}
       {showSignup && <AuthModal allowSignup={!prelaunch} startMode={authMode} onClose={() => { setShowSignup(false); setAuthMode("signup"); }} defaultTier={signupTier} onSignupIntent={(creds) => { setShowSignup(false); setOnboarding(creds); }} onAuthed={(user, how) => { setMember(user); setShowSignup(false); if (user.role === "admin") { sessionStorage.setItem("adminToken", localStorage.getItem("guToken") || ""); } else { sessionStorage.removeItem("adminToken"); sessionStorage.removeItem("isAdmin"); setIsAdmin(false); } sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); }} />}

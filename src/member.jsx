@@ -483,6 +483,30 @@ export function FoundingWelcomeModal({ user, seats, launchAt, onPlans, onClose }
 // Arriving from a launch email (/?join=1), before any account exists: the
 // welcome. One button opens Create Account with their plan pre-selected; the
 // other closes it and leaves the plans on the page behind.
+// Shown to someone who arrives on an invite link the team opened early (Dr.
+// Merritt's): they may make a free account now and start a 14-day trial of one course.
+export function TrialInviteModal({ from, onStart, onClose }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 330, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, overflowY: "auto" }} {...backdropClose(onClose)}>
+      <div style={{ background: "#0d0404", border: "1px solid #b8010166", borderRadius: 18, padding: "clamp(24px,4vw,40px)", width: "100%", maxWidth: 520, position: "relative", boxShadow: "0 30px 80px rgba(0,0,0,0.7)" }}>
+        <button onClick={onClose} aria-label="Close" style={{ position: "absolute", top: 14, right: 16, background: "none", border: "none", color: "#8a7070", fontSize: 20, cursor: "pointer" }}>✕</button>
+        <div style={{ fontSize: 10, color: "#e0c4c4", fontWeight: 800, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 12 }}>✦ {from ? `Invited by ${from}` : "You're invited"}</div>
+        <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(28px,4.5vw,38px)", color: "#f5e8e8", margin: "0 0 12px", lineHeight: 1.1 }}>Try one GroundUp course, free for 14 days.</h2>
+        <p style={{ color: "#c8a8a8", fontSize: 14.5, fontFamily: font, lineHeight: 1.75, margin: "0 0 10px" }}>
+          Create a free account, then open any course and choose it as your trial. You get every lesson in that course for 14 days.
+        </p>
+        <p style={{ color: "#c8a8a8", fontSize: 14.5, fontFamily: font, lineHeight: 1.75, margin: "0 0 22px" }}>
+          No card needed. It is one trial per account, so pick the course you are most curious about.
+        </p>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button onClick={onStart} style={btnRed}>Create my free account →</button>
+          <button onClick={onClose} style={{ ...btnGhost, color: "#e0c4c4", borderColor: "#e0c4c450" }}>Let me look around first</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function InsiderWelcomeModal({ seats, onChoose, onClose }) {
   const left = seats && Number.isFinite(seats.remaining) ? seats.remaining : null;
   return (
@@ -626,7 +650,7 @@ export function AuthModal({ onClose, onAuthed, onSignupIntent, defaultTier = "Fr
       if (mode === "signup" && tier === "Free" && onSignupIntent) {
         // Before the public launch there are no free accounts — early access
         // is for paying founding members only.
-        if (typeof window !== "undefined" && window.__guPublicAt && new Date(window.__guPublicAt).getTime() > Date.now()) {
+        if (typeof window !== "undefined" && !window.__guTrialInvite && window.__guPublicAt && new Date(window.__guPublicAt).getTime() > Date.now()) {
           throw new Error("Before December 1, an account comes with a paid plan. Choose your plan on the Pricing page to claim your founding seat — free accounts open at the public launch.");
         }
         await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "check_email", email }) });

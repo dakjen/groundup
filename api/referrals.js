@@ -64,6 +64,19 @@ export async function referredRevenue(sql) {
 export default async function handler(req, res) {
   // Public: who referred me? Powers the you've-been-referred banner on the
   // waitlist page. Name and company only — nothing sensitive.
+  // Public: whose invite link is this, and may its guests make a free account
+  // before the public launch? (settings prelaunch_open_refs, comma-separated
+  // codes. First: Dr. Merritt's, Nov 13, 2026.) First name and flag only.
+  if (req.method === 'GET' && req.query.invite) {
+    try {
+      const sql = neon(process.env.DATABASE_URL);
+      const code = String(req.query.invite).trim().toLowerCase();
+      const [u] = await sql`SELECT name FROM users WHERE LOWER(referral_code) = ${code}`;
+      const [o] = await sql`SELECT value FROM settings WHERE key = 'prelaunch_open_refs'`;
+      const open = !!u && String(o?.value || '').toLowerCase().split(/[\s,]+/).includes(code);
+      return res.json(u ? { name: u.name, open } : { name: null, open: false });
+    } catch { return res.json({ name: null, open: false }); }
+  }
   if (req.method === 'GET' && req.query.partner) {
     try {
       const sql = neon(process.env.DATABASE_URL);

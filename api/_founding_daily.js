@@ -147,26 +147,30 @@ async function freezeRule(sql) {
   return { freeze, exempt: new Set(String(v('waitlist_freeze_exempt') || '').toLowerCase().split(/[\s,]+/).filter(Boolean)) };
 }
 
-// 9 AM Eastern, Nov 14 (vercel.json, ?foundingwelcome=1): the "you can join as
-// a founding member" email for anyone let through the freeze by name who has
-// not had it yet. Dakotah asked for this for Premise D Martin on Nov 13, 2026.
+// 9 AM Eastern, Nov 14 to Nov 20 (vercel.json, ?foundingwelcome=1). Dakotah,
+// Nov 13, 2026: anyone who joins the waitlist gets an email the next morning
+// inviting them to be a founding member, until founding closes Nov 20. This
+// covers everyone who signed up after the Nov 6 send to the general list and
+// before today (Eastern), once each. The freeze in settings waitlist_freeze_at
+// was moved to the founding close so these people can actually join.
+const AFTER_NOV6_SEND = '2026-11-07T05:00:00.000Z';
 export async function foundingWelcome(sql, { dry = false } = {}) {
   const kind = 'founding seats open — late signup';
-  const { exempt } = await freezeRule(sql);
-  if (!exempt.size) return { v: 'fw1', sent: 0, total: 0 };
+  const today = easternDay();
+  if (today > '2026-11-20') return { v: 'fw2', closed: true, sent: 0 };
   const joined = new Set((await sql`SELECT LOWER(email) AS email FROM users WHERE membership_status = 'active' AND tier IS DISTINCT FROM 'Free'`).map(r => r.email));
   const out = new Set((await sql`SELECT LOWER(email) AS email FROM email_optouts`).map(r => r.email));
   const had = new Set((await sql`SELECT LOWER(recipient_email) AS email FROM email_log WHERE kind = ${kind} AND ok`).map(r => r.email));
-  const rows = (await sql`SELECT name, email FROM waitlist WHERE LOWER(email) = ANY(${[...exempt]}) AND NOT COALESCE(comped, FALSE)`)
-    .filter(r => { const e = r.email.toLowerCase(); return !joined.has(e) && !out.has(e) && !had.has(e); });
-  if (dry) return { v: 'fw1', dry, to: rows.map(r => r.email) };
+  const rows = (await sql`SELECT name, email, created_at FROM waitlist WHERE created_at >= ${AFTER_NOV6_SEND} AND NOT COALESCE(comped, FALSE) ORDER BY id`)
+    .filter(r => { const e = String(r.email).toLowerCase(); return easternDay(new Date(r.created_at)) < today && !joined.has(e) && !out.has(e) && !had.has(e); });
+  if (dry) return { v: 'fw2', dry, today, to: rows.map(r => r.email) };
   let sent = 0;
   for (const r of rows) {
     const mail = generalFoundingEmail(r.name, { late: true, link: `${siteUrl()}/?join=1&email=${encodeURIComponent(r.email)}` });
     const ok = await sendEmail(r.email, mail.subject, mail.html, { marketing: true }); if (ok) sent++;
     await logEmails(sql, kind, 'general', mail.subject, [{ name: r.name, email: r.email, ok: !!ok }]);
   }
-  return { v: 'fw1', sent, total: rows.length };
+  return { v: 'fw2', sent, total: rows.length };
 }
 
 // Everyone on the waitlist (both lists) who has not joined a paid plan, is not
