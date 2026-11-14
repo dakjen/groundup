@@ -1091,6 +1091,24 @@ export function generalFoundingEmail(name, opts = {}) {
   const first = firstName(name);
   const left = Number(opts.seatsLeft ?? 0);
   const link = opts.link || `${siteUrl()}/?join=1`;
+  // Someone who joined the waitlist after the Nov 6 send and was let in by
+  // name: same email, without the seat count or the "you have been waiting" lines.
+  if (opts.late) return {
+    subject: 'You can join GroundUp as a founding member',
+    html: `
+      ${seqHero('/opt/hough-exterior.jpg', '9410 Hough, Cleveland')}
+      ${seqKicker('Now open to you')}
+      ${seqH1(`You can join as a founding member, ${first}.`)}
+      ${seqP('Thank you for joining the waitlist. Founding membership is still open, so you do not have to wait for December 1. Your link below creates your account today. Founding membership closes Friday, November 20.')}
+      ${seqBtn(link, 'Join now →')}
+      ${seqFeature(FEATURES.community)}
+      ${seqFoundingBlock()}
+      ${seqCurriculum()}
+      ${seqBlock('Membership at founding rates', seqPlanTable(true))}
+      ${seqDates()}
+      ${seqP('When the seats are gone the page will say so before you pay — nobody is charged for a seat that is not there.', { size: 13, color: '#8a8a8a' })}
+      ${seqSign()}`,
+  };
   return {
     subject: `${left} founding seat${left === 1 ? '' : 's'} just opened to the waitlist`,
     html: `

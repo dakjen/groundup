@@ -6,7 +6,7 @@ import { recommendPlan, sendRecommendBatch, sendLaunchBatch, logEmails } from '.
 import { foundingSeats } from './stripe.js';
 import { insiderReminderEmail, insiderLaunchMorningEmail, generalFoundingEmail, generalHeadsUpEmail, generalSeatsTomorrowEmail, NEWSLETTER_ISSUES, newsletterEmail } from './_email.js';
 import { referredRevenue, rungFor } from './referrals.js';
-import { foundingDaily } from './_founding_daily.js';
+import { foundingDaily, foundingWelcome } from './_founding_daily.js';
 
 // Team email tools: send a custom email or an event announcement to a segment.
 // Audiences: all | Free | Basic | Premium | Elite | lnl (active Lunch & Learn access)
@@ -245,6 +245,11 @@ async function cronRun(req, res) {
     const sql = neon(process.env.DATABASE_URL);
     try { return res.json({ success: true, evening: await insiderEveningSend(sql) }); }
     catch (e) { await alertFailure('launch night email failed', e); return res.status(500).json({ error: String(e?.message || e) }); }
+  }
+  if (req.query.foundingwelcome === '1') {
+    const sql = neon(process.env.DATABASE_URL);
+    try { return res.json({ success: true, foundingwelcome: await foundingWelcome(sql) }); }
+    catch (e) { await alertFailure('founding email for late signup failed', e); return res.status(500).json({ error: String(e?.message || e) }); }
   }
   if (req.query.foundingdaily === '1') {
     const sql = neon(process.env.DATABASE_URL);

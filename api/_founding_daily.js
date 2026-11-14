@@ -5,7 +5,7 @@
 // One note per day, chosen by the Eastern date. Nothing sends on a date that
 // is not in SCHEDULE, so the job goes quiet by itself after November 20.
 import { logEmails } from './waitlist.js';
-import { firstName } from './_email.js';
+import { firstName, sendEmail, siteUrl, generalFoundingEmail } from './_email.js';
 
 // Eastern date -> 1-based position in `notes` below.
 export const SCHEDULE = {
@@ -140,17 +140,50 @@ export const textFor = (n, first) => `Hi ${first},\n\n${n.body}\n\n${foot}`;
 
 const easternDay = (d = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(d);
 
+async function freezeRule(sql) {
+  const rows = await sql`SELECT key, value FROM settings WHERE key IN ('waitlist_freeze_at', 'waitlist_freeze_exempt')`;
+  const v = (k) => rows.find(r => r.key === k)?.value;
+  const freeze = v('waitlist_freeze_at') && !isNaN(Date.parse(v('waitlist_freeze_at'))) ? new Date(v('waitlist_freeze_at')) : new Date('2026-11-07T05:00:00.000Z');
+  return { freeze, exempt: new Set(String(v('waitlist_freeze_exempt') || '').toLowerCase().split(/[\s,]+/).filter(Boolean)) };
+}
+
+// 9 AM Eastern, Nov 14 (vercel.json, ?foundingwelcome=1): the "you can join as
+// a founding member" email for anyone let through the freeze by name who has
+// not had it yet. Dakotah asked for this for Premise D Martin on Nov 13, 2026.
+export async function foundingWelcome(sql, { dry = false } = {}) {
+  const kind = 'founding seats open — late signup';
+  const { exempt } = await freezeRule(sql);
+  if (!exempt.size) return { v: 'fw1', sent: 0, total: 0 };
+  const joined = new Set((await sql`SELECT LOWER(email) AS email FROM users WHERE membership_status = 'active' AND tier IS DISTINCT FROM 'Free'`).map(r => r.email));
+  const out = new Set((await sql`SELECT LOWER(email) AS email FROM email_optouts`).map(r => r.email));
+  const had = new Set((await sql`SELECT LOWER(recipient_email) AS email FROM email_log WHERE kind = ${kind} AND ok`).map(r => r.email));
+  const rows = (await sql`SELECT name, email FROM waitlist WHERE LOWER(email) = ANY(${[...exempt]}) AND NOT COALESCE(comped, FALSE)`)
+    .filter(r => { const e = r.email.toLowerCase(); return !joined.has(e) && !out.has(e) && !had.has(e); });
+  if (dry) return { v: 'fw1', dry, to: rows.map(r => r.email) };
+  let sent = 0;
+  for (const r of rows) {
+    const mail = generalFoundingEmail(r.name, { late: true, link: `${siteUrl()}/?join=1&email=${encodeURIComponent(r.email)}` });
+    const ok = await sendEmail(r.email, mail.subject, mail.html, { marketing: true }); if (ok) sent++;
+    await logEmails(sql, kind, 'general', mail.subject, [{ name: r.name, email: r.email, ok: !!ok }]);
+  }
+  return { v: 'fw1', sent, total: rows.length };
+}
+
 // Everyone on the waitlist (both lists) who has not joined a paid plan, is not
 // a comped team account, has not opted out, and has not already had this day's note.
 export async function foundingDailyAudience(sql, kind) {
   const joined = new Set((await sql`SELECT LOWER(email) AS email FROM users WHERE membership_status = 'active' AND tier IS DISTINCT FROM 'Free'`).map(r => r.email));
   const out = new Set((await sql`SELECT LOWER(email) AS email FROM email_optouts`).map(r => r.email));
   const had = new Set((await sql`SELECT LOWER(recipient_email) AS email FROM email_log WHERE kind = ${kind} AND ok`).map(r => r.email));
-  const rows = await sql`SELECT name, email FROM waitlist WHERE NOT COALESCE(comped, FALSE) ORDER BY id`;
+  const rows = await sql`SELECT name, email, created_at FROM waitlist WHERE NOT COALESCE(comped, FALSE) ORDER BY id`;
+  // Only people who can actually join: on the waitlist before the Nov 7 freeze,
+  // or let through it by name. Later signups wait for December 1 (api/auth.js).
+  const { freeze, exempt } = await freezeRule(sql);
   const seen = new Set();
   return rows.filter(r => {
     const e = String(r.email || '').trim().toLowerCase();
     if (!e || seen.has(e) || joined.has(e) || out.has(e) || had.has(e)) return false;
+    if (new Date(r.created_at) >= freeze && !exempt.has(e)) return false;
     seen.add(e); return true;
   });
 }

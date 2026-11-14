@@ -257,6 +257,16 @@ export default async function handler(req, res) {
               ? await sql`SELECT id FROM waitlist WHERE LOWER(email) = LOWER(${tryEmail}) AND created_at < ${freeze.toISOString()} LIMIT 1`
               : await sql`SELECT id FROM waitlist WHERE LOWER(email) = LOWER(${tryEmail}) AND COALESCE(list, 'insider') = 'insider' LIMIT 1`;
             isInsider = !!wl;
+            // People Dakotah let through the Nov 7 freeze by name (settings
+            // waitlist_freeze_exempt, comma-separated emails). First: Premise
+            // D Martin, Nov 13, 2026. They must still be on the waitlist.
+            if (!isInsider && windowOver) {
+              const [ex] = await sql`SELECT value FROM settings WHERE key = 'waitlist_freeze_exempt'`;
+              if (String(ex?.value || '').toLowerCase().split(/[\s,]+/).includes(tryEmail)) {
+                const [w2] = await sql`SELECT id FROM waitlist WHERE LOWER(email) = ${tryEmail} LIMIT 1`;
+                isInsider = !!w2;
+              }
+            }
           }
           if (!isInsider) {
             return res.status(403).json({
