@@ -650,9 +650,10 @@ export function AuthModal({ onClose, onAuthed, onSignupIntent, defaultTier = "Fr
       if (mode === "signup" && tier === "Free" && onSignupIntent) {
         // Before the public launch there are no free accounts — early access
         // is for paying founding members only.
-        if (typeof window !== "undefined" && !window.__guTrialInvite && window.__guPublicAt && new Date(window.__guPublicAt).getTime() > Date.now()) {
-          throw new Error("Before December 1, an account comes with a paid plan. Choose your plan on the Pricing page to claim your founding seat — free accounts open at the public launch.");
-        }
+        // (Nov 15, 2026: this used to stop here with "an account comes with a
+        // paid plan", which dead-ended waitlist people who clicked Sign In /
+        // Join. They now go on to the questions and the plans, where the free
+        // choice is hidden until the public launch.)
         await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "check_email", email }) });
         onSignupIntent({ name, email, password });
         setBusy(false);
@@ -908,7 +909,7 @@ export function OnboardingFlow({ pending, onDone }) {
     setBusy(true); setError("");
     try {
       const data = await api("/api/auth", { method: "POST", body: JSON.stringify({
-        action: "signup", name: pending.name, email: pending.email, password: pending.password,
+        action: "signup", name: pending.name, email: pending.email, password: pending.password, tier: t,
         ref: localStorage.getItem("guRef") || undefined,
         onboarding: { learn, pain, source, role, phase, experience, focus, goal, company, location },
       }) });
@@ -1090,7 +1091,7 @@ export function OnboardingFlow({ pending, onDone }) {
               })}
             </div>
 
-            <button onClick={() => choose("Free")} disabled={busy} style={{ display: "block", width: "100%", marginTop: 14, background: "transparent", border: "1px dashed #5a2122", borderRadius: 11, padding: "15px 18px", color: "#e0bcbc", fontFamily: font, fontSize: 13.5, fontWeight: 700, cursor: "pointer", opacity: busy ? 0.6 : 1 }}>
+            <button onClick={() => choose("Free")} disabled={busy} style={{ display: (typeof window !== "undefined" && !window.__guTrialInvite && window.__guPublicAt && new Date(window.__guPublicAt).getTime() > Date.now()) ? "none" : "block", width: "100%", marginTop: 14, background: "transparent", border: "1px dashed #5a2122", borderRadius: 11, padding: "15px 18px", color: "#e0bcbc", fontFamily: font, fontSize: 13.5, fontWeight: 700, cursor: "pointer", opacity: busy ? 0.6 : 1 }}>
               Free — I&rsquo;m not ready to invest yet
               <span style={{ display: "block", marginTop: 4, color: "#b59a9a", fontSize: 12, fontWeight: 500 }}>
                 Keep your account, preview every curriculum, and upgrade whenever you are.

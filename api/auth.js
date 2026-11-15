@@ -242,11 +242,10 @@ export default async function handler(req, res) {
         const insiderOpen = passed(at('launch_insider_at'));
         // Guests of an invite link the team opened early (Dakotah, Nov 13, 2026:
         // Dr. Merritt's link) may make a FREE account before the public launch,
-        // so their 14-day one-course trial can start now. A paid plan before
-        // Dec 1 still goes through the founding rules below.
+        // so their 14-day one-course trial can start now.
         let refOpen = false;
         const refTry = String(req.body.ref || '').trim().toLowerCase();
-        if (!publicOpen && refTry && !['Basic', 'Builder', 'Premium', 'Elite'].includes(String(req.body.tier || ''))) {
+        if (!publicOpen && refTry) {
           const [o] = await sql`SELECT value FROM settings WHERE key = 'prelaunch_open_refs'`;
           if (String(o?.value || '').toLowerCase().split(/[\s,]+/).includes(refTry)) {
             const [owner] = await sql`SELECT id FROM users WHERE LOWER(referral_code) = ${refTry}`;
