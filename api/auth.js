@@ -227,6 +227,39 @@ export default async function handler(req, res) {
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) return res.status(400).json({ error: 'That email doesn\'t look right.' });
       const [row] = await sql`SELECT 1 AS x FROM users WHERE email = ${e}`;
       if (row) return res.status(409).json({ error: 'An account with that email already exists' });
+      // Only people on the waitlist get past the Create Account form before
+      // the public launch (Dakotah, Nov 17, 2026). The same rule runs again at
+      // signup below; this stops everyone else at the first screen instead of
+      // after the questions and the plans.
+      {
+        const rows = await sql`SELECT key, value FROM settings WHERE key IN ('launch_at', 'launch_insider_at', 'insider_window_days', 'waitlist_freeze_at', 'waitlist_freeze_exempt', 'prelaunch_open_refs')`;
+        const v = (k) => rows.find(r => r.key === k)?.value;
+        const passed = (x) => !!x && new Date(x).getTime() <= Date.now();
+        if (!passed(v('launch_at'))) {
+          let ok = false;
+          const refTry = String(req.body.ref || '').trim().toLowerCase();
+          if (refTry && String(v('prelaunch_open_refs') || '').toLowerCase().split(/[\s,]+/).includes(refTry)) {
+            const [owner] = await sql`SELECT id FROM users WHERE LOWER(referral_code) = ${refTry}`;
+            ok = !!owner;
+          }
+          const insiderOpen = passed(v('launch_insider_at'));
+          if (!ok && insiderOpen) {
+            const windowOver = Date.now() >= new Date(v('launch_insider_at')).getTime() + Math.max(1, parseInt(v('insider_window_days'), 10) || 5) * 86400000;
+            const freeze = v('waitlist_freeze_at') && !isNaN(Date.parse(v('waitlist_freeze_at'))) ? new Date(v('waitlist_freeze_at')) : new Date('2026-11-07T05:00:00.000Z');
+            const [wl] = windowOver
+              ? await sql`SELECT id FROM waitlist WHERE LOWER(email) = ${e} AND created_at < ${freeze.toISOString()} LIMIT 1`
+              : await sql`SELECT id FROM waitlist WHERE LOWER(email) = ${e} AND COALESCE(list, 'insider') = 'insider' LIMIT 1`;
+            ok = !!wl;
+            if (!ok && windowOver && String(v('waitlist_freeze_exempt') || '').toLowerCase().split(/[\s,]+/).includes(e)) {
+              const [w2] = await sql`SELECT id FROM waitlist WHERE LOWER(email) = ${e} LIMIT 1`;
+              ok = !!w2;
+            }
+          }
+          if (!ok) return res.status(403).json({ error: insiderOpen
+            ? "This email is not on the GroundUp waitlist, so it cannot join yet. Use the email address you joined the waitlist with. GroundUp opens to everyone on December 1."
+            : "We haven't launched yet — join the waitlist to be first in." });
+        }
+      }
       return res.json({ available: true });
     }
 

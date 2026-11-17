@@ -654,7 +654,7 @@ export function AuthModal({ onClose, onAuthed, onSignupIntent, defaultTier = "Fr
         // paid plan", which dead-ended waitlist people who clicked Sign In /
         // Join. They now go on to the questions and the plans, where the free
         // choice is hidden until the public launch.)
-        await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "check_email", email }) });
+        await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "check_email", email, ref: localStorage.getItem("guRef") || undefined }) });
         onSignupIntent({ name, email, password });
         setBusy(false);
         return;
