@@ -7,6 +7,7 @@ import { foundingSeats } from './stripe.js';
 import { insiderReminderEmail, insiderLaunchMorningEmail, generalFoundingEmail, generalHeadsUpEmail, generalSeatsTomorrowEmail, NEWSLETTER_ISSUES, newsletterEmail } from './_email.js';
 import { referredRevenue, rungFor } from './referrals.js';
 import { foundingDaily, foundingWelcome, howToJoin } from './_founding_daily.js';
+import { contactCardEmail } from './_email.js';
 
 // Team email tools: send a custom email or an event announcement to a segment.
 // Audiences: all | Free | Basic | Premium | Elite | lnl (active Lunch & Learn access)
@@ -65,6 +66,17 @@ export default async function handler(req, res) {
     if (!tok?.value || tok.value !== String(req.query.key)) return res.status(403).json({ error: 'forbidden' });
     if (req.query.what === 'howto') return res.json(await howToJoin(sql, { dry: true, ...(req.query.day ? { day: String(req.query.day) } : {}) }));
     return res.json(await foundingDaily(sql, { dry: true, ...(req.query.day ? { day: String(req.query.day) } : {}) }));
+  }
+  // Preview of the "save us as a contact" email. It can only ever go to
+  // Dakotah's inbox, through Brevo like every other GroundUp email.
+  if (req.method === 'GET' && req.query.send === 'contactpreview' && req.query.key) {
+    const sql = neon(process.env.DATABASE_URL);
+    const [tok] = await sql`SELECT value FROM settings WHERE key = 'ops_token'`;
+    if (!tok?.value || tok.value !== String(req.query.key)) return res.status(403).json({ error: 'forbidden' });
+    const mail = contactCardEmail('Dakotah');
+    const ok = await sendEmail('dakotah@dakjencreative.com', '[PREVIEW] ' + mail.subject, mail.html);
+    await logEmails(sql, 'preview — save our contact', 'preview', mail.subject, [{ name: 'Dakotah Jennifer', email: 'dakotah@dakjencreative.com', ok: !!ok }]);
+    return res.json({ v: 'cp1', sent: !!ok });
   }
   if (req.method === 'GET' && req.query.send === 'clickers' && req.query.key) {
     const sql = neon(process.env.DATABASE_URL);

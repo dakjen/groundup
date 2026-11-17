@@ -1293,3 +1293,35 @@ export function foundingThanksEmail(name, opts = {}) {
 
 // For rendering previews outside a send.
 export const _wrapForPreview = wrap;
+
+// "Save us as a contact" (Dakotah, Nov 17, 2026): our emails have been landing
+// in spam and Promotions. One email asking people to save the sending address
+// and the phone number, with the one-tap contact card and how to do it in each
+// mail app.
+export function contactCardEmail(name) {
+  const first = firstName(name);
+  const card = `${siteUrl()}/groundup-contact.vcf`;
+  return {
+    subject: 'Save our contact so GroundUp emails reach you',
+    html: `
+      ${seqKicker('One quick thing')}
+      ${seqH1(`${first ? first + ', s' : 'S'}ave us as a contact.`)}
+      ${seqP('Some of our emails have been landing in spam or the Promotions tab. Saving us as a contact fixes that, and it takes one tap.')}
+      ${seqBlock('Our contact', `
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0;">
+          ${seqRow('Email', 'groundup@drginamerritt.net')}
+          ${seqRow('Phone', '(202) 505-1444')}
+        </table>`)}
+      ${seqBtn(card, 'Save GroundUp to my contacts →')}
+      ${seqBlock('How to save it', `
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0;">
+          ${seqRow('iPhone', 'Tap the button, then tap Add or Create New Contact')}
+          ${seqRow('Android', 'Tap the button, open the file, then tap Save')}
+          ${seqRow('Mac', 'Click the button, open the file, then click Add')}
+          ${seqRow('Outlook', 'Open the file it downloads, then click Save &amp; Close')}
+          ${seqRow('Gmail', 'Hover over our name at the top of this email, then click Add to contacts')}
+        </table>`)}
+      ${seqP('If this email was in spam or Promotions, please also move it to your main inbox. That tells your mail app to keep us there.', { size: 14 })}
+      ${seqSign()}`,
+  };
+}
