@@ -270,3 +270,43 @@ export async function howToJoin(sql, { dry = false, day = easternDay() } = {}) {
   }
   return { v: 'ht1', day, subject: howToNote.subject, sent, total: audience.length };
 }
+
+// "Save us as a contact" (Dakotah, Nov 17, 2026), text-only like the daily
+// notes so it reaches the main inbox. The preview goes to Dakotah's inbox
+// only. Nothing here sends to the list; that waits for her word on who gets it.
+export const contactNote = { subject: 'Save our contact so GroundUp emails reach you', body: `Some of our emails have been landing in spam or the promotions tab. There is a quick fix: save us as a contact.
+
+Our email: groundup@drginamerritt.net
+Our phone: (202) 505-1444
+
+One tap saves both:
+https://${URL}/groundup-contact.vcf
+
+iPhone, Android or Mac: tap the link, then tap Add or Save.
+Outlook: open the file it downloads and click Save & Close.
+Gmail: hover over our name at the top of this email and click Add to contacts.
+
+If this email was in spam or promotions, please move it to your main inbox too. That tells your mail app to keep us there.
+
+That is all. Thank you for doing it.` };
+
+export async function contactNotePreview(sql) {
+  const to = 'dakotah@dakjencreative.com';
+  const subject = '[PREVIEW] ' + contactNote.subject;
+  let ok = false;
+  try {
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        sender: { email: 'groundup@drginamerritt.net', name: 'Gina Merritt' },
+        replyTo: { email: process.env.BREVO_REPLY_TO || 'djmj@nreuv.com', name: 'Gina Merritt' },
+        to: [{ email: to }], subject, textContent: textFor(contactNote, 'Dakotah'),
+      }),
+    });
+    ok = res.ok;
+    if (!ok) console.error('contact note preview failed', res.status, (await res.text()).slice(0, 200));
+  } catch (e) { console.error('contact note preview failed', e.message); }
+  await logEmails(sql, 'preview — save our contact (text)', 'preview', contactNote.subject, [{ name: 'Dakotah Jennifer', email: to, ok }]);
+  return { v: 'cn1', sent: ok };
+}
