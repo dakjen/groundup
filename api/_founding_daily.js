@@ -221,3 +221,52 @@ export async function foundingDaily(sql, { dry = false, day = easternDay() } = {
   }
   return { v: 'fd1', day, subject: note.subject, sent, total: audience.length };
 }
+
+// One-time "how to join, step by step" note (Dakotah, Nov 17, 2026): people
+// were making an account and not getting through payment. Goes once, at the
+// 9 AM Eastern run on Nov 18, to the same audience as the daily notes. Sends
+// everyone through Pricing, the route every paid member has used. Signed Gina
+// (Dakotah: emails are always signed Gina or the GroundUp team).
+const HOWTO_DAY = '2026-11-18';
+export const howToNote = { subject: 'How to join GroundUp, step by step', body: `A few people told us they made an account but could not finish joining. Here are the exact steps.
+
+1. Go to ${URL} and click Pricing at the top.
+
+2. Scroll to the plans and click the button under the one you want: Member, Builder, Premium or Owner.
+
+3. Create your account with this email address and a password of 8 or more characters. Tick the agreement box and click Create Account.
+
+4. The secure payment page opens next. Enter your card and click Subscribe. Your membership starts once the payment goes through. An account without payment is not a membership yet.
+
+Already made an account? Click Sign In / Join at the top right and sign in. Then open Pricing and click your plan. The payment page opens from there.
+
+If anything stops you, reply and tell me which step. A person on the team will get you in.
+
+Founding membership closes Friday, November 20 at 11:59 PM Eastern.` };
+
+export async function howToJoin(sql, { dry = false, day = easternDay() } = {}) {
+  const kind = 'how to join — steps';
+  if (day !== HOWTO_DAY) return { v: 'ht1', day, scheduled: false };
+  const audience = await foundingDailyAudience(sql, kind);
+  if (dry) return { v: 'ht1', day, dry, subject: howToNote.subject, wouldSend: audience.length, to: audience.map(r => r.email), sample: textFor(howToNote, firstName(audience[0]?.name || '')) };
+  let sent = 0;
+  for (const r of audience) {
+    let ok = false;
+    try {
+      const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          sender: { email: 'groundup@drginamerritt.net', name: 'Gina Merritt' },
+          replyTo: { email: process.env.BREVO_REPLY_TO || 'djmj@nreuv.com', name: 'Gina Merritt' },
+          to: [{ email: r.email }], subject: howToNote.subject, textContent: textFor(howToNote, firstName(r.name)),
+        }),
+      });
+      ok = res.ok;
+      if (!ok) console.error('how to join send failed', r.email, res.status, (await res.text()).slice(0, 200));
+    } catch (e) { console.error('how to join send failed', r.email, e.message); }
+    if (ok) sent++;
+    await logEmails(sql, kind, 'waitlist', howToNote.subject, [{ name: r.name, email: r.email, ok }]);
+  }
+  return { v: 'ht1', day, subject: howToNote.subject, sent, total: audience.length };
+}

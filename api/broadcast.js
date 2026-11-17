@@ -6,7 +6,7 @@ import { recommendPlan, sendRecommendBatch, sendLaunchBatch, logEmails } from '.
 import { foundingSeats } from './stripe.js';
 import { insiderReminderEmail, insiderLaunchMorningEmail, generalFoundingEmail, generalHeadsUpEmail, generalSeatsTomorrowEmail, NEWSLETTER_ISSUES, newsletterEmail } from './_email.js';
 import { referredRevenue, rungFor } from './referrals.js';
-import { foundingDaily, foundingWelcome } from './_founding_daily.js';
+import { foundingDaily, foundingWelcome, howToJoin } from './_founding_daily.js';
 
 // Team email tools: send a custom email or an event announcement to a segment.
 // Audiences: all | Free | Basic | Premium | Elite | lnl (active Lunch & Learn access)
@@ -63,6 +63,7 @@ export default async function handler(req, res) {
     const sql = neon(process.env.DATABASE_URL);
     const [tok] = await sql`SELECT value FROM settings WHERE key = 'ops_token'`;
     if (!tok?.value || tok.value !== String(req.query.key)) return res.status(403).json({ error: 'forbidden' });
+    if (req.query.what === 'howto') return res.json(await howToJoin(sql, { dry: true, ...(req.query.day ? { day: String(req.query.day) } : {}) }));
     return res.json(await foundingDaily(sql, { dry: true, ...(req.query.day ? { day: String(req.query.day) } : {}) }));
   }
   if (req.method === 'GET' && req.query.send === 'clickers' && req.query.key) {
@@ -248,7 +249,13 @@ async function cronRun(req, res) {
   }
   if (req.query.foundingwelcome === '1') {
     const sql = neon(process.env.DATABASE_URL);
-    try { return res.json({ success: true, foundingwelcome: await foundingWelcome(sql) }); }
+    try {
+      const foundingwelcome = await foundingWelcome(sql);
+      // The one-time step-by-step note rides the same 9 AM run (Nov 18 only).
+      let howto = null;
+      try { howto = await howToJoin(sql); } catch (e) { await alertFailure('how-to-join email failed', e); howto = { error: String(e?.message || e) }; }
+      return res.json({ success: true, foundingwelcome, howto });
+    }
     catch (e) { await alertFailure('founding email for late signup failed', e); return res.status(500).json({ error: String(e?.message || e) }); }
   }
   if (req.query.foundingdaily === '1') {
