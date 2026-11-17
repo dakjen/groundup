@@ -2971,6 +2971,19 @@ export function WaitlistForm({ list = "insider" }) {
           <div style={{ textAlign: "center", padding: "20px 0" }}>
             <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 12 }}>{insider ? "You're an insider." : "You're on the list."}</h2>
             <p style={{ color: "#8a7070", fontSize: 14, fontFamily: font, lineHeight: 1.8 }}>Check your inbox — your spot is saved. We read every answer, and when we launch you'll get our personal recommendation for the plan that fits you best.</p>
+            {/* Emails only help if they arrive (Dakotah, Nov 17, 2026): ask them
+                to save the sending address, with a one-tap contact card. */}
+            <div style={{ marginTop: 22, background: "#160808", border: "1px solid #b8010170", borderRadius: 12, padding: "18px 20px", textAlign: "left" }}>
+              <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>One thing to do now</div>
+              <div style={{ color: "#f5e8e8", fontFamily: font, fontWeight: 800, fontSize: 16, marginBottom: 6 }}>Save us as a contact so our emails reach you.</div>
+              <div style={{ color: "#c8a8a8", fontSize: 13.5, fontFamily: font, lineHeight: 1.7, marginBottom: 14 }}>We write from <strong style={{ color: "#f0d8d8" }}>groundup@drginamerritt.net</strong>. Our phone is <strong style={{ color: "#f0d8d8" }}>(202) 505-1444</strong>.</div>
+              <a href="/groundup-contact.vcf" download="GroundUp.vcf" style={{ display: "block", textAlign: "center", background: "#b80101", color: "#fff", borderRadius: 10, padding: "13px 18px", fontFamily: font, fontWeight: 800, fontSize: 14, textDecoration: "none" }}>Save GroundUp to my contacts</a>
+              <div style={{ color: "#a08888", fontSize: 12.5, fontFamily: font, lineHeight: 1.7, marginTop: 12 }}>
+                <strong style={{ color: "#e0c4c4" }}>iPhone, Android, Mac:</strong> tap the button, then Add or Save.<br />
+                <strong style={{ color: "#e0c4c4" }}>Outlook:</strong> open the file it downloads and click Save &amp; Close.<br />
+                <strong style={{ color: "#e0c4c4" }}>Gmail:</strong> open our email, hover over our name at the top, and click Add to contacts.
+              </div>
+            </div>
           </div>
         ) : (
           <>
