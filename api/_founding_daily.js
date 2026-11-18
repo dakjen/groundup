@@ -273,7 +273,7 @@ export async function howToJoin(sql, { dry = false, day = easternDay() } = {}) {
 
 // "Save us as a contact" (Dakotah, Nov 17, 2026), text-only like the daily
 // notes so it reaches the main inbox. The preview goes to Dakotah's inbox
-// only. Nothing here sends to the list; that waits for her word on who gets it.
+// only. The list send is contactNoteSend below.
 export const contactNote = { subject: 'Save our contact so GroundUp emails reach you', body: `Some of our emails have been landing in spam or the promotions tab. There is a quick fix: save us as a contact.
 
 Our email: groundup@drginamerritt.net
@@ -309,4 +309,44 @@ export async function contactNotePreview(sql) {
   } catch (e) { console.error('contact note preview failed', e.message); }
   await logEmails(sql, 'preview — save our contact (text)', 'preview', contactNote.subject, [{ name: 'Dakotah Jennifer', email: to, ok }]);
   return { v: 'cn1', sent: ok };
+}
+
+// The send to everyone (Dakotah, Nov 17, 2026: "email looks good pls send to
+// everyone"): every address on the waitlist and every account, paid members
+// included, once each. People who opted out of email are left out.
+export async function contactNoteSend(sql, { dry = false } = {}) {
+  const kind = 'save our contact';
+  const out = new Set((await sql`SELECT LOWER(email) AS email FROM email_optouts`).map(r => r.email));
+  const had = new Set((await sql`SELECT LOWER(recipient_email) AS email FROM email_log WHERE kind = ${kind} AND ok`).map(r => r.email));
+  const rows = [
+    ...(await sql`SELECT name, email FROM users ORDER BY id`),
+    ...(await sql`SELECT name, email FROM waitlist ORDER BY id`),
+  ];
+  const seen = new Set();
+  const audience = rows.filter(r => {
+    const e = String(r.email || '').trim().toLowerCase();
+    if (!e || !e.includes('@') || seen.has(e) || out.has(e) || had.has(e)) return false;
+    seen.add(e); return true;
+  });
+  if (dry) return { v: 'cn2', dry, subject: contactNote.subject, wouldSend: audience.length, alreadySent: had.size, optedOut: out.size, to: audience.map(r => `${r.name || ''} <${r.email}>`), sample: textFor(contactNote, firstName(audience[0]?.name || '')) };
+  let sent = 0;
+  for (const r of audience) {
+    let ok = false;
+    try {
+      const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          sender: { email: 'groundup@drginamerritt.net', name: 'Gina Merritt' },
+          replyTo: { email: process.env.BREVO_REPLY_TO || 'djmj@nreuv.com', name: 'Gina Merritt' },
+          to: [{ email: String(r.email).trim() }], subject: contactNote.subject, textContent: textFor(contactNote, firstName(r.name)),
+        }),
+      });
+      ok = res.ok;
+      if (!ok) console.error('contact note send failed', r.email, res.status, (await res.text()).slice(0, 200));
+    } catch (e) { console.error('contact note send failed', r.email, e.message); }
+    if (ok) sent++;
+    await logEmails(sql, kind, 'everyone', contactNote.subject, [{ name: r.name, email: r.email, ok }]);
+  }
+  return { v: 'cn2', subject: contactNote.subject, sent, total: audience.length };
 }
