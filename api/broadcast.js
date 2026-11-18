@@ -6,7 +6,7 @@ import { recommendPlan, sendRecommendBatch, sendLaunchBatch, logEmails } from '.
 import { foundingSeats } from './stripe.js';
 import { insiderReminderEmail, insiderLaunchMorningEmail, generalFoundingEmail, generalHeadsUpEmail, generalSeatsTomorrowEmail, NEWSLETTER_ISSUES, newsletterEmail } from './_email.js';
 import { referredRevenue, rungFor } from './referrals.js';
-import { foundingDaily, foundingWelcome, howToJoin, contactNotePreview, contactNoteSend } from './_founding_daily.js';
+import { foundingDaily, foundingWelcome, howToJoin, contactNotePreview, contactNoteSend, replyDraftsToGina } from './_founding_daily.js';
 import { contactCardEmail } from './_email.js';
 
 // Team email tools: send a custom email or an event announcement to a segment.
@@ -75,6 +75,7 @@ export default async function handler(req, res) {
     if (!tok?.value || tok.value !== String(req.query.key)) return res.status(403).json({ error: 'forbidden' });
     if (req.query.what === 'text') return res.json(await contactNotePreview(sql));
     // The real send, to everyone, once each. &dry=1 lists who would get it.
+    if (req.query.what === 'ginadrafts') return res.json(await replyDraftsToGina(sql));
     if (req.query.what === 'everyone') return res.json(await contactNoteSend(sql, { dry: req.query.dry === '1' }));
     const mail = contactCardEmail('Dakotah');
     const ok = await sendEmail('dakotah@dakjencreative.com', '[PREVIEW] ' + mail.subject, mail.html);

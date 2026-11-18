@@ -350,3 +350,80 @@ export async function contactNoteSend(sql, { dry = false } = {}) {
   }
   return { v: 'cn2', subject: contactNote.subject, sent, total: audience.length };
 }
+
+// Reply drafts for Dr. Merritt (Dakotah, Nov 17, 2026: "send this in a
+// traditional email to gmerritt ... so she can copy paste"). Plain text so the
+// drafts paste cleanly. Goes to Gina with a copy to Dakotah, once.
+const REPLY_DRAFTS = `Hi Dr. Gina,
+
+Dakotah asked us to send you a few short replies you can copy and paste when people ask you for a "quick chat" or for development support. Each one points them to GroundUp. Change any wording you like.
+
+
+1. SOMEONE YOU DON'T KNOW ASKS FOR A QUICK CHAT
+
+Thank you for reaching out. I'd love to help. So that I can give people real attention, I now do all of my advising through GroundUp, my development community. That is where I answer questions, walk through deals, and teach the process step by step.
+
+You can join here: https://${URL}
+
+Once you're in, bring your question and I'll see it.
+
+
+2. "CAN I PICK YOUR BRAIN ABOUT MY PROJECT?"
+
+I appreciate you thinking of me. A quick chat rarely does a project justice, so I built GroundUp for exactly this. Inside, you get the lessons, the tools, and a place to ask me about your own deal.
+
+Start here: https://${URL}
+
+Tell me about your project when you join. I'd like to hear where you are.
+
+
+3. SOMEONE ASKS FOR DEVELOPMENT SUPPORT ON A DEAL
+
+Thank you for telling me about your project. Development support now runs through GroundUp. Members can request support on a deal there, and that is where I look at the numbers, the site and the next decision with you.
+
+Here is the link: https://${URL}
+
+Join, then send your request from inside. That puts your deal in front of me the right way.
+
+
+4. SOMEONE YOU KNOW AND LIKE
+
+So good to hear from you. My calendar is spoken for these days, so I've put everything I'd tell you over coffee into GroundUp, and I'm in there every week answering questions.
+
+Come join me: https://${URL}
+
+I'd love to see you in there.
+
+
+5. ONE LINE, FOR A TEXT OR DM
+
+Thank you for asking! I do all my advising through GroundUp now: https://${URL}. Join and bring your question there.
+
+
+Two things to check before you use them: the replies say you answer member questions yourself and are in GroundUp every week, and that members request deal support from inside the membership. If either should be worded differently, tell Dakotah and we will fix the drafts.
+
+The GroundUp team`;
+
+export async function replyDraftsToGina(sql) {
+  const kind = 'team — reply drafts for Gina';
+  const to = 'gmerritt@nreuv.com', cc = 'dakotah@dakjencreative.com';
+  const subject = 'Replies you can paste when people ask for a quick chat';
+  const [had] = await sql`SELECT 1 AS x FROM email_log WHERE kind = ${kind} AND ok LIMIT 1`;
+  if (had) return { v: 'rd1', sent: false, already: true };
+  let ok = false;
+  try {
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        sender: { email: 'groundup@drginamerritt.net', name: 'GroundUp' },
+        replyTo: { email: 'djmj@nreuv.com', name: 'Dakotah Jennifer' },
+        to: [{ email: to }], cc: [{ email: cc }], subject, textContent: REPLY_DRAFTS,
+      }),
+    });
+    ok = res.ok;
+    if (!ok) console.error('reply drafts send failed', res.status, (await res.text()).slice(0, 200));
+  } catch (e) { console.error('reply drafts send failed', e.message); }
+  await logEmails(sql, kind, 'team', subject, [{ name: 'Dr. Gina Merritt', email: to, ok }]);
+  return { v: 'rd1', sent: ok };
+}
