@@ -7,6 +7,15 @@ import { GetStartedPage } from "./getstarted.jsx";
 import { DocViewerPage } from "./docviewer.jsx";
 import { backdropClose, guUpload, PasswordInput, AuthModal, OnboardingFlow, FoundingWelcomeModal, InsiderWelcomeModal, TrialInviteModal, FOUNDING_PERKS, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, AdvisoryAdminPage, BookingsAdminPage, DropsAdminPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
 
+// True on the founding close day, Friday Nov 20, 2026, by the Eastern calendar.
+// ?lastday=1 shows the pop-up on any day, for checking it.
+export const foundingLastDay = () => {
+  try {
+    if (new URLSearchParams(window.location.search).get("lastday") === "1") return true;
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date()) === "2026-11-20";
+  } catch { return false; }
+};
+
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
   window.storage = {
@@ -8323,6 +8332,7 @@ export default function App() {
   useEffect(() => {
     // Never over the password-reset or sign-in forms — it sat on top of the
     // reset form and made the emailed link look like it did nothing.
+    if (foundingLastDay()) return; // the last-day pop-up takes its place on Nov 20
     if (!prelaunch || member || isAdmin || resetToken || showSignup || String(activePage || "").startsWith("go/")) return;
     try { if (localStorage.getItem("guWaitlistPopSeen") === "1") return; } catch {}
     const t = setTimeout(() => {
@@ -8331,6 +8341,21 @@ export default function App() {
     }, 2500);
     return () => clearTimeout(t);
   }, [prelaunch, member, isAdmin, resetToken, showSignup]);
+  // Friday, November 20, 2026 only (Eastern): the last day to join as a founding
+  // member (Dakotah, Nov 19, 2026). Shown once per visit to anyone who is not
+  // already a paying member or the team. It goes quiet by itself at midnight.
+  const [showLastDayPop, setShowLastDayPop] = useState(false);
+  useEffect(() => {
+    if (!foundingLastDay() || isAdmin || resetToken || showSignup || onboarding) return;
+    if (member && (member.role === "admin" || (member.tier && member.tier !== "Free"))) return;
+    if (String(activePage || "").startsWith("go/")) return;
+    try { if (sessionStorage.getItem("guLastDayPopSeen") === "1") return; } catch {}
+    const t = setTimeout(() => {
+      setShowLastDayPop(true);
+      try { sessionStorage.setItem("guLastDayPopSeen", "1"); } catch {}
+    }, 1800);
+    return () => clearTimeout(t);
+  }, [member, isAdmin, resetToken, showSignup, onboarding]);
   // Every join / sign-up / enrol button on the site routes through here.
   //
   // Before launch there are no accounts to create and nothing to buy, so all of
@@ -8464,6 +8489,20 @@ export default function App() {
               <div style={{ color: "#e08a8a", fontSize: 11.5, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", marginTop: 6 }}>{t.reload ? "Refresh now →" : "Reply →"}</div>
             </button>
           ))}
+        </div>
+      )}
+      {showLastDayPop && !resetToken && !showSignup && !onboarding && (
+        <div className="gu-pop-backdrop" style={{ position: "fixed", inset: 0, zIndex: 320, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, overflowY: "auto" }} {...backdropClose(() => setShowLastDayPop(false))}>
+          <div className="gu-pop-card" onClick={e => e.stopPropagation()} style={{ position: "relative", width: "100%", maxWidth: 480, background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "38px clamp(20px,6vw,36px) 28px", textAlign: "center", margin: "auto" }}>
+            <button onClick={() => setShowLastDayPop(false)} aria-label="Close" style={{ position: "absolute", top: 12, right: 16, background: "none", border: "none", color: "#8a7070", fontSize: 24, lineHeight: 1, cursor: "pointer", padding: 4 }}>×</button>
+            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Last day · Friday, November 20</div>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(27px,5vw,36px)", color: "#f5e8e8", margin: "0 0 12px", lineHeight: 1.15 }}>Founding membership closes tonight.</h2>
+            <p style={{ color: "#c8a8a8", fontSize: 14.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.75, margin: "0 0 14px" }}>Today is the last day to get on the founding list and keep the founding discount: <strong style={{ color: "#f0d8d8" }}>25% off your membership for your whole first year</strong>.</p>
+            <p style={{ color: "#c8a8a8", fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.75, margin: "0 0 22px" }}>Founding members also get a year of live Lunch &amp; Learns, the founding member badge, and an invitation to the launch party in DC on December 5. It closes at <strong style={{ color: "#f0d8d8" }}>11:59 PM Eastern</strong>.</p>
+            <button onClick={() => { setShowLastDayPop(false); navigateTo("pricing"); }} style={{ display: "block", width: "100%", background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "15px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 15, cursor: "pointer" }}>Choose your plan →</button>
+            <button onClick={() => setShowLastDayPop(false)} style={{ marginTop: 14, background: "none", border: "none", color: "#6a5050", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}>I'll look around first</button>
+            {!member && <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid #2a0000", color: "#8a7070", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>Not on the waitlist yet? <a href="/waitlist" style={{ color: "#f0d8d8", fontWeight: 800, textUnderlineOffset: 3 }}>Join it first</a>, then choose your plan with the same email.</div>}
+          </div>
         </div>
       )}
       {showWaitlistPop && !resetToken && !showSignup && (
