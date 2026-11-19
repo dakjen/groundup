@@ -2833,8 +2833,9 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
                     </div>
                   </div>
                 )}
-                <form onSubmit={e => { e.preventDefault(); send(null, draft, () => setDraft("")); }} style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
-                  <GrowingInput style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", flex: 1, marginBottom: 0 }} value={draft} onChange={e => setDraft(e.target.value)} mentionable={mentionable} onSubmit={() => send(null, draft, () => setDraft(""))} placeholder={active.slug === "deal-questions" ? "One specific question — a number, a term, a decision. Not the whole deal." : `Message ${active.name}`} maxLength={active.slug === "deal-questions" ? 600 : 4000} />
+                <form onSubmit={e => { e.preventDefault(); send(null, draft, () => setDraft("")); }} style={{ display: "flex", gap: 10, alignItems: "flex-end", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                  {/* On a phone the box takes the full line and the buttons sit under it. */}
+                  <GrowingInput style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", flex: "1 1 240px", minWidth: 0, marginBottom: 0 }} value={draft} onChange={e => setDraft(e.target.value)} mentionable={mentionable} onSubmit={() => send(null, draft, () => setDraft(""))} placeholder={active.slug === "deal-questions" ? "One specific question — a number, a term, a decision. Not the whole deal." : `Message ${active.name}`} maxLength={active.slug === "deal-questions" ? 600 : 4000} />
                   {isAdmin && <AttachButton onInsert={t => setDraft(d => (d && !d.endsWith("\n") ? d + "\n" : d || "") + t + "\n")} />}
                   {isAdmin && <button type="button" onClick={() => setPollOpen(!pollOpen)} style={btnGhost}>Poll</button>}
                   <button type="submit" style={btnRed}>Send</button>
