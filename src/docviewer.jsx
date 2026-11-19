@@ -91,7 +91,7 @@ export function DocViewerPage({ setActivePage }) {
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 18 }}>
           <button onClick={goBack} style={{ background: "none", border: "none", color: "#8f7070", cursor: "pointer", fontSize: 13, fontFamily: font, fontWeight: 700, padding: 0 }}>← Back</button>
-          <div style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(20px,3vw,28px)", color: "#f5e8e8", flex: "1 1 240px", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</div>
+          <div style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(20px,3vw,28px)", color: "#f5e8e8", flex: "1 1 240px", minWidth: 0, lineHeight: 1.2, overflowWrap: "anywhere" }}>{name}</div>
           <span style={{ color: "#8f7070", fontSize: 10, fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font }}>{ext || "file"}{state.blob ? ` · ${(state.blob.size / 1024).toFixed(0)} KB` : ""}</span>
           {state.objectUrl && <button onClick={download} style={btn}>Download</button>}
           {state.status === "pdf" && <a href={state.objectUrl} target="_blank" rel="noreferrer" style={{ ...ghost, textDecoration: "none" }}>Open in a new tab</a>}
@@ -99,8 +99,9 @@ export function DocViewerPage({ setActivePage }) {
         {nav && (
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 14, fontFamily: font, fontSize: 12.5 }}>
             {nav.prev ? <a href={nav.prev} title={nav.prevTitle} style={{ ...ghost, padding: "8px 14px", textDecoration: "none", fontSize: 12.5 }}>← Previous</a> : <span style={{ ...ghost, padding: "8px 14px", opacity: 0.35, fontSize: 12.5 }}>← Previous</span>}
-            <span style={{ color: "#8f7070", fontWeight: 700 }}>{nav.idx + 1} of {nav.count}{nav.section ? ` in ${nav.section}` : ""}</span>
             {nav.next ? <a href={nav.next} title={nav.nextTitle} style={{ ...ghost, padding: "8px 14px", textDecoration: "none", fontSize: 12.5 }}>Next →</a> : <span style={{ ...ghost, padding: "8px 14px", opacity: 0.35, fontSize: 12.5 }}>Next →</span>}
+            {/* Count last, so on a phone Previous and Next share a line and the count sits under them. */}
+            <span style={{ color: "#8f7070", fontWeight: 700 }}>{nav.idx + 1} of {nav.count}{nav.section ? ` in ${nav.section}` : ""}</span>
           </div>
         )}
 
