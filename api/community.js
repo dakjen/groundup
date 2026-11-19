@@ -3,6 +3,8 @@ import { getSession, getAdmin, TIER_RANK } from './_utils.js';
 import { sendEmail, dmReplyEmail } from './_email.js';
 import { sendPush, adminIds, PUSH_PUBLIC_KEY } from './_push.js';
 
+const CHAT_ALERT_TO = 'dakotah@dakjencreative.com';
+
 // A channel is visible when the tier gate passes, team-only channels stay with
 // the team, and a cohort channel stays inside its cohort (admins see all).
 function canSeeChannel(ch, user) {
@@ -347,7 +349,8 @@ export default async function handler(req, res) {
         // Member sent a DM → Dr. Merritt and the team both hear about it
         try {
           const [gina] = await sql`SELECT email FROM users WHERE badge = 'drmerritt' LIMIT 1`;
-          const to = [...new Set([process.env.ADMIN_EMAIL || 'admin@nreuv.com', gina?.email].filter(Boolean))];
+          // Dakotah gets every chat that is not from Dr. Merritt (Nov 19, 2026).
+          const to = [...new Set([process.env.ADMIN_EMAIL || 'admin@nreuv.com', gina?.email, CHAT_ALERT_TO].filter(Boolean))];
           const html = `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New direct message</h2>
              <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${user.name}</strong> (${user.email}, ${user.tier}) sent a DM:</p>
              <p style="color:#444444;font-size:14px;line-height:1.8;background:#faf7f7;border:1px solid #e5dccf;border-radius:10px;padding:14px 18px;">${text.slice(0, 500)}</p>
@@ -513,8 +516,22 @@ export default async function handler(req, res) {
           }
         }
       } catch (e) { console.error('mentions failed', e.message); }
-      // No email per post: the team gets the Friday community digest instead,
-      // and desktop notifications while the site is open.
+      // The team gets the Friday community digest, and desktop notifications
+      // while the site is open. Dakotah also gets an email for every post and
+      // reply that is not from Dr. Merritt and not her own (Nov 19, 2026:
+      // "send me an email every time someone sends a chat that isn't Gina").
+      try {
+        const mine = ['dakotah@dakjencreative.com', 'djmj@nreuv.com', 'dakjenenterprises@gmail.com', 'dakotahjennifer@gmail.com'];
+        if (user.badge !== 'drmerritt' && !mine.includes(String(user.email || '').toLowerCase())) {
+          const esc = (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          const who = user.name || 'GroundUp Team';
+          await sendEmail(CHAT_ALERT_TO, `${who} posted in #${channel.slug || channel.name}`,
+            `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New ${parent_id ? 'reply' : 'post'} in #${esc(channel.slug || channel.name)}</h2>
+             <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${esc(who)}</strong>${user.email ? ` (${esc(user.email)}, ${esc(user.role === 'admin' ? 'team' : user.tier)})` : ''} wrote:</p>
+             <p style="color:#333333;font-size:14px;line-height:1.8;background:#faf7f7;border-left:3px solid #b80101;border-radius:0 10px 10px 0;padding:14px 18px;white-space:pre-wrap;">${esc(text)}</p>
+             <p style="margin-top:18px;"><a href="https://community.drginamerritt.net/community" style="color:#b80101;font-weight:700;">Open the community →</a></p>`);
+        }
+      } catch (e) { console.error('chat alert failed', e.message); }
       return res.status(201).json({ message: { ...msg, author_name: user.role === 'admin' ? (user.name || 'GroundUp Team') : user.name, author_tier: user.tier, author_badge: user.badge || null, author_badges: user.badges || [], reply_count: 0 } });
     }
 
