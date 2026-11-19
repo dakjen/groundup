@@ -198,7 +198,13 @@ export async function foundingDaily(sql, { dry = false, day = easternDay() } = {
   const kind = `founding daily — ${day}`;
   if (!idx) return { v: 'fd1', day, scheduled: false };
   const note = notes[idx - 1];
-  const audience = await foundingDailyAudience(sql, kind);
+  let audience = await foundingDailyAudience(sql, kind);
+  // The Nov 19 note is the "land is worth zero" idea. People with an account
+  // and no plan already had it in their own note on Nov 18, so they skip this one.
+  if (day === '2026-11-19') {
+    const hadLand = new Set((await sql`SELECT LOWER(recipient_email) AS email FROM email_log WHERE kind = 'free plan note 1' AND ok`).map(r => r.email));
+    audience = audience.filter(r => !hadLand.has(String(r.email).trim().toLowerCase()));
+  }
   if (dry || off?.value) return { v: 'fd1', day, subject: note.subject, paused: !!off?.value, dry, wouldSend: audience.length, to: dry ? audience.map(r => r.email) : undefined, sample: dry ? textFor(note, firstName(audience[0]?.name || '')) : undefined };
   let sent = 0;
   for (const r of audience) {
@@ -426,4 +432,73 @@ export async function replyDraftsToGina(sql) {
   } catch (e) { console.error('reply drafts send failed', e.message); }
   await logEmails(sql, kind, 'team', subject, [{ name: 'Dr. Gina Merritt', email: to, ok }]);
   return { v: 'rd1', sent: ok };
+}
+
+// Notes to people who made an account and have not chosen a plan (Dakotah,
+// Nov 18, 2026): "start right at the front with, you haven't upgraded your
+// plan ... send one now, send one tomorrow morning, and then send one on
+// Saturday ... obviously with different tidbits." Text-only from Gina. Each
+// carries one idea from a lesson, in the lesson's own words, and a link to
+// Pricing. Note 1 is sent by hand on Nov 18; notes 2 and 3 go at 9 AM Eastern
+// on the dates below (vercel.json, ?freeplan=1). Each person gets each note
+// once, and nothing after they pay or opt out.
+const FREE_SCHEDULE = { '2026-11-19': 2, '2026-11-21': 3 };
+const freeOpen = `You made a GroundUp account but haven't chosen a plan yet. We'd love for you to join the community and keep learning on your way into development.
+
+Here is a taste of what is inside.`;
+const freeClose = `Choose your plan here:
+https://${URL}/pricing
+
+Warmly,
+Gina
+
+You're getting this because you made a GroundUp account. To stop these notes, reply with the word "stop".`;
+export const freeNotes = [
+  { subject: 'Your GroundUp account is waiting on a plan', tidbit: `In affordable housing, land is worth zero. Not as a figure of speech. If a project needs tax credits and subsidy, that is because it cannot carry normal debt and equity. So there is no room for expensive land. The more you pay for the site, the more subsidy you have to find.
+
+That comes from the lesson "How Much Is the Site Actually Worth?", which walks through how to back into a land price you can defend.` },
+  { subject: 'Go after the funny money first', tidbit: `Most developers line up their financing in this order: the tax credits, the construction loan, the permanent debt, and then the gap. I do it in the opposite order. I find the gap first and spend the first months filling it.
+
+Tax credits are relatively fixed. Debt is relatively fixed, because your rents drive what you can borrow. What makes or breaks an affordable housing deal is the subsidy: the city money, the foundation grants, the CDFI loans. I call it the funny money, and I go after it first.
+
+That comes from the lesson "Go After the Funny Money First" in the financing course.` },
+  { subject: 'Title comes first, always', tidbit: `Once you are under contract, the clock starts. You have a limited window to find the problems that would change your decision to buy.
+
+Title comes first, always. Pull it early and look carefully. You will find things: unpaid water bills, old liens, easements, strange ownership histories. One deal had an owner who owed $250,000 in water bills. You need to know that before you commit.
+
+That comes from the lesson "Due Diligence: What You Need Before You're Locked In", which goes through the full checklist.` },
+];
+const freeText = (n, first) => `Hi ${first},\n\n${freeOpen}\n\n${n.tidbit}\n\n${freeClose}`;
+const freeKind = (i) => `free plan note ${i}`;
+
+export async function freePlanNote(sql, { dry = false, day = easternDay(), index } = {}) {
+  const idx = index || FREE_SCHEDULE[day];
+  if (!idx) return { v: 'fp1', day, scheduled: false };
+  const note = freeNotes[idx - 1];
+  const kind = freeKind(idx);
+  const out = new Set((await sql`SELECT LOWER(email) AS email FROM email_optouts`).map(r => r.email));
+  const had = new Set((await sql`SELECT LOWER(recipient_email) AS email FROM email_log WHERE kind = ${kind} AND ok`).map(r => r.email));
+  const audience = (await sql`SELECT name, email FROM users WHERE tier = 'Free' AND role = 'member' AND NOT COALESCE(comped, FALSE) ORDER BY id`)
+    .filter(r => { const e = String(r.email || '').trim().toLowerCase(); return e && !out.has(e) && !had.has(e); });
+  if (dry) return { v: 'fp1', day, dry, note: idx, subject: note.subject, wouldSend: audience.length, to: audience.map(r => r.email), sample: freeText(note, firstName(audience[0]?.name || '')) };
+  let sent = 0;
+  for (const r of audience) {
+    let ok = false;
+    try {
+      const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          sender: { email: 'groundup@drginamerritt.net', name: 'Gina Merritt' },
+          replyTo: { email: process.env.BREVO_REPLY_TO || 'djmj@nreuv.com', name: 'Gina Merritt' },
+          to: [{ email: String(r.email).trim() }], subject: note.subject, textContent: freeText(note, firstName(r.name)),
+        }),
+      });
+      ok = res.ok;
+      if (!ok) console.error('free plan note failed', r.email, res.status, (await res.text()).slice(0, 200));
+    } catch (e) { console.error('free plan note failed', r.email, e.message); }
+    if (ok) sent++;
+    await logEmails(sql, kind, 'free accounts', note.subject, [{ name: r.name, email: r.email, ok }]);
+  }
+  return { v: 'fp1', day, note: idx, subject: note.subject, sent, total: audience.length };
 }
