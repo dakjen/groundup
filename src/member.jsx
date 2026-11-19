@@ -2418,6 +2418,21 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
   const [threadMsgs, setThreadMsgs] = useState([]);
   const [draft, setDraft] = useState("");
   const [threadDraft, setThreadDraft] = useState("");
+  // Attachments the team has picked for the message being written. They show
+  // as chips above the box and are added to the text when it is sent.
+  const [pending, setPending] = useState([]);
+  const [threadPending, setThreadPending] = useState([]);
+  const withAtt = (text, list) => [String(text || "").trim(), ...list].filter(Boolean).join("\n");
+  const attChips = (list, setList) => list.length > 0 && (
+    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flex: "1 1 100%", order: -1 }}>
+      {list.map((t, i) => (
+        <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 6, maxWidth: "100%", background: "var(--gu-card)", border: "1px solid #b8010150", borderRadius: 99, padding: "5px 6px 5px 12px", color: "var(--gu-text2)", fontFamily: font, fontSize: 12, fontWeight: 700 }}>
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.startsWith("[[photo:") ? "Photo" : "Template: " + t.slice(11, -2).split("|")[0]}</span>
+          <button type="button" aria-label="Remove attachment" onClick={() => setList(l => l.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: "var(--gu-muted)", cursor: "pointer", fontSize: 15, lineHeight: 1, padding: "0 4px" }}>×</button>
+        </span>
+      ))}
+    </div>
+  );
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -2833,10 +2848,11 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
                     </div>
                   </div>
                 )}
-                <form onSubmit={e => { e.preventDefault(); send(null, draft, () => setDraft("")); }} style={{ display: "flex", gap: 10, alignItems: "flex-end", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                <form onSubmit={e => { e.preventDefault(); send(null, withAtt(draft, pending), () => { setDraft(""); setPending([]); }); }} style={{ display: "flex", gap: 10, alignItems: "flex-end", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                  {attChips(pending, setPending)}
                   {/* On a phone the box takes the full line and the buttons sit under it. */}
-                  <GrowingInput style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", flex: "1 1 240px", minWidth: 0, marginBottom: 0 }} value={draft} onChange={e => setDraft(e.target.value)} mentionable={mentionable} onSubmit={() => send(null, draft, () => setDraft(""))} placeholder={active.slug === "deal-questions" ? "One specific question — a number, a term, a decision. Not the whole deal." : `Message ${active.name}`} maxLength={active.slug === "deal-questions" ? 600 : 4000} />
-                  {isAdmin && <AttachButton onInsert={t => setDraft(d => (d && !d.endsWith("\n") ? d + "\n" : d || "") + t + "\n")} />}
+                  <GrowingInput style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", flex: (typeof window !== "undefined" && window.innerWidth < 700) ? "1 1 100%" : "1 1 240px", minWidth: 0, marginBottom: 0 }} value={draft} onChange={e => setDraft(e.target.value)} mentionable={mentionable} onSubmit={() => send(null, withAtt(draft, pending), () => { setDraft(""); setPending([]); })} placeholder={active.slug === "deal-questions" ? "One specific question — a number, a term, a decision. Not the whole deal." : `Message ${active.name}`} maxLength={active.slug === "deal-questions" ? 600 : 4000} />
+                  {isAdmin && <AttachButton onInsert={t => setPending(l => [...l, t])} />}
                   {isAdmin && <button type="button" onClick={() => setPollOpen(!pollOpen)} style={btnGhost}>Poll</button>}
                   <button type="submit" style={btnRed}>Send</button>
                 </form>
@@ -2866,9 +2882,10 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
             {threadMsgs.map(m => <Message key={m.id} m={m} inThread onDelete={deleteMsg} canDelete={isAdmin || (member && m.user_id === member.id)} onEdit={editMsg} meId={member?.id} isAdmin={isAdmin} />)}
           </div>
           {canEngage ? (
-            <form onSubmit={e => { e.preventDefault(); send(thread.id, threadDraft, () => setThreadDraft("")); }} style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 14px 16px", borderTop: "1px solid #1a0000" }}>
-              <GrowingInput style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", flex: 1, marginBottom: 0 }} onSubmit={() => { send(thread.id, threadDraft, () => setThreadDraft("")); }} mentionable={mentionable} value={threadDraft} onChange={e => setThreadDraft(e.target.value)} placeholder="Reply…" maxLength={4000} />
-              {isAdmin && <AttachButton compact onInsert={t => setThreadDraft(d => (d && !d.endsWith("\n") ? d + "\n" : d || "") + t + "\n")} />}
+            <form onSubmit={e => { e.preventDefault(); send(thread.id, withAtt(threadDraft, threadPending), () => { setThreadDraft(""); setThreadPending([]); }); }} style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", padding: "12px 14px 16px", borderTop: "1px solid #1a0000" }}>
+              {attChips(threadPending, setThreadPending)}
+              <GrowingInput style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", flex: "1 1 140px", minWidth: 0, marginBottom: 0 }} onSubmit={() => { send(thread.id, withAtt(threadDraft, threadPending), () => { setThreadDraft(""); setThreadPending([]); }); }} mentionable={mentionable} value={threadDraft} onChange={e => setThreadDraft(e.target.value)} placeholder="Reply…" maxLength={4000} />
+              {isAdmin && <AttachButton compact onInsert={t => setThreadPending(l => [...l, t])} />}
               <button type="submit" style={{ ...btnRed, padding: "12px 16px" }}>↑</button>
             </form>
           ) : (
