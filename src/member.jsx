@@ -2115,6 +2115,39 @@ function AttachmentCard({ token }) {
   );
 }
 
+// A quick look at a template inside the picker, so the team can check it is
+// the right file before sending it: Word files as text, spreadsheets as their
+// first sheet. Nothing is attached by looking.
+function QuickLook({ url }) {
+  const [state, setState] = useState({ status: "loading" });
+  useEffect(() => {
+    let off = false;
+    (async () => {
+      try {
+        const p = decodeURIComponent(String(url).split("p=")[1] || "");
+        const ext = (p.match(/\.([a-z0-9]+)$/i) || [, ""])[1].toLowerCase();
+        const r = await fetch(url, { headers: { Authorization: "Bearer " + getMemberToken() } });
+        if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.error || "Could not open this file."); }
+        const buf = await (await r.blob()).arrayBuffer();
+        let html = null;
+        if (ext === "docx") { const mammoth = await import("mammoth/mammoth.browser"); html = (await mammoth.convertToHtml({ arrayBuffer: buf })).value; }
+        else if (/^(xlsx|xls|xlsm|csv)$/.test(ext)) { const XLSX = await import("xlsx"); const wb = XLSX.read(buf, { type: "array", cellStyles: false }); html = `<div style="font-weight:700;margin-bottom:6px">Sheet: ${wb.SheetNames[0]}${wb.SheetNames.length > 1 ? ` (1 of ${wb.SheetNames.length})` : ""}</div>` + XLSX.utils.sheet_to_html(wb.Sheets[wb.SheetNames[0]], { editable: false }); }
+        if (!off) setState(html ? { status: "ok", html } : { status: "none" });
+      } catch (e) { if (!off) setState({ status: "error", error: e.message }); }
+    })();
+    return () => { off = true; };
+  }, [url]);
+  return (
+    <div onClick={e => e.stopPropagation()} style={{ marginTop: 8, background: "#fff", color: "#161616", borderRadius: 8, padding: "12px 14px", maxHeight: 280, overflow: "auto", fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 12.5, lineHeight: 1.55, textAlign: "left", cursor: "default" }}>
+      <style>{`.ql table { border-collapse: collapse; font-size: 11.5px; } .ql td, .ql th { border: 1px solid #d8d2c6; padding: 3px 7px; white-space: nowrap; } .ql h1, .ql h2, .ql h3 { font-size: 14px; margin: 8px 0 4px; } .ql p { margin: 4px 0; }`}</style>
+      {state.status === "loading" && <span style={{ color: "#777" }}>Loading a quick look…</span>}
+      {state.status === "error" && <span style={{ color: "#b80101" }}>{state.error}</span>}
+      {state.status === "none" && <span style={{ color: "#777" }}>No quick look for this kind of file. Use "Open full view".</span>}
+      {state.status === "ok" && <div className="ql" dangerouslySetInnerHTML={{ __html: state.html }} />}
+    </div>
+  );
+}
+
 // Team only: attach a photo or link a template into the message being written.
 function AttachButton({ onInsert, compact }) {
   const [open, setOpen] = useState(false);
@@ -2123,6 +2156,10 @@ function AttachButton({ onInsert, compact }) {
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  // Which row is showing its quick look. Hovering a row for a moment opens it
+  // on a computer; on a phone the "Quick look" link does.
+  const [look, setLook] = useState(null);
+  const hoverT = useRef(null);
   const fileRef = useRef(null);
   const openPicker = () => {
     setOpen(false); setPicker(true); setErr("");
@@ -2170,11 +2207,21 @@ function AttachButton({ onInsert, compact }) {
               {!items && !err && <div style={{ color: "var(--gu-muted)", fontFamily: font, fontSize: 13 }}>Loading…</div>}
               {items && shown.length === 0 && <div style={{ color: "var(--gu-muted)", fontFamily: font, fontSize: 13 }}>No template matches that.</div>}
               {shown.map(r => (
-                <button key={r.id} type="button" onClick={() => { onInsert(`[[template:${String(r.title).replace(/[|\]\[]/g, " ")}|${r.url}${r.unpublished ? "|early" : ""}]]`); setPicker(false); setQ(""); }} style={{ textAlign: "left", background: "var(--gu-panel)", border: "1px solid var(--gu-border)", borderRadius: 10, padding: "10px 12px", cursor: "pointer" }}>
+                <div key={r.id} role="button" tabIndex={0}
+                  onMouseEnter={() => { clearTimeout(hoverT.current); hoverT.current = setTimeout(() => setLook(r.id), 600); }}
+                  onMouseLeave={() => clearTimeout(hoverT.current)}
+                  onClick={() => { clearTimeout(hoverT.current); onInsert(`[[template:${String(r.title).replace(/[|\]\[]/g, " ")}|${r.url}${r.unpublished ? "|early" : ""}]]`); setPicker(false); setQ(""); setLook(null); }}
+                  style={{ textAlign: "left", background: "var(--gu-panel)", border: look === r.id ? "1px solid #b8010170" : "1px solid var(--gu-border)", borderRadius: 10, padding: "10px 12px", cursor: "pointer" }}>
                   <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 13.5, fontFamily: font, lineHeight: 1.35 }}>{r.title}</div>
                   {r.description && <div style={{ color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font, lineHeight: 1.5, marginTop: 2 }}>{r.description}</div>}
                   {r.unpublished && <div style={{ color: "#e0a030", fontSize: 10.5, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: font, marginTop: 4 }}>Not released yet · only Owner members can open it</div>}
-                </button>
+                  <div style={{ display: "flex", gap: 14, marginTop: 6, fontFamily: font, fontSize: 12, fontWeight: 700 }}>
+                    <span onClick={e => { e.stopPropagation(); clearTimeout(hoverT.current); setLook(look === r.id ? null : r.id); }} style={{ color: "#e08a8a" }}>{look === r.id ? "Hide quick look" : "Quick look"}</span>
+                    <span onClick={e => { e.stopPropagation(); window.open(r.url, "_blank", "noreferrer"); }} style={{ color: "var(--gu-muted)" }}>Open full view</span>
+                    <span style={{ marginLeft: "auto", color: "#b80101" }}>Attach →</span>
+                  </div>
+                  {look === r.id && <QuickLook url={r.url} />}
+                </div>
               ))}
             </div>
           </div>
@@ -2319,7 +2366,9 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdi
         background: isGina ? "linear-gradient(135deg, #1a0808 0%, #12060a 100%)" : mine ? "#2c1214" : hover ? "#1a0e0f" : "transparent",
         border: isGina ? "1px solid #b8010170" : "1px solid transparent",
         boxShadow: isGina ? "0 0 20px rgba(184,1,1,0.10)" : "none",
-        marginBottom: 1, maxWidth: 680, width: "fit-content", minWidth: 0,
+        // Dr. Merritt's boxed posts need air between them; stacked 1px apart the
+        // outlines ran together (Dakotah, Nov 19, 2026).
+        marginBottom: isGina ? 12 : 1, marginTop: isGina ? 4 : 0, maxWidth: 680, width: "fit-content", minWidth: 0,
         marginLeft: mine ? "auto" : 0,
         transition: "background-color 0.12s" }}>
       {isGina && <div style={{ height: 2, background: "linear-gradient(90deg, transparent, #b80101, transparent)", margin: "-11px -14px 8px", borderRadius: "10px 10px 0 0" }} />}
