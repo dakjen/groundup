@@ -2302,7 +2302,8 @@ function Message({ m, onOpenThread, onDelete, canDelete, inThread, onVote, onEdi
   // Your own messages are editable for 1 hour after sending; the team, anytime.
   const mine = meId && m.user_id === meId;
   const withinHour = Date.now() - new Date(m.created_at).getTime() < 3600 * 1000;
-  const canEdit = onEdit && (isAdmin || (mine && withinHour));
+  // Your own message only. The team has no time limit on its own posts, and can delete (not edit) anyone's.
+  const canEdit = onEdit && mine && (isAdmin || withinHour);
   // Dr. Merritt's messages carry a presence of their own — richer than TEAM,
   // unmistakable at a glance: glowing card, serif name, crowned badge.
   const isGina = m.is_admin && m.author_badge === "drmerritt";

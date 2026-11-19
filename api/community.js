@@ -388,10 +388,10 @@ export default async function handler(req, res) {
       if (!body) return res.status(400).json({ error: 'Message required' });
       const [msg] = await sql`SELECT id, user_id, created_at FROM messages WHERE id = ${Number(req.body.message_id)} AND deleted = FALSE`;
       if (!msg) return res.status(404).json({ error: 'Message not found' });
-      if (!isAdminReq) {
-        if (msg.user_id !== user.id) return res.status(403).json({ error: 'You can only edit your own messages' });
-        if (Date.now() - new Date(msg.created_at).getTime() > 3600 * 1000) return res.status(403).json({ error: 'Messages can be edited for 1 hour after sending' });
-      }
+      // Nobody edits another person's words, the team included (Dakotah, Nov
+      // 19, 2026). The team may still delete a post; that is moderation.
+      if (!user.id || msg.user_id !== user.id) return res.status(403).json({ error: 'You can only edit your own messages' });
+      if (!isAdminReq && Date.now() - new Date(msg.created_at).getTime() > 3600 * 1000) return res.status(403).json({ error: 'Messages can be edited for 1 hour after sending' });
       const [updated] = await sql`UPDATE messages SET body = ${body}, edited_at = NOW() WHERE id = ${msg.id} RETURNING *`;
       return res.json({ message: updated });
     }
