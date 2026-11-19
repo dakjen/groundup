@@ -532,6 +532,27 @@ export default async function handler(req, res) {
              <p style="margin-top:18px;"><a href="https://community.drginamerritt.net/community" style="color:#b80101;font-weight:700;">Open the community →</a></p>`);
         }
       } catch (e) { console.error('chat alert failed', e.message); }
+      // Dr. Merritt hears about every post and reply in the Owner spaces (any
+      // channel only Owner members can enter: Owner Lounge, Deal Questions),
+      // by email and on any device she has notifications on. Since Oct 13 she
+      // only got the Friday digest, so a question in the Owner Lounge on Nov
+      // 14 sat unanswered for five days (Dakotah, Nov 19, 2026).
+      try {
+        if (channel.min_tier === 'Elite' && !channel.team_only && user.badge !== 'drmerritt') {
+          const [gina] = await sql`SELECT id, email FROM users WHERE badge = 'drmerritt' LIMIT 1`;
+          if (gina?.email) {
+            const esc = (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const who = user.name || 'GroundUp Team';
+            const where = channel.name || channel.slug;
+            await sendEmail(gina.email, `${who} posted in ${where}`,
+              `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">New ${parent_id ? 'reply' : 'post'} in ${esc(where)}</h2>
+               <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${esc(who)}</strong> wrote:</p>
+               <p style="color:#333333;font-size:14px;line-height:1.8;background:#faf7f7;border-left:3px solid #b80101;border-radius:0 10px 10px 0;padding:14px 18px;white-space:pre-wrap;">${esc(text)}</p>
+               <p style="margin-top:18px;"><a href="https://community.drginamerritt.net/community#ch=${encodeURIComponent(channel.slug || '')}" style="color:#b80101;font-weight:700;">Open ${esc(where)} to reply →</a></p>`);
+            await sendPush(sql, [gina.id], { title: `${who} posted in ${where}`, body: text.slice(0, 140), url: `/community#ch=${encodeURIComponent(channel.slug || '')}`, tag: 'owner:' + msg.id });
+          }
+        }
+      } catch (e) { console.error('owner space alert failed', e.message); }
       return res.status(201).json({ message: { ...msg, author_name: user.role === 'admin' ? (user.name || 'GroundUp Team') : user.name, author_tier: user.tier, author_badge: user.badge || null, author_badges: user.badges || [], reply_count: 0 } });
     }
 
