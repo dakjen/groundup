@@ -2087,7 +2087,111 @@ function timeAgo(ts) {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
+// Team attachments ride inside the message text as tokens, so they need no
+// extra storage: [[photo:URL]] and [[template:TITLE|URL|early]]. "early" marks
+// a template shared before its lesson is released, which only Owner members
+// can open (the server enforces that in /api/file).
+const ATTACH_RE = /(\[\[(?:photo|template):[^\]]+\]\])/g;
+function AttachmentCard({ token }) {
+  const body = token.slice(2, -2);
+  if (body.startsWith("photo:")) {
+    const url = body.slice(6);
+    return <a href={url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} style={{ display: "block", margin: "6px 0" }}><img src={url} alt="Photo from the GroundUp team" style={{ display: "block", maxWidth: "min(100%, 420px)", maxHeight: 360, borderRadius: 10, border: "1px solid var(--gu-border)" }} /></a>;
+  }
+  const [title, url, flag] = body.slice(9).split("|");
+  const early = flag === "early";
+  return (
+    <div onClick={e => { e.stopPropagation(); if (url) window.open(url, "_blank", "noreferrer"); }} style={{ display: "block", margin: "6px 0", maxWidth: 440, background: "var(--gu-card)", border: early ? "1px solid #e0a03070" : "1px solid #b8010150", borderRadius: 12, padding: "12px 14px", cursor: "pointer", whiteSpace: "normal" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <FileTextIcon />
+        <span style={{ flex: 1, minWidth: 0, color: "var(--gu-text2)", fontWeight: 800, fontSize: 14, fontFamily: font, lineHeight: 1.35 }}>{title}</span>
+        <span style={{ color: "#b80101", fontWeight: 800, fontSize: 12, fontFamily: font, whiteSpace: "nowrap" }}>Open →</span>
+      </div>
+      <div style={{ marginTop: 8, fontSize: 11.5, lineHeight: 1.55, fontFamily: font, color: early ? "#e0a030" : "var(--gu-muted)" }}>
+        {early && <strong style={{ display: "block", letterSpacing: "0.4px" }}>Shared with you before release. Exclusive to Owner members.</strong>}
+        This template is proprietary to GroundUp. It is not to be sold or shared.
+      </div>
+    </div>
+  );
+}
+
+// Team only: attach a photo or link a template into the message being written.
+function AttachButton({ onInsert, compact }) {
+  const [open, setOpen] = useState(false);
+  const [picker, setPicker] = useState(false);
+  const [items, setItems] = useState(null);
+  const [q, setQ] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const fileRef = useRef(null);
+  const openPicker = () => {
+    setOpen(false); setPicker(true); setErr("");
+    if (!items) api("/api/resources?library=1").then(d => setItems((d.resources || []).filter(r => r.category === "template" && r.url))).catch(e => setErr(e.message || "Could not load the templates."));
+  };
+  const pickPhoto = async (e) => {
+    const file = e.target.files && e.target.files[0]; e.target.value = "";
+    if (!file) return;
+    setErr("");
+    if (!/\.(png|jpe?g|webp)$/i.test(file.name || "")) { setErr("Photos need to be PNG, JPG or WEBP. iPhone photos are often HEIC; a screenshot of the photo works."); return; }
+    if (file.size > 4 * 1024 * 1024) { setErr(`That photo is ${(file.size / 1048576).toFixed(1)}MB. Please keep it under 4MB.`); return; }
+    setBusy(true);
+    try {
+      const fd = new FormData(); fd.append("file", file);
+      const res = await fetch("/api/lesson-pdfs?kind=chat", { method: "POST", headers: { Authorization: "Bearer " + getMemberToken() }, body: fd });
+      const raw = await res.text(); let d = {}; try { d = raw ? JSON.parse(raw) : {}; } catch {}
+      if (!res.ok || !d.url) throw new Error(d.error || `Upload failed (${res.status})`);
+      onInsert(`[[photo:${d.url}]]`);
+    } catch (e2) { setErr(e2.message || "The photo did not upload."); }
+    setBusy(false);
+  };
+  const shown = (items || []).filter(r => !q.trim() || (r.title + " " + (r.description || "")).toLowerCase().includes(q.trim().toLowerCase()));
+  return (
+    <span style={{ position: "relative", flexShrink: 0 }}>
+      <button type="button" onClick={() => { setOpen(!open); setErr(""); }} disabled={busy} title="Attach a photo or a template" style={{ ...btnGhost, padding: compact ? "12px 12px" : "12px 16px" }}>{busy ? "Uploading…" : "Attach"}</button>
+      <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" style={{ display: "none" }} onChange={pickPhoto} />
+      {open && (
+        <div style={{ position: "absolute", bottom: "calc(100% + 6px)", right: 0, zIndex: 40, background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 10, padding: 6, minWidth: 170, boxShadow: "0 12px 40px rgba(0,0,0,0.55)" }}>
+          {[["Photo", () => { setOpen(false); fileRef.current && fileRef.current.click(); }], ["Template", openPicker]].map(([label, fn]) => (
+            <button key={label} type="button" onClick={fn} style={{ display: "block", width: "100%", textAlign: "left", background: "none", border: "none", color: "var(--gu-text2)", fontFamily: font, fontWeight: 700, fontSize: 13.5, padding: "10px 12px", cursor: "pointer", borderRadius: 7 }}>{label}</button>
+          ))}
+        </div>
+      )}
+      {err && !picker && <div style={{ position: "absolute", bottom: "calc(100% + 6px)", right: 0, zIndex: 41, width: 260, background: "#2c1214", border: "1px solid #b8010170", borderRadius: 10, padding: "10px 12px", color: "#ffb4b4", fontFamily: font, fontSize: 12.5, lineHeight: 1.5 }} onClick={() => setErr("")}>{err}</div>}
+      {picker && (
+        <div onClick={() => setPicker(false)} style={{ position: "fixed", inset: 0, zIndex: 330, background: "rgba(10,2,3,0.8)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "var(--gu-card)", border: "1px solid var(--gu-border)", borderRadius: 16, width: "100%", maxWidth: 520, maxHeight: "82vh", display: "flex", flexDirection: "column", padding: "20px 20px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 22, color: "var(--gu-text)" }}>Link a template</div>
+              <button type="button" onClick={() => setPicker(false)} aria-label="Close" style={{ background: "none", border: "none", color: "var(--gu-muted)", fontSize: 22, cursor: "pointer", lineHeight: 1 }}>×</button>
+            </div>
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search templates" style={{ ...inp, background: "var(--gu-panel)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", marginBottom: 10 }} />
+            <div style={{ overflowY: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
+              {err && <div style={{ color: "#ffb4b4", fontFamily: font, fontSize: 13 }}>{err}</div>}
+              {!items && !err && <div style={{ color: "var(--gu-muted)", fontFamily: font, fontSize: 13 }}>Loading…</div>}
+              {items && shown.length === 0 && <div style={{ color: "var(--gu-muted)", fontFamily: font, fontSize: 13 }}>No template matches that.</div>}
+              {shown.map(r => (
+                <button key={r.id} type="button" onClick={() => { onInsert(`[[template:${String(r.title).replace(/[|\]\[]/g, " ")}|${r.url}${r.unpublished ? "|early" : ""}]]`); setPicker(false); setQ(""); }} style={{ textAlign: "left", background: "var(--gu-panel)", border: "1px solid var(--gu-border)", borderRadius: 10, padding: "10px 12px", cursor: "pointer" }}>
+                  <div style={{ color: "var(--gu-text2)", fontWeight: 800, fontSize: 13.5, fontFamily: font, lineHeight: 1.35 }}>{r.title}</div>
+                  {r.description && <div style={{ color: "var(--gu-muted)", fontSize: 11.5, fontFamily: font, lineHeight: 1.5, marginTop: 2 }}>{r.description}</div>}
+                  {r.unpublished && <div style={{ color: "#e0a030", fontSize: 10.5, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase", fontFamily: font, marginTop: 4 }}>Not released yet · only Owner members can open it</div>}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </span>
+  );
+}
+
 function linkify(text) {
+  if (ATTACH_RE.test(String(text))) {
+    ATTACH_RE.lastIndex = 0;
+    return String(text).split(ATTACH_RE).map((seg, i) => /^\[\[(?:photo|template):/.test(seg) ? <AttachmentCard key={"a" + i} token={seg} /> : <span key={"t" + i}>{linkifyText(seg.replace(/^\n+|\n+$/g, ""))}</span>);
+  }
+  return linkifyText(text);
+}
+function linkifyText(text) {
   const parts = String(text).split(/(https?:\/\/[^\s]+|@[A-Z][\w.'-]*(?: [A-Z][\w.'-]*)?|(?:^|(?<=\s))#[A-Za-z][\w-]{1,30})/g);
   return parts.map((p, i) => /^https?:\/\//.test(p)
     ? <a key={i} href={p} target="_blank" rel="noreferrer" style={{ color: "#b80101", wordBreak: "break-all" }}>{p}</a>
@@ -2730,6 +2834,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
                 )}
                 <form onSubmit={e => { e.preventDefault(); send(null, draft, () => setDraft("")); }} style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
                   <GrowingInput style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", flex: 1, marginBottom: 0 }} value={draft} onChange={e => setDraft(e.target.value)} mentionable={mentionable} onSubmit={() => send(null, draft, () => setDraft(""))} placeholder={active.slug === "deal-questions" ? "One specific question — a number, a term, a decision. Not the whole deal." : `Message ${active.name}`} maxLength={active.slug === "deal-questions" ? 600 : 4000} />
+                  {isAdmin && <AttachButton onInsert={t => setDraft(d => (d && !d.endsWith("\n") ? d + "\n" : d || "") + t + "\n")} />}
                   {isAdmin && <button type="button" onClick={() => setPollOpen(!pollOpen)} style={btnGhost}>Poll</button>}
                   <button type="submit" style={btnRed}>Send</button>
                 </form>
@@ -2761,6 +2866,7 @@ export function CommunityPage({ member, isAdmin, onSignIn }) {
           {canEngage ? (
             <form onSubmit={e => { e.preventDefault(); send(thread.id, threadDraft, () => setThreadDraft("")); }} style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 14px 16px", borderTop: "1px solid #1a0000" }}>
               <GrowingInput style={{ ...inp, background: "var(--gu-card)", border: "1px solid var(--gu-border)", color: "var(--gu-text)", flex: 1, marginBottom: 0 }} onSubmit={() => { send(thread.id, threadDraft, () => setThreadDraft("")); }} mentionable={mentionable} value={threadDraft} onChange={e => setThreadDraft(e.target.value)} placeholder="Reply…" maxLength={4000} />
+              {isAdmin && <AttachButton compact onInsert={t => setThreadDraft(d => (d && !d.endsWith("\n") ? d + "\n" : d || "") + t + "\n")} />}
               <button type="submit" style={{ ...btnRed, padding: "12px 16px" }}>↑</button>
             </form>
           ) : (

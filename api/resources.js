@@ -617,6 +617,9 @@ export default async function handler(req, res) {
       // is still on the Free tier, so templates stay locked for them.
       const lockRow = (r, need) => rank >= need ? r : { ...r, url: null, code: null, locked: true, unlock_tier: Object.keys(TIER_RANK).find(k => TIER_RANK[k] === need) || 'Premium' };
       const visible = rows.map(r => lockRow(r, TIER_RANK[r.min_tier] ?? 2));
+      // A template attached to more than one lesson is listed once (Dakotah,
+      // Nov 19, 2026). The released copy wins over an unreleased one.
+      const seenAtt = new Map();
       // Every template and material attached to a lesson is in the library too,
       // filed under the phase the team picked, labelled with where it came from.
       try {
@@ -640,6 +643,12 @@ export default async function handler(req, res) {
             if (!lessonLive(lesson) && !team) continue;
             const unpublished = !courseLive || !lessonLive(lesson);
             // Lesson materials come with the courses: any paid plan opens them
+            const dupe = seenAtt.get(m.url);
+            if (dupe !== undefined) {
+              if (visible[dupe].unpublished && !unpublished) visible[dupe] = null; // replace with the released copy below
+              else continue;
+            }
+            seenAtt.set(m.url, visible.length);
             visible.push(lockRow({ id: `att:${key}:${i}`, title: String(m.title || '').replace(/_/g, ' '), url: m.url, category: m.kind === 'Template' ? 'template' : 'resource',
               kind_label: m.kind, min_tier: 'Basic', phase: m.phase || null, position: 999,
               description: course ? `From ${course.title}${lesson ? ` · ${lesson.title}` : ''}` : null, from_lesson: true, unpublished,
@@ -648,7 +657,7 @@ export default async function handler(req, res) {
         }
       } catch (e) { console.error('library merge', e.message); }
       const [pt] = await sql`SELECT value FROM settings WHERE key = 'partner_types'`;
-      return res.json({ resources: visible, tier: user.tier, partner_types: parseTypes(pt?.value) });
+      return res.json({ resources: visible.filter(Boolean), tier: user.tier, partner_types: parseTypes(pt?.value) });
     }
 
     if (!admin) return res.status(401).json({ error: 'Unauthorized' });

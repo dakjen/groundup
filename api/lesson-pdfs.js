@@ -107,6 +107,12 @@ export default async function handler(req, res) {
         if (!imgExt) return res.status(400).json({ error: 'Rendered pages must be PNG, JPG or WEBP' });
         if (filePart.data.length > 6 * 1024 * 1024) return res.status(400).json({ error: 'Rendered page too large' });
         folder = 'shop-pages'; contentType = IMG[imgExt];
+      } else if (kind === 'chat') {
+        // A photo the team attaches to a community post. Team only (the door
+        // above lets members through for avatars and session documents only).
+        if (!imgExt) return res.status(400).json({ error: 'Photos must be PNG, JPG, or WEBP' });
+        if (filePart.data.length > 4 * 1024 * 1024) return res.status(400).json({ error: 'Keep photos under 4MB' });
+        folder = 'chat-photos'; contentType = IMG[imgExt];
       } else if (kind === 'cover') {
         if (!imgExt) return res.status(400).json({ error: 'Covers must be PNG, JPG, or WEBP' });
         folder = 'shop-covers'; contentType = IMG[imgExt];

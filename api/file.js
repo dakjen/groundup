@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   // unguessable paths in a private store, so nothing is listable or reachable
   // by guessing. Everything else still needs a session, and documents need
   // ownership on top of that.
-  const OPEN = ['avatars/', 'shop-covers/'];
+  const OPEN = ['avatars/', 'shop-covers/', 'chat-photos/'];
   const isImage = OPEN.some(f => pathname.startsWith(f));
   if (!isImage && !session?.uid && !admin) return res.status(401).json({ error: 'Not signed in' });
 
@@ -38,6 +38,35 @@ export default async function handler(req, res) {
       const sql = neon(process.env.DATABASE_URL);
       const [u] = await sql`SELECT tier, membership_status FROM users WHERE id = ${session.uid}`;
       if (!u || u.membership_status !== 'active' || (TIER_RANK[u.tier] ?? 0) < 1) return res.status(403).json({ error: 'Templates and materials come with a paid membership.' });
+      // A template that sits only on lessons or courses not released yet is
+      // shared early by the team, and only Owner members may open it (Dakotah,
+      // Nov 19, 2026). Once any lesson it is on is released, every paid plan can.
+      if ((TIER_RANK[u.tier] ?? 0) < 4) {
+        let early = false;
+        try {
+          const [attRow] = await sql`SELECT value FROM settings WHERE key = 'lesson_attachments'`;
+          const atts = attRow?.value ? JSON.parse(attRow.value) : {};
+          const courses = await sql`SELECT id, lessons, hidden, available_at FROM courses`;
+          const byId = Object.fromEntries(courses.map(c => [c.id, c]));
+          const now = new Date();
+          let onAny = false, onLive = false;
+          for (const [key, v] of Object.entries(atts)) {
+            for (const m of (v.materials || [])) {
+              if (!m?.url || !decodeURIComponent(String(m.url)).endsWith(pathname)) continue;
+              onAny = true;
+              const [cid, lid] = key.split(':');
+              const c = byId[cid]; if (!c) continue;
+              const lessons = (typeof c.lessons === 'string' ? JSON.parse(c.lessons) : c.lessons) || [];
+              const l = lessons.find(x => String(x.id) === String(lid)) || lessons.find(x => String(x.id) === String(lid).replace(/^l/, ''));
+              const courseLive = !c.hidden && !(c.available_at && new Date(c.available_at) > now);
+              const lessonLive = l && (!l.draft || (l.release_at && new Date(l.release_at) <= now));
+              if (courseLive && lessonLive) onLive = true;
+            }
+          }
+          early = onAny && !onLive;
+        } catch (e) { console.error('early template check failed', e.message); }
+        if (early) return res.status(403).json({ error: 'This template has not been released yet. Early access is exclusive to Owner members.' });
+      }
     } catch (e) { return res.status(403).json({ error: 'Templates and materials come with a paid membership.' }); }
   }
 
