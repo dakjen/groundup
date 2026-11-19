@@ -582,7 +582,12 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'GET') {
-      if (admin) {
+      // The team's management page gets the raw rows with click counts. The
+      // member Library and Resources pages ask with ?library=1, and the team
+      // then gets the same merged list members do, lesson templates included.
+      // Without that flag the team saw only the 8 hand-added rows and none of
+      // the lesson templates (Dakotah, Nov 19, 2026).
+      if (admin && req.query.library !== '1') {
         const rows = await sql`
           SELECT r.*,
             COALESCE(c.clicks, 0)::int AS clicks,
@@ -598,8 +603,9 @@ export default async function handler(req, res) {
         return res.json({ resources: rows, partner_types: parseTypes(pt?.value) });
       }
       const session = getSession(req);
-      if (!session || !session.uid) return res.status(401).json({ error: 'Sign in required' });
-      const [user] = await sql`SELECT tier, membership_status, role FROM users WHERE id = ${session.uid}`;
+      if (!admin && (!session || !session.uid)) return res.status(401).json({ error: 'Sign in required' });
+      const [found] = session?.uid ? await sql`SELECT tier, membership_status, role FROM users WHERE id = ${session.uid}` : [];
+      const user = admin ? { tier: found?.tier || 'Elite', membership_status: 'active', role: 'admin' } : found;
       if (!user || user.membership_status !== 'active') return res.status(401).json({ error: 'Sign in required' });
       // The team sees the whole library, open, including templates on lessons
       // and courses that have not been published yet (marked as such below).

@@ -3262,7 +3262,7 @@ export function LibraryPage({ member, onUpgrade }) {
 
   useEffect(() => {
     if (!allowed) return;
-    api("/api/resources").then(setData).catch(e => setError(e.message));
+    api("/api/resources?library=1").then(setData).catch(e => setError(e.message));
   }, [member?.id]);
 
   const ping = (id) => { try { api("/api/resources", { method: "POST", body: JSON.stringify({ action: "resource_click", id }) }).catch(() => {}); } catch {} };
@@ -3339,7 +3339,7 @@ export function ResourcesPage({ member, onUpgrade }) {
 
   useEffect(() => {
     if (rank < 2 && member?.role !== "admin") return;
-    api("/api/resources").then(setData).catch(e => setError(e.message));
+    api("/api/resources?library=1").then(setData).catch(e => setError(e.message));
   }, [member?.id]);
 
   // Count every resource use — link opens and code copies — for the admin panel
