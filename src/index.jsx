@@ -15,6 +15,8 @@ export const foundingLastDay = () => {
     return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date()) === "2026-11-20";
   } catch { return false; }
 };
+// True until founding closes: 11:59 PM Eastern, Friday Nov 20, 2026.
+export const foundingStillOpen = () => Date.now() < new Date("2026-11-21T05:00:00.000Z").getTime();
 
 // Provide a no-op storage fallback so the app doesn't crash when no backend is connected
 if (!window.storage) {
@@ -8345,14 +8347,20 @@ export default function App() {
   // member (Dakotah, Nov 19, 2026). Shown once per visit to anyone who is not
   // already a paying member or the team. It goes quiet by itself at midnight.
   const [showLastDayPop, setShowLastDayPop] = useState(false);
+  const [payBusy, setPayBusy] = useState(null);
   useEffect(() => {
-    if (!foundingLastDay() || isAdmin || resetToken || showSignup || onboarding) return;
-    if (member && (member.role === "admin" || (member.tier && member.tier !== "Free"))) return;
+    // People with an account and no plan see it from Nov 19 until founding
+    // closes, every visit: without a paid plan they do not get the founding
+    // badge or discount (Dakotah, Nov 19, 2026).
+    const freeAccount = !!member && member.role !== "admin" && (!member.tier || member.tier === "Free");
+    if (!(foundingLastDay() || (freeAccount && foundingStillOpen())) || isAdmin || resetToken || showSignup || onboarding) return;
+    if (member && !freeAccount) return;
     if (String(activePage || "").startsWith("go/")) return;
-    try { if (sessionStorage.getItem("guLastDayPopSeen") === "1") return; } catch {}
+    // Free accounts see it on every page load until they pick a plan.
+    try { if (!freeAccount && sessionStorage.getItem("guLastDayPopSeen") === "1") return; } catch {}
     const t = setTimeout(() => {
       setShowLastDayPop(true);
-      try { sessionStorage.setItem("guLastDayPopSeen", "1"); } catch {}
+      try { if (!freeAccount) sessionStorage.setItem("guLastDayPopSeen", "1"); } catch {}
     }, 1800);
     return () => clearTimeout(t);
   }, [member, isAdmin, resetToken, showSignup, onboarding]);
@@ -8495,12 +8503,29 @@ export default function App() {
         <div className="gu-pop-backdrop" style={{ position: "fixed", inset: 0, zIndex: 320, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, overflowY: "auto" }} {...backdropClose(() => setShowLastDayPop(false))}>
           <div className="gu-pop-card" onClick={e => e.stopPropagation()} style={{ position: "relative", width: "100%", maxWidth: 480, background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "38px clamp(20px,6vw,36px) 28px", textAlign: "center", margin: "auto" }}>
             <button onClick={() => setShowLastDayPop(false)} aria-label="Close" style={{ position: "absolute", top: 12, right: 16, background: "none", border: "none", color: "#8a7070", fontSize: 24, lineHeight: 1, cursor: "pointer", padding: 4 }}>×</button>
-            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Last day · Friday, November 20</div>
-            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(27px,5vw,36px)", color: "#f5e8e8", margin: "0 0 12px", lineHeight: 1.15 }}>Founding membership closes tonight.</h2>
-            <p style={{ color: "#c8a8a8", fontSize: 14.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.75, margin: "0 0 14px" }}>Today is the last day to get on the founding list and keep the founding discount: <strong style={{ color: "#f0d8d8" }}>25% off your membership for your whole first year</strong>.</p>
+            <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>{foundingLastDay() ? "Last day · Friday, November 20" : "Closes Friday, November 20"}</div>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: "clamp(27px,5vw,36px)", color: "#f5e8e8", margin: "0 0 12px", lineHeight: 1.15 }}>{member ? "Your account doesn't have a plan yet." : "Founding membership closes tonight."}</h2>
+            {member
+              ? <p style={{ color: "#c8a8a8", fontSize: 14.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.75, margin: "0 0 14px" }}><strong style={{ color: "#f0d8d8" }}>A free account does not save your founding spot.</strong> Without a paid plan, you will not get the founding member badge or the founding discount: 25% off your membership for your whole first year. {foundingLastDay() ? "Today is the last day." : "The last day is Friday, November 20."}</p>
+              : <p style={{ color: "#c8a8a8", fontSize: 14.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.75, margin: "0 0 14px" }}>Today is the last day to get on the founding list and keep the founding discount: <strong style={{ color: "#f0d8d8" }}>25% off your membership for your whole first year</strong>.</p>}
             <p style={{ color: "#c8a8a8", fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.75, margin: "0 0 22px" }}>Founding members also get a year of live Lunch &amp; Learns, the founding member badge, and an invitation to the launch party in DC on December 5. It closes at <strong style={{ color: "#f0d8d8" }}>11:59 PM Eastern</strong>.</p>
+            {member ? (
+              /* Free accounts pay right here: one tap goes straight to secure
+                 payment for that plan (Dakotah, Nov 19, 2026: "BLATANTLY EASY"). */
+              <div style={{ display: "grid", gap: 8, textAlign: "left" }}>
+                {[["Basic", "Member", 37.49, 49.99], ["Builder", "Builder", 112.49, 149.99], ["Premium", "Premium", 187.49, 249.99], ["Elite", "Owner", 374.99, 499.99]].map(([t, label, now, list]) => (
+                  <button key={t} disabled={!!payBusy} onClick={async () => { setPayBusy(t); const ok = window.startCheckout ? await window.startCheckout("sub_" + t) : false; if (!ok) { setPayBusy(null); navigateTo("pricing"); setShowLastDayPop(false); } }}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap", width: "100%", background: t === "Basic" ? "#b80101" : "#1a0808", color: "#fff", border: "1px solid " + (t === "Basic" ? "#b80101" : "#3a1618"), borderRadius: 10, padding: "13px 16px", fontFamily: "'DM Sans', sans-serif", cursor: payBusy ? "wait" : "pointer", opacity: payBusy && payBusy !== t ? 0.5 : 1 }}>
+                    <span style={{ fontWeight: 800, fontSize: 15 }}>{payBusy === t ? "Opening payment…" : `Pay for ${label}`}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700 }}>${now}/mo <span style={{ fontWeight: 500, opacity: 0.7, textDecoration: "line-through" }}>${list}</span></span>
+                  </button>
+                ))}
+                <div style={{ color: "#8a7070", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, textAlign: "center", marginTop: 2 }}>Founding price for your first year. Tap a plan to go straight to secure payment. <button onClick={() => { setShowLastDayPop(false); navigateTo("pricing"); }} style={{ background: "none", border: "none", color: "#c8a8a8", fontSize: 12, fontFamily: "inherit", fontWeight: 700, cursor: "pointer", padding: 0, textDecoration: "underline" }}>Compare plans</button></div>
+              </div>
+            ) : (
             <button onClick={() => { setShowLastDayPop(false); navigateTo("pricing"); }} style={{ display: "block", width: "100%", background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "15px 28px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 15, cursor: "pointer" }}>Choose your plan →</button>
-            <button onClick={() => setShowLastDayPop(false)} style={{ marginTop: 14, background: "none", border: "none", color: "#6a5050", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}>I'll look around first</button>
+            )}
+            <button onClick={() => setShowLastDayPop(false)} style={{ marginTop: 14, background: "none", border: "none", color: "#6a5050", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}>{member ? "Not right now" : "I'll look around first"}</button>
             {!member && <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid #2a0000", color: "#8a7070", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7 }}>Not on the waitlist yet? <a href="/waitlist" style={{ color: "#f0d8d8", fontWeight: 800, textUnderlineOffset: 3 }}>Join it first</a>, then choose your plan with the same email.</div>}
           </div>
         </div>
@@ -8561,7 +8586,9 @@ export default function App() {
                   : getMember()
                     ? "Payment received — your access is activating now. Refresh in a few seconds if you don't see it yet."
                     : "Payment received. Sign in with the email you just paid with and everything will be waiting.")
-              : "Checkout cancelled — no charge was made."}
+              : (foundingStillOpen() && getMember() && (!getMember().tier || getMember().tier === "Free")
+                  ? <>You left before paying, so you are not a member yet. A free account does not save your founding spot. <button onClick={() => { setCheckoutMsg(null); navigateTo("pricing"); }} style={{ background: "none", border: "none", color: "inherit", fontWeight: 800, textDecoration: "underline", cursor: "pointer", padding: 0, fontFamily: "inherit", fontSize: "inherit" }}>Choose your plan →</button></>
+                  : "Checkout cancelled — no charge was made.")}
           </div>
           <button onClick={() => { setCheckoutMsg(null); window.history.replaceState({}, "", window.location.pathname); }} style={{ background: "transparent", color: "inherit", border: "none", fontSize: 16, cursor: "pointer" }}>✕</button>
         </div>
