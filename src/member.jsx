@@ -868,7 +868,14 @@ const onbInp = { width: "100%", background: "#2a1416", border: "1px solid #5a212
 const onbLbl = { display: "block", fontSize: 10, color: "#e0aaaa", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 };
 const onbBtn = { background: "#e01818", color: "#fff", border: "none", borderRadius: 9, padding: "13px 22px", fontFamily: font, fontWeight: 800, fontSize: 13.5, cursor: "pointer" };
 
-export function OnboardingFlow({ pending, onDone }) {
+// Two uses. With `pending`, it is the sign-up path from Sign In / Join:
+// questions, then plans, and the account is made at the end. With
+// `answersOnly`, the person is already signed in (they joined from Pricing, or
+// before the questions were required) and only the two question screens show;
+// the answers are saved to their account. Dakotah, Nov 18, 2026: everyone
+// fills these out. There is no skip, and the three core questions (who you
+// are, what you want to learn, what is in your way) must be answered.
+export function OnboardingFlow({ pending, onDone, answersOnly = false, member = null }) {
   const [step, setStep] = useState(0);
   const [learn, setLearn] = useState("");
   const [pain, setPain] = useState("");
@@ -894,6 +901,23 @@ export function OnboardingFlow({ pending, onDone }) {
 
   // Saves whatever was answered (possibly nothing) and moves to the plans.
   // Budget is deliberately NOT asked — the engine recommends from need alone.
+  const need0 = !role ? "Please choose what best describes you." : "";
+  const need1 = !learn ? "Please choose what you hope to learn." : !pain ? "Please choose what is in your way right now." : "";
+  const who = pending || member;
+  const totalSteps = answersOnly ? 2 : 3;
+  // Signed-in member: save the answers to the account and close.
+  const saveAnswers = async () => {
+    setBusy(true); setError("");
+    try {
+      await api("/api/auth", { method: "POST", body: JSON.stringify({ action: "onboarding", learn, pain, source, role, phase, experience, focus, goal, company, location }) });
+      const me = await api("/api/auth").catch(() => null);
+      if (me?.user) saveMember(me.user);
+      onDone(me?.user || { ...(member || {}), onboarded_at: new Date().toISOString() });
+    } catch (e) {
+      setError(e.message || "We couldn't save your answers just now. Please try again.");
+      setBusy(false);
+    }
+  };
   const toPlans = async () => {
     setBusy(true);
     try {
@@ -944,7 +968,7 @@ export function OnboardingFlow({ pending, onDone }) {
           <div style={{ position: "absolute", left: 16, right: 16, bottom: 12, display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 12 }}>
             <div style={{ color: "#ffd9d9", fontSize: 11.5, fontFamily: font, fontWeight: 600, textShadow: "0 1px 4px rgba(0,0,0,0.7)" }}>{ONB_BANNER[step].caption}</div>
             <div style={{ display: "flex", gap: 5 }}>
-              {[0, 1, 2].map(i => (
+              {(answersOnly ? [0, 1] : [0, 1, 2]).map(i => (
                 <span key={i} style={{ width: i === step ? 20 : 7, height: 7, borderRadius: 4, background: i === step ? "#ff3b3b" : "#ffffff55", transition: "width .2s" }} />
               ))}
             </div>
@@ -952,14 +976,14 @@ export function OnboardingFlow({ pending, onDone }) {
         </div>
 
         <div style={{ fontSize: 10, color: "#ff5c5c", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>
-          Step {step + 1} of 3
+          Step {step + 1} of {totalSteps}
         </div>
 
         {step === 0 ? (
           <>
-            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>Welcome, {firstName(pending?.name) || "there"}.</h2>
+            <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>Welcome, {firstName(who?.name) || "there"}.</h2>
             <p style={{ color: "#d9c2c2", fontSize: 14, lineHeight: 1.7, fontFamily: font, marginBottom: 24 }}>
-              Tell us a little about you, so Dr. Merritt and the community know who they're talking to. All of it is optional and you can change it later.
+              Tell us a little about you, so Dr. Merritt and the community know who they're talking to. It takes about a minute, and you can change your answers later.
             </p>
 
             <div style={{ marginBottom: 16 }}>
@@ -974,7 +998,7 @@ export function OnboardingFlow({ pending, onDone }) {
             <div style={{ marginBottom: 16 }}>
               <label style={lbl2}>Which best describes you?</label>
               <select style={sel} value={role} onChange={e => setRole(e.target.value)}>
-                <option value="">Rather not say</option>
+                <option value="">Choose one</option>
                 {ONB_ROLE.map(o => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
@@ -986,16 +1010,14 @@ export function OnboardingFlow({ pending, onDone }) {
               </select>
             </div>}
 
-            <button onClick={() => setStep(1)} style={{ ...onbBtn, width: "100%" }}>Continue →</button>
-            <button onClick={toPlans} disabled={busy} style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", color: "#c2a5a5", fontFamily: font, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-              Skip to the plans
-            </button>
+            {error && <div style={{ color: "#ff8a8a", fontFamily: font, fontSize: 13, marginBottom: 12 }}>{error}</div>}
+            <button onClick={() => { if (need0) { setError(need0); return; } setError(""); setStep(1); }} style={{ ...onbBtn, width: "100%" }}>Continue →</button>
           </>
         ) : step === 1 ? (
           <>
             <h2 style={{ fontFamily: serif, fontWeight: 700, fontSize: 30, color: "#f5e8e8", marginBottom: 6 }}>What are you working on?</h2>
             <p style={{ color: "#d9c2c2", fontSize: 14, lineHeight: 1.7, fontFamily: font, marginBottom: 24 }}>
-              This is what we use to point you at the right courses, channels and plan — instead of making you guess. Still optional.
+              This is what we use to point you at the right courses, channels and plan, instead of making you guess.
             </p>
 
             {isDev && <div style={{ marginBottom: 16 }}>
@@ -1015,14 +1037,14 @@ export function OnboardingFlow({ pending, onDone }) {
             <div style={{ marginBottom: 16 }}>
               <label style={lbl2}>What do you hope to learn?</label>
               <select style={sel} value={learn} onChange={e => setLearn(e.target.value)}>
-                <option value="">No preference yet</option>
+                <option value="">Choose one</option>
                 {WL_LEARN.filter(o => o !== "Other").map(o => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
             <div style={{ marginBottom: 16 }}>
               <label style={lbl2}>What's in your way right now?</label>
               <select style={sel} value={pain} onChange={e => setPain(e.target.value)}>
-                <option value="">Rather not say</option>
+                <option value="">Choose one</option>
                 {WL_PAIN.filter(o => o !== "Other").map(o => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
@@ -1038,8 +1060,9 @@ export function OnboardingFlow({ pending, onDone }) {
               </select>
             </div>
 
-            <button onClick={toPlans} disabled={busy} style={{ ...onbBtn, width: "100%", opacity: busy ? 0.6 : 1 }}>
-              {busy ? "One moment…" : "See the plans →"}
+            {error && <div style={{ color: "#ff8a8a", fontFamily: font, fontSize: 13, marginBottom: 12 }}>{error}</div>}
+            <button onClick={() => { if (need1) { setError(need1); return; } setError(""); (answersOnly ? saveAnswers : toPlans)(); }} disabled={busy} style={{ ...onbBtn, width: "100%", opacity: busy ? 0.6 : 1 }}>
+              {busy ? "One moment…" : answersOnly ? "Save my answers →" : "See the plans →"}
             </button>
             <button onClick={() => setStep(0)} style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", color: "#c2a5a5", fontFamily: font, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
               ← Back

@@ -8046,6 +8046,9 @@ export default function App() {
   const [signupTier, setSignupTier] = useState("Free");
   const [authMode, setAuthMode] = useState("signup");
   const [member, setMember] = useState(() => getMember());
+  // True once the member has been re-read from the server on this load, so the
+  // questions gate below never acts on a stale copy from the browser.
+  const [memberFresh, setMemberFresh] = useState(false);
   // IP agreement gate plumbing — protected content summons it via window.guRequireIp
   const [showIpGate, setShowIpGate] = useState(false);
   const ipPendingRef = useRef(null);
@@ -8251,12 +8254,21 @@ export default function App() {
     for (const [k, v] of Object.entries(V)) document.documentElement.style.setProperty(k, v);
   }, [member?.role, activePage]);
 
+  // Someone who signs in during this visit: re-read them once from the server
+  // so the questions gate sees whether they have answered.
+  useEffect(() => {
+    if (!member?.id || memberFresh || !getMemberToken()) return;
+    fetch("/api/auth", { headers: { Authorization: `Bearer ${getMemberToken()}` } })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => { if (data?.user) { saveMember(data.user); setMember(data.user); setMemberFresh(true); } })
+      .catch(() => {});
+  }, [member?.id, memberFresh]);
   // Re-validate the saved member session against the server on load
   useEffect(() => {
     if (!getMemberToken() || !getMember()) return;
     fetch("/api/auth", { headers: { Authorization: `Bearer ${getMemberToken()}` } })
       .then(r => r.ok ? r.json() : Promise.reject())
-      .then(data => { saveMember(data.user); setMember(data.user); if (data.user.role === "admin") { sessionStorage.setItem("adminToken", getMemberToken()); } else { sessionStorage.removeItem("adminToken"); sessionStorage.removeItem("isAdmin"); } })
+      .then(data => { saveMember(data.user); setMember(data.user); setMemberFresh(true); if (data.user.role === "admin") { sessionStorage.setItem("adminToken", getMemberToken()); } else { sessionStorage.removeItem("adminToken"); sessionStorage.removeItem("isAdmin"); } })
       .catch(() => { clearMember(); setMember(null); sessionStorage.removeItem("adminToken"); sessionStorage.removeItem("isAdmin"); setIsAdmin(false); });
   }, []);
 
@@ -8543,6 +8555,12 @@ export default function App() {
             <button onClick={() => setShowWaitlistPop(false)} style={{ marginTop: 14, background: "none", border: "none", color: "#6a5050", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}>I'll look around first</button>
           </div>
         </div>
+      )}
+      {/* Everyone answers the sign-up questions (Dakotah, Nov 18, 2026). A signed-in
+          member who has not answered yet gets them before anything else. This
+          catches people who joined from Pricing, which goes straight to payment. */}
+      {!onboarding && memberFresh && member && member.role !== "admin" && member.tier && member.tier !== "Free" && !member.onboarded_at && (
+        <OnboardingFlow answersOnly member={member} onDone={(user) => { if (user) setMember({ ...member, ...user }); }} />
       )}
       {onboarding && <OnboardingFlow pending={onboarding} onDone={(user) => { setOnboarding(null); setMember(user); sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); welcomeOnce(user); }} />}
       {trialInvite && !member && !showSignup && !onboarding && <TrialInviteModal from={trialInvite.from} onStart={() => { setTrialInvite(null); setAuthMode("signup"); setSignupTier("Free"); setShowSignup(true); }} onClose={() => setTrialInvite(null)} />}
