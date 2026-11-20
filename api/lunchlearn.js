@@ -3,6 +3,7 @@ import { getSession, getAdmin, TIER_RANK, benefitGate } from './_utils.js';
 import { sendEmail, lnlAccessEmail, addLnlContact, freeSeatEmail, siteUrl } from './_email.js';
 import { wallToUtc, partsIn } from './_gcal.js';
 import { OUTCOMES, OUTCOME_PLAN } from '../shared/outcomes.js';
+import { recordFunnelLead, ensureFunnelTable } from './_funnel.js';
 
 // Lunch & Learn onboarding: $69.99 buys 6 months of access (entitlement
 // course_id 'lunchlearn'); comp coupons grant the same. Access also starts a
@@ -108,6 +109,21 @@ export default async function handler(req, res) {
       const next = events.filter(e => (e.kind || 'lnl') === 'lnl' && stillLive(e)).sort((a, b) => a.date.localeCompare(b.date))[0] || null;
       res.setHeader('Cache-Control', 'public, max-age=300');
       return res.json({ session: next ? { title: next.title, date: next.date, time: next.time || null } : null });
+    }
+
+    // ── Admin: Funnel Leads — everyone who came in through a funnel page, what
+    // they came for, how far they got, and what they have done since ──
+    if (req.method === 'GET' && req.query.funnel === '1') {
+      if (!admin) return res.status(401).json({ error: 'Unauthorized' });
+      await ensureFunnelTable(sql);
+      const rows = await sql`
+        SELECT f.id, f.name, f.email, f.came_for, f.page, f.status, f.acquisition, f.details, f.created_at, f.updated_at,
+               u.id AS user_id, u.tier, u.membership_status, u.created_at AS account_at,
+               (SELECT COUNT(*)::int FROM lnl_rsvps r WHERE r.user_id = u.id) AS rsvps,
+               EXISTS (SELECT 1 FROM waitlist w WHERE LOWER(w.email) = f.email) AS on_waitlist
+        FROM funnel_leads f LEFT JOIN users u ON LOWER(u.email) = f.email
+        ORDER BY f.created_at DESC LIMIT 1000`;
+      return res.json({ leads: rows });
     }
 
     // ── Admin: every completed Get Started quiz, newest first ──
@@ -373,6 +389,7 @@ export default async function handler(req, res) {
       const stage = String(req.body.stage || '').trim().slice(0, 80) || null;
       const about = String(req.body.about || '').trim().slice(0, 2000) || null;
       const acq = String(req.body.acquisition || '').slice(0, 120) || 'scoping-call';
+      await recordFunnelLead(sql, { name, email, cameFor: 'scoping_call', page: 'call', acquisition: acq, details: { phone, stage, about } });
       try { await sql`INSERT INTO scoping_requests (name, email, phone, stage, about, acquisition) VALUES (${name}, ${email}, ${phone}, ${stage}, ${about}, ${acq})`; } catch (e) { console.error('scoping insert', e.message); }
       try { await sql`INSERT INTO waitlist (name, email, list, source, acquisition, created_at) VALUES (${name}, ${email}, 'general', ${'ad:' + acq}, ${acq}, NOW()) ON CONFLICT DO NOTHING`; } catch {}
       const [linkRow] = await sql`SELECT value FROM settings WHERE key = 'scoping_call_link'`;
@@ -403,6 +420,7 @@ export default async function handler(req, res) {
       if (!outcome) return res.status(400).json({ error: 'No recommendation to send' });
       const answers = Array.isArray(req.body.answers) ? req.body.answers.slice(0, 12).map(a => ({ q: String(a?.q || '').slice(0, 200), a: String(a?.a || '').slice(0, 200) })).filter(a => a.q && a.a) : [];
       const acq = String(req.body.acquisition || '').slice(0, 120) || 'get-started';
+      await recordFunnelLead(sql, { name, email, cameFor: 'quiz', page: 'get-started', acquisition: acq, details: { outcome: outcome.key, read: outcome.title, answers } });
       try { await sql`INSERT INTO quiz_results (name, email, outcome, answers, acquisition) VALUES (${name}, ${email}, ${outcome.key}, ${JSON.stringify(answers)}::jsonb, ${acq})`; } catch (e) { console.error('quiz insert', e.message); }
       try { await sql`INSERT INTO waitlist (name, email, list, source, acquisition, created_at) VALUES (${name}, ${email}, 'general', ${'quiz:' + outcome.key}, ${acq}, NOW()) ON CONFLICT DO NOTHING`; } catch {}
       const esc = (x) => String(x || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -434,6 +452,7 @@ export default async function handler(req, res) {
       if ((req.body.website && String(req.body.website).trim())) return res.status(201).json({ success: true });
       if (!name || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'Your name and a real email, please' });
       const acq = String(req.body.acquisition || '').slice(0, 120) || 'free-seat';
+      await recordFunnelLead(sql, { name, email, cameFor: 'free_seat', page: 'lunch', acquisition: acq });
       const code = 'LIVE-' + genCode().slice(0, 6);
       const [coupon] = await sql`INSERT INTO coupons (code, kind, max_uses, expires_at, created_at) VALUES (${code}, 'lnl_comp', 1, NOW() + interval '180 days', NOW()) ON CONFLICT (code) DO NOTHING RETURNING code`;
       if (!coupon) return res.status(500).json({ error: 'Try once more' });

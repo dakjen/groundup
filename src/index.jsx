@@ -6,6 +6,7 @@ import { FunnelPage } from "./funnels.jsx";
 import { GetStartedPage } from "./getstarted.jsx";
 import { DocViewerPage } from "./docviewer.jsx";
 import { backdropClose, guUpload, PasswordInput, AuthModal, OnboardingFlow, FoundingWelcomeModal, InsiderWelcomeModal, TrialInviteModal, FOUNDING_PERKS, ResetPasswordModal, WaitlistForm, ResourcesPage, LibraryPage, MyCohortPage, RetainerPage, AdvisoryAdminPage, BookingsAdminPage, DropsAdminPage, MemberPage, CommunityPage, TierBadge, BadgeChips, TIER_RANK, TIER_LABELS, DEV_PHASES, firstName, getMember, getMemberToken, saveMember, clearMember } from "./member.jsx";
+import FunnelLeadsPage from "./funnelleads.jsx";
 
 // True on the founding close day, Friday Nov 20, 2026, by the Eastern calendar.
 // ?lastday=1 shows the pop-up on any day, for checking it.
@@ -1082,7 +1083,7 @@ function GULogo({ size = 40, light = false }) {
 
 // One name per page, used by the menu AND by the back button, so a back button
 // always reads exactly like the menu item for the page it returns to.
-const PAGE_LABELS = { home: "Home", "get-started": "Get started", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", officehours: "Office Hours", contact: "Book with Dr. Gina", support: "Contact Us", glossary: "Glossary", community: "Community", library: "The Library", membership: "Membership", resources: "Resources", advisory: "Advisory", cohort: "My Cohort", shop: "Shop", refer: "Refer", partner: "Partner", "partner-interest": "Partner", terms: "Terms", privacy: "Privacy", doc: "Document", "admin-users": "Users", "admin-contacts": "Contacts", "admin-waitlist": "Waitlist", "admin-referrals": "Referrals", "admin-invites": "Gifts & Invites", "admin-retainers": "Advisory Clients", "admin-bookings": "Intake & Bookings", "admin-office": "Office Hours", "admin-revenue": "Revenue", "admin-drops": "Lesson Drops", "admin-email": "Email", "admin-team": "Team", "admin-shop": "Shop", "admin-courses": "All Courses", "admin-status": "System Status" };
+const PAGE_LABELS = { home: "Home", "get-started": "Get started", courses: "Courses", about: "About", pricing: "Pricing", lunchlearn: "Lunch & Learns", officehours: "Office Hours", contact: "Book with Dr. Gina", support: "Contact Us", glossary: "Glossary", community: "Community", library: "The Library", membership: "Membership", resources: "Resources", advisory: "Advisory", cohort: "My Cohort", shop: "Shop", refer: "Refer", partner: "Partner", "partner-interest": "Partner", terms: "Terms", privacy: "Privacy", doc: "Document", "admin-users": "Users", "admin-contacts": "Contacts", "admin-waitlist": "Waitlist", "admin-funnel": "Funnel Leads", "admin-referrals": "Referrals", "admin-invites": "Gifts & Invites", "admin-retainers": "Advisory Clients", "admin-bookings": "Intake & Bookings", "admin-office": "Office Hours", "admin-revenue": "Revenue", "admin-drops": "Lesson Drops", "admin-email": "Email", "admin-team": "Team", "admin-shop": "Shop", "admin-courses": "All Courses", "admin-status": "System Status" };
 
 function Nav({ activePage, setActivePage, onLogoClick, onSignUp, onSignOut, member, unread = 0, dots = {} }) {
   // A red dot on a team menu item (and its group) when something there is waiting, e.g. an advisory message
@@ -1123,8 +1124,8 @@ function Nav({ activePage, setActivePage, onLogoClick, onSignUp, onSignOut, memb
     { label: "GroundUp", items: [["courses", "Courses"], ["community", "Community"], ["resources", "Resources"]] },
     { label: "Advisory", items: [["admin-retainers", "Advisory Clients"], ["admin-bookings", "Intake & Bookings"]] },
     { label: launched ? "Users" : "Waitlist", items: launched
-      ? [["admin-users", "Users"], ["admin-contacts", "Contacts"], ["admin-waitlist", "Waitlist"], ["admin-referrals", "Referrals"], ["admin-invites", "Gifts & Invites"]]
-      : [["admin-waitlist", "Waitlist"], ["admin-contacts", "Contacts"], ["admin-users", "Users"], ["admin-referrals", "Referrals"], ["admin-invites", "Gifts & Invites"]] },
+      ? [["admin-users", "Users"], ["admin-contacts", "Contacts"], ["admin-waitlist", "Waitlist"], ["admin-funnel", "Funnel Leads"], ["admin-referrals", "Referrals"], ["admin-invites", "Gifts & Invites"]]
+      : [["admin-waitlist", "Waitlist"], ["admin-funnel", "Funnel Leads"], ["admin-contacts", "Contacts"], ["admin-users", "Users"], ["admin-referrals", "Referrals"], ["admin-invites", "Gifts & Invites"]] },
     { label: "Events", items: [["lunchlearn", "Lunch & Learns"], ["admin-office", "Office Hours"]] },
     { label: "Revenue", items: [["admin-revenue", "Revenue"]] },
     { label: "Admin", items: [["admin-drops", "Lesson Drops"], ["admin-email", "Email"], ["admin-team", "Team"], ["admin-shop", "Shop"], ["admin-courses", "All Courses"], ["admin-status", "System Status"]] },
@@ -7942,7 +7943,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
 
 export default function App() {
   const [siteUnlocked, setSiteUnlocked] = useState(() => sessionStorage.getItem("siteUnlocked") === "true");
-  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-email", "admin-courses", "admin-retainers", "admin-bookings", "admin-drops", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "admin-invites", "admin-team", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "refer", "support", "glossary", "library", "cohort", "get-started", "doc", "go/playbook", "go/lunch", "go/intake", "go/call", "go/project-intake"];
+  const PAGES = ["home", "courses", "about", "pricing", "lunchlearn", "contact", "community", "membership", "resources", "admin-users", "admin-referrals", "admin-waitlist", "admin-funnel", "admin-email", "admin-courses", "admin-retainers", "admin-bookings", "admin-drops", "admin-revenue", "admin-status", "admin-shop", "admin-contacts", "admin-office", "admin-invites", "admin-team", "advisory", "shop", "officehours", "terms", "privacy", "partner", "partner-interest", "refer", "support", "glossary", "library", "cohort", "get-started", "doc", "go/playbook", "go/lunch", "go/intake", "go/call", "go/project-intake"];
   const pathPage = () => {
     const p = window.location.pathname.replace(/^\/+|\/+$/g, "");
     if (!p) return "home";
@@ -8499,7 +8500,7 @@ export default function App() {
           ))}
         </div>
       )}
-      {showLastDayPop && !resetToken && !showSignup && !onboarding && (
+      {showLastDayPop && !resetToken && !showSignup && !onboarding && !(member && (member.role === "admin" || (member.tier && member.tier !== "Free"))) && (
         <div className="gu-pop-backdrop" style={{ position: "fixed", inset: 0, zIndex: 320, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, overflowY: "auto" }} {...backdropClose(() => setShowLastDayPop(false))}>
           <div className="gu-pop-card" onClick={e => e.stopPropagation()} style={{ position: "relative", width: "100%", maxWidth: 480, background: "#0d0404", border: "1px solid #2a0000", borderRadius: 20, padding: "38px clamp(20px,6vw,36px) 28px", textAlign: "center", margin: "auto" }}>
             <button onClick={() => setShowLastDayPop(false)} aria-label="Close" style={{ position: "absolute", top: 12, right: 16, background: "none", border: "none", color: "#8a7070", fontSize: 24, lineHeight: 1, cursor: "pointer", padding: 4 }}>×</button>
@@ -8651,6 +8652,7 @@ export default function App() {
       {member?.role === "admin" && activePage === "admin-referrals" && <TeamPage><ReferralTab mode="referrals" btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-invites" && <TeamPage><ReferralTab mode="invites" btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-team" && <TeamPage><UsersTab teamOnly btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
+      {member?.role === "admin" && activePage === "admin-funnel" && <TeamPage><FunnelLeadsPage /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-waitlist" && <TeamPage><WaitlistTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-email" && <TeamPage><EmailTab btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-courses" && <TeamPage><CourseAttachmentsAdmin btnRed={TA.btnRed} btnGhost={TA.btnGhost} inp={TA.inp} lbl={TA.lbl} /></TeamPage>}

@@ -2,6 +2,7 @@ import Stripe from 'stripe';
 import crypto from 'crypto';
 import { neon } from '@neondatabase/serverless';
 import { hashPassword, signToken, getSession, getAdmin } from './_utils.js';
+import { recordFunnelLead, FUNNEL_ITEMS } from './_funnel.js';
 import { sendEmail, teamAlert, siteUrl, addLnlContact, dealSupportBlock, firstName, guestWelcomeEmail, intakeStepsEmail } from './_email.js';
 
 export const config = { api: { bodyParser: false } };
@@ -754,6 +755,13 @@ export default async function handler(req, res) {
       if (event.type === 'checkout.session.completed') {
         const cs = event.data.object;
         await fulfill(sql, cs);
+        // Funnel Leads: a guest purchase from a funnel page is now paid.
+        if (cs.metadata?.guest === '1' && FUNNEL_ITEMS[cs.metadata?.item]) {
+          try {
+            const [fu] = await sql`SELECT name, email FROM users WHERE id = ${Number(cs.metadata.user_id)}`;
+            if (fu) await recordFunnelLead(sql, { name: fu.name, email: fu.email, cameFor: FUNNEL_ITEMS[cs.metadata.item], status: 'paid', acquisition: cs.metadata.acquisition || null });
+          } catch (e) { console.error('funnel paid mark', e.message); }
+        }
         if (cs.metadata?.guest === '1') {
           // The purchase made the account; hand them the key.
           try {
@@ -972,6 +980,7 @@ export default async function handler(req, res) {
           RETURNING id, name, email, tier, lnl_discount_until, referred_by, referred_code`;
       }
       body.guest = true; body.agreed_ip = true;
+      if (FUNNEL_ITEMS[body.item]) await recordFunnelLead(sql, { name, email, cameFor: FUNNEL_ITEMS[body.item], page: body.item === 'lnl_year_funnel' ? 'lunch' : body.item === 'retainer_onboarding' ? 'intake' : 'playbook', status: 'started_payment', acquisition: acq });
       if (body.item === 'playbook') {
         const [pb] = await sql`SELECT id FROM products WHERE is_playbook AND active ORDER BY id DESC LIMIT 1`;
         if (!pb) return res.status(409).json({ error: 'The Playbook isn\'t on sale yet — leave your email and we\'ll tell you the day it is.' });
