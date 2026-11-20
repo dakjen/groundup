@@ -8049,6 +8049,8 @@ export default function App() {
   // True once the member has been re-read from the server on this load, so the
   // questions gate below never acts on a stale copy from the browser.
   const [memberFresh, setMemberFresh] = useState(false);
+  // Closed the questions this visit: they come back next visit until answered.
+  const [questionsClosed, setQuestionsClosed] = useState(() => { try { return sessionStorage.getItem("guQuestionsClosed") === "1"; } catch { return false; } });
   // IP agreement gate plumbing — protected content summons it via window.guRequireIp
   const [showIpGate, setShowIpGate] = useState(false);
   const ipPendingRef = useRef(null);
@@ -8559,8 +8561,8 @@ export default function App() {
       {/* Everyone answers the sign-up questions (Dakotah, Nov 18, 2026). A signed-in
           member who has not answered yet gets them before anything else. This
           catches people who joined from Pricing, which goes straight to payment. */}
-      {!onboarding && memberFresh && member && member.role !== "admin" && member.tier && member.tier !== "Free" && !member.onboarded_at && (
-        <OnboardingFlow answersOnly member={member} onDone={(user) => { if (user) setMember({ ...member, ...user }); }} />
+      {!onboarding && !questionsClosed && memberFresh && member && member.role !== "admin" && member.tier && member.tier !== "Free" && !member.onboarded_at && (
+        <OnboardingFlow answersOnly member={member} onClose={() => { setQuestionsClosed(true); try { sessionStorage.setItem("guQuestionsClosed", "1"); } catch {} }} onDone={(user) => { if (user) setMember({ ...member, ...user }); }} />
       )}
       {onboarding && <OnboardingFlow pending={onboarding} onDone={(user) => { setOnboarding(null); setMember(user); sessionStorage.setItem("currentUser", JSON.stringify({ name: user.name, email: user.email, tier: user.tier })); setCurrentUser({ name: user.name, email: user.email, tier: user.tier }); welcomeOnce(user); }} />}
       {trialInvite && !member && !showSignup && !onboarding && <TrialInviteModal from={trialInvite.from} onStart={() => { setTrialInvite(null); setAuthMode("signup"); setSignupTier("Free"); setShowSignup(true); }} onClose={() => setTrialInvite(null)} />}

@@ -875,7 +875,7 @@ const onbBtn = { background: "#e01818", color: "#fff", border: "none", borderRad
 // the answers are saved to their account. Dakotah, Nov 18, 2026: everyone
 // fills these out. There is no skip, and the three core questions (who you
 // are, what you want to learn, what is in your way) must be answered.
-export function OnboardingFlow({ pending, onDone, answersOnly = false, member = null }) {
+export function OnboardingFlow({ pending, onDone, answersOnly = false, member = null, onClose = null }) {
   const [step, setStep] = useState(0);
   const [learn, setLearn] = useState("");
   const [pain, setPain] = useState("");
@@ -961,7 +961,12 @@ export function OnboardingFlow({ pending, onDone, answersOnly = false, member = 
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 320, background: "rgba(10,2,3,0.92)", backdropFilter: "blur(6px)", overflowY: "auto", padding: "24px 16px" }}>
-      <div style={{ background: "#1a0d0e", border: "1px solid #46191a", borderRadius: 20, padding: "32px clamp(20px,4vw,38px)", width: "100%", maxWidth: step === 2 ? 1100 : 520, margin: "0 auto" }}>
+      <div style={{ position: "relative", background: "#1a0d0e", border: "1px solid #46191a", borderRadius: 20, padding: "32px clamp(20px,4vw,38px)", width: "100%", maxWidth: step === 2 ? 1100 : 520, margin: "0 auto" }}>
+        {/* Members can close the questions (Dakotah, Nov 20: "i dont want to hold
+            them hostage"). They come back on the next visit until answered. */}
+        {answersOnly && onClose && (
+          <button onClick={onClose} aria-label="Close" style={{ position: "absolute", top: 10, right: 12, zIndex: 3, background: "rgba(0,0,0,0.45)", border: "none", borderRadius: 16, width: 32, height: 32, color: "#f0d8d8", fontSize: 22, lineHeight: 1, cursor: "pointer" }}>×</button>
+        )}
         <div style={{ position: "relative", borderRadius: 14, overflow: "hidden", marginBottom: 22, height: step === 2 ? 110 : 150 }}>
           <img src={ONB_BANNER[step].src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(20,4,6,0.25) 0%, rgba(20,4,6,0.85) 100%)" }} />
@@ -1012,6 +1017,7 @@ export function OnboardingFlow({ pending, onDone, answersOnly = false, member = 
 
             {error && <div style={{ color: "#ff8a8a", fontFamily: font, fontSize: 13, marginBottom: 12 }}>{error}</div>}
             <button onClick={() => { if (need0) { setError(need0); return; } setError(""); setStep(1); }} style={{ ...onbBtn, width: "100%" }}>Continue →</button>
+            {answersOnly && onClose && <button onClick={onClose} style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", color: "#c2a5a5", fontFamily: font, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Not right now</button>}
           </>
         ) : step === 1 ? (
           <>
