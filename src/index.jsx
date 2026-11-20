@@ -5875,7 +5875,7 @@ function RevenueTab() {
         {statCard("Trial Conversions", trialConversions, `${trialPending} invites pending`, "#7d6d6d")}
       </div>
 
-      {/* The split: NREUV's share of the MRR vs what stays with the platform.
+      {/* The split: NREUV's share of the MRR vs Notable's share (Dakotah, Nov 20).
           Rates per PRICING-RULES §12 — memberships 75%, retainers 90% (of gross;
           the platform absorbs Stripe fees). */}
       {(() => {
@@ -5891,7 +5891,7 @@ function RevenueTab() {
                 <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 30, color: "#570404", lineHeight: 1 }}>${nreuvShare.toFixed(2)}</div>
               </div>
               <div>
-                <div style={{ fontSize: 11, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, marginBottom: 4 }}>STAYS WITH PLATFORM / MO</div>
+                <div style={{ fontSize: 11, color: "#9a9a9a", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, marginBottom: 4 }}>TO NOTABLE / MO</div>
                 <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 30, color: "#222222", lineHeight: 1 }}>${platformShare.toFixed(2)}</div>
               </div>
               <div>
