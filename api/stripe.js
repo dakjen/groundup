@@ -537,7 +537,7 @@ async function fulfill(sql, session) {
         const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
         await teamAlert(`OWNER OVER CAP: ${seats.taken} of ${seats.cap} seats`,
           `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Owner went over cap</h2>
-           <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u?.name}</strong> (${u?.email}) completed Owner checkout at the same moment as someone else, putting Elite at <strong style="color:#161616;">${seats.taken} of ${seats.cap}</strong>. Their payment went through and their access is live. Either raise the cap in Admin, or reach out to arrange a refund.</p>`);
+           <p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u?.name}</strong> (${u?.email}) completed Owner checkout at the same moment as someone else, putting Owner at <strong style="color:#161616;">${seats.taken} of ${seats.cap}</strong>. Their payment went through and their access is live. Either raise the cap in Admin, or reach out to arrange a refund.</p>`);
       }
     }
   } else if (item === 'product') {

@@ -2299,6 +2299,7 @@ const BENEFIT_HELP = {
   "Deal support — bring YOUR deal": "Bring your actual project — your numbers, your gap, your structure — to your private advisory calls.",
   "Owner Lounge + networking event": "The private Owner channel, plus an invite to the exclusive networking event after 4 months.",
 };
+const TIER_NAME_OF = (t) => ({ Basic: "Member", Elite: "Owner" }[t] || t);
 const ANNUAL_PRICES = { Basic: "$539.89", Builder: "$1,619.89", Premium: "$2,699.89", Elite: "$5,399.89" };
 
 // The fine print people actually want — one line, expandable on demand
@@ -2708,7 +2709,7 @@ function ContactPage({ setActivePage, advisorLink, opensAt, isAdmin }) {
           <div style={{ background: "#1a0808", border: "1px solid #b80101", borderRadius: 12, padding: "16px 22px", margin: "20px 0 8px", display: "flex", alignItems: "center", gap: 12 }}>
             <BadgePercent size={20} color="#b80101" style={{ flexShrink: 0 }} />
             <div style={{ color: "#e0c4c4", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>
-              <strong style={{ color: "#f0d8d8" }}>Your {pricing.tier} member rate is applied</strong> — {Math.round(pricing.session_discount * 100)}% off the sessions below. Nothing to enter; it comes off at checkout.
+              <strong style={{ color: "#f0d8d8" }}>Your {TIER_NAME_OF(pricing.tier)} member rate is applied</strong> — {Math.round(pricing.session_discount * 100)}% off the sessions below. Nothing to enter; it comes off at checkout.
             </div>
           </div>
         ) : (
@@ -6074,7 +6075,7 @@ function MemberProfileSheet({ user }) {
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8, fontSize: 12, fontFamily: font }}>
             {user.linkedin_url && <a href={user.linkedin_url} target="_blank" rel="noreferrer" style={{ color: "#b80101", fontWeight: 800, textDecoration: "none" }}>Open LinkedIn ↗</a>}
             <a href={"mailto:" + user.email} style={{ color: "#555555", textDecoration: "none" }}>{user.email}</a>
-            <span style={{ color: "#9a9a9a" }}>{user.tier}{user.created_at ? ` · joined ${new Date(user.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}</span>
+            <span style={{ color: "#9a9a9a" }}>{TIER_NAME_OF(user.tier)}{user.created_at ? ` · joined ${new Date(user.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}</span>
             <span style={{ color: filled >= 7 ? "#22a55a" : "#b08a3a" }}>{filled} of 9 profile fields filled</span>
           </div>
         </div>
@@ -6435,7 +6436,7 @@ function ContactsTab({ btnRed, btnGhost, inp, lbl }) {
           {(c.sources || []).map(s => (
             <span key={s} style={{ background: chipColor(s) + "14", color: chipColor(s), border: `1px solid ${chipColor(s)}40`, borderRadius: 5, padding: "2px 9px", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.5px", whiteSpace: "nowrap" }}>{s}</span>
           ))}
-          {c.tier && c.tier !== "Free" && <span style={{ color: "#b80101", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{c.tier}</span>}
+          {c.tier && c.tier !== "Free" && <span style={{ color: "#b80101", fontSize: 10, fontWeight: 800, fontFamily: "'DM Sans', sans-serif", letterSpacing: "1px", textTransform: "uppercase" }}>{TIER_NAME_OF(c.tier)}</span>}
           <span style={{ color: "#9a9a9a", fontSize: 11, fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap" }}>{c.joined ? new Date(c.joined).toLocaleDateString() : ""}</span>
           {c.why && <div style={{ width: "100%", color: "#666666", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, borderTop: "1px solid #f2efe8", paddingTop: 6, marginTop: 2 }}>{c.why}</div>}
         </div>
@@ -6742,7 +6743,7 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl, mode = 'referrals' }) {
               <div key={f.id} style={{ border: "1px solid #e0dbd2", borderRadius: 12, padding: "14px 18px", marginBottom: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
                   <div style={{ flex: 1, minWidth: 180 }}>
-                    <div style={{ color: "#222222", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{f.name} <span style={{ color: "#9a9a9a", fontWeight: 600 }}>· {f.tier}</span></div>
+                    <div style={{ color: "#222222", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{f.name} <span style={{ color: "#9a9a9a", fontWeight: 600 }}>· {TIER_NAME_OF(f.tier)}</span></div>
                     <div style={{ color: "#777777", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>{f.email} · <code style={{ color: "#b80101" }}>/invite/{f.referral_code}</code></div>
                   </div>
                   <div style={{ textAlign: "center", minWidth: 70 }}><div style={{ fontSize: 22, fontWeight: 700, color: "#161616", fontFamily: "'Cormorant Garamond', serif", lineHeight: 1 }}>{f.signed_up}</div><div style={{ fontSize: 10, color: "#9a9a9a", letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>Signed up</div></div>
@@ -6853,7 +6854,7 @@ function ReferralTab({ btnRed, btnGhost, inp, lbl, mode = 'referrals' }) {
 }
 
 function WaitlistTab({ btnRed, btnGhost, inp, lbl }) {
-  const PLAN_LABELS = { Basic: "Member", Premium: "Premium", Elite: "Elite", pass_single: "One Course", pass_all: "All-Access" };
+  const PLAN_LABELS = { Basic: "Member", Premium: "Premium", Elite: "Owner", pass_single: "One Course", pass_all: "All-Access" };
   const [data, setData] = useState(null);
   const [launchAt, setLaunchAt] = useState("");
   const [insiderAt, setInsiderAt] = useState("");
@@ -7897,7 +7898,7 @@ function SignupModal({ onClose, defaultTier = "Free" }) {
             <div style={{ fontSize: 48, marginBottom: 16 }}>✓</div>
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#f5e8e8", marginBottom: 12 }}>You're in.</div>
             <div style={{ color: "#8a7070", fontSize: 14, lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>
-              Welcome to GroundUp, {form.name.split(" ")[0]}. You're signed up on the <strong style={{ color: planColors[form.tier] }}>{form.tier}</strong> plan.
+              Welcome to GroundUp, {form.name.split(" ")[0]}. You're signed up on the <strong style={{ color: planColors[form.tier] }}>{TIER_NAME_OF(form.tier)}</strong> plan.
             </div>
             {form.tier === "Free" && <div style={{ color: "#6a5050", fontSize: 12, fontFamily: "'DM Sans', sans-serif", marginBottom: 24 }}>You can upgrade anytime from the Pricing page.</div>}
             <button onClick={onClose} style={{ background: "#b80101", color: "#fff", border: "none", borderRadius: 10, padding: "12px 32px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>Start Learning →</button>

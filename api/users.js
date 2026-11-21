@@ -36,7 +36,7 @@ export default async function handler(req, res) {
       const accounts = await sql`SELECT name, email, tier, role, created_at FROM users`;
       for (const u of accounts) touch(u.email, { name: u.name, tier: u.role === 'admin' ? 'Team' : u.tier, source: u.role === 'admin' ? 'Team account' : 'Member account', joined: u.created_at });
       const wl = await sql`SELECT name, email, phone, reason, learn, budget, list, created_at FROM waitlist`;
-      for (const w of wl) touch(w.email, { name: w.name, phone: w.phone, why: [w.learn, w.reason, w.budget && `budget ${w.budget}`].filter(Boolean).join(' · '), source: (w.list || 'insider') === 'insider' ? 'Insider waitlist' : 'General waitlist', joined: w.created_at });
+      for (const w of wl) touch(w.email, { name: w.name, phone: w.phone, why: [w.learn, w.reason, w.budget && `budget ${String(w.budget).replace(/\bElite\b/g, 'Owner')}`].filter(Boolean).join(' · '), source: (w.list || 'insider') === 'insider' ? 'Insider waitlist' : 'General waitlist', joined: w.created_at });
       const refs = await sql`SELECT name, email, kind, used, created_at FROM referrals`;
       for (const r of refs) touch(r.email, { name: r.name, source: r.kind === 'month_free' ? (r.used ? 'Gift (redeemed)' : 'Gift (sent)') : 'Personal invite', joined: r.created_at });
       const lnl = await sql`SELECT u.name, u.email, e.created_at FROM entitlements e JOIN users u ON u.id = e.user_id WHERE e.course_id = 'lunchlearn'`;
