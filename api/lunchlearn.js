@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
-import { getSession, getAdmin, TIER_RANK, benefitGate } from './_utils.js';
+import crypto from 'crypto';
+import { getSession, getAdmin, TIER_RANK, benefitGate, hashPassword, signToken } from './_utils.js';
 import { sendEmail, lnlAccessEmail, addLnlContact, freeSeatEmail, siteUrl } from './_email.js';
 import { wallToUtc, partsIn } from './_gcal.js';
 import { OUTCOMES, OUTCOME_PLAN } from '../shared/outcomes.js';
@@ -28,6 +29,41 @@ function audienceFits(ev, me, rank) {
 // starts — people join late, sessions run long, and a link that vanishes two
 // minutes in is worse than one that lingers.
 const LIVE_HOURS = 4;
+// Plain-text email from Gina: lands in the main inbox, not Promotions (tested Nov 12, 2026).
+async function sendPlain(to, subject, textContent) {
+  try {
+    const r = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ sender: { email: 'groundup@drginamerritt.net', name: 'Gina Merritt' }, replyTo: { email: process.env.BREVO_REPLY_TO || 'djmj@nreuv.com', name: 'Gina Merritt' }, to: [{ email: to }], subject, textContent }),
+    });
+    if (!r.ok) console.error('plain send failed', to, r.status);
+    return r.ok;
+  } catch (e) { console.error('plain send failed', e.message); return false; }
+}
+export function freeSeatText(name, next, link) {
+  const first = String(name || '').trim().split(/\s+/)[0] || 'there';
+  const when = new Date(next.date).toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric' });
+  return `Hi ${first},
+
+Your seat is held for my live Lunch & Learn on ${when}, at ${String(next.time || '11 am').toUpperCase().replace('AM', 'AM')} Eastern, on Zoom.
+
+To claim it and get the Zoom link, set up your free account. We made it for you with this email address. Just choose a password here:
+
+${link}
+
+That's it. You are already RSVPed. The Zoom link will be on your Lunch & Learn page, and in your reminder email before the session.
+
+Bring your questions. The Q&A is for your own deal.
+
+Warmly,
+Gina
+
+Dr. Gina Merritt
+Founder, GroundUp
+community.drginamerritt.net`;
+}
+
 export const stillLive = (e) => new Date(e.date).getTime() + LIVE_HOURS * 3600e3 > Date.now();
 
 async function getEvents(sql) {
@@ -460,9 +496,42 @@ export default async function handler(req, res) {
       try { await sql`INSERT INTO waitlist (name, email, list, source, acquisition, created_at) VALUES (${name}, ${email}, 'general', ${'ad:' + acq}, ${acq}, NOW()) ON CONFLICT DO NOTHING`; } catch (e) { console.error('free seat lead', e.message); }
       const events = await getEvents(sql);
       const next = events.filter(e => (e.kind || 'lnl') === 'lnl' && stillLive(e)).sort((a, b) => a.date.localeCompare(b.date))[0] || null;
-      const mail = freeSeatEmail(name, code, next);
-      const ok = await sendEmail(email, mail.subject, mail.html);
+      // The seat is held in their name (Dakotah, Nov 20, 2026: "it should rsvp
+      // them"). We make the account and RSVP it to the next session; they claim
+      // it by setting a password from the email, and the Zoom link is on their
+      // Lunch & Learn page and in the reminder.
+      let held = false, link = `${siteUrl()}/lunchlearn`;
+      try {
+        let [u] = await sql`SELECT id FROM users WHERE LOWER(email) = ${email}`;
+        let isNew = false;
+        if (!u) {
+          [u] = await sql`INSERT INTO users (name, email, tier, password_hash, role, ip_agreed_at, acquisition, created_at)
+            VALUES (${name}, ${email}, 'Free', ${hashPassword(crypto.randomBytes(24).toString('hex'))}, 'member', NOW(), ${acq}, NOW())
+            ON CONFLICT (email) DO NOTHING RETURNING id`;
+          isNew = !!u;
+          if (!u) [u] = await sql`SELECT id FROM users WHERE LOWER(email) = ${email}`;
+        }
+        if (u && next) {
+          const access = await getAccess(sql, u.id);
+          if (!access) {
+            const until = new Date(new Date(next.date).getTime() + 24 * 3600 * 1000).toISOString();
+            await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${u.id}, 'lunchlearn', 'free_seat', ${until}, NOW())`;
+          }
+          await sql`INSERT INTO lnl_rsvps (user_id, event_key, created_at) VALUES (${u.id}, ${next.date}, NOW()) ON CONFLICT (user_id, event_key) DO NOTHING`;
+          await sql`UPDATE coupons SET used_count = max_uses WHERE code = ${code}`;
+          held = true;
+        }
+        if (u && isNew) link = `${siteUrl()}/?reset=${encodeURIComponent(signToken({ uid: u.id, purpose: 'reset' }, 1000 * 60 * 60 * 24 * 14))}`;
+      } catch (e) { console.error('free seat hold failed', e.message); }
+      let ok = false;
+      if (held) {
+        ok = await sendPlain(email, `Your seat for the ${new Date(next.date).toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'long', day: 'numeric' })} Lunch & Learn`, freeSeatText(name, next, link));
+      } else {
+        const mail = freeSeatEmail(name, code, next);
+        ok = await sendEmail(email, mail.subject, mail.html);
+      }
       try { await addLnlContact?.(email, name); } catch {}
+      if (held) return res.status(201).json({ success: true, sent: !!ok, held: true, session: { title: next.title, date: next.date, time: next.time } });
       // The code comes back on the page too, so a missed email never costs the seat
       return res.status(201).json({ success: true, sent: !!ok, code, session: next ? { title: next.title, date: next.date, time: next.time } : null });
     }

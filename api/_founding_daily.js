@@ -478,8 +478,12 @@ export async function freePlanNote(sql, { dry = false, day = easternDay(), index
   const kind = freeKind(idx);
   const out = new Set((await sql`SELECT LOWER(email) AS email FROM email_optouts`).map(r => r.email));
   const had = new Set((await sql`SELECT LOWER(recipient_email) AS email FROM email_log WHERE kind = ${kind} AND ok`).map(r => r.email));
+  // Free Lunch & Learn seat holders got their account from the ad page, not by
+  // choosing to join; the "you haven't picked a plan" notes are not for them.
+  let seat = new Set();
+  try { seat = new Set((await sql`SELECT email FROM funnel_leads WHERE came_for IN ('free_seat', 'year_pass')`).map(r => r.email)); } catch {}
   const audience = (await sql`SELECT name, email FROM users WHERE tier = 'Free' AND role = 'member' AND NOT COALESCE(comped, FALSE) ORDER BY id`)
-    .filter(r => { const e = String(r.email || '').trim().toLowerCase(); return e && !out.has(e) && !had.has(e); });
+    .filter(r => { const e = String(r.email || '').trim().toLowerCase(); return e && !out.has(e) && !had.has(e) && !seat.has(e); });
   if (dry) return { v: 'fp1', day, dry, note: idx, subject: note.subject, wouldSend: audience.length, to: audience.map(r => r.email), sample: freeText(note, firstName(audience[0]?.name || '')) };
   let sent = 0;
   for (const r of audience) {

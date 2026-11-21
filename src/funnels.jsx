@@ -127,6 +127,7 @@ export function FunnelPage({ offer }) {
   const [done, setDone] = useState(() => { try { return new URLSearchParams(window.location.search).get("success") === "1"; } catch { return false; } });
   const [sessionInfo, setSessionInfo] = useState(null);
   const [seatCode, setSeatCode] = useState(null);
+  const [held, setHeld] = useState(false);
   const [nextSession, setNextSession] = useState(null);
   const [formVisible, setFormVisible] = useState(false);
   // The next live session, on the page before anyone fills anything in
@@ -154,7 +155,7 @@ export function FunnelPage({ offer }) {
       } else if (o.mode === "lead") {
         const r = await fetch("/api/lunchlearn", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "free_seat", name: form.name, email: form.email, website: form.website, acquisition: acq }) });
         const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || "Something went wrong");
-        setSessionInfo(d.session || null); setSeatCode(d.code || null); setDone(true); pixel("Lead", { content_name: o.page });
+        setSessionInfo(d.session || null); setSeatCode(d.code || null); setHeld(!!d.held); setDone(true); pixel("Lead", { content_name: o.page });
         try { history.replaceState(null, "", window.location.pathname + "?success=1"); } catch {}
       } else {
         pixel("InitiateCheckout", { content_name: o.page });
@@ -177,7 +178,7 @@ export function FunnelPage({ offer }) {
   ) : done ? (
     <div style={{ background: "#0b0505", border: "1px solid #22c55e50", borderRadius: 14, padding: compact ? "20px 18px" : "24px 22px" }}>
       <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "#f5e8e8", marginBottom: 8 }}>{o.success.title}</div>
-      <div style={{ color: "#c8a8a8", fontSize: 14.5, fontFamily: font, lineHeight: 1.7 }}>{o.success.body}{sessionInfo?.date ? ` Next session: ${sessionInfo.title}, ${new Date(sessionInfo.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}${sessionInfo.time ? " · " + sessionInfo.time + " ET" : ""}.` : ""}</div>
+      <div style={{ color: "#c8a8a8", fontSize: 14.5, fontFamily: font, lineHeight: 1.7 }}>{held ? "You're RSVPed. Check your email: we made your free GroundUp account with that address. Choose a password from the link in the email to claim your seat, and the Zoom link will be on your Lunch & Learn page." : o.success.body}{sessionInfo?.date ? ` Next session: ${sessionInfo.title}, ${new Date(sessionInfo.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}${sessionInfo.time ? " · " + sessionInfo.time + " ET" : ""}.` : ""}</div>
       {seatCode && (
         <div style={{ marginTop: 16, background: "#120808", border: "1px dashed #b8010180", borderRadius: 12, padding: "14px 16px" }}>
           <div style={{ fontSize: 9.5, color: RED, fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 6 }}>Your seat code</div>
