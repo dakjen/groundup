@@ -8,6 +8,11 @@ export default async function handler(req, res) {
   const sql = neon(process.env.DATABASE_URL);
 
   try {
+    // Payout record (Revenue → Payouts): every payout on the 15th and 30th
+    if (req.method === 'GET' && req.query.payouts === '1') {
+      const { payoutOverview } = await import('./_payouts.js');
+      return res.json(await payoutOverview(sql));
+    }
     if (req.method === 'GET') {
       const [userStats] = await sql`
         SELECT
@@ -94,7 +99,14 @@ export default async function handler(req, res) {
         reserve = { held_cents: h?.t || 0, slices: h?.n || 0,
           whole_cents: parts?.whole_cents || 0, whole_n: parts?.whole_n || 0, slice_cents: parts?.slice_cents || 0, slice_n: parts?.slice_n || 0,
           cap_cents: cap, floor_cents: cap, floor_fixed: fixedFloor != null, paying: paying?.n || 0,
-          stripe: stripeBalance, swept_this_month: sweep?.value || null, next_sweep: nextSweep.toISOString() };
+          stripe: stripeBalance, swept_this_month: null, next_sweep: nextSweep.toISOString() };
+        // Payouts on the 15th and 30th (Nov 22, 2026): the next payday and what it keeps
+        try {
+          const { nextPaydays, payoutKeeps } = await import('./_payouts.js');
+          const nx = nextPaydays(now, 4).filter(p => p.date >= '2026-11-30')[0];
+          const { k15, k30 } = await payoutKeeps(sql);
+          if (nx) Object.assign(reserve, { next_sweep: nx.date + 'T12:00:00', cap_cents: nx.kind === 15 ? k15 : k30, floor_cents: nx.kind === 15 ? k15 : k30, floor_fixed: true, keep15: k15, keep30: k30 });
+        } catch (e) { console.error('next payday', e.message); }
       } catch (e) { console.error('revenue actuals failed', e.message); }
       return res.json({ userStats, retainerStats, signupsByMonth, referralStats, statement, reserve });
     }

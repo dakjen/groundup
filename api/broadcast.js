@@ -403,74 +403,23 @@ async function cronRun(req, res) {
       } catch (e) { await alertFailure('launch drip — ' + list, e); }
     }
 
-    // THE 6TH-OF-THE-MONTH SETTLEMENT. Every payment is held whole in the
-    // balance until the 5th of the following month — the 5th is the last day a
-    // member can ask for that month's refund. On the 6th, each payment from
-    // before the 1st settles, oldest first, as long as what stays behind is at
-    // or above the reserve ($1,000 per ten paying members, measured on the 1st;
-    // override with settings.reserve_floor_cents). Of every settled payment,
-    // NREUV's share is transferred to its account and DakJen's share is paid
-    // out to the bank. The reserve never leaves the balance: it is the refund
-    // buffer, so a refund comes out of it and not out of money already paid to
-    // either side. Requires Stripe payouts set to MANUAL — on automatic, Stripe
-    // sweeps the whole balance (reserve included) to the bank by itself.
-    let released = 0, releasedCents = 0;
+    // PAYOUTS ON THE 15TH AND THE 30TH (Dakotah, Nov 22, 2026): see api/_payouts.js.
+    // The 15th keeps $1,000 in Stripe, the 30th keeps $500; everything above that
+    // which is past its 5-day refund window goes out, split NREUV / DakJen.
     if (!dripOnly && process.env.STRIPE_SECRET_KEY && process.env.NREUV_CONNECT_ACCOUNT) {
-      const et = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
-      const etDay = Number(et.find(p => p.type === 'day').value);
-      const etYear = et.find(p => p.type === 'year').value, etMonth = et.find(p => p.type === 'month').value;
-      const monthKey = `pot_sweep_${etYear}-${etMonth}`;
-      const [sweptRow] = await sql`SELECT value FROM settings WHERE key = ${monthKey}`;
-      if (etDay >= 6 && !sweptRow?.value) {
-        const { potCapCents } = await import('./stripe.js');
-        const FLOOR = await potCapCents(sql);
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-        let manual = null;
-        try { const acct = await stripe.accounts.retrieve(); manual = acct.settings?.payouts?.schedule?.interval === 'manual'; } catch {}
-        const [tot] = await sql`SELECT COALESCE(SUM(held_cents), 0)::int AS total FROM held_transfers WHERE status = 'held'`;
-        let total = tot?.total || 0;
-        // Only payments from before the 1st (ET) — this month's wait for next month's 6th.
-        const monthStartIso = new Date(`${etYear}-${etMonth}-01T05:00:00.000Z`).toISOString();
-        // The ledger row carries the card fee and net for each payment, for the 50-50 fee split.
-        const held = await sql`SELECT h.id, h.charge_id, h.item, h.held_cents, h.rate_pct, h.gross_cents, l.fee_cents, l.net_cents
-          FROM held_transfers h LEFT JOIN revenue_ledger l ON l.charge_id = h.charge_id
-          WHERE h.status = 'held' AND h.created_at < ${monthStartIso} ORDER BY h.created_at ASC LIMIT 500`;
-        let dakjenCents = 0; const lines = [];
-        for (const h of held) {
-          if (total - h.held_cents < FLOOR) break;
-          // Per the services agreement, Stripe's fee comes off before the split and
-          // both parties bear it in proportion to their shares: NREUV = rate × net.
-          const nreuv = Math.floor(h.held_cents * (h.rate_pct / 100));
-          const dakjen = h.held_cents - nreuv;
-          try {
-            if (nreuv > 0) await stripe.transfers.create({
-              amount: nreuv, currency: 'usd', destination: process.env.NREUV_CONNECT_ACCOUNT,
-              source_transaction: h.charge_id,
-              description: `NREUV ${h.rate_pct}% — settlement on the 6th — ${h.item || 'purchase'} (payment net ${h.held_cents}¢)`,
-            });
-            await sql`UPDATE held_transfers SET status = 'released', released_at = NOW() WHERE id = ${h.id}`;
-            total -= h.held_cents; released++; releasedCents += nreuv; dakjenCents += dakjen;
-            lines.push(`${h.item || 'purchase'}: net $${(h.held_cents / 100).toFixed(2)} → NREUV $${(nreuv / 100).toFixed(2)}, DakJen $${(dakjen / 100).toFixed(2)}`);
-          } catch (e) { await alertFailure('settlement ' + h.charge_id, e); break; }
-        }
-        // DakJen's share of everything settled goes to the bank as one payout.
-        let payoutNote = 'no payout (nothing settled)';
-        if (dakjenCents > 0) {
-          try {
-            const po = await stripe.payouts.create({ amount: dakjenCents, currency: 'usd', description: `DakJen share — settlement on the 6th (${etYear}-${etMonth})`, statement_descriptor: 'GROUNDUP SETTLE' });
-            payoutNote = `payout ${po.id} $${(dakjenCents / 100).toFixed(2)} to the bank`;
-          } catch (e) { payoutNote = `PAYOUT FAILED: ${e.message}`; await alertFailure('DakJen payout', e); }
-        }
-        const summary = `settled ${released} payments: $${(releasedCents / 100).toFixed(2)} to NREUV, ${payoutNote}; reserve now $${(total / 100).toFixed(2)} (floor $${(FLOOR / 100).toFixed(2)})${manual === false ? '; WARNING: Stripe payouts are AUTOMATIC — the reserve cannot be held until they are set to manual' : ''}`;
-        await sql`INSERT INTO settings (key, value) VALUES (${monthKey}, ${summary}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`;
-        try {
+      try {
+        const { runPayout } = await import('./_payouts.js');
+        const r = await runPayout(sql, new Stripe(process.env.STRIPE_SECRET_KEY), { alert: alertFailure });
+        if (r.payday) {
           const { teamAlert } = await import('./_email.js');
-          await teamAlert(`Settlement ${etYear}-${etMonth}: $${(releasedCents / 100).toFixed(2)} to NREUV · $${(dakjenCents / 100).toFixed(2)} to DakJen`,
-            `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">Monthly settlement ran</h2>
-             <p style="color:#444444;font-size:14px;line-height:1.8;">${summary}</p>
-             ${lines.length ? `<ul style="color:#444444;font-size:13px;line-height:1.8;">${lines.map(l => `<li>${l}</li>`).join('')}</ul>` : '<p style="color:#8a8a8a;font-size:13px;">Nothing settled this month: the held total is not yet above the reserve floor.</p>'}`);
-        } catch (e) { console.error('settlement alert failed', e.message); }
-      }
+          const m = (c) => '$' + ((c || 0) / 100).toFixed(2);
+          await teamAlert(`Payout ${r.payday}: ${m(r.nreuv)} to NREUV · ${m(r.dakjen)} to DakJen`,
+            `<h2 style="color:#161616;font-size:22px;margin:0 0 14px;">GroundUp payout ran</h2>
+             <p style="color:#444444;font-size:14px;line-height:1.8;">${r.payments} payment${r.payments === 1 ? '' : 's'} paid out: <strong style="color:#161616;">${m(r.nreuv)}</strong> to NREUV and <strong style="color:#161616;">${m(r.dakjen)}</strong> to DakJen's bank. Kept in Stripe as the reserve: ${m(r.reserve)} (the rule keeps at least ${m(r.kept)} on this payday).</p>
+             ${r.notes.length ? `<p style="color:#9a5b00;font-size:13px;line-height:1.7;">${r.notes.join('<br>')}</p>` : ''}
+             <p style="color:#444444;font-size:13px;line-height:1.7;">Every payout is on the team portal: Revenue → Payouts.</p>`);
+        }
+      } catch (e) { await alertFailure('payout run', e); }
     }
     // Founding email — fires itself the day the insider waitlist reaches 25
     // non-comped signups. Once only (founding_thanked stamps each recipient);

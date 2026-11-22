@@ -5763,7 +5763,7 @@ function AdminPanel({ onLogout, onExit }) {
 
 const TIER_PRICES = { Free: 0, Basic: 49.99, Builder: 149.99, Premium: 249.99, Elite: 499.99 };
 
-function RevenueTab() {
+function RevenueTab({ onNav = null }) {
   const [users, setUsers] = useState([]);
   const [referrals, setReferrals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -5962,15 +5962,15 @@ function RevenueTab() {
                 <div style={{ fontSize: 10, color: "#b80101", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: F, marginBottom: 8 }}>Held in the balance · refund reserve</div>
                 <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "baseline", marginBottom: 8 }}>
                   <div><span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: "#161616" }}>{m(rs.held_cents)}</span> <span style={{ color: "#8a8a8a", fontSize: 12, fontFamily: F }}>held by the site</span></div>
-                  <div style={{ color: "#444444", fontSize: 12.5, fontFamily: F }}>Reserve floor <strong>{m(rs.cap_cents)}</strong>{rs.floor_fixed ? " (set by the team)" : ` ($1,000 per ten paying members · ${rs.paying} paying)`}</div>
+                  <div style={{ color: "#444444", fontSize: 12.5, fontFamily: F }}>Kept in Stripe on the next payout <strong>{m(rs.cap_cents)}</strong></div>
                   {rs.stripe && <div style={{ color: "#444444", fontSize: 12.5, fontFamily: F }}>Stripe balance <strong>{m(rs.stripe.available_cents)}</strong> available{rs.stripe.pending_cents ? ` · ${m(rs.stripe.pending_cents)} pending` : ""}</div>}
                 </div>
                 <div style={{ color: "#444444", fontSize: 12.5, fontFamily: F, marginBottom: 8, lineHeight: 1.6 }}>
-                  {rs.whole_n > 0 && <span>{rs.whole_n} payment{rs.whole_n === 1 ? "" : "s"} held whole, {m(rs.whole_cents)}, awaiting the {new Date(rs.next_sweep).toLocaleDateString(undefined, { month: "long", day: "numeric" })} settlement. </span>}
+                  {rs.whole_n > 0 && <span>{rs.whole_n} payment{rs.whole_n === 1 ? "" : "s"} held whole, {m(rs.whole_cents)}, waiting to be paid out once each is 5 days old. </span>}
                   {rs.slice_n > 0 && <span>Plus {m(rs.slice_cents)} of reserve left from {rs.slice_n} launch payment{rs.slice_n === 1 ? "" : "s"} that were already split and paid to both sides.</span>}
                 </div>
                 <div style={{ height: 8, background: "#efe9e2", borderRadius: 99, overflow: "hidden", marginBottom: 8 }}><div style={{ width: `${pct}%`, height: "100%", background: "linear-gradient(90deg, #b80101, #570404)", borderRadius: 99 }} /></div>
-                <div style={{ color: "#8d847a", fontSize: 12, fontFamily: F, lineHeight: 1.6 }}>{rs.swept_this_month ? `This month: ${rs.swept_this_month}.` : `Next settlement ${new Date(rs.next_sweep).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}.`} On the 6th, last month's payments settle oldest first while the pot stays at or above the floor. What settles splits 75/25: NREUV's share transferred, DakJen's paid to the bank. A refund comes out of the held pot, so both sides bear it.</div>
+                <div style={{ color: "#8d847a", fontSize: 12, fontFamily: F, lineHeight: 1.6 }}>Next payout {new Date(rs.next_sweep).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}. Payouts happen on the 15th and the 30th: every payment that is 5 or more days old goes out, keeping {m(rs.keep15 ?? 100000)} in Stripe on the 15th and {m(rs.keep30 ?? 50000)} on the 30th. NREUV's share is transferred to NREUV, DakJen's goes to the bank, the same day. A refund on a payment already paid out comes off the next payout, each side giving back its own share.</div>
               </div>
             )}
           </div>
@@ -6041,6 +6041,89 @@ function RevenueTab() {
           ))}
         </div>
       </div>
+      <PayoutRecord onNav={onNav} />
+    </div>
+  );
+}
+
+// Payout record (Dakotah, Nov 22, 2026): a link at the bottom of Revenue that
+// opens every payout on the 15th and 30th, and what is waiting for the next one.
+function PayoutRecord({ onNav = null }) {
+  const [open, setOpen] = useState(false);
+  const [data, setData] = useState(null);
+  const [err, setErr] = useState(null);
+  const [shown, setShown] = useState(null);
+  const F = "'DM Sans', sans-serif";
+  const m = (c) => "$" + ((c || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const day = (d) => new Date(String(d).slice(0, 10) + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+  const NAMES = { sub_Basic: "Member", sub_Builder: "Builder", sub_Premium: "Premium", sub_Elite: "Owner" };
+  const what = (item) => NAMES[item] || NAMES[String(item || "").replace(/_annual$/, "")] || (item || "purchase").replace(/_/g, " ");
+  const load = () => {
+    setOpen(o => !o);
+    if (data) return;
+    fetch("/api/revenue?payouts=1", { headers: { Authorization: "Bearer " + sessionStorage.getItem("adminToken") } })
+      .then(r => r.ok ? r.json() : Promise.reject(new Error("Couldn't load the payout record")))
+      .then(setData).catch(e => setErr(e.message));
+  };
+  const row = { display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", padding: "10px 0", borderTop: "1px solid #eee7dd", fontSize: 13, fontFamily: F, color: "#333333" };
+  return (
+    <div style={{ marginTop: 20, textAlign: "center" }}>
+      <button onClick={load} style={{ background: "none", border: "none", color: "#b80101", fontFamily: F, fontWeight: 700, fontSize: 13.5, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}>
+        {open ? "Hide payout record" : "Payout record →"}
+      </button>
+      {onNav && <>
+        <span style={{ color: "#c9bfb2", margin: "0 10px" }}>·</span>
+        <button onClick={() => onNav("admin-users")} style={{ background: "none", border: "none", color: "#b80101", fontFamily: F, fontWeight: 700, fontSize: 13.5, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}>Users →</button>
+      </>}
+      {open && (
+        <div style={{ textAlign: "left", background: "#ffffff", border: "1px solid #e6e0d6", borderRadius: 14, padding: "20px 22px", marginTop: 12 }}>
+          {err && <div style={{ color: "#b80101", fontSize: 13, fontFamily: F }}>{err}</div>}
+          {!data && !err && <div style={{ color: "#9a9a9a", fontSize: 13, fontFamily: F }}>Loading…</div>}
+          {data && (() => {
+            const ready = data.waiting.filter(w => w.past_window);
+            const soon = data.waiting.filter(w => !w.past_window);
+            const sum = (arr) => arr.reduce((a, w) => a + (w.held_cents || 0), 0);
+            return (
+              <>
+                <div style={{ color: "#555555", fontSize: 12.5, fontFamily: F, lineHeight: 1.7, marginBottom: 14 }}>
+                  Payouts run on the <strong>15th</strong> (keeps {m(data.keep15)} in Stripe) and the <strong>30th</strong> (keeps {m(data.keep30)}). Every payment 5 or more days old goes out: NREUV's share to NREUV, DakJen's to the bank.
+                  {data.next[0] && <> Next payout: <strong>{day(data.next[0].date)}</strong>.</>}
+                </div>
+                <div style={{ fontSize: 10.5, color: "#8a8a8a", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", fontFamily: F, marginBottom: 2 }}>Waiting in Stripe</div>
+                <div style={row}><span>{ready.length} payment{ready.length === 1 ? "" : "s"} past the 5-day window</span><strong>{m(sum(ready))}</strong></div>
+                <div style={{ ...row, marginBottom: 18 }}><span>{soon.length} payment{soon.length === 1 ? "" : "s"} still inside the 5-day window</span><strong>{m(sum(soon))}</strong></div>
+                <div style={{ fontSize: 10.5, color: "#8a8a8a", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", fontFamily: F, marginBottom: 2 }}>Past payouts</div>
+                {data.runs.length === 0 && <div style={{ ...row, color: "#9a9a9a" }}>No payouts yet. The first one is Monday, November 30.</div>}
+                {data.runs.map(r => {
+                  const pays = data.paid.filter(p => p.payout_id === r.id);
+                  const isOpen = shown === r.id;
+                  return (
+                    <div key={r.id} style={{ borderTop: "1px solid #eee7dd", padding: "10px 0" }}>
+                      <div onClick={() => setShown(isOpen ? null : r.id)} style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", cursor: "pointer", fontSize: 13, fontFamily: F, color: "#222222" }}>
+                        <span><strong>{day(r.payday)}</strong> · {r.payments} payment{r.payments === 1 ? "" : "s"} {r.status !== "done" && <span style={{ color: "#b80101", fontWeight: 800 }}>· {r.status === "running" ? "in progress" : "bank payout failed"}</span>}</span>
+                        <span style={{ fontVariantNumeric: "tabular-nums" }}>NREUV <strong>{m(r.nreuv_cents)}</strong> · DakJen <strong>{m(r.dakjen_cents)}</strong> · kept {m(r.reserve_after_cents)}</span>
+                      </div>
+                      {isOpen && (
+                        <div style={{ marginTop: 8, paddingLeft: 10, borderLeft: "2px solid #f0e2e2" }}>
+                          {pays.map((p, i) => (
+                            <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", fontSize: 12.5, fontFamily: F, color: "#555555", padding: "3px 0" }}>
+                              <span>{p.name || "Member"} · {what(p.item)} · paid {new Date(p.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+                              <span style={{ fontVariantNumeric: "tabular-nums" }}>NREUV {m(p.nreuv_paid_cents)} · DakJen {m(p.dakjen_paid_cents)}</span>
+                            </div>
+                          ))}
+                          {(r.refund_nreuv_cents > 0 || r.refund_dakjen_cents > 0) && <div style={{ fontSize: 12.5, fontFamily: F, color: "#9a5b00", padding: "3px 0" }}>Refunds taken off this payout: NREUV {m(r.refund_nreuv_cents)} · DakJen {m(r.refund_dakjen_cents)}</div>}
+                          {r.stripe_payout_id && <div style={{ fontSize: 11.5, fontFamily: F, color: "#9a9a9a", padding: "3px 0" }}>Stripe bank payout {r.stripe_payout_id}</div>}
+                          {r.note && <div style={{ fontSize: 12.5, fontFamily: F, color: "#9a5b00", padding: "3px 0" }}>{r.note}</div>}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </>
+            );
+          })()}
+        </div>
+      )}
     </div>
   );
 }
@@ -8680,7 +8763,7 @@ export default function App() {
       {member?.role === "admin" && activePage === "admin-retainers" && <AdvisoryAdminPage />}
       {member?.role === "admin" && activePage === "admin-bookings" && <BookingsAdminPage />}
       {member?.role === "admin" && activePage === "admin-drops" && <DropsAdminPage />}
-      {member?.role === "admin" && activePage === "admin-revenue" && <TeamPage><RevenueTab /></TeamPage>}
+      {member?.role === "admin" && activePage === "admin-revenue" && <TeamPage><RevenueTab onNav={(p) => { navigateTo(p); window.scrollTo(0, 0); }} /></TeamPage>}
       {member?.role === "admin" && activePage === "admin-status" && <TeamPage><SystemStatusTab /></TeamPage>}
       {activePage === "contact" && <ContactPage setActivePage={navigateTo} advisorLink={advisorLink} opensAt={insiderAt} isAdmin={member?.role === "admin"} />}
       {activePage === "support" && <SupportPage />}
