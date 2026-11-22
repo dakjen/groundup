@@ -39,6 +39,17 @@ async function recipients(sql, audience) {
 // cron goes out as an email to Dakotah and the GroundUp inbox, and as an
 // `error` update to the Vantage automations dashboard (which also emails her).
 const ALERT_TO = [process.env.ALERT_EMAIL || 'dakotah@dakjencreative.com', process.env.ADMIN_EMAIL || 'admin@nreuv.com'];
+// One heads-up a day when a general-list send is waiting on the team's approval
+async function holdAlert(sql, what) {
+  try {
+    const key = 'general_launch_hold_' + new Date().toISOString().slice(0, 10);
+    const [r] = await sql`INSERT INTO settings (key, value) VALUES (${key}, 'alerted') ON CONFLICT (key) DO NOTHING RETURNING key`;
+    if (!r) return;
+    const { teamAlert } = await import('./_email.js');
+    await teamAlert(`Waiting on your OK: ${what} to the general waitlist`, `<p style="color:#444444;font-size:14px;line-height:1.8;">${what} to the general waitlist is ready but has not been approved, so it did not send. Approve the wording and it goes on the next daily run.</p>`);
+  } catch (e) { console.error('hold alert failed', e.message); }
+}
+
 async function alertFailure(step, err, extra) {
   const msg = (err && err.stack) ? err.stack.split('\n').slice(0, 4).join('\n') : String(err);
   console.error('[cron failure]', step, msg);
@@ -376,6 +387,19 @@ async function cronRun(req, res) {
         const sendCountdown = async (stage, flag) => {
           const [done] = await sql`SELECT value FROM settings WHERE key = ${flag}`;
           if (done?.value) return;
+          // General list, Nov 29: the plain-text note with no founding mention
+          // (Dakotah, Nov 22), and only once the team has approved the wording.
+          if (list === 'general') {
+            const G = await import('./_general_launch.js');
+            if (!(await G.generalApproved(sql))) { await holdAlert(sql, 'the "GroundUp opens Tuesday" note'); return; }
+            const entries = await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = 'general' AND NOT COALESCE(comped, FALSE)`;
+            const rows = [];
+            for (const r of entries) { const m = G.generalTwoDays(r.name); rows.push({ name: r.name, email: r.email, ok: await G.sendPlainText(r.email, m.subject, m.text) }); }
+            drip[list + '_countdown_' + stage.replace(' ', '')] = rows.filter(r => r.ok).length;
+            await logEmails(sql, `countdown — ${stage}`, list, G.generalTwoDays('').subject, rows);
+            await sql`INSERT INTO settings (key, value) VALUES (${flag}, 'sent') ON CONFLICT (key) DO UPDATE SET value = 'sent'`;
+            return;
+          }
           const entries = await sql`SELECT name, email FROM waitlist WHERE COALESCE(list, 'insider') = ${list} AND NOT COALESCE(comped, FALSE)`;
           if (entries.length) {
             const launchText = new Date(lr.value).toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
@@ -388,14 +412,15 @@ async function cronRun(req, res) {
         };
         if (msLeft <= 0) {
           const r = await sendLaunchBatch(sql, list);
+          if (r.held) await holdAlert(sql, 'the "GroundUp is open" note');
           if (r.total) drip[list + '_launch'] = r.sent;
         } else if (msLeft <= 2 * DAY) {
           // Final stretch: make sure recommendations went out, then the 2-day hype
-          const r = await sendRecommendBatch(sql, list);
+          const r = list === 'general' ? { total: 0 } : await sendRecommendBatch(sql, list); // general: folded into the Dec 1 note
           if (r.total) drip[list + '_recommend'] = r.sent;
           await sendCountdown('2 days', 'drip_countdown2_' + list);
         } else if (msLeft <= 7 * DAY) {
-          const r = await sendRecommendBatch(sql, list);
+          const r = list === 'general' ? { total: 0 } : await sendRecommendBatch(sql, list); // general: folded into the Dec 1 note
           if (r.total) drip[list + '_recommend'] = r.sent;
         } else if (msLeft <= 14 * DAY) {
           await sendCountdown('2 weeks', 'drip_countdown14_' + list);

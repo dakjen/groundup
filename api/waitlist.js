@@ -243,6 +243,25 @@ export async function sendRecommendBatch(sql, target) {
 }
 
 export async function sendLaunchBatch(sql, target) {
+  // General list, Dec 1: the plain-text "GroundUp is open" note with no founding
+  // mention and the plan we'd pick (Dakotah, Nov 22), once the team approves it.
+  if (target === 'general') {
+    const G = await import('./_general_launch.js');
+    if (!(await G.generalApproved(sql))) return { sent: 0, total: 0, held: true };
+    const entries = await sql`SELECT * FROM waitlist WHERE launched_notified = FALSE AND NOT COALESCE(comped, FALSE) AND COALESCE(list, 'insider') = 'general'`;
+    if (entries.length === 0) return { sent: 0, total: 0 };
+    const [callRow] = await sql`SELECT value FROM settings WHERE key = 'advisor_call_link'`;
+    const rows = [];
+    for (const e of entries) {
+      const rec = recommendPlan(e);
+      const m = G.generalLaunch(e.name, rec, G.generalLinkFor(rec, e.email), callRow?.value || null);
+      const ok = await G.sendPlainText(e.email, m.subject, m.text);
+      rows.push({ name: `${e.name} → ${rec.label}`, email: e.email, ok });
+      if (ok) await sql`UPDATE waitlist SET launched_notified = TRUE WHERE id = ${e.id}`;
+    }
+    await logEmails(sql, 'launch + pay link', 'general', 'GroundUp is open', rows);
+    return { sent: rows.filter(r => r.ok).length, total: entries.length };
+  }
   const entries = target
     ? await sql`SELECT * FROM waitlist WHERE launched_notified = FALSE AND NOT COALESCE(comped, FALSE) AND COALESCE(list, 'insider') = ${target}`
     : await sql`SELECT * FROM waitlist WHERE launched_notified = FALSE AND NOT COALESCE(comped, FALSE)`;
