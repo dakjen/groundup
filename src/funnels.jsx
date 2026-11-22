@@ -52,7 +52,7 @@ const OFFERS = {
     page: "lunch", eyebrow: "A free seat · live Lunch & Learn",
     headline: ["One hour, one topic,", "and you leave knowing exactly what to do."],
     sub: "Every live Lunch & Learn takes one thing that stands between a developer and the next closing: sizing the gap when credit pricing moves, what a lender will and will not give on a construction loan, structuring a JV so your guarantee is protected, reading a QAP for score. Dr. Gina Merritt, thirty years and $2B of deals worked on, takes it apart from buildings she has built, then takes your questions on your own situation. You walk out with the answer and the standing to act on it. Normally $39.99. Your first seat is free.",
-    image: "/opt/hough-exterior.webp", imageAlt: "9410 Hough, Cleveland — a real deal, taken apart live",
+    image: "/opt/hough-exterior-crop.webp", imageWide: true, imageAlt: "9410 Hough, Cleveland — a real deal, taken apart live",
     proof: [["$2B+", "in deals behind the advice"], ["1 hr", "one topic, live"], ["Q&A", "on your situation"]],
     bullets: [
       "One topic per session, taught from real buildings with the real numbers, by someone who has sat on every side of the table",
@@ -130,6 +130,10 @@ export function FunnelPage({ offer }) {
   const [held, setHeld] = useState(false);
   const [nextSession, setNextSession] = useState(null);
   const [formVisible, setFormVisible] = useState(false);
+  // The year pass at $99.99, offered on the free Lunch & Learn page only
+  const [passDone] = useState(() => { try { return new URLSearchParams(window.location.search).get("pass") === "1"; } catch { return false; } });
+  const [passBusy, setPassBusy] = useState(false);
+  const [passErr, setPassErr] = useState(null);
   // The next live session, on the page before anyone fills anything in
   useEffect(() => { if (o?.page !== "lunch") return; fetch("/api/lunchlearn?next=1").then(r => r.ok ? r.json() : null).then(d => setNextSession(d?.session || null)).catch(() => {}); }, [o?.page]);
   // The sticky button steps aside while the form itself is on screen
@@ -166,9 +170,47 @@ export function FunnelPage({ offer }) {
     } catch (e2) { setErr(e2.message); } finally { setBusy(false); }
   };
 
+  const emailOk = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(form.email || "").trim());
+  const buyPass = async () => {
+    setPassErr(null);
+    if (!String(form.name || "").trim() || !emailOk) { setPassErr(done ? "Your name and email, please." : "Add your name and email above first."); return; }
+    setPassBusy(true);
+    try {
+      pixel("InitiateCheckout", { content_name: "lunch-year-pass", currency: "USD", value: 99.99 });
+      const r = await fetch("/api/stripe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "guest_checkout", item: "lnl_year_funnel", name: form.name, email: form.email, acquisition: acq }) });
+      const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || "Checkout failed");
+      window.location.href = d.url;
+    } catch (e2) { setPassErr(e2.message); setPassBusy(false); }
+  };
+
   const inp = { width: "100%", boxSizing: "border-box", background: "#120808", border: "1px solid #3a1a1a", borderRadius: 10, padding: "13px 14px", color: "#f5e8e8", fontFamily: font, fontSize: 15, outline: "none" };
   const btn = { width: "100%", background: RED, color: "#fff", border: "none", borderRadius: 10, padding: "15px 18px", fontFamily: font, fontWeight: 800, fontSize: 15, cursor: "pointer", letterSpacing: "0.2px" };
-  const formBlock = (compact) => o.mode === "soon" ? (
+  const passOffer = (compact) => (o.page !== "lunch" || passDone) ? null : (
+    <div style={{ marginTop: 14, background: "#120808", border: "1px solid #b8010180", borderRadius: 14, padding: compact ? "18px 16px" : "20px 22px" }}>
+      <div style={{ fontSize: 9.5, color: RED, fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>Only on this page</div>
+      <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 22, color: "#f5e8e8", marginBottom: 6, lineHeight: 1.25 }}>1-year Lunch & Learn pass</div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 8 }}>
+        <span style={{ fontFamily: font, fontWeight: 800, fontSize: 30, color: "#f5e8e8" }}>$99.99</span>
+        <span style={{ fontFamily: font, fontWeight: 700, fontSize: 18, color: "#8f7070", textDecoration: "line-through" }}>$159.96</span>
+      </div>
+      <div style={{ color: "#c8a8a8", fontSize: 14, fontFamily: font, lineHeight: 1.7 }}>All four live sessions this year and their recordings. Renews each year at $99.99. Cancel anytime.</div>
+      {done && !emailOk && (
+        <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
+          <input style={inp} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Your name" maxLength={120} autoComplete="name" />
+          <input style={inp} type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="Email" maxLength={200} autoComplete="email" inputMode="email" />
+        </div>
+      )}
+      {passErr && <div style={{ color: "#ff9a9a", fontSize: 13, fontFamily: font, marginTop: 10 }}>{passErr}</div>}
+      <button type="button" onClick={buyPass} disabled={passBusy} style={{ ...btn, marginTop: 14, background: "transparent", border: "1px solid " + RED, color: "#f5e8e8", opacity: passBusy ? 0.6 : 1 }}>{passBusy ? "Opening checkout…" : "Get the year pass · $99.99 →"}</button>
+    </div>
+  );
+  const formBlock = (compact) => passDone ? (
+    <div style={{ background: "#0b0505", border: "1px solid #22c55e50", borderRadius: 14, padding: compact ? "20px 18px" : "24px 22px" }}>
+      <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "#f5e8e8", marginBottom: 8 }}>Your year of Lunch & Learns is set.</div>
+      <div style={{ color: "#c8a8a8", fontSize: 14.5, fontFamily: font, lineHeight: 1.7 }}>Check your email: we made you a GroundUp account and sent a link to set your password. Once you are in, open Lunch & Learns and RSVP to the next session. Your pass covers every live session and its recording for twelve months.</div>
+      <a href="/" style={{ display: "inline-block", marginTop: 16, color: "#e08a8a", fontFamily: font, fontWeight: 800, fontSize: 13, textDecoration: "none" }}>See everything else inside GroundUp →</a>
+    </div>
+  ) : o.mode === "soon" ? (
     <div style={{ background: "#0b0505", border: "1px solid #b8010160", borderRadius: 14, padding: compact ? "20px 18px" : "24px 22px" }}>
       <div style={{ fontSize: 9.5, color: RED, fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: font, marginBottom: 8 }}>Coming soon</div>
       <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 24, color: "#f5e8e8", marginBottom: 8 }}>The Playbook is not on sale yet.</div>
@@ -239,7 +281,9 @@ export function FunnelPage({ offer }) {
         .fn-label { font-family: ${font}; font-size: 10px; color: ${RED}; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
         .fn-two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; margin-top: 8px; }
         .fn-sticky { display: none; }
+        .fn-img.fn-img-wide { aspect-ratio: 4 / 3; }
         @media (max-width: 920px) {
+          .fn-img.fn-img-wide { aspect-ratio: 16 / 9; object-position: center 35%; }
           .fn-hero { grid-template-columns: 1fr; gap: 24px; padding: 28px 0 16px; }
           .fn-img { aspect-ratio: 16 / 9; }
           .fn-h1 { font-size: 34px; max-width: none; }
@@ -281,9 +325,9 @@ export function FunnelPage({ offer }) {
             <div className="fn-proof">
               {o.proof.map(([n, l]) => (<div key={l}><b>{n}</b><span>{l}</span></div>))}
             </div>
-            <div className="fn-desktop-form">{formBlock(false)}</div>
+            <div className="fn-desktop-form">{formBlock(false)}{passOffer(false)}</div>
           </div>
-          <img className="fn-img" src={o.image} alt={o.imageAlt} />
+          <img className={"fn-img" + (o.imageWide ? " fn-img-wide" : "")} src={o.image} alt={o.imageAlt} />
         </div>
 
         <div className="fn-two">
@@ -315,7 +359,7 @@ export function FunnelPage({ offer }) {
           </div>
         </div>
 
-        <div id="fn-form-mobile" style={{ marginTop: 20 }}>{formBlock(true)}</div>
+        <div id="fn-form-mobile" style={{ marginTop: 20 }}>{formBlock(true)}{passOffer(true)}</div>
         <div style={{ color: "#5a4040", fontSize: 11, fontFamily: font, textAlign: "center", marginTop: 28, lineHeight: 1.7, borderTop: "1px solid #1c0b0b", paddingTop: 18 }}>© {new Date().getFullYear()} GroundUp by Dr. Gina Merritt · Northern Real Estate Urban Ventures · <a href="/terms" style={{ color: "#7a5a5a" }}>Terms</a> · <a href="/privacy" style={{ color: "#7a5a5a" }}>Privacy</a></div>
       </div>
 

@@ -51,8 +51,11 @@ const CATALOG = {
   pass_all:    { mode: 'payment',      name: 'All-Access Pass (30 days)',  amount: 27500 },
   pass_lifetime: { mode: 'payment',    name: 'GroundUp Lifetime Pass',     amount: 500000 },
   lnl:         { mode: 'payment',      name: 'Lunch & Learn — one live session', amount: 3999 },
-  lnl_year:    { mode: 'payment',      name: 'Lunch & Learn — one-year pass', amount: 10500 },
+  lnl_year:    { mode: 'subscription', name: 'Lunch & Learn — year pass', amount: 12499, annual: true },
   lnl_life:    { mode: 'payment',      name: 'Lunch & Learn — Lifetime Pass', amount: 35000 },
+  // The same one-year pass at $99.99, sold ONLY from the free Lunch & Learn
+  // funnel page (/go/lunch). Everywhere else the year pass is $124.99. Both renew yearly (Dakotah, Nov 22, 2026).
+  lnl_year_funnel: { mode: 'subscription', name: 'Lunch & Learn — year pass (Lunch & Learn page offer)', amount: 9999, annual: true },
   session_deal:      { mode: 'payment', name: '1:1 Deal Review (45 min)',        amount: 50000 },
   session_strategy:  { mode: 'payment', name: '1:1 Strategy Session (45 min)',   amount: 42500 },
   session_capital:   { mode: 'payment', name: '1:1 Capital Stack Review (45 min)', amount: 55000 },
@@ -76,6 +79,7 @@ const DESCRIPTIONS = {
   pass_lifetime: 'Every GroundUp course in perpetuity, one year of Builder membership, group office hours for five years, and every Lunch & Learn — live and recorded — for life.',
   lnl: 'A seat at the next live Lunch & Learn with Dr. Merritt, recording included.',
   lnl_year: 'Every live Lunch & Learn and recording for twelve months.',
+  lnl_year_funnel: 'Every live Lunch & Learn and recording for twelve months.',
   lnl_life: 'Every Lunch & Learn session and recording, forever.',
   session_deal: 'A 45-minute one-to-one deal review with Dr. Gina Merritt.',
   session_strategy: 'A 45-minute one-to-one strategy session with Dr. Gina Merritt.',
@@ -94,7 +98,7 @@ const describe = (item) => DESCRIPTIONS[item] || DESCRIPTIONS[item.replace(/_ann
 // amount means a NEW Price — the old one keeps serving existing subscriptions,
 // which is exactly what you want.
 export async function syncStripeCatalog(stripe, sql, onlyItem = null) {
-  const existing = await sql`SELECT item, product_id, price_id, amount_cents FROM stripe_prices`;
+  const existing = await sql`SELECT item, product_id, price_id, amount_cents, interval FROM stripe_prices`;
   const have = Object.fromEntries(existing.map(r => [r.item, r]));
   const created = [], updated = [], unchanged = [];
   let last = {};
@@ -102,7 +106,7 @@ export async function syncStripeCatalog(stripe, sql, onlyItem = null) {
   for (const [item, spec] of entries) {
     const interval = spec.mode === 'subscription' ? (spec.annual ? 'year' : 'month') : null;
     const row = have[item];
-    if (row && row.amount_cents === spec.amount) { unchanged.push(item); continue; }
+    if (row && row.amount_cents === spec.amount && (row.interval || null) === interval) { unchanged.push(item); continue; }
     let productId = row?.product_id;
     if (productId) {
       // Keep the name, description and tax code current on the existing product.
@@ -138,8 +142,10 @@ export async function syncStripeCatalog(stripe, sql, onlyItem = null) {
 async function storedPrice(sql, stripe, item, unitAmount) {
   const spec = CATALOG[item];
   try {
-    const [row] = await sql`SELECT price_id, amount_cents FROM stripe_prices WHERE item = ${item}`;
-    if (row && row.amount_cents === unitAmount) return row.price_id;
+    const [row] = await sql`SELECT price_id, amount_cents, interval FROM stripe_prices WHERE item = ${item}`;
+    // A stored price is reused only if it bills the same way (one-time vs yearly)
+    const wantInterval = spec?.mode === 'subscription' ? (spec.annual ? 'year' : 'month') : null;
+    if (row && row.amount_cents === unitAmount && (row.interval || null) === wantInterval) return row.price_id;
     // Only self-create at the sticker price. A server-discounted amount is
     // specific to this person and must never become the catalog's price.
     if (!spec || spec.amount !== unitAmount) return null;
@@ -155,7 +161,7 @@ async function storedPrice(sql, stripe, item, unitAmount) {
 // 1.00 = NREUV keeps all of it; 0.75 = NREUV 75% / platform 25%.
 const SPLIT = {
   DEFAULT: 0.75,  // NREUV 75% / platform 25% — memberships and course passes
-  lnl: 1.00, lnl_year: 1.00, lnl_life: 1.00, // Lunch & Learn: 100% to NREUV, platform takes no cut
+  lnl: 1.00, lnl_year: 1.00, lnl_year_funnel: 1.00, lnl_life: 1.00, // Lunch & Learn: 100% to NREUV, platform takes no cut
   // Dr. Merritt's own hours — 90/10
   session_deal: 0.90, session_strategy: 0.90, session_capital: 0.90,
   session_community: 0.90,
@@ -416,6 +422,17 @@ async function splitCharge(stripe, chargeId, item, sql, opts = {}) {
   } catch (e) { console.error('split failed', chargeId, e.message); }
 }
 
+// RSVP someone to the next Lunch & Learn that hasn't happened yet (year pass buyers)
+async function rsvpNextLnl(sql, userId) {
+  const [row] = await sql`SELECT value FROM settings WHERE key = 'lnl_events'`;
+  const events = row?.value ? JSON.parse(row.value) : [];
+  const next = events.filter(e => e && e.date && (e.kind || 'lnl') === 'lnl' && new Date(e.date).getTime() > Date.now())
+    .sort((a, b) => a.date.localeCompare(b.date))[0];
+  if (!next) return null;
+  await sql`INSERT INTO lnl_rsvps (user_id, event_key, created_at) VALUES (${userId}, ${next.date}, NOW()) ON CONFLICT (user_id, event_key) DO NOTHING`;
+  return next;
+}
+
 async function fulfill(sql, session) {
   const md = session.metadata || {};
   const userId = Number(md.user_id);
@@ -634,10 +651,13 @@ async function fulfill(sql, session) {
       const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
       if (u) await addLnlContact(u.email, u.name);
     } catch (e) { console.error('lnl contact failed', e.message); }
-  } else if (item === 'lnl_year') {
-    // The year pass: every live session for 12 months (roughly four sessions),
-    // recordings included — same attendee perk as the single seat.
-    await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, 'lunchlearn', 'stripe_onetime', NOW() + interval '1 year', NOW())`;
+  } else if (item === 'lnl_year' || item === 'lnl_year_funnel') {
+    // The year pass: every live session for 12 months, recordings included. It
+    // renews every year (Dakotah, Nov 22, 2026: $124.99, or $99.99 from the
+    // Lunch & Learn page); each renewal extends this (see invoice.payment_succeeded).
+    await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${userId}, 'lunchlearn', 'lnl_year', NOW() + interval '1 year 3 days', NOW())`;
+    // ...and they are RSVPed to the next session right away
+    try { await rsvpNextLnl(sql, userId); } catch (e) { console.error('pass rsvp failed', e.message); }
     await sql`UPDATE users SET lnl_discount_until = NOW() + interval '2 months' WHERE id = ${userId} AND (lnl_discount_until IS NULL OR lnl_discount_until < NOW() + interval '2 months')`;
     try {
       const [u] = await sql`SELECT name, email FROM users WHERE id = ${userId}`;
@@ -771,8 +791,9 @@ export default async function handler(req, res) {
               const token = signToken({ uid: gu.id, purpose: 'reset' }, 1000 * 60 * 60 * 24);
               const link = `${siteUrl()}/?reset=${encodeURIComponent(token)}`;
               const isIntake = cs.metadata.item === 'retainer_onboarding';
-              const mail = guestWelcomeEmail(gu.name, isIntake ? 'Full Project Intake' : 'Playbook', link,
-                isIntake ? 'Once you are in, your intake workspace walks you through three steps: book your time with Dr. Merritt, upload your project documents, and fill out the intake form. A separate email has the details.' : 'The Playbook opens in your account under Shop → My documents. Read it there anytime; it is tied to your account and watermarked to you.');
+              const isPass = cs.metadata.item === 'lnl_year_funnel';
+              const mail = guestWelcomeEmail(gu.name, isIntake ? 'Full Project Intake' : isPass ? 'Lunch & Learn year pass' : 'Playbook', link,
+                isPass ? 'You are already RSVPed to the next session: the Zoom link is on your Lunch & Learn page once you are in, and in your reminder email. Your pass covers every live Lunch & Learn and its recording for a year, and renews each year at $99.99 until you cancel.' : isIntake ? 'Once you are in, your intake workspace walks you through three steps: book your time with Dr. Merritt, upload your project documents, and fill out the intake form. A separate email has the details.' : 'The Playbook opens in your account under Shop → My documents. Read it there anytime; it is tied to your account and watermarked to you.');
               await sendEmail(gu.email, mail.subject, mail.html);
             }
           } catch (e) { console.error('guest welcome failed', e.message); }
@@ -793,6 +814,10 @@ export default async function handler(req, res) {
         const uid = Number(meta.user_id);
         if (uid && item && CATALOG[item]?.tier) {
           await sql`UPDATE users SET tier = ${CATALOG[item].tier}, membership_status = 'active', stripe_customer_id = ${inv.customer} WHERE id = ${uid}`;
+        }
+        // Lunch & Learn year pass renewal: another year of access
+        if (uid && (item === 'lnl_year' || item === 'lnl_year_funnel') && inv.billing_reason === 'subscription_cycle') {
+          await sql`INSERT INTO entitlements (user_id, course_id, source, expires_at, created_at) VALUES (${uid}, 'lunchlearn', 'lnl_year', NOW() + interval '1 year 3 days', NOW())`;
         }
         if (uid && item && item.startsWith('retainer_')) {
           await sql`UPDATE retainers SET status = 'active' WHERE user_id = ${uid} AND status = 'paused'`;
@@ -856,6 +881,14 @@ export default async function handler(req, res) {
              <p style="color:#444444;font-size:14px;line-height:1.8;">Charge ${dp.charge} — ${lg?.item || 'unknown item'} (${lg?.category || 'uncategorized'}). Amount <strong style="color:#161616;">${d(dp.amount)}</strong>, reason: ${dp.reason || 'not given'}. Respond in Stripe → Disputes${dp.evidence_details?.due_by ? ` by ${new Date(dp.evidence_details.due_by * 1000).toLocaleDateString('en-US')}` : ''}.</p>
              <p style="color:#444444;font-size:14px;line-height:1.8;">The reserve currently holds <strong style="color:#161616;">${d(pot?.total)}</strong>. Per the agreement, a chargeback the reserve cannot cover reduces Platform Revenue for the month it is issued and is borne by both parties in proportion to their shares of the ${lg?.category || 'applicable'} category; amounts already distributed are not clawed back. It is recorded on the ledger for the monthly statement.</p>`);
         } catch (e) { console.error('dispute alert failed', e.message); }
+      } else if (event.type === 'customer.subscription.deleted' && ['lnl_year', 'lnl_year_funnel'].includes(event.data.object?.metadata?.item)) {
+        // A Lunch & Learn year pass ended: it simply stops renewing. Access runs
+        // to the end of the year they paid for; their membership is untouched.
+        const sub = event.data.object;
+        const uid = Number(sub.metadata?.user_id);
+        const [u] = uid ? await sql`SELECT name, email FROM users WHERE id = ${uid}` : [];
+        if (u) await teamAlert(`Lunch & Learn year pass ended: ${u.name}`,
+          `<p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u.name}</strong> (${u.email}) cancelled their Lunch & Learn year pass. It will not renew; their access runs to the end of the year they paid for. If they ask for a refund within 5 days of the charge, refund it in Stripe.</p>`);
       } else if (event.type === 'customer.subscription.deleted') {
         const sub = event.data.object;
         // Refund rules — alert-driven (the NREUV split transfer must be reversed
@@ -969,7 +1002,7 @@ export default async function handler(req, res) {
       const email = String(body.email || '').trim().toLowerCase().slice(0, 200);
       const name = String(body.name || '').trim().slice(0, 120) || email.split('@')[0];
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'That email doesn\'t look right' });
-      const ALLOWED = { playbook: true, retainer_onboarding: true };
+      const ALLOWED = { playbook: true, retainer_onboarding: true, lnl_year_funnel: true };
       if (!ALLOWED[body.item]) return res.status(400).json({ error: 'Not available this way' });
       const acq = String(body.acquisition || '').slice(0, 120) || null;
       [user] = await sql`SELECT id, name, email, tier, lnl_discount_until, referred_by, referred_code FROM users WHERE email = ${email}`;
@@ -1025,6 +1058,13 @@ export default async function handler(req, res) {
     const item = body.item;
     const product = CATALOG[item];
     if (!product) return res.status(400).json({ error: 'Unknown item' });
+
+    // The $99.99 year pass is sold from the free Lunch & Learn page only.
+    if (item === 'lnl_year_funnel') {
+      if (!body.guest) return res.status(400).json({ error: 'Not available this way' });
+      const [has] = await sql`SELECT id FROM entitlements WHERE user_id = ${user.id} AND course_id = 'lunchlearn' AND (expires_at IS NULL OR expires_at > NOW() + interval '6 months') LIMIT 1`;
+      if (has) return res.status(409).json({ error: 'This email already has a Lunch & Learn pass. Sign in and open Lunch & Learns to RSVP.' });
+    }
 
     // 1:1 sessions and the Full Project Intake open with the insider launch
     // (settings.launch_insider_at). Until then nobody can buy them — the page
@@ -1149,13 +1189,15 @@ export default async function handler(req, res) {
       // page. Land them on it, in the meetings section.
       success_url: body.guest && item === 'retainer_onboarding'
         ? `${base}/go/intake?success=1`
+        : item === 'lnl_year_funnel'
+        ? `${base}/go/lunch?pass=1`
         : item.startsWith('session_')
         ? `${base}/membership?checkout=success&item=${encodeURIComponent(item)}#meetings`
         : item === 'retainer_onboarding'
           // The intake is paid — the next thing they must do is book the call.
           ? `${base}/membership?checkout=success&item=retainer_onboarding#gu-advisory`
           : `${base}/?checkout=success&item=${encodeURIComponent(item)}`,
-      cancel_url: `${base}/?checkout=cancelled`,
+      cancel_url: item === 'lnl_year_funnel' ? `${base}/go/lunch` : `${base}/?checkout=cancelled`,
     };
 
     // Month-free gift link: locked to the recipient's email, single use — a
