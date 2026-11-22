@@ -470,19 +470,15 @@ export default async function handler(req, res) {
       const site = siteUrl();
       const href = (h) => h.startsWith('/?join=') ? site + '/' : site + h;
       const first = esc(name.split(' ')[0]);
+      // One plain-text email with everything (Dakotah, Nov 22, 2026): the result,
+      // the next step with its link, the free scoping call link, and their answers.
       try {
-        await sendEmail(email, `Your GroundUp read: ${outcome.title}`,
-          `<div style="font-size:10px;color:#b80101;letter-spacing:3px;text-transform:uppercase;font-weight:bold;margin-bottom:12px;">${esc(outcome.eyebrow)}</div>
-           <h2 style="color:#161616;font-size:24px;line-height:1.2;margin:0 0 14px;">${esc(outcome.title)}</h2>
-           <p style="color:#444444;font-size:14px;line-height:1.8;">${first}, here is the honest read from your ten answers.</p>
-           <p style="color:#444444;font-size:14px;line-height:1.8;">${esc(outcome.body)}</p>
-           <p style="margin:22px 0 8px;"><a href="${esc(href(outcome.cta[1]))}" style="display:inline-block;background:#b80101;color:#ffffff;text-decoration:none;font-weight:700;padding:13px 26px;border-radius:8px;">${esc(outcome.cta[0])} →</a></p>
-           <p style="margin:0 0 22px;"><a href="${esc(href(outcome.alt[1]))}" style="color:#b80101;font-weight:700;text-decoration:none;">${esc(outcome.alt[0])} →</a></p>
-           ${answers.length ? `<div style="background:#faf7f7;border:1px solid #e5dccf;border-radius:12px;padding:16px 20px;margin:14px 0;">
-             <div style="font-size:10px;color:#b80101;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin-bottom:8px;">What you told us</div>
-             ${answers.map(a => `<p style="color:#444444;font-size:13px;line-height:1.7;margin:0 0 6px;"><span style="color:#8a7070;">${esc(a.q)}</span><br/><strong style="color:#161616;">${esc(a.a)}</strong></p>`).join('')}
-           </div>` : ''}
-           <p style="color:#7a5050;font-size:12px;line-height:1.7;">Reply to this email and a person on the GroundUp team answers.${outcome.key === 'advisory' ? '' : ` Want a human to check the read? <a href="${esc(site)}/go/call" style="color:#b80101;font-weight:700;">Book a free 20-minute scoping call</a>.`}</p>`);
+        const { quizEmail } = await import('./_quiz_email.js');
+        const [callRow] = await sql`SELECT value FROM settings WHERE key = 'scoping_call_link'`;
+        const [launchRow] = await sql`SELECT value FROM settings WHERE key = 'launch_at'`;
+        const launched = !!launchRow?.value && new Date(launchRow.value).getTime() <= Date.now();
+        const m = quizEmail({ name, email, outcome, answers, site, callLink: callRow?.value || null, launched });
+        await sendPlain(email, m.subject, m.text);
       } catch (e) { console.error('quiz email', e.message); }
       return res.status(201).json({ success: true });
     }
