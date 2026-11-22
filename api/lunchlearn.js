@@ -421,6 +421,13 @@ export default async function handler(req, res) {
       const name = String(req.body.name || '').trim().slice(0, 120);
       if ((req.body.website && String(req.body.website).trim())) return res.status(201).json({ success: true });
       if (!name || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'Your name and a real email, please' });
+      // The free call is for new people only (Dakotah, Nov 16): not members,
+      // and not anyone who joined the waitlist themselves. Rows the funnels
+      // add on their own (source ad:… or quiz:…) do not count, or the quiz
+      // would lock out the people it sends here.
+      const [isMember] = await sql`SELECT id FROM users WHERE LOWER(email) = ${email}`;
+      const [onList] = isMember ? [null] : await sql`SELECT id FROM waitlist WHERE LOWER(email) = ${email} AND COALESCE(source, '') NOT LIKE 'ad:%' AND COALESCE(source, '') NOT LIKE 'quiz:%'`;
+      if (isMember || onList) return res.status(409).json({ error: 'The free scoping call is for people who are new to GroundUp, and this email is already with us. Reply to any GroundUp email and a person on the team will help you.' });
       const phone = String(req.body.phone || '').trim().slice(0, 40) || null;
       const stage = String(req.body.stage || '').trim().slice(0, 80) || null;
       const about = String(req.body.about || '').trim().slice(0, 2000) || null;
