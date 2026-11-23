@@ -431,10 +431,12 @@ async function cronRun(req, res) {
     // PAYOUTS ON THE 15TH AND THE 30TH (Dakotah, Nov 22, 2026): see api/_payouts.js.
     // The 15th keeps $1,000 in Stripe, the 30th keeps $500; everything above that
     // which is past its 5-day refund window goes out, split NREUV / DakJen.
+    let payout = null;
     if (!dripOnly && process.env.STRIPE_SECRET_KEY && process.env.NREUV_CONNECT_ACCOUNT) {
       try {
         const { runPayout } = await import('./_payouts.js');
         const r = await runPayout(sql, new Stripe(process.env.STRIPE_SECRET_KEY), { alert: alertFailure });
+        payout = r;
         if (r.payday) {
           const { teamAlert } = await import('./_email.js');
           const m = (c) => '$' + ((c || 0) / 100).toFixed(2);
@@ -683,7 +685,7 @@ async function cronRun(req, res) {
       }
     } catch (e) { await alertFailure('send watchdog', e); }
     if (dripOnly) return res.json({ success: true, drip });
-    return res.json({ success: true, expired: rows.length, sent, drip, pot_released: released, pot_released_cents: releasedCents, weekly, monthly, founding, ladder });
+    return res.json({ success: true, expired: rows.length, sent, drip, payout, weekly, monthly, founding, ladder });
   }
 }
 
