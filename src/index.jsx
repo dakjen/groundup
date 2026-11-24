@@ -2236,8 +2236,8 @@ function PlanCard({ plan, onSelect, seats, compact, recommended }) {
         <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: plan.price.length > 8 ? "clamp(24px,1.9vw,32px)" : "clamp(30px,2.9vw,46px)", color: "#f5e8e8", lineHeight: 1.2 }}>{plan.price}</span>
         <span style={{ color: "#8a7070", fontSize: 15, fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap" }}>{plan.period}</span>
       </div>
-      <p style={{ color: "#8a7070", fontSize: 13, marginBottom: plan.value || seats ? 14 : 28, lineHeight: 1.65, fontFamily: "'DM Sans', sans-serif" }}>{plan.description}</p>
-      {plan.value && <div style={{ color: "#8f7070", fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontStyle: "italic", marginBottom: 14 }}>{plan.value}</div>}
+      <p style={{ color: "#8a7070", fontSize: 13, marginBottom: plan.value || seats ? 14 : 28, lineHeight: 1.65, fontFamily: "'DM Sans', sans-serif", minHeight: compact ? "11.6em" : undefined }}>{plan.description}</p>
+      {plan.value && <div style={{ color: "#8f7070", fontSize: 11, fontFamily: "'DM Sans', sans-serif", fontStyle: "italic", marginBottom: 14, minHeight: compact ? "4.5em" : undefined }}>{plan.value}</div>}
 
       {showSeats && (
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, background: "#1a0808", border: "1px solid #b8010140", borderRadius: 8, padding: "9px 13px" }}>
@@ -2347,26 +2347,15 @@ function PricingPage({ onSignUp }) {
             Invest in yourself.<br />The returns are generational.
           </h1>
           <p style={{ color: "#7a6151", fontSize: 15, maxWidth: 420, margin: "0 auto", lineHeight: 1.8, fontFamily: "'DM Sans', sans-serif" }}>Start free. Upgrade when you're ready. Cancel anytime.</p>
-          <div style={{ marginTop: 18, display: "inline-flex", alignItems: "center", gap: 10, background: "#0d0404", border: "1px solid #b8010130", borderRadius: 12, padding: "12px 20px" }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#b80101", display: "inline-block" }} />
-            <span style={{ color: "#c8a8a8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{typeof window !== "undefined" && window.__guLaunchAt && new Date(window.__guLaunchAt).getTime() > Date.now() ? "The waitlist is open." : "The doors are open. Founding seats are being claimed now."}</span>
-          </div>
         </div>
 
         {/* Two doors: recurring memberships, or pay-once passes */}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}>
           {[["plans", "Memberships"], ["onetime", "One-Time Purchases"]].map(([id, label], i) => (
             // A two-way switch: the lit side is what you are looking at, the dim side is the other view
             <button key={id} onClick={() => setTab(id)} aria-pressed={tab === id} title={tab === id ? `You are viewing ${label}` : `Switch to ${label}`} style={{ background: tab === id ? "#b80101" : "#0d0404", color: tab === id ? "#fff" : "#c8a8a8", border: "1px solid " + (tab === id ? "#b80101" : "#3a1a1a"), borderRadius: i === 0 ? "12px 0 0 12px" : "0 12px 12px 0", padding: "13px 30px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 14, cursor: tab === id ? "default" : "pointer" }}>{tab === id ? "✓ " : ""}{label}</button>
           ))}
         </div>
-        {tab === "plans" && (
-          <div style={{ textAlign: "center", marginBottom: 26 }}>
-            <button onClick={() => setTab("onetime")} style={{ background: "none", border: "none", color: "#8a7070", fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer", padding: 0 }}>
-              Not ready to commit? <span style={{ color: "#b80101", fontWeight: 800 }}>Buy limited course access — no subscription →</span>
-            </button>
-          </div>
-        )}
 
         {/* One-time passes */}
         {tab === "onetime" && (
@@ -2402,12 +2391,70 @@ function PricingPage({ onSignUp }) {
 
         {/* Subscriptions */}
         {tab === "plans" && (<>
-        <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 10 }}>Memberships</div>
-          <p style={{ color: "#8a7070", fontSize: 14, fontFamily: "'DM Sans', sans-serif", maxWidth: 520, margin: "0 auto", lineHeight: 1.7 }}>Lower tiers build your <strong style={{ color: "#c8a8a8" }}>foundation</strong> — higher tiers put <strong style={{ color: "#c8a8a8" }}>Dr. Merritt on YOUR project</strong>.</p>
+        {(() => {
+          // One handler for every plan button (the row of four and the Senior Advisor band)
+          const choose = (plan) => {
+              // Before launch every one of these buttons is labelled "Join the
+              // waitlist", so that is where every one of them goes.
+              if (window.__guLaunchAt && new Date(window.__guLaunchAt).getTime() > Date.now()) { window.location.href = "/waitlist"; return; }
+              if (plan.tier === "Advisor") { window.location.href = "/contact"; return; }
+              if (plan.limited && elite?.full) { window.location.href = "mailto:admin@nreuv.com?subject=" + encodeURIComponent("Owner waitlist — notify me when a seat opens"); return; }
+              if (plan.tier === "Free") { onSignUp && onSignUp("Free"); return; }
+              if (getMember()) { startCheckout("sub_" + plan.tier + (annual && ANNUAL_PRICES[plan.tier] ? "_annual" : ""), { gift: localStorage.getItem("guGift") || undefined, promo: localStorage.getItem("guPromo") || undefined }); return; }
+              onSignUp && onSignUp(plan.tier);
+          };
+          const advisor = plans.find(p => p.tier === "Advisor");
+          return (<>
+        {annual && (
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 14, marginBottom: 22, background: "#12060a", border: "1px solid #b8010140", borderRadius: 12, padding: "14px 22px", flexWrap: "wrap" }}>
+            <span style={{ color: "#c8a8a8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>Annual billing unlocked — pay for the year at about 10% off the monthly rate.</span>
+            <button onClick={() => setAnnual(false)} style={{ background: "transparent", color: "#8a7070", border: "1px solid #2a0000", borderRadius: 8, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>Switch to monthly</button>
+          </div>
+        )}
+        {/* Free rides above the paid row as a full-width band — one clean row of five below */}
+        {(() => {
+          const free = plans.find(p => p.tier === "Free");
+          return free && (
+            <div onClick={() => onSignUp && onSignUp("Free")} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "18px 26px", marginBottom: 14, display: "flex", alignItems: "center", gap: "10px 24px", flexWrap: "wrap", cursor: "pointer", transition: "border-color 0.2s" }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = "#8a8a8a60"} onMouseLeave={e => e.currentTarget.style.borderColor = "#2a0000"}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexShrink: 0 }}>
+                <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 24, color: "#f0d8d8" }}>Free</span>
+                <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 20, color: "#8a8a8a" }}>$0</span>
+              </div>
+              <span style={{ color: "#8f7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, flex: 1, minWidth: 260 }}>See every course's outline (the lessons themselves stay locked), join one free live Lunch & Learn with Dr. Merritt, and set up your community profile — no card required.</span>
+              <button onClick={e => { e.stopPropagation(); onSignUp && onSignUp("Free"); }} style={{ background: "transparent", color: "#f0d8d8", border: "1px solid #8a8a8a70", borderRadius: 8, padding: "10px 24px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", flexShrink: 0 }}>{beforePublicLaunch() ? "Free accounts open Dec 1" : "Start Free →"}</button>
+            </div>
+          );
+        })()}
+        <div className="gu-plan-row" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 14, alignItems: "stretch" }}>
+          <style>{`
+            @media (max-width: 980px) { .gu-plan-row { grid-template-columns: repeat(2, minmax(0,1fr)) !important; } }
+            @media (max-width: 560px) { .gu-plan-row { grid-template-columns: minmax(0,1fr) !important; } }
+          `}</style>
+          {plans.filter(p => !["Partner", "Free", "Advisor"].includes(p.tier)).map((raw, i) => {
+            const plan = annual && ANNUAL_PRICES[raw.tier] ? { ...raw, price: ANNUAL_PRICES[raw.tier], period: "/yr" } : raw;
+            return <PlanCard key={i} plan={plan} compact seats={plan.limited ? elite : null} recommended={recommendedTier === plan.tier} onSelect={() => choose(plan)} />;
+          })}
         </div>
+        {/* Senior Advisor: its own band under the four memberships */}
+        {advisor && (
+          <div style={{ marginTop: 14, background: "#0d0404", border: "1px solid #e0c4c440", borderRadius: 16, padding: "22px 28px", display: "flex", alignItems: "center", gap: "12px 28px", flexWrap: "wrap" }}>
+            <div style={{ flexShrink: 0 }}>
+              <div style={{ fontSize: 10, color: "#e0c4c4", fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 4 }}>Senior Advisor</div>
+              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 30, color: "#f5e8e8", lineHeight: 1.1 }}>{advisor.price}<span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#8a7070", fontWeight: 600 }}>{advisor.period}</span></div>
+            </div>
+            <div style={{ flex: 1, minWidth: 240 }}>
+              <div style={{ color: "#c8a8a8", fontSize: 14, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, marginBottom: 4 }}>{advisor.description}</div>
+              <div style={{ color: "#8a7070", fontSize: 12.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>{advisor.value}</div>
+            </div>
+            <button onClick={() => choose(advisor)} style={{ background: "transparent", color: "#f0d8d8", border: "1px solid #e0c4c470", borderRadius: 10, padding: "12px 22px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", flexShrink: 0 }}>{advisor.cta} →</button>
+          </div>
+        )}
+          </>);
+        })()}
+
         {/* Which level should I choose? — routes deal-havers to the top */}
-        <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "28px 32px", marginBottom: 28 }}>
+        <div style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "28px 32px", marginTop: 28 }}>
           <div style={{ fontSize: 10, color: "#b80101", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Where are you?</div>
           <div style={{ display: "grid", gap: 10 }}>
             {[
@@ -2433,55 +2480,6 @@ function PricingPage({ onSignUp }) {
           <HonestRule />
         </div>
 
-        {annual && (
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 14, marginBottom: 22, background: "#12060a", border: "1px solid #b8010140", borderRadius: 12, padding: "14px 22px", flexWrap: "wrap" }}>
-            <span style={{ color: "#c8a8a8", fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 700 }}>Annual billing unlocked — pay for the year at about 10% off the monthly rate.</span>
-            <button onClick={() => setAnnual(false)} style={{ background: "transparent", color: "#8a7070", border: "1px solid #2a0000", borderRadius: 8, padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>Switch to monthly</button>
-          </div>
-        )}
-
-        {/* Free rides above the paid row as a full-width band — one clean row of five below */}
-        {(() => {
-          const free = plans.find(p => p.tier === "Free");
-          return free && (
-            <div onClick={() => onSignUp && onSignUp("Free")} style={{ background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, padding: "18px 26px", marginBottom: 14, display: "flex", alignItems: "center", gap: "10px 24px", flexWrap: "wrap", cursor: "pointer", transition: "border-color 0.2s" }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = "#8a8a8a60"} onMouseLeave={e => e.currentTarget.style.borderColor = "#2a0000"}>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexShrink: 0 }}>
-                <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 24, color: "#f0d8d8" }}>Free</span>
-                <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 20, color: "#8a8a8a" }}>$0</span>
-              </div>
-              <span style={{ color: "#8f7070", fontSize: 13, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, flex: 1, minWidth: 260 }}>See every course's outline (the lessons themselves stay locked), join one free live Lunch & Learn with Dr. Merritt, and set up your community profile — no card required.</span>
-              <button onClick={e => { e.stopPropagation(); onSignUp && onSignUp("Free"); }} style={{ background: "transparent", color: "#f0d8d8", border: "1px solid #8a8a8a70", borderRadius: 8, padding: "10px 24px", fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", flexShrink: 0 }}>{beforePublicLaunch() ? "Free accounts open Dec 1" : "Start Free →"}</button>
-            </div>
-          );
-        })()}
-        <div className="gu-plan-row" style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 12, alignItems: "stretch" }}>
-          {/* Five plans forced onto one line pushed the last card off the edge and
-              made the row scroll sideways — people simply never saw Senior Advisor.
-              They wrap into legible rows instead of hiding behind a scrollbar. */}
-          <style>{`
-            @media (max-width: 1180px) { .gu-plan-row { grid-template-columns: repeat(3, minmax(0,1fr)) !important; } }
-            @media (max-width: 820px)  { .gu-plan-row { grid-template-columns: repeat(2, minmax(0,1fr)) !important; } }
-            @media (max-width: 560px)  { .gu-plan-row { grid-template-columns: minmax(0,1fr) !important; } }
-          `}</style>
-          {plans.filter(p => p.tier !== "Partner" && p.tier !== "Free").map((raw, i) => {
-            const plan = annual && ANNUAL_PRICES[raw.tier] ? { ...raw, price: ANNUAL_PRICES[raw.tier], period: "/yr" } : raw;
-            return (
-            <PlanCard key={i} plan={plan} compact seats={plan.limited ? elite : null} recommended={recommendedTier === plan.tier} onSelect={() => {
-              // Before launch every one of these buttons is labelled "Join the
-              // waitlist", so that is where every one of them goes. The Senior
-              // Advisor card used to carry that label and open the booking page.
-              if (window.__guLaunchAt && new Date(window.__guLaunchAt).getTime() > Date.now()) { window.location.href = "/waitlist"; return; }
-              if (plan.tier === "Advisor") { window.location.href = "/contact"; return; }
-              // Elite is capped — send full-cohort visitors to the waitlist, not to checkout
-              if (plan.limited && elite?.full) { window.location.href = "mailto:admin@nreuv.com?subject=" + encodeURIComponent("Owner waitlist — notify me when a seat opens"); return; }
-              if (plan.tier === "Free") { onSignUp && onSignUp("Free"); return; }
-              if (getMember()) { startCheckout("sub_" + plan.tier + (annual && ANNUAL_PRICES[plan.tier] ? "_annual" : ""), { gift: localStorage.getItem("guGift") || undefined, promo: localStorage.getItem("guPromo") || undefined }); return; }
-              onSignUp && onSignUp(plan.tier);
-            }} />
-            );
-          })}
-        </div>
 
         {/* Everything in one chart — cleaner than five long cards */}
         <div style={{ marginTop: 28, background: "#0d0404", border: "1px solid #2a0000", borderRadius: 16, overflow: "hidden" }}>
