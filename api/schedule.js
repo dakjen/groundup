@@ -31,6 +31,30 @@ const DEFAULTS = {
   },
 };
 
+// Members can cancel or reschedule up to 48 hours before the session
+// (Dakotah, Nov 24, 2026). Inside that, they write to the team.
+const CHANGE_CUTOFF_MS = 48 * 3600e3;
+const CUTOFF_MSG = 'Sessions can be cancelled or rescheduled up to 48 hours before they start. To change this one, email admin@nreuv.com.';
+const fmtWhen = (iso) => new Date(iso).toLocaleString('en-US', { timeZone: TZ, weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+
+// Take a booked time down: the calendar event (Google tells the guests) and
+// the Zoom meeting, so the old join link stops working and nobody can still
+// get on a call that was cancelled. If Zoom refuses, try once more, then tell
+// the team to delete it by hand rather than leave a live link behind.
+async function releaseSlot(b, u) {
+  try { await deleteEvent(b.calendar_event_id); } catch (e) { console.error('calendar delete failed', e.message); }
+  if (!b.zoom_meeting_id) return;
+  for (let i = 0; i < 2; i++) {
+    try { await deleteMeeting(b.zoom_meeting_id); return; }
+    catch (e) { console.error('zoom delete failed', e.message); if (i === 0) await new Promise(r => setTimeout(r, 1500)); }
+  }
+  try {
+    const { teamAlert } = await import('./_email.js');
+    await teamAlert(`Delete Zoom meeting ${b.zoom_meeting_id} by hand`,
+      `<p>${u?.name || 'A member'} cancelled or moved <strong>${b.label || 'a session'}</strong> (${b.scheduled_at ? fmtWhen(b.scheduled_at) : 'no time'}), but Zoom would not delete meeting <strong>${b.zoom_meeting_id}</strong>. Its link still works until someone deletes it in Zoom: zoom.us → Meetings → find that ID → Delete.</p>`);
+  } catch {}
+}
+
 async function rules(sql) {
   try {
     const [row] = await sql`SELECT value FROM settings WHERE key = 'scheduling_rules'`;
@@ -136,7 +160,7 @@ export default async function handler(req, res) {
       const startIso = String(req.body.start || '');
       if (isNaN(Date.parse(startIso))) return res.status(400).json({ error: 'Pick a time first.' });
 
-      let b;
+      let b, moving = null;   // moving: the old time, when this is a reschedule
       if (req.body.included) {
         // An advisory call the plan already includes. It schedules exactly like
         // a paid one — the allowance is what gets checked instead of a payment.
@@ -166,7 +190,12 @@ export default async function handler(req, res) {
         if (['refunded', 'cancelled', 'void'].includes(String(b.status || ''))) {
           return res.status(403).json({ error: 'That session was refunded, so it can no longer be booked. Purchase another any time.' });
         }
-        if (b.scheduled_at) return res.status(409).json({ error: 'That session already has a time. Cancel it first to move it.' });
+        if (b.scheduled_at && !req.body.reschedule) return res.status(409).json({ error: 'That session already has a time. Use Reschedule to move it.' });
+        if (req.body.reschedule) {
+          if (!b.scheduled_at) return res.status(400).json({ error: 'That session has no time yet. Book it instead.' });
+          if (!admin && new Date(b.scheduled_at).getTime() - Date.now() < CHANGE_CUTOFF_MS) return res.status(403).json({ error: CUTOFF_MSG });
+          moving = { ...b };
+        }
       }
 
       const start = new Date(startIso);
@@ -222,9 +251,13 @@ export default async function handler(req, res) {
       await sql`UPDATE bookings SET scheduled_at = ${start.toISOString()}, status = 'booked',
         booked_at = NOW(), calendar_event_id = ${ev.id || null}, zoom_meeting_id = ${zoom?.id || null},
         meet_link = ${meet || null}, event_link = ${ev.htmlLink || null} WHERE id = ${b.id}`;
+      // A reschedule: only now that the new time exists, take the old one down
+      // (its calendar event, and its Zoom meeting so the old link is dead).
+      if (moving) await releaseSlot(moving, u);
       if (u?.email) {
-        sendEmail(u.email, `Booked — ${b.label || 'your session'} on ${when}`,
-          `<h2 style="color:#161616;font-size:23px;margin:0 0 14px;">You're booked, ${firstName(u.name)}.</h2>
+        sendEmail(u.email, `${moving ? 'Rescheduled' : 'Booked'} — ${b.label || 'your session'} on ${when}`,
+          `<h2 style="color:#161616;font-size:23px;margin:0 0 14px;">${moving ? `You're rescheduled, ${firstName(u.name)}.` : `You're booked, ${firstName(u.name)}.`}</h2>
+           ${moving ? `<p style="color:#444444;font-size:14px;line-height:1.8;margin:0 0 14px;">Your old time, ${fmtWhen(moving.scheduled_at)}, is cancelled and its Zoom link no longer works. Use the new one below.</p>` : ''}
            <p style="color:#444444;font-size:14px;line-height:1.8;margin:0 0 6px;"><strong style="color:#161616;">${b.label || 'Your session'}</strong></p>
            <p style="color:#444444;font-size:14px;line-height:1.8;margin:0 0 18px;">${when}</p>
            ${meet ? `<a href="${meet}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin:0 8px 10px 0;">Join the meeting</a>` : ''}
@@ -233,8 +266,8 @@ export default async function handler(req, res) {
            <p style="color:#444444;font-size:14px;line-height:1.8;margin:22px 0 0;">A calendar invite is on its way. ${b.brief ? 'Dr. Merritt has your brief.' : '<strong style="color:#161616;">Add your brief before the session</strong> — it\'s what makes the 45 minutes count.'}</p>`
         ).catch(() => {});
       }
-      sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com', `Session booked — ${u?.name || 'member'}, ${when}`,
-        `<p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u?.name || 'A member'}</strong> booked <strong style="color:#161616;">${b.label || 'a session'}</strong> for ${when}.${b.brief ? ' Their brief is on the calendar invite.' : ' No brief yet.'}</p>`
+      sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com', `Session ${moving ? 'rescheduled' : 'booked'} — ${u?.name || 'member'}, ${when}`,
+        `<p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u?.name || 'A member'}</strong> ${moving ? `moved <strong style="color:#161616;">${b.label || 'a session'}</strong> from ${fmtWhen(moving.scheduled_at)} to` : `booked <strong style="color:#161616;">${b.label || 'a session'}</strong> for`} ${when}.${b.brief ? ' Their brief is on the calendar invite.' : ' No brief yet.'}</p>`
       ).catch(() => {});
 
       return res.json({ success: true, scheduled_at: start.toISOString(), meet_link: meet || null, event_link: ev.htmlLink || null });
@@ -244,8 +277,23 @@ export default async function handler(req, res) {
     if (req.body?.action === 'cancel') {
       const [b] = await sql`SELECT * FROM bookings WHERE id = ${Number(req.body.booking_id)} AND user_id = ${session.uid}`;
       if (!b) return res.status(404).json({ error: 'Session not found' });
-      await deleteEvent(b.calendar_event_id);
-      try { await deleteMeeting(b.zoom_meeting_id); } catch (e) { console.error('zoom delete failed', e.message); }
+      if (b.scheduled_at && !admin && new Date(b.scheduled_at).getTime() - Date.now() < CHANGE_CUTOFF_MS) {
+        return res.status(403).json({ error: CUTOFF_MSG });
+      }
+      const [u] = await sql`SELECT name, email FROM users WHERE id = ${session.uid}`;
+      await releaseSlot(b, u);
+      if (b.scheduled_at) {
+        const when = fmtWhen(b.scheduled_at);
+        if (u?.email) sendEmail(u.email, `Cancelled — ${b.label || 'your session'} on ${when}`,
+          `<h2 style="color:#161616;font-size:23px;margin:0 0 14px;">Your session is cancelled.</h2>
+           <p style="color:#444444;font-size:14px;line-height:1.8;margin:0 0 14px;"><strong style="color:#161616;">${b.label || 'Your session'}</strong> on ${when} is off Dr. Merritt's calendar and its Zoom link no longer works.</p>
+           <p style="color:#444444;font-size:14px;line-height:1.8;margin:0 0 18px;">${b.item === 'advisory_included' ? 'The call is back in your plan, so you can book it again any time.' : 'Your session is still yours: pick a new time whenever you are ready.'}</p>
+           <a href="${siteUrl()}/membership#meetings" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;">Your meetings</a>`
+        ).catch(() => {});
+        sendEmail(process.env.ADMIN_EMAIL || 'admin@nreuv.com', `Session cancelled — ${u?.name || 'member'}, ${when}`,
+          `<p style="color:#444444;font-size:14px;line-height:1.8;"><strong style="color:#161616;">${u?.name || 'A member'}</strong> cancelled <strong style="color:#161616;">${b.label || 'a session'}</strong> on ${when}. It is off the calendar and the Zoom meeting is deleted.</p>`
+        ).catch(() => {});
+      }
       if (b.item === 'advisory_included') {
         // Hand the allowance back rather than charging someone a call for a
         // meeting that never happened.
