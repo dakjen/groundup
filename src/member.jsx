@@ -1347,7 +1347,7 @@ function SlotPicker({ bookingId, included, title, onClose, onBooked }) {
         <div style={{ color: "#444", fontSize: 13.5, fontFamily: F, lineHeight: 1.6 }}>
           {picked
             ? <><strong style={{ color: "#1a1a1a" }}>{new Date(picked).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} at {fmtTime(picked)}</strong>
-                <div style={{ color: "#777", fontSize: 12, marginTop: 3 }}>A calendar invite and Google Meet link follow straight away.</div></>
+                <div style={{ color: "#777", fontSize: 12, marginTop: 3 }}>A calendar invite with your Zoom link follows straight away.</div></>
             : <span style={{ color: "#9a9285" }}>Pick a day, then a time.</span>}
         </div>
         <button onClick={confirm} disabled={!picked || busy} style={{
