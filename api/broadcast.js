@@ -674,7 +674,9 @@ async function cronRun(req, res) {
         const [lr] = await sql`SELECT value FROM settings WHERE key = ${list === 'insider' ? 'launch_insider_at' : 'launch_at'}`;
         if (!lr?.value) continue;
         const msLeft = new Date(lr.value) - Date.now();
-        if (msLeft <= 7 * 86400000 && msLeft > 0) {
+        // The general list has no separate recommendation email any more: the
+        // plan we'd pick is inside its Dec 1 "GroundUp is open" email (Nov 22).
+        if (list !== 'general' && msLeft <= 7 * 86400000 && msLeft > 0) {
           const [{ n }] = await sql`SELECT COUNT(*)::int AS n FROM waitlist WHERE recommended_notified = FALSE AND NOT COALESCE(comped, FALSE) AND COALESCE(list,'insider') = ${list}`;
           if (n > 0) await alertFailure(`plan recommendation due — ${list}`, new Error(`${n} people on the ${list} list still have no recommendation email after the run`));
         }
