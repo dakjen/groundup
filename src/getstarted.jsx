@@ -117,6 +117,19 @@ function scoreBase(answers) {
   return OUTCOMES.learn;
 }
 
+// The big recommendation card at the end of the results (Dakotah, Nov 24).
+// Plan reads link to making an account on that plan once GroundUp opens.
+const PUBLIC_LAUNCH = new Date("2026-12-01T05:00:00Z").getTime();
+const REC = {
+  notyet: { name: "A free Lunch & Learn seat", price: "Free", period: "", points: ["A live session with Dr. Merritt on how real deals get done", "No account, no card", "Come back and retake this when you have a site, a number or a question"] },
+  org: { name: "The Partner Program", price: "For organizations", period: "", points: ["A cohort of your staff or developers, taken through together", "Their own channel and office hours", "Built around your program"] },
+  learn: { plan: "Basic", name: "Member", price: "$49.99", period: "/mo", points: ["Every course, plus each new one we add", "All written lessons, case studies & worksheets", "Free invites to every live Lunch & Learn", "Read every channel in the community"] },
+  room: { plan: "Builder", name: "Builder", price: "$149.99", period: "/mo", points: ["Everything in Member", "Post, reply & find partners in the community", "The Lunch & Learn recording library", "View every guide, template & the Developer's Playbook"] },
+  premium: { plan: "Premium", name: "Premium", price: "$249.99", period: "/mo", points: ["Everything in Builder", "Group office hours with Dr. Merritt", "The Opportunity Board: RFPs, funding windows & deals", "1 free 1:1 session with Dr. Merritt every year"] },
+  owner: { plan: "Elite", name: "Owner", price: "$499.99", period: "/mo", points: ["Everything in Premium", "Direct messages to Dr. Merritt & her team", "3 one-on-one advisory calls a year, with deal support", "Download the Developer's Playbook"] },
+  advisory: { name: "The Full Project Intake", price: "$1,500", period: "", points: ["Dr. Merritt takes in your whole deal", "She tells you what you missed and what to do next", "Credited in full if you continue into a Senior Advisor retainer"] },
+};
+
 export function GetStartedPage({ setActivePage, onSignIn }) {
   const [answers, setAnswers] = useState({});
   const [step, setStep] = useState(0);
@@ -214,7 +227,6 @@ export function GetStartedPage({ setActivePage, onSignIn }) {
             <h1 style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(32px,5vw,48px)", lineHeight: 1.08, margin: "0 0 14px" }}>{result.title}</h1>
             <p style={{ color: "#c8a8a8", fontSize: 16, fontFamily: font, lineHeight: 1.8, margin: "0 0 26px" }}>{result.body}</p>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 36 }}>
-              <button onClick={() => go(result.cta[1])} style={btn}>{result.cta[0]} →</button>
               <button onClick={() => go(result.alt[1])} style={ghost}>{result.alt[0]}</button>
             </div>
             {/* Advisory reads go straight to the intake; there is no free call on that path */}
@@ -236,6 +248,29 @@ export function GetStartedPage({ setActivePage, onSignIn }) {
                 </form>
               )}
             </div>}
+            {(() => {
+              const rec = REC[result.key]; if (!rec) return null;
+              const open = Date.now() >= PUBLIC_LAUNCH;
+              const label = rec.plan ? (open ? `Join as a ${rec.name} →` : `See the ${rec.name} plan →`) : `${result.cta[0]} →`;
+              const act = () => {
+                if (!rec.plan) return go(result.cta[1]);
+                if (open) { window.location.href = `/?join=1&plan=${rec.plan}`; return; }
+                try { sessionStorage.setItem("guRecommended", rec.plan); } catch {}
+                setActivePage("pricing");
+              };
+              return (
+                <div style={{ marginTop: 28, background: "linear-gradient(160deg,#2a0505,#0d0404 70%)", border: `2px solid ${RED}`, borderRadius: 22, padding: "clamp(24px,5vw,40px)" }}>
+                  <div style={{ fontSize: 11, color: "#e08a8a", fontWeight: 800, letterSpacing: "3px", textTransform: "uppercase", fontFamily: font, marginBottom: 10 }}>Our recommendation for you</div>
+                  <div style={{ fontFamily: serif, fontWeight: 700, fontSize: "clamp(40px,8vw,64px)", lineHeight: 1, margin: "0 0 10px" }}>{rec.name}</div>
+                  <div style={{ fontFamily: font, fontSize: 22, fontWeight: 800, color: "#fff", marginBottom: 20 }}>{rec.price}<span style={{ fontSize: 14, color: "#a88888", fontWeight: 600 }}>{rec.period}</span></div>
+                  <div style={{ display: "grid", gap: 10, marginBottom: 26 }}>
+                    {rec.points.map(p => <div key={p} style={{ display: "flex", gap: 10, color: "#f0d8d8", fontSize: 15, fontFamily: font, lineHeight: 1.5 }}><span style={{ color: RED, fontWeight: 900 }}>✓</span><span>{p}</span></div>)}
+                  </div>
+                  <button onClick={act} style={{ ...btn, width: "100%", fontSize: 17, padding: "18px 24px" }}>{label}</button>
+                  {rec.plan && !open && <div style={{ color: "#a88888", fontSize: 13, fontFamily: font, marginTop: 12, lineHeight: 1.6, textAlign: "center" }}>GroundUp opens to everyone on December 1.</div>}
+                </div>
+              );
+            })()}
             <div style={{ color: "#6a5050", fontSize: 12.5, fontFamily: font, marginTop: 18, lineHeight: 1.6 }}>A copy of this read is on its way to {lead.email || "your inbox"}.</div>
             <button onClick={() => { setDone(false); setStep(0); setAnswers({}); setSent(false); setSaved(false); }} style={{ background: "none", border: "none", color: "#8f7070", cursor: "pointer", fontSize: 13, fontFamily: font, fontWeight: 700, padding: "22px 0 0" }}>Start over</button>
           </>
