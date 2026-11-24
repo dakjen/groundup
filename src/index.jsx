@@ -6046,6 +6046,61 @@ function RevenueTab({ onNav = null }) {
 
 // Payout record (Dakotah, Nov 22, 2026): a link at the bottom of Revenue that
 // opens every payout on the 15th and 30th, and what is waiting for the next one.
+// "Pay NREUV now" (Dakotah, Nov 24): two buttons, each shows the amount and
+// waits for Confirm. Only NREUV's share moves; DakJen's waits for the payday.
+function PayNreuvNow({ onDone }) {
+  const [pending, setPending] = useState(null); // { reserve, quote }
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const F = "'DM Sans', sans-serif";
+  const m = (c) => "$" + ((c || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const auth = { Authorization: "Bearer " + sessionStorage.getItem("adminToken") };
+  const ask = (reserve) => {
+    setMsg(null); setBusy(true);
+    fetch("/api/revenue?nreuvnow=1&reserve=" + (reserve ? 1 : 0), { headers: auth })
+      .then(r => r.ok ? r.json() : Promise.reject(new Error("Couldn't work out the amount")))
+      .then(q => setPending({ reserve, quote: q })).catch(e => setMsg(e.message)).finally(() => setBusy(false));
+  };
+  const send = () => {
+    setBusy(true);
+    fetch("/api/revenue", { method: "POST", headers: { ...auth, "Content-Type": "application/json" }, body: JSON.stringify({ action: "pay_nreuv_now", reserve: pending.reserve, confirm: true }) })
+      .then(async r => { const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || "The payout didn't go through"); return d; })
+      .then(d => { setPending(null); setMsg(d.payments ? `Sent ${m(d.nreuv_cents)} to NREUV (${d.payments} payment${d.payments === 1 ? "" : "s"}).${d.notes?.length ? " " + d.notes.join(" ") : ""}` : (d.note || "Nothing to pay.")); onDone && onDone(); })
+      .catch(e => setMsg(e.message)).finally(() => setBusy(false));
+  };
+  const b = (primary) => ({ background: primary ? "#b80101" : "#ffffff", color: primary ? "#fff" : "#b80101", border: "1px solid #b80101", borderRadius: 8, padding: "8px 14px", fontFamily: F, fontWeight: 800, fontSize: 12.5, cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1 });
+  const q = pending?.quote;
+  return (
+    <div style={{ marginTop: 14, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+      {!pending && (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", alignItems: "center" }}>
+          <span style={{ color: "#555555", fontSize: 12.5, fontFamily: F, fontWeight: 700 }}>Pay NREUV now:</span>
+          <button disabled={busy} onClick={() => ask(true)} style={b(false)}>Keep the $1,000 reserve</button>
+          <button disabled={busy} onClick={() => ask(false)} style={b(false)}>Everything (no reserve)</button>
+        </div>
+      )}
+      {pending && (
+        <div style={{ background: "#fff8f8", border: "1px solid #f0caca", borderRadius: 12, padding: "14px 18px", maxWidth: 460, textAlign: "left", fontFamily: F }}>
+          {q.payments > 0 ? (<>
+            <div style={{ fontSize: 15, color: "#222222", fontWeight: 800, marginBottom: 6 }}>Send NREUV {m(q.nreuv_cents)}?</div>
+            <div style={{ fontSize: 12.5, color: "#555555", lineHeight: 1.6, marginBottom: 10 }}>
+              NREUV's share of {q.payments} payment{q.payments === 1 ? "" : "s"}{q.refunds_off_cents > 0 ? `, less ${m(q.refunds_off_cents)} in earlier refunds` : ""}. {pending.reserve ? `Keeps the ${m(q.keep)} reserve.` : "Keeps no reserve: a refund before the next payday would come out of DakJen's share still in Stripe."} DakJen's share of these goes to the bank on the next 15th or 30th.
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button disabled={busy} onClick={send} style={b(true)}>{busy ? "Sending…" : "Confirm, send it"}</button>
+              <button disabled={busy} onClick={() => setPending(null)} style={b(false)}>Cancel</button>
+            </div>
+          </>) : (<>
+            <div style={{ fontSize: 13, color: "#555555", marginBottom: 8 }}>Nothing to send: {pending.reserve ? "everything left is the reserve" : "NREUV is paid up"}.</div>
+            <button onClick={() => setPending(null)} style={b(false)}>OK</button>
+          </>)}
+        </div>
+      )}
+      {msg && <div style={{ fontSize: 12.5, color: "#333333", fontFamily: F }}>{msg}</div>}
+    </div>
+  );
+}
+
 function PayoutRecord({ onNav = null }) {
   const [open, setOpen] = useState(false);
   const [data, setData] = useState(null);
@@ -6073,6 +6128,7 @@ function PayoutRecord({ onNav = null }) {
         <span style={{ color: "#c9bfb2", margin: "0 10px" }}>·</span>
         <button onClick={() => onNav("admin-users")} style={{ background: "none", border: "none", color: "#b80101", fontFamily: F, fontWeight: 700, fontSize: 13.5, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}>Users →</button>
       </>}
+      <PayNreuvNow onDone={() => { setData(null); setOpen(false); }} />
       {open && (
         <div style={{ textAlign: "left", background: "#ffffff", border: "1px solid #e6e0d6", borderRadius: 14, padding: "20px 22px", marginTop: 12 }}>
           {err && <div style={{ color: "#b80101", fontSize: 13, fontFamily: F }}>{err}</div>}
@@ -6080,7 +6136,7 @@ function PayoutRecord({ onNav = null }) {
           {data && (() => {
             const ready = data.waiting.filter(w => w.past_window);
             const soon = data.waiting.filter(w => !w.past_window);
-            const sum = (arr) => arr.reduce((a, w) => a + (w.held_cents || 0), 0);
+            const sum = (arr) => arr.reduce((a, w) => a + (w.held_cents || 0) - (w.status === "nreuv_paid" ? (w.nreuv_paid_cents || 0) : 0), 0);
             return (
               <>
                 <div style={{ color: "#555555", fontSize: 12.5, fontFamily: F, lineHeight: 1.7, marginBottom: 14 }}>
@@ -6090,6 +6146,25 @@ function PayoutRecord({ onNav = null }) {
                 <div style={{ fontSize: 10.5, color: "#8a8a8a", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", fontFamily: F, marginBottom: 2 }}>Waiting in Stripe</div>
                 <div style={row}><span>{ready.length} payment{ready.length === 1 ? "" : "s"} past the 5-day window</span><strong>{m(sum(ready))}</strong></div>
                 <div style={{ ...row, marginBottom: 18 }}><span>{soon.length} payment{soon.length === 1 ? "" : "s"} still inside the 5-day window</span><strong>{m(sum(soon))}</strong></div>
+                {data.early?.length > 0 && <>
+                  <div style={{ fontSize: 10.5, color: "#8a8a8a", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", fontFamily: F, marginBottom: 2 }}>NREUV paid early (button)</div>
+                  {data.early.map(r => (
+                    <div key={r.id} style={{ borderTop: "1px solid #eee7dd", padding: "10px 0" }}>
+                      <div onClick={() => setShown(shown === "e" + r.id ? null : "e" + r.id)} style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", cursor: "pointer", fontSize: 13, fontFamily: F, color: "#222222" }}>
+                        <span><strong>{new Date(r.created_at).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</strong> · {r.payments} payment{r.payments === 1 ? "" : "s"} · {r.kept_cents > 0 ? "reserve kept" : "no reserve"}{r.status !== "done" && <span style={{ color: "#b80101", fontWeight: 800 }}> · {r.status === "running" ? "in progress" : "stopped early"}</span>}</span>
+                        <span style={{ fontVariantNumeric: "tabular-nums" }}>NREUV <strong>{m(r.nreuv_cents)}</strong></span>
+                      </div>
+                      {shown === "e" + r.id && (
+                        <div style={{ marginTop: 8, paddingLeft: 10, borderLeft: "2px solid #f0e2e2" }}>
+                          {(r.lines || []).map((l, i) => <div key={i} style={{ fontSize: 12.5, fontFamily: F, color: "#555555", padding: "3px 0" }}>{l}</div>)}
+                          {r.by_email && <div style={{ fontSize: 11.5, fontFamily: F, color: "#9a9a9a", padding: "3px 0" }}>Pressed by {r.by_email}</div>}
+                          {r.note && <div style={{ fontSize: 12.5, fontFamily: F, color: "#9a5b00", padding: "3px 0" }}>{r.note}</div>}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <div style={{ height: 18 }} />
+                </>}
                 <div style={{ fontSize: 10.5, color: "#8a8a8a", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", fontFamily: F, marginBottom: 2 }}>Past payouts</div>
                 {data.runs.length === 0 && <div style={{ ...row, color: "#9a9a9a" }}>No payouts yet. The first one is Monday, November 30.</div>}
                 {data.runs.map(r => {

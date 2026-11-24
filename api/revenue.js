@@ -13,6 +13,26 @@ export default async function handler(req, res) {
       const { payoutOverview } = await import('./_payouts.js');
       return res.json(await payoutOverview(sql));
     }
+    // "Pay NREUV now" buttons: GET ?nreuvnow=1&reserve=1|0 shows the amount;
+    // POST { action: 'pay_nreuv_now', reserve, confirm: true } sends it.
+    if (req.method === 'GET' && req.query.nreuvnow === '1') {
+      const { payNreuvNow } = await import('./_payouts.js');
+      return res.json(await payNreuvNow(sql, null, { reserve: req.query.reserve !== '0', dry: true }));
+    }
+    if (req.method === 'POST' && req.body?.action === 'pay_nreuv_now') {
+      if (req.body.confirm !== true) return res.status(400).json({ error: 'Confirm first.' });
+      const { getAdmin } = await import('./_utils.js');
+      const { payNreuvNow } = await import('./_payouts.js');
+      const { teamAlert } = await import('./_email.js');
+      const Stripe = (await import('stripe')).default;
+      const by = getAdmin(req)?.email || null;
+      const reserve = req.body.reserve !== false;
+      const alert = async (step, e) => { try { await teamAlert(`Pay NREUV now: ${step} failed`, `<p>${String(e?.message || e).replace(/</g, '&lt;')}</p>`); } catch {} };
+      const r = await payNreuvNow(sql, new Stripe(process.env.STRIPE_SECRET_KEY), { reserve, dry: false, by, alert });
+      if (r.error) return res.status(409).json(r);
+      if (r.payments) { try { await teamAlert(`NREUV paid early: $${(r.nreuv_cents / 100).toFixed(2)}`, `<p>${by || 'An admin'} pressed "Pay NREUV now" (${reserve ? 'keeping the $1,000 reserve' : 'no reserve'}). ${r.payments} payment${r.payments === 1 ? '' : 's'}, $${(r.nreuv_cents / 100).toFixed(2)} to NREUV. DakJen's share of them goes out on the next 15th or 30th.</p>${r.notes?.length ? `<p>${r.notes.join(' ')}</p>` : ''}<p>Every payout is on the team portal: Revenue → Payout record.</p>`); } catch {} }
+      return res.json(r);
+    }
     if (req.method === 'GET') {
       const [userStats] = await sql`
         SELECT

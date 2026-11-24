@@ -45,6 +45,17 @@ export async function ensurePayoutTables(sql) {
   await sql`ALTER TABLE held_transfers ADD COLUMN IF NOT EXISTS payout_id INTEGER`;
   await sql`ALTER TABLE held_transfers ADD COLUMN IF NOT EXISTS nreuv_paid_cents INTEGER`;
   await sql`ALTER TABLE held_transfers ADD COLUMN IF NOT EXISTS dakjen_paid_cents INTEGER`;
+  await sql`ALTER TABLE held_transfers ADD COLUMN IF NOT EXISTS nreuv_payout_id INTEGER`;
+  await sql`CREATE TABLE IF NOT EXISTS nreuv_payouts (
+    id SERIAL PRIMARY KEY,
+    kept_cents INTEGER NOT NULL,
+    payments INTEGER NOT NULL DEFAULT 0,
+    nreuv_cents INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'running',
+    note TEXT,
+    lines JSONB,
+    by_email TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
   ready = true;
 }
 
@@ -99,22 +110,16 @@ export async function runPayout(sql, stripe, { now = new Date(), alert = async (
   try { const acct = await stripe.accounts.retrieve(); manual = acct.settings?.payouts?.schedule?.interval === 'manual'; } catch {}
 
   // 1. Refunds on payments still held: only what is left of the payment gets split.
-  const heldRefunds = await sql`SELECT h.id, h.held_cents, h.refund_settled_cents, l.refunded_cents
-    FROM held_transfers h JOIN revenue_ledger l ON l.charge_id = h.charge_id
-    WHERE h.status = 'held' AND COALESCE(l.refunded_cents, 0) > h.refund_settled_cents
-      AND COALESCE(l.nreuv_cents, 0) = 0`; // launch-week payments split at purchase are handled by hand (alert)
-  for (const r of heldRefunds) {
-    const left = Math.max(0, r.held_cents - (r.refunded_cents - r.refund_settled_cents));
-    await sql`UPDATE held_transfers SET held_cents = ${left}, refund_settled_cents = ${r.refunded_cents}, status = ${left === 0 ? 'refunded' : 'held'} WHERE id = ${r.id}`;
-  }
+  await settleHeldRefunds(sql);
 
   // 2. Refunds and lost chargebacks on payments already paid out: each side
   //    gives back its own share, off this payout (plus anything carried over).
+  //    'nreuv_paid' = NREUV was paid early with the button; DakJen's share waits.
   let owedN = 0, owedD = 0; const notes = [];
   try { const c = JSON.parse((await sql`SELECT value FROM settings WHERE key = 'payout_carry'`)[0]?.value || '{}'); owedN += c.n || 0; owedD += c.d || 0; } catch {}
   const paidRefunds = await sql`SELECT h.id, h.item, h.rate_pct, h.gross_cents, h.refund_settled_cents, l.refunded_cents, l.status
     FROM held_transfers h JOIN revenue_ledger l ON l.charge_id = h.charge_id
-    WHERE h.status = 'released' AND COALESCE(l.nreuv_cents, 0) = 0 AND (COALESCE(l.refunded_cents, 0) > h.refund_settled_cents
+    WHERE h.status IN ('released', 'nreuv_paid') AND COALESCE(l.nreuv_cents, 0) = 0 AND (COALESCE(l.refunded_cents, 0) > h.refund_settled_cents
       OR (l.status = 'disputed_lost' AND h.refund_settled_cents < h.gross_cents))`;
   for (const r of paidRefunds) {
     const target = r.status === 'disputed_lost' ? r.gross_cents : r.refunded_cents;
@@ -125,24 +130,26 @@ export async function runPayout(sql, stripe, { now = new Date(), alert = async (
     notes.push(`${r.status === 'disputed_lost' ? 'Chargeback' : 'Refund'} on ${r.item || 'a payment'} already paid out: $${(back / 100).toFixed(2)} back (NREUV $${(n / 100).toFixed(2)}, DakJen $${(d / 100).toFixed(2)})`);
   }
 
-  // 3. The balance as GroundUp's records see it: everything still held, less
-  //    what refunds of paid-out payments have already taken from it.
-  const [tot] = await sql`SELECT COALESCE(SUM(held_cents), 0)::int AS total FROM held_transfers WHERE status = 'held'`;
-  let balance = (tot?.total || 0) - owedN - owedD;
+  // 3. The balance as GroundUp's records see it: everything still held (for a
+  //    payment NREUV was already paid on, only DakJen's share), less what
+  //    refunds of paid-out payments have already taken from it.
+  let balance = (await recordsBalance(sql)) - owedN - owedD;
   const cutoff = new Date(now.getTime() - 5 * 86400000).toISOString();
-  const due = await sql`SELECT h.id, h.charge_id, h.item, h.held_cents, h.rate_pct
+  const due = await sql`SELECT h.id, h.charge_id, h.item, h.held_cents, h.rate_pct, h.status, COALESCE(h.nreuv_paid_cents, 0) AS early_n
     FROM held_transfers h LEFT JOIN revenue_ledger l ON l.charge_id = h.charge_id
-    WHERE h.status = 'held' AND h.created_at <= ${cutoff} AND h.held_cents > 0
+    WHERE h.status IN ('held', 'nreuv_paid') AND h.created_at <= ${cutoff} AND h.held_cents > 0
       AND COALESCE(l.status, 'paid') NOT IN ('disputed', 'disputed_lost')
     ORDER BY h.created_at ASC LIMIT 1000`;
 
   let sentN = 0, shareDTotal = 0, tookN = 0, count = 0; const lines = [];
   for (const h of due) {
-    if (balance - h.held_cents < keep) continue; // would dip into the reserve; a smaller one may still fit
-    const shareN = Math.floor(h.held_cents * (h.rate_pct / 100));
+    const early = h.status === 'nreuv_paid';
+    const leaving = early ? h.held_cents - h.early_n : h.held_cents;
+    if (balance - leaving < keep) continue; // would dip into the reserve; a smaller one may still fit
+    const shareN = early ? h.early_n : Math.floor(h.held_cents * (h.rate_pct / 100));
     const shareD = h.held_cents - shareN;
-    const takeN = Math.min(owedN, shareN);
-    const sendN = shareN - takeN;
+    const takeN = early ? 0 : Math.min(owedN, shareN);
+    const sendN = early ? 0 : shareN - takeN;
     try {
       if (sendN > 0) await stripe.transfers.create({
         amount: sendN, currency: 'usd', destination: process.env.NREUV_CONNECT_ACCOUNT,
@@ -151,10 +158,29 @@ export async function runPayout(sql, stripe, { now = new Date(), alert = async (
       });
     } catch (e) { await alert('payout transfer ' + h.charge_id, e); notes.push(`Stopped early: the NREUV transfer for ${h.item || 'a payment'} failed (${e.message}).`); break; }
     owedN -= takeN; tookN += takeN;
-    await sql`UPDATE held_transfers SET status = 'released', released_at = NOW(), payout_id = ${payoutId}, nreuv_paid_cents = ${sendN}, dakjen_paid_cents = ${shareD} WHERE id = ${h.id}`;
-    balance -= h.held_cents - takeN; count++; sentN += sendN; shareDTotal += shareD;
-    lines.push(`${h.item || 'purchase'}: net $${(h.held_cents / 100).toFixed(2)} → NREUV $${(sendN / 100).toFixed(2)}${takeN ? ` (after $${(takeN / 100).toFixed(2)} refunded)` : ''}, DakJen $${(shareD / 100).toFixed(2)}`);
+    await sql`UPDATE held_transfers SET status = 'released', released_at = NOW(), payout_id = ${payoutId}, nreuv_paid_cents = ${early ? h.early_n : sendN}, dakjen_paid_cents = ${shareD} WHERE id = ${h.id}`;
+    balance -= leaving - takeN; count++; sentN += sendN; shareDTotal += shareD;
+    lines.push(early
+      ? `${h.item || 'purchase'}: net $${(h.held_cents / 100).toFixed(2)} → NREUV already paid early ($${(h.early_n / 100).toFixed(2)}), DakJen $${(shareD / 100).toFixed(2)}`
+      : `${h.item || 'purchase'}: net $${(h.held_cents / 100).toFixed(2)} → NREUV $${(sendN / 100).toFixed(2)}${takeN ? ` (after $${(takeN / 100).toFixed(2)} refunded)` : ''}, DakJen $${(shareD / 100).toFixed(2)}`);
   }
+  return finishPayout({ sql, stripe, alert, pd, keep, payoutId, manual, notes, owedN, owedD, sentN, shareDTotal, tookN, count, lines, balance });
+}
+
+// Refunds on payments still held: only what is left of the payment gets split.
+async function settleHeldRefunds(sql) {
+  const heldRefunds = await sql`SELECT h.id, h.held_cents, h.refund_settled_cents, l.refunded_cents
+    FROM held_transfers h JOIN revenue_ledger l ON l.charge_id = h.charge_id
+    WHERE h.status = 'held' AND COALESCE(l.refunded_cents, 0) > h.refund_settled_cents
+      AND COALESCE(l.nreuv_cents, 0) = 0`; // launch-week payments split at purchase are handled by hand (alert)
+  for (const r of heldRefunds) {
+    const left = Math.max(0, r.held_cents - (r.refunded_cents - r.refund_settled_cents));
+    await sql`UPDATE held_transfers SET held_cents = ${left}, refund_settled_cents = ${r.refunded_cents}, status = ${left === 0 ? 'refunded' : 'held'} WHERE id = ${r.id}`;
+  }
+}
+
+// What is left after the payments: the DakJen bank payout, the carry, the record.
+async function finishPayout({ sql, stripe, alert, pd, keep, payoutId, manual, notes, owedN, owedD, sentN, shareDTotal, tookN, count, lines, balance }) {
   // DakJen's own refund share comes off DakJen's payout and stays in the balance
   const takeD = Math.min(owedD, shareDTotal); owedD -= takeD;
   const sendD = shareDTotal - takeD;
@@ -177,15 +203,91 @@ export async function runPayout(sql, stripe, { now = new Date(), alert = async (
   return { payday: pd.date, kept: keep, payments: count, nreuv: sentN, dakjen: sendD, reserve: balance, notes, lines };
 }
 
+// GroundUp's balance as its records see it: every held payment in full, and for
+// a payment NREUV was paid on early, only DakJen's share that is still there.
+async function recordsBalance(sql) {
+  const [t] = await sql`SELECT COALESCE(SUM(CASE WHEN status = 'nreuv_paid' THEN held_cents - COALESCE(nreuv_paid_cents, 0) ELSE held_cents END), 0)::int AS total
+    FROM held_transfers WHERE status IN ('held', 'nreuv_paid')`;
+  return t?.total || 0;
+}
+
+// "Pay NREUV now" (Dakotah, Nov 24, 2026): two buttons on Revenue → Payouts.
+//   reserve = true  → keeps the $1,000 reserve (settings.payout_keep_15_cents)
+//   reserve = false → keeps nothing back
+// Counts every payment not yet paid out, oldest first, of any age (no 5-day
+// wait), skipping one whose whole amount would dip below what is kept. Sends
+// ONLY NREUV's share of each; DakJen's share stays in Stripe and goes to the
+// bank on the next 15th or 30th, where these payments pay DakJen only. A
+// refund afterwards comes off NREUV's next payout, like any paid-out payment.
+// dry = true just works out the amount for the confirm step; nothing moves.
+export async function payNreuvNow(sql, stripe, { reserve = true, dry = true, by = null, alert = async () => {} } = {}) {
+  await ensurePayoutTables(sql);
+  const keep = reserve ? (await payoutKeeps(sql)).k15 : 0;
+  if (!dry) {
+    // One at a time: a second click while this runs gets turned away
+    const [lock] = await sql`INSERT INTO settings (key, value) VALUES ('nreuv_now_running', ${new Date().toISOString()})
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value WHERE settings.value::timestamptz < NOW() - INTERVAL '10 minutes' RETURNING key`;
+    if (!lock) return { error: 'A payout is already running. Give it a minute and refresh.' };
+  }
+  try {
+    if (!dry) await settleHeldRefunds(sql);
+    let carryN = 0;
+    try { carryN = JSON.parse((await sql`SELECT value FROM settings WHERE key = 'payout_carry'`)[0]?.value || '{}').n || 0; } catch {}
+    let balance = await recordsBalance(sql);
+    const rows = await sql`SELECT h.id, h.charge_id, h.item, h.held_cents, h.rate_pct
+      FROM held_transfers h LEFT JOIN revenue_ledger l ON l.charge_id = h.charge_id
+      WHERE h.status = 'held' AND h.held_cents > 0 AND COALESCE(l.status, 'paid') NOT IN ('disputed', 'disputed_lost')
+        AND COALESCE(l.refunded_cents, 0) <= h.refund_settled_cents
+      ORDER BY h.created_at ASC LIMIT 1000`;
+    const pick = [];
+    for (const h of rows) {
+      if (balance - h.held_cents < keep) continue;
+      const shareN = Math.floor(h.held_cents * (h.rate_pct / 100));
+      if (shareN <= 0) continue;
+      pick.push({ ...h, shareN }); balance -= h.held_cents;
+    }
+    const total = pick.reduce((s, h) => s + h.shareN, 0);
+    const owed = Math.min(carryN, total);
+    if (dry) return { keep, payments: pick.length, nreuv_cents: total - owed, refunds_off_cents: owed, left_cents: balance };
+    if (!pick.length) return { keep, payments: 0, nreuv_cents: 0, note: 'Nothing to pay: everything left is the reserve.' };
+
+    const [run] = await sql`INSERT INTO nreuv_payouts (kept_cents, by_email) VALUES (${keep}, ${by}) RETURNING id`;
+    let sent = 0, count = 0, left = carryN; const lines = [], notes = [];
+    for (const h of pick) {
+      const take = Math.min(left, h.shareN), send = h.shareN - take;
+      try {
+        if (send > 0) await stripe.transfers.create({
+          amount: send, currency: 'usd', destination: process.env.NREUV_CONNECT_ACCOUNT, source_transaction: h.charge_id,
+          description: `NREUV ${h.rate_pct}% — early payout ${reserve ? '(reserve kept)' : '(no reserve)'} — ${h.item || 'purchase'}${take ? ` (less ${(take / 100).toFixed(2)} refunded)` : ''}`,
+        });
+      } catch (e) { await alert('NREUV early payout ' + h.charge_id, e); notes.push(`Stopped early: the transfer for ${h.item || 'a payment'} failed (${e.message}).`); break; }
+      left -= take;
+      await sql`UPDATE held_transfers SET status = 'nreuv_paid', nreuv_paid_cents = ${h.shareN}, nreuv_payout_id = ${run.id} WHERE id = ${h.id} AND status = 'held'`;
+      sent += send; count++;
+      lines.push(`${h.item || 'purchase'}: net $${(h.held_cents / 100).toFixed(2)} → NREUV $${(send / 100).toFixed(2)}${take ? ` (after $${(take / 100).toFixed(2)} refunded)` : ''}; DakJen's $${((h.held_cents - h.shareN) / 100).toFixed(2)} waits for the next payday`);
+    }
+    if (left !== carryN) {
+      let c = {}; try { c = JSON.parse((await sql`SELECT value FROM settings WHERE key = 'payout_carry'`)[0]?.value || '{}'); } catch {}
+      await sql`INSERT INTO settings (key, value) VALUES ('payout_carry', ${JSON.stringify({ n: left, d: c.d || 0 })}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`;
+    }
+    await sql`UPDATE nreuv_payouts SET status = ${notes.length ? 'partial' : 'done'}, payments = ${count}, nreuv_cents = ${sent},
+      note = ${notes.join(' ') || null}, lines = ${JSON.stringify(lines)}::jsonb WHERE id = ${run.id}`;
+    return { keep, payments: count, nreuv_cents: sent, notes };
+  } finally {
+    if (!dry) await sql`DELETE FROM settings WHERE key = 'nreuv_now_running'`;
+  }
+}
+
 // What the Payouts page shows: past runs, what is waiting, the next paydays.
 export async function payoutOverview(sql, now = new Date()) {
   await ensurePayoutTables(sql);
   const { k15, k30 } = await payoutKeeps(sql);
   const runs = await sql`SELECT * FROM payouts ORDER BY payday DESC LIMIT 60`;
   const cutoff = new Date(now.getTime() - 5 * 86400000).toISOString();
-  const waiting = await sql`SELECT h.id, h.item, h.held_cents, h.rate_pct, h.gross_cents, h.created_at, u.name
+  const waiting = await sql`SELECT h.id, h.item, h.held_cents, h.rate_pct, h.gross_cents, h.created_at, h.status, h.nreuv_paid_cents, u.name
     FROM held_transfers h LEFT JOIN users u ON u.stripe_customer_id = h.customer_id
-    WHERE h.status = 'held' ORDER BY h.created_at ASC`;
+    WHERE h.status IN ('held', 'nreuv_paid') ORDER BY h.created_at ASC`;
+  const early = await sql`SELECT * FROM nreuv_payouts ORDER BY created_at DESC LIMIT 60`;
   const paid = await sql`SELECT h.payout_id, h.item, h.held_cents, h.rate_pct, h.gross_cents, h.nreuv_paid_cents, h.dakjen_paid_cents, h.created_at, h.released_at, u.name
     FROM held_transfers h LEFT JOIN users u ON u.stripe_customer_id = h.customer_id
     WHERE h.payout_id IS NOT NULL ORDER BY h.created_at ASC`;
@@ -194,7 +296,7 @@ export async function payoutOverview(sql, now = new Date()) {
   return {
     keep15: k15, keep30: k30, carry,
     next: nextPaydays(now, 4).filter(p => p.date >= FIRST_PAYDAY),
-    runs,
+    runs, early,
     waiting: waiting.map(w => ({ ...w, past_window: new Date(w.created_at).toISOString() <= cutoff })),
     paid,
   };
