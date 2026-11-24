@@ -1,6 +1,7 @@
 import { BookOpen, MessagesSquare, Video, Handshake, Lock, Mail, Megaphone, Menu, X as XIcon, Eye, Calendar, ThumbsUp, Heart, Lightbulb, Flame, PartyPopper, SmilePlus } from "lucide-react";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { pollVisible } from "./poll.js";
+import { addToCalendarUrl } from "../shared/calendar.js";
 
 // ─── MEMBER SESSION HELPERS ─────────────────────────────────────────────────
 
@@ -1223,32 +1224,34 @@ function SlotPicker({ bookingId, included, title, onClose, onBooked }) {
     }).catch(e => setErr(e.message));
   }, []);
   useEffect(() => {
-    const esc = (e) => e.key === "Escape" && onClose();
+    const esc = (e) => e.key === "Escape" && !busy && finish();
     document.addEventListener("keydown", esc);
     return () => document.removeEventListener("keydown", esc);
-  }, [onClose]);
+  }, [onClose, onBooked, done, busy]);
 
   const confirm = async () => {
     setBusy(true); setErr("");
     try {
       const d = await api("/api/schedule", { method: "POST", body: JSON.stringify({ action: "book", ...(included ? { included: true } : { booking_id: bookingId }), start: picked }) });
-      onBooked(d);
+      setDone({ ...d, scheduled_at: d.scheduled_at || picked }); setBusy(false);
     } catch (e) { setErr(e.message); setBusy(false); }
   };
 
   const F = font;
+  const [done, setDone] = useState(null);     // the booking, once it went through
+  const finish = () => (done ? onBooked(done) : onClose());
   const overlay = { position: "fixed", inset: 0, zIndex: 400, background: "rgba(8,2,3,0.7)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 18, overflowY: "auto" };
   const card = { background: "#ffffff", borderRadius: 18, width: "100%", maxWidth: 760, color: "#1a1a1a", boxShadow: "0 24px 70px rgba(0,0,0,0.5)", overflow: "hidden" };
 
   const body = (inner) => (
-    <div style={overlay} {...backdropClose(onClose)}>
+    <div style={overlay} {...backdropClose(() => !busy && finish())}>
       <div style={card} onClick={(e) => e.stopPropagation()}>
         <div style={{ background: "#0d0404", padding: "18px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
-            <div style={{ fontSize: 9, color: "#ff5c5c", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: F }}>Book with Dr. Merritt</div>
+            <div style={{ fontSize: 9, color: "#ff5c5c", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: F }}>{done ? "You're booked" : "Book with Dr. Merritt"}</div>
             <div style={{ fontFamily: serif, fontSize: 21, fontWeight: 700, color: "#fff", marginTop: 2 }}>{title || "Your session"}</div>
           </div>
-          <button onClick={onClose} aria-label="Close" style={{ background: "transparent", border: "none", color: "#c2a5a5", fontSize: 24, lineHeight: 1, cursor: "pointer", padding: 4 }}>×</button>
+          <button onClick={() => !busy && finish()} aria-label="Close" style={{ background: "transparent", border: "none", color: "#c2a5a5", fontSize: 24, lineHeight: 1, cursor: "pointer", padding: 4 }}>×</button>
         </div>
         <div style={{ padding: "22px 24px 24px" }}>{inner}</div>
       </div>
@@ -1278,6 +1281,37 @@ function SlotPicker({ bookingId, included, title, onClose, onBooked }) {
   const firstOfMonth = month || new Date();
   const gridStart = new Date(firstOfMonth); gridStart.setDate(1 - firstOfMonth.getDay());
   const cells = Array.from({ length: 42 }, (_, i) => { const dt = new Date(gridStart); dt.setDate(gridStart.getDate() + i); return dt; });
+  // Booked: say so plainly, with the two things they'll want next.
+  if (done) {
+    const at = new Date(done.scheduled_at);
+    const join = done.meet_link || "";
+    return body(
+      <div style={{ textAlign: "center", padding: "14px 4px 6px", fontFamily: F }}>
+        <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#fdeced", color: "#b80101", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px", fontSize: 28, fontWeight: 800 }}>✓</div>
+        <div style={{ fontFamily: serif, fontSize: 28, fontWeight: 700, color: "#1a1a1a" }}>You&rsquo;re scheduled.</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: "#1a1a1a", marginTop: 10 }}>
+          {at.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} at {at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+        </div>
+        <div style={{ color: "#666", fontSize: 13.5, lineHeight: 1.7, marginTop: 6, maxWidth: 440, marginLeft: "auto", marginRight: "auto" }}>
+          A confirmation email is on its way{join ? " with your Zoom link" : ""}. You&rsquo;ll find this session under Your meetings any time.
+        </div>
+        <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", marginTop: 20 }}>
+          <a href={addToCalendarUrl({ title: title || "Session with Dr. Gina Merritt", startIso: done.scheduled_at, joinUrl: join })} target="_blank" rel="noreferrer"
+            style={{ background: "#b80101", color: "#fff", borderRadius: 10, padding: "12px 22px", fontWeight: 800, fontSize: 13.5, textDecoration: "none" }}>Add to Google Calendar</a>
+          <button onClick={finish} style={{ background: "#fff", color: "#1a1a1a", border: "1px solid #e3ddd5", borderRadius: 10, padding: "12px 22px", fontFamily: F, fontWeight: 800, fontSize: 13.5, cursor: "pointer" }}>Done</button>
+        </div>
+      </div>
+    );
+  }
+  // Booking in flight: creating the Zoom room and the invite takes a few seconds.
+  if (busy) return body(
+    <div style={{ textAlign: "center", padding: "34px 4px", fontFamily: F }}>
+      <span style={{ width: 34, height: 34, border: "3px solid #f1e6e6", borderTopColor: "#b80101", borderRadius: "50%", display: "inline-block", animation: "gu-spin .8s linear infinite" }} />
+      <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, color: "#1a1a1a", marginTop: 14 }}>Booking your time…</div>
+      <div style={{ color: "#777", fontSize: 13.5, marginTop: 6 }}>Setting up your Zoom room and calendar invite. This takes a few seconds.</div>
+      <style>{`@keyframes gu-spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
   const monthsAvailable = [...new Set(data.days.map(d => d.date.slice(0, 7)))];
   const thisMonthKey = `${firstOfMonth.getFullYear()}-${String(firstOfMonth.getMonth() + 1).padStart(2, "0")}`;
   const idx = monthsAvailable.indexOf(thisMonthKey);
@@ -1432,7 +1466,7 @@ function MeetingCard({ b, onChange, link }) {
           : (
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {b.meet_link && <a href={b.meet_link} target="_blank" rel="noreferrer" style={{ ...btnRed, textDecoration: "none", display: "inline-block" }}>Join the meeting</a>}
-              {b.event_link && <a href={b.event_link} target="_blank" rel="noreferrer" style={{ ...btnGhost, textDecoration: "none", display: "inline-block" }}>Add to calendar</a>}
+              <a href={addToCalendarUrl({ title: b.label, startIso: b.scheduled_at, joinUrl: b.meet_link || "" })} target="_blank" rel="noreferrer" style={{ ...btnGhost, textDecoration: "none", display: "inline-block" }}>Add to calendar</a>
             </div>
           )}
       </div>
@@ -3912,7 +3946,7 @@ function IntakeSteps({ data, reload }) {
                 <p style={sub}>{new Date(intakeBooking.scheduled_at).toLocaleString(undefined, { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })}</p>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {intakeBooking.meet_link && <a href={intakeBooking.meet_link} target="_blank" rel="noreferrer" style={{ ...btnRed, textDecoration: "none", display: "inline-block" }}>Join the meeting</a>}
-                  {intakeBooking.event_link && <a href={intakeBooking.event_link} target="_blank" rel="noreferrer" style={{ ...btnGhost, textDecoration: "none", display: "inline-block", color: "var(--gu-text2)", borderColor: "var(--gu-border)" }}>Add to calendar</a>}
+                  {intakeBooking.scheduled_at && <a href={addToCalendarUrl({ title: "Full Project Intake with Dr. Gina Merritt", startIso: intakeBooking.scheduled_at, joinUrl: intakeBooking.meet_link || "" })} target="_blank" rel="noreferrer" style={{ ...btnGhost, textDecoration: "none", display: "inline-block", color: "var(--gu-text2)", borderColor: "var(--gu-border)" }}>Add to calendar</a>}
                 </div>
               </>)
             : intakeBooking ? (<>

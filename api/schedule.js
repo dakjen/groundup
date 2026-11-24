@@ -3,6 +3,7 @@ import { getSession, getAdmin, benefitGate } from './_utils.js';
 import { sendEmail, siteUrl, firstName } from './_email.js';
 import { gcalConfigured, freeBusy, createEvent, deleteEvent, wallToUtc, partsIn } from './_gcal.js';
 import { zoomConfigured, zoomHost, createMeeting, deleteMeeting } from './_zoom.js';
+import { addToCalendarUrl } from '../shared/calendar.js';
 
 // Booking a session with Dr. Merritt, through our own server rather than a
 // public calendar link. That is the point: a slot can only be taken against a
@@ -227,7 +228,7 @@ export default async function handler(req, res) {
            <p style="color:#444444;font-size:14px;line-height:1.8;margin:0 0 6px;"><strong style="color:#161616;">${b.label || 'Your session'}</strong></p>
            <p style="color:#444444;font-size:14px;line-height:1.8;margin:0 0 18px;">${when}</p>
            ${meet ? `<a href="${meet}" style="display:inline-block;background:#b80101;color:#fff;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin:0 8px 10px 0;">Join the meeting</a>` : ''}
-           ${ev.htmlLink ? `<a href="${ev.htmlLink}" style="display:inline-block;background:#ffffff;color:#b80101;border:1px solid #b80101;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin:0 8px 10px 0;">Add to your calendar</a>` : ''}
+           ${start ? `<a href="${addToCalendarUrl({ title: b.label || summary, startIso: start.toISOString(), minutes: R.duration, joinUrl: meet }).replace(/&/g, '&amp;')}" style="display:inline-block;background:#ffffff;color:#b80101;border:1px solid #b80101;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;margin:0 8px 10px 0;">Add to your calendar</a>` : ''}
            <a href="${siteUrl()}/membership#meetings" style="display:inline-block;background:#ffffff;color:#b80101;border:1px solid #b80101;border-radius:8px;padding:12px 26px;font-weight:bold;font-size:14px;text-decoration:none;">Your meetings</a>
            <p style="color:#444444;font-size:14px;line-height:1.8;margin:22px 0 0;">A calendar invite is on its way. ${b.brief ? 'Dr. Merritt has your brief.' : '<strong style="color:#161616;">Add your brief before the session</strong> — it\'s what makes the 45 minutes count.'}</p>`
         ).catch(() => {});
