@@ -3,6 +3,16 @@ import { requireAdmin } from './_utils.js';
 import { revenueStatement } from './broadcast.js';
 
 
+// The signed-in team member's email (the session token carries only their id)
+const DAKJEN_PAYER = 'djmj@nreuv.com';
+async function adminEmail(req, sql) {
+  const { getAdmin } = await import('./_utils.js');
+  const uid = getAdmin(req)?.uid;
+  if (!uid) return null;
+  const [u] = await sql`SELECT LOWER(email) AS email FROM users WHERE id = ${uid}`;
+  return u?.email || null;
+}
+
 export default async function handler(req, res) {
   if (!requireAdmin(req, res)) return;
   const sql = neon(process.env.DATABASE_URL);
@@ -19,13 +29,28 @@ export default async function handler(req, res) {
       const { payNreuvNow } = await import('./_payouts.js');
       return res.json(await payNreuvNow(sql, null, { reserve: req.query.reserve !== '0', dry: true }));
     }
+    // "Pay DakJen now": only the djmj@nreuv.com account sees or uses it.
+    if (req.query.dakjennow === '1' || req.body?.action === 'pay_dakjen_now') {
+      const me = await adminEmail(req, sql);
+      if (me !== DAKJEN_PAYER) return res.status(403).json({ error: 'Only the DakJen account can pay DakJen early.' });
+      const { payDakjenNow } = await import('./_payouts.js');
+      if (req.method === 'GET') return res.json(await payDakjenNow(sql, null, { dry: true }));
+      if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+      if (req.body.confirm !== true) return res.status(400).json({ error: 'Confirm first.' });
+      const { teamAlert } = await import('./_email.js');
+      const Stripe = (await import('stripe')).default;
+      const alert = async (step, e) => { try { await teamAlert(`Pay DakJen now: ${step} failed`, `<p>${String(e?.message || e).replace(/</g, '&lt;')}</p>`); } catch {} };
+      const r = await payDakjenNow(sql, new Stripe(process.env.STRIPE_SECRET_KEY), { dry: false, by: me, alert });
+      if (r.error) return res.status(409).json(r);
+      if (r.payments) { try { await teamAlert(`DakJen paid early: $${(r.dakjen_cents / 100).toFixed(2)}`, `<p>${me} pressed "Pay DakJen now" (keeping the $1,000 reserve). ${r.payments} payment${r.payments === 1 ? '' : 's'}, $${(r.dakjen_cents / 100).toFixed(2)} to DakJen's bank. NREUV's share of them goes out on the next 15th or 30th.</p><p>Every payout is on the team portal: Revenue → Payout record.</p>`); } catch {} }
+      return res.json(r);
+    }
     if (req.method === 'POST' && req.body?.action === 'pay_nreuv_now') {
       if (req.body.confirm !== true) return res.status(400).json({ error: 'Confirm first.' });
-      const { getAdmin } = await import('./_utils.js');
       const { payNreuvNow } = await import('./_payouts.js');
       const { teamAlert } = await import('./_email.js');
       const Stripe = (await import('stripe')).default;
-      const by = getAdmin(req)?.email || null;
+      const by = await adminEmail(req, sql);
       const reserve = req.body.reserve !== false;
       const alert = async (step, e) => { try { await teamAlert(`Pay NREUV now: ${step} failed`, `<p>${String(e?.message || e).replace(/</g, '&lt;')}</p>`); } catch {} };
       const r = await payNreuvNow(sql, new Stripe(process.env.STRIPE_SECRET_KEY), { reserve, dry: false, by, alert });
